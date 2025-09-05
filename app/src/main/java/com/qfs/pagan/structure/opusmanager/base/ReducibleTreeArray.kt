@@ -610,20 +610,15 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
 
     fun get_tree(beat: Int, position: List<Int>? = null): ReducibleTree<T> {
         var tree = this.beats[beat]
-        if (position != null) {
-            for (i in position) {
-                tree = tree[i]
-            }
+        for (i in position ?: listOf()) {
+            tree = tree[i]
         }
-
         return tree
     }
 
     fun replace_tree(beat: Int, position: List<Int>?, tree: ReducibleTree<T>) {
         val old_tree = this.get_tree(beat, position)
-        if (old_tree == tree) {
-            return // Don't waste the cycles
-        }
+        if (old_tree == tree) return // Don't waste the cycles
 
         val working_position = position ?: listOf()
         val overlapper = this.get_blocking_position(beat, working_position)

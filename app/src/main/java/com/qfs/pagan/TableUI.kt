@@ -163,8 +163,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     true
                 }
             }
-
-
         }
 
         fun get_standard_line_state(channel: Int, line_offset: Int): IntArray {
@@ -443,23 +441,13 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 // TODO: ensure that *cannot* happen
                 val state = try {
                     this.get_standard_leaf_state(beat_key, position)
-                } catch (e: IndexOutOfBoundsException) {
+                } catch (_: IndexOutOfBoundsException) {
                     return@draw_tree
                 }
 
-                this.leaf_drawable.state = state
-                this.leaf_drawable.setBounds(
-                    (x).toInt(),
-                    (y).toInt(),
-                    (x + width).toInt(),
-                    (y + line_height).toInt()
-                )
-                this.leaf_drawable.draw(canvas)
+                this.draw_drawable(canvas, this.leaf_drawable, state, x, y, width, line_height)
 
-                if (line.color != null && (state.contains(R.attr.state_spill) || state.contains(
-                        R.attr.state_active
-                    ))
-                ) {
+                if (line.color != null && (state.contains(R.attr.state_spill) || state.contains(R.attr.state_active))) {
                     colored_line_paint.color = line.color!!
                     canvas.drawRect(
                         x,
@@ -470,19 +458,13 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     )
                 }
 
-                val color_list = ContextCompat.getColorStateList(
-                    this.context,
-                    R.color.leaf_text_selector
-                )!!
-                this.text_paint_octave.color =
-                    color_list.getColorForState(state, Color.MAGENTA)
-                this.text_paint_offset.color =
-                    color_list.getColorForState(state, Color.MAGENTA)
+                val color_list = ContextCompat.getColorStateList(this.context, R.color.leaf_text_selector)!!
+                this.text_paint_octave.color = color_list.getColorForState(state, Color.MAGENTA)
+                this.text_paint_offset.color = color_list.getColorForState(state, Color.MAGENTA)
 
                 when (event) {
                     is AbsoluteNoteEvent -> {
-                        val offset_text =
-                            "${event.note % opus_manager.tuning_map.size}"
+                        val offset_text = "${event.note % opus_manager.tuning_map.size}"
                         val offset_text_bounds = Rect()
                         this.text_paint_offset.getTextBounds(
                             offset_text,
@@ -491,8 +473,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                             offset_text_bounds
                         )
 
-                        val octave_text =
-                            "${event.note / opus_manager.tuning_map.size}"
+                        val octave_text = "${event.note / opus_manager.tuning_map.size}"
                         val octave_text_bounds = Rect()
                         this.text_paint_octave.getTextBounds(
                             octave_text,
@@ -501,14 +482,10 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                             octave_text_bounds
                         )
 
-                        val padding_x =
-                            this.resources.getDimension(R.dimen.octave_label_padding_x)
-
-                        val text_height =
-                            (offset_text_bounds.height() * 2 / 3) + octave_text_bounds.height()
+                        val padding_x = this.resources.getDimension(R.dimen.octave_label_padding_x)
+                        val text_height = (offset_text_bounds.height() * 2 / 3) + octave_text_bounds.height()
                         val offset_text_y = y + ((line_height - text_height) / 2)
-                        val offset_text_x =
-                            x + ((width - (offset_text_bounds.width() + octave_text_bounds.width() + padding_x)) / 2)
+                        val offset_text_x = x + ((width - (offset_text_bounds.width() + octave_text_bounds.width() + padding_x)) / 2)
                         canvas.drawText(
                             offset_text,
                             offset_text_x + octave_text_bounds.width() + padding_x,
@@ -525,8 +502,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     }
 
                     is RelativeNoteEvent -> {
-                        val offset_text =
-                            "${abs(event.offset) % opus_manager.tuning_map.size}"
+                        val offset_text = "${abs(event.offset) % opus_manager.tuning_map.size}"
                         val offset_text_bounds = Rect()
                         this.text_paint_offset.getTextBounds(
                             offset_text,
@@ -535,8 +511,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                             offset_text_bounds
                         )
 
-                        val octave_text =
-                            "${abs(event.offset) / opus_manager.tuning_map.size}"
+                        val octave_text = "${abs(event.offset) / opus_manager.tuning_map.size}"
                         val octave_text_bounds = Rect()
                         this.text_paint_octave.getTextBounds(
                             octave_text,
@@ -550,6 +525,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                         } else {
                             this.context.getString(R.string.pfx_add)
                         }
+
                         val prefix_text_bounds = Rect()
                         this.text_paint_octave.getTextBounds(
                             prefix_text,
@@ -558,8 +534,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                             prefix_text_bounds
                         )
 
-                        val padding_x =
-                            this.resources.getDimension(R.dimen.octave_label_padding_x)
+                        val padding_x = this.resources.getDimension(R.dimen.octave_label_padding_x)
 
                         val text_height =
                             (offset_text_bounds.height() * 2 / 3) + octave_text_bounds.height()
@@ -615,6 +590,18 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             }
         }
 
+        fun draw_drawable(canvas: Canvas, drawable_id: Int, state: IntArray?, x: Float, y: Float, width: Float, height: Float) {
+            val drawable = ContextCompat.getDrawable(this.context, drawable_id)!!
+            this.draw_drawable(canvas, drawable, state, x, y, width, height)
+        }
+        fun draw_drawable(canvas: Canvas, drawable: Drawable, state: IntArray?, x: Float, y: Float, width: Float, height: Float) {
+            state?.let {
+                drawable.state = it
+            }
+            drawable.setBounds(x.toInt(), y.toInt(), (x + width).toInt(), (y + height).toInt())
+            drawable.draw(canvas)
+        }
+
         override fun draw(canvas: Canvas) {
             // TODO: deal with draw Allocations. preallocate in different function?
             super.draw(canvas)
@@ -631,21 +618,22 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             val channel_gap_height = floor(this.resources.getDimension(R.dimen.channel_gap_size))
             val line_label_width = floor(this.resources.getDimension(R.dimen.line_label_width))
 
-            val first_x = this.editor_table.get_first_visible_column_index()
-            val last_x = this.editor_table.get_last_visible_column_index()
-            var offset = (this.editor_table.get_column_rect(first_x)?.x ?: 0).toFloat() + line_label_width
+            val first_column = this.editor_table.get_first_visible_column_index()
+            val last_column = this.editor_table.get_last_visible_column_index()
+            var offset = (this.editor_table.get_column_rect(first_column)?.x ?: 0).toFloat() + line_label_width
 
-            val channels = opus_manager.get_all_channels()
             val horizontal_scroll_view = (this.parent.parent as HorizontalScrollView)
             val vertical_scroll_view = (horizontal_scroll_view.parent as ScrollView)
-            val scroll_y = vertical_scroll_view.scrollY
-            val scroll_x = horizontal_scroll_view.scrollX
+            val scroll_y = vertical_scroll_view.scrollY.toFloat()
+            val scroll_x = horizontal_scroll_view.scrollX.toFloat()
+
+            val channels = opus_manager.get_all_channels()
 
             canvas.drawLine(scroll_x + line_label_width, scroll_y + line_height, this.width.toFloat(), scroll_y + line_height, this.table_line_paint)
 
             val dragging = this.table_ui._dragging ?: Pair(-1, -1)
 
-            for (i in first_x .. last_x) {
+            for (i in first_column .. last_column) {
                 val beat_width = (this.editor_table.get_column_width(i) * floor(base_width))
                 var y_offset = line_height
                 for (j in channels.indices) {
@@ -714,27 +702,18 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 val state = this.get_column_label_state(i)
                 this.text_paint_column.color = color_list.getColorForState(state, Color.MAGENTA)
 
-                val column_width = this.editor_table.get_column_width(i) * base_width.toInt()
-                val drawable = ContextCompat.getDrawable(this.context, R.drawable.editor_label_column)!!
-                drawable.setState(state)
-                drawable.setBounds(
-                    (offset).toInt(),
-                    scroll_y,
-                    (offset + column_width).toInt(),
-                    (scroll_y + line_height).toInt()
-                )
-                drawable.draw(canvas)
+                val column_width = this.editor_table.get_column_width(i) * floor(base_width)
+                this.draw_drawable(canvas, R.drawable.editor_label_column, state, offset, scroll_y, column_width, line_height)
 
                 val column_text = "$i"
                 val bounds = Rect()
 
                 this.text_paint_column.getTextBounds(column_text, 0, column_text.length, bounds)
-
                 if (opus_manager.is_beat_tagged(i)) {
                     this.tagged_paint_column.color = color_list.getColorForState(state, Color.MAGENTA)
                     val x = if (column_width > viewable_width) {
                         if (offset <= scroll_x && offset + column_width >= scroll_x + viewable_width) {
-                            (scroll_x + ((viewable_width - bounds.width()) / 2)).toFloat()
+                            (scroll_x + ((viewable_width - bounds.width()) / 2))
                         } else if (offset <= scroll_x) {
                             offset + column_width - ((viewable_width + bounds.width()) / 2)
                         } else {
@@ -759,7 +738,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     // Keep the column number of huge columns on screen
                     if (column_width > viewable_width) {
                         if (offset <= scroll_x && offset + column_width >= scroll_x + viewable_width) {
-                            (scroll_x + ((viewable_width - bounds.width()) / 2)).toFloat()
+                            (scroll_x + ((viewable_width - bounds.width()) / 2))
                         } else if (offset <= scroll_x) {
                             offset + column_width - ((viewable_width + bounds.width()) / 2)
                         } else {
@@ -779,24 +758,8 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             for (j in channels.indices) {
                 for (k in channels[j].lines.indices) {
                     if (dragging.first != j || (dragging.second != -1 && dragging.second != k)) {
-                        this.line_label_drawable.state = this.get_standard_line_state(j, k)
-                        this.line_label_drawable.setBounds(
-                            scroll_x,
-                            (y_offset).toInt(),
-                            (scroll_x + line_label_width).toInt(),
-                            (y_offset + line_height).toInt()
-                        )
-                        this.line_label_drawable.draw(canvas)
-                        this.draw_line_label_text(
-                            canvas,
-                            j,
-                            k,
-                            this.line_label_drawable.state,
-                            scroll_x.toFloat(),
-                            y_offset,
-                            line_label_width,
-                            line_height
-                        )
+                        this.draw_drawable(canvas, this.line_label_drawable, this.get_standard_line_state(j, k), scroll_x, y_offset, line_label_width, line_height)
+                        this.draw_line_label_text(canvas, j, k, this.line_label_drawable.state, scroll_x, y_offset, line_label_width, line_height)
                     }
 
                     y_offset += line_height
@@ -804,27 +767,15 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                         if (!controller.visible) continue
 
                         if (dragging.first != j || (dragging.second != -1 && dragging.second != k)) {
-                            this.ctl_label_drawable.state = this.get_line_control_line_state(type, j, k)
-                            this.ctl_label_drawable.setBounds(
-                                scroll_x,
-                                (y_offset).toInt(),
-                                (scroll_x + line_label_width).toInt(),
-                                (y_offset + ctl_line_height).toInt()
-                            )
-                            this.ctl_label_drawable.draw(canvas)
-
-                            this.draw_ctl_label_text(
-                                canvas,
-                                type,
-                                this.ctl_label_drawable.state,
-                                scroll_x.toFloat(),
-                                y_offset,
-                                line_label_width,
-                                ctl_line_height
-                            )
+                            this.draw_drawable(canvas, this.ctl_label_drawable, this.get_line_control_line_state(type, j, k), scroll_x, y_offset, line_label_width, ctl_line_height)
+                            this.draw_ctl_label_text(canvas, type, this.ctl_label_drawable.state, scroll_x, y_offset, line_label_width, ctl_line_height)
                         }
 
                         y_offset += ctl_line_height
+                    }
+
+                    if (dragging.first == j && dragging.second == k) {
+                        canvas.drawLine(scroll_x, y_offset, this.width.toFloat(), y_offset, this.table_line_paint)
                     }
                 }
 
@@ -832,92 +783,50 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     if (!controller.visible) continue
 
                     if (dragging.second != -1 || dragging.first != j) {
-                        this.ctl_label_drawable.state = this.get_channel_control_line_state(type, j)
-                        this.ctl_label_drawable.setBounds(
-                            scroll_x,
-                            (y_offset).toInt(),
-                            (scroll_x + line_label_width).toInt(),
-                            (y_offset + ctl_line_height).toInt()
-                        )
-                        this.ctl_label_drawable.draw(canvas)
-
-                        this.draw_ctl_label_text(
-                            canvas,
-                            type,
-                            this.ctl_label_drawable.state,
-                            scroll_x.toFloat(),
-                            y_offset,
-                            line_label_width,
-                            ctl_line_height
-                        )
+                        this.draw_drawable(canvas, this.ctl_label_drawable, this.get_channel_control_line_state(type, j), scroll_x, y_offset, line_label_width, ctl_line_height)
+                        this.draw_ctl_label_text(canvas, type, this.ctl_label_drawable.state, scroll_x, y_offset, line_label_width, ctl_line_height)
                     }
-
 
                     y_offset += ctl_line_height
                 }
 
-                canvas.drawRect(scroll_x.toFloat(), y_offset, scroll_x + line_label_width, y_offset + channel_gap_height, this.table_line_paint)
+                canvas.drawRect(scroll_x, y_offset, scroll_x + line_label_width, y_offset + channel_gap_height, this.table_line_paint)
                 y_offset += channel_gap_height
             }
 
             for ((type, controller) in opus_manager.controllers.get_all()) {
                 if (!controller.visible) continue
 
-                this.ctl_label_drawable.state = this.get_global_control_line_state(type)
-                this.ctl_label_drawable.setBounds(
-                    scroll_x,
-                    (y_offset).toInt(),
-                    (scroll_x + line_label_width).toInt(),
-                    (y_offset + ctl_line_height).toInt()
-                )
-                this.ctl_label_drawable.draw(canvas)
-
-                this.draw_ctl_label_text(
-                    canvas,
-                    type,
-                    this.ctl_label_drawable.state,
-                    scroll_x.toFloat(),
-                    y_offset,
-                    line_label_width,
-                    ctl_line_height
-                )
+                this.draw_drawable(canvas, this.ctl_label_drawable, this.get_global_control_line_state(type), scroll_x, y_offset, line_label_width, ctl_line_height)
+                this.draw_ctl_label_text(canvas, type, this.ctl_label_drawable.state, scroll_x, y_offset, line_label_width, ctl_line_height)
 
                 y_offset += ctl_line_height
             }
 
             // Draw Corner Button
-            this.corner_drawable.setBounds(
-                scroll_x,
-                scroll_y,
-                (scroll_x + line_label_width).toInt(),
-                (scroll_y + line_height).toInt()
-            )
-
-            this.corner_drawable.draw(canvas)
-
+            this.draw_drawable(canvas, this.corner_drawable, null, scroll_x, scroll_y, line_label_width, line_height)
 
             // Draw Floating/Dragged Channel/Line
             if (dragging != Pair(-1, -1)) {
+                val x_start_offset = (this.editor_table.get_column_rect(first_column)?.x ?: 0).toFloat() + line_label_width
                 val channel = opus_manager.channels[dragging.first]
-                if (dragging.second == -1) {
-                    var offset = (this.editor_table.get_column_rect(first_x)?.x ?: 0).toFloat() + line_label_width
-                    for (i in first_x .. last_x) {
-                        var y_offset = this.table_ui.touch_position_y - this.table_ui._dragging_y_offset
-                        val beat_width = (this.editor_table.get_column_width(i) * floor(base_width))
+                val y_start_offset = this.table_ui.touch_position_y - this.table_ui._dragging_y_offset
 
+                if (dragging.second == -1) {
+                    var x_offset = x_start_offset
+                    for (i in first_column .. last_column) {
+                        val beat_width = (this.editor_table.get_column_width(i) * floor(base_width))
+                        var y_offset = y_start_offset
                         for (k in channel.lines.indices) {
                             val beat_key = BeatKey(dragging.first, k, i)
-                            this.draw_std_tree_wrapper(canvas, beat_key, offset, y_offset, line_height, beat_width)
-                            canvas.drawRect(offset, y_offset, this.width.toFloat(), y_offset + line_height, this.drag_highlight_bg_paint)
+                            canvas.drawRect(x_offset, y_offset, this.width.toFloat(), y_offset + line_height, this.drag_highlight_bg_paint)
+                            this.draw_std_tree_wrapper(canvas, beat_key, x_offset, y_offset, line_height, beat_width)
 
                             y_offset += line_height
                             for ((type, controller) in channel.lines[k].controllers.get_all()) {
-                                if (!controller.visible) {
-                                    continue
-                                }
-                                val tree = controller.get_tree(i, listOf())
+                                if (!controller.visible) continue
 
-                                this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width) { event, position, canvas, x, y, width ->
+                                this.draw_tree(canvas, controller.get_tree(i), listOf(), x_offset, y_offset, beat_width) { event, position, canvas, x, y, width ->
                                     val state = this.get_line_control_leaf_state(type, beat_key, position)
                                     this.process_ctl_event_layout(state, event, canvas, x, y, width, ctl_line_height)
                                 }
@@ -926,79 +835,95 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                             }
                         }
                         for ((type, controller) in channel.controllers.get_all()) {
-                            if (!controller.visible) {
-                                continue
-                            }
-                            val tree = controller.get_tree(i, listOf())
-                            this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width) { event, position, canvas, x, y, width ->
+                            if (!controller.visible) continue
+
+                            this.draw_tree(canvas, controller.get_tree(i), listOf(), x_offset, y_offset, beat_width) { event, position, canvas, x, y, width ->
                                 val state = this.get_channel_control_leaf_state(type, dragging.first, i, position)
                                 this.process_ctl_event_layout(state, event, canvas, x, y, width, ctl_line_height)
                             }
+
                             y_offset += ctl_line_height
                         }
-                        offset += beat_width
+                        x_offset += beat_width
                     }
+
+                    y_offset = y_start_offset
+                    // Draw Floating Line labels
+                    for (k in channel.lines.indices) {
+                        this.draw_drawable(canvas, this.line_label_drawable, this.get_standard_line_state(dragging.first, k), scroll_x, y_offset, line_label_width, line_height)
+
+                        y_offset += line_height
+                        for ((type, controller) in channel.lines[k].controllers.get_all()) {
+                            if (!controller.visible) continue
+                            this.draw_drawable(canvas, this.ctl_label_drawable, this.get_line_control_line_state(type, dragging.first, k), scroll_x, y_offset, line_label_width, ctl_line_height)
+                            y_offset += ctl_line_height
+                        }
+                    }
+                    for ((type, controller) in channel.controllers.get_all()) {
+                        if (!controller.visible) continue
+                        this.draw_drawable(canvas, this.ctl_label_drawable, this.get_channel_control_line_state(type, dragging.first), scroll_x, y_offset, line_label_width, ctl_line_height)
+                        y_offset += ctl_line_height
+                    }
+
                 } else {
                     val line = opus_manager.channels[dragging.first].lines[dragging.second]
-                    var offset = (this.editor_table.get_column_rect(first_x)?.x ?: 0).toFloat() + line_label_width
-                    for (i in first_x .. last_x) {
-                        var y_offset = this.table_ui.touch_position_y - this.table_ui._dragging_y_offset
+                    var x_offset = x_start_offset
+                    for (i in first_column .. last_column) {
+                        y_offset = y_start_offset
                         val beat_width = (this.editor_table.get_column_width(i) * floor(base_width))
 
                         val beat_key = BeatKey(dragging.first, dragging.second, i)
-                        canvas.drawRect(offset, y_offset, this.width.toFloat(), y_offset + line_height, this.drag_highlight_bg_paint)
-                        this.draw_std_tree_wrapper(canvas, beat_key, offset, y_offset, line_height, beat_width)
-
+                        canvas.drawRect(x_offset, y_offset, this.width.toFloat(), y_offset + line_height, this.drag_highlight_bg_paint)
+                        this.draw_std_tree_wrapper(canvas, beat_key, x_offset, y_offset, line_height, beat_width)
                         y_offset += line_height
-                        for ((type, controller) in line.controllers.get_all()) {
-                            if (!controller.visible) {
-                                continue
-                            }
-                            val tree = controller.get_tree(i, listOf())
 
-                            this.draw_tree(canvas, tree, listOf(), offset, y_offset, beat_width) { event, position, canvas, x, y, width ->
+                        for ((type, controller) in line.controllers.get_all()) {
+                            if (!controller.visible) continue
+
+                            this.draw_tree(canvas, controller.get_tree(i), listOf(), x_offset, y_offset, beat_width) { event, position, canvas, x, y, width ->
                                 val state = this.get_line_control_leaf_state(type, beat_key, position)
                                 this.process_ctl_event_layout(state, event, canvas, x, y, width, ctl_line_height)
                             }
 
                             y_offset += ctl_line_height
                         }
-                        offset += beat_width
+                        x_offset += beat_width
+                    }
+
+                    // Draw Floating selection line label/ctl labels
+                    y_offset = y_start_offset
+                    this.draw_drawable(canvas, this.line_label_drawable, this.get_standard_line_state(dragging.first, dragging.second), scroll_x, y_offset, line_label_width, line_height)
+                    for ((type, controller) in channel.lines[dragging.second].controllers.get_all()) {
+                        if (!controller.visible) continue
+                        this.draw_drawable(canvas, this.ctl_label_drawable, this.get_line_control_line_state(type, dragging.first, dragging.second), scroll_x, y_offset, line_label_width, ctl_line_height)
+                        y_offset += ctl_line_height
                     }
                 }
 
-                var y_offset = this.table_ui.touch_position_y - this.table_ui._dragging_y_offset
-                canvas.drawLine(scroll_x.toFloat(), y_offset, this.width.toFloat(), y_offset, this.table_line_paint)
-
+                canvas.drawLine(scroll_x, y_start_offset, this.width.toFloat(), y_start_offset, this.table_line_paint)
             }
 
-            if (this.table_ui._dragging_index > -1) {
-                val y_position = if (dragging.second == -1) {
-                    val (y_range, _, before) = this.table_ui.channel_drag_map[this.table_ui._dragging_index]
-                    if (before) {
-                        y_range.first
-                    } else {
-                        y_range.last
-                    }
-                } else {
-                    val (y_range, _, before) = this.table_ui.line_drag_map[this.table_ui._dragging_index]
-                    if (before) {
-                        y_range.first
-                    } else {
-                        y_range.last
-                    }
-                }
+            this.draw_drag_indicator(canvas, this.table_ui._dragging_index, dragging.second == -1)
+        }
 
-                canvas.drawLine(
-                    0F,
-                    y_position.toFloat(),
-                    this.width.toFloat(),
-                    y_position.toFloat(),
-                    this.drag_highlight_paint
-                )
+        fun draw_drag_indicator(canvas: Canvas, index: Int, use_channel: Boolean) {
+            if (index < 0) return
+
+            val (y_range, use_first) = if (use_channel) {
+                val triple = this.table_ui.channel_drag_map[index]
+                Pair(triple.first, triple.third)
             } else {
-                Pair(-1, -1)
+                val triple = this.table_ui.line_drag_map[index]
+                Pair(triple.first, triple.third)
             }
+
+            val y_position = if (use_first) {
+                y_range.first
+            } else {
+                y_range.last
+            }.toFloat()
+
+            canvas.drawLine(0F, y_position, this.width.toFloat(), y_position, this.drag_highlight_paint)
         }
 
         private fun draw_line_label_text(canvas: Canvas, channel: Int, line_offset: Int, state: IntArray, x: Float, y: Float, width: Float, height: Float) {
@@ -1305,7 +1230,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                         }
                     }
                 } else {
-                    for (i in this.channel_drag_map.indices) {
+                    for (i in this.line_drag_map.indices) {
                         val (y_range, check_pair, is_top) = this.line_drag_map[i]
                         if (check_channel == check_pair.first && check_line_offset == check_pair.second) {
                             this._dragging_y_offset = y_relative + this.scrollY - y_range.first
@@ -1322,12 +1247,11 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             this._dragging_index = -1
             return
         }
-        val adjusted_y = (y - this._dragging_y_offset).toInt()
         val (_, drag_line_offset) = this._dragging!!
         if (drag_line_offset == -1) {
             for (i in this.channel_drag_map.indices) {
                 val (y_range, _, _) = this.channel_drag_map[i]
-                if (y_range.contains(adjusted_y)) {
+                if (y_range.contains(y)) {
                     this._dragging_index = i
                     break
                 }
@@ -1335,7 +1259,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         } else {
             for (i in this.line_drag_map.indices) {
                 val (y_range, _, _) = this.line_drag_map[i]
-                if (y_range.contains(adjusted_y)) {
+                if (y_range.contains(y)) {
                     this._dragging_index = i
                     break
                 }

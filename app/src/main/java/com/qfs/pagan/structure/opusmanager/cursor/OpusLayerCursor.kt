@@ -1934,6 +1934,11 @@ open class OpusLayerCursor: OpusLayerBase() {
         }
     }
 
+    fun is_channel_selected(channel: Int): Boolean {
+        val cursor = this.cursor
+        return (cursor.mode == CursorMode.Channel && cursor.ctl_level == null && cursor.channel == channel)
+    }
+
     fun is_line_selected(channel: Int, line_offset: Int): Boolean {
         val cursor = this.cursor
         return (cursor.mode == CursorMode.Line && cursor.ctl_level == null && cursor.line_offset == line_offset && cursor.channel == channel)

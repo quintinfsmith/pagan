@@ -4922,7 +4922,7 @@ open class OpusLayerBase: Effectable {
         Given the row, get the line number in the Opus
      */
     fun get_ctl_line_from_row(row: Int): Int {
-        return this._cached_row_map[row]!!
+        return this._cached_row_map[row] ?: throw Exception("Row $row not found.")
     }
 
     fun get_visible_row_from_ctl_line(line: Int): Int? {

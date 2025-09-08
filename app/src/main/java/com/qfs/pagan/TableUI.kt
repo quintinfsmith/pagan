@@ -1377,12 +1377,25 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
             val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
             if (opus_manager.cursor.mode == CursorMode.Channel) {
+                if (opus_manager.cursor.channel != channel) {
+                    opus_manager.cursor_select_channel(channel)
+                }
                 this._drag_handle.set_from(y_relative, channel)
             } else {
                 when (ctl_line_level) {
                     null,
-                    CtlLineLevel.Line -> this._drag_handle.set_from(y_relative, channel, line_offset)
-                    CtlLineLevel.Channel -> this._drag_handle.set_from(y_relative, channel)
+                    CtlLineLevel.Line ->{
+                        this._drag_handle.set_from(y_relative, channel, line_offset)
+                        if (opus_manager.cursor.mode != CursorMode.Line || opus_manager.cursor.channel != channel || opus_manager.cursor.line_offset != line_offset) {
+                            opus_manager.cursor_select_line(channel, line_offset)
+                        }
+                    }
+                    CtlLineLevel.Channel -> {
+                        this._drag_handle.set_from(y_relative, channel)
+                        if (opus_manager.cursor.channel != channel) {
+                            opus_manager.cursor_select_channel(channel)
+                        }
+                    }
                     CtlLineLevel.Global -> null
                 }
             }
@@ -1441,15 +1454,12 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
     }
 
     override fun onInterceptTouchEvent(motion_event: MotionEvent?): Boolean {
+        val output = super.onInterceptTouchEvent(motion_event)
         this.set_touch_position(motion_event, this.scrollX.toFloat(), this.scrollY.toFloat())
         when (motion_event?.action) {
-            MotionEvent.ACTION_MOVE -> {
-                this.set_dragging()
-                this.update_cached_line_drag_position()
-            }
             MotionEvent.ACTION_UP -> this.do_action_up(motion_event)
         }
-        return super.onInterceptTouchEvent(motion_event)
+        return output
     }
 
     override fun onTouchEvent(motion_event: MotionEvent?): Boolean {
@@ -1619,38 +1629,34 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             } else {
                 val opus_manager = this.get_activity().get_opus_manager()
                 val cursor = opus_manager.cursor
-                val (pointer, ctl_level, ctl_type) = line_info
-                when (ctl_level) {
-                    CtlLineLevel.Line -> {
-                        val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
-                        if (cursor.is_selecting_range()) {
+                if (cursor.is_selecting_range()) {
+                    val (pointer, ctl_level, ctl_type) = line_info
+                    when (ctl_level) {
+                        CtlLineLevel.Line -> {
+                            val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
                             action_interface.repeat_selection_ctl_line(ctl_type!!, channel, line_offset)
-                        } else {
-                            action_interface.cursor_select_line_ctl_line(ctl_type!!, channel, line_offset)
                         }
-                    }
-                    CtlLineLevel.Channel -> {
-                        if (cursor.is_selecting_range()) {
+
+                        CtlLineLevel.Channel -> {
                             action_interface.repeat_selection_ctl_channel(ctl_type!!, pointer)
-                        } else {
-                            action_interface.cursor_select_channel_ctl_line(ctl_type!!, pointer)
                         }
-                    }
-                    CtlLineLevel.Global -> {
-                        if (cursor.is_selecting_range()) {
-                            action_interface.repeat_selection_ctl_global(ctl_type!!)
-                        } else {
-                            action_interface.cursor_select_global_ctl_line(ctl_type!!)
+
+                        CtlLineLevel.Global -> {
+                            if (cursor.is_selecting_range()) {
+                                action_interface.repeat_selection_ctl_global(ctl_type!!)
+                            } else {
+                                action_interface.cursor_select_global_ctl_line(ctl_type!!)
+                            }
                         }
-                    }
-                    null -> {
-                        val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
-                        if (cursor.is_selecting_range()) {
+
+                        null -> {
+                            val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
                             action_interface.repeat_selection_std(channel, line_offset)
-                        } else {
-                            action_interface.cursor_select_line_std(channel, line_offset)
                         }
                     }
+                } else {
+                    this.set_dragging()
+                    this.update_cached_line_drag_position()
                 }
             }
             true

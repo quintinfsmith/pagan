@@ -2473,4 +2473,19 @@ open class OpusLayerCursor: OpusLayerBase() {
     internal fun _block_cursor_selection(): Boolean {
         return (this._blocked_action_catcher > 0 || this._cursor_lock > 0)
     }
+
+    override fun move_line(channel_index_from: Int, line_offset_from: Int, channel_index_to: Int, line_offset_to: Int) {
+        this.lock_cursor {
+            super.move_line(channel_index_from, line_offset_from, channel_index_to, line_offset_to)
+        }
+
+        var adjust_line_offset = line_offset_to
+        if (channel_index_to == channel_index_from && line_offset_to > line_offset_from) {
+            adjust_line_offset -= 1
+        }
+        this.cursor_select_line(channel_index_to, adjust_line_offset)
+    }
+
+
+
 }

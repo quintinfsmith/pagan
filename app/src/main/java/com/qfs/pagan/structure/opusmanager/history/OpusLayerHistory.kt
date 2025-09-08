@@ -315,6 +315,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     open fun apply_history_node(current_node: HistoryCache.HistoryNode, depth: Int = 0) {
+        println("APPLYING: ${current_node.token}")
         try {
             when (current_node.token) {
                 HistoryToken.SET_PROJECT_NAME -> {
@@ -813,7 +814,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     override fun swap_lines(channel_index_a: Int, line_offset_a: Int, channel_index_b: Int, line_offset_b: Int) {
-
         this._remember {
             super.swap_lines(channel_index_a, line_offset_a, channel_index_b, line_offset_b)
             this.push_to_history_stack(
@@ -1954,6 +1954,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
             super.move_line(channel_index_from, line_offset_from, channel_index_to, line_offset_to)
         }
     }
+
     fun set_name_and_notes(name: String?, notes: String?) {
         this._remember {
             if (name != this.project_name) {

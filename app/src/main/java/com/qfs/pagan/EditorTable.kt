@@ -93,7 +93,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
             output += 1
         }
 
-        return output
+        return -2
     }
 
     fun get_scroll_view(): TableUI {
@@ -114,9 +114,11 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
 
     fun reset_table_size() {
         val (pix_width, pix_height) = this._calculate_table_size()
+        // Include extra line of height for the top row, and for the bottom global ctl button
+        // and line label width for the label column
         this.table_ui.set_size(
             pix_width + this.resources.getDimension(R.dimen.line_label_width).toInt(),
-            pix_height + this.resources.getDimension(R.dimen.line_height).toInt()
+            pix_height + (this.resources.getDimension(R.dimen.line_height).toInt() * 2)
         )
     }
 

@@ -53,6 +53,11 @@ import kotlin.math.roundToInt
 @SuppressLint("ViewConstructor")
 /* The UI of the EditorTable. Only drawing-related logic and onclick dispatching is handled here. */
 class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
+    enum class RowType {
+        Top,
+        UI,
+        Bottom
+    }
     class PaintedLayer(val table_ui: TableUI): View(table_ui.context) {
         val editor_table: EditorTable = this.table_ui.editor_table
         val section_radius_x = 20F
@@ -143,22 +148,15 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             }
 
             this.setOnClickListener {
-                if (!this.table_ui._drag_handle.is_dragging()) {
-                    val (line_info, beat, position) = this.table_ui._get_current_line_info_and_position(this.table_ui.touch_position_x, this.table_ui.touch_position_y) ?: return@setOnClickListener
-                    this.table_ui.on_click_listener(line_info, beat, position)
-                }
+                this.table_ui._drag_handle.clear()
+                val (row_type, line_info, beat_position) = this.table_ui._get_current_line_info_and_position(this.table_ui.touch_position_x, this.table_ui.touch_position_y) ?: return@setOnClickListener
+                this.table_ui.on_click(row_type, line_info, beat_position.first, beat_position.second)
             }
 
             this.setOnLongClickListener {
-                if (!this.table_ui._drag_handle.is_dragging()) {
-                    val (line_info, beat, position) = this.table_ui._get_current_line_info_and_position(
-                        this.table_ui.touch_position_x,
-                        this.table_ui.touch_position_y
-                    ) ?: return@setOnLongClickListener false
-                    this.table_ui.on_long_click_listener(line_info, beat, position)
-                } else {
-                    true
-                }
+                this.table_ui._drag_handle.clear()
+                val (row_type, line_info, beat_position) = this.table_ui._get_current_line_info_and_position(this.table_ui.touch_position_x, this.table_ui.touch_position_y) ?: return@setOnLongClickListener false
+                this.table_ui.on_long_click(row_type, line_info, beat_position.first, beat_position.second)
             }
         }
 
@@ -837,6 +835,10 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 y_offset += ctl_line_height
             }
 
+            // Draw Global Control toggle button
+            this.draw_drawable(canvas, this.ctl_label_drawable, IntArray(0), scroll_x, y_offset, line_label_width, ctl_line_height)
+            this.draw_ctl_label_text(canvas, null, this.ctl_label_drawable.state, scroll_x, y_offset, line_label_width, ctl_line_height)
+
             // Draw Corner Button
             this.draw_drawable(canvas, this.corner_drawable, null, scroll_x, scroll_y, line_label_width, line_height)
 
@@ -934,31 +936,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
                 canvas.drawLine(scroll_x, y_start_offset, this.width.toFloat(), y_start_offset, this.table_line_paint)
             }
-
-        }
-
-        // FOR DEBUG
-        fun draw_drag_indicator(canvas: Canvas) {
-            val index = this.table_ui._drag_handle.to_map_index ?: return
-            val (y_range, use_first) = when (this.table_ui._drag_handle.mode) {
-                DragHandle.DragMode.Channel -> {
-                    val triple = this.table_ui._drag_handle.channel_drag_map[index]
-                    Pair(triple.first, triple.third)
-                }
-                DragHandle.DragMode.Line -> {
-                    val triple = this.table_ui._drag_handle.line_drag_map[index]
-                    Pair(triple.first, triple.third)
-                }
-                null -> return
-            }
-
-            val y_position = if (use_first) {
-                y_range.first
-            } else {
-                y_range.last
-            }.toFloat()
-
-            canvas.drawLine(0F, y_position, this.width.toFloat(), y_position, this.drag_highlight_paint)
         }
 
         private fun draw_line_label_text(canvas: Canvas, channel: Int, line_offset: Int, state: IntArray, x: Float, y: Float, width: Float, height: Float) {
@@ -985,7 +962,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             canvas.drawText(line_offset_text, x + width - line_offset_text_bounds.width() - padding, y + height - padding, this.text_paint_line_label_std)
         }
 
-        private fun draw_ctl_label_text(canvas: Canvas, type: EffectType, state: IntArray, x: Float, y: Float, width: Float, height: Float) {
+        private fun draw_ctl_label_text(canvas: Canvas, type: EffectType?, state: IntArray, x: Float, y: Float, width: Float, height: Float) {
             val color_list = ContextCompat.getColorStateList(this.context, R.color.line_label_ctl_text)!!
             val ctl_drawable = ContextCompat.getDrawable(
             this.context,
@@ -993,9 +970,10 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     EffectType.Tempo -> R.drawable.icon_tempo
                     EffectType.Volume -> R.drawable.icon_volume
                     EffectType.Velocity -> R.drawable.icon_velocity
-                    EffectType.Reverb -> R.drawable.icon_volume // Placeholder TODO
                     EffectType.Pan -> R.drawable.icon_pan
-                    EffectType.Delay -> R.drawable.icon_volume // Placeholder TODO
+                    EffectType.Delay -> R.drawable.icon_echo
+                    else -> R.drawable.icon_ctl
+                    //EffectType.Reverb -> R.drawable.icon_volume // Placeholder TODO
                 }
             )!!
 
@@ -1376,7 +1354,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         if (x_relative < this.resources.getDimension(R.dimen.line_label_width)) {
             this.recache_drag_maps()
             val row_position = this.editor_table.get_visible_row_from_pixel(this.touch_position_y) ?: return
-            if (row_position == -1) return
+            if (row_position < 0) return
 
             val opus_manager = this.get_activity().get_opus_manager()
             val (pointer, ctl_line_level, _) = opus_manager.get_ctl_line_info(opus_manager.get_ctl_line_from_row(row_position))
@@ -1626,184 +1604,192 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         super.onSizeChanged(w, h, oldw, oldh)
     }
 
-    fun on_long_click_listener(line_info: Triple<Int, CtlLineLevel?, EffectType?>?, beat: Int?, position: List<Int>?): Boolean {
+    fun on_long_click(row_type: RowType, line_info: Triple<Int, CtlLineLevel?, EffectType?>?, beat: Int?, position: List<Int>?): Boolean {
         this._drag_handle.clear()
         val action_interface = this.get_action_interface()
         val opus_manager = action_interface.get_opus_manager()
         return if (beat == null) {
-            if (line_info == null) {
-                opus_manager.force_cursor_select_column(0)
-            } else {
-                val opus_manager = this.get_activity().get_opus_manager()
-                val cursor = opus_manager.cursor
-                if (cursor.is_selecting_range()) {
-                    val (pointer, ctl_level, ctl_type) = line_info
-                    when (ctl_level) {
-                        CtlLineLevel.Line -> {
-                            val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
-                            action_interface.repeat_selection_ctl_line(ctl_type!!, channel, line_offset)
-                        }
+            when (row_type) {
+                RowType.Bottom -> { /* No Defined Behaviour */ }
+                RowType.Top -> opus_manager.force_cursor_select_column(0)
+                RowType.UI -> {
+                    val opus_manager = this.get_activity().get_opus_manager()
+                    val cursor = opus_manager.cursor
+                    if (cursor.is_selecting_range()) {
+                        val (pointer, ctl_level, ctl_type) = line_info!!
+                        when (ctl_level) {
+                            CtlLineLevel.Line -> {
+                                val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+                                action_interface.repeat_selection_ctl_line(ctl_type!!, channel, line_offset)
+                            }
 
-                        CtlLineLevel.Channel -> {
-                            action_interface.repeat_selection_ctl_channel(ctl_type!!, pointer)
-                        }
+                            CtlLineLevel.Channel -> {
+                                action_interface.repeat_selection_ctl_channel(ctl_type!!, pointer)
+                            }
 
-                        CtlLineLevel.Global -> {
-                            if (cursor.is_selecting_range()) {
-                                action_interface.repeat_selection_ctl_global(ctl_type!!)
-                            } else {
-                                action_interface.cursor_select_global_ctl_line(ctl_type!!)
+                            CtlLineLevel.Global -> {
+                                if (cursor.is_selecting_range()) {
+                                    action_interface.repeat_selection_ctl_global(ctl_type!!)
+                                } else {
+                                    action_interface.cursor_select_global_ctl_line(ctl_type!!)
+                                }
+                            }
+
+                            null -> {
+                                val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+                                action_interface.repeat_selection_std(channel, line_offset)
                             }
                         }
-
-                        null -> {
-                            val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
-                            action_interface.repeat_selection_std(channel, line_offset)
-                        }
+                    } else {
+                        this.set_dragging()
+                        this.update_cached_line_drag_position()
                     }
-                } else {
-                    this.set_dragging()
-                    this.update_cached_line_drag_position()
                 }
             }
             true
         } else {
-            if (line_info == null) {
-                false // No Action
-            } else {
-                val (pointer, ctl_line_level, ctl_type) = line_info
-                val cursor = opus_manager.cursor
-                when (ctl_line_level) {
-                    null -> {
-                        val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
-                        val beat_key = BeatKey(channel, line_offset, beat)
+            when (row_type) {
+                RowType.UI -> {
+                    val (pointer, ctl_line_level, ctl_type) = line_info!!
+                    val cursor = opus_manager.cursor
+                    when (ctl_line_level) {
+                        null -> {
+                            val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+                            val beat_key = BeatKey(channel, line_offset, beat)
 
-                        if (cursor.is_selecting_range() && cursor.ctl_level == null) {
-                            action_interface.cursor_select_range(opus_manager.cursor.range!!.first, beat_key)
-                        } else {
-                            action_interface.cursor_select_range(beat_key, beat_key)
-                        }
-                    }
-
-                    CtlLineLevel.Line -> {
-                        val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
-                        val beat_key = BeatKey(channel, line_offset, beat)
-
-                        if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Line && cursor.range!!.first.channel == beat_key.channel && cursor.range!!.first.line_offset == beat_key.line_offset && ctl_type == cursor.ctl_type) {
-                            action_interface.cursor_select_line_ctl_range(ctl_type!!, cursor.range!!.first, beat_key)
-                        } else {
-                            action_interface.cursor_select_line_ctl_range(ctl_type!!, beat_key, beat_key)
-                        }
-                    }
-
-                    CtlLineLevel.Channel -> {
-                        val type = ctl_type!!
-                        val channel = pointer
-
-                        if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Channel && cursor.ctl_type == type) {
-                            // Currently, can't select multiple channels in a range
-                            if (channel == cursor.range!!.first.channel) {
-                                action_interface.cursor_select_channel_ctl_range(type, channel, cursor.range!!.first.beat, beat)
+                            if (cursor.is_selecting_range() && cursor.ctl_level == null) {
+                                action_interface.cursor_select_range(opus_manager.cursor.range!!.first, beat_key)
+                            } else {
+                                action_interface.cursor_select_range(beat_key, beat_key)
                             }
-                        } else {
-                            action_interface.cursor_select_channel_ctl_range(type, channel, beat, beat)
                         }
-                    }
 
-                    CtlLineLevel.Global -> {
-                        if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Global && cursor.ctl_type == ctl_type) {
-                            action_interface.cursor_select_global_ctl_range(ctl_type!!, cursor.range!!.first.beat, beat)
-                        } else {
-                            action_interface.cursor_select_global_ctl_range(ctl_type!!, beat, beat)
+                        CtlLineLevel.Line -> {
+                            val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+                            val beat_key = BeatKey(channel, line_offset, beat)
+
+                            if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Line && cursor.range!!.first.channel == beat_key.channel && cursor.range!!.first.line_offset == beat_key.line_offset && ctl_type == cursor.ctl_type) {
+                                action_interface.cursor_select_line_ctl_range(ctl_type!!, cursor.range!!.first, beat_key)
+                            } else {
+                                action_interface.cursor_select_line_ctl_range(ctl_type!!, beat_key, beat_key)
+                            }
+                        }
+
+                        CtlLineLevel.Channel -> {
+                            val type = ctl_type!!
+                            val channel = pointer
+
+                            if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Channel && cursor.ctl_type == type) {
+                                // Currently, can't select multiple channels in a range
+                                if (channel == cursor.range!!.first.channel) {
+                                    action_interface.cursor_select_channel_ctl_range(type, channel, cursor.range!!.first.beat, beat)
+                                }
+                            } else {
+                                action_interface.cursor_select_channel_ctl_range(type, channel, beat, beat)
+                            }
+                        }
+
+                        CtlLineLevel.Global -> {
+                            if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Global && cursor.ctl_type == ctl_type) {
+                                action_interface.cursor_select_global_ctl_range(ctl_type!!, cursor.range!!.first.beat, beat)
+                            } else {
+                                action_interface.cursor_select_global_ctl_range(ctl_type!!, beat, beat)
+                            }
                         }
                     }
+                    true
                 }
-                true
+                else -> false
+                // RowType.Top -> {}
+                // RowType.Bottom -> {}
             }
         }
     }
 
-    fun on_click_listener(line_info: Triple<Int, CtlLineLevel?, EffectType?>?, beat: Int?, position: List<Int>?) {
-        this._drag_handle.clear()
+    fun on_click(row_type: RowType, line_info: Triple<Int, CtlLineLevel?, EffectType?>?, beat: Int?, position: List<Int>?) {
         val action_interface = this.get_action_interface()
         if (beat == null) {
-            if (line_info == null) {
-                this.get_activity().shortcut_dialog()
-            } else {
-                val opus_manager = this.get_activity().get_opus_manager()
-                val cursor = opus_manager.cursor
-                val (pointer, ctl_level, ctl_type) = line_info
-                when (ctl_level) {
-                    CtlLineLevel.Line -> {
-                        val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
-                        if (cursor.is_selecting_range()) {
-                            action_interface.repeat_selection_ctl_line(ctl_type!!, channel, line_offset, -1)
-                        } else {
-                            action_interface.cursor_select_line_ctl_line(ctl_type!!, channel, line_offset)
+            when (row_type) {
+                RowType.Top -> this.get_activity().shortcut_dialog()
+                RowType.Bottom -> action_interface.show_hidden_channel_controller()
+                RowType.UI -> {
+                    val opus_manager = this.get_activity().get_opus_manager()
+                    val cursor = opus_manager.cursor
+                    val (pointer, ctl_level, ctl_type) = line_info!!
+                    when (ctl_level) {
+                        CtlLineLevel.Line -> {
+                            val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+                            if (cursor.is_selecting_range()) {
+                                action_interface.repeat_selection_ctl_line(ctl_type!!, channel, line_offset, -1)
+                            } else {
+                                action_interface.cursor_select_line_ctl_line(ctl_type!!, channel, line_offset)
+                            }
                         }
-                    }
-                    CtlLineLevel.Channel -> {
-                        if (cursor.is_selecting_range()) {
-                            action_interface.repeat_selection_ctl_channel(ctl_type!!, pointer, -1)
-                        } else {
-                            action_interface.cursor_select_channel_ctl_line(ctl_type!!, pointer)
+                        CtlLineLevel.Channel -> {
+                            if (cursor.is_selecting_range()) {
+                                action_interface.repeat_selection_ctl_channel(ctl_type!!, pointer, -1)
+                            } else {
+                                action_interface.cursor_select_channel_ctl_line(ctl_type!!, pointer)
+                            }
                         }
-                    }
-                    CtlLineLevel.Global -> {
-                        if (cursor.is_selecting_range()) {
-                            action_interface.repeat_selection_ctl_global(ctl_type!!, -1)
-                        } else {
-                            action_interface.cursor_select_global_ctl_line(ctl_type!!)
+                        CtlLineLevel.Global -> {
+                            if (cursor.is_selecting_range()) {
+                                action_interface.repeat_selection_ctl_global(ctl_type!!, -1)
+                            } else {
+                                action_interface.cursor_select_global_ctl_line(ctl_type!!)
+                            }
                         }
-                    }
-                    null -> {
-                        val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
-                        if (cursor.is_selecting_range()) {
-                            action_interface.repeat_selection_std(channel, line_offset, -1)
-                        } else {
-                            action_interface.cursor_select_line_std(channel, line_offset)
+                        null -> {
+                            val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+                            if (cursor.is_selecting_range()) {
+                                action_interface.repeat_selection_std(channel, line_offset, -1)
+                            } else {
+                                action_interface.cursor_select_line_std(channel, line_offset)
+                            }
                         }
                     }
                 }
             }
         } else {
-            if (line_info == null) {
-                action_interface.cursor_select_column(beat)
-            } else {
-                val opus_manager = action_interface.get_opus_manager()
-                val (pointer, ctl_line_level, ctl_type) = line_info
-                when (ctl_line_level) {
-                    null -> {
-                        val (channel, line_offset) = opus_manager.get_channel_and_line_offset(
-                            pointer
-                        )
-                        this._process_standard_on_click(
-                            BeatKey(channel, line_offset, beat),
-                            position!!
-                        )
-                    }
+            when (row_type) {
+                RowType.UI -> {
+                    val opus_manager = action_interface.get_opus_manager()
+                    val (pointer, ctl_line_level, ctl_type) = line_info!!
+                    when (ctl_line_level) {
+                        null -> {
+                            val (channel, line_offset) = opus_manager.get_channel_and_line_offset(
+                                pointer
+                            )
+                            this._process_standard_on_click(
+                                BeatKey(channel, line_offset, beat),
+                                position!!
+                            )
+                        }
 
-                    CtlLineLevel.Line -> {
-                        val (channel, line_offset) = opus_manager.get_channel_and_line_offset(
-                            pointer
-                        )
-                        val beat_key = BeatKey(channel, line_offset, beat)
-                        this._process_ctl_line_on_click(ctl_type!!, beat_key, position!!)
-                    }
+                        CtlLineLevel.Line -> {
+                            val (channel, line_offset) = opus_manager.get_channel_and_line_offset(
+                                pointer
+                            )
+                            val beat_key = BeatKey(channel, line_offset, beat)
+                            this._process_ctl_line_on_click(ctl_type!!, beat_key, position!!)
+                        }
 
-                    CtlLineLevel.Channel -> {
-                        this._process_ctl_channel_on_click(
-                            ctl_type!!,
-                            pointer,
-                            beat,
-                            position!!
-                        )
-                    }
+                        CtlLineLevel.Channel -> {
+                            this._process_ctl_channel_on_click(
+                                ctl_type!!,
+                                pointer,
+                                beat,
+                                position!!
+                            )
+                        }
 
-                    CtlLineLevel.Global -> {
-                        this._process_ctl_global_on_click(ctl_type!!, beat, position!!)
+                        CtlLineLevel.Global -> {
+                            this._process_ctl_global_on_click(ctl_type!!, beat, position!!)
+                        }
                     }
                 }
+                RowType.Top -> action_interface.cursor_select_column(beat)
+                RowType.Bottom -> { /* No defined behavior */ }
             }
         }
     }
@@ -1950,7 +1936,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         return this.get_activity().get_action_interface()
     }
 
-    private fun _get_current_line_info_and_position(x_touch: Float, y_touch: Float): Triple<Triple<Int, CtlLineLevel?, EffectType?>?, Int?, List<Int>?>?  {
+    private fun _get_current_line_info_and_position(x_touch: Float, y_touch: Float): Triple<RowType, Triple<Int, CtlLineLevel?, EffectType?>?, Pair<Int?, List<Int>?>>?  {
         val side_column_width = this.resources.getDimension(R.dimen.line_label_width)
         val x = x_touch - side_column_width
 
@@ -1964,69 +1950,74 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             this.editor_table.get_column_from_leaf((x / min_leaf_width).toInt())
         }
 
-        return if (row_position == -1) {
-            Triple(null, beat, null)
-        } else {
-            val (pointer, ctl_line_level, ctl_type) = opus_manager.get_ctl_line_info(
-                opus_manager.get_ctl_line_from_row(row_position)
-            )
+        return when (row_position) {
+            -1 -> Triple(RowType.Top, null, Pair(beat, null))
+            -2 -> Triple(RowType.Bottom, null, Pair(beat, null))
+            else -> {
+                val (pointer, ctl_line_level, ctl_type) = opus_manager.get_ctl_line_info(
+                    opus_manager.get_ctl_line_from_row(row_position)
+                )
 
-            Triple(
-                Triple(pointer, ctl_line_level, ctl_type),
-                beat,
-                if (beat == null) {
-                    null
-                } else {
-                    val inner_offset = x - this.editor_table.get_column_offset(beat)
-                    val column_width = this.editor_table.get_column_width(beat) * min_leaf_width
+                Triple(
+                    RowType.UI,
+                    Triple(pointer, ctl_line_level, ctl_type),
+                    Pair(
+                        beat,
+                        if (beat == null) {
+                            null
+                        } else {
+                            val inner_offset = x - this.editor_table.get_column_offset(beat)
+                            val column_width = this.editor_table.get_column_width(beat) * min_leaf_width
 
-                    when (ctl_line_level) {
-                        null -> {
-                            val (channel, line_offset) = opus_manager.get_channel_and_line_offset(
-                                pointer
-                            )
-                            val beat_key = BeatKey(channel, line_offset, beat)
-                            TableUI.calc_position(
-                                opus_manager.get_tree(beat_key),
-                                column_width,
-                                inner_offset
-                            )
+                            when (ctl_line_level) {
+                                null -> {
+                                    val (channel, line_offset) = opus_manager.get_channel_and_line_offset(
+                                        pointer
+                                    )
+                                    val beat_key = BeatKey(channel, line_offset, beat)
+                                    TableUI.calc_position(
+                                        opus_manager.get_tree(beat_key),
+                                        column_width,
+                                        inner_offset
+                                    )
+                                }
+
+                                CtlLineLevel.Line -> {
+                                    val (channel, line_offset) = opus_manager.get_channel_and_line_offset(
+                                        pointer
+                                    )
+                                    val beat_key = BeatKey(channel, line_offset, beat)
+                                    TableUI.calc_position(
+                                        opus_manager.get_line_ctl_tree(
+                                            ctl_type!!,
+                                            beat_key
+                                        ), column_width, inner_offset
+                                    )
+                                }
+
+                                CtlLineLevel.Channel -> {
+                                    TableUI.calc_position(
+                                        opus_manager.get_channel_ctl_tree(
+                                            ctl_type!!,
+                                            pointer,
+                                            beat
+                                        ), column_width, inner_offset
+                                    )
+                                }
+
+                                CtlLineLevel.Global -> {
+                                    TableUI.calc_position(
+                                        opus_manager.get_global_ctl_tree(
+                                            ctl_type!!,
+                                            beat
+                                        ), column_width, inner_offset
+                                    )
+                                }
+                            }
                         }
-
-                        CtlLineLevel.Line -> {
-                            val (channel, line_offset) = opus_manager.get_channel_and_line_offset(
-                                pointer
-                            )
-                            val beat_key = BeatKey(channel, line_offset, beat)
-                            TableUI.calc_position(
-                                opus_manager.get_line_ctl_tree(
-                                    ctl_type!!,
-                                    beat_key
-                                ), column_width, inner_offset
-                            )
-                        }
-
-                        CtlLineLevel.Channel -> {
-                            TableUI.calc_position(
-                                opus_manager.get_channel_ctl_tree(
-                                    ctl_type!!,
-                                    pointer,
-                                    beat
-                                ), column_width, inner_offset
-                            )
-                        }
-
-                        CtlLineLevel.Global -> {
-                            TableUI.calc_position(
-                                opus_manager.get_global_ctl_tree(
-                                    ctl_type!!,
-                                    beat
-                                ), column_width, inner_offset
-                            )
-                        }
-                    }
-                }
-            )
+                    )
+                )
+            }
         }
     }
 

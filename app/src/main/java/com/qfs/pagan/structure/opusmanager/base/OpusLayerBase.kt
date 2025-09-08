@@ -3318,7 +3318,7 @@ open class OpusLayerBase: Effectable {
         this.set_channel_controller_visibility(type, channel_index, !controller.visible)
     }
 
-    open fun toggle_global_control_visibility(type: EffectType) {
+    open fun toggle_global_controller_visibility(type: EffectType) {
         val exists = this.controllers.has_controller(type)
         if (!exists) {
             this.new_global_controller(type)

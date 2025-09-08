@@ -99,6 +99,7 @@ class ActionTracker {
         ToggleControllerVisibility,
         ShowLineController,
         ShowChannelController,
+        ShowGlobalController,
         RemoveController,
         InsertLine,
         RemoveLine,
@@ -161,6 +162,7 @@ class ActionTracker {
                     TrackedAction.ImportSong,
                     TrackedAction.ShowLineController,
                     TrackedAction.ShowChannelController,
+                    TrackedAction.ShowGlobalController,
                     TrackedAction.SetCopyMode,
                     TrackedAction.LoadProject -> {
                         val string = entry.get_string(1)
@@ -298,6 +300,7 @@ class ActionTracker {
                     TrackedAction.SetTransitionAtCursor,
                     TrackedAction.ShowLineController,
                     TrackedAction.ShowChannelController,
+                    TrackedAction.ShowGlobalController,
                     TrackedAction.SetCopyMode,
                     TrackedAction.ImportSong,
                     TrackedAction.LoadProject -> {
@@ -1048,6 +1051,22 @@ class ActionTracker {
         this.dialog_popup_menu(this.get_activity().getString(R.string.show_channel_controls), options, stub_output = forced_value) { index: Int, ctl_type: EffectType ->
             this.track(TrackedAction.ShowChannelController, ActionTracker.string_to_ints(ctl_type.name))
             opus_manager.toggle_channel_controller_visibility(ctl_type, cursor.channel)
+        }
+    }
+
+    fun show_hidden_global_controller(forced_value: EffectType? =  null) {
+        val opus_manager = this.get_opus_manager()
+        val options = mutableListOf<Triple<EffectType, Int?, String>>( )
+
+        for ((ctl_type, icon_id) in OpusLayerInterface.global_controller_domain) {
+            if (opus_manager.is_global_ctl_visible(ctl_type)) continue
+
+            options.add(Triple(ctl_type, icon_id, ctl_type.name))
+        }
+
+        this.dialog_popup_menu(this.get_activity().getString(R.string.show_global_controls), options, stub_output = forced_value) { index: Int, ctl_type: EffectType ->
+            this.track(TrackedAction.ShowGlobalController, ActionTracker.string_to_ints(ctl_type.name))
+            opus_manager.toggle_global_controller_visibility(ctl_type)
         }
     }
 
@@ -2014,6 +2033,11 @@ class ActionTracker {
             }
             TrackedAction.ShowChannelController -> {
                 this.show_hidden_channel_controller(
+                    EffectType.valueOf(string_from_ints(integers))
+                )
+            }
+            TrackedAction.ShowGlobalController -> {
+                this.show_hidden_global_controller(
                     EffectType.valueOf(string_from_ints(integers))
                 )
             }

@@ -1903,9 +1903,9 @@ open class OpusLayerHistory: OpusLayerCursor() {
         }
     }
 
-    override fun toggle_global_control_visibility(type: EffectType) {
+    override fun toggle_global_controller_visibility(type: EffectType) {
         this._remember {
-            super.toggle_global_control_visibility(type)
+            super.toggle_global_controller_visibility(type)
         }
     }
 

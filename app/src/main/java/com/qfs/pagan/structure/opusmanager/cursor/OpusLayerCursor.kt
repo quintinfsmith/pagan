@@ -193,7 +193,11 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     override fun move_channel(channel_index: Int, new_channel_index: Int) {
         super.move_channel(channel_index, new_channel_index)
-        this.cursor_select_channel(new_channel_index)
+        this.cursor_select_channel(if (channel_index < new_channel_index) {
+            new_channel_index - 1
+        } else {
+            new_channel_index
+        })
     }
 
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?, is_percussion: Boolean) {
@@ -307,8 +311,6 @@ open class OpusLayerCursor: OpusLayerBase() {
         super.tag_section(beat, title)
         this.cursor_select_column(beat)
     }
-
-    // ----- Cursor handled in lower order functions ^^^^^^^^^^^^ //
 
     fun offset_selection(amount: Int) {
         val (minimum, maximum) = this.get_min_and_max_in_selection() ?: return // Null means Single or Unset, can return
@@ -1932,6 +1934,11 @@ open class OpusLayerCursor: OpusLayerBase() {
         }
     }
 
+    fun is_channel_selected(channel: Int): Boolean {
+        val cursor = this.cursor
+        return (cursor.mode == CursorMode.Channel && cursor.ctl_level == null && cursor.channel == channel)
+    }
+
     fun is_line_selected(channel: Int, line_offset: Int): Boolean {
         val cursor = this.cursor
         return (cursor.mode == CursorMode.Line && cursor.ctl_level == null && cursor.line_offset == line_offset && cursor.channel == channel)
@@ -2466,4 +2473,19 @@ open class OpusLayerCursor: OpusLayerBase() {
     internal fun _block_cursor_selection(): Boolean {
         return (this._blocked_action_catcher > 0 || this._cursor_lock > 0)
     }
+
+    override fun move_line(channel_index_from: Int, line_offset_from: Int, channel_index_to: Int, line_offset_to: Int) {
+        this.lock_cursor {
+            super.move_line(channel_index_from, line_offset_from, channel_index_to, line_offset_to)
+        }
+
+        var adjust_line_offset = line_offset_to
+        if (channel_index_to == channel_index_from && line_offset_to > line_offset_from) {
+            adjust_line_offset -= 1
+        }
+        this.cursor_select_line(channel_index_to, adjust_line_offset)
+    }
+
+
+
 }

@@ -9,6 +9,7 @@
     <dimen name="ctl_leaf_radius">6dp</dimen>
     <dimen name="relative_option_width">35dp</dimen>
     <dimen name="line_height">41dp</dimen>
+    <dimen name="line_label_width">41dp</dimen>
     <dimen name="ctl_line_height">30dp</dimen>
     <dimen name="base_leaf_width">41dp</dimen>
     <dimen name="channel_gap_size">5dp</dimen>
@@ -37,6 +38,8 @@
     <dimen name="text_size_octave">14sp</dimen>
     <dimen name="text_size_column_tagged">18sp</dimen>
     <dimen name="text_size_ctl">12sp</dimen>
+    <dimen name="text_size_line_label">14sp</dimen>
+    <dimen name="line_label_padding">4dp</dimen>
     <dimen name="octave_label_padding_y">12dp</dimen>
     <dimen name="octave_label_padding_x">3dp</dimen>
 

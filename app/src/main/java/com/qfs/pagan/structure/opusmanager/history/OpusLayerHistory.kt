@@ -1,14 +1,14 @@
 package com.qfs.pagan.structure.opusmanager.history
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusLine
 import com.qfs.pagan.structure.opusmanager.base.OpusLineAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
 import com.qfs.pagan.structure.opusmanager.base.OpusPercussionChannel
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.cursor.OpusLayerCursor
 import com.qfs.pagan.structure.opusmanager.utils.checked_cast
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
@@ -315,6 +315,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     open fun apply_history_node(current_node: HistoryCache.HistoryNode, depth: Int = 0) {
+        println("APPLYING: ${current_node.token}")
         try {
             when (current_node.token) {
                 HistoryToken.SET_PROJECT_NAME -> {
@@ -813,7 +814,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     override fun swap_lines(channel_index_a: Int, line_offset_a: Int, channel_index_b: Int, line_offset_b: Int) {
-
         this._remember {
             super.swap_lines(channel_index_a, line_offset_a, channel_index_b, line_offset_b)
             this.push_to_history_stack(
@@ -1421,7 +1421,14 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
             this.push_to_history_stack(
                 HistoryToken.MOVE_CHANNEL,
-                listOf(new_channel_index, channel_index)
+                listOf(
+                    if (channel_index < new_channel_index) {
+                        new_channel_index - 1
+                    } else {
+                        new_channel_index
+                    },
+                    channel_index
+                )
             )
         }
     }
@@ -1941,6 +1948,12 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     // BASE FUNCTIONS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    override fun move_line(channel_index_from: Int, line_offset_from: Int, channel_index_to: Int, line_offset_to: Int) {
+        println("$channel_index_from, $line_offset_from -> $channel_index_to, $line_offset_to")
+        this._remember {
+            super.move_line(channel_index_from, line_offset_from, channel_index_to, line_offset_to)
+        }
+    }
 
     fun set_name_and_notes(name: String?, notes: String?) {
         this._remember {
@@ -1952,6 +1965,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
             }
         }
     }
+
 
     // HISTORY FUNCTIONS vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     // HISTORY FUNCTIONS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

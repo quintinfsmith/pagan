@@ -222,6 +222,7 @@ class LineLabelStd(context: Context, var channel: Int, var line_offset: Int): Li
         } else {
             resources.getString(R.string.line_label_second, this.line_offset)
         }
+
         //val text = if (!opus_manager.is_percussion(this.channel)) {
         //    "${this.channel}::${this.line_offset}"
         //} else {

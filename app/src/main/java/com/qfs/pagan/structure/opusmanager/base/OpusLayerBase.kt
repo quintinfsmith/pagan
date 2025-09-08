@@ -1514,6 +1514,26 @@ open class OpusLayerBase: Effectable {
     }
 
     /**
+     * Move line at [line_offset_from] in [channel_index_from], to [line_offset_to] / [channel_index_to]
+     */
+    open fun move_line(channel_index_from: Int, line_offset_from: Int, channel_index_to: Int, line_offset_to: Int) {
+        if (this.is_percussion(channel_index_from) != this.is_percussion(channel_index_to)) {
+            throw IncompatibleChannelException(channel_index_from, channel_index_to)
+        }
+        this.new_line(channel_index_to, line_offset_to)
+        var adj_line_offset_from = line_offset_from
+        if (channel_index_to == channel_index_from && line_offset_to < line_offset_from) {
+            adj_line_offset_from += 1
+        }
+
+        this.swap_lines(channel_index_from, adj_line_offset_from, channel_index_to, line_offset_to)
+        if (this.get_channel(channel_index_from).lines.size > 1) {
+            this.remove_line(channel_index_from, adj_line_offset_from)
+        } else {
+            this.remove_channel(channel_index_from)
+        }
+    }
+    /**
      * Swap line [line_offset_a] of channel [channel_index_a] with line [line_offset_b] of channel [channel_index_b].
      * When swapping lines in percussion, the percussion instruments are left in place and the events are switched.
      */
@@ -1559,8 +1579,6 @@ open class OpusLayerBase: Effectable {
         if (beat_index > this.length) {
             throw IndexOutOfBoundsException()
         }
-
-
 
         this.length += 1
         for (channel in this.channels) {
@@ -1780,7 +1798,12 @@ open class OpusLayerBase: Effectable {
 
     open fun move_channel(channel_index: Int, new_channel_index: Int) {
         val channel = this.channels.removeAt(channel_index)
-        this.channels.add(new_channel_index, channel)
+        val adj_new_channel_index = if (channel_index < new_channel_index) {
+            new_channel_index - 1
+        } else {
+            new_channel_index
+        }
+        this.channels.add(adj_new_channel_index, channel)
         this.recache_line_maps()
     }
 
@@ -4899,7 +4922,7 @@ open class OpusLayerBase: Effectable {
         Given the row, get the line number in the Opus
      */
     fun get_ctl_line_from_row(row: Int): Int {
-        return this._cached_row_map[row]!!
+        return this._cached_row_map[row] ?: throw Exception("Row $row not found.")
     }
 
     fun get_visible_row_from_ctl_line(line: Int): Int? {

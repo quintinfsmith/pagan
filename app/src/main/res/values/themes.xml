@@ -21,7 +21,10 @@
         <item name="android:windowBackground">@color/main_background</item>
 
         <item name="leaf">@drawable/leaf</item>
+        <item name="line_label">@drawable/editor_label_line</item>
+        <item name="ctl_line_label">@drawable/editor_label_ctl_line</item>
         <item name="font_main">@font/fira_sans</item>
+        <item name="corner_button">@drawable/corner_button</item>
 
         <item name="soundfont_warning_background">@color/blue_sky</item>
         <item name="soundfont_warning_frame">@color/blue_dark</item>

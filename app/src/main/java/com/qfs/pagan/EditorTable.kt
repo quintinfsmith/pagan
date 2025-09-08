@@ -39,7 +39,6 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     }
 
     fun get_visible_row_from_pixel(y: Float): Int? {
-        println("GETT: $y")
         val line_height = floor(this.resources.getDimension(R.dimen.line_height))
         val ctl_line_height = floor(this.resources.getDimension(R.dimen.ctl_line_height))
         val channel_gap_size = floor(this.resources.getDimension(R.dimen.channel_gap_size))

@@ -150,7 +150,7 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
     }
 
     override fun equals(other: Any?): Boolean {
-        if (other !is OpusLineAbstract<*> || this.beats.size != other.beats.size) {
+        if (other !is ReducibleTreeArray<T> || this.beats.size != other.beats.size) {
             return false
         }
 
@@ -159,7 +159,6 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
                 return false
             }
         }
-
         return true
     }
 

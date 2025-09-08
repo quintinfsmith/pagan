@@ -85,4 +85,15 @@ class EffectControlSet(var beat_count: Int, default_enabled: Set<EffectType>? = 
             controller.set_beat_count(new_count)
         }
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is EffectControlSet) return false
+        if (other.controllers.keys != this.controllers.keys) return false
+        for ((key, controller) in this.controllers.entries) {
+            if (other.controllers[key] != controller) {
+                return false
+            }
+        }
+        return true
+    }
 }

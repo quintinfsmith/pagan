@@ -11,17 +11,20 @@ import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.BlockedActionException
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
+import com.qfs.pagan.structure.opusmanager.base.ChannelEffectRowNotVisible
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.base.GlobalEffectRowNotVisible
 import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
+import com.qfs.pagan.structure.opusmanager.base.LineEffectRowNotVisible
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusLineAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusPercussionChannel
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.TunedInstrumentEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.IncorrectCursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
@@ -30,7 +33,6 @@ import com.qfs.pagan.structure.rationaltree.InvalidGetCall
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.uibill.BillableItem
 import com.qfs.pagan.uibill.UIChangeBill
-import kotlin.Pair
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -1949,8 +1951,14 @@ class OpusLayerInterface : OpusLayerHistory() {
         if (cursor != this._cache_cursor) {
             try {
                 this._queue_cursor_update(this._cache_cursor, deep_update)
-            } catch (_: InvalidGetCall) {
-                // Pass
+            }  catch (e: Exception) {
+                when (e) {
+                    is GlobalEffectRowNotVisible,
+                    is ChannelEffectRowNotVisible,
+                    is LineEffectRowNotVisible,
+                    is InvalidGetCall -> {}
+                    else -> throw e
+                }
             }
 
             this._cache_cursor = cursor.copy()

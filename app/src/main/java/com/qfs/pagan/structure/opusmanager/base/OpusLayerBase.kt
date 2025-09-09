@@ -317,6 +317,7 @@ open class OpusLayerBase: Effectable {
     private val _cached_ctl_map_channel = HashMap<Pair<Int, EffectType>, Int>()
     private val _cached_ctl_map_global = HashMap<EffectType, Int>()
     private var _channel_uuid_map = HashMap<Int, OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>>>()
+    private var flag_all_global_controllers_visible = false
 
     internal var _blocked_action_catcher = 0
     internal var project_changing = false
@@ -4046,6 +4047,7 @@ open class OpusLayerBase: Effectable {
         this._cached_ctl_map_line.clear()
         this._cached_ctl_map_channel.clear()
         this._cached_ctl_map_global.clear()
+        this.flag_all_global_controllers_visible = false
     }
 
     open fun tag_section(beat: Int, title: String?) {
@@ -4672,15 +4674,22 @@ open class OpusLayerBase: Effectable {
             }
         }
 
+        var invisible_controller_count = this.controllers.size()
         for ((type, controller) in this.controllers.get_all()) {
             if (controller.visible) {
                 this._cached_inv_visible_line_map[ctl_line] = visible_line
                 this._cached_row_map[visible_line] = ctl_line
                 this._cached_ctl_map_global[type] = visible_line
                 visible_line += 1
+                invisible_controller_count -= 1
             }
             ctl_line += 1
         }
+        this.flag_all_global_controllers_visible = (invisible_controller_count == 0)
+    }
+
+    fun all_global_controllers_visible(): Boolean {
+        return this.flag_all_global_controllers_visible
     }
 
     private fun _get_beat_keys_for_overwrite_line(channel: Int, line_offset: Int, beat_key: BeatKey): List<BeatKey> {
@@ -4930,15 +4939,15 @@ open class OpusLayerBase: Effectable {
     }
 
     fun get_visible_row_from_ctl_line_line(type: EffectType, channel: Int, line_offset: Int): Int {
-        return this._cached_ctl_map_line[Triple(channel, line_offset, type)]!!
+        return this._cached_ctl_map_line[Triple(channel, line_offset, type)] ?: throw LineEffectRowNotVisible(type, channel, line_offset)
     }
 
     fun get_visible_row_from_ctl_line_channel(type: EffectType, channel: Int): Int {
-        return this._cached_ctl_map_channel[Pair(channel, type)]!!
+        return this._cached_ctl_map_channel[Pair(channel, type)] ?: throw ChannelEffectRowNotVisible(type, channel)
     }
 
     fun get_visible_row_from_ctl_line_global(type: EffectType): Int {
-        return this._cached_ctl_map_global[type]!!
+        return this._cached_ctl_map_global[type] ?: throw GlobalEffectRowNotVisible(type)
     }
 
     override fun hashCode(): Int {

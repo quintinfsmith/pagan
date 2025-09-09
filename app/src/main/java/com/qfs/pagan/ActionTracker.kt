@@ -2198,7 +2198,9 @@ class ActionTracker {
                 )
             }
 
-            CtlLineLevel.Global,
+            CtlLineLevel.Global -> {
+                opus_manager.toggle_global_controller_visibility(cursor.ctl_type!!)
+            }
             null -> {} // Pass
         }
     }

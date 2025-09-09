@@ -4,8 +4,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import com.qfs.pagan.ContextMenuWithController
-import com.qfs.pagan.controlwidgets.ControlWidget
 import com.qfs.pagan.R
+import com.qfs.pagan.controlwidgets.ControlWidget
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
@@ -39,12 +39,12 @@ class ContextMenuControlLine<T: EffectEvent>(val widget: ControlWidget<T>, prima
         this.button_remove_line_control = this.primary.findViewById(R.id.btnRemoveCtl)
 
         when (cursor.ctl_level) {
+            CtlLineLevel.Global,
             CtlLineLevel.Line,
             CtlLineLevel.Channel -> {
                 this.button_toggle_line_control.visibility = View.VISIBLE
                 this.button_remove_line_control.visibility = View.VISIBLE
             }
-            CtlLineLevel.Global,
             null -> {
                 this.button_toggle_line_control.visibility = View.GONE
                 this.button_remove_line_control.visibility = View.GONE

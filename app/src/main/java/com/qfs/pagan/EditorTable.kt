@@ -3,7 +3,6 @@ package com.qfs.pagan
 import android.content.Context
 import android.content.res.Configuration
 import android.util.AttributeSet
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout
@@ -116,9 +115,14 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         val (pix_width, pix_height) = this._calculate_table_size()
         // Include extra line of height for the top row, and for the bottom global ctl button
         // and line label width for the label column
+        val line_height = this.resources.getDimension(R.dimen.line_height).toInt()
         this.table_ui.set_size(
             pix_width + this.resources.getDimension(R.dimen.line_label_width).toInt(),
-            pix_height + (this.resources.getDimension(R.dimen.line_height).toInt() * 2)
+            if (this.get_opus_manager().all_global_controllers_visible()) {
+                pix_height + line_height
+            } else {
+                pix_height + (line_height * 2)
+            }
         )
     }
 

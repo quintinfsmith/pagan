@@ -836,8 +836,10 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             }
 
             // Draw Global Control toggle button
-            this.draw_drawable(canvas, this.ctl_label_drawable, IntArray(0), scroll_x, y_offset, line_label_width, line_height)
-            this.draw_ctl_label_text(canvas, null, this.ctl_label_drawable.state, scroll_x, y_offset, line_label_width, line_height)
+            if (!opus_manager.all_global_controllers_visible()) {
+                this.draw_drawable(canvas, this.ctl_label_drawable, IntArray(0), scroll_x, y_offset, line_label_width, line_height)
+                this.draw_ctl_label_text(canvas, null, this.ctl_label_drawable.state, scroll_x, y_offset, line_label_width, line_height)
+            }
 
             // Draw Corner Button
             this.draw_drawable(canvas, this.corner_drawable, null, scroll_x, scroll_y, line_label_width, line_height)

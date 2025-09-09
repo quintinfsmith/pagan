@@ -10,6 +10,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        android:background="@drawable/editor_table_background"
         android:id="@+id/etEditorTable"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>

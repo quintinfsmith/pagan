@@ -227,4 +227,11 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
 
         return output
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is EffectController<T>) return false
+        if (other.initial_event != this.initial_event) return false
+
+        return super.equals(other)
+    }
 }

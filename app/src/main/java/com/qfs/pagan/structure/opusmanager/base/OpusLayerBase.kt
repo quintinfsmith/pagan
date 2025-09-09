@@ -4791,7 +4791,7 @@ open class OpusLayerBase: Effectable {
             }
         }
 
-        return true
+        return other.controllers == this.controllers
     }
 
     fun get_all_channels(): List<OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>>> {

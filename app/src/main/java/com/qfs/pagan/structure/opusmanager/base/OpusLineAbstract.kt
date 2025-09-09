@@ -1,14 +1,13 @@
 package com.qfs.pagan.structure.opusmanager.base
 
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectControlSet
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.Effectable
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
-abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<ReducibleTree<T>>): ReducibleTreeArray<T>(beats),
-    Effectable {
+abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<ReducibleTree<T>>): ReducibleTreeArray<T>(beats), Effectable {
     class BlockedCtlTreeException(var type: EffectType, var e: BlockedTreeException): Exception(e.message)
     var controllers = EffectControlSet(this.beats.size, setOf(EffectType.Volume))
     var muted = false
@@ -99,5 +98,10 @@ abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<Reducible
     }
 
 
+    override fun equals(other: Any?): Boolean {
+        if (other !is OpusLineAbstract<T>) return false
+        if (this.controllers != other.controllers) return false
+        return super.equals(other)
+    }
 }
 

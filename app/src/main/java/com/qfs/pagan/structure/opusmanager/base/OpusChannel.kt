@@ -1,11 +1,11 @@
 package com.qfs.pagan.structure.opusmanager.base
 
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectControlSet
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.Effectable
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import kotlinx.serialization.Serializable
 
@@ -234,8 +234,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
     }
 
     fun set_line_volume(line_offset: Int, volume: Float) {
-        this.lines[line_offset].get_controller<OpusVolumeEvent>(EffectType.Volume).initial_event =
-            OpusVolumeEvent(volume)
+        this.lines[line_offset].get_controller<OpusVolumeEvent>(EffectType.Volume).initial_event = OpusVolumeEvent(volume)
     }
 
     fun squish(factor: Int) {
@@ -259,7 +258,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
             }
         }
 
-        return true
+        return (this.controllers == other.controllers)
     }
     fun get_midi_channel(): Int {
         return this.midi_channel
@@ -396,6 +395,12 @@ class OpusChannel(uuid: Int): OpusChannelAbstract<TunedInstrumentEvent, OpusLine
         this.midi_bank = 0
     }
 
+    override fun equals(other: Any?): Boolean {
+        return other is OpusChannel
+                && other.midi_bank == this.midi_bank
+                && super.equals(other)
+    }
+
 }
 
 class OpusPercussionChannel(uuid: Int) : OpusChannelAbstract<PercussionEvent, OpusLinePercussion>(uuid) {
@@ -417,5 +422,9 @@ class OpusPercussionChannel(uuid: Int) : OpusChannelAbstract<PercussionEvent, Op
 
     override fun get_midi_bank(): Int {
         return 128
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is OpusPercussionChannel && super.equals(other)
     }
 }

@@ -836,8 +836,8 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             }
 
             // Draw Global Control toggle button
-            this.draw_drawable(canvas, this.ctl_label_drawable, IntArray(0), scroll_x, y_offset, line_label_width, ctl_line_height)
-            this.draw_ctl_label_text(canvas, null, this.ctl_label_drawable.state, scroll_x, y_offset, line_label_width, ctl_line_height)
+            this.draw_drawable(canvas, this.ctl_label_drawable, IntArray(0), scroll_x, y_offset, line_label_width, line_height)
+            this.draw_ctl_label_text(canvas, null, this.ctl_label_drawable.state, scroll_x, y_offset, line_label_width, line_height)
 
             // Draw Corner Button
             this.draw_drawable(canvas, this.corner_drawable, null, scroll_x, scroll_y, line_label_width, line_height)
@@ -1711,7 +1711,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         if (beat == null) {
             when (row_type) {
                 RowType.Top -> this.get_activity().shortcut_dialog()
-                RowType.Bottom -> action_interface.show_hidden_channel_controller()
+                RowType.Bottom -> action_interface.show_hidden_global_controller()
                 RowType.UI -> {
                     val opus_manager = this.get_activity().get_opus_manager()
                     val cursor = opus_manager.cursor

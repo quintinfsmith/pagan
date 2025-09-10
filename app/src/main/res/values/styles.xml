@@ -306,10 +306,6 @@
         <item name="android:layout_marginStart">@dimen/contextmenu_secondary_padding_start</item>
         <item name="android:layout_marginEnd">@dimen/contextmenu_secondary_padding_end</item>
     </style>
-    <style name="tail_space">
-        <item name="android:layout_height">match_parent</item>
-        <item name="android:minWidth">@dimen/trailing_space_width</item>
-    </style>
     <style name="landing_button" parent="Theme.Pagan.Button">
         <item name="android:background">@drawable/button</item>
         <item name="android:stateListAnimator">@animator/std_button</item>

@@ -298,8 +298,10 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     /* ------------------- 2nd Order Functions ---------------------------------- */
     override fun insert_beats(beat_index: Int, count: Int) {
-        super.insert_beats(beat_index, count)
-        this.cursor_select_column(beat_index)
+        this.lock_cursor {
+            super.insert_beats(beat_index, count)
+        }
+        this.cursor_select_column(beat_index + count - 1)
     }
 
     override fun remove_tagged_section(beat: Int) {
@@ -804,12 +806,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor.select_global_ctl_line(ctl_type)
     }
     open fun cursor_select_column(beat: Int) {
-        if (this._block_cursor_selection()) {
-            return
-        }
-        if (beat >= this.length) {
-            return
-        }
+        if (this._block_cursor_selection() || beat >= this.length) return
 
         this.cursor.select_column(beat)
     }

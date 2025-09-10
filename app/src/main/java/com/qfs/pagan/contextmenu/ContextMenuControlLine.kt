@@ -82,6 +82,7 @@ class ContextMenuControlLine<T: EffectEvent>(val widget: ControlWidget<T>, prima
             this.first_refresh_skipped = true
             return
         }
+
         val cursor = this.get_opus_manager().cursor
         this.active_ctl_type = cursor.ctl_type
         this.active_ctl_level = cursor.ctl_level
@@ -95,7 +96,17 @@ class ContextMenuControlLine<T: EffectEvent>(val widget: ControlWidget<T>, prima
             else -> null
         }
 
+        this.update_remove_button_visibility()
+
         this.widget.set_event(this.get_control_event(), true)
+    }
+
+    fun update_remove_button_visibility() {
+        this.button_remove_line_control.visibility = if (this.active_ctl_type == EffectType.Tempo) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
     }
 
     override fun get_widget(): ControlWidget<T> {

@@ -14,8 +14,10 @@ import android.view.MotionEvent.ACTION_MOVE
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-import android.widget.GridLayout
 import android.widget.HorizontalScrollView
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.LinearLayout.VERTICAL
 import android.widget.ScrollView
 import android.widget.Space
 import androidx.core.content.ContextCompat
@@ -150,13 +152,15 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             this.setOnClickListener {
                 this.table_ui._drag_handle.clear()
                 val (row_type, line_info, beat_position) = this.table_ui._get_current_line_info_and_position(this.table_ui.touch_position_x, this.table_ui.touch_position_y) ?: return@setOnClickListener
-                this.table_ui.on_click(row_type, line_info, beat_position.first, beat_position.second)
+                val (beat, position) = beat_position
+                this.table_ui.on_click(row_type,line_info, beat, position)
             }
 
             this.setOnLongClickListener {
                 this.table_ui._drag_handle.clear()
                 val (row_type, line_info, beat_position) = this.table_ui._get_current_line_info_and_position(this.table_ui.touch_position_x, this.table_ui.touch_position_y) ?: return@setOnLongClickListener false
-                this.table_ui.on_long_click(row_type, line_info, beat_position.first, beat_position.second)
+                val (beat, position) = beat_position
+                this.table_ui.on_long_click(row_type, line_info, beat, position)
             }
         }
 
@@ -623,9 +627,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
             val channels = opus_manager.get_all_channels()
 
-            canvas.drawLine(scroll_x + line_label_width, scroll_y + line_height, this.width.toFloat(), scroll_y + line_height, this.table_line_paint)
-
-            val dragging_up = this.table_ui._drag_handle.dragging_up
             val dragging_from = Pair(
                 this.table_ui._drag_handle.from_channel ?: -1,
                 this.table_ui._drag_handle.from_line_offset ?: -1
@@ -765,6 +766,10 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 offset += beat_width
             }
 
+            if (offset < this.width) {
+                this.draw_drawable(canvas, R.drawable.icon_add_channel, null, offset, 0f, base_width, line_height)
+            }
+
             // ------------------- Draw Line Labels ----------------------------
             var y_offset = line_height
             for (j in channels.indices) {
@@ -780,30 +785,26 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     if (dragging_from.first != j || (dragging_from.second != -1 && dragging_from.second != k)) {
                         this.draw_drawable(canvas, this.line_label_drawable, this.get_standard_line_state(j, k), scroll_x, y_offset, line_label_width, line_height)
                         this.draw_line_label_text(canvas, j, k, this.line_label_drawable.state, scroll_x, y_offset, line_label_width, line_height)
-                        canvas.drawLine(scroll_x, y_offset, this.width.toFloat(), y_offset, this.table_line_paint)
                         y_offset += line_height
                     }
 
-
+                    if ((dragging_to.first == j && dragging_to.second == k) || (dragging_from.first == j && dragging_from.second + 1 == k)) {
+                        canvas.drawLine(scroll_x, y_offset - line_height, (this.width.toFloat() - base_width), y_offset - line_height, this.table_line_paint)
+                    }
 
                     for ((type, controller) in channels[j].lines[k].controllers.get_all()) {
                         if (!controller.visible) continue
-
                         if (dragging_from.first != j || (dragging_from.second != -1 && dragging_from.second != k)) {
                             this.draw_drawable(canvas, this.ctl_label_drawable, this.get_line_control_line_state(type, j, k), scroll_x, y_offset, line_label_width, ctl_line_height)
                             this.draw_ctl_label_text(canvas, type, this.ctl_label_drawable.state, scroll_x, y_offset, line_label_width, ctl_line_height)
                             y_offset += ctl_line_height
                         }
-
                     }
                 }
-
-                canvas.drawLine(scroll_x, y_offset, this.width.toFloat(), y_offset, this.table_line_paint)
 
                 if (dragging_to.first == j && dragging_to.second == channels[j].lines.size) {
                     y_offset += dragging_from_height
                 }
-
 
                 for ((type, controller) in channels[j].controllers.get_all()) {
                     if (!controller.visible) continue
@@ -819,7 +820,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     canvas.drawRect( scroll_x, y_offset, scroll_x + line_label_width, y_offset + channel_gap_height, this.table_line_paint)
                     y_offset += channel_gap_height
                 }
-
             }
 
             if (dragging_to.first == opus_manager.channels.size && dragging_to.second == -1) {
@@ -836,9 +836,8 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             }
 
             // Draw Global Control toggle button
-            if (!opus_manager.all_global_controllers_visible()) {
-                this.draw_drawable(canvas, this.ctl_label_drawable, IntArray(0), scroll_x, y_offset, line_label_width, line_height)
-                this.draw_ctl_label_text(canvas, null, this.ctl_label_drawable.state, scroll_x, y_offset, line_label_width, line_height)
+            if (this.table_ui.global_ctl_button_visible) {
+                this.draw_ctl_label_text(canvas, null, IntArray(0), scroll_x, y_offset, line_label_width, line_height)
             }
 
             // Draw Corner Button
@@ -936,7 +935,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     }
                 }
 
-                canvas.drawLine(scroll_x, y_start_offset, this.width.toFloat(), y_start_offset, this.table_line_paint)
+                canvas.drawLine(scroll_x, y_start_offset, (this.width.toFloat() - base_width), y_start_offset, this.table_line_paint)
             }
         }
 
@@ -1142,7 +1141,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             }
             return output
         }
-
     }
 
     class DragHandle() {
@@ -1307,6 +1305,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
     private var queued_scroll_y: Int? = null
     private var _last_x_position: Float? = null
     private var _drag_handle: DragHandle = DragHandle()
+    var global_ctl_button_visible: Boolean = false
 
     var touch_position_x = 0F
     var touch_position_y = 0F
@@ -1317,7 +1316,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             super.onScrollChanged(l, t, oldl, oldt)
             this@TableUI.painted_layer.invalidate()
         }
-
 
         override fun onTouchEvent(motion_event: MotionEvent?): Boolean {
             this@TableUI.set_touch_position(motion_event, this@TableUI.scrollX.toFloat())
@@ -1395,7 +1393,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             return
         }
 
-        val y = this.touch_position_y.toInt()
         this._drag_handle.update_to(this.touch_position_y.toInt())
 
         this.painted_layer.invalidate()
@@ -1471,17 +1468,12 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         this.inner_scroll_view.isHorizontalScrollBarEnabled = false
 
         // Add padding layer so we can scroll the bottom of the table to the middle of the screen
-        val padding_layer = GridLayout(this.context)
-        padding_layer.rowCount = 2
-        padding_layer.columnCount = 2
-
+        val padding_layer = LinearLayout(this.context)
+        padding_layer.orientation = VERTICAL
         val padder_bottom = Space(this.context)
-        val padder_end = Space(ContextThemeWrapper(this.context, R.style.tail_space))
 
         padding_layer.addView(this.painted_layer)
-        padding_layer.addView(padder_end)
         padding_layer.addView(padder_bottom)
-
 
         val activity = this.editor_table.get_activity()
         padder_bottom.layoutParams.height = activity.get_bottom_padding()
@@ -1494,6 +1486,8 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
         this.overScrollMode = OVER_SCROLL_NEVER
         this.isVerticalScrollBarEnabled = false
+
+        this.update_global_ctl_button()
     }
 
     fun clear() {
@@ -1545,12 +1539,19 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         }
     }
 
+    fun update_global_ctl_button() {
+        this.global_ctl_button_visible = !this.get_activity().get_opus_manager().all_global_controllers_visible()
+    }
+
+
     fun insert_row(y: Int) {
         this.painted_layer.insert_row(y)
+        this.update_global_ctl_button()
     }
 
     fun remove_rows(y: Int, count: Int) {
         this.painted_layer.remove_rows(y, count)
+        this.update_global_ctl_button()
     }
 
     fun add_column(x: Int) {
@@ -1574,9 +1575,10 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
     fun notify_row_change(y: Int, state_only: Boolean) {
         this.painted_layer.notify_row_change(y, state_only)
     }
+
     fun set_size(width: Int, height: Int) {
-        this.painted_layer.minimumWidth = width
-        this.painted_layer.minimumHeight = height
+        this.painted_layer.minimumWidth = width + this.resources.getDimension(R.dimen.base_leaf_width).toInt()
+        this.painted_layer.minimumHeight = height + this.resources.getDimension(R.dimen.line_height).toInt()
     }
 
     fun get_scroll_x_max(): Int {
@@ -1701,8 +1703,15 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     }
                     true
                 }
+                RowType.Top -> {
+                    if (beat == opus_manager.length) {
+                        action_interface.insert_beat(beat)
+                        true
+                    } else {
+                        false
+                    }
+                }
                 else -> false
-                // RowType.Top -> {}
                 // RowType.Bottom -> {}
             }
         }
@@ -1753,9 +1762,16 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 }
             }
         } else {
+            val opus_manager = action_interface.get_opus_manager()
             when (row_type) {
+                RowType.Top -> {
+                    if (beat == opus_manager.length) {
+                        action_interface.insert_beat(beat)
+                    } else {
+                        action_interface.cursor_select_column(beat)
+                    }
+                }
                 RowType.UI -> {
-                    val opus_manager = action_interface.get_opus_manager()
                     val (pointer, ctl_line_level, ctl_type) = line_info!!
                     when (ctl_line_level) {
                         null -> {
@@ -1790,7 +1806,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                         }
                     }
                 }
-                RowType.Top -> action_interface.cursor_select_column(beat)
                 RowType.Bottom -> { /* No defined behavior */ }
             }
         }
@@ -1937,7 +1952,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
     fun get_action_interface(): ActionTracker {
         return this.get_activity().get_action_interface()
     }
-
     private fun _get_current_line_info_and_position(x_touch: Float, y_touch: Float): Triple<RowType, Triple<Int, CtlLineLevel?, EffectType?>?, Pair<Int?, List<Int>?>>?  {
         val side_column_width = this.resources.getDimension(R.dimen.line_label_width)
         val x = x_touch - side_column_width
@@ -1949,7 +1963,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         val beat: Int? = if (x_touch - this.inner_scroll_view.scrollX < side_column_width) {
             null
         } else {
-            this.editor_table.get_column_from_leaf((x / min_leaf_width).toInt())
+            this.editor_table.get_column_from_leaf((x / min_leaf_width).toInt()) ?: opus_manager.length
         }
 
         return when (row_position) {

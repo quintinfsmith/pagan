@@ -5,6 +5,8 @@ import android.content.res.Configuration
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import androidx.core.view.isGone
 import com.qfs.pagan.Activity.ActivityEditor
@@ -28,8 +30,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         super.onAttachedToWindow()
 
         this.addView(this.table_ui)
-        (this.table_ui.layoutParams as LayoutParams).weight = 1F
-        this.table_ui.layoutParams.width = 0
+        this.table_ui.layoutParams.width = WRAP_CONTENT
         this.table_ui.layoutParams.height = MATCH_PARENT
     }
 
@@ -118,11 +119,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         val line_height = this.resources.getDimension(R.dimen.line_height).toInt()
         this.table_ui.set_size(
             pix_width + this.resources.getDimension(R.dimen.line_label_width).toInt(),
-            if (this.get_opus_manager().all_global_controllers_visible()) {
-                pix_height + line_height
-            } else {
-                pix_height + (line_height * 2)
-            }
+            pix_height + line_height
         )
     }
 
@@ -265,7 +262,9 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     }
 
     private fun _scroll_to_x(x: Int, offset: Float = 0F, offset_width: Float = 1F) {
-        val box_width = this.table_ui.inner_scroll_view.measuredWidth
+
+        val line_label_width = this.resources.getDimension(R.dimen.line_label_width).toInt()
+        val box_width = this.table_ui.inner_scroll_view.measuredWidth - line_label_width
 
         val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
         val max_width = (this._column_width_maxes[x] * base_width).toInt()
@@ -283,7 +282,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         subdiv_state[FITS_ON_SCREEN] = target_width <= box_width
         column_state[FITS_ON_SCREEN] = max_width <= box_width
 
-        val scroll_x = this.table_ui.inner_scroll_view.scrollX
+        val scroll_x = this.table_ui.inner_scroll_view.scrollX + line_label_width // account for the line label being on the same plane as the rest of the table
         val target_rect = this.get_column_rect(x) ?: return
         if (x in visible_range) {
             if (target_rect.x + target_width + target_offset > box_width + scroll_x) {
@@ -320,10 +319,15 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         var column_int = 0
         var working_offset = 1
         for (i in 0 until 4) {
-            subdiv_int += working_offset * if (subdiv_state[i]) { 1 } else { 0 }
-            column_int += working_offset * if (column_state[i]) { 1 } else { 0 }
+            if (subdiv_state[i]) {
+                subdiv_int += working_offset
+            }
+            if (column_state[i]) {
+                column_int += working_offset
+            }
             working_offset *= 2
         }
+        println("$subdiv_int, $column_int ---------")
 
         // FITS, LEFT, RIGHT, ON SCREEN
         val adj_offset = when (subdiv_int) {
@@ -374,6 +378,8 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
             // 0b1111 -> { }   // Invalid
             else -> { return }     // Unreachable
         }
+
+        println(":: $adj_offset :: ${target_rect.x}")
 
         this.table_ui.scroll(target_rect.x - adj_offset, null)
     }

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:height="39dp">
+    <item android:height="40dp">
         <shape android:shape="rectangle">
-            <solid android:color="@color/line_label"/>
+            <solid android:color="@color/ctl_line"/>
         </shape>
     </item>
 
-    <item android:height="@dimen/stroke_leaf" android:top="39dp" android:gravity="top">
+    <item android:height="@dimen/stroke_leaf" android:top="40dp" android:gravity="top">
         <shape android:shape="rectangle">
             <solid android:color="@color/table_lines"/>
         </shape>
@@ -14,7 +14,7 @@
 
     <item android:width="40dp">
         <shape android:shape="rectangle">
-            <solid android:color="@color/line_label"/>
+            <solid android:color="@color/ctl_line"/>
         </shape>
     </item>
 

@@ -120,6 +120,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
             }
             this.click_button_insert_channel()
         }
+
         this.button_insert_percussion.setOnClickListener {
             if (!it.isEnabled) {
                 return@setOnClickListener

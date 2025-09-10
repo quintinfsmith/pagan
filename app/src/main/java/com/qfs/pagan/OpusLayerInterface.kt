@@ -33,6 +33,7 @@ import com.qfs.pagan.structure.rationaltree.InvalidGetCall
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.uibill.BillableItem
 import com.qfs.pagan.uibill.UIChangeBill
+import kotlin.concurrent.thread
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -1104,13 +1105,19 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
+    override fun insert_beats(beat_index: Int, count: Int) {
+        this.lock_ui_partial {
+            super.insert_beats(beat_index, count)
+        }
+    }
+
     override fun insert_beat(beat_index: Int, beats_in_column: List<ReducibleTree<OpusEvent>>?) {
         this.lock_ui_partial {
             if (!this._ui_change_bill.is_full_locked()) {
                 this._queue_cursor_update(this.cursor)
                 this._ui_change_bill.queue_add_column(beat_index)
 
-                // Need to find all notes that overflow into the proceding beats and queue a column refresh on those beats
+                // Need to find all notes that overflow into the proceeding beats and queue a column refresh on those beats
                 if (beat_index > 0 && beat_index < this.length) {
                     val channels = this.get_all_channels()
                     for (i in channels.indices) {
@@ -1139,6 +1146,15 @@ class OpusLayerInterface : OpusLayerHistory() {
 
             super.insert_beat(beat_index, beats_in_column)
         }
+    }
+
+    fun all_global_controllers_visible(): Boolean {
+        for ((type, _) in OpusLayerInterface.global_controller_domain) {
+            if (!this.has_global_controller(type) || !this.get_controller<EffectEvent>(type).visible) {
+                return false
+            }
+        }
+        return true
     }
 
     private fun _pre_remove_channel(channel: Int): Triple<Int, Int, List<Int>> {
@@ -1609,9 +1625,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.cursor_select_column(beat)
     }
     override fun cursor_select_column(beat: Int) {
-        if (this._block_cursor_selection()) {
-            return
-        }
+        if (this._block_cursor_selection()) return
 
         this.lock_ui_partial {
             super.cursor_select_column(beat)
@@ -1623,9 +1637,8 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     override fun cursor_select(beat_key: BeatKey, position: List<Int>) {
-        if (this._block_cursor_selection()) {
-            return
-        }
+        if (this._block_cursor_selection()) return
+
         this.lock_ui_partial {
             this._unset_temporary_blocker()
             super.cursor_select(beat_key, position)
@@ -2476,6 +2489,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             this._ui_change_bill.clear()
             return
         }
+
         this.run_on_ui_thread { activity: ActivityEditor ->
             this._ui_change_bill.consolidate()
             while (true) {
@@ -2494,13 +2508,19 @@ class OpusLayerInterface : OpusLayerHistory() {
                             this._ui_change_bill.get_next_int()
                         )
                         val force = this._ui_change_bill.get_next_int() != 0
-                        editor_table.scroll_to_position(
-                            y = if (y == -1) null else y,
-                            x = if (x == -1) null else x,
-                            offset = offset.numerator.toFloat() / offset.denominator.toFloat(),
-                            offset_width = offset_width.numerator.toFloat() / offset_width.denominator.toFloat(),
-                            force = force
-                        )
+
+                        // Detach from order and thread after ui updates are finished
+                        thread {
+                            this.run_on_ui_thread {
+                                editor_table.scroll_to_position(
+                                    y = if (y == -1) null else y,
+                                    x = if (x == -1) null else x,
+                                    offset = offset.numerator.toFloat() / offset.denominator.toFloat(),
+                                    offset_width = offset_width.numerator.toFloat() / offset_width.denominator.toFloat(),
+                                    force = force
+                                )
+                            }
+                        }
                     }
 
                     BillableItem.FullRefresh -> {

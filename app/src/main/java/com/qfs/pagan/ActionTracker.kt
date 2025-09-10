@@ -114,6 +114,7 @@ class ActionTracker {
         SetDelayAtCursor,
         RemoveBeat,
         InsertBeat,
+        InsertBeatAt,
         SetCopyMode,
         DrawerOpen,
         DrawerClose,
@@ -1412,6 +1413,22 @@ class ActionTracker {
         widget.set_event(new_event)
     }
 
+    fun insert_beat(beat: Int, repeat: Int? = null) {
+        val opus_manager = this.get_opus_manager()
+        this.dialog_number_input(this.get_activity().getString(R.string.dlg_insert_beats), 1, 4096, stub_output = repeat) { count: Int ->
+            this.track(TrackedAction.InsertBeatAt, listOf(beat, count))
+            opus_manager.insert_beats(beat, count)
+        }
+    }
+
+    fun remove_beat(repeat: Int? = null) {
+        val opus_manager = this.get_opus_manager()
+        this.dialog_number_input(this.get_activity().getString(R.string.dlg_remove_beats), 1, opus_manager.length - 1, stub_output = repeat) { count: Int ->
+            this.track(TrackedAction.RemoveBeat, listOf(count))
+            opus_manager.remove_beat_at_cursor(count)
+        }
+    }
+
     fun insert_beat_after_cursor(repeat: Int? = null) {
         val opus_manager = this.get_opus_manager()
         this.dialog_number_input(this.get_activity().getString(R.string.dlg_insert_beats), 1, 4096, stub_output = repeat) { count: Int ->
@@ -2108,6 +2125,9 @@ class ActionTracker {
             TrackedAction.MoveChannel -> {
                 this.move_channel(integers[0]!!, integers[1]!!)
             }
+            TrackedAction.InsertBeatAt -> {
+                this.insert_beat(integers[0]!!, integers[1]!!)
+            }
         }
     }
 
@@ -2152,27 +2172,12 @@ class ActionTracker {
 
     fun remove_controller() {
         this.track(TrackedAction.RemoveController)
-
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-
         when (cursor.ctl_level) {
-            CtlLineLevel.Line -> {
-                opus_manager.remove_line_controller(
-                    cursor.ctl_type!!,
-                    cursor.channel,
-                    cursor.line_offset
-                )
-            }
-
-            CtlLineLevel.Channel -> {
-                opus_manager.remove_channel_controller(
-                    cursor.ctl_type!!,
-                    cursor.channel
-                )
-            }
-
-            CtlLineLevel.Global,
+            CtlLineLevel.Line -> opus_manager.remove_line_controller(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
+            CtlLineLevel.Channel -> opus_manager.remove_channel_controller(cursor.ctl_type!!, cursor.channel)
+            CtlLineLevel.Global -> opus_manager.remove_global_controller(cursor.ctl_type!!)
             null -> {} // pass
         }
     }

@@ -162,6 +162,7 @@ class ActionTrackerUnitTest {
                 }
 
 
+
                 ActionTracker.TrackedAction.InsertChannel,
                 ActionTracker.TrackedAction.SwapChannels,
                 ActionTracker.TrackedAction.MuteLine,
@@ -188,6 +189,7 @@ class ActionTrackerUnitTest {
                     Pair(enum, listOf(4, 2, 6))
                 }
 
+                ActionTracker.TrackedAction.InsertBeatAt,
                 ActionTracker.TrackedAction.CopyChannelCtlToBeat,
                 ActionTracker.TrackedAction.MoveChannelCtlToBeat -> {
                     Pair(enum, listOf(4, 2))
@@ -208,6 +210,10 @@ class ActionTrackerUnitTest {
                     Pair(enum, listOf(0, 0, 1, 0))
                 }
 
+                ActionTracker.TrackedAction.ShowGlobalController -> TODO()
+                ActionTracker.TrackedAction.MoveChannel -> TODO()
+                ActionTracker.TrackedAction.SetDelayAtCursor -> TODO()
+                ActionTracker.TrackedAction.MoveLine -> TODO()
             }
 
             val json_name = JSONString(enum.name)
@@ -284,6 +290,7 @@ class ActionTrackerUnitTest {
                         JSONList(json_name, JSONInteger(5))
                     }
 
+                    ActionTracker.TrackedAction.InsertBeatAt,
                     ActionTracker.TrackedAction.RepeatSelectionCtlChannel,
                     ActionTracker.TrackedAction.CursorSelectGlobalCtlRange -> {
                         val string = JSONString("test")
@@ -378,6 +385,10 @@ class ActionTrackerUnitTest {
                         JSONList(json_name, JSONInteger(56), JSONString("TAGNAME"))
                     }
 
+                    ActionTracker.TrackedAction.ShowGlobalController -> TODO()
+                    ActionTracker.TrackedAction.MoveChannel -> TODO()
+                    ActionTracker.TrackedAction.SetDelayAtCursor -> TODO()
+                    ActionTracker.TrackedAction.MoveLine -> TODO()
                 },
                 json_item
             )

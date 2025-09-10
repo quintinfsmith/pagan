@@ -765,7 +765,11 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             }
 
             if (offset < this.width) {
-                this.draw_drawable(canvas, R.drawable.icon_add_channel, null, offset, 0f, base_width, line_height)
+                ContextCompat.getDrawable(this.context, R.drawable.icon_add_channel)?.let {
+                    it.setBounds((offset).toInt(), (scroll_y).toInt(), (offset + base_width).toInt(), (scroll_y + line_height).toInt())
+                    it.setTint(ContextCompat.getColor(this.context, R.color.table_foreground))
+                    it.draw(canvas)
+                }
             }
 
             // ------------------- Draw Line Labels ----------------------------

@@ -6,5 +6,5 @@
         </shape>
     </item>
     <item android:drawable="@drawable/leaf_border" />
-    <item android:height="24dp" android:width="24dp" android:gravity="center" android:drawable="@drawable/baseline_shortcut_24"/>
+    <item android:height="24dp" android:width="24dp" android:gravity="center" android:drawable="@drawable/icon_shortcut"/>
 </layer-list>

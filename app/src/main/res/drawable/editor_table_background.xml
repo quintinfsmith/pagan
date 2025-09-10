@@ -2,7 +2,7 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:height="40dp">
         <shape android:shape="rectangle">
-            <solid android:color="@color/ctl_line"/>
+            <solid android:color="@color/line_label"/>
         </shape>
     </item>
 
@@ -14,7 +14,7 @@
 
     <item android:width="40dp">
         <shape android:shape="rectangle">
-            <solid android:color="@color/ctl_line"/>
+            <solid android:color="@color/line_label"/>
         </shape>
     </item>
 

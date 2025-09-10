@@ -111,4 +111,5 @@
     <dimen name="number_selector_button_width">@dimen/base_leaf_width</dimen>
     <dimen name="number_selector_button_height">41dp</dimen>
     <dimen name="character_width">16dp</dimen>
+
 </resources>

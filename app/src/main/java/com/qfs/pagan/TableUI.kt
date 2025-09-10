@@ -140,8 +140,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             this.drag_highlight_paint.color = Color.YELLOW
             this.drag_highlight_paint.strokeWidth = 8f
 
-
-
             this.setWillNotDraw(false)
 
             this.setOnTouchListener { view: View?, motion_event: MotionEvent? ->
@@ -1991,9 +1989,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
                                 when (ctl_line_level) {
                                     null -> {
-                                        val (channel, line_offset) = opus_manager.get_channel_and_line_offset(
-                                            pointer
-                                        )
+                                        val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
                                         val beat_key = BeatKey(channel, line_offset, beat)
                                         TableUI.calc_position(
                                             opus_manager.get_tree(beat_key),

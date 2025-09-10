@@ -2127,11 +2127,8 @@ class ActivityEditor : PaganActivity() {
 
         hex_value.setText("%02x".format(initial_color.red) + "%02x".format(initial_color.green) + "%02x".format(initial_color.blue))
         rniRed.set_value(initial_color.red)
-        rniRed.set_range(0, 255)
         rniGreen.set_value(initial_color.green)
-        rniGreen.set_range(0, 255)
         rniBlue.set_value(initial_color.blue)
-        rniBlue.set_range(0, 255)
 
         sbRed.progress = initial_color.red
         sbGreen.progress = initial_color.green

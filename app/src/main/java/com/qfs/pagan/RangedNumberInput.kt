@@ -6,13 +6,11 @@ import android.graphics.Typeface
 import android.text.InputType
 import android.util.AttributeSet
 import android.view.ContextThemeWrapper
-import android.view.Gravity
 import android.view.KeyEvent
 import android.widget.TextView
+import androidx.core.content.withStyledAttributes
 import java.util.Locale
-import kotlin.math.floor
 import kotlin.math.max
-import kotlin.math.pow
 import kotlin.math.min
 
 abstract class RangedNumberInput<T: Number>(context: Context, attrs: AttributeSet? = null): androidx.appcompat.widget.AppCompatEditText(ContextThemeWrapper(context, R.style.Theme_Pagan_EditText), attrs) {
@@ -34,9 +32,13 @@ abstract class RangedNumberInput<T: Number>(context: Context, attrs: AttributeSe
         this.typeface = Typeface.MONOSPACE
         this.setSelectAllOnFocus(true)
 
-        this.textAlignment = TEXT_ALIGNMENT_TEXT_END
+        this.context.withStyledAttributes(attrs, R.styleable.Ranged) {
+            this@RangedNumberInput.confirm_required = getBoolean(R.styleable.Ranged_require_confirm, true)
+            this@RangedNumberInput.confirm_on_unfocus = getBoolean(R.styleable.Ranged_confirm_on_unfocus, false)
+            this@RangedNumberInput.set_auto_resize(getBoolean(R.styleable.Ranged_auto_resize, false))
+        }
 
-        this.init_range()
+        this.init_range(attrs)
 
 
         this.setOnEditorActionListener { _: TextView?, action_id: Int?, _: KeyEvent? ->
@@ -51,7 +53,7 @@ abstract class RangedNumberInput<T: Number>(context: Context, attrs: AttributeSe
         }
     }
 
-    abstract fun init_range()
+    abstract fun init_range(attrs: AttributeSet?)
 
     fun set_auto_resize(value: Boolean) {
         if (value) {
@@ -120,14 +122,10 @@ class RangedIntegerInput(context: Context, attrs: AttributeSet? = null): RangedN
         this.setText(String.format(Locale.getDefault(), "%d", new_value))
     }
 
-    override fun init_range() {
-        val styled_attributes = this.context.theme.obtainStyledAttributes(null, R.styleable.Ranged, 0, 0)
-
-        try {
-            this.max = styled_attributes.getInteger(R.styleable.Ranged_max, 1)
-            this.min = styled_attributes.getInteger(R.styleable.Ranged_min, 0)
-        } finally {
-            styled_attributes.recycle()
+    override fun init_range(attrs: AttributeSet?) {
+        this.context.withStyledAttributes(attrs, R.styleable.Ranged) {
+            this@RangedIntegerInput.max = getInteger(R.styleable.Ranged_max, 1)
+            this@RangedIntegerInput.min = getInteger(R.styleable.Ranged_min, 1)
         }
     }
 }
@@ -162,15 +160,14 @@ class RangedFloatInput(context: Context, attrs: AttributeSet? = null): RangedNum
         }
     }
 
-    override fun init_range() {
-        val styled_attributes = this.context.theme.obtainStyledAttributes(null, R.styleable.Ranged, 0, 0)
-        try {
-            this.max = styled_attributes.getFloat(R.styleable.Ranged_maxf, 1f)
-            this.min = styled_attributes.getFloat(R.styleable.Ranged_minf, 0f)
-        } finally {
-            styled_attributes.recycle()
+    override fun init_range(attrs: AttributeSet?) {
+        this.context.withStyledAttributes(attrs, R.styleable.Ranged) {
+            this@RangedFloatInput.max = getFloat(R.styleable.Ranged_fmax, 1F)
+            this@RangedFloatInput.min = getFloat(R.styleable.Ranged_fmin, 0F)
+            this@RangedFloatInput.set_precision(getInteger(R.styleable.Ranged_precision, 2))
         }
     }
+
     override fun _set_value(new_value: Float) {
         val fmt = "%.${this.precision  ?: 0}f"
         this.setText(String.format(Locale.getDefault(), fmt, new_value))

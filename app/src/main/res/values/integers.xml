@@ -5,4 +5,5 @@
     <integer name="maximum_octave_size">36</integer>
     <integer name="EXPORTED_CHUNK_SIZE">22500</integer>
     <integer name="EXPORTED_SAMPLE_RATE">44100</integer>
+    <integer name="max_tempo">1024</integer>
 </resources>

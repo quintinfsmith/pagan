@@ -2,8 +2,12 @@
     <declare-styleable name="Ranged">
         <attr name="min" format="integer" />
         <attr name="max" format="integer" />
-        <attr name="minf" format="float" />
-        <attr name="maxf" format="float" />
+        <attr name="fmin" format="float" />
+        <attr name="fmax" format="float" />
+        <attr name="precision" format="integer"/>
+        <attr name="auto_resize" format="boolean"/>
+        <attr name="require_confirm" format="boolean"/>
+        <attr name="confirm_on_unfocus" format="boolean"/>
     </declare-styleable>
     <declare-styleable name="NumberSelector">
         <attr name="button_theme" format="integer" />

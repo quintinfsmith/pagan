@@ -16,8 +16,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            custom:minf="0"
-            custom:maxf="128"
+            custom:fmin="0"
+            custom:fmax="128"
             android:ems="8"
             android:textAlignment="textEnd" />
 

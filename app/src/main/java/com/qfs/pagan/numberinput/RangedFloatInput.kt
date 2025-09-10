@@ -8,6 +8,8 @@ import com.qfs.pagan.R
 import com.qfs.pagan.RangedTextWatcher
 import java.util.Locale
 import kotlin.math.max
+import kotlin.math.pow
+import kotlin.math.roundToInt
 
 class RangedFloatInput(context: Context, attrs: AttributeSet? = null): RangedNumberInput<Float>(context, attrs) {
     var precision: Int? = null
@@ -48,7 +50,17 @@ class RangedFloatInput(context: Context, attrs: AttributeSet? = null): RangedNum
     }
 
     override fun _set_value(new_value: Float) {
-        val fmt = "%.${this.precision  ?: 0}f"
+        val fmt = if (this.precision != null) {
+            var check_value = (new_value * 10F.pow(this.precision!!)).roundToInt()
+            var adj_precision = this.precision!!
+            for (i in 0 until this.precision!!) {
+                if (check_value % 10 != 0) break
+                adj_precision -= 1
+            }
+            "%.${adj_precision}f"
+        } else {
+            "%f"
+        }
         this.setText(String.Companion.format(Locale.getDefault(), fmt, new_value))
     }
 }

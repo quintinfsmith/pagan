@@ -54,7 +54,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
-            <com.qfs.pagan.RangedIntegerInput
+            <com.qfs.pagan.numberinput.RangedIntegerInput
                 android:id="@+id/rniRed"
                 android:textAlignment="textEnd"
                 custom:max="255"
@@ -83,7 +83,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
-            <com.qfs.pagan.RangedIntegerInput
+            <com.qfs.pagan.numberinput.RangedIntegerInput
                 android:id="@+id/rniGreen"
                 custom:max="255"
                 custom:min="0"
@@ -110,7 +110,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
-            <com.qfs.pagan.RangedIntegerInput
+            <com.qfs.pagan.numberinput.RangedIntegerInput
                 android:id="@+id/rniBlue"
                 custom:max="255"
                 custom:min="0"

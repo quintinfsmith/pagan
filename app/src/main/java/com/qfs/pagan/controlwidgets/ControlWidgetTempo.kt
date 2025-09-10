@@ -11,13 +11,8 @@ import kotlin.math.roundToInt
 class ControlWidgetTempo(_level: CtlLineLevel, is_initial_event: Boolean, context: Context, callback: (OpusTempoEvent) -> Unit): ControlWidget<OpusTempoEvent>(context, CtlLineLevel.Global, is_initial_event, R.layout.control_widget_tempo, callback) {
     private lateinit var input: RangedFloatInput
 
-
     override fun on_inflated() {
         this.input = this.inner.findViewById(R.id.tempo_value)
-        //this.input.set_range(this.min, this.max)
-        //this.input.set_precision(3)
-        //this.input.confirm_required = false
-        //this.input.auto_resize = true
 
         this.input.value_set_callback = { value: Float? ->
             if (value != null) {

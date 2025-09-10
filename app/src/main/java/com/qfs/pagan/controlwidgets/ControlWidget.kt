@@ -29,6 +29,10 @@ abstract class ControlWidget<T: EffectEvent>(context: Context, var level: CtlLin
         this.on_inflated()
     }
 
+    override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
+        super.onLayout(changed, l, t, r, b)
+    }
+
     fun get_event(): T {
         return this.working_event!!
     }

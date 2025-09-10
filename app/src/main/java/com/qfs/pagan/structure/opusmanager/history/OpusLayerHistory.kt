@@ -315,7 +315,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     open fun apply_history_node(current_node: HistoryCache.HistoryNode, depth: Int = 0) {
-        println("APPLYING: ${current_node.token}")
         try {
             when (current_node.token) {
                 HistoryToken.SET_PROJECT_NAME -> {
@@ -1949,7 +1948,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
     // BASE FUNCTIONS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     override fun move_line(channel_index_from: Int, line_offset_from: Int, channel_index_to: Int, line_offset_to: Int) {
-        println("$channel_index_from, $line_offset_from -> $channel_index_to, $line_offset_to")
         this._remember {
             super.move_line(channel_index_from, line_offset_from, channel_index_to, line_offset_to)
         }

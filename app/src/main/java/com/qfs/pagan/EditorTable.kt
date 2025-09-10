@@ -189,7 +189,11 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     }
 
     fun get_column_width(column: Int): Int {
-        return this._column_width_maxes[column]
+        return if (this._column_width_maxes.contains(column)) {
+            this._column_width_maxes[column]
+        } else {
+            1
+        }
     }
 
     fun get_activity(): ActivityEditor {

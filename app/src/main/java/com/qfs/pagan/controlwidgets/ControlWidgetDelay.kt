@@ -2,15 +2,11 @@ package com.qfs.pagan.controlwidgets
 
 import android.content.Context
 import android.view.ContextThemeWrapper
-import android.widget.Button
-import android.widget.NumberPicker
 import android.widget.SeekBar
 import android.widget.TextView
-import com.google.android.material.button.MaterialButton
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.R
-import com.qfs.pagan.RangedFloatInput
-import com.qfs.pagan.RangedIntegerInput
+import com.qfs.pagan.numberinput.RangedIntegerInput
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 

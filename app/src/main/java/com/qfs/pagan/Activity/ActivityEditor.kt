@@ -90,8 +90,8 @@ import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.PlaybackDevice
 import com.qfs.pagan.PlaybackFrameMap
 import com.qfs.pagan.R
-import com.qfs.pagan.RangedFloatInput
-import com.qfs.pagan.RangedIntegerInput
+import com.qfs.pagan.numberinput.RangedFloatInput
+import com.qfs.pagan.numberinput.RangedIntegerInput
 import com.qfs.pagan.TuningMapRecycler
 import com.qfs.pagan.TuningMapRecyclerAdapter
 import com.qfs.pagan.contextmenu.ContextMenuChannel

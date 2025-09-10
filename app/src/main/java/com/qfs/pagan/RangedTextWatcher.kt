@@ -2,8 +2,7 @@ package com.qfs.pagan
 
 import android.text.Editable
 import android.text.TextWatcher
-import android.view.View
-import android.widget.LinearLayout
+import com.qfs.pagan.numberinput.RangedNumberInput
 import kotlin.math.max
 
 abstract class RangedTextWatcher<T: Number>(private var _number_input: RangedNumberInput<T>, var min_value: T?, var max_value: T?): TextWatcher {

@@ -7,6 +7,7 @@ import android.view.ViewGroup.MarginLayoutParams
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.qfs.pagan.numberinput.RangedIntegerInput
 import kotlin.math.roundToInt
 
 class TuningMapRecyclerAdapter(var tuning_map: Array<Pair<Int, Int>>): RecyclerView.Adapter<TuningMapRecycler.TuningMapViewHolder>() {

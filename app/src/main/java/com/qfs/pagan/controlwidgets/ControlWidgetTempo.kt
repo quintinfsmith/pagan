@@ -3,7 +3,7 @@ package com.qfs.pagan.controlwidgets
 import android.content.Context
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.R
-import com.qfs.pagan.RangedFloatInput
+import com.qfs.pagan.numberinput.RangedFloatInput
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import kotlin.math.roundToInt

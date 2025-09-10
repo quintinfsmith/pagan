@@ -1377,7 +1377,7 @@ class ActionTracker {
         widget.set_event(new_event)
     }
 
-    fun set_tempo_at_cursor(input_value: Float? = null) {
+    fun set_tempo_at_cursor(input_value: Float) {
         val main = this.get_activity()
 
         val context_menu = main.active_context_menu
@@ -1385,13 +1385,10 @@ class ActionTracker {
             return
         }
         val widget = context_menu.get_widget() as ControlWidgetTempo
-
-        val event = widget.get_event()
-        this.dialog_float_input(main.getString(R.string.dlg_set_tempo), widget.min, widget.max, event.value, input_value) { new_value: Float ->
-            this.track(TrackedAction.SetTempoAtCursor, listOf(new_value.toBits()))
-            val new_event = OpusTempoEvent((new_value * 1000F).roundToInt().toFloat() / 1000F)
-            widget.set_event(new_event)
-        }
+        val rounded_value = (input_value * 1000F).roundToInt().toFloat() / 1000F
+        this.track(TrackedAction.SetTempoAtCursor, listOf(input_value.toBits()))
+        val new_event = OpusTempoEvent(rounded_value)
+        widget.set_event(new_event)
     }
 
     fun set_delay_at_cursor(numerator: Int, denominator: Int, fade: Float, repeat: Int) {

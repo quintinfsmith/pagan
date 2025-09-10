@@ -10,7 +10,10 @@ import android.view.Gravity
 import android.view.KeyEvent
 import android.widget.TextView
 import java.util.Locale
+import kotlin.math.floor
 import kotlin.math.max
+import kotlin.math.pow
+import kotlin.math.min
 
 abstract class RangedNumberInput<T: Number>(context: Context, attrs: AttributeSet? = null): androidx.appcompat.widget.AppCompatEditText(ContextThemeWrapper(context, R.style.Theme_Pagan_EditText), attrs) {
     var max: T? = null
@@ -64,7 +67,6 @@ abstract class RangedNumberInput<T: Number>(context: Context, attrs: AttributeSe
         this._watcher.min_value = new_min
         this._watcher.max_value = new_max
     }
-
     fun set_value(new_value: T) {
         this._watcher.lockout = true
         this._set_value(new_value)
@@ -78,7 +80,10 @@ abstract class RangedNumberInput<T: Number>(context: Context, attrs: AttributeSe
         this.value_set_callback?.let {
             val backup_selection = Pair(this.selectionStart, this.selectionEnd)
             it(this.get_value())
-            this.setSelection(backup_selection.first, backup_selection.second)
+            this.setSelection(
+                min(this.text?.length ?: 0,backup_selection.first),
+                min(this.text?.length ?: 0, backup_selection.second)
+            )
         }
     }
 
@@ -128,6 +133,7 @@ class RangedIntegerInput(context: Context, attrs: AttributeSet? = null): RangedN
 }
 
 class RangedFloatInput(context: Context, attrs: AttributeSet? = null): RangedNumberInput<Float>(context, attrs) {
+    var precision: Int? = null
     override var _watcher = object: RangedTextWatcher<Float>(this, this.min, this.max) {
         override fun gt(value: Float, max: Float): Boolean {
             return value > max
@@ -141,6 +147,11 @@ class RangedFloatInput(context: Context, attrs: AttributeSet? = null): RangedNum
     init {
         this.inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
     }
+
+    fun set_precision(precision: Int) {
+        this.precision = precision
+    }
+
 
     override fun get_value(): Float? {
         return try {
@@ -161,6 +172,8 @@ class RangedFloatInput(context: Context, attrs: AttributeSet? = null): RangedNum
         }
     }
     override fun _set_value(new_value: Float) {
-        this.setText(String.format(Locale.getDefault(), "%f", new_value))
+        val fmt = "%.${this.precision  ?: 0}f"
+        this.setText(String.format(Locale.getDefault(), fmt, new_value))
     }
 }
+

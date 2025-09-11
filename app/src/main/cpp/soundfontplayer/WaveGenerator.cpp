@@ -36,8 +36,7 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
     jint* effect_indices = env->GetIntArrayElements(buffer_layer_indices_input, nullptr);
 
     int current_array_count = array_count;
-    auto tmp_first_layer = reinterpret_cast<jintArray>(env->GetObjectArrayElement(merge_keys, 0));
-    int layer_count = env->GetArrayLength(tmp_first_layer);
+    int layer_count = env->GetArrayLength(buffer_layer_indices_input);
 
     int shifted_buffers[effect_buffer_count];
     int shift_buffers_size = 0;
@@ -80,7 +79,6 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
         }
 
         current_array_count = new_arrays_size;
-
         for (int i = 0; i < current_array_count; i++) {
             for (int j = 0; j < effect_buffer_count; j++) {
                 if (layer != effect_indices[j] || effect_keys[j] != working_keys[i][layer]) {

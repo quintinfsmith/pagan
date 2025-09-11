@@ -1001,10 +1001,14 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             val new_state = mutableSetOf<Int>()
 
             val opus_manager = this.editor_table.get_opus_manager()
-            if (opus_manager.is_beat_selected(x)) {
-                new_state.add(R.attr.state_focused)
-            } else if (opus_manager.is_beat_selected_secondary(x)) {
-                new_state.add(R.attr.state_focused_secondary)
+
+            // Prevent the column from being highlighted before scroll is done. Otherwise flickering occurs.
+            if (!opus_manager.force_scroll_queued) {
+                if (opus_manager.is_beat_selected(x)) {
+                    new_state.add(R.attr.state_focused)
+                } else if (opus_manager.is_beat_selected_secondary(x)) {
+                    new_state.add(R.attr.state_focused_secondary)
+                }
             }
 
             return new_state.toIntArray()

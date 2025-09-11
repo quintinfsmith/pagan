@@ -76,6 +76,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     var temporary_blocker: OpusManagerCursor? = null
 
     private var _in_reload = false
+    var force_scroll_queued = false
 
     fun attach_activity(activity: ActivityEditor) {
         this._activity = activity
@@ -2510,6 +2511,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                         val force = this._ui_change_bill.get_next_int() != 0
 
                         // Detach from order and thread after ui updates are finished
+                        this.force_scroll_queued = true
                         thread {
                             this.run_on_ui_thread {
                                 editor_table.scroll_to_position(
@@ -2519,6 +2521,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                                     offset_width = offset_width.numerator.toFloat() / offset_width.denominator.toFloat(),
                                     force = force
                                 )
+                                this.force_scroll_queued = false
                             }
                         }
                     }

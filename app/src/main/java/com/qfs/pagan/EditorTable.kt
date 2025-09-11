@@ -331,7 +331,6 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
             }
             working_offset *= 2
         }
-        println("$subdiv_int, $column_int ---------")
 
         // FITS, LEFT, RIGHT, ON SCREEN
         val adj_offset = when (subdiv_int) {
@@ -339,9 +338,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
             0b0011,
             0b0101,
             0b0010,
-            0b0100 -> {
-                (box_width - target_width) / 2
-            }
+            0b0100 -> (box_width - target_width) / 2
 
             // Try to scroll the column onto screen, then the section
             0b1010 -> {
@@ -353,10 +350,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
             }
 
             // Align the end of the section with the end of the screen
-            0b1011 -> {
-                box_width - target_offset - target_width
-            }
-
+            0b1011 -> box_width - target_offset - target_width
 
             // Try to scroll the column onto screen, then the section
             0b1100 -> {
@@ -371,19 +365,16 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
             0b1101 -> 0 - target_offset
 
             0b0111,   // Overflowing,
-            0b1001 -> { // No need to scroll
-                return
-            }
+            0b1001 -> return // No need to scroll
             // 0b0000 -> { }   // Invalid
             // 0b0001 -> { }   // Invalid
             // 0b0110 -> { }   // Invalid
             // 0b1000 -> { }   // Invalid
             // 0b1110 -> { }   // Invalid
             // 0b1111 -> { }   // Invalid
-            else -> { return }     // Unreachable
+            else -> return     // Unreachable
         }
 
-        println(":: $adj_offset :: ${target_rect.x}")
 
         this.table_ui.scroll(target_rect.x - adj_offset, null)
     }

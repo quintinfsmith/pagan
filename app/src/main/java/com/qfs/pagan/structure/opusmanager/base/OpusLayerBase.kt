@@ -1535,30 +1535,17 @@ open class OpusLayerBase: Effectable {
     }
     /**
      * Swap line [line_offset_a] of channel [channel_index_a] with line [line_offset_b] of channel [channel_index_b].
-     * When swapping lines in percussion, the percussion instruments are left in place and the events are switched.
      */
     open fun swap_lines(channel_index_a: Int, line_offset_a: Int, channel_index_b: Int, line_offset_b: Int) {
         if (this.is_percussion(channel_index_a) != this.is_percussion(channel_index_b)) {
             throw IncompatibleChannelException(channel_index_a, channel_index_b)
         }
 
-        if (this.is_percussion(channel_index_a)) {
-            val channel_a = this.get_channel(channel_index_a) as OpusPercussionChannel
-            val channel_b = this.get_channel(channel_index_b) as OpusPercussionChannel
-
-            val tmp_line  = channel_a.lines[line_offset_a]
-            channel_a.lines[line_offset_a] = channel_b.lines[line_offset_b]
-            channel_b.lines[line_offset_b] = tmp_line
-            val tmp_instrument = channel_a.lines[line_offset_a].instrument
-            channel_a.lines[line_offset_a].instrument = channel_b.lines[line_offset_b].instrument
-            channel_b.lines[line_offset_b].instrument = tmp_instrument
-        } else {
-            val channel_a = this.get_channel(channel_index_a) as OpusChannel
-            val channel_b = this.get_channel(channel_index_b) as OpusChannel
-            val tmp_line = channel_a.lines[line_offset_a]
-            channel_a.lines[line_offset_a] = channel_b.lines[line_offset_b]
-            channel_b.lines[line_offset_b] = tmp_line
-        }
+        val channel_a = this.get_channel(channel_index_a) as OpusChannel
+        val channel_b = this.get_channel(channel_index_b) as OpusChannel
+        val tmp_line = channel_a.lines[line_offset_a]
+        channel_a.lines[line_offset_a] = channel_b.lines[line_offset_b]
+        channel_b.lines[line_offset_b] = tmp_line
 
         this.recache_line_maps()
     }

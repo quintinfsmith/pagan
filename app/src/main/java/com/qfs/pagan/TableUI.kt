@@ -981,13 +981,15 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             )!!
 
             val padding = this.resources.getDimension(R.dimen.line_label_padding)
-            val adj_width = width - (2 * padding)
             val adj_height = height - (2 * padding)
 
+            val ratio = ctl_drawable.intrinsicWidth.toFloat() / ctl_drawable.intrinsicHeight.toFloat()
+            val adj_width = ratio * adj_height
+
             ctl_drawable.setBounds(
-                (x + padding + ((adj_width - adj_height) / 2)).toInt(),
+                (x + ((width - adj_width) / 2)).toInt(),
                 (y + padding).toInt(),
-                (x + padding + ((adj_width + adj_height) / 2)).toInt(),
+                (x + ((width + adj_width) / 2)).toInt(),
                 (y + height - padding).toInt()
             )
 

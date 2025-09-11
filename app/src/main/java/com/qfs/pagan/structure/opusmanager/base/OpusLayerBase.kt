@@ -1541,11 +1541,19 @@ open class OpusLayerBase: Effectable {
             throw IncompatibleChannelException(channel_index_a, channel_index_b)
         }
 
-        val channel_a = this.get_channel(channel_index_a) as OpusChannel
-        val channel_b = this.get_channel(channel_index_b) as OpusChannel
-        val tmp_line = channel_a.lines[line_offset_a]
-        channel_a.lines[line_offset_a] = channel_b.lines[line_offset_b]
-        channel_b.lines[line_offset_b] = tmp_line
+        if (this.is_percussion(channel_index_a)) {
+            val channel_a = this.get_channel(channel_index_a) as OpusPercussionChannel
+            val channel_b = this.get_channel(channel_index_b) as OpusPercussionChannel
+            val tmp_line = channel_a.lines[line_offset_a]
+            channel_a.lines[line_offset_a] = channel_b.lines[line_offset_b]
+            channel_b.lines[line_offset_b] = tmp_line
+        } else {
+            val channel_a = this.get_channel(channel_index_a) as OpusChannel
+            val channel_b = this.get_channel(channel_index_b) as OpusChannel
+            val tmp_line = channel_a.lines[line_offset_a]
+            channel_a.lines[line_offset_a] = channel_b.lines[line_offset_b]
+            channel_b.lines[line_offset_b] = tmp_line
+        }
 
         this.recache_line_maps()
     }

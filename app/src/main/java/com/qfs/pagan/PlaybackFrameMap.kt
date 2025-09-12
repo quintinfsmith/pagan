@@ -25,6 +25,7 @@ import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.random.Random
 
 class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_handle_manager: SampleHandleManager): FrameMap {
     companion object {
@@ -329,7 +330,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                         this._effect_profiles.add(
                             Triple(
                                 PlaybackFrameMap.LAYER_LINE,
-                                this.generate_merge_keys(c, l)[0], // key
+                                this.generate_merge_keys(c, l)[1], // key
                                 ProfileBuffer(
                                     this.convert_controller_to_event_data(
                                         control_type,
@@ -347,7 +348,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                     this._effect_profiles.add(
                         Triple(
                             PlaybackFrameMap.LAYER_CHANNEL, // layer (channel)
-                            this.generate_merge_keys(c, -1)[1], // key
+                            this.generate_merge_keys(c, -1)[2], // key
                             ProfileBuffer(
                                 this.convert_controller_to_event_data(control_type, controller)
                             )
@@ -713,8 +714,9 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
     private fun generate_merge_keys(channel: Int, line_offset: Int): IntArray {
         return intArrayOf(
-            line_offset + (channel * 1000),
-            channel
+            Random.nextInt(), // LAYER_SAMPLE
+            line_offset + (channel * 1000), // LAYER_LINE
+            channel // LAYER_CHANNEL
         )
     }
 }

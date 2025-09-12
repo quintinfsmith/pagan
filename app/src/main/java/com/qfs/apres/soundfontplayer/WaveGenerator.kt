@@ -65,6 +65,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         if (forced_empty_frames.isNotEmpty()) {
             val empty_frames = FloatArray(this.buffer_size * 2)
             for (merge_keys in forced_empty_frames) {
+                // THIS RIGHT HERE!!!
                 separated_lines_map[separated_lines_map.size] = Pair(empty_frames, merge_keys)
             }
         }
@@ -78,7 +79,11 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             separated_lines_map[keys[i]]!!.second
         }
 
+
         val profiles = this.midi_frame_map.get_effect_buffers()
+        for (profile in profiles) {
+            println("P: ${profile.toList()}")
+        }
         val merged_array = this.merge_arrays(
             arrays_to_merge,
             this.buffer_size,
@@ -97,6 +102,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
         this.frame += this.buffer_size
 
+        // TODO: _empty_chunks_count is never incremented
         if (this.timeout != null && this._empty_chunks_count >= this.timeout!!) {
             throw DeadException()
         }
@@ -107,17 +113,13 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     private fun generate_sample_arrays(first_frame: Int): HashMap<Int, Pair<FloatArray, IntArray>> {
         val sample_handles_to_use = mutableSetOf<Triple<Int, Pair<SampleHandle, IntArray>, Int>>()
         for ((_, item) in this._active_sample_handles) {
-            if (item.first_frame >= first_frame + this.buffer_size) {
-                continue
-            }
+            if (item.first_frame >= first_frame + this.buffer_size) continue
+
             if (!item.handle.is_dead) {
                 sample_handles_to_use.add(
                     Triple(
                         item.handle.uuid,
-                        Pair(
-                            item.handle,
-                            item.merge_keys
-                        ),
+                        Pair(item.handle, item.merge_keys),
                         if ((0 until this@WaveGenerator.buffer_size).contains(item.first_frame - first_frame)) {
                             item.first_frame - first_frame
                         } else {

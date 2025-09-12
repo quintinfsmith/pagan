@@ -2,8 +2,14 @@
 // Created by pent on 8/12/25.
 //
 
+bool array_contains(int* array, int array_size, int value) {
+    for (int k = 0; k < array_size; k++) {
+        if (array[k] == value) return true;
+    }
+    return false;
+}
+
 bool apply_effect_buffer(EffectProfileBuffer* effect_buffer, float* working_array, int array_size) {
-    __android_log_print(ANDROID_LOG_DEBUG, "", "TYPE: %d", effect_buffer->data->type);
     switch (effect_buffer->data->type) {
         case TYPE_PAN: {
             auto* buffer = (PanBuffer *) effect_buffer;
@@ -66,81 +72,41 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
     jint* effect_keys = env->GetIntArrayElements(buffer_keys_input, nullptr);
     jint* effect_indices = env->GetIntArrayElements(buffer_layer_indices_input, nullptr);
 
-    int current_array_count = array_count;
-    int top_layer = 0;
-    for (int x = 0; x < env->GetArrayLength(buffer_layer_indices_input); x++) {
-        top_layer = std::max(effect_indices[x], top_layer);
-    }
+    int depth = 0;
+    int done_stack[array_count];
+    int done_count = 0;
+    int effect_buffers_applied[effect_buffer_count];
+    int effect_buffers_applied_count = 0;
 
-    int shifted_buffers[effect_buffer_count];
-    int shift_buffers_size = 0;
+    __android_log_print(ANDROID_LOG_DEBUG, "", "||| %d %d", array_count, effect_buffer_count);
 
-    // Merge the layers first, since initially, the data arrays are actually sample specific
-    for (int layer = 0; layer <= top_layer; layer++) {
-        int done[current_array_count];
-        int done_size = 0;
-        int new_arrays_size = 0;
-
-        for (int i = 0; i < current_array_count; i++) {
-            bool skip = false;
-            for (int j = 0; j < done_size; j++) {
-                if (done[j] == working_keys[i][layer]) {
-                    skip = true;
-                    break;
-                }
-            }
-            if (skip) continue;
-            if (i != new_arrays_size) {
-                for (int j = 0; j < frames; j++) {
-                    working_arrays[new_arrays_size][j] = working_arrays[i][j];
-                    working_arrays[new_arrays_size][j + frames] = working_arrays[i][j + frames];
+    while (depth <= key_width) {
+        for (int i = 0; i < array_count; i++) {
+            if (array_contains(done_stack, done_count, i)) continue;
+            for (int j = i + 1; j < array_count; j++) {
+                if (array_contains(done_stack, done_count, j)) continue;
+                if (depth == key_width || working_keys[j][depth] == working_keys[i][depth]) {
+                    for (int k = 0; k < frames; k++) {
+                        working_arrays[i][k] += working_arrays[j][k];
+                        working_arrays[i][k + frames] += working_arrays[i][k + frames];
+                    }
+                    done_stack[done_count++] = j;
                 }
             }
 
-            for (int k = i + 1; k < current_array_count; k++) {
-                if (working_keys[k][layer] != working_keys[i][layer]) continue;
-
-                for (int j = 0; j < frames; j++) {
-                    working_arrays[new_arrays_size][j] += working_arrays[k][j];
-                    working_arrays[new_arrays_size][j + frames] += working_arrays[k][j + frames];
-                }
-            }
-
-            done[done_size++] = working_keys[i][layer];
-            __android_log_print(ANDROID_LOG_DEBUG, "", "MOVE %d|%d", working_keys[i][0], working_keys[i][1]);
-            for (int x = 0; x < key_width; x++) {
-                working_keys[new_arrays_size][x] = working_keys[i][x];
-            }
-            new_arrays_size++;
-        }
-        __android_log_print(ANDROID_LOG_DEBUG, "", "NEW SIZE: %d", new_arrays_size);
-
-        current_array_count = new_arrays_size;
-        for (int j = 0; j < effect_buffer_count; j++) {
-            if (layer != effect_indices[j]) continue;
-            for (int i = 0; i < current_array_count; i++) {
-                __android_log_print(ANDROID_LOG_DEBUG, "", "Z %d %d %d, %d", i, layer, working_keys[i][1], effect_keys[j]);
-                if (effect_keys[j] != working_keys[i][1]) continue;
+            for (int j = 0; j < effect_buffer_count; j++) {
+                if (depth != effect_indices[j] || (depth != key_width && effect_keys[j] != working_keys[i][depth])) continue;
                 if (apply_effect_buffer((EffectProfileBuffer *) effect_buffers[j], working_arrays[i], (int) frames)) {
-                    shifted_buffers[shift_buffers_size++] = j;
+                    effect_buffers_applied[effect_buffers_applied_count++] = j;
                 }
             }
         }
-
-        __android_log_print(ANDROID_LOG_DEBUG, "", "----------------");
+        depth++;
     }
+    __android_log_print(ANDROID_LOG_DEBUG, "", "|__ %d %d", depth, key_width);
 
-
-    // set the positions of the buffers that weren't needed
     for (int i = 0; i < effect_buffer_count; i++) {
-        bool found = false;
-        for (int j = 0; j < shift_buffers_size; j++) {
-            if (shifted_buffers[j] == i) {
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
+        if (!array_contains(effect_buffers_applied, effect_buffers_applied_count, i)) {
             auto* effect_buffer = (EffectProfileBuffer*)effect_buffers[i];
             effect_buffer->drain((int)frames);
         }
@@ -153,12 +119,9 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
 
     // move the merged and modified signal into a single array,
     // Multiplexing the channels
-    for (int i = 0; i < current_array_count; i++) {
-        jfloat* input_ptr = working_arrays[i];
-        for (int j = 0; j < frames; j++) {
-            output_ptr[j * 2] += input_ptr[j];
-            output_ptr[(j * 2) + 1] += input_ptr[j + frames];
-        }
+    for (int j = 0; j < frames; j++) {
+        output_ptr[j * 2] += working_arrays[0][j];
+        output_ptr[(j * 2) + 1] += working_arrays[0][j + frames];
     }
 
     jfloatArray output = env->NewFloatArray(frames * 2);

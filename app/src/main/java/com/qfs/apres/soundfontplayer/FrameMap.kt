@@ -10,4 +10,9 @@ interface FrameMap {
     fun has_frames_remaining(frame: Int): Boolean
     fun get_size(): Int
     fun get_effect_buffers(): List<Triple<Int, Int, ProfileBuffer>>
+    fun destroy() {
+        for ((_, _, buffer) in this.get_effect_buffers()) {
+            buffer.destroy()
+        }
+    }
 }

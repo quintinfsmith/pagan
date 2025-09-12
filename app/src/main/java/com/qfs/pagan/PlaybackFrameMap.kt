@@ -27,6 +27,12 @@ import kotlin.math.max
 import kotlin.math.min
 
 class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_handle_manager: SampleHandleManager): FrameMap {
+    companion object {
+        const val LAYER_SAMPLE = 0
+        const val LAYER_LINE = 1
+        const val LAYER_CHANNEL = 2
+        const val LAYER_GLOBAL = 3
+    }
     private val _fade_limit = this._sample_handle_manager.sample_rate / 12 // when clipping a release phase, limit the fade out so it doesn't click
     private val _handle_map = HashMap<Int, Pair<SampleHandle, IntArray>>() // Handle UUID::(Handle::Merge Keys)
     private val _handle_range_map = HashMap<Int, IntRange>() // Handle UUID::Frame Range
@@ -286,14 +292,10 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this.get_marked_frames()
         this.setup_effect_buffers(ignore_global_controls, ignore_channel_controls, ignore_line_controls)
         this.opus_manager.channels.forEachIndexed { c: Int, channel: OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>> ->
-            if (channel.muted) {
-                return@forEachIndexed
-            }
+            if (channel.muted) return@forEachIndexed
 
             for (l in channel.lines.indices) {
-                if (channel.get_line(l).muted)  {
-                    continue
-                }
+                if (channel.get_line(l).muted) continue
 
                 var prev_abs_note = 0
                 for (b in 0 until this.opus_manager.length) {
@@ -318,18 +320,15 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
     fun setup_effect_buffers(ignore_global_controls: Boolean = false, ignore_channel_controls: Boolean = false, ignore_line_controls: Boolean = false) {
         this.opus_manager.get_all_channels().forEachIndexed { c: Int, channel: OpusChannelAbstract<*, *> ->
-            if (channel.muted) {
-                return@forEachIndexed
-            }
+            if (channel.muted) return@forEachIndexed
             channel.lines.forEachIndexed { l: Int, line: OpusLineAbstract<out InstrumentEvent> ->
-                if (line.muted) {
-                    return@forEachIndexed
-                }
+                if (line.muted) return@forEachIndexed
+
                 if (!ignore_line_controls) {
                     for ((control_type, controller) in line.controllers.get_all()) {
                         this._effect_profiles.add(
                             Triple(
-                                0, // layer ( line)
+                                PlaybackFrameMap.LAYER_LINE,
                                 this.generate_merge_keys(c, l)[0], // key
                                 ProfileBuffer(
                                     this.convert_controller_to_event_data(
@@ -347,7 +346,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 for ((control_type, controller) in channel.controllers.get_all()) {
                     this._effect_profiles.add(
                         Triple(
-                            1, // layer (channel)
+                            PlaybackFrameMap.LAYER_CHANNEL, // layer (channel)
                             this.generate_merge_keys(c, -1)[1], // key
                             ProfileBuffer(
                                 this.convert_controller_to_event_data(control_type, controller)
@@ -360,9 +359,10 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         if (!ignore_global_controls) {
             for ((control_type, controller) in this.opus_manager.controllers.get_all()) {
+                if (control_type == EffectType.Tempo) continue
                 this._effect_profiles.add(
                     Triple(
-                        2, // layer (global)
+                        PlaybackFrameMap.LAYER_GLOBAL, // layer (global)
                         0,
                         ProfileBuffer(
                             this.convert_controller_to_event_data(control_type, controller)

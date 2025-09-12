@@ -57,6 +57,7 @@ class PlaybackDevice(var activity: ActivityEditor, sample_handle_manager: Sample
 
     override fun on_stop() {
         this.activity.restore_playback_state()
+        (this.sample_frame_map as PlaybackFrameMap).clear()
     }
 
     override fun on_start() {
@@ -90,6 +91,7 @@ class PlaybackDevice(var activity: ActivityEditor, sample_handle_manager: Sample
 
     override fun on_cancelled() {
         this.activity.restore_playback_state()
+        (this.sample_frame_map as PlaybackFrameMap).clear()
     }
 
     fun play_opus(start_beat: Int) {

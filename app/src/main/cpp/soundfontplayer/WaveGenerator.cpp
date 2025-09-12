@@ -2,6 +2,35 @@
 // Created by pent on 8/12/25.
 //
 
+bool apply_effect_buffer(EffectProfileBuffer* effect_buffer, float* working_array, int array_size) {
+    __android_log_print(ANDROID_LOG_DEBUG, "", "TYPE: %d", effect_buffer->data->type);
+    switch (effect_buffer->data->type) {
+        case TYPE_PAN: {
+            auto* buffer = (PanBuffer *) effect_buffer;
+            buffer->apply(working_array, array_size);
+            break;
+        }
+        case TYPE_VOLUME: {
+            auto* buffer = (VolumeBuffer *) effect_buffer;
+            buffer->apply(working_array, array_size);
+            break;
+        }
+        case TYPE_DELAY: {
+            auto* buffer = (DelayBuffer *) effect_buffer;
+            buffer->apply(working_array, array_size);
+            break;
+        }
+        case TYPE_EQUALIZER: {
+            auto* buffer = (EqualizerBuffer *) effect_buffer;
+            buffer->apply(working_array, array_size);
+            break;
+        }
+        default: return false;
+    }
+
+    return true;
+}
+
 extern "C" JNIEXPORT jfloatArray JNICALL
 Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
         JNIEnv* env,
@@ -21,12 +50,14 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
     int* working_keys[array_count];
 
     // Put input arrays into jfloat ptrs & Put merge_keys into jint ptrs
+    int key_width = 2;
     for (int i = 0; i < array_count; i++) {
         auto working_array = reinterpret_cast<jfloatArray>(env->GetObjectArrayElement(input_array, i));
         working_arrays[i] = env->GetFloatArrayElements(working_array, nullptr);
 
         auto working_keylist = reinterpret_cast<jintArray>(env->GetObjectArrayElement(merge_keys, i));
         working_keys[i] = env->GetIntArrayElements(working_keylist, nullptr);
+        key_width = env->GetArrayLength(working_keylist);
     }
 
     // Set up effect buffers
@@ -36,13 +67,16 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
     jint* effect_indices = env->GetIntArrayElements(buffer_layer_indices_input, nullptr);
 
     int current_array_count = array_count;
-    int layer_count = env->GetArrayLength(buffer_layer_indices_input);
+    int top_layer = 0;
+    for (int x = 0; x < env->GetArrayLength(buffer_layer_indices_input); x++) {
+        top_layer = std::max(effect_indices[x], top_layer);
+    }
 
     int shifted_buffers[effect_buffer_count];
     int shift_buffers_size = 0;
 
     // Merge the layers first, since initially, the data arrays are actually sample specific
-    for (int layer = 0; layer < layer_count; layer++) {
+    for (int layer = 0; layer <= top_layer; layer++) {
         int done[current_array_count];
         int done_size = 0;
         int new_arrays_size = 0;
@@ -64,9 +98,8 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
             }
 
             for (int k = i + 1; k < current_array_count; k++) {
-                if (working_keys[k][layer] != working_keys[i][layer]) {
-                    continue;
-                }
+                if (working_keys[k][layer] != working_keys[i][layer]) continue;
+
                 for (int j = 0; j < frames; j++) {
                     working_arrays[new_arrays_size][j] += working_arrays[k][j];
                     working_arrays[new_arrays_size][j + frames] += working_arrays[k][j + frames];
@@ -74,45 +107,29 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
             }
 
             done[done_size++] = working_keys[i][layer];
-            working_keys[new_arrays_size] = working_keys[i];
+            __android_log_print(ANDROID_LOG_DEBUG, "", "MOVE %d|%d", working_keys[i][0], working_keys[i][1]);
+            for (int x = 0; x < key_width; x++) {
+                working_keys[new_arrays_size][x] = working_keys[i][x];
+            }
             new_arrays_size++;
         }
+        __android_log_print(ANDROID_LOG_DEBUG, "", "NEW SIZE: %d", new_arrays_size);
 
         current_array_count = new_arrays_size;
-        for (int i = 0; i < current_array_count; i++) {
-            for (int j = 0; j < effect_buffer_count; j++) {
-                if (layer != effect_indices[j] || effect_keys[j] != working_keys[i][layer]) {
-                    continue;
+        for (int j = 0; j < effect_buffer_count; j++) {
+            if (layer != effect_indices[j]) continue;
+            for (int i = 0; i < current_array_count; i++) {
+                __android_log_print(ANDROID_LOG_DEBUG, "", "Z %d %d %d, %d", i, layer, working_keys[i][1], effect_keys[j]);
+                if (effect_keys[j] != working_keys[i][1]) continue;
+                if (apply_effect_buffer((EffectProfileBuffer *) effect_buffers[j], working_arrays[i], (int) frames)) {
+                    shifted_buffers[shift_buffers_size++] = j;
                 }
-                auto effect_buffer = (EffectProfileBuffer*)effect_buffers[j];
-                switch (effect_buffer->data->type) {
-                    case TYPE_PAN: {
-                        auto* buffer = (PanBuffer *) effect_buffer;
-                        buffer->apply(working_arrays[i], (int) frames);
-                        break;
-                    }
-                    case TYPE_VOLUME: {
-                        auto* buffer = (VolumeBuffer *) effect_buffers[j];
-                        buffer->apply(working_arrays[i], (int) frames);
-                        break;
-                    }
-                    case TYPE_DELAY: {
-                        auto* buffer = (DelayBuffer *) effect_buffer;
-                        buffer->apply(working_arrays[i], (int) frames);
-                        break;
-                    }
-                    case TYPE_EQUALIZER: {
-                        auto* buffer = (EqualizerBuffer *) effect_buffer;
-                        buffer->apply(working_arrays[i], (int) frames);
-                        break;
-                    }
-                    default: continue;
-                }
-
-                shifted_buffers[shift_buffers_size++] = j;
             }
         }
+
+        __android_log_print(ANDROID_LOG_DEBUG, "", "----------------");
     }
+
 
     // set the positions of the buffers that weren't needed
     for (int i = 0; i < effect_buffer_count; i++) {
@@ -148,6 +165,7 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
     env->SetFloatArrayRegion(output, 0, frames * 2, output_ptr);
     return output;
 }
+
 
 extern "C" JNIEXPORT jfloatArray JNICALL
 Java_com_qfs_apres_soundfontplayer_WaveGenerator_tanh_1array(JNIEnv* env, jobject, jfloatArray input_array) {

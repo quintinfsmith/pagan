@@ -78,7 +78,6 @@ abstract class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_r
 
             this.kill()
             this.on_stop()
-            this.sample_frame_map.destroy()
             this.wave_generator.clear()
         }
 
@@ -187,7 +186,6 @@ abstract class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_r
         } catch (e: IllegalStateException) {
             this.play_cancelled = false
             this.is_playing = false
-            this.sample_frame_map.destroy()
             this.on_cancelled()
         }
     }

@@ -87,7 +87,26 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_destroy_1jni(JNIEnv* env, jobje
     if (deep) {
         delete ptr->data;
     }
-    free(ptr);
+    switch (ptr->type) {
+        case TYPE_DELAY: {
+            auto* original =(DelayBuffer*)ptr;
+            free(original);
+            break;
+        }
+        case TYPE_PAN: {
+            auto* original =(PanBuffer*)ptr;
+            free(original);
+            break;
+        }
+        case TYPE_VOLUME: {
+            auto* original =(VolumeBuffer*)ptr;
+            free(original);
+            break;
+        }
+        default: {
+            free(ptr);
+        }
+    }
 }
 
 extern "C" JNIEXPORT void JNICALL

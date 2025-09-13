@@ -88,7 +88,7 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
                 if (depth == key_width || working_keys[j][depth] == working_keys[i][depth]) {
                     for (int k = 0; k < frames; k++) {
                         working_arrays[i][k] += working_arrays[j][k];
-                        working_arrays[i][k + frames] += working_arrays[i][k + frames];
+                        working_arrays[i][k + frames] += working_arrays[j][k + frames];
                     }
                     done_stack[done_count++] = j;
                 }
@@ -106,10 +106,8 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
     __android_log_print(ANDROID_LOG_DEBUG, "", "|__ %d %d", depth, key_width);
 
     for (int i = 0; i < effect_buffer_count; i++) {
-        if (!array_contains(effect_buffers_applied, effect_buffers_applied_count, i)) {
-            auto* effect_buffer = (EffectProfileBuffer*)effect_buffers[i];
-            effect_buffer->drain((int)frames);
-        }
+        auto* effect_buffer = (EffectProfileBuffer*)effect_buffers[i];
+        effect_buffer->drain((int)frames);
     }
 
     jfloat output_ptr[frames * 2];

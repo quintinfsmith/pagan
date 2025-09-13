@@ -48,7 +48,11 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         if (this._active_sample_handles.isEmpty()) {
             for ( (layer_id, key, buffer) in this.midi_frame_map.get_effect_buffers()) {
                 if (buffer.allow_empty()) {
-                    forced_empty_frames.add(intArrayOf(layer_id, key))
+                    forced_empty_frames.add(
+                        IntArray(layer_id + 1) {
+                            if (it == layer_id) key else 0
+                        }
+                    )
                 }
             }
 
@@ -65,7 +69,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         if (forced_empty_frames.isNotEmpty()) {
             val empty_frames = FloatArray(this.buffer_size * 2)
             for (merge_keys in forced_empty_frames) {
-                // THIS RIGHT HERE!!!
                 separated_lines_map[separated_lines_map.size] = Pair(empty_frames, merge_keys)
             }
         }
@@ -79,11 +82,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             separated_lines_map[keys[i]]!!.second
         }
 
-
         val profiles = this.midi_frame_map.get_effect_buffers()
-        for (profile in profiles) {
-            println("P: ${profile.toList()}")
-        }
         val merged_array = this.merge_arrays(
             arrays_to_merge,
             this.buffer_size,

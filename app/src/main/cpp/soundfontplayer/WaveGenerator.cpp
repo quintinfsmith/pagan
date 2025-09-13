@@ -56,7 +56,7 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
     int* working_keys[array_count];
 
     // Put input arrays into jfloat ptrs & Put merge_keys into jint ptrs
-    int key_width = 2;
+    int key_width = 0;
     for (int i = 0; i < array_count; i++) {
         auto working_array = reinterpret_cast<jfloatArray>(env->GetObjectArrayElement(input_array, i));
         working_arrays[i] = env->GetFloatArrayElements(working_array, nullptr);

@@ -103,8 +103,10 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
     }
 
     for (int i = 0; i < effect_buffer_count; i++) {
-        auto* effect_buffer = (EffectProfileBuffer*)effect_buffers[i];
-        effect_buffer->drain((int)frames);
+        if (!array_contains(effect_buffers_applied, effect_buffer_count, i)) {
+            auto* effect_buffer = (EffectProfileBuffer*)effect_buffers[i];
+            effect_buffer->drain((int)frames);
+        }
     }
 
     jfloat output_ptr[frames * 2];

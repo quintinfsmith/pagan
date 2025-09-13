@@ -31,8 +31,8 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.E
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.SingleFloatEvent
 import com.qfs.pagan.structure.opusmanager.utils.checked_cast
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import kotlin.math.abs
@@ -4508,20 +4508,49 @@ open class OpusLayerBase: Effectable {
         return (this.get_line_controller_initial_event(EffectType.Volume, channel, line_offset) as OpusVolumeEvent).value
     }
 
-    fun get_current_velocity(beat_key: BeatKey, position: List<Int>): Float {
-        // If the velocity controller exists, use that otherwise consider velocity to be volume
-        val line = this.channels[beat_key.channel].lines[beat_key.line_offset]
+    fun <T: EffectEvent> get_current_effects(type: EffectType, beat_key: BeatKey, position: List<Int>): Triple<T?, T?, T?> {
+        // if the velocity controller exists, use that otherwise consider velocity to be volume
+        val channel = this.channels[beat_key.channel]
+        val line = channel.lines[beat_key.line_offset]
         val event_position = line.get_tree(beat_key.beat).get_rational_position(position)
 
-        return if (line.controllers.has_controller(EffectType.Velocity)) {
-            val controller = line.get_controller<OpusVelocityEvent>(EffectType.Velocity)
-            val event = controller.coerce_event(beat_key.beat, event_position)
-            event.value
+        return Triple(
+            if (this.controllers.has_controller(type)) {
+                this.get_controller<T>(type).coerce_event(beat_key.beat, event_position)
+            } else {
+                null
+            },
+            if (channel.controllers.has_controller(type)) {
+                channel.get_controller<T>(type).coerce_event(beat_key.beat, event_position)
+            } else {
+                null
+            },
+            if (channel.controllers.has_controller(type)) {
+                line.get_controller<T>(type).coerce_event(beat_key.beat, event_position)
+            } else {
+                null
+            }
+        )
+    }
+
+
+    fun <T: EffectEvent> get_current_line_effect(type: EffectType, beat_key: BeatKey, position: List<Int>): T? {
+        // if the velocity controller exists, use that otherwise consider velocity to be volume
+        val line = this.channels[beat_key.channel].lines[beat_key.line_offset]
+
+        return if (line.controllers.has_controller(type)) {
+            val event_position = line.get_tree(beat_key.beat).get_rational_position(position)
+            val controller = line.get_controller<T>(type)
+            controller.coerce_event(beat_key.beat, event_position)
         } else {
-            val controller = line.get_controller<OpusVolumeEvent>(EffectType.Volume)
-            val event = controller.coerce_event(beat_key.beat, event_position)
-            event.value
+            null
         }
+    }
+
+
+    fun get_current_velocity(beat_key: BeatKey, position: List<Int>): Float {
+        val event: SingleFloatEvent? = this.get_current_line_effect(EffectType.Velocity, beat_key, position) ?: this.get_current_line_effect(EffectType.Volume, beat_key, position)
+        return event?.value ?: 1F
     }
 
     internal fun _get_beatkeys_from_range(beat_key: BeatKey, from_key: BeatKey, to_key: BeatKey): List<BeatKey> {

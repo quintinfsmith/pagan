@@ -78,8 +78,6 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
     int effect_buffers_applied[effect_buffer_count];
     int effect_buffers_applied_count = 0;
 
-    __android_log_print(ANDROID_LOG_DEBUG, "", "||| %d %d", array_count, effect_buffer_count);
-
     while (depth <= key_width) {
         for (int i = 0; i < array_count; i++) {
             if (array_contains(done_stack, done_count, i)) continue;
@@ -103,7 +101,6 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
         }
         depth++;
     }
-    __android_log_print(ANDROID_LOG_DEBUG, "", "|__ %d %d", depth, key_width);
 
     for (int i = 0; i < effect_buffer_count; i++) {
         auto* effect_buffer = (EffectProfileBuffer*)effect_buffers[i];

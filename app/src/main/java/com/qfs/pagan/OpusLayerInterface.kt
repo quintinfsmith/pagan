@@ -2511,19 +2511,13 @@ class OpusLayerInterface : OpusLayerHistory() {
                         val force = this._ui_change_bill.get_next_int() != 0
 
                         // Detach from order and thread after ui updates are finished
-                        this.force_scroll_queued = true
-                        thread {
-                            this.run_on_ui_thread {
-                                editor_table.scroll_to_position(
-                                    y = if (y == -1) null else y,
-                                    x = if (x == -1) null else x,
-                                    offset = offset.numerator.toFloat() / offset.denominator.toFloat(),
-                                    offset_width = offset_width.numerator.toFloat() / offset_width.denominator.toFloat(),
-                                    force = force
-                                )
-                                this.force_scroll_queued = false
-                            }
-                        }
+                        editor_table.scroll_to_position(
+                            y = if (y == -1) null else y,
+                            x = if (x == -1) null else x,
+                            offset = offset.numerator.toFloat() / offset.denominator.toFloat(),
+                            offset_width = offset_width.numerator.toFloat() / offset_width.denominator.toFloat(),
+                            force = force
+                        )
                     }
 
                     BillableItem.FullRefresh -> {

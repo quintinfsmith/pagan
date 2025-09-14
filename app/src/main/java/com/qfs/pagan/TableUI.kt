@@ -636,7 +636,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 this.table_ui._drag_handle.to_line_offset ?: -1
             )
 
-
             for (i in first_column .. last_column) {
                 val beat_width = (this.editor_table.get_column_width(i) * floor(base_width))
                 var y_offset = line_height
@@ -692,7 +691,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                         y_offset += channel_gap_height
                     }
                 }
-
 
                 if (dragging_to.first == opus_manager.channels.size && dragging_to.second == -1) {
                     y_offset += dragging_from_height + channel_gap_height
@@ -1008,13 +1006,10 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
             val opus_manager = this.editor_table.get_opus_manager()
 
-            // Prevent the column from being highlighted before scroll is done. Otherwise flickering occurs.
-            if (!opus_manager.force_scroll_queued) {
-                if (opus_manager.is_beat_selected(x)) {
-                    new_state.add(R.attr.state_focused)
-                } else if (opus_manager.is_beat_selected_secondary(x)) {
-                    new_state.add(R.attr.state_focused_secondary)
-                }
+            if (opus_manager.is_beat_selected(x)) {
+                new_state.add(R.attr.state_focused)
+            } else if (opus_manager.is_beat_selected_secondary(x)) {
+                new_state.add(R.attr.state_focused_secondary)
             }
 
             return new_state.toIntArray()
@@ -1435,6 +1430,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 null -> {}
             }
             this._drag_handle.clear()
+            return false
         }
         this._last_x_position = null
 

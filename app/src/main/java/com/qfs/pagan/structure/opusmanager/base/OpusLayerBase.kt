@@ -4533,7 +4533,6 @@ open class OpusLayerBase: Effectable {
         )
     }
 
-
     fun <T: EffectEvent> get_current_line_effect(type: EffectType, beat_key: BeatKey, position: List<Int>): T? {
         // if the velocity controller exists, use that otherwise consider velocity to be volume
         val line = this.channels[beat_key.channel].lines[beat_key.line_offset]
@@ -4546,7 +4545,6 @@ open class OpusLayerBase: Effectable {
             null
         }
     }
-
 
     fun get_current_velocity(beat_key: BeatKey, position: List<Int>): Float {
         val event: SingleFloatEvent? = this.get_current_line_effect(EffectType.Velocity, beat_key, position) ?: this.get_current_line_effect(EffectType.Volume, beat_key, position)
@@ -4571,7 +4569,6 @@ open class OpusLayerBase: Effectable {
         }
 
         val target_second_key = BeatKey(target_channel, target_offset, beat_key.beat + x_diff)
-
         return this.get_beatkeys_in_range(beat_key, target_second_key)
     }
 
@@ -4580,22 +4577,14 @@ open class OpusLayerBase: Effectable {
     }
 
     private fun _is_valid_beat_range(first_corner: BeatKey, second_corner: BeatKey): Boolean {
-        return if (this.channels.size <= first_corner.channel) {
-            false
-        } else if (this.get_channel(first_corner.channel).size <= first_corner.line_offset) {
-            false
-        } else if (this.length <= first_corner.beat) {
-            false
-        } else if (this.channels.size <= second_corner.channel) {
-            false
-        } else if (this.get_channel(second_corner.channel).size <= second_corner.line_offset) {
-            false
-        } else if (this.length <= second_corner.beat) {
-            false
-        } else {
-            true
-        }
+        return this.channels.size > first_corner.channel
+            && this.get_channel(first_corner.channel).size > first_corner.line_offset
+            && this.length > first_corner.beat
+            && this.channels.size > second_corner.channel
+            && this.get_channel(second_corner.channel).size > second_corner.line_offset
+            && this.length > second_corner.beat
     }
+
     // Calling this function every time a channel/line is modified should still be more efficient
     // than calculating offsets as needed
     open fun recache_line_maps() {

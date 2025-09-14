@@ -636,12 +636,14 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 this.table_ui._drag_handle.to_line_offset ?: -1
             )
 
+
             for (i in first_column .. last_column) {
                 val beat_width = (this.editor_table.get_column_width(i) * floor(base_width))
                 var y_offset = line_height
                 for (j in channels.indices) {
                     if (dragging_to.first == j && dragging_to.second == -1) {
                         y_offset += dragging_from_height + channel_gap_height
+                        canvas.drawLine( offset, y_offset, offset + beat_width, y_offset, this.table_line_paint)
                     }
 
                     val channel = channels[j]
@@ -668,6 +670,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                             }
                         }
                     }
+
                     if (dragging_to.first == j && dragging_to.second == channel.lines.size) {
                         y_offset += dragging_from_height
                     }
@@ -688,7 +691,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                         canvas.drawRect(offset, y_offset, offset + beat_width, y_offset + channel_gap_height, this.table_line_paint)
                         y_offset += channel_gap_height
                     }
-
                 }
 
 
@@ -696,6 +698,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     y_offset += dragging_from_height + channel_gap_height
                 }
 
+                canvas.drawLine( offset, y_offset, offset + beat_width, y_offset, this.table_line_paint)
                 for ((type, controller) in opus_manager.controllers.get_all()) {
                     if (!controller.visible) continue
 
@@ -774,9 +777,11 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
             // ------------------- Draw Line Labels ----------------------------
             var y_offset = line_height
+            println("$dragging_from | $dragging_to ")
             for (j in channels.indices) {
                 if (dragging_to.first == j && dragging_to.second == -1) {
                     y_offset += dragging_from_height + channel_gap_height
+                    canvas.drawLine( scroll_x, y_offset, scroll_x + line_label_width, y_offset, this.table_line_paint)
                 }
 
                 for (k in channels[j].lines.indices) {
@@ -790,7 +795,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                         y_offset += line_height
                     }
 
-                    if ((dragging_to.first == j && dragging_to.second == k) || (dragging_from.first == j && dragging_from.second + 1 == k)) {
+                    if (dragging_from.second != -1 && ((dragging_to.first == j && dragging_to.second == k) || (dragging_from.first == j && dragging_from.second + 1 == k))) {
                         canvas.drawLine(scroll_x, y_offset - line_height, (this.width.toFloat() - base_width), y_offset - line_height, this.table_line_paint)
                     }
 
@@ -830,6 +835,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
             for ((type, controller) in opus_manager.controllers.get_all()) {
                 if (!controller.visible) continue
+                canvas.drawLine( scroll_x, y_offset, scroll_x + line_label_width, y_offset, this.table_line_paint)
 
                 this.draw_drawable(canvas, this.ctl_label_drawable, this.get_global_control_line_state(type), scroll_x, y_offset, line_label_width, ctl_line_height)
                 this.draw_ctl_label_text(canvas, type, this.ctl_label_drawable.state, scroll_x, y_offset, line_label_width, ctl_line_height)

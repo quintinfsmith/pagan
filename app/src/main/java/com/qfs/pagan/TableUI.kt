@@ -1552,12 +1552,10 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
     fun insert_row(y: Int) {
         this.painted_layer.insert_row(y)
-        this.update_global_ctl_button()
     }
 
     fun remove_rows(y: Int, count: Int) {
         this.painted_layer.remove_rows(y, count)
-        this.update_global_ctl_button()
     }
 
     fun add_column(x: Int) {
@@ -1601,6 +1599,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
      */
 
     fun finalize_update() {
+        this.update_global_ctl_button()
         if (this.painted_layer.invalidate_queued) {
             this.painted_layer.invalidate()
             this.painted_layer.invalidate_queued = false

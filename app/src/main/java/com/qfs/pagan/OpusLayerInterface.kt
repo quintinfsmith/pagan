@@ -33,7 +33,6 @@ import com.qfs.pagan.structure.rationaltree.InvalidGetCall
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.uibill.BillableItem
 import com.qfs.pagan.uibill.UIChangeBill
-import kotlin.concurrent.thread
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -897,7 +896,7 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     private fun _swap_line_ui_update(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
         var y = 0
-        var first_swapped_line = min(
+        val first_swapped_line = min(
             this.get_instrument_line_index(channel_a, line_a),
             this.get_instrument_line_index(channel_b, line_b)
         )
@@ -1218,9 +1217,7 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     override fun project_change_wrapper(callback: () -> Unit)  {
         this.lock_ui_full {
-            this.get_activity()?.let { activity ->
-                activity.active_percussion_names.clear()
-            }
+            this.get_activity()?.active_percussion_names?.clear()
 
             this._ui_clear()
             super.project_change_wrapper(callback)

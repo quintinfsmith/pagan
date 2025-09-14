@@ -1,11 +1,15 @@
 package com.qfs.pagan.contextmenu
 
+import android.app.Activity
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
+import androidx.core.content.ContextCompat.getSystemService
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.OpusLayerInterface
-import com.qfs.pagan.structure.opusmanager.cursor.OpusLayerCursor
 import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
+
 
 abstract class ContextMenuView(layout_id_primary: Int?, layout_id_secondary: Int?, primary_container: ViewGroup, secondary_container: ViewGroup) {
     val primary: ViewGroup?
@@ -45,5 +49,11 @@ abstract class ContextMenuView(layout_id_primary: Int?, layout_id_secondary: Int
 
     fun get_opus_manager(): OpusLayerInterface {
         return this.get_activity().get_opus_manager()
+    }
+    fun destroy() {
+        this.get_activity().currentFocus?.let {
+            val imm: InputMethodManager = this.context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.hideSoftInputFromWindow(it.windowToken, 0)
+        }
     }
 }

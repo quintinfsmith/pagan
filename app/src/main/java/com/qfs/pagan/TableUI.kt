@@ -775,7 +775,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
             // ------------------- Draw Line Labels ----------------------------
             var y_offset = line_height
-            println("$dragging_from | $dragging_to ")
             for (j in channels.indices) {
                 if (dragging_to.first == j && dragging_to.second == -1) {
                     y_offset += dragging_from_height + channel_gap_height

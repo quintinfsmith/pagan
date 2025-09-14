@@ -103,5 +103,4 @@ class ContextMenuRange(primary_container: ViewGroup, secondary_container: ViewGr
                 && cursor.ctl_level == null
                 && cursor.get_ordered_range() == this.active_corners
     }
-
 }

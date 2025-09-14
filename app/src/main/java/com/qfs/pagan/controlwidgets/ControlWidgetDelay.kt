@@ -109,4 +109,5 @@ class ControlWidgetDelay(level: CtlLineLevel, is_initial_event: Boolean, context
         this._echo.set_value(event.echo)
         this._label.text = this.context.getString(R.string.contextmenu_delay_attenuation, ((1F - event.fade) * 100).toInt())
     }
+
 }

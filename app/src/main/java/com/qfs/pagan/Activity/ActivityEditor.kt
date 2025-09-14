@@ -2773,22 +2773,15 @@ class ActivityEditor : PaganActivity() {
     // vv Formerly Fragment Functions ---------------------------------------------------------
     fun clear_context_menu() {
         this.hide_context_menus()
-        if (this.active_context_menu == null) {
-            return
-        }
-
-        if (this.active_context_menu!!.primary != null) {
-            if (this.active_context_menu!!.primary!!.parent != null) {
-                (this.active_context_menu!!.primary!!.parent as ViewGroup).removeAllViews()
+        this.active_context_menu?.let { context_menu: ContextMenuView ->
+            context_menu.destroy()
+            context_menu.primary?.parent?.let {
+                (it as ViewGroup).removeAllViews()
+            }
+            context_menu.secondary?.parent?.let {
+                (it as ViewGroup).removeAllViews()
             }
         }
-
-        if (this.active_context_menu!!.secondary != null) {
-            if (this.active_context_menu!!.secondary!!.parent != null) {
-                (this.active_context_menu!!.secondary!!.parent as ViewGroup).removeAllViews()
-            }
-        }
-
         this.active_context_menu = null
     }
 
@@ -3078,15 +3071,8 @@ class ActivityEditor : PaganActivity() {
     }
 
     private inline fun <reified T: ContextMenuView?> refresh_or_clear_context_menu(): Boolean {
-        val llContextMenu = this.findViewById<LinearLayout>(R.id.llContextMenuPrimary)
-        val llContextMenuSecondary = this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
-
         if (this.active_context_menu !is T) {
-            llContextMenu.removeAllViews()
-            llContextMenu.visibility = View.GONE
-            llContextMenuSecondary.removeAllViews()
-            llContextMenuSecondary.visibility = View.GONE
-            this.active_context_menu = null
+            this.clear_context_menu()
             return false
         }
 

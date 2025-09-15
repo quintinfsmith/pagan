@@ -17,7 +17,6 @@ import java.io.File
 import java.io.FileOutputStream
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import kotlin.concurrent.thread
 
 class ActivityLanding : PaganActivity() {
     private lateinit var _binding: ActivityLandingBinding
@@ -130,7 +129,7 @@ class ActivityLanding : PaganActivity() {
         }
 
         this.findViewById<View>(R.id.btnFrontNew).setOnClickListener {
-            //this.loading_reticle_show()
+            this.loading_reticle_show()
             this.startActivity(Intent(this, ActivityEditor::class.java))
         }
 

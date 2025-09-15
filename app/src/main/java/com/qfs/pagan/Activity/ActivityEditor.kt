@@ -90,8 +90,6 @@ import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.PlaybackDevice
 import com.qfs.pagan.PlaybackFrameMap
 import com.qfs.pagan.R
-import com.qfs.pagan.numberinput.RangedFloatInput
-import com.qfs.pagan.numberinput.RangedIntegerInput
 import com.qfs.pagan.TuningMapRecycler
 import com.qfs.pagan.TuningMapRecyclerAdapter
 import com.qfs.pagan.contextmenu.ContextMenuChannel
@@ -110,6 +108,8 @@ import com.qfs.pagan.controlwidgets.ControlWidgetTempo
 import com.qfs.pagan.controlwidgets.ControlWidgetVelocity
 import com.qfs.pagan.controlwidgets.ControlWidgetVolume
 import com.qfs.pagan.databinding.ActivityEditorBinding
+import com.qfs.pagan.numberinput.RangedFloatInput
+import com.qfs.pagan.numberinput.RangedIntegerInput
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
@@ -158,6 +158,7 @@ class ActivityEditor : PaganActivity() {
         var opus_manager = OpusLayerInterface()
         var active_project: Uri? = null
         var active_midi_device: MidiDeviceInfo? = null
+
 
         fun export_wav(
             opus_manager: OpusLayerBase,
@@ -958,7 +959,6 @@ class ActivityEditor : PaganActivity() {
     fun load_from_bkp() {
         val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.clear()
-
         val opus_manager = this.get_opus_manager()
         val project_manager = this.view_model.project_manager
         val (backup_uri, bytes) = project_manager.read_backup()

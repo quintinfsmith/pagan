@@ -4,10 +4,10 @@ import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.BlockedTreeException
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.NoteOutOfRange
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import kotlin.math.max
 import kotlin.math.min
@@ -671,6 +671,14 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                     channel,
                     this.get_buffer_value(default, 0, default)
                 )
+            }
+        },
+
+        Pair(KeyEvent.KEYCODE_W, true) to object: KeyStrokeNode(this) {
+            override fun call(opus_manager: OpusLayerInterface, ctrl_pressed: Boolean): Boolean {
+                println("???")
+                opus_manager.get_activity()?.project_save()
+                return true
             }
         },
 

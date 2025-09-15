@@ -544,24 +544,19 @@ open class PaganActivity: AppCompatActivity() {
 
     fun loading_reticle_show() {
         this.on_reticle_show()
+        val progress_bar = this._progress_bar ?: LayoutInflater.from(this).inflate(
+            R.layout.loading_reticle,
+            this.window.decorView as ViewGroup,
+            false
+        ) as ConstraintLayout
+
+        progress_bar.isClickable = true
+        this._progress_bar = progress_bar
+
         this.runOnUiThread {
-            if (this._progress_bar == null) {
-                this._progress_bar = LayoutInflater.from(this)
-                    .inflate(
-                        R.layout.loading_reticle,
-                        this.window.decorView as ViewGroup,
-                        false
-                    ) as ConstraintLayout
-            }
-
-            this._progress_bar!!.isClickable = true
-            val parent = this._progress_bar!!.parent
-            if (parent != null) {
-                (parent as ViewGroup).removeView(this._progress_bar)
-            }
-
+            (progress_bar.parent as ViewGroup?)?.removeView(progress_bar)
             try {
-                (this.window.decorView as ViewGroup).addView(this._progress_bar)
+                (this.window.decorView as ViewGroup).addView(progress_bar)
             } catch (e: UninitializedPropertyAccessException) {
                 // pass
             }
@@ -571,9 +566,7 @@ open class PaganActivity: AppCompatActivity() {
     fun loading_reticle_hide() {
         this.runOnUiThread {
             this._progress_bar?.let {
-                if (it.parent != null) {
-                    (it.parent as ViewGroup).removeView(it)
-                }
+                (it.parent as ViewGroup?)?.removeView(it)
             }
         }
         this.on_reticle_hide()
@@ -582,26 +575,22 @@ open class PaganActivity: AppCompatActivity() {
     open fun on_reticle_hide() { }
 
     fun get_soundfont_uri(): Uri? {
-        if (this.configuration.soundfont == null || this.configuration.soundfont_directory == null) {
-            return null
-        }
+        if (this.configuration.soundfont == null || this.configuration.soundfont_directory == null) return null
 
         var working_file = DocumentFile.fromTreeUri(this, this.configuration.soundfont_directory!!) ?: return null
         for (node in this.configuration.soundfont!!.split("/")) {
             working_file = working_file.findFile(node) ?: return null
         }
 
-        if (!working_file.exists()) {
-            return null
+        return if (working_file.exists()) {
+            working_file.uri
+        } else {
+            null
         }
-
-        return working_file.uri
     }
 
     fun coerce_relative_soundfont_path(soundfont_uri: Uri): String? {
-        if (this.configuration.soundfont_directory == null) {
-            return null
-        }
+        if (this.configuration.soundfont_directory == null) return null
 
         val parent_segments = this.configuration.soundfont_directory!!.pathSegments
         val child_segments = soundfont_uri.pathSegments

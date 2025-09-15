@@ -96,6 +96,18 @@ class ControlWidgetDelay(level: CtlLineLevel, is_initial_event: Boolean, context
                 value ?: DEFAULT_REPEAT
             )
         }
+
+        this._label.setOnLongClickListener {
+            main.dialog_number_input(context.getString(R.string.dialog_delay_attenuation), this._fade.min, this._fade.max, this._fade.progress) { value: Int ->
+                main.get_action_interface().set_delay_at_cursor(
+                    this.working_event?.numerator ?: DEFAULT_NUMERATOR,
+                    this.working_event?.denominator ?: DEFAULT_DENOMINATOR,
+                    1F - (this._fade.progress.toFloat() / this._fade.max.toFloat()),
+                    this.working_event?.echo ?: DEFAULT_REPEAT
+                )
+            }
+            true
+        }
     }
 
     init {

@@ -62,7 +62,7 @@
 
     <SeekBar
         android:id="@+id/fade"
-        android:max="128"
+        android:max="100"
         android:min="0"
         app:layout_constraintTop_toBottomOf="@id/fade_label"
         app:layout_constraintBottom_toBottomOf="parent"

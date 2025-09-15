@@ -383,12 +383,11 @@ class DelayBuffer: public EffectProfileBuffer {
         if (next_fpb == this->active_fpb && this->active_delay == next_delay) return;
 
         DelayedFrame* original_ptr = this->active_input_frame;
-        delete original_ptr;
+        free(original_ptr);
 
         this->active_delay = next_delay;
         this->active_fpb = next_fpb;
         this->active_delay_in_frames = (int)(this->active_delay * (float)this->active_fpb);
-
         this->create_chain();
     }
 

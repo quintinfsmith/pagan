@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.R
 import com.qfs.apres.event.GeneralMIDIEvent
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
@@ -20,6 +21,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.ControllerProfile
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import kotlin.math.floor
@@ -312,8 +314,50 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         val controller_profile = controller.generate_profile()
 
         val control_event_data = mutableListOf< ControllerEventData.IndexedProfileBufferFrame>()
-        for (effect_event in controller_profile.get_events()) {
-            control_event_data.addAll(this.convert_to_indexed_profile_buffer_frames(effect_event, control_type))
+
+        when (control_type) {
+            EffectType.Delay -> {
+                val tempo_controller = this.opus_manager.get_controller<OpusTempoEvent>(EffectType.Tempo)
+                val tempo_profile = tempo_controller.generate_profile()
+                val merged_events: MutableList<Pair<EffectType, ControllerProfile.ProfileEffectEvent>> = mutableListOf()
+                for (event in controller_profile.get_events()) {
+                    merged_events.add(Pair(control_type, event))
+                }
+                for (event in tempo_profile.get_events()) {
+                    merged_events.add(Pair(EffectType.Tempo, event))
+                }
+                merged_events.sortBy { it.second.start_position }
+
+                var working_event: ControllerProfile.ProfileEffectEvent? = null
+                var index = 0
+                while (index < merged_events.size) {
+                    val (current_type, current_event) = merged_events[index]
+                    if (current_type == control_type) {
+                        working_event = current_event
+                        index += 1
+                    } else if (working_event == null) {
+                        merged_events.removeAt(index)
+                    } else {
+                        merged_events.removeAt(index)
+                        merged_events.add(index, Pair(control_type, ControllerProfile.ProfileEffectEvent(
+                            start_position = current_event.start_position,
+                            end_position = current_event.end_position,
+                            start_value = working_event.start_value,
+                            end_value = working_event.end_value,
+                            transition = current_event.transition
+                        )))
+                    }
+                }
+
+                for ((_, effect_event) in merged_events) {
+                    control_event_data.addAll(this.convert_to_indexed_profile_buffer_frames(effect_event, control_type))
+                }
+            }
+            else -> {
+                for (effect_event in controller_profile.get_events()) {
+                    control_event_data.addAll(this.convert_to_indexed_profile_buffer_frames(effect_event, control_type))
+                }
+            }
         }
 
         return ControllerEventData(control_event_data, control_type)

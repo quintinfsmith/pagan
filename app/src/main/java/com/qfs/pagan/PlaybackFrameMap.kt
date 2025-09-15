@@ -425,22 +425,35 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this._tempo_ratio_map.add(Pair(0f, working_tempo))
 
         controller.beats.forEachIndexed { i: Int, tree: ReducibleTree<OpusTempoEvent>? ->
-            if (tree == null) {
-                return@forEachIndexed
-            }
+            if (tree == null) return@forEachIndexed
 
             val stack = mutableListOf(Triple(tree, 1F, 0F))
             while (stack.isNotEmpty()) {
                 val (working_tree, working_ratio, working_offset) = stack.removeAt(0)
 
                 if (working_tree.has_event()) {
-                    working_tempo = working_tree.get_event()!!.value
-                    this._tempo_ratio_map.add(
-                        Pair(
-                            i.toFloat() + working_offset,
-                            working_tempo
+                    working_tree.get_event()?.let { event ->
+                        this._tempo_ratio_map.add(
+                            Pair(
+                                i.toFloat() + working_offset,
+                                event.value
+                            )
                         )
-                    )
+                        when (event.transition) {
+                            EffectTransition.Instant -> {
+                                working_tempo = event.value
+                            }
+                            EffectTransition.RInstant -> {
+                                this._tempo_ratio_map.add(
+                                    Pair(
+                                        i.toFloat() + working_offset + working_ratio,
+                                        working_tempo
+                                    )
+                                )
+                            }
+                            else -> {/* TODO: throw exception? */}
+                        }
+                    }
                 } else if (!working_tree.is_leaf()) {
                     for ((j, child) in working_tree.divisions) {
                         val child_width = working_ratio / working_tree.size.toFloat()

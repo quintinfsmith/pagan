@@ -922,6 +922,20 @@ class ActionTracker {
 
     fun set_ctl_transition(transition: EffectTransition? = null) {
         val main = this.get_activity()
+        val context_menu = main.active_context_menu as ContextMenuControlLeaf<EffectEvent>
+        val event = context_menu.get_control_event<EffectEvent>().copy()
+
+
+        val filter = when (event.event_type) {
+            EffectType.Tempo -> listOf(EffectTransition.Instant, EffectTransition.RInstant)
+            else -> listOf(
+                EffectTransition.Instant,
+                EffectTransition.Linear,
+                EffectTransition.RInstant,
+                EffectTransition.RLinear
+            )
+        }
+
         val options = listOf(
             Triple(
                 EffectTransition.Instant,
@@ -943,11 +957,8 @@ class ActionTracker {
                 main.get_effect_transition_icon(EffectTransition.RLinear),
                 main.getString(R.string.effect_transition_rlinear)
             )
-        )
+        ).filter { filter.contains(it.first) }
 
-        val context_menu = main.active_context_menu as ContextMenuControlLeaf<EffectEvent>
-
-        val event = context_menu.get_control_event<EffectEvent>().copy()
         this.dialog_popup_menu(main.getString(R.string.dialog_transition), options, default = event.transition, transition) { i: Int, transition: EffectTransition ->
             this.track(TrackedAction.SetTransitionAtCursor, ActionTracker.string_to_ints(transition.name))
             event.transition = transition

@@ -35,4 +35,13 @@
         app:layout_constraintBottom_toBottomOf="@id/tempo_value"
         app:layout_constraintStart_toEndOf="@id/tempo_value"/>
 
+    <Button
+        android:id="@+id/transition_button"
+        style="@style/contextmenu_button"
+        android:layout_height="match_parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>

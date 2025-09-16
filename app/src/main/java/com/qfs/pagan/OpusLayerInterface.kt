@@ -1646,7 +1646,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 this.set_relative_mode(current_tree.get_event()!! as TunedInstrumentEvent)
             }
 
-            this._queue_cursor_update(this.cursor, false)
+            this._queue_cursor_update(this.cursor)
             if (this.is_percussion(beat_key.channel)) {
                 this._ui_change_bill.queue_set_context_menu_leaf_percussion()
             } else {
@@ -1665,7 +1665,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             this._unset_temporary_blocker()
             super.cursor_select_ctl_at_line(ctl_type, beat_key, position)
 
-            this._queue_cursor_update(this.cursor, false)
+            this._queue_cursor_update(this.cursor)
             this._ui_change_bill.queue_set_context_menu_line_control_leaf()
         }
     }
@@ -1679,7 +1679,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             this._unset_temporary_blocker()
             super.cursor_select_ctl_at_channel(ctl_type, channel, beat, position)
 
-            this._queue_cursor_update(this.cursor, false)
+            this._queue_cursor_update(this.cursor)
             this._ui_change_bill.queue_set_context_menu_line_control_leaf()
         }
     }
@@ -1693,58 +1693,51 @@ class OpusLayerInterface : OpusLayerHistory() {
             this._unset_temporary_blocker()
             super.cursor_select_ctl_at_global(ctl_type, beat, position)
 
-            this._queue_cursor_update(this.cursor, false)
+            this._queue_cursor_update(this.cursor)
             this._ui_change_bill.queue_set_context_menu_line_control_leaf()
         }
     }
 
     override fun cursor_select_global_ctl_range(type: EffectType, first: Int, second: Int) {
-        if (this._block_cursor_selection()) {
-            return
-        }
+        if (this._block_cursor_selection()) return
+
         this.lock_ui_partial {
             this._unset_temporary_blocker()
             super.cursor_select_global_ctl_range(type, first, second)
 
-            this._queue_cursor_update(this.cursor, false)
+            this._queue_cursor_update(this.cursor)
             this._ui_change_bill.queue_set_context_menu_line_control_leaf_b()
         }
     }
 
     override fun cursor_select_channel_ctl_range(type: EffectType, channel: Int, first: Int, second: Int) {
-        if (this._block_cursor_selection()) {
-            return
-        }
+        if (this._block_cursor_selection()) return
         this.lock_ui_partial {
             this._unset_temporary_blocker()
             super.cursor_select_channel_ctl_range(type, channel, first, second)
-            this._queue_cursor_update(this.cursor.copy(), false)
+            this._queue_cursor_update(this.cursor.copy())
             this._ui_change_bill.queue_set_context_menu_line_control_leaf_b()
         }
     }
 
     override fun cursor_select_line_ctl_range(type: EffectType, beat_key_a: BeatKey, beat_key_b: BeatKey) {
-        if (this._block_cursor_selection()) {
-            return
-        }
+        if (this._block_cursor_selection()) return
         this.lock_ui_partial {
             this._unset_temporary_blocker()
             super.cursor_select_line_ctl_range(type, beat_key_a, beat_key_b)
 
-            this._queue_cursor_update(this.cursor.copy(), false)
+            this._queue_cursor_update(this.cursor.copy())
             this._ui_change_bill.queue_set_context_menu_line_control_leaf_b()
         }
     }
 
     override fun cursor_select_range(beat_key_a: BeatKey, beat_key_b: BeatKey) {
-        if (this._block_cursor_selection()) {
-            return
-        }
+        if (this._block_cursor_selection()) return
+
         this.lock_ui_partial {
             this._unset_temporary_blocker()
             super.cursor_select_range(beat_key_a, beat_key_b)
-
-            this._queue_cursor_update(this.cursor.copy(), false)
+            this._queue_cursor_update(this.cursor)
             this._ui_change_bill.queue_set_context_menu_range()
         }
     }
@@ -1958,10 +1951,10 @@ class OpusLayerInterface : OpusLayerHistory() {
         this._ui_change_bill.queue_force_scroll(y ?: -1, beat ?: -1, offset, offset_width, this._activity?.in_playback() == true)
     }
 
-    private fun _queue_cursor_update(cursor: OpusManagerCursor, deep_update: Boolean = true) {
+    private fun _queue_cursor_update(cursor: OpusManagerCursor) {
         if (cursor != this._cache_cursor) {
             try {
-                this._queue_cursor_update(this._cache_cursor, deep_update)
+                this._queue_cursor_update(this._cache_cursor)
             }  catch (e: Exception) {
                 when (e) {
                     is GlobalEffectRowNotVisible,
@@ -2248,7 +2241,6 @@ class OpusLayerInterface : OpusLayerHistory() {
                         }
 
                         row_index
-
                     }
                     CtlLineLevel.Channel -> {
                         val channel = this.get_all_channels()[cursor.channel]
@@ -2288,9 +2280,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                             return
                         }
                     }
-                    CtlLineLevel.Global -> {
-                        this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
-                    }
+                    CtlLineLevel.Global -> this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
                 }
 
                 this._ui_change_bill.queue_row_change(y, true)

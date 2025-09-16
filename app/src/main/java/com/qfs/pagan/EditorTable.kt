@@ -412,9 +412,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
                 }
             }
             for ((_, controller) in channel.controllers.get_all()) {
-                if (!controller.visible) {
-                    continue
-                }
+                if (!controller.visible) continue
                 if (y == row) {
                     return Pair(working_y_offset, controller_height)
                 } else {
@@ -426,9 +424,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         }
 
         for ((_, controller) in opus_manager.controllers.get_all()) {
-            if (!controller.visible) {
-                continue
-            }
+            if (!controller.visible) continue
             if (y == row) {
                 return Pair(working_y_offset, controller_height)
             } else {
@@ -474,18 +470,27 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
                     }
                 }
             }
-            // No need to force_scroll in these modes
+
             CursorMode.Range -> {
-                val (first, second) = cursor.get_ordered_range()!!
-                opus_manager.get_visible_row_from_ctl_line(
-                    opus_manager.get_actual_line_index(
-                        max(
-                            opus_manager.get_instrument_line_index(first.channel, first.line_offset),
-                            opus_manager.get_instrument_line_index(second.channel, second.line_offset)
+                when (cursor.ctl_level) {
+                    null -> {
+                        val (first, second) = cursor.get_ordered_range()!!
+                        opus_manager.get_visible_row_from_ctl_line(
+                            opus_manager.get_actual_line_index(
+                                max(
+                                    opus_manager.get_instrument_line_index(first.channel, first.line_offset),
+                                    opus_manager.get_instrument_line_index(second.channel, second.line_offset)
+                                )
+                            )
                         )
-                    )
-                )
+                    }
+
+                    CtlLineLevel.Line -> opus_manager.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, cursor.range!!.second.channel, cursor.range!!.second.line_offset)
+                    CtlLineLevel.Channel -> opus_manager.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.range!!.second.channel)
+                    CtlLineLevel.Global -> opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
+                }
             }
+
             CursorMode.Channel-> {
                 opus_manager.get_visible_row_from_ctl_line(
                     opus_manager.get_actual_line_index(
@@ -496,9 +501,11 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
                     )
                 )
             }
+            // No need to force_scroll in these modes
             CursorMode.Column,
             CursorMode.Unset -> null
         } ?: return
+
         this._scroll_to_y(row)
     }
 
@@ -524,9 +531,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         }.toInt()
 
         // kludge: view hasn't been measured yet. skip.
-        if (context_menu_top == 0) {
-            return
-        }
+        if (context_menu_top == 0) return
 
         if (context_menu_top + vertical_scroll_view.scrollY < target_y + row_height) {
             val adj_y = (target_y + row_height) - context_menu_top.toInt()

@@ -39,6 +39,7 @@ import kotlin.concurrent.thread
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
+import kotlin.math.round
 import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
@@ -1398,7 +1399,10 @@ class ActionTracker {
         val widget = context_menu.get_widget() as ControlWidgetTempo
         val rounded_value = (input_value * 1000F).roundToInt().toFloat() / 1000F
         this.track(TrackedAction.SetTempoAtCursor, listOf(input_value.toBits()))
-        val new_event = OpusTempoEvent(rounded_value)
+
+        val new_event = widget.get_event().copy()
+        new_event.value = rounded_value
+
         widget.set_event(new_event)
     }
 

@@ -2,6 +2,9 @@ package com.qfs.pagan.projectmanager
 
 import android.content.Context
 import android.net.Uri
+import android.provider.DocumentsContract
+import android.provider.DocumentsContract.Document.COLUMN_DISPLAY_NAME
+import android.provider.DocumentsContract.Document.COLUMN_DOCUMENT_ID
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.qfs.json.InvalidJSON
@@ -21,6 +24,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.TimeZone
+
 
 /**
  * Handles project file management. ie caching files, generating file names, etc
@@ -174,9 +178,23 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         }
         val working_directory = DocumentFile.fromTreeUri(this.context, this.uri!!)!!
         var i = 0
+        var ts = System.currentTimeMillis()
         while (working_directory.findFile("opus_$i.json") != null) {
             i += 1
         }
+        println("BAD?: ${System.currentTimeMillis() - ts}")
+
+        val docUriTree = DocumentsContract.buildDocumentUriUsingTree(this.uri, DocumentsContract.getTreeDocumentId(this.uri))
+        ts = System.currentTimeMillis()
+        this.context.contentResolver.query(docUriTree, arrayOf(COLUMN_DOCUMENT_ID, COLUMN_DISPLAY_NAME),null,null,null)?.let { cursor ->
+            while (cursor.moveToNext()) {
+                val i = cursor.getColumnIndex(COLUMN_DISPLAY_NAME)
+                println("F: ${cursor.getString(i)} ($i) (${cursor.position})")
+            }
+            println("ContentResolver: ${cursor.count}")
+            cursor.close()
+        }
+        println("${System.currentTimeMillis() - ts}")
 
         return working_directory.createFile("application/json", "opus_$i.json")?.uri
     }
@@ -292,7 +310,6 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         }
 
         val working_directory = DocumentFile.fromTreeUri(this.context, this.uri!!) ?: return
-
         val project_list = JSONList()
         for (json_file in working_directory.listFiles()) {
             val project_name = try {
@@ -371,7 +388,6 @@ class ProjectManager(val context: Context, var uri: Uri?) {
             string_content = File(this._cache_path).readText(Charsets.UTF_8)
             JSONParser.parse(string_content)!!
         }
-
     }
 
     /**

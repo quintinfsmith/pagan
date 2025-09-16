@@ -17,10 +17,10 @@ class ControlWidgetDelay(level: CtlLineLevel, is_initial_event: Boolean, context
     private lateinit var _fade: SeekBar
     private lateinit var _label: TextView
     companion object {
-        val DEFAULT_NUMERATOR = 1
-        val DEFAULT_DENOMINATOR = 1
-        val DEFAULT_FADE = 1F
-        val DEFAULT_REPEAT = 0
+        const val DEFAULT_NUMERATOR = 1
+        const val DEFAULT_DENOMINATOR = 1
+        const val DEFAULT_FADE = 1F
+        const val DEFAULT_REPEAT = 0
     }
 
     val min = 1
@@ -102,7 +102,7 @@ class ControlWidgetDelay(level: CtlLineLevel, is_initial_event: Boolean, context
                 main.get_action_interface().set_delay_at_cursor(
                     this.working_event?.numerator ?: DEFAULT_NUMERATOR,
                     this.working_event?.denominator ?: DEFAULT_DENOMINATOR,
-                    1F - (this._fade.progress.toFloat() / this._fade.max.toFloat()),
+                    1F - (value.toFloat() / this._fade.max.toFloat()),
                     this.working_event?.echo ?: DEFAULT_REPEAT
                 )
             }

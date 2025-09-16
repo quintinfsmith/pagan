@@ -415,7 +415,7 @@ class DelayBuffer: public EffectProfileBuffer {
 
                 if (this->active_input_frame == nullptr) continue;
 
-                if (working_array[i] != 0 && working_array[i + array_size] != 0) {
+                if (working_array[i] != 0 || working_array[i + array_size] != 0) {
                     this->active_input_frame->add_value(working_array[i] * fade, working_array[i + array_size] * fade, echo);
                     this->active_value_count++;
                 }

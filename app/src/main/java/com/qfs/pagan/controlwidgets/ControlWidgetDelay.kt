@@ -23,8 +23,6 @@ class ControlWidgetDelay(level: CtlLineLevel, is_initial_event: Boolean, context
         const val DEFAULT_REPEAT = 0
     }
 
-    val min = 1
-    val max = 9999
     private var _lockout_ui: Boolean = false
 
     override fun on_inflated() {
@@ -45,9 +43,6 @@ class ControlWidgetDelay(level: CtlLineLevel, is_initial_event: Boolean, context
         this._echo.textAlignment = TEXT_ALIGNMENT_CENTER
         this._numerator.textAlignment = TEXT_ALIGNMENT_CENTER
         this._denominator.textAlignment = TEXT_ALIGNMENT_CENTER
-
-        this._numerator.set_range(this.min, this.max)
-        this._denominator.set_range(this.min, this.max)
 
         var context = this.context
         while (context !is ActivityEditor) {

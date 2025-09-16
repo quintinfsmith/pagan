@@ -320,7 +320,6 @@ class ActivitySettings : PaganActivity() {
         this.set_project_directory_button_text()
         this.set_soundfont_directory_button_text()
 
-
         this.setResult(RESULT_CANCELED)
     }
 

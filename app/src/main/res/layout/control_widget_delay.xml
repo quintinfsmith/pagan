@@ -19,7 +19,7 @@
             android:paddingStart="0dp"
             android:paddingEnd="0dp"
             app:min="1"
-            app:max="99"
+            app:max="4096"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/icon_echo"
@@ -29,6 +29,8 @@
             android:id="@+id/numerator"
             android:paddingStart="0dp"
             android:paddingEnd="0dp"
+            app:min="1"
+            app:max="9999"
             android:background="@drawable/icon_hz"
             android:backgroundTint="@color/context_menu_background_icon"
             android:layout_width="wrap_content"
@@ -43,6 +45,8 @@
 
         <com.qfs.pagan.numberinput.RangedIntegerInput
             android:id="@+id/denominator"
+            app:min="1"
+            app:max="9999"
             android:paddingStart="0dp"
             android:paddingEnd="0dp"
             android:background="@drawable/icon_hz"

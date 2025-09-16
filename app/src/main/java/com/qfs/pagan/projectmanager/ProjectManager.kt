@@ -173,46 +173,38 @@ class ProjectManager(val context: Context, var uri: Uri?) {
      * Generate a new uri that will *definitely not* collide with existing project files.
      */
     fun get_new_file_uri(): Uri? {
-        if (this.uri == null) {
-            throw PathNotSetException()
-        }
-        val working_directory = DocumentFile.fromTreeUri(this.context, this.uri!!)!!
+        if (this.uri == null) throw PathNotSetException()
+
+        val existing_files = this.get_existing_file_names()
         var i = 0
-        var ts = System.currentTimeMillis()
-        while (working_directory.findFile("opus_$i.json") != null) {
+        while (existing_files.contains("opus_$i.json")) {
             i += 1
         }
-        println("BAD?: ${System.currentTimeMillis() - ts}")
 
-        val docUriTree = DocumentsContract.buildDocumentUriUsingTree(this.uri, DocumentsContract.getTreeDocumentId(this.uri))
-        ts = System.currentTimeMillis()
-        this.context.contentResolver.query(docUriTree, arrayOf(COLUMN_DOCUMENT_ID, COLUMN_DISPLAY_NAME),null,null,null)?.let { cursor ->
+        val working_directory = DocumentFile.fromTreeUri(this.context, this.uri!!)!!
+        return working_directory.createFile("application/json", "opus_$i.json")?.uri
+    }
+
+    fun get_existing_file_names(): Set<String> {
+        val document_id = DocumentsContract.getTreeDocumentId(this.uri)
+        val uri_tree = DocumentsContract.buildChildDocumentsUriUsingTree(this.uri, document_id)
+        val existing_files = mutableSetOf<String>()
+        this.context.contentResolver.query(uri_tree, arrayOf(COLUMN_DOCUMENT_ID, COLUMN_DISPLAY_NAME), null,null,null)?.let { cursor ->
             while (cursor.moveToNext()) {
                 val i = cursor.getColumnIndex(COLUMN_DISPLAY_NAME)
-                println("F: ${cursor.getString(i)} ($i) (${cursor.position})")
+                existing_files.add(cursor.getString(i))
             }
-            println("ContentResolver: ${cursor.count}")
             cursor.close()
         }
-        println("${System.currentTimeMillis() - ts}")
 
-        return working_directory.createFile("application/json", "opus_$i.json")?.uri
+        return existing_files
     }
 
     /**
      * Check if there are any projects saved in the ProjectManager's Uri
      */
     fun has_projects_saved(): Boolean {
-        if (this.uri == null) {
-            return false
-        }
-
-        val working_directory = DocumentFile.fromTreeUri(this.context, this.uri!!) ?: return false
-        if (!working_directory.isDirectory) {
-            return false
-        }
-
-        return working_directory.listFiles().isNotEmpty()
+        return this.get_existing_file_names().isNotEmpty()
     }
 
     /**
@@ -261,9 +253,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         } catch (_: SecurityException) {
             return false
         }
-        if (!old_directory.isDirectory || old_directory.listFiles()?.isEmpty() ?: false) {
-            return false
-        }
+        if (!old_directory.isDirectory || old_directory.listFiles()?.isEmpty() ?: false) return false
 
         val working_directory = DocumentFile.fromFile(old_directory)
 

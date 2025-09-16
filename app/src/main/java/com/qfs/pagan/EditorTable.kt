@@ -205,7 +205,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     }
 
     fun update_line_label(y: Int) {
-        // TODO
+        this.table_ui.notify_row_change(y, false)
     }
 
     fun update_column_label(x: Int) {

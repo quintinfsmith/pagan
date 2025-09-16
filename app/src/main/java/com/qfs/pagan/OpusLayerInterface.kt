@@ -728,16 +728,14 @@ class OpusLayerInterface : OpusLayerHistory() {
             // Need to call get_drum name to repopulate instrument list if needed
             this.get_activity()?.get_drum_name(channel, instrument)
 
-            if (!this._ui_change_bill.is_full_locked()) {
-                this._ui_change_bill.queue_refresh_choose_percussion_button(channel, line_offset)
-                this._ui_change_bill.queue_line_label_refresh(
-                    this.get_visible_row_from_ctl_line(
-                        this.get_actual_line_index(
-                            this.get_instrument_line_index(channel, line_offset)
-                        )
-                    )!!
-                )
-            }
+            this._ui_change_bill.queue_refresh_choose_percussion_button(channel, line_offset)
+            this._ui_change_bill.queue_line_label_refresh(
+                this.get_visible_row_from_ctl_line(
+                    this.get_actual_line_index(
+                        this.get_instrument_line_index(channel, line_offset)
+                    )
+                )!!
+            )
         }
     }
 
@@ -2436,9 +2434,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     private fun _new_column_in_column_width_map(index: Int) {
-        if (this._ui_change_bill.is_full_locked()) {
-            return
-        }
+        if (this._ui_change_bill.is_full_locked()) return
 
         val column = mutableListOf<Int>()
         for (channel in this.get_visible_channels()) {
@@ -2709,6 +2705,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                     null -> break
                 }
             }
+
             // Temporary function call while I work on a spot-update solution
             editor_table.table_ui.finalize_update()
 

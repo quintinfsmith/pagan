@@ -18,6 +18,8 @@
             android:id="@+id/echo"
             android:paddingStart="0dp"
             android:paddingEnd="0dp"
+            app:min="1"
+            app:max="99"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/icon_echo"

@@ -46,7 +46,6 @@ class ControlWidgetDelay(level: CtlLineLevel, is_initial_event: Boolean, context
         this._numerator.textAlignment = TEXT_ALIGNMENT_CENTER
         this._denominator.textAlignment = TEXT_ALIGNMENT_CENTER
 
-        this._echo.set_range(0, 99)
         this._numerator.set_range(this.min, this.max)
         this._denominator.set_range(this.min, this.max)
 
@@ -89,11 +88,12 @@ class ControlWidgetDelay(level: CtlLineLevel, is_initial_event: Boolean, context
         })
 
         this._echo.value_set_callback = { value: Int? ->
+            val adj_value = value?.let { it - 1 } ?: DEFAULT_REPEAT
             main.get_action_interface().set_delay_at_cursor(
                 this.working_event?.numerator ?: DEFAULT_NUMERATOR,
                 this.working_event?.denominator ?: DEFAULT_DENOMINATOR,
                 this.working_event?.fade ?: DEFAULT_FADE,
-                value ?: DEFAULT_REPEAT
+                adj_value
             )
         }
 
@@ -118,8 +118,7 @@ class ControlWidgetDelay(level: CtlLineLevel, is_initial_event: Boolean, context
         this._fade.progress = this._fade.max - (this._fade.max * event.fade).toInt()
         this._denominator.set_value(event.denominator)
         this._numerator.set_value(event.numerator)
-        this._echo.set_value(event.echo)
+        this._echo.set_value(event.echo + 1)
         this._label.text = this.context.getString(R.string.contextmenu_delay_attenuation, ((1F - event.fade) * 100).toInt())
     }
-
 }

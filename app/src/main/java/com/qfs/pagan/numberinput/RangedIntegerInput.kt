@@ -24,8 +24,7 @@ class RangedIntegerInput(context: Context, attrs: AttributeSet? = null): RangedN
 
     override fun get_value(): Int? {
         return try {
-            val current_value = this.text.toString().toInt()
-            max(this.min ?: current_value, current_value)
+            this.text.toString().toInt()
         } catch (nfe: NumberFormatException) {
             null
         }

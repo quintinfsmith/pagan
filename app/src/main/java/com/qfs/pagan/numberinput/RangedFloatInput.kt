@@ -34,8 +34,7 @@ class RangedFloatInput(context: Context, attrs: AttributeSet? = null): RangedNum
 
     override fun get_value(): Float? {
         return try {
-            val current_value = this.text.toString().toFloat()
-            max(this.min ?: current_value, current_value)
+            this.text.toString().toFloat()
         } catch (nfe: NumberFormatException) {
             null
         }

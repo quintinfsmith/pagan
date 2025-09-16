@@ -1,9 +1,12 @@
 package com.qfs.apres.soundfontplayer
 
-class ProfileBuffer(var ptr: Long) {
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
+
+class ProfileBuffer(var ptr: Long, val type: EffectType) {
     // TODO: Memory Management
     constructor(data: ControllerEventData, start_frame: Int = 0): this(
-        ProfileBuffer.create(data.ptr, start_frame)
+        ProfileBuffer.create(data.ptr, start_frame),
+        data.type
     )
 
     companion object {
@@ -22,7 +25,7 @@ class ProfileBuffer(var ptr: Long) {
 
     external fun copy_jni(ptr: Long): Long
     fun copy(): ProfileBuffer {
-        return ProfileBuffer(this.copy_jni(this.ptr))
+        return ProfileBuffer(this.copy_jni(this.ptr), this.type)
     }
 
     external fun destroy_jni(ptr: Long, deep: Boolean)
@@ -36,7 +39,7 @@ class ProfileBuffer(var ptr: Long) {
 
     external fun get_data_ptr_jni(ptr: Long): Long
     fun get_data(): ControllerEventData {
-        return ControllerEventData(this.get_data_ptr_jni(this.ptr))
+        return ControllerEventData(this.get_data_ptr_jni(this.ptr), this.type)
     }
 }
 

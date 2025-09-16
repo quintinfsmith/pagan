@@ -2,11 +2,11 @@ package com.qfs.apres.soundfontplayer
 
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 
-class ControllerEventData(val ptr: Long) {
+class ControllerEventData(val ptr: Long, val type: EffectType) {
     class IndexedProfileBufferFrame(val first_frame: Int, val last_frame: Int, val value: FloatArray, val increment: FloatArray)
 
     constructor(frames: List<IndexedProfileBufferFrame>, type: EffectType): this(
-        ControllerEventData.intermediary_create(frames, type)
+        ControllerEventData.intermediary_create(frames, type), type
     )
 
     companion object {

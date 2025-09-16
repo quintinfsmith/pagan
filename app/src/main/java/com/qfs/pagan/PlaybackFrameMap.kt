@@ -379,7 +379,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                                     this.convert_controller_to_event_data(
                                         control_type,
                                         controller
-                                    )
+                                    ),
                                 )
                             )
                         )
@@ -415,6 +415,10 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                     )
                 )
             }
+        }
+
+        this._effect_profiles.sortBy { (layer, _, buffer) ->
+            buffer.type
         }
     }
 

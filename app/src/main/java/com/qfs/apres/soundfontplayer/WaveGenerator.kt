@@ -63,25 +63,28 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         }
 
         val separated_lines_map: HashMap<Int, Pair<FloatArray, IntArray>> = this@WaveGenerator.generate_sample_arrays(first_frame)
-        // Add buffers of empty lines that still have to be included (ie Delay)
-        if (force_empty_indices.isNotEmpty()) {
-            outer@ for (i in force_empty_indices) {
-                val (layer, key, _) = profiles[i]
-                for ((key, pair) in separated_lines_map) {
-                    val (merge_key, _) = pair
-                    if (merge_key[layer] == key.toFloat()) {
-                        continue@outer
-                    }
-                }
 
-                val empty_frames = FloatArray(this.buffer_size * 2)
-                separated_lines_map[separated_lines_map.size] = Pair(
-                    empty_frames,
-                    IntArray(layer + 1) {
-                        if (it == layer) key else 0
-                    }
-                )
+        // Add buffers of empty lines that still have to be included (ie Delay)
+        outer@ for (i in force_empty_indices) {
+            val (layer, key, _) = profiles[i]
+            for ((key, pair) in separated_lines_map) {
+                val (merge_key, _) = pair
+                if (merge_key[layer] == key.toFloat()) continue@outer
             }
+
+            val empty_frames = FloatArray(this.buffer_size * 2)
+            val new_key = if (separated_lines_map.keys.isNotEmpty()) {
+                separated_lines_map.keys.max() + 1
+            } else {
+                0
+            }
+
+            separated_lines_map[new_key] = Pair(
+                empty_frames,
+                IntArray(layer + 1) {
+                    if (it == layer) key else 0
+                }
+            )
         }
 
         val keys = separated_lines_map.keys.toList()

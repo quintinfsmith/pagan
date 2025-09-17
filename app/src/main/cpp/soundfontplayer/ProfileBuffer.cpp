@@ -47,21 +47,21 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_copy_1jni(JNIEnv* env, jobject,
     EffectProfileBuffer* buffer;
     switch (ptr->type) {
         case TYPE_DELAY: {
-            auto* original =(DelayBuffer*)ptr;
+            auto* original = (DelayBuffer*)ptr;
             auto* derived_buffer = (DelayBuffer*)malloc(sizeof(DelayBuffer));
             original->copy_to(derived_buffer);
             buffer = derived_buffer;
             break;
         }
         case TYPE_PAN: {
-            auto* original =(PanBuffer*)ptr;
+            auto* original = (PanBuffer*)ptr;
             auto* derived_buffer = (PanBuffer*)malloc(sizeof(PanBuffer));
             original->copy_to(derived_buffer);
             buffer = derived_buffer;
             break;
         }
         case TYPE_VOLUME: {
-            auto* original =(VolumeBuffer*)ptr;
+            auto* original = (VolumeBuffer*)ptr;
             auto* derived_buffer = (VolumeBuffer*)malloc(sizeof(VolumeBuffer));
             original->copy_to(derived_buffer);
             buffer = derived_buffer;
@@ -123,7 +123,8 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_allow_1empty_1jni(JNIEnv* env, 
         case TYPE_DELAY: {
             auto* typed_ptr = (DelayBuffer*) ptr_long;
             // DEBUG
-            return typed_ptr->has_pending_echoes();
+            return true;
+            //return typed_ptr->has_pending_echoes();
         }
         default: {
             return false;

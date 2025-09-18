@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <dimen name="action_bar_size">52dp</dimen>
     <dimen name="normal_padding">1dp</dimen>
     <dimen name="stroke_leaf">1dp</dimen>
     <dimen name="leaf_light_width">2dp</dimen>

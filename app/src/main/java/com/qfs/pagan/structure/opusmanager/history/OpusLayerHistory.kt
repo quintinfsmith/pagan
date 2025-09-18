@@ -196,7 +196,9 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 )
             }
 
-
+            for ((type, _) in this.channels[channel].controllers.get_all()) {
+                this.remove_channel_controller(type, channel)
+            }
 
             tmp_history_nodes.add(
                 Pair(

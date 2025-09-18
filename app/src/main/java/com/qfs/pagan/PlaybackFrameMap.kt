@@ -35,6 +35,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         const val LAYER_LINE = 1
         const val LAYER_CHANNEL = 2
         const val LAYER_GLOBAL = 3
+
+        var merge_offset_gen = 1
     }
     private val _fade_limit = this._sample_handle_manager.sample_rate / 12 // when clipping a release phase, limit the fade out so it doesn't click
     private val _handle_map = HashMap<Int, Pair<SampleHandle, IntArray>>() // Handle UUID::(Handle::Merge Keys)
@@ -374,7 +376,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                         this._effect_profiles.add(
                             Triple(
                                 PlaybackFrameMap.LAYER_LINE,
-                                this.generate_merge_keys(c, l)[1], // key
+                                this.generate_merge_keys(c, l)[LAYER_LINE], // key
                                 ProfileBuffer(
                                     this.convert_controller_to_event_data(
                                         control_type,
@@ -392,7 +394,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                     this._effect_profiles.add(
                         Triple(
                             PlaybackFrameMap.LAYER_CHANNEL, // layer (channel)
-                            this.generate_merge_keys(c, -1)[2], // key
+                            this.generate_merge_keys(c, -1)[LAYER_CHANNEL], // key
                             ProfileBuffer(
                                 this.convert_controller_to_event_data(control_type, controller)
                             )
@@ -408,7 +410,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 this._effect_profiles.add(
                     Triple(
                         PlaybackFrameMap.LAYER_GLOBAL, // layer (global)
-                        0,
+                        -1,
                         ProfileBuffer(
                             this.convert_controller_to_event_data(control_type, controller)
                         )
@@ -775,7 +777,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
     private fun generate_merge_keys(channel: Int, line_offset: Int): IntArray {
         return intArrayOf(
-            Random.nextInt(), // LAYER_SAMPLE
+            PlaybackFrameMap.merge_offset_gen++,
             line_offset + (channel * 1000), // LAYER_LINE
             channel // LAYER_CHANNEL
         )

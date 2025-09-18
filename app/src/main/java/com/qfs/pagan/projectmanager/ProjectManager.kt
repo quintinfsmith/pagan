@@ -186,6 +186,8 @@ class ProjectManager(val context: Context, var uri: Uri?) {
     }
 
     fun get_existing_file_names(): Set<String> {
+        if (this.uri == null) return mutableSetOf()
+
         val document_id = DocumentsContract.getTreeDocumentId(this.uri)
         val uri_tree = DocumentsContract.buildChildDocumentsUriUsingTree(this.uri, document_id)
         val existing_files = mutableSetOf<String>()

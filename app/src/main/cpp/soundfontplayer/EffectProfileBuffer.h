@@ -9,7 +9,6 @@
 #include "ControllerEventData.h"
 #include "SampleHandle.h"
 #include "Complex.h"
-#include <android/log.h>
 
 int PROFILE_BUFFER_ID_GEN = 0;
 class EffectProfileBuffer {
@@ -370,6 +369,7 @@ class DelayBuffer: public EffectProfileBuffer {
         auto* working_ptr = (DelayedFrame*)malloc(sizeof(DelayedFrame));
         working_ptr->init();
 
+        this->active_value_count = 0;
         this->active_input_frame = working_ptr;
 
         for (int i = 0; i < this->active_delay_in_frames - 1; i++) {
@@ -441,9 +441,7 @@ class DelayBuffer: public EffectProfileBuffer {
         }
 
         ~DelayBuffer() {
-            if (this->active_input_frame != nullptr) {
-                delete this->active_input_frame;
-            }
+            delete this->active_input_frame;
         }
 
         bool has_pending_echoes() {

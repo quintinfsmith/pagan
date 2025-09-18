@@ -122,9 +122,7 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_allow_1empty_1jni(JNIEnv* env, 
     switch (ptr->data->type) {
         case TYPE_DELAY: {
             auto* typed_ptr = (DelayBuffer*) ptr_long;
-            // DEBUG
-            return true;
-            //return typed_ptr->has_pending_echoes();
+            return typed_ptr->has_pending_echoes();
         }
         default: {
             return false;

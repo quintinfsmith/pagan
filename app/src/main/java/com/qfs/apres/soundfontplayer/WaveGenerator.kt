@@ -1,5 +1,8 @@
 package com.qfs.apres.soundfontplayer
 
+import androidx.collection.IntList
+import kotlin.math.max
+
 class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int, var stereo_mode: StereoMode = StereoMode.Stereo) {
     enum class StereoMode {
         Mono,
@@ -67,12 +70,13 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         // Add buffers of empty lines that still have to be included (ie Delay)
         outer@ for (i in force_empty_indices) {
             val (layer, key, _) = profiles[i]
-            for ((key, pair) in separated_lines_map) {
-                val (merge_key, _) = pair
-                if (merge_key[layer] == key.toFloat()) continue@outer
+            var key_size = 0
+            for ((_, pair) in separated_lines_map) {
+                val (_, merge_key) = pair
+                key_size = max(merge_key.size, key_size)
+                if (merge_key[layer] == key) continue@outer
             }
 
-            val empty_frames = FloatArray(this.buffer_size * 2)
             val new_key = if (separated_lines_map.keys.isNotEmpty()) {
                 separated_lines_map.keys.max() + 1
             } else {
@@ -80,9 +84,9 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             }
 
             separated_lines_map[new_key] = Pair(
-                empty_frames,
-                IntArray(layer + 1) {
-                    if (it == layer) key else 0
+                FloatArray(this.buffer_size * 2),
+                IntArray(key_size) {
+                    if (it == layer) key else -1
                 }
             )
         }

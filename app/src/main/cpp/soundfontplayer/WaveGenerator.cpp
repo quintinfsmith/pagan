@@ -63,7 +63,7 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
 
         auto working_keylist = reinterpret_cast<jintArray>(env->GetObjectArrayElement(merge_keys, i));
         working_keys[i] = env->GetIntArrayElements(working_keylist, nullptr);
-        key_width = env->GetArrayLength(working_keylist);
+        key_width = max(key_width, env->GetArrayLength(working_keylist));
     }
 
     // Set up effect buffers
@@ -72,17 +72,18 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
     jint* effect_keys = env->GetIntArrayElements(buffer_keys_input, nullptr);
     jint* effect_indices = env->GetIntArrayElements(buffer_layer_indices_input, nullptr);
 
-    int depth = 0;
     int done_stack[array_count];
     int done_count = 0;
     int effect_buffers_applied[effect_buffer_count];
     int effect_buffers_applied_count = 0;
 
-    while (depth <= key_width) {
+    for (int depth = 0; depth <= key_width; depth++) {
         for (int i = 0; i < array_count; i++) {
             if (array_contains(done_stack, done_count, i)) continue;
             for (int j = i + 1; j < array_count; j++) {
+                if (key_width < depth && working_keys[j][depth] == -1) continue;
                 if (array_contains(done_stack, done_count, j)) continue;
+
                 if (depth == key_width || working_keys[j][depth] == working_keys[i][depth]) {
                     for (int k = 0; k < frames; k++) {
                         working_arrays[i][k] += working_arrays[j][k];
@@ -93,13 +94,13 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
             }
 
             for (int j = 0; j < effect_buffer_count; j++) {
-                if (depth != effect_indices[j] || (depth != key_width && effect_keys[j] != working_keys[i][depth])) continue;
+                if (effect_keys[j] == -1) continue;
+                if (depth != effect_indices[j] || (depth < key_width && effect_keys[j] != working_keys[i][depth])) continue;
                 if (apply_effect_buffer((EffectProfileBuffer *) effect_buffers[j], working_arrays[i], (int) frames)) {
                     effect_buffers_applied[effect_buffers_applied_count++] = j;
                 }
             }
         }
-        depth++;
     }
 
     for (int i = 0; i < effect_buffer_count; i++) {

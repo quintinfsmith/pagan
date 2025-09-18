@@ -7,7 +7,6 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.util.TypedValue
-import android.view.ContextThemeWrapper
 import android.view.KeyEvent.ACTION_UP
 import android.view.MotionEvent
 import android.view.MotionEvent.ACTION_MOVE
@@ -15,7 +14,6 @@ import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.HorizontalScrollView
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.LinearLayout.VERTICAL
 import android.widget.ScrollView
@@ -642,7 +640,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 for (j in channels.indices) {
                     if (dragging_to.first == j && dragging_to.second == -1) {
                         y_offset += dragging_from_height + channel_gap_height
-                        canvas.drawLine( offset, y_offset, offset + beat_width, y_offset, this.table_line_paint)
                     }
 
                     val channel = channels[j]
@@ -654,6 +651,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                         val beat_key = BeatKey(j, k, i)
                         if (dragging_from.first != j || (dragging_from.second != -1 && dragging_from.second != k)) {
                             this.draw_std_tree_wrapper(canvas, beat_key, offset, y_offset, line_height, beat_width)
+                            canvas.drawLine(offset, y_offset, offset + beat_width, y_offset, this.table_line_paint)
                             y_offset += line_height
                         }
 
@@ -665,6 +663,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                                     val state = this.get_line_control_leaf_state(type, beat_key, position)
                                     this.process_ctl_event_layout(state, event, canvas, x, y, width, ctl_line_height)
                                 }
+                                canvas.drawLine(offset, y_offset, offset + beat_width, y_offset, this.table_line_paint)
                                 y_offset += ctl_line_height
                             }
                         }
@@ -682,6 +681,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                                 val state = this.get_channel_control_leaf_state(type, j, i, position)
                                 this.process_ctl_event_layout(state, event, canvas, x, y, width, ctl_line_height)
                             }
+                            canvas.drawLine(offset, y_offset, offset + beat_width, y_offset, this.table_line_paint)
                             y_offset += ctl_line_height
                         }
                     }
@@ -692,11 +692,11 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     }
                 }
 
+                // Handle Gap between last channel and global ctl lines
                 if (dragging_to.first == opus_manager.channels.size && dragging_to.second == -1) {
                     y_offset += dragging_from_height + channel_gap_height
                 }
 
-                canvas.drawLine( offset, y_offset, offset + beat_width, y_offset, this.table_line_paint)
                 for ((type, controller) in opus_manager.controllers.get_all()) {
                     if (!controller.visible) continue
 
@@ -704,6 +704,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                         val state = this.get_global_control_leaf_state(type, i, position)
                         this.process_ctl_event_layout(state, event, canvas, x, y, width, ctl_line_height)
                     }
+                    canvas.drawLine(offset, y_offset, offset + beat_width, y_offset, this.table_line_paint)
 
                     y_offset += ctl_line_height
                 }
@@ -778,7 +779,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             for (j in channels.indices) {
                 if (dragging_to.first == j && dragging_to.second == -1) {
                     y_offset += dragging_from_height + channel_gap_height
-                    canvas.drawLine( scroll_x, y_offset, scroll_x + line_label_width, y_offset, this.table_line_paint)
                 }
 
                 for (k in channels[j].lines.indices) {
@@ -789,11 +789,8 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     if (dragging_from.first != j || (dragging_from.second != -1 && dragging_from.second != k)) {
                         this.draw_drawable(canvas, this.line_label_drawable, this.get_standard_line_state(j, k), scroll_x, y_offset, line_label_width, line_height)
                         this.draw_line_label_text(canvas, j, k, this.line_label_drawable.state, scroll_x, y_offset, line_label_width, line_height)
+                        canvas.drawLine(scroll_x, y_offset, scroll_x + line_label_width, y_offset, this.table_line_paint)
                         y_offset += line_height
-                    }
-
-                    if (dragging_from.second != -1 && ((dragging_to.first == j && dragging_to.second == k) || (dragging_from.first == j && dragging_from.second + 1 == k))) {
-                        canvas.drawLine(scroll_x, y_offset - line_height, (this.width.toFloat() - base_width), y_offset - line_height, this.table_line_paint)
                     }
 
                     for ((type, controller) in channels[j].lines[k].controllers.get_all()) {
@@ -801,6 +798,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                         if (dragging_from.first != j || (dragging_from.second != -1 && dragging_from.second != k)) {
                             this.draw_drawable(canvas, this.ctl_label_drawable, this.get_line_control_line_state(type, j, k), scroll_x, y_offset, line_label_width, ctl_line_height)
                             this.draw_ctl_label_text(canvas, type, this.ctl_label_drawable.state, scroll_x, y_offset, line_label_width, ctl_line_height)
+                            canvas.drawLine(scroll_x, y_offset, scroll_x + line_label_width, y_offset, this.table_line_paint)
                             y_offset += ctl_line_height
                         }
                     }
@@ -816,9 +814,11 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     if (dragging_from.second != -1 || dragging_from.first != j) {
                         this.draw_drawable(canvas, this.ctl_label_drawable, this.get_channel_control_line_state(type, j), scroll_x, y_offset, line_label_width, ctl_line_height)
                         this.draw_ctl_label_text(canvas, type, this.ctl_label_drawable.state, scroll_x, y_offset, line_label_width, ctl_line_height)
+                        canvas.drawLine(scroll_x, y_offset, scroll_x + line_label_width, y_offset, this.table_line_paint)
                         y_offset += ctl_line_height
                     }
                 }
+
 
                 if (dragging_from.second != -1 || dragging_from.first != j) {
                     canvas.drawRect( scroll_x, y_offset, scroll_x + line_label_width, y_offset + channel_gap_height, this.table_line_paint)
@@ -832,10 +832,10 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
             for ((type, controller) in opus_manager.controllers.get_all()) {
                 if (!controller.visible) continue
-                canvas.drawLine( scroll_x, y_offset, scroll_x + line_label_width, y_offset, this.table_line_paint)
 
                 this.draw_drawable(canvas, this.ctl_label_drawable, this.get_global_control_line_state(type), scroll_x, y_offset, line_label_width, ctl_line_height)
                 this.draw_ctl_label_text(canvas, type, this.ctl_label_drawable.state, scroll_x, y_offset, line_label_width, ctl_line_height)
+                canvas.drawLine( scroll_x, y_offset, scroll_x + line_label_width, y_offset, this.table_line_paint)
 
                 y_offset += ctl_line_height
             }
@@ -862,6 +862,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                         for (k in channel.lines.indices) {
                             val beat_key = BeatKey(dragging_from.first, k, i)
                             this.draw_std_tree_wrapper(canvas, beat_key, x_offset, y_offset, line_height, beat_width)
+                            canvas.drawLine(x_offset, y_offset, x_offset + beat_width, y_offset, this.table_line_paint)
 
                             y_offset += line_height
                             for ((type, controller) in channel.lines[k].controllers.get_all()) {
@@ -871,6 +872,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                                     val state = this.get_line_control_leaf_state(type, beat_key, position)
                                     this.process_ctl_event_layout(state, event, canvas, x, y, width, ctl_line_height)
                                 }
+                                canvas.drawLine(x_offset, y_offset, x_offset + beat_width, y_offset, this.table_line_paint)
 
                                 y_offset += ctl_line_height
                             }
@@ -882,6 +884,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                                 val state = this.get_channel_control_leaf_state(type, dragging_from.first, i, position)
                                 this.process_ctl_event_layout(state, event, canvas, x, y, width, ctl_line_height)
                             }
+                            canvas.drawLine(x_offset, y_offset, x_offset + beat_width, y_offset, this.table_line_paint)
 
                             y_offset += ctl_line_height
                         }
@@ -891,18 +894,30 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     y_offset = y_start_offset
                     // Draw Floating Line labels
                     for (k in channel.lines.indices) {
-                        this.draw_drawable(canvas, this.line_label_drawable, this.get_standard_line_state(dragging_from.first, k), scroll_x, y_offset, line_label_width, line_height)
+                        this.get_standard_line_state(dragging_from.first, k).let { state ->
+                            this.draw_drawable(canvas, this.line_label_drawable, state, scroll_x, y_offset, line_label_width, line_height)
+                            this.draw_line_label_text(canvas, dragging_from.first, k, state, scroll_x, y_offset, line_label_width, line_height)
+                            canvas.drawLine(scroll_x, y_offset, scroll_x + line_label_width, y_offset, this.table_line_paint)
+                        }
 
                         y_offset += line_height
                         for ((type, controller) in channel.lines[k].controllers.get_all()) {
                             if (!controller.visible) continue
-                            this.draw_drawable(canvas, this.ctl_label_drawable, this.get_line_control_line_state(type, dragging_from.first, k), scroll_x, y_offset, line_label_width, ctl_line_height)
+                            this.get_line_control_line_state(type, dragging_from.first, k).let { state ->
+                                this.draw_drawable(canvas, this.ctl_label_drawable, state, scroll_x, y_offset, line_label_width, ctl_line_height)
+                                this.draw_ctl_label_text(canvas, type, state, scroll_x, y_offset, line_label_width, ctl_line_height)
+                                canvas.drawLine(scroll_x, y_offset, scroll_x + line_label_width, y_offset, this.table_line_paint)
+                            }
                             y_offset += ctl_line_height
                         }
                     }
                     for ((type, controller) in channel.controllers.get_all()) {
                         if (!controller.visible) continue
-                        this.draw_drawable(canvas, this.ctl_label_drawable, this.get_channel_control_line_state(type, dragging_from.first), scroll_x, y_offset, line_label_width, ctl_line_height)
+                        this.get_channel_control_line_state(type, dragging_from.first).let { state ->
+                            this.draw_drawable(canvas, this.ctl_label_drawable, state,scroll_x, y_offset, line_label_width, ctl_line_height)
+                            this.draw_ctl_label_text(canvas, type, state, scroll_x, y_offset, line_label_width, ctl_line_height)
+                            canvas.drawLine(scroll_x, y_offset, scroll_x + line_label_width, y_offset, this.table_line_paint)
+                        }
                         y_offset += ctl_line_height
                     }
 
@@ -915,6 +930,8 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
                         val beat_key = BeatKey(dragging_from.first, dragging_from.second, i)
                         this.draw_std_tree_wrapper(canvas, beat_key, x_offset, y_offset, line_height, beat_width)
+                        canvas.drawLine(x_offset, y_offset, x_offset + beat_width, y_offset, this.table_line_paint)
+
                         y_offset += line_height
 
                         for ((type, controller) in line.controllers.get_all()) {
@@ -924,23 +941,34 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                                 val state = this.get_line_control_leaf_state(type, beat_key, position)
                                 this.process_ctl_event_layout(state, event, canvas, x, y, width, ctl_line_height)
                             }
+                            canvas.drawLine(x_offset, y_offset, x_offset + beat_width, y_offset, this.table_line_paint)
 
                             y_offset += ctl_line_height
                         }
+
                         x_offset += beat_width
                     }
 
                     // Draw Floating selection line label/ctl labels
                     y_offset = y_start_offset
-                    this.draw_drawable(canvas, this.line_label_drawable, this.get_standard_line_state(dragging_from.first, dragging_from.second), scroll_x, y_offset, line_label_width, line_height)
+                    this.get_standard_line_state(dragging_from.first, dragging_from.second).let { state ->
+                        this.draw_drawable(canvas, this.line_label_drawable, state, scroll_x, y_offset, line_label_width, line_height)
+                        this.draw_line_label_text(canvas, dragging_from.first, dragging_from.second, state, scroll_x, y_offset, line_label_width, line_height)
+                        canvas.drawLine(scroll_x, y_offset, scroll_x + line_label_width, y_offset, this.table_line_paint)
+                    }
+                    y_offset += line_height
                     for ((type, controller) in channel.lines[dragging_from.second].controllers.get_all()) {
                         if (!controller.visible) continue
-                        this.draw_drawable(canvas, this.ctl_label_drawable, this.get_line_control_line_state(type, dragging_from.first, dragging_from.second), scroll_x, y_offset, line_label_width, ctl_line_height)
+                        this.get_line_control_line_state(type, dragging_from.first, dragging_from.second).let { state ->
+                            this.draw_drawable(canvas, this.ctl_label_drawable, state, scroll_x, y_offset, line_label_width, ctl_line_height)
+                            this.draw_ctl_label_text(canvas, type, state, scroll_x, y_offset, line_label_width, ctl_line_height)
+                            canvas.drawLine(scroll_x, y_offset, scroll_x + line_label_width, y_offset, this.table_line_paint)
+                        }
                         y_offset += ctl_line_height
                     }
                 }
 
-                canvas.drawLine(scroll_x, y_start_offset, (this.width.toFloat() - base_width), y_start_offset, this.table_line_paint)
+                //canvas.drawLine(scroll_x, y_start_offset, (this.width.toFloat() - base_width), y_start_offset, this.table_line_paint)
             }
         }
 

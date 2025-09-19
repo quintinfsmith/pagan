@@ -1898,9 +1898,33 @@ open class OpusLayerHistory: OpusLayerCursor() {
         }
     }
 
+    override fun set_all_line_controller_visibility(type: EffectType) {
+        this._remember {
+            super.set_all_line_controller_visibility(type)
+        }
+    }
+
+    override fun unset_all_line_controller_visibility(type: EffectType) {
+        this._remember {
+            super.unset_all_line_controller_visibility(type)
+        }
+    }
+
     override fun toggle_line_controller_visibility(type: EffectType, channel_index: Int, line_offset: Int) {
         this._remember {
             super.toggle_line_controller_visibility(type, channel_index, line_offset)
+        }
+    }
+
+    override fun set_all_channel_controller_visibility(type: EffectType) {
+        this._remember {
+            super.set_all_channel_controller_visibility(type)
+        }
+    }
+
+    override fun unset_all_channel_controller_visibility(type: EffectType) {
+        this._remember {
+            super.unset_all_channel_controller_visibility(type)
         }
     }
 

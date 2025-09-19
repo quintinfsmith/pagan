@@ -3291,6 +3291,25 @@ open class OpusLayerBase: Effectable {
         }
     }
 
+    open fun set_all_line_controller_visibility(type: EffectType) {
+       for (c in this.channels.indices) {
+           for (l in this.channels[c].lines.indices) {
+               if (!this.has_line_controller(type, c, l) || !this.get_line_controller<EffectEvent>(type, c, l).visible) {
+                   this.toggle_line_controller_visibility(type, c, l)
+               }
+           }
+       }
+    }
+    open fun unset_all_line_controller_visibility(type: EffectType) {
+        for (c in this.channels.indices) {
+            for (l in this.channels[c].lines.indices) {
+                if (this.has_line_controller(type, c, l) && this.get_line_controller<EffectEvent>(type, c, l).visible) {
+                    this.toggle_line_controller_visibility(type, c, l)
+                }
+            }
+        }
+    }
+
     open fun toggle_line_controller_visibility(type: EffectType, channel_index: Int, line_offset: Int) {
         val channel = this.get_all_channels()[channel_index]
         val line = channel.lines[line_offset]
@@ -3301,6 +3320,22 @@ open class OpusLayerBase: Effectable {
 
         val controller = line.get_controller<EffectEvent>(type)
         this.set_line_controller_visibility(type, channel_index, line_offset, !controller.visible)
+    }
+
+    open fun set_all_channel_controller_visibility(type: EffectType) {
+        for (c in this.channels.indices) {
+            if (!this.has_channel_controller(type, c) || !this.get_channel_controller<EffectEvent>(type, c).visible) {
+                this.toggle_channel_controller_visibility(type, c)
+            }
+        }
+    }
+
+    open fun unset_all_channel_controller_visibility(type: EffectType) {
+        for (c in this.channels.indices) {
+            if (this.has_channel_controller(type, c) && this.get_channel_controller<EffectEvent>(type, c).visible) {
+                this.toggle_channel_controller_visibility(type, c)
+            }
+        }
     }
 
     open fun toggle_channel_controller_visibility(type: EffectType, channel_index: Int) {

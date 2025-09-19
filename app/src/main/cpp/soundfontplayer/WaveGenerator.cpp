@@ -94,7 +94,7 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
             }
 
             for (int j = 0; j < effect_buffer_count; j++) {
-                if (effect_keys[j] == -1) continue;
+                if (depth < key_width && effect_keys[j] == -1) continue;
                 if (depth != effect_indices[j] || (depth < key_width && effect_keys[j] != working_keys[i][depth])) continue;
                 if (apply_effect_buffer((EffectProfileBuffer *) effect_buffers[j], working_arrays[i], (int) frames)) {
                     effect_buffers_applied[effect_buffers_applied_count++] = j;

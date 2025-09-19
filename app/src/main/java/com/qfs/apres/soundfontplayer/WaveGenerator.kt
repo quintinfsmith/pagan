@@ -74,7 +74,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
             for ((_, pair) in separated_lines_map) {
                 val (_, merge_key) = pair
                 key_size = max(merge_key.size, key_size)
-                if (merge_key[layer] == key) continue@outer
+                if (layer < key_size && merge_key[layer] == key) continue@outer
             }
 
             val new_key = if (separated_lines_map.keys.isNotEmpty()) {

@@ -2,9 +2,6 @@ package com.qfs.pagan.projectmanager
 
 import android.content.Context
 import android.net.Uri
-import android.provider.DocumentsContract
-import android.provider.DocumentsContract.Document.COLUMN_DISPLAY_NAME
-import android.provider.DocumentsContract.Document.COLUMN_DOCUMENT_ID
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.qfs.json.InvalidJSON
@@ -12,6 +9,7 @@ import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONList
 import com.qfs.json.JSONParser
 import com.qfs.json.JSONString
+import com.qfs.pagan.Activity.PaganActivity
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
@@ -37,8 +35,12 @@ class ProjectManager(val context: Context, var uri: Uri?) {
     // Where the uri of the backed up data is stored, if it has a uri associated.
     private val _bkp_path_path = "${this.context.cacheDir}/.bkp_path"
 
-    init {
-        this.recache_project_list()
+    /**
+     * Call before showing Load Projects menu
+     */
+    fun check() {
+        this.ucheck_recache_external_storage_projects()
+        this.scan_and_update_project_list()
     }
 
     /**
@@ -54,16 +56,12 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         }
 
         val old_directory = DocumentFile.fromTreeUri(this.context, old_uri) ?: return null
-        if (!old_directory.isDirectory || old_uri == this.uri) {
-            return null
-        }
+        if (!old_directory.isDirectory || old_uri == this.uri) return null
 
         var output: Uri? = null
         val buffer_size = 1024 * 1024
         for (project in old_directory.listFiles()) {
-            if (!project.isFile) {
-                continue
-            }
+            if (!project.isFile) continue
             // Use new path instead of copying file name to avoid collisions
             val new_uri = this.get_new_file_uri() ?: continue
             val output_stream = this.context.contentResolver.openOutputStream(new_uri, "wt")
@@ -91,7 +89,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
             project.delete()
         }
 
-        this.recache_project_list()
+        this.scan_and_update_project_list()
         return output
     }
 
@@ -117,7 +115,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
             null
         }
 
-        this.recache_project_list()
+        this.scan_and_update_project_list()
         return output
     }
 
@@ -145,7 +143,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
             document_file.delete()
         }
 
-        this._untrack_uri(uri)
+        this.scan_and_update_project_list()
     }
 
     /**
@@ -185,28 +183,22 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         return working_directory.createFile("application/json", "opus_$i.json")?.uri
     }
 
-    fun get_existing_file_names(): Set<String> {
-        if (this.uri == null) return mutableSetOf()
-
-        val document_id = DocumentsContract.getTreeDocumentId(this.uri)
-        val uri_tree = DocumentsContract.buildChildDocumentsUriUsingTree(this.uri, document_id)
-        val existing_files = mutableSetOf<String>()
-        this.context.contentResolver.query(uri_tree, arrayOf(COLUMN_DOCUMENT_ID, COLUMN_DISPLAY_NAME), null,null,null)?.let { cursor ->
-            while (cursor.moveToNext()) {
-                val i = cursor.getColumnIndex(COLUMN_DISPLAY_NAME)
-                existing_files.add(cursor.getString(i))
-            }
-            cursor.close()
+    fun get_existing_file_names(): List<String> {
+        val existing_uris = this.get_existing_uris()
+        return List(existing_uris.size) { i: Int ->
+            existing_uris[i].lastPathSegment?.split("/")?.last() ?: ""
         }
+    }
 
-        return existing_files
+    fun get_existing_uris(): List<Uri> {
+        return (this.context as PaganActivity).get_existing_uris(this.uri)
     }
 
     /**
      * Check if there are any projects saved in the ProjectManager's Uri
      */
     fun has_projects_saved(): Boolean {
-        return this.get_existing_file_names().isNotEmpty()
+        return this.get_existing_uris().isNotEmpty()
     }
 
     /**
@@ -289,32 +281,31 @@ class ProjectManager(val context: Context, var uri: Uri?) {
      * Reduces lag when opening "Load Project".
      */
     fun recache_project_list() {
+        if (this.ucheck_recache_external_storage_projects()) return
+        val project_list = JSONList()
+        val uris = this.get_existing_uris()
         val file = File(this._cache_path)
-        if (this.ucheck_recache_external_storage_projects()) {
-            return
-        }
-
-        if (!this.has_projects_saved()) {
+        if (uris.isEmpty()) {
             if (file.exists()) {
                 file.delete()
             }
             return
         }
 
-        val working_directory = DocumentFile.fromTreeUri(this.context, this.uri!!) ?: return
-        val project_list = JSONList()
-        for (json_file in working_directory.listFiles()) {
+        val timestamp = System.currentTimeMillis()
+        for (uri in uris) {
             val project_name = try {
-                this.get_file_project_name(json_file.uri) ?: this.generate_file_project_name(json_file.uri)
-            } catch (_: Exception) {
+                this.get_file_project_name(uri) ?: this.generate_file_project_name(uri)
+            } catch (e: Exception) {
                 continue
             }
 
             project_list.add(JSONList(
-                JSONString(json_file.uri.toString()),
+                JSONString(uri.toString()),
                 JSONString(project_name)
             ))
         }
+        val delta = System.currentTimeMillis() - timestamp
 
         project_list.sort_by { it ->
             (it as JSONList).get_string(1)
@@ -329,8 +320,8 @@ class ProjectManager(val context: Context, var uri: Uri?) {
     fun get_file_project_name(uri: Uri): String? {
         val input_stream = this.context.contentResolver.openInputStream(uri)
         val reader = BufferedReader(InputStreamReader(input_stream))
-        val content = reader.readText()
 
+        val content = reader.readText()
         reader.close()
 
         val json_obj = JSONParser.Companion.parse<JSONHashMap>(content) ?: return null
@@ -361,25 +352,62 @@ class ProjectManager(val context: Context, var uri: Uri?) {
      * Same as get_project_list, but a json version.
      */
     fun get_json_project_list(): JSONList {
-        if (!File(this._cache_path).exists()) {
-            this.recache_project_list()
-        }
-
         val file = File(this._cache_path)
-        if (!file.exists()) {
-            return JSONList()
-        }
+        if (!file.exists()) return JSONList()
 
-        var string_content = file.readText(Charsets.UTF_8)
+        val string_content = file.readText(Charsets.UTF_8)
 
         return try {
             JSONParser.parse(string_content)!!
         } catch (_: InvalidJSON) {
             File(this._cache_path).delete()
-            this.recache_project_list()
-            string_content = File(this._cache_path).readText(Charsets.UTF_8)
-            JSONParser.parse(string_content)!!
+            JSONList()
         }
+    }
+
+    fun scan_and_update_project_list() {
+        val cached_list = this.get_json_project_list()
+        // Check for new
+        val uris = this.get_existing_uris()
+        val cached_uri_to_remove = mutableListOf<Int>()
+        // Create list of cached uris, remove none existing ones while we're here.
+        val cached_uris_list = Array(cached_list.size) { i: Int ->
+            val uri = cached_list.get_list(i).get_string(0).toUri()
+            if (!uris.contains(uri)) {
+                cached_uri_to_remove.add(i)
+            }
+
+            uri
+        }
+        for (i in cached_uri_to_remove.reversed()) {
+            cached_list.remove_at(i)
+        }
+
+        for (uri in uris) {
+            if (cached_uris_list.contains(uri)) continue
+
+            val project_name = try {
+                this.get_file_project_name(uri) ?: this.generate_file_project_name(uri)
+            } catch (e: Exception) {
+                continue
+            }
+
+            cached_list.add(JSONList(
+                JSONString(uri.toString()),
+                JSONString(project_name)
+            ))
+        }
+
+        cached_list.sort_by { it ->
+            (it as JSONList).get_string(1)
+        }
+
+        val file = File(this._cache_path)
+        if (file.exists()) {
+            file.delete()
+        }
+
+        file.writeText(cached_list.to_string())
     }
 
     /**
@@ -396,9 +424,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
             }
         }
 
-        if (is_tracking) {
-            return
-        }
+        if (is_tracking) return
 
         val project_name = this.get_file_project_name(uri) ?: return
         project_list.add(
@@ -423,15 +449,11 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         val project_list = this.get_json_project_list()
         var index_to_pop = 0
         for (i in 0 until project_list.size) {
-            if (project_list.get_list(i).get_string(0).toUri() == uri) {
-                break
-            }
+            if (project_list.get_list(i).get_string(0).toUri() == uri) break
             index_to_pop += 1
         }
 
-        if (index_to_pop == project_list.size) {
-            return
-        }
+        if (index_to_pop == project_list.size) return
 
         project_list.remove_at(index_to_pop)
         project_list.sort_by { it ->
@@ -456,9 +478,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         try {
             this.context.getExternalFilesDir(null)?.let {
                 val old_directory = File("$it/projects")
-                if (!old_directory.isDirectory) {
-                    return null
-                }
+                if (!old_directory.isDirectory) return null
 
                 val buffer_size = 1024 * 1024
                 for (project in old_directory.listFiles() ?: arrayOf()) {
@@ -484,9 +504,8 @@ class ProjectManager(val context: Context, var uri: Uri?) {
                     val buffer = ByteArray(buffer_size)
                     while (true) {
                         val read_size = input_stream.read(buffer)
-                        if (read_size == -1) {
-                            break
-                        }
+                        if (read_size == -1) break
+
                         output_stream?.write(buffer, 0, read_size)
                     }
 
@@ -495,7 +514,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
                     output_stream?.close()
                 }
 
-                this.recache_project_list()
+                this.scan_and_update_project_list()
                 old_directory.deleteRecursively()
             }
         } catch (_: SecurityException) {

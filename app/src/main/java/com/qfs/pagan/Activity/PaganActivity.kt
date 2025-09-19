@@ -2,11 +2,16 @@ package com.qfs.pagan.Activity
 
 import android.app.AlertDialog
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
+import android.provider.DocumentsContract
+import android.provider.DocumentsContract.Document.COLUMN_DISPLAY_NAME
+import android.provider.DocumentsContract.Document.COLUMN_DOCUMENT_ID
+import android.provider.DocumentsContract.Document.COLUMN_MIME_TYPE
+import android.provider.DocumentsContract.Document.COLUMN_FLAGS
+import android.provider.DocumentsContract.Document.MIME_TYPE_DIR
 import android.provider.OpenableColumns
 import android.util.Log
 import android.view.Gravity
@@ -47,6 +52,21 @@ import kotlin.math.roundToInt
 open class PaganActivity: AppCompatActivity() {
     companion object {
         const val EXTRA_ACTIVE_PROJECT = "active_project"
+
+        fun coerce_relative_path(descendant: Uri, ancestor: Uri?): String? {
+            if (ancestor == null) return null
+
+            val parent_segments = ancestor.pathSegments
+            val child_segments = descendant.pathSegments
+
+            if (parent_segments.size >= child_segments.size || child_segments.subList(0, parent_segments.size) != parent_segments) return null
+
+            val split_child_path = child_segments.last().split("/")
+            val split_parent_path = parent_segments.last().split("/")
+            val relative_path = split_child_path.subList(split_parent_path.size, split_child_path.size)
+
+            return relative_path.joinToString("/")
+        }
     }
     class PaganViewModel: ViewModel() {
         internal lateinit var project_manager: ProjectManager
@@ -133,8 +153,42 @@ open class PaganActivity: AppCompatActivity() {
     }
 
     fun is_soundfont_available(): Boolean {
-        val soundfont_dir = this.get_soundfont_directory()
-        return soundfont_dir.listFiles().isNotEmpty()
+        return this.get_existing_soundfonts().isNotEmpty()
+    }
+
+    fun get_existing_uris(top_uri: Uri?): List<Uri> {
+        if (top_uri == null) return listOf()
+
+        val document_id = DocumentsContract.getTreeDocumentId(top_uri)
+        val uri_tree = DocumentsContract.buildChildDocumentsUriUsingTree(top_uri, document_id)
+
+        val existing_uris = mutableListOf<Uri>()
+        val stack = mutableListOf<Uri>(uri_tree)
+        while (stack.isNotEmpty()) {
+            val working_uri = stack.removeAt(0)
+            this.contentResolver.query(working_uri, arrayOf(COLUMN_MIME_TYPE, COLUMN_DOCUMENT_ID), null, null, null)?.let { cursor ->
+                while (cursor.moveToNext()) {
+                    val mime_index = cursor.getColumnIndex(COLUMN_MIME_TYPE)
+                    val id_index = cursor.getColumnIndex(COLUMN_DOCUMENT_ID)
+                    if (cursor.getString(mime_index) != MIME_TYPE_DIR) {
+                        val uri = DocumentsContract.buildDocumentUri(working_uri.authority, cursor.getString(id_index))
+                        val new_uri = "${top_uri.scheme}://${top_uri.authority}${top_uri.encodedPath}${uri.encodedPath}".toUri()
+                        existing_uris.add(new_uri)
+                    } else {
+                        val uri = DocumentsContract.buildChildDocumentsUri(top_uri.authority, cursor.getString(id_index))
+                        val new_uri = "${top_uri.scheme}://${top_uri.authority}${top_uri.encodedPath}${uri.encodedPath}".toUri()
+                        stack.add(new_uri)
+                    }
+                }
+                cursor.close()
+            }
+
+        }
+        return existing_uris
+    }
+
+    fun get_existing_soundfonts(): List<Uri> {
+        return this.get_existing_uris(this.configuration.soundfont_directory)
     }
 
 
@@ -160,6 +214,7 @@ open class PaganActivity: AppCompatActivity() {
         this.requestedOrientation = this.configuration.force_orientation
         AppCompatDelegate.setDefaultNightMode(this.configuration.night_mode)
 
+        val ts = System.currentTimeMillis()
         this.view_model.project_manager = ProjectManager(this, this.configuration.project_directory)
     }
 
@@ -224,7 +279,6 @@ open class PaganActivity: AppCompatActivity() {
 
         this.ucheck_move_configuration()
         this.load_config()
-
     }
 
     // changed v.1.7.7
@@ -416,11 +470,11 @@ open class PaganActivity: AppCompatActivity() {
     }
 
     internal fun dialog_load_project(callback: (project_uri: Uri) -> Unit) {
-        if (this._popup_active) {
-            return
-        }
+        if (this._popup_active) return
+        val project_manager = this.get_project_manager()
+        project_manager.check()
 
-        val tmp_project_list = this.get_project_manager().get_project_list()
+        val tmp_project_list = project_manager.get_project_list()
         val project_list = List(tmp_project_list.size) { i: Int ->
             val (uri, path) = tmp_project_list[i]
             Triple(uri, null, path)
@@ -582,7 +636,6 @@ open class PaganActivity: AppCompatActivity() {
         for (node in this.configuration.soundfont!!.split("/")) {
             working_file = working_file.findFile(node) ?: return null
         }
-
         return if (working_file.exists()) {
             working_file.uri
         } else {
@@ -591,20 +644,7 @@ open class PaganActivity: AppCompatActivity() {
     }
 
     fun coerce_relative_soundfont_path(soundfont_uri: Uri): String? {
-        if (this.configuration.soundfont_directory == null) return null
-
-        val parent_segments = this.configuration.soundfont_directory!!.pathSegments
-        val child_segments = soundfont_uri.pathSegments
-
-        if (parent_segments.size >= child_segments.size || child_segments.subList(0, parent_segments.size) != parent_segments) {
-            return null
-        }
-
-        val split_child_path = child_segments.last().split("/")
-        val split_parent_path = parent_segments.last().split("/")
-        val relative_path = split_child_path.subList(split_parent_path.size, split_child_path.size)
-
-        return relative_path.joinToString("/")
+        return PaganActivity.coerce_relative_path(soundfont_uri, this.configuration.soundfont_directory)
     }
 
     open fun on_soundfont_directory_set(uri: Uri) {}

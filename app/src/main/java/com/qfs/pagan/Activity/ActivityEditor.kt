@@ -1932,13 +1932,10 @@ class ActivityEditor : PaganActivity() {
             return
         }
 
-        if (!this.update_playback_state_soundfont(PlaybackState.Ready)) {
-            // Failed to change playback_state
-            return
-        }
+        // Failed to change playback_state
+        if (!this.update_playback_state_soundfont(PlaybackState.Ready)) return
 
         val soundfont_directory = this.get_soundfont_directory()
-
         var soundfont_file = soundfont_directory
         for (segment in file_path.split("/")) {
             soundfont_file = soundfont_file.findFile(segment) ?: throw FileNotFoundException()
@@ -1948,8 +1945,8 @@ class ActivityEditor : PaganActivity() {
             // Possible if user puts the sf2 in their files manually
             this.feedback_msg(this.getString(R.string.soundfont_not_found))
             throw FileNotFoundException()
-
         }
+
         try {
             this._soundfont = SoundFont(this, soundfont_file.uri)
         } catch (_: Riff.InvalidRiff) {

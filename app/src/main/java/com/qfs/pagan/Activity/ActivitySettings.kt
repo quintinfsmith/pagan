@@ -237,7 +237,6 @@ class ActivitySettings : PaganActivity() {
             }
         }
 
-
         this.findViewById<RadioGroup>(R.id.rgLockOrientation).let {
             it.check(when (this.configuration.force_orientation) {
                 ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE -> R.id.rbOrientationLandscape
@@ -376,19 +375,7 @@ class ActivitySettings : PaganActivity() {
     }
 
     private fun dialog_select_soundfont() {
-        val soundfont_dir = this.get_soundfont_directory()
-        val file_list: MutableList<Uri> = mutableListOf()
-        val stack = mutableListOf(soundfont_dir)
-        while (stack.isNotEmpty()) {
-            val current_document_file = stack.removeAt(0)
-            for (child in current_document_file.listFiles()) {
-                if (child.isDirectory) {
-                    stack.add(child)
-                } else if (child.isFile) {
-                    file_list.add(child.uri)
-                }
-            }
-        }
+        val file_list = this.get_existing_soundfonts()
 
         if (file_list.isEmpty()) {
             this.import_soundfont()

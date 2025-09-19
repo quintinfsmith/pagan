@@ -2,6 +2,7 @@ package com.qfs.pagan.Activity
 
 import android.app.AlertDialog
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.database.Cursor
 import android.net.Uri

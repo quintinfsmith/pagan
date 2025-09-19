@@ -153,10 +153,10 @@ class ActionTracker {
                     }
                     TrackedAction.SetDelayAtCursor -> {
                         listOf(
-                            entry.get_int(0),
                             entry.get_int(1),
-                            entry.get_float(2).toBits(),
-                            entry.get_int(3)
+                            entry.get_int(2),
+                            entry.get_float(3).toBits(),
+                            entry.get_int(4)
                         )
                     }
                     // STRING
@@ -221,6 +221,13 @@ class ActionTracker {
                         }
                     }
 
+                    TrackedAction.MoveChannel -> {
+                        listOf(
+                            entry.get_int(1),
+                            entry.get_int(2),
+                            if (entry.get_boolean(3)) 1 else 0
+                        )
+                    }
                     else -> {
                         if (entry.size == 1) {
                             listOf()
@@ -330,6 +337,9 @@ class ActionTracker {
 
                     TrackedAction.UntagColumn -> {
                         arrayOf(JSONInteger(integers[0]!!))
+                    }
+                    TrackedAction.MoveChannel -> {
+                        arrayOf(JSONInteger(integers[0]!!), JSONInteger(integers[1]!!), JSONBoolean(integers[2] != 0))
                     }
 
                     TrackedAction.RepeatSelectionCtlLine,

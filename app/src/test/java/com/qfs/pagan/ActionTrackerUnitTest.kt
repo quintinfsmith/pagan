@@ -5,6 +5,7 @@ import com.qfs.json.JSONFloat
 import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONString
+import com.qfs.pagan.ActionTracker.TrackedAction
 import junit.framework.TestCase.assertEquals
 import org.junit.Test
 
@@ -51,6 +52,7 @@ class ActionTrackerUnitTest {
                 // -------- Single String Argument -------------
                 ActionTracker.TrackedAction.SetTransitionAtCursor,
                 ActionTracker.TrackedAction.ShowLineController,
+                ActionTracker.TrackedAction.ShowGlobalController,
                 ActionTracker.TrackedAction.ShowChannelController,
                 ActionTracker.TrackedAction.ImportSong,
                 ActionTracker.TrackedAction.SetCopyMode,
@@ -205,15 +207,17 @@ class ActionTrackerUnitTest {
                     Pair(enum, listOf(35f.toBits()))
                 }
 
+                ActionTracker.TrackedAction.MoveLine,
                 ActionTracker.TrackedAction.SwapLines -> {
-                    val test_ints = arrayOf(0, 0, 1, 0)
                     Pair(enum, listOf(0, 0, 1, 0))
                 }
 
-                ActionTracker.TrackedAction.ShowGlobalController -> TODO()
-                ActionTracker.TrackedAction.MoveChannel -> TODO()
-                ActionTracker.TrackedAction.SetDelayAtCursor -> TODO()
-                ActionTracker.TrackedAction.MoveLine -> TODO()
+                ActionTracker.TrackedAction.MoveChannel -> {
+                    Pair(enum, listOf(1, 3, 1))
+                }
+                ActionTracker.TrackedAction.SetDelayAtCursor -> {
+                    Pair(enum, listOf(4,3, 0.75F.toBits(), 4))
+                }
             }
 
             val json_name = JSONString(enum.name)
@@ -254,6 +258,7 @@ class ActionTrackerUnitTest {
                     // -------- Single String Argument -------------
                     ActionTracker.TrackedAction.SetTransitionAtCursor,
                     ActionTracker.TrackedAction.ShowLineController,
+                    ActionTracker.TrackedAction.ShowGlobalController,
                     ActionTracker.TrackedAction.ShowChannelController,
                     ActionTracker.TrackedAction.ImportSong,
                     ActionTracker.TrackedAction.SetCopyMode,
@@ -290,7 +295,7 @@ class ActionTrackerUnitTest {
                         JSONList(json_name, JSONInteger(5))
                     }
 
-                    ActionTracker.TrackedAction.InsertBeatAt,
+
                     ActionTracker.TrackedAction.RepeatSelectionCtlChannel,
                     ActionTracker.TrackedAction.CursorSelectGlobalCtlRange -> {
                         val string = JSONString("test")
@@ -358,6 +363,7 @@ class ActionTrackerUnitTest {
                         JSONList(json_name, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }
 
+                    ActionTracker.TrackedAction.InsertBeatAt,
                     ActionTracker.TrackedAction.CopyChannelCtlToBeat,
                     ActionTracker.TrackedAction.MoveChannelCtlToBeat -> {
                         val test_ints = listOf(4,2)
@@ -375,6 +381,7 @@ class ActionTrackerUnitTest {
                         JSONList(json_name, JSONFloat(35f))
                     }
 
+                    ActionTracker.TrackedAction.MoveLine,
                     ActionTracker.TrackedAction.SwapLines -> {
                         val test_ints = arrayOf(0, 0, 1, 0)
                         JSONList(json_name, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
@@ -385,10 +392,12 @@ class ActionTrackerUnitTest {
                         JSONList(json_name, JSONInteger(56), JSONString("TAGNAME"))
                     }
 
-                    ActionTracker.TrackedAction.ShowGlobalController -> TODO()
-                    ActionTracker.TrackedAction.MoveChannel -> TODO()
-                    ActionTracker.TrackedAction.SetDelayAtCursor -> TODO()
-                    ActionTracker.TrackedAction.MoveLine -> TODO()
+                    ActionTracker.TrackedAction.MoveChannel -> {
+                        JSONList(json_name, JSONInteger(1), JSONInteger(3), JSONBoolean(true))
+                    }
+                    ActionTracker.TrackedAction.SetDelayAtCursor -> {
+                        JSONList(json_name, JSONInteger(4), JSONInteger(3), JSONFloat(.75F), JSONInteger(4))
+                    }
                 },
                 json_item
             )

@@ -1078,7 +1078,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     } else {
                         val rational = Rational(event.numerator, event.denominator)
                         rational.reduce()
-                        "${event.echo}x${rational.numerator}/${rational.denominator}"
+                        "${event.echo + 1}x${rational.numerator}/${rational.denominator}"
                     }
                 }
                 else -> "???"

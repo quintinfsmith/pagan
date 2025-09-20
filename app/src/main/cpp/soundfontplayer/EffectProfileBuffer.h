@@ -304,13 +304,16 @@ class DelayedFrame {
         }
 
         // return number of values removed
-        int decay(float decay) {
+        int decay(float decay, int echo_limit) {
             DelayedFrameValue* working_ptr = this->value_chain;
             while (working_ptr != nullptr) {
                 if (working_ptr->count > 0) {
                     working_ptr->left *= decay;
                     working_ptr->right *= decay;
                     working_ptr->count -= 1;
+                    if (working_ptr->count > echo_limit) {
+                        working_ptr->count = echo_limit;
+                    }
                 }
                 working_ptr = working_ptr->next;
             }
@@ -383,12 +386,29 @@ class DelayBuffer: public EffectProfileBuffer {
         if (next_fpb == this->active_fpb && this->active_delay == next_delay) return;
 
         DelayedFrame* original_ptr = this->active_input_frame;
-        free(original_ptr);
+        int original_size = this->active_delay_in_frames;
 
         this->active_delay = next_delay;
         this->active_fpb = next_fpb;
         this->active_delay_in_frames = (int)(this->active_delay * (float)this->active_fpb);
         this->create_chain();
+
+        if (original_ptr != nullptr) {
+            DelayedFrame* working_ptr = this->active_input_frame;
+            int count = min(original_size, this->active_delay_in_frames);
+            for (int i = 0; i < count; i++) {
+                DelayedFrameValue* chain = original_ptr->value_chain;
+                while (chain != nullptr) {
+                    working_ptr->add_value(chain->left, chain->right, chain->count);
+                    this->active_value_count += 1;
+                    chain = chain->next;
+                }
+
+                original_ptr = original_ptr->get_next();
+                working_ptr = working_ptr->get_next();
+            }
+            free(original_ptr);
+        }
     }
 
     void cycle() {
@@ -423,7 +443,7 @@ class DelayBuffer: public EffectProfileBuffer {
                 auto* output_frame = this->active_input_frame->get_next();
                 float decay_value[2] = {0,0};
                 output_frame->get_values(decay_value);
-                this->active_value_count -= output_frame->decay(fade);
+                this->active_value_count -= output_frame->decay(fade, echo);
 
                 working_array[i] += decay_value[0];
                 working_array[i + array_size] += decay_value[1];

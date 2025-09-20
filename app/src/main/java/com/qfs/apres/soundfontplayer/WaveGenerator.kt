@@ -51,7 +51,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         val profiles = this.midi_frame_map.get_effect_buffers()
 
         for (i in profiles.indices) {
-            val (_, _, buffer) = profiles[i]
+            val (layer, key, buffer) = profiles[i]
             if (buffer.allow_empty()) {
                 force_empty_indices.add(i)
             }
@@ -70,11 +70,12 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         // Add buffers of empty lines that still have to be included (ie Delay)
         outer@ for (i in force_empty_indices) {
             val (layer, key, _) = profiles[i]
-            var key_size = 0
+            var key_size = layer
+
             for ((_, pair) in separated_lines_map) {
                 val (_, merge_key) = pair
                 key_size = max(merge_key.size, key_size)
-                if (layer < key_size && merge_key[layer] == key) continue@outer
+                if ((layer >= merge_key.size || merge_key[layer] == key)) continue@outer
             }
 
             val new_key = if (separated_lines_map.keys.isNotEmpty()) {
@@ -88,6 +89,13 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 IntArray(key_size) {
                     if (it == layer) key else -1
                 }
+            )
+        }
+
+        if (separated_lines_map.isEmpty() && force_empty_indices.isNotEmpty()) {
+            separated_lines_map[0] = Pair(
+                FloatArray(this.buffer_size * 2),
+                IntArray(0)
             )
         }
 

@@ -76,7 +76,6 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
     int done_count = 0;
     int effect_buffers_applied[effect_buffer_count];
     int effect_buffers_applied_count = 0;
-
     for (int depth = 0; depth <= key_width; depth++) {
         for (int i = 0; i < array_count; i++) {
             if (array_contains(done_stack, done_count, i)) continue;

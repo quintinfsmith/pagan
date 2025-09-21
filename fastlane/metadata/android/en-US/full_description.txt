@@ -1,7 +1,8 @@
-The fastest way to share that tune in your head.
+Pagan is a music sequencer tailored to mobile devices. It uses a simplistic but self-evident notation scheme to save vertical space.
+Pagan was created with the intent of being able to quickly jot down a tune then come back and work on it at your own pace rather than getting out your instruments or booting up an entire DAW.
 
 * Use your own soundfont (.sf2)
 * Import, reorchestrate and export .mid files
 * Connect to and playback through Midi devices
-* Easy Polyrhythms and microtones
+* Easy Polyrhythms and micro-tones
 * Export .wav files

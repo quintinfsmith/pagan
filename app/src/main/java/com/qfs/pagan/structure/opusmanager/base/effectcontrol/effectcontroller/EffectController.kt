@@ -4,7 +4,9 @@ import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.ReducibleTreeArray
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
+import com.qfs.pagan.structure.plus
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
+import com.qfs.pagan.structure.times
 
 abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_event: T): ReducibleTreeArray<T>(MutableList(beat_count) { ReducibleTree() }) {
     var visible = false // I don't like this logic here, but the code is substantially cleaner with it hear than in the OpusLayerInterface
@@ -66,9 +68,7 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
 
         // If transition is instant, no need for further calculations
         when (working_event.transition) {
-            EffectTransition.Instant -> {
-                return working_event
-            }
+            EffectTransition.Instant -> return working_event
             else -> {}
         }
 
@@ -116,19 +116,19 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
     }
 
     fun generate_profile(): ControllerProfile {
-        data class StackItem(val position: List<Int>, val tree: ReducibleTree<T>?, val relative_width: Float, val relative_offset: Float)
+        data class StackItem(val position: List<Int>, val tree: ReducibleTree<T>?, val relative_width: Rational, val relative_offset: Rational)
 
         val initial_value = this.initial_event.to_float_array()
         val output = ControllerProfile(initial_value)
-        var previous_tail = Pair(0F, initial_value)
+        var previous_tail = Pair(Rational(0,1), initial_value)
 
         for (beat_index in 0 until this.beat_count()) {
             val stack: MutableList<StackItem> = mutableListOf(
                 StackItem(
                     position = listOf(),
                     tree = this.get_tree(beat_index),
-                    relative_width = 1F,
-                    relative_offset = 0F
+                    relative_width = Rational(1,1),
+                    relative_offset = Rational(0,1)
                 )
             )
 
@@ -140,15 +140,13 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
                     val working_event = working_tree.get_event()!!
                     val working_values = working_event.to_float_array()
 
-                    if (working_values.contentEquals(previous_tail.second)) {
-                        continue
-                    }
+                    if (working_values.contentEquals(previous_tail.second)) continue
 
-                    val start_position = beat_index.toFloat() + working_item.relative_offset
+                    val start_position = beat_index + working_item.relative_offset
                     val end_position = start_position + (working_event.duration * working_item.relative_width)
 
                     if (start_position > previous_tail.first) {
-                        output.add (
+                        output.add(
                             ControllerProfile.ProfileEffectEvent(
                                 start_position = previous_tail.first,
                                 end_position = start_position,
@@ -208,7 +206,7 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
                         previous_tail = Pair(end_position, working_values)
                     }
                 } else if (!working_tree.is_leaf()) {
-                    val new_width = working_item.relative_width / working_tree.size.toFloat()
+                    val new_width = working_item.relative_width / working_tree.size
                     for (i in 0 until working_tree.size) {
                         val new_position = working_item.position.toMutableList()
                         new_position.add(i)

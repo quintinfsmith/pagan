@@ -5,7 +5,7 @@ import kotlin.math.abs
 /**
  *  Class to handle Rational Values
  */
-data class Rational(var numerator: Int, var denominator: Int) {
+data class Rational(var numerator: Int, var denominator: Int) : Comparable<Any> {
     init {
         this.reduce()
     }
@@ -20,7 +20,7 @@ data class Rational(var numerator: Int, var denominator: Int) {
         }
     }
 
-    operator fun compareTo(other: Any): Int {
+    override operator fun compareTo(other: Any): Int {
         return when (other) {
             is Rational -> (this.numerator * other.denominator) - (other.numerator * this.denominator)
             is Int -> this.compareTo(Rational(other, 1))
@@ -68,7 +68,7 @@ data class Rational(var numerator: Int, var denominator: Int) {
         return when (other) {
             is Rational -> this * Rational(other.denominator, other.numerator)
             is Int -> this * Rational(1, other)
-            else -> throw Exception()
+            else -> throw Exception("${other.javaClass}")
         }
     }
 
@@ -97,10 +97,24 @@ data class Rational(var numerator: Int, var denominator: Int) {
             } catch (e: Exception) {
                 return
             }
-
             this.numerator /= gcd
             this.denominator /= gcd
-
         }
     }
+
+
+    fun toInt(): Int {
+        return this.numerator / this.denominator
+    }
+}
+
+operator fun Int.plus(b: Rational) = Rational(this, 1) + b
+operator fun Int.minus(b: Rational) = Rational(this, 1) - b
+operator fun Int.times(b: Rational) = Rational(this, 1) * b
+fun List<Rational>.sum() = {
+    var output = Rational(0, 1)
+    for (x in this) {
+        output += x
+    }
+    output
 }

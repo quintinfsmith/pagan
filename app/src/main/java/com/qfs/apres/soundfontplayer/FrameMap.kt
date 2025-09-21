@@ -1,5 +1,7 @@
 package com.qfs.apres.soundfontplayer
 
+import com.qfs.pagan.structure.Rational
+
 interface FrameMap {
     /* Get handles that start at frame */
     fun get_new_handles(frame: Int): Set<Pair<SampleHandle, IntArray>>? //handle, merge keys

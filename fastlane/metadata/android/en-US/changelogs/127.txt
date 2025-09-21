@@ -1,6 +1,7 @@
-- Delay Function
+- Delay Effect
 - UI tweaks
 - Toggle tempo visibility
 - Improved load/save times
 - Drag line/channel to move (no longer swap)
 - Added persistent 'Insert Beat' button to end of table
+- Fixed rounding issue causing effects to *sometimes* not get applied

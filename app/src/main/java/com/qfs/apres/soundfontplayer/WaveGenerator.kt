@@ -51,7 +51,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         val profiles = this.midi_frame_map.get_effect_buffers()
 
         for (i in profiles.indices) {
-            val (layer, key, buffer) = profiles[i]
+            val (_, _, buffer) = profiles[i]
             if (buffer.allow_empty()) {
                 force_empty_indices.add(i)
             }

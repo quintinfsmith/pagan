@@ -1,4 +1,4 @@
-Mobile music applications can be limited. Desktop sequencers and workstations can be impenetrable. By dropping certain limitations, Pagan attempts to be musically complete while still being approachable.
+The fastest way to share that tune in your head.
 
 * Use your own soundfont (.sf2)
 * Import, reorchestrate and export .mid files

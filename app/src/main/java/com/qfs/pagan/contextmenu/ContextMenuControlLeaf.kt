@@ -229,12 +229,6 @@ class ContextMenuControlLeaf<T: EffectEvent>(val widget: ControlWidget<T>, prima
             ""
         }
 
-        if (cursor.ctl_type != EffectType.Tempo) {
-            this.button_duration.visibility = View.VISIBLE
-        } else {
-            this.button_duration.visibility = View.GONE
-        }
-
         this.widget.set_event(current_event, true)
     }
 

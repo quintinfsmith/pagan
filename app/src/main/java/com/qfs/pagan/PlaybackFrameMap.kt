@@ -85,7 +85,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             return
         }
         val frames_per_minute = 60F * this._sample_handle_manager.sample_rate.toFloat()
-
         val beats = mutableListOf(0)
 
         var working_frame = 0
@@ -122,8 +121,13 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     override fun get_marked_frame(i: Int): Int {
-        return this.get_marked_frames().let {
-            it[i % it.size]
+        val marked_frames = this.get_marked_frames()
+        return if (marked_frames.isEmpty()) {
+            0
+        } else {
+            marked_frames.let {
+                it[i % it.size]
+            }
         }
     }
 

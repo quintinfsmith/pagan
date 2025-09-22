@@ -66,63 +66,43 @@ class ContextMenuControlLeaf<T: EffectEvent>(val widget: ControlWidget<T>, prima
 
     override fun setup_interactions() {
         this.button_split.setOnClickListener {
-            if (!it.isEnabled) {
-                return@setOnClickListener
-            }
+            if (!it.isEnabled) return@setOnClickListener
             this.click_button_split()
         }
         this.button_split.setOnLongClickListener {
-            if (!it.isEnabled) {
-                return@setOnLongClickListener false
-            }
+            if (!it.isEnabled) return@setOnLongClickListener false
             this.long_click_button_split()
         }
 
         this.button_duration.setOnClickListener {
-            if (!it.isEnabled) {
-                return@setOnClickListener
-            }
+            if (!it.isEnabled) return@setOnClickListener
             this.click_button_duration()
         }
 
         this.button_duration.setOnLongClickListener {
-            if (!it.isEnabled) {
-                return@setOnLongClickListener false
-            }
+            if (!it.isEnabled) return@setOnLongClickListener false
             this.long_click_button_duration()
         }
         this.button_insert.setOnClickListener {
-            if (!it.isEnabled) {
-                return@setOnClickListener
-            }
+            if (!it.isEnabled) return@setOnClickListener
             this.click_button_insert()
         }
         this.button_insert.setOnLongClickListener {
-            if (!it.isEnabled) {
-                return@setOnLongClickListener false
-            }
+            if (!it.isEnabled) return@setOnLongClickListener false
             this.long_click_button_insert()
         }
 
         this.button_remove.setOnClickListener {
-            if (!it.isEnabled) {
-                return@setOnClickListener
-            }
+            if (!it.isEnabled) return@setOnClickListener
             this.click_button_remove()
         }
         this.button_remove.setOnLongClickListener {
-            if (!it.isEnabled) {
-                return@setOnLongClickListener false
-            }
-
+            if (!it.isEnabled) return@setOnLongClickListener false
             this.long_click_button_remove()
         }
 
         this.button_unset.setOnClickListener {
-            if (!it.isEnabled) {
-                return@setOnClickListener
-            }
-
+            if (!it.isEnabled) return@setOnClickListener
             this.click_button_unset()
         }
     }

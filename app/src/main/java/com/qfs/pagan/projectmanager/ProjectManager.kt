@@ -376,7 +376,6 @@ class ProjectManager(val context: Context, var uri: Uri?) {
             if (!uris.contains(uri)) {
                 cached_uri_to_remove.add(i)
             }
-
             uri
         }
         for (i in cached_uri_to_remove.reversed()) {

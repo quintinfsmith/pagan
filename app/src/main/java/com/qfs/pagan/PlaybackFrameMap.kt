@@ -80,6 +80,10 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     private fun _cache_beat_frames() {
+        if (this._tempo_ratio_map.isEmpty()) {
+            this._cached_beat_frames = null
+            return
+        }
         val frames_per_minute = 60F * this._sample_handle_manager.sample_rate.toFloat()
 
         val beats = mutableListOf(0)
@@ -130,7 +134,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         this._cache_beat_frames()
 
-        return this._cached_beat_frames!!
+        return this._cached_beat_frames ?: arrayOf()
     }
 
     override fun has_frames_remaining(frame: Int): Boolean {

@@ -11,7 +11,6 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_00024Companion_create(
         jlong cev_ptr,
         jint start_frame
 ) {
-
     auto* controller_event_data = (ControllerEventData *)cev_ptr;
     EffectProfileBuffer* buffer;
     switch (controller_event_data->type) {
@@ -37,7 +36,6 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_00024Companion_create(
     }
 
     buffer->init(controller_event_data, start_frame);
-
     return (jlong)buffer;
 }
 

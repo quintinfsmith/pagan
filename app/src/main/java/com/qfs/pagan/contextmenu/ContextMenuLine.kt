@@ -148,16 +148,12 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         }
 
         this.button_choose_percussion.setOnClickListener {
-            if (!it.isEnabled) {
-                return@setOnClickListener
-            }
+            if (!it.isEnabled) return@setOnClickListener
             this.interact_btnChoosePercussion()
         }
 
         this.button_choose_percussion.setOnLongClickListener {
-            if (!it.isEnabled) {
-                return@setOnLongClickListener false
-            }
+            if (!it.isEnabled) return@setOnLongClickListener false
             val opus_manager = this.get_opus_manager()
             val cursor = opus_manager.cursor
             val line = opus_manager.get_all_channels()[cursor.channel].lines[cursor.line_offset]
@@ -169,38 +165,27 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
         }
 
         this.button_insert.setOnLongClickListener {
-            if (!it.isEnabled) {
-                return@setOnLongClickListener false
-            }
+            if (!it.isEnabled) return@setOnLongClickListener false
             this.long_click_button_insert_line()
         }
 
         this.button_insert.setOnClickListener {
-            if (!it.isEnabled) {
-                return@setOnClickListener
-            }
+            if (!it.isEnabled) return@setOnClickListener
             this.click_button_insert_line()
         }
 
         this.button_remove.setOnClickListener {
-            if (!it.isEnabled) {
-                return@setOnClickListener
-            }
+            if (!it.isEnabled) return@setOnClickListener
             this.click_button_remove_line()
         }
 
         this.button_remove.setOnLongClickListener {
-            if (!it.isEnabled) {
-                return@setOnLongClickListener false
-            }
-
+            if (!it.isEnabled) return@setOnLongClickListener false
             this.long_click_button_remove_line()
         }
 
         this.button_toggle_volume_control.setOnClickListener {
-            if (!it.isEnabled) {
-                return@setOnClickListener
-            }
+            if (!it.isEnabled) return@setOnClickListener
             this.get_activity().get_action_interface().show_hidden_line_controller()
             //this.click_button_toggle_volume_control()
         }

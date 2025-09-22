@@ -23,8 +23,6 @@ class ControlWidgetDelay(level: CtlLineLevel, is_initial_event: Boolean, context
         const val DEFAULT_REPEAT = 0
     }
 
-    private var _lockout_ui: Boolean = false
-
     override fun on_inflated() {
         this._echo = this.inner.findViewById(R.id.echo)
         this._numerator = this.inner.findViewById(R.id.numerator)

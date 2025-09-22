@@ -65,65 +65,47 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
 
     override fun setup_interactions() {
         this.button_duration.setOnClickListener {
-            if (!it.isEnabled) {
-                return@setOnClickListener
-            }
+            if (!it.isEnabled) return@setOnClickListener
             this.click_button_duration()
         }
 
         this.button_duration.setOnLongClickListener {
-            if (!it.isEnabled) {
-                return@setOnLongClickListener false
-            }
+            if (!it.isEnabled) return@setOnLongClickListener false
             this.long_click_button_duration()
         }
 
         this.button_remove.setOnClickListener {
-            if (!it.isEnabled) {
-                return@setOnClickListener
-            }
+            if (!it.isEnabled) return@setOnClickListener
             this.click_button_remove()
         }
 
         this.button_remove.setOnLongClickListener {
-            if (!it.isEnabled) {
-                return@setOnLongClickListener false
-            }
+            if (!it.isEnabled) return@setOnLongClickListener false
             this.long_click_button_remove()
         }
 
         this.button_unset.setOnClickListener {
-            if (!it.isEnabled) {
-                return@setOnClickListener
-            }
+            if (!it.isEnabled) return@setOnClickListener
             this.click_button_unset()
         }
 
         this.button_split.setOnClickListener {
-            if (!it.isEnabled) {
-                return@setOnClickListener
-            }
+            if (!it.isEnabled) return@setOnClickListener
             this.click_button_split()
         }
 
         this.button_split.setOnLongClickListener {
-            if (!it.isEnabled) {
-                return@setOnLongClickListener false
-            }
+            if (!it.isEnabled) return@setOnLongClickListener false
             this.long_click_button_split()
         }
 
         this.button_insert.setOnClickListener {
-            if (!it.isEnabled) {
-                return@setOnClickListener
-            }
+            if (!it.isEnabled) return@setOnClickListener
             this.click_button_insert()
         }
 
         this.button_insert.setOnLongClickListener {
-            if (!it.isEnabled) {
-                return@setOnLongClickListener false
-            }
+            if (!it.isEnabled) return@setOnLongClickListener false
             this.long_click_button_insert()
         }
     }
@@ -167,6 +149,7 @@ class ContextMenuLeafPercussion(primary_container: ViewGroup, secondary_containe
     private fun click_button_unset() {
         this.get_activity().get_action_interface().toggle_percussion()
     }
+
     override fun matches_cursor(cursor: OpusManagerCursor): Boolean {
         return cursor.mode == CursorMode.Single
                 && cursor.ctl_level == null

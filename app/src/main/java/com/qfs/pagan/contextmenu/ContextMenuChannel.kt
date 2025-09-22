@@ -8,7 +8,6 @@ import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.InvalidModeException
-import com.qfs.pagan.structure.opusmanager.cursor.OpusLayerCursor
 import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 
 /*
@@ -97,9 +96,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
 
     override fun setup_interactions() {
         this.button_choose_instrument.setOnClickListener {
-            if (!it.isEnabled) {
-                return@setOnClickListener
-            }
+            if (!it.isEnabled) return@setOnClickListener
             this.interact_choose_instrument()
         }
 
@@ -108,45 +105,32 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         }
 
         this.button_insert.setOnLongClickListener {
-            if (!it.isEnabled) {
-                return@setOnLongClickListener false
-            }
+            if (!it.isEnabled) return@setOnLongClickListener false
             this.long_click_button_insert_channel()
         }
 
         this.button_insert.setOnClickListener {
-            if (!it.isEnabled) {
-                return@setOnClickListener
-            }
+            if (!it.isEnabled) return@setOnClickListener
             this.click_button_insert_channel()
         }
 
         this.button_insert_percussion.setOnClickListener {
-            if (!it.isEnabled) {
-                return@setOnClickListener
-            }
+            if (!it.isEnabled) return@setOnClickListener
             this.click_button_insert_percussion_channel()
         }
 
         this.button_remove.setOnClickListener {
-            if (!it.isEnabled) {
-                return@setOnClickListener
-            }
+            if (!it.isEnabled) return@setOnClickListener
             this.click_button_remove_channel()
         }
 
         this.button_remove.setOnLongClickListener {
-            if (!it.isEnabled) {
-                return@setOnLongClickListener false
-            }
-
+            if (!it.isEnabled) return@setOnLongClickListener false
             this.long_click_button_remove_channel()
         }
 
         this.button_toggle_controllers.setOnClickListener {
-            if (!it.isEnabled) {
-                return@setOnClickListener
-            }
+            if (!it.isEnabled) return@setOnClickListener
             this.get_activity().get_action_interface().show_hidden_channel_controller()
         }
 

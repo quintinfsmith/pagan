@@ -1,5 +1,6 @@
 package com.qfs.pagan.structure.rationaltree
 
+import android.database.Observable
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.greatest_common_denominator
 import com.qfs.pagan.structure.lowest_common_multiple
@@ -15,7 +16,6 @@ import kotlin.math.round
  */
 class ReducibleTree<T> {
     companion object {
-
         fun <T> get_set_tree(input: ReducibleTree<T>): ReducibleTree<Set<T>> {
             val output = ReducibleTree<Set<T>>()
 
@@ -30,8 +30,8 @@ class ReducibleTree<T> {
 
             return output
         }
-
     }
+
     private data class ReducerTuple<T>(
         var denominator: Int,
         var indices: MutableList<Pair<Int, ReducibleTree<T>>>,
@@ -48,9 +48,7 @@ class ReducibleTree<T> {
     operator fun get(vararg rel_indices: Int): ReducibleTree<T> {
         var output: ReducibleTree<T> = this
         for (rel_index in rel_indices) {
-            if (output.is_leaf()) {
-                throw InvalidGetCall()
-            }
+            if (output.is_leaf()) throw InvalidGetCall()
 
             val index = if (rel_index < 0) {
                 output._real_size + rel_index
@@ -58,9 +56,7 @@ class ReducibleTree<T> {
                 rel_index
             }
 
-            if (index >= output._real_size) {
-                throw InvalidGetCall()
-            }
+            if (index >= output._real_size) throw InvalidGetCall()
 
             if (!output.divisions.containsKey(index)) {
                 val new_tree = ReducibleTree<T>()
@@ -92,11 +88,9 @@ class ReducibleTree<T> {
      * Get index relative to siblings if applicable, null otherwise
      */
     fun get_index(): Int? {
-        if (this.parent == null) {
-            return null
-        }
+        val parent = this.parent ?: return null
 
-        for ((i, node) in this.parent!!.divisions) {
+        for ((i, node) in parent.divisions) {
             if (node === this) {
                 return i
             }
@@ -151,9 +145,7 @@ class ReducibleTree<T> {
      * Adjust the number of children to their lowest value (or value closest to [target_size]) without losing precision.
      */
     fun reduce(target_size: Int = 1) {
-        if (this.is_leaf()) {
-            return
-        }
+        if (this.is_leaf()) return
         if (!this.is_flat()) {
             this.flatten()
         }
@@ -196,18 +188,14 @@ class ReducibleTree<T> {
 
             for (i in 0 until denominator) {
                 val working_indices = split_indices[i]
-                if (working_indices.isEmpty() || parent_node.is_leaf()) {
-                    continue
-                }
+                if (working_indices.isEmpty() || parent_node.is_leaf()) continue
 
                 val working_node = parent_node[i]
 
                 // Get the most reduces version of each index
                 val minimum_divs = mutableSetOf<Int>()
                 for ((index, _) in working_indices) {
-                    if (index == 0) {
-                        continue
-                    }
+                    if (index == 0) continue
 
                     val most_reduced: Int = current_size / greatest_common_denominator(
                         current_size,
@@ -276,9 +264,7 @@ class ReducibleTree<T> {
     }
 
     fun flatten() {
-        if (this.has_event() || this.is_flat()) {
-            return
-        }
+        if (this.has_event() || this.is_flat()) return
 
         val sizes: MutableList<Int> = mutableListOf()
         val subnode_backup: MutableList<Pair<Int, ReducibleTree<T>>> = mutableListOf()
@@ -358,9 +344,7 @@ class ReducibleTree<T> {
     }
 
     fun clear_singles() {
-        if (this.is_leaf()) {
-            return
-        }
+        if (this.is_leaf()) return
 
         for (child in this.divisions.values) {
             child.clear_singles()
@@ -384,9 +368,7 @@ class ReducibleTree<T> {
         if (this.parent != null) {
             val parent = this.parent!!
             for (i in parent.divisions.keys) {
-                if (parent.divisions[i] !== this) {
-                    continue
-                }
+                if (parent.divisions[i] !== this) continue
                 parent.divisions[i] = new_node
                 break
             }
@@ -528,9 +510,7 @@ class ReducibleTree<T> {
      * Get the largest size of all branches.
      */
     fun get_max_child_weight(): Int {
-        if (this.is_leaf()) {
-            return 1
-        }
+        if (this.is_leaf()) return 1
 
         var max_weight = 1
         for (node in this.divisions.values) {
@@ -545,9 +525,7 @@ class ReducibleTree<T> {
     }
 
     fun get_total_child_weight(): Int {
-        if (this.is_leaf()) {
-            return 1
-        }
+        if (this.is_leaf()) return 1
 
         var max_weight = 1
         for (node in this.divisions.values) {

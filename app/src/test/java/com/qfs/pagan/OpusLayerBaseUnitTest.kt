@@ -3464,6 +3464,7 @@ class OpusLayerBaseUnitTest {
 
     }
 
+    @Test
     fun test_mute() {
         val manager = OpusManager()
         manager._project_change_new()
@@ -3476,12 +3477,6 @@ class OpusLayerBaseUnitTest {
         assert(manager.channels[0].muted)
         manager.unmute_channel(0)
         assert(!manager.channels[0].muted)
-
-    }
-
-    @Test
-    fun test_json() {
-
     }
 
     //@Test

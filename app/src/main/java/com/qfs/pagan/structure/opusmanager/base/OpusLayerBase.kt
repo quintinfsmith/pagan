@@ -382,54 +382,6 @@ open class OpusLayerBase: Effectable {
     }
 
     /**
-     * Does a tree exist at [beat_key][position]?
-     */
-    fun is_valid(beat_key: BeatKey, position: List<Int>): Boolean {
-        return try {
-            this.get_tree(beat_key, position)
-            true
-        } catch (_: Exception) {
-            false
-        }
-    }
-
-    /**
-     * Does a tree exist in the global [ctl_type] controller at [beat][position]?
-     */
-    fun is_valid_global_ctl(ctl_type: EffectType, beat: Int, position: List<Int>): Boolean {
-        return try {
-            this.get_global_ctl_tree<EffectEvent>(ctl_type, beat, position)
-            true
-        } catch (_: Exception) {
-            false
-        }
-    }
-
-    /**
-     * Does a tree exist in the channel [ctl_type] controller at [channel]/[beat]/[position]?
-     */
-    fun is_valid_channel_ctl(ctl_type: EffectType, channel: Int, beat: Int, position: List<Int>): Boolean {
-        return try {
-            this.get_channel_ctl_tree<EffectEvent>(ctl_type, channel, beat, position)
-            true
-        } catch (_: Exception) {
-            false
-        }
-    }
-
-    /**
-     * Does a tree exist in the line [ctl_type] controller at [beat_key][position]?
-     */
-    fun is_valid_line_ctl(ctl_type: EffectType, beat_key: BeatKey, position: List<Int>): Boolean {
-        return try {
-            this.get_line_ctl_tree<EffectEvent>(ctl_type, beat_key, position)
-            true
-        } catch (_: Exception) {
-            false
-        }
-    }
-
-    /**
      *  Insert extra lines to fit overlapping events (happens on import midi or old savve file versions)
      */
     private fun _reshape_lines_from_blocked_trees() {
@@ -634,15 +586,13 @@ open class OpusLayerBase: Effectable {
      * Get the tree structure found within the BeatKey [beat] at [position]
      * [position] defaults to null, indicating the root tree of the beat
      */
-    fun get_percussion_tree(channel: Int, line_offset: Int, beat: Int, position: List<Int>? = null): ReducibleTree<PercussionEvent> {
-        if (!this.is_percussion(channel)) {
-            throw PercussionChannelRequired(channel)
-        }
-        val percussion_channel = this.channels[channel]
-        if (line_offset > percussion_channel.size) {
-            throw BadBeatKey(BeatKey(channel, line_offset, beat))
-        }
-        return (percussion_channel as OpusPercussionChannel).get_tree(line_offset, beat, position ?: listOf())
+    fun get_percussion_tree(beat_key: BeatKey, position: List<Int>? = null): ReducibleTree<PercussionEvent> {
+        if (!this.is_percussion(beat_key.channel)) throw PercussionChannelRequired(beat_key.channel)
+
+        val percussion_channel = this.channels[beat_key.channel]
+        if (beat_key.line_offset >= percussion_channel.size) throw BadBeatKey(beat_key)
+
+        return (percussion_channel as OpusPercussionChannel).get_tree(beat_key.line_offset, beat_key.beat, position ?: listOf())
     }
 
     /**
@@ -1150,14 +1100,10 @@ open class OpusLayerBase: Effectable {
      */
     fun get_relative_value(beat_key: BeatKey, position: List<Int>): Int {
         val tree = this.get_tree(beat_key, position)
-        if (!tree.has_event()) {
-            throw NonEventConversion(beat_key, position)
-        }
+        if (!tree.has_event()) throw NonEventConversion(beat_key, position)
 
         val event = tree.get_event()!!
-        if (event is RelativeNoteEvent) {
-            return event.offset
-        }
+        if (event is RelativeNoteEvent) return event.offset
 
         var working_beat_key: BeatKey = beat_key
         var working_position: List<Int> = position
@@ -1193,10 +1139,7 @@ open class OpusLayerBase: Effectable {
      * @throws BadInsertPosition When attempting to insert a new tree next to a top-level tree
      */
     open fun insert_after(beat_key: BeatKey, position: List<Int>) {
-        if (position.isEmpty()) {
-            throw BadInsertPosition()
-        }
-
+        if (position.isEmpty()) throw BadInsertPosition()
         this._catch_blocked_tree_exception(beat_key.channel) {
             this.get_all_channels()[beat_key.channel].insert_after(beat_key.line_offset, beat_key.beat, position)
         }
@@ -1206,9 +1149,7 @@ open class OpusLayerBase: Effectable {
      * Insert a leaf into the tree of the channel [channel] [type] effect controller at [beat]/[position]
      */
     open fun controller_channel_insert(type: EffectType, channel: Int, beat: Int, position: List<Int>) {
-        if (position.isEmpty()) {
-            throw BadInsertPosition()
-        }
+        if (position.isEmpty()) throw BadInsertPosition()
         this._catch_blocked_tree_exception(channel) {
             this.get_all_channels()[channel].controller_channel_insert_leaf(type, beat, position)
         }
@@ -1218,9 +1159,7 @@ open class OpusLayerBase: Effectable {
      * Insert a leaf into the tree of the channel [channel] [type] effect controller after [beat]/[position]
      */
     open fun controller_channel_insert_after(type: EffectType, channel: Int, beat: Int, position: List<Int>) {
-        if (position.isEmpty()) {
-            throw BadInsertPosition()
-        }
+        if (position.isEmpty()) throw BadInsertPosition()
         this._catch_blocked_tree_exception(channel) {
             this.get_all_channels()[channel].controller_channel_insert_leaf_after(type, beat, position)
         }
@@ -1336,9 +1275,7 @@ open class OpusLayerBase: Effectable {
      * Insert a leaf into the tree of the line at [beat_key.channel], [beat_key.line_offset]'s [type] effect controller at [beat]/[position]
      */
     open fun controller_line_insert(type: EffectType, beat_key: BeatKey, position: List<Int>) {
-        if (position.isEmpty()) {
-            throw BadInsertPosition()
-        }
+        if (position.isEmpty()) throw BadInsertPosition()
         this._catch_blocked_tree_exception(beat_key.channel) {
             this.get_all_channels()[beat_key.channel].controller_line_insert_leaf(type, beat_key.line_offset, beat_key.beat, position)
         }
@@ -1348,10 +1285,7 @@ open class OpusLayerBase: Effectable {
      * Insert a leaf into the tree of the line at [beat_key.channel], [beat_key.line_offset]'s [type] effect controller after [beat]/[position]
      */
     open fun controller_line_insert_after(type: EffectType, beat_key: BeatKey, position: List<Int>) {
-        if (position.isEmpty()) {
-            throw BadInsertPosition()
-        }
-
+        if (position.isEmpty()) throw BadInsertPosition()
         this._catch_blocked_tree_exception(beat_key.channel) {
             this.get_all_channels()[beat_key.channel].controller_line_insert_leaf_after(type, beat_key.line_offset, beat_key.beat, position)
         }
@@ -1361,10 +1295,7 @@ open class OpusLayerBase: Effectable {
      * Insert a leaf into the tree of the global [type] effect controller at [beat]/[position]
      */
     open fun controller_global_insert(type: EffectType, beat: Int, position: List<Int>) {
-        if (position.isEmpty()) {
-            throw BadInsertPosition()
-        }
-
+        if (position.isEmpty()) throw BadInsertPosition()
         this._catch_global_ctl_blocked_tree_exception(type) {
             val controller = this.get_controller<EffectEvent>(type)
             controller.insert(beat, position)
@@ -1375,10 +1306,7 @@ open class OpusLayerBase: Effectable {
      * Insert a leaf into the tree of the global [type] effect controller after [beat]/[position]
      */
     open fun controller_global_insert_after(type: EffectType, beat: Int, position: List<Int>) {
-        if (position.isEmpty()) {
-            throw BadInsertPosition()
-        }
-
+        if (position.isEmpty()) throw BadInsertPosition()
         this._catch_global_ctl_blocked_tree_exception(type) {
             val controller = this.get_controller<EffectEvent>(type)
             controller.insert_after(beat, position)
@@ -1390,11 +1318,7 @@ open class OpusLayerBase: Effectable {
      * The [beat_key.channel] must be the percussion channel.
      */
     open fun percussion_set_event(beat_key: BeatKey, position: List<Int>) {
-        if (!this.is_percussion(beat_key.channel)) {
-            throw PercussionChannelRequired(beat_key.channel)
-        }
-
-        val tree = this.get_percussion_tree(beat_key.channel, beat_key.line_offset, beat_key.beat, position)
+        val tree = this.get_percussion_tree(beat_key, position)
         if (tree.has_event()) {
             tree.unset_event()
         }
@@ -1406,10 +1330,7 @@ open class OpusLayerBase: Effectable {
      * Set the percussion instrument of the line at [line_offset] of the percussion channel to [instrument].
      */
     open fun percussion_set_instrument(channel: Int, line_offset: Int, instrument: Int) {
-        if (!this.is_percussion(channel)) {
-            throw PercussionChannelRequired(channel)
-        }
-
+        if (!this.is_percussion(channel)) throw PercussionChannelRequired(channel)
         (this.get_channel(channel) as OpusPercussionChannel).set_instrument(line_offset, instrument)
     }
 
@@ -1631,19 +1552,13 @@ open class OpusLayerBase: Effectable {
      * remove the beat at [beat_index] [count] times from all controllers, lines and channels.
      */
     open fun remove_beat(beat_index: Int, count: Int = 1) {
-        if (this.length <= count) {
-            throw RemovingLastBeatException()
-        }
-        if (beat_index >= this.length) {
-            throw IndexOutOfBoundsException()
-        }
+        if (this.length <= count) throw RemovingLastBeatException()
+        if (beat_index >= this.length) throw IndexOutOfBoundsException()
 
         this.blocked_check_remove_beat(beat_index, count)
 
         val working_beat_index = min(beat_index + count - 1, this.length - 1) - (count - 1)
-        if (working_beat_index < 0) {
-            throw IndexOutOfBoundsException()
-        }
+        if (working_beat_index < 0) throw IndexOutOfBoundsException()
 
         for (channel in this.get_all_channels()) {
             channel.remove_beat(working_beat_index, count)
@@ -1707,22 +1622,16 @@ open class OpusLayerBase: Effectable {
         val original = this.tuning_map
         this.tuning_map = new_map.clone()
 
-        if (!mod_events || new_map.size == original.size) {
-            return
-        }
+        if (!mod_events || new_map.size == original.size) return
 
         val radix = new_map.size
 
         for (i in this.channels.indices) {
-            if (this.is_percussion(i)) {
-                continue
-            }
+            if (this.is_percussion(i)) continue
             (this.get_channel(i) as OpusChannel).lines.forEachIndexed { j: Int, line: OpusLine ->
                 line.beats.forEachIndexed { k: Int, beat_tree: ReducibleTree<TunedInstrumentEvent> ->
                     beat_tree.traverse { tree: ReducibleTree<TunedInstrumentEvent>, event: TunedInstrumentEvent? ->
-                        if (event == null) {
-                            return@traverse
-                        }
+                        if (event == null) return@traverse
 
                         val position = tree.get_path()
                         val new_event = when (event) {
@@ -1739,9 +1648,7 @@ open class OpusLayerBase: Effectable {
                                 new_event
                             }
 
-                            else -> {
-                                return@traverse
-                            }
+                            else -> return@traverse
                         }
 
 
@@ -1883,7 +1790,6 @@ open class OpusLayerBase: Effectable {
     open fun unmute_line(channel: Int, line_offset: Int) {
         this.get_all_channels()[channel].get_line(line_offset).unmute()
     }
-
 
     /*
      * ---------------------------- 2nd Order Functions ---------------------------
@@ -4537,10 +4443,6 @@ open class OpusLayerBase: Effectable {
                 line.flag_ignore_blocking = false
             }
         }
-    }
-
-    fun get_line_volume(channel: Int, line_offset: Int): Float {
-        return (this.get_line_controller_initial_event(EffectType.Volume, channel, line_offset) as OpusVolumeEvent).value
     }
 
     fun <T: EffectEvent> get_current_effects(type: EffectType, beat_key: BeatKey, position: List<Int>): Triple<T?, T?, T?> {

@@ -3,14 +3,15 @@ plugins {
     id "org.jetbrains.kotlin.android" version "2.1.21"
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.8.0'
     id 'org.jetbrains.kotlinx.kover' version '0.9.2'
+    id "org.jetbrains.kotlin.plugin.compose" version "2.2.20"
 }
 
 android {
     namespace 'com.qfs.pagan'
-    compileSdk 35
+    compileSdk 36
 
     defaultConfig {
-        applicationId "com.qfs.pagan"
+        applicationId "com.qfs.pagandevb"
         minSdk 27
         targetSdk 35
         versionCode 127
@@ -38,6 +39,7 @@ android {
     }
     buildFeatures {
         viewBinding true
+        compose true
     }
     externalNativeBuild {
         cmake {
@@ -49,19 +51,57 @@ android {
 
 dependencies {
     implementation "com.google.android.material:material:1.12.0"
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.1'
-    implementation 'androidx.core:core-ktx:1.16.0'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.4'
+    implementation 'androidx.core:core-ktx:1.17.0'
     implementation 'androidx.appcompat:appcompat:1.7.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
-    implementation "androidx.test:core:1.6.1"
-    implementation 'androidx.navigation:navigation-fragment-ktx:2.9.1'
-    implementation 'androidx.navigation:navigation-ui-ktx:2.9.1'
+    implementation "androidx.test:core:1.7.0"
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.9.4'
+    implementation 'androidx.navigation:navigation-ui-ktx:2.9.4'
     implementation 'androidx.drawerlayout:drawerlayout:1.2.0'
     implementation 'androidx.recyclerview:recyclerview:1.4.0'
-    implementation 'androidx.test:rules:1.6.1'
-    implementation 'androidx.fragment:fragment-ktx:1.8.8'
+    implementation 'androidx.test:rules:1.7.0'
+    implementation 'androidx.fragment:fragment-ktx:1.8.9'
+    implementation 'androidx.compose.ui:ui:1.9.1'
+    implementation 'androidx.compose.ui:ui-graphics:1.9.1'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'io.mockk:mockk:1.13.14'
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+
+
+    // Specify the Compose BOM with a version definition
+    Dependency composeBom = platform('androidx.compose:compose-bom:2025.08.00')
+    implementation composeBom
+    testImplementation composeBom
+    androidTestImplementation composeBom
+
+    // Choose one of the following:
+    // Material Design 3
+    implementation("androidx.compose.material3:material3")
+
+    // Android Studio Preview support
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    debugImplementation("androidx.compose.ui:ui-tooling")
+
+    // UI Tests
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    // Optional - Included automatically by material, only add when you need
+    // the icons but not the material library (e.g. when using Material3 or a
+    // custom design system based on Foundation)
+    implementation("androidx.compose.material:material-icons-core")
+    // Optional - Add full set of material icons
+    implementation("androidx.compose.material:material-icons-extended")
+    // Optional - Add window size utils
+    implementation("androidx.compose.material3.adaptive:adaptive")
+
+    // Optional - Integration with activities
+    implementation("androidx.activity:activity-compose:1.11.0")
+    // Optional - Integration with ViewModels
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.4")
+    // Optional - Integration with LiveData
+    implementation("androidx.compose.runtime:runtime-livedata")
+    // Optional - Integration with RxJava
+    implementation("androidx.compose.runtime:runtime-rxjava2")
 }

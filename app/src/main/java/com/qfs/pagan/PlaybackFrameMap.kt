@@ -448,7 +448,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         controller.beats.forEachIndexed { i: Int, tree: ReducibleTree<OpusTempoEvent>? ->
             if (tree == null) return@forEachIndexed
 
-            val stack = mutableListOf(Triple(tree, Rational(1,0), Rational(0,1)))
+            val stack = mutableListOf(Triple(tree, Rational(1,1), Rational(0,1)))
             while (stack.isNotEmpty()) {
                 val (working_tree, working_ratio, working_offset) = stack.removeAt(0)
 
@@ -467,7 +467,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                             EffectTransition.RInstant -> {
                                 this._tempo_ratio_map.add(
                                     Pair(
-                                        i + working_offset + working_ratio,
+                                        i + working_offset + (working_ratio * event.duration),
                                         working_tempo
                                     )
                                 )

@@ -366,7 +366,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 }
             }
         }
-
         // remove unused
         var i = 0
         while (i < control_event_data.size - 1) {
@@ -375,7 +374,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             } else {
                 i += 1
             }
-        }
+       }
+
 
         return ControllerEventData(control_event_data, control_type)
     }
@@ -507,7 +507,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         val frames_per_minute = 60F * this._sample_handle_manager.sample_rate
         // Find the tempo active at the beginning of the beat
-        var working_position = effect_event.start_position
+        var working_position = Rational(effect_event.start_position.toInt(), 1)
         var working_tempo = 0f
         var tempo_index = 0
         val data_width = effect_event.start_value.size
@@ -525,7 +525,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         // Calculate Start Position
         var start_frame = this._cached_beat_frames!![effect_event.start_position.toInt()]
-
         while (tempo_index < this._tempo_ratio_map.size) {
             val tempo_change_position = this._tempo_ratio_map[tempo_index].first
             if (tempo_change_position < effect_event.start_position) {

@@ -214,7 +214,7 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
                             StackItem(
                                 position = new_position,
                                 tree = working_tree[i],
-                                relative_width = new_width,
+                                relative_width = new_width.copy(),
                                 relative_offset = working_item.relative_offset + (new_width * i)
                             )
                         )

@@ -1675,6 +1675,13 @@ open class OpusLayerHistory: OpusLayerCursor() {
         this._remember {
             if (this.has_global_controller(type)) {
                 this.push_to_history_stack(
+                    HistoryToken.SET_GLOBAL_CTL_INITIAL_EVENT,
+                    listOf(
+                        type,
+                        this.get_controller<EffectEvent>(type).initial_event
+                    )
+                )
+                this.push_to_history_stack(
                     HistoryToken.NEW_GLOBAL_CONTROLLER,
                     listOf(type)
                 )
@@ -1699,6 +1706,15 @@ open class OpusLayerHistory: OpusLayerCursor() {
                     )
                 }
                 this.push_to_history_stack(
+                    HistoryToken.SET_LINE_CTL_INITIAL_EVENT,
+                    listOf(
+                        type,
+                        channel_index,
+                        line_offset,
+                        this.get_channel(channel_index).lines[line_offset].get_controller<EffectEvent>(type).initial_event
+                    )
+                )
+                this.push_to_history_stack(
                     HistoryToken.NEW_LINE_CONTROLLER,
                     listOf(type, channel_index, line_offset, controller.visible)
                 )
@@ -1721,6 +1737,14 @@ open class OpusLayerHistory: OpusLayerCursor() {
                         listOf(type, channel_index, beat, listOf<Int>(), controller.beats[beat])
                     )
                 }
+                this.push_to_history_stack(
+                    HistoryToken.SET_CHANNEL_CTL_INITIAL_EVENT,
+                    listOf(
+                        type,
+                        channel_index,
+                        this.get_channel(channel_index).get_controller<EffectEvent>(type).initial_event
+                    )
+                )
                 this.push_to_history_stack(
                     HistoryToken.NEW_CHANNEL_CONTROLLER,
                     listOf(type, channel_index, controller.visible)

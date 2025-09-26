@@ -21,18 +21,14 @@ import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.ControllerProfile
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.TempoController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.plus
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.structure.times
-import kotlinx.coroutines.delay
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.text.get
 
 class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_handle_manager: SampleHandleManager): FrameMap {
     companion object {
@@ -126,10 +122,14 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             return output
         }
 
-        private fun generate_merge_keys(channel: Int, line_offset: Int): IntArray {
+        private fun generate_merge_keys(channel: Int, line_offset: Int? = null): IntArray {
             return intArrayOf(
                 PlaybackFrameMap.merge_offset_gen++,
-                line_offset + (channel * 1000), // LAYER_LINE
+                if (line_offset != null) {
+                    line_offset + (channel * 1000)
+                } else {
+                    -1
+                }, // LAYER_LINE
                 channel // LAYER_CHANNEL
             )
         }
@@ -525,7 +525,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                         temp_data.add(
                             Quad(
                                 PlaybackFrameMap.LAYER_LINE, // layer (channel)
-                                PlaybackFrameMap.generate_merge_keys(c, -1)[PlaybackFrameMap.LAYER_LINE], // key
+                                PlaybackFrameMap.generate_merge_keys(c, l)[PlaybackFrameMap.LAYER_LINE], // key
                                 controller.generate_profile(),
                                 control_type
                             )
@@ -539,7 +539,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                     temp_data.add(
                         Quad(
                             PlaybackFrameMap.LAYER_CHANNEL, // layer (channel)
-                            PlaybackFrameMap.generate_merge_keys(c, -1)[PlaybackFrameMap.LAYER_CHANNEL], // key
+                            PlaybackFrameMap.generate_merge_keys(c)[PlaybackFrameMap.LAYER_CHANNEL], // key
                             controller.generate_profile(),
                             control_type
                         )

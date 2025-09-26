@@ -22,13 +22,17 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.ControllerProfile
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.TempoController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.plus
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.structure.times
+import kotlinx.coroutines.delay
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.text.get
 
 class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_handle_manager: SampleHandleManager): FrameMap {
     companion object {
@@ -36,9 +40,230 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         const val LAYER_LINE = 1
         const val LAYER_CHANNEL = 2
         const val LAYER_GLOBAL = 3
-
         var merge_offset_gen = 1
+
+        fun calculate_beat_frames(beat_count: Int, sample_rate: Int, tempo_map: List<Pair<Rational, Float>>): IntArray? {
+            if (tempo_map.isEmpty()) return null
+
+            val frames_per_minute = 60F * sample_rate.toFloat()
+            val beats = mutableListOf(0)
+            val working_tempo = tempo_map[0].second
+            val frames_to_add = mutableListOf<Int>()
+
+            var frames_per_beat = (frames_per_minute / working_tempo).toInt()
+            var tempo_index = 0
+            var working_frame = 0
+
+            // First, just get the frame of each beat
+            for (i in 1 until beat_count + 1) {
+                val beat_position = i
+                var working_position = Rational(i - 1,1)
+
+                while (tempo_index < tempo_map.size) {
+                    val tempo_change_position = tempo_map[tempo_index].first
+                    if (tempo_change_position < beat_position) {
+                        frames_to_add.add((frames_per_beat * (tempo_change_position - working_position)).toInt())
+
+                        working_position = tempo_change_position
+                        frames_per_beat = (frames_per_minute / tempo_map[tempo_index].second).toInt()
+                        tempo_index += 1
+                    } else {
+                        break
+                    }
+                }
+                frames_to_add.add((frames_per_beat * (beat_position - working_position)).toInt())
+                working_frame += frames_to_add.sum()
+                frames_to_add.clear()
+
+                beats.add(working_frame)
+            }
+
+            return beats.toIntArray()
+        }
+
+        fun calculate_tempo_changes(tempo_controller: TempoController): List<Pair<Rational, Float>> {
+            var working_tempo = tempo_controller.initial_event.value
+
+            val output = mutableListOf(Pair(Rational(0,1), working_tempo))
+
+            tempo_controller.beats.forEachIndexed { i: Int, tree: ReducibleTree<OpusTempoEvent>? ->
+                if (tree == null) return@forEachIndexed
+
+                val stack = mutableListOf(
+                    Triple(tree, Rational(1,1), Rational(0,1))
+                )
+
+                while (stack.isNotEmpty()) {
+                    val (working_tree, working_ratio, working_offset) = stack.removeAt(0)
+
+                    if (working_tree.has_event()) {
+                        working_tree.get_event()?.let { event ->
+                            output.add(Pair(i + working_offset, event.value))
+                            when (event.transition) {
+                                EffectTransition.Instant -> {
+                                    working_tempo = event.value
+                                }
+                                EffectTransition.RInstant -> {
+                                    output.add(Pair(i + working_offset + (working_ratio * event.duration), working_tempo))
+                                }
+                                else -> {/* TODO: throw exception? */}
+                            }
+                        }
+                    } else if (!working_tree.is_leaf()) {
+                        for ((j, child) in working_tree.divisions) {
+                            val child_width = working_ratio / working_tree.size
+                            stack.add(
+                                Triple(
+                                    child,
+                                    child_width,
+                                    working_offset + (j * child_width)
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+            return output
+        }
+
+        private fun generate_merge_keys(channel: Int, line_offset: Int): IntArray {
+            return intArrayOf(
+                PlaybackFrameMap.merge_offset_gen++,
+                line_offset + (channel * 1000), // LAYER_LINE
+                channel // LAYER_CHANNEL
+            )
+        }
+
+        private fun convert_to_indexed_profile_buffer_frames(sample_rate: Int, tempo_map: List<Pair<Rational, Float>>, beat_map: IntArray, effect_event: ControllerProfile.ProfileEffectEvent, event_type: EffectType): List<ControllerEventData.IndexedProfileBufferFrame> {
+            val output = mutableListOf<ControllerEventData.IndexedProfileBufferFrame>()
+
+            val frames_per_minute = 60F * sample_rate.toFloat()
+            // Find the tempo active at the beginning of the beat
+            var working_position = Rational(effect_event.start_position.toInt(), 1)
+            var working_tempo = 0f
+            var tempo_index = 0
+            val data_width = effect_event.start_value.size
+
+            for (i in tempo_map.size - 1 downTo 0) {
+                val (absolute_offset, tempo) = tempo_map[i]
+                if (absolute_offset <= working_position) {
+                    working_tempo = tempo
+                    tempo_index = i
+                    break
+                }
+            }
+
+            var frames_per_beat = (frames_per_minute / working_tempo).toInt()
+
+            // Calculate Start Position
+            var start_frame = beat_map[effect_event.start_position.toInt()]
+            while (tempo_index < tempo_map.size) {
+                val tempo_change_position = tempo_map[tempo_index].first
+                if (tempo_change_position < effect_event.start_position) {
+                    start_frame += (frames_per_beat * (tempo_change_position - working_position)).toInt()
+
+                    working_position = tempo_change_position
+                    frames_per_beat = (frames_per_minute / tempo_map[tempo_index].second).toInt()
+
+                    tempo_index += 1
+                } else {
+                    break
+                }
+            }
+
+            start_frame += (frames_per_beat * (effect_event.start_position - working_position)).toInt()
+
+            if (effect_event.transition == EffectTransition.Instant) {
+                val adj_value = when (event_type) {
+                    EffectType.Delay -> this.convert_delay_event_values(effect_event.end_value, frames_per_beat)
+                    else -> effect_event.end_value
+                }
+
+                return listOf(
+                    ControllerEventData.IndexedProfileBufferFrame(
+                        first_frame = start_frame,
+                        last_frame = start_frame,
+                        value = adj_value,
+                        increment = FloatArray(adj_value.size)
+                    )
+                )
+            }
+
+            // Calculate End Position
+            working_position = effect_event.start_position
+            var end_frame = start_frame
+            var working_values = effect_event.start_value
+            // Note: divide duration to keep in-line with 0-1 range
+
+            while (tempo_index < tempo_map.size) {
+                val tempo_change_position = tempo_map[tempo_index].first
+                if (tempo_change_position < effect_event.end_position) {
+                    val next_end_frame = end_frame + (frames_per_beat * (tempo_change_position - working_position)).toInt()
+
+                    val (next_values, increments) = if (!effect_event.is_trivial() && next_end_frame != end_frame) {
+                        Pair(FloatArray(data_width), FloatArray(data_width)).also {
+                            val p = (tempo_change_position - effect_event.start_position) / (effect_event.end_position - effect_event.start_position)
+                            for (i in 0 until data_width) {
+                                val n = (effect_event.end_value[i] - effect_event.start_value[i]) * p.toFloat()
+                                it.first[i] = n + effect_event.start_value[i]
+                                it.second[i] = n / (next_end_frame - end_frame)
+                            }
+                        }
+                    } else {
+                        Pair(working_values, FloatArray(working_values.size))
+                    }
+
+                    output.add(
+                        ControllerEventData.IndexedProfileBufferFrame(
+                            first_frame = end_frame,
+                            last_frame = next_end_frame,
+                            value = working_values,
+                            increment = increments
+                        )
+                    )
+
+                    working_values = next_values
+                    end_frame = next_end_frame
+
+                    working_position = tempo_change_position
+                    frames_per_beat = (frames_per_minute / tempo_map[tempo_index].second).toInt()
+                    tempo_index += 1
+                } else {
+                    break
+                }
+            }
+
+            val next_end_frame = end_frame + (frames_per_beat * (effect_event.end_position - working_position)).toInt()
+            output.add(
+                ControllerEventData.IndexedProfileBufferFrame(
+                    first_frame = end_frame,
+                    last_frame = next_end_frame,
+                    value = working_values,
+                    increment = if (!effect_event.is_trivial() && next_end_frame != end_frame) {
+                        FloatArray(data_width) { i ->
+                            (effect_event.end_value[i] - working_values[i]) / (next_end_frame - end_frame).toFloat()
+                        }
+                    } else {
+                        FloatArray(data_width)
+                    }
+                )
+            )
+
+            return output
+        }
+
+        private fun convert_delay_event_values(values: FloatArray, frames_per_beat: Int): FloatArray {
+            val output = FloatArray(values.size + 1) { i: Int ->
+                if (i == values.size) {
+                    frames_per_beat.toFloat()
+                } else {
+                    values[i]
+                }
+            }
+            return output
+        }
     }
+
     private val _fade_limit = this._sample_handle_manager.sample_rate / 12 // when clipping a release phase, limit the fade out so it doesn't click
     private val _handle_map = HashMap<Int, Pair<SampleHandle, IntArray>>() // Handle UUID::(Handle::Merge Keys)
     private val _handle_range_map = HashMap<Int, IntRange>() // Handle UUID::Frame Range
@@ -49,7 +274,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     private var _setter_frame_map = HashMap<Int, MutableSet<Int>>()
     private val _setter_range_map = HashMap<Int, IntRange>()
     private var _cached_frame_count: Int? = null
-    private var _cached_beat_frames: Array<Int>? = null
+    private var _cached_beat_frames: IntArray? = null
 
     private val _tempo_ratio_map = mutableListOf<Pair<Rational, Float>>()// rational position:: tempo
     private val _volume_map = HashMap<Pair<Int, Int>, ControllerEventData>()
@@ -64,9 +289,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         // Check frame a buffer ahead to make sure frames are added as accurately as possible
         this.check_frame(frame + this._sample_handle_manager.buffer_size)
 
-        if (!this._frame_map.containsKey(frame)) {
-            return null
-        }
+        if (!this._frame_map.containsKey(frame)) return null
 
         val output = mutableSetOf<Pair<SampleHandle, IntArray>>()
 
@@ -80,45 +303,11 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     private fun _cache_beat_frames() {
-        if (this._tempo_ratio_map.isEmpty()) {
-            this._cached_beat_frames = null
-            return
-        }
-        val frames_per_minute = 60F * this._sample_handle_manager.sample_rate.toFloat()
-
-        val beats = mutableListOf(0)
-
-        var working_frame = 0
-        val working_tempo = this._tempo_ratio_map[0].second
-        var frames_per_beat = (frames_per_minute / working_tempo).toInt()
-        var tempo_index = 0
-        val frames_to_add = mutableListOf<Int>()
-        // First, just get the frame of each beat
-        for (i in 1 until this.opus_manager.length + 1) {
-            val beat_position = i
-            var working_position = Rational(i - 1,1)
-
-            while (tempo_index < this._tempo_ratio_map.size) {
-                val tempo_change_position = this._tempo_ratio_map[tempo_index].first
-                if (tempo_change_position < beat_position) {
-                    frames_to_add.add((frames_per_beat * (tempo_change_position - working_position)).toInt())
-
-                    working_position = tempo_change_position
-                    frames_per_beat = (frames_per_minute / this._tempo_ratio_map[tempo_index].second).toInt()
-                    tempo_index += 1
-
-                } else {
-                    break
-                }
-            }
-            frames_to_add.add((frames_per_beat * (beat_position - working_position)).toInt())
-            working_frame += frames_to_add.sum()
-            frames_to_add.clear()
-
-            beats.add(working_frame)
-        }
-
-        this._cached_beat_frames = beats.toTypedArray()
+        this._cached_beat_frames = PlaybackFrameMap.calculate_beat_frames(
+            this.opus_manager.length,
+            this._sample_handle_manager.sample_rate,
+            this._tempo_ratio_map
+        )
     }
 
     override fun get_marked_frame(i: Int): Int {
@@ -127,14 +316,13 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         }
     }
 
-    fun get_marked_frames(): Array<Int> {
-        if (!this._cached_beat_frames.isNullOrEmpty()) {
-            return this._cached_beat_frames!!
+    fun get_marked_frames(): IntArray {
+        this._cached_beat_frames?.let {
+            if (it.isNotEmpty()) return it
         }
 
         this._cache_beat_frames()
-
-        return this._cached_beat_frames ?: arrayOf()
+        return this._cached_beat_frames ?: intArrayOf()
     }
 
     override fun has_frames_remaining(frame: Int): Boolean {
@@ -186,9 +374,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
     // End FrameMap Interface --------------------------
     fun check_frame(frame: Int) {
-        if (!this._setter_frame_map.containsKey(frame)) {
-            return
-        }
+        if (!this._setter_frame_map.containsKey(frame)) return
 
         for (setter_id in this._setter_frame_map.remove(frame)!!) {
             val handles = this._setter_map.remove(setter_id)?.let { it() } ?: continue
@@ -299,7 +485,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         }
 
         this.map_tempo_changes()
-        this.get_marked_frames()
+        this._cache_beat_frames()
+
         this.setup_effect_buffers(ignore_global_controls, ignore_channel_controls, ignore_line_controls)
         this.opus_manager.channels.forEachIndexed { c: Int, channel: OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>> ->
             if (channel.muted) return@forEachIndexed
@@ -311,25 +498,79 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 for (b in 0 until this.opus_manager.length) {
                     val beat_key = BeatKey(c, l, b)
                     val working_tree = this.opus_manager.get_tree(beat_key)
-                    prev_abs_note = this.map_tree(beat_key, listOf(), working_tree, Rational(1,1), Rational(0,1), prev_abs_note)
+                    prev_abs_note = this.map_tree(beat_key, listOf(), working_tree, Rational(1, 1), Rational(0, 1), prev_abs_note)
                 }
             }
         }
     }
 
-    private fun convert_controller_to_event_data(control_type: EffectType, controller: EffectController<*>): ControllerEventData {
-        val controller_profile = controller.generate_profile()
+    fun setup_effect_buffers(ignore_global_controls: Boolean = false, ignore_channel_controls: Boolean = false, ignore_line_controls: Boolean = false) {
+        data class Quad(var layer: Int, var layer_key: Int, var profile: ControllerProfile, var type: EffectType)
+        this._effect_profiles.clear()
 
-        val control_event_data = mutableListOf<ControllerEventData.IndexedProfileBufferFrame>()
+        val tempo_profile = this.opus_manager.get_controller<OpusTempoEvent>(EffectType.Tempo).generate_profile()
+        val sample_rate = this._sample_handle_manager.sample_rate
+        val tempo_map = this._tempo_ratio_map
+        val beat_map = this._cached_beat_frames!!
 
-        when (control_type) {
-            EffectType.Delay -> {
-                val tempo_controller = this.opus_manager.get_controller<OpusTempoEvent>(EffectType.Tempo)
-                val tempo_profile = tempo_controller.generate_profile()
+        val temp_data = mutableListOf<Quad>()
+
+        this.opus_manager.get_all_channels().forEachIndexed { c: Int, channel: OpusChannelAbstract<*, *> ->
+            if (channel.muted) return@forEachIndexed
+            channel.lines.forEachIndexed { l: Int, line: OpusLineAbstract<out InstrumentEvent> ->
+                if (line.muted) return@forEachIndexed
+
+                if (!ignore_line_controls) {
+                    for ((control_type, controller) in line.controllers.get_all()) {
+                        temp_data.add(
+                            Quad(
+                                PlaybackFrameMap.LAYER_LINE, // layer (channel)
+                                PlaybackFrameMap.generate_merge_keys(c, -1)[PlaybackFrameMap.LAYER_LINE], // key
+                                controller.generate_profile(),
+                                control_type
+                            )
+                        )
+                    }
+                }
+            }
+
+            if (!ignore_channel_controls) {
+                for ((control_type, controller) in channel.controllers.get_all()) {
+                    temp_data.add(
+                        Quad(
+                            PlaybackFrameMap.LAYER_CHANNEL, // layer (channel)
+                            PlaybackFrameMap.generate_merge_keys(c, -1)[PlaybackFrameMap.LAYER_CHANNEL], // key
+                            controller.generate_profile(),
+                            control_type
+                        )
+                    )
+                }
+            }
+        }
+
+        if (!ignore_global_controls) {
+            for ((control_type, controller) in this.opus_manager.controllers.get_all()) {
+                if (control_type == EffectType.Tempo) continue
+                temp_data.add(
+                    Quad(
+                        PlaybackFrameMap.LAYER_GLOBAL, // layer (global)
+                        -1,
+                        controller.generate_profile(),
+                        control_type
+                    )
+                )
+            }
+        }
+
+        for ((layer, layer_key, controller_profile, control_type) in temp_data) {
+            val control_event_data = mutableListOf<ControllerEventData.IndexedProfileBufferFrame>()
+            if (control_type == EffectType.Delay) {
                 val merged_events: MutableList<Pair<EffectType, ControllerProfile.ProfileEffectEvent>> = mutableListOf()
+
                 for (event in controller_profile.get_events()) {
                     merged_events.add(Pair(control_type, event))
                 }
+
                 for (event in tempo_profile.get_events()) {
                     merged_events.add(Pair(EffectType.Tempo, event))
                 }
@@ -346,278 +587,56 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                         merged_events.removeAt(index)
                     } else {
                         merged_events.removeAt(index)
-                        merged_events.add(index, Pair(control_type, ControllerProfile.ProfileEffectEvent(
-                            start_position = current_event.start_position,
-                            end_position = current_event.end_position,
-                            start_value = working_event.start_value,
-                            end_value = working_event.end_value,
-                            transition = current_event.transition
-                        )))
+                        merged_events.add(
+                            index,
+                            Pair(
+                                control_type,
+                                ControllerProfile.ProfileEffectEvent(
+                                    start_position = current_event.start_position,
+                                    end_position = current_event.end_position,
+                                    start_value = working_event.start_value,
+                                    end_value = working_event.end_value,
+                                    transition = current_event.transition
+                                )
+                            )
+                        )
                     }
                 }
 
                 for ((_, effect_event) in merged_events) {
-                    control_event_data.addAll(this.convert_to_indexed_profile_buffer_frames(effect_event, control_type))
+                    control_event_data.addAll(PlaybackFrameMap.convert_to_indexed_profile_buffer_frames(sample_rate, tempo_map, beat_map, effect_event, control_type))
                 }
-            }
-            else -> {
-                for (effect_event in controller_profile.get_events()) {
-                    control_event_data.addAll(this.convert_to_indexed_profile_buffer_frames(effect_event, control_type))
-                }
-            }
-        }
-        // remove unused
-        var i = 0
-        while (i < control_event_data.size - 1) {
-            if (control_event_data[i].first_frame == control_event_data[i + 1].first_frame && control_event_data[i].last_frame == control_event_data[i + 1].last_frame) {
-                control_event_data.removeAt(i)
             } else {
-                i += 1
-            }
-       }
-
-
-        return ControllerEventData(control_event_data, control_type)
-    }
-
-    fun setup_effect_buffers(ignore_global_controls: Boolean = false, ignore_channel_controls: Boolean = false, ignore_line_controls: Boolean = false) {
-        this.opus_manager.get_all_channels().forEachIndexed { c: Int, channel: OpusChannelAbstract<*, *> ->
-            if (channel.muted) return@forEachIndexed
-            channel.lines.forEachIndexed { l: Int, line: OpusLineAbstract<out InstrumentEvent> ->
-                if (line.muted) return@forEachIndexed
-
-                if (!ignore_line_controls) {
-                    for ((control_type, controller) in line.controllers.get_all()) {
-                        this._effect_profiles.add(
-                            Triple(
-                                PlaybackFrameMap.LAYER_LINE,
-                                this.generate_merge_keys(c, l)[LAYER_LINE], // key
-                                ProfileBuffer(
-                                    this.convert_controller_to_event_data(
-                                        control_type,
-                                        controller
-                                    ),
-                                )
-                            )
-                        )
-                    }
+                for (effect_event in controller_profile.get_events()) {
+                    control_event_data.addAll(PlaybackFrameMap.convert_to_indexed_profile_buffer_frames(sample_rate, tempo_map, beat_map, effect_event, control_type))
                 }
             }
-
-            if (!ignore_channel_controls) {
-                for ((control_type, controller) in channel.controllers.get_all()) {
-                    this._effect_profiles.add(
-                        Triple(
-                            PlaybackFrameMap.LAYER_CHANNEL, // layer (channel)
-                            this.generate_merge_keys(c, -1)[LAYER_CHANNEL], // key
-                            ProfileBuffer(
-                                this.convert_controller_to_event_data(control_type, controller)
-                            )
-                        )
-                    )
-                }
-            }
-        }
-
-        if (!ignore_global_controls) {
-            for ((control_type, controller) in this.opus_manager.controllers.get_all()) {
-                if (control_type == EffectType.Tempo) continue
-                this._effect_profiles.add(
-                    Triple(
-                        PlaybackFrameMap.LAYER_GLOBAL, // layer (global)
-                        -1,
-                        ProfileBuffer(
-                            this.convert_controller_to_event_data(control_type, controller)
+            this._effect_profiles.add(
+                Triple(
+                    layer,
+                    layer_key,
+                    ProfileBuffer(
+                        ControllerEventData(
+                            control_event_data,
+                            control_type
                         )
                     )
                 )
-            }
+            )
         }
 
-        this._effect_profiles.sortBy { (layer, _, buffer) ->
-            buffer.type
-        }
+
+        this._effect_profiles.sortBy { (_, _, buffer) -> buffer.type }
     }
+
 
     fun map_tempo_changes() {
-        val controller = this.opus_manager.get_controller<OpusTempoEvent>(EffectType.Tempo)
-        var working_tempo = controller.initial_event.value
-
-        this._tempo_ratio_map.add(Pair(Rational(0,1), working_tempo))
-
-        controller.beats.forEachIndexed { i: Int, tree: ReducibleTree<OpusTempoEvent>? ->
-            if (tree == null) return@forEachIndexed
-
-            val stack = mutableListOf(Triple(tree, Rational(1,1), Rational(0,1)))
-            while (stack.isNotEmpty()) {
-                val (working_tree, working_ratio, working_offset) = stack.removeAt(0)
-
-                if (working_tree.has_event()) {
-                    working_tree.get_event()?.let { event ->
-                        this._tempo_ratio_map.add(
-                            Pair(
-                                i + working_offset,
-                                event.value
-                            )
-                        )
-                        when (event.transition) {
-                            EffectTransition.Instant -> {
-                                working_tempo = event.value
-                            }
-                            EffectTransition.RInstant -> {
-                                this._tempo_ratio_map.add(
-                                    Pair(
-                                        i + working_offset + (working_ratio * event.duration),
-                                        working_tempo
-                                    )
-                                )
-                            }
-                            else -> {/* TODO: throw exception? */}
-                        }
-                    }
-                } else if (!working_tree.is_leaf()) {
-                    for ((j, child) in working_tree.divisions) {
-                        val child_width = working_ratio / working_tree.size
-                        stack.add(
-                            Triple(
-                                child,
-                                child_width,
-                                working_offset + (j * child_width)
-                            )
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    fun convert_delay_event_values(values: FloatArray, frames_per_beat: Int): FloatArray {
-        val output = FloatArray(values.size + 1) { i: Int ->
-            if (i == values.size) {
-                frames_per_beat.toFloat()
-            } else {
-                values[i]
-            }
-        }
-        return output
-    }
-
-    private fun convert_to_indexed_profile_buffer_frames(effect_event: ControllerProfile.ProfileEffectEvent, event_type: EffectType): List<ControllerEventData.IndexedProfileBufferFrame> {
-        val output = mutableListOf<ControllerEventData.IndexedProfileBufferFrame>()
-
-        val frames_per_minute = 60F * this._sample_handle_manager.sample_rate
-        // Find the tempo active at the beginning of the beat
-        var working_position = Rational(effect_event.start_position.toInt(), 1)
-        var working_tempo = 0f
-        var tempo_index = 0
-        val data_width = effect_event.start_value.size
-
-        for (i in this._tempo_ratio_map.size - 1 downTo 0) {
-            val (absolute_offset, tempo) = this._tempo_ratio_map[i]
-            if (absolute_offset <= working_position) {
-                working_tempo = tempo
-                tempo_index = i
-                break
-            }
-        }
-
-        var frames_per_beat = (frames_per_minute / working_tempo).toInt()
-
-        // Calculate Start Position
-        var start_frame = this._cached_beat_frames!![effect_event.start_position.toInt()]
-        while (tempo_index < this._tempo_ratio_map.size) {
-            val tempo_change_position = this._tempo_ratio_map[tempo_index].first
-            if (tempo_change_position < effect_event.start_position) {
-                start_frame += (frames_per_beat * (tempo_change_position - working_position)).toInt()
-
-                working_position = tempo_change_position
-                frames_per_beat = (frames_per_minute / this._tempo_ratio_map[tempo_index].second).toInt()
-
-                tempo_index += 1
-            } else {
-                break
-            }
-        }
-
-        start_frame += (frames_per_beat * (effect_event.start_position - working_position)).toInt()
-
-        if (effect_event.transition == EffectTransition.Instant) {
-            val adj_value = when (event_type) {
-                EffectType.Delay -> this.convert_delay_event_values(effect_event.end_value, frames_per_beat)
-                else -> effect_event.end_value
-            }
-
-            return listOf(
-                ControllerEventData.IndexedProfileBufferFrame(
-                    first_frame = start_frame,
-                    last_frame = start_frame,
-                    value = adj_value,
-                    increment = FloatArray(adj_value.size)
-                )
-            )
-        }
-
-        // Calculate End Position
-        working_position = effect_event.start_position
-        var end_frame = start_frame
-        var working_values = effect_event.start_value
-        // Note: divide duration to keep in-line with 0-1 range
-
-        while (tempo_index < this._tempo_ratio_map.size) {
-            val tempo_change_position = this._tempo_ratio_map[tempo_index].first
-            if (tempo_change_position < effect_event.end_position) {
-                val next_end_frame = end_frame + (frames_per_beat * (tempo_change_position - working_position)).toInt()
-
-                val (next_values, increments) = if (!effect_event.is_trivial() && next_end_frame != end_frame) {
-                    Pair(FloatArray(data_width), FloatArray(data_width)).also {
-                        val p = (tempo_change_position - effect_event.start_position) / (effect_event.end_position - effect_event.start_position)
-                        for (i in 0 until data_width) {
-                            val n = (effect_event.end_value[i] - effect_event.start_value[i]) * p.toFloat()
-                            it.first[i] = n + effect_event.start_value[i]
-                            it.second[i] = n / (next_end_frame - end_frame)
-                        }
-                    }
-                } else {
-                     Pair(working_values, FloatArray(working_values.size))
-                }
-
-                output.add(
-                    ControllerEventData.IndexedProfileBufferFrame(
-                        first_frame = end_frame,
-                        last_frame = next_end_frame,
-                        value = working_values,
-                        increment = increments
-                    )
-                )
-
-                working_values = next_values
-                end_frame = next_end_frame
-
-                working_position = tempo_change_position
-                frames_per_beat = (frames_per_minute / this._tempo_ratio_map[tempo_index].second).toInt()
-                tempo_index += 1
-            } else {
-                break
-            }
-        }
-
-        val next_end_frame = end_frame + (frames_per_beat * (effect_event.end_position - working_position)).toInt()
-        output.add(
-            ControllerEventData.IndexedProfileBufferFrame(
-                first_frame = end_frame,
-                last_frame = next_end_frame,
-                value = working_values,
-                increment = if (!effect_event.is_trivial() && next_end_frame != end_frame) {
-                    FloatArray(data_width) { i ->
-                        (effect_event.end_value[i] - working_values[i]) / (next_end_frame - end_frame).toFloat()
-                    }
-                } else {
-                    FloatArray(data_width)
-                }
+        this._tempo_ratio_map.clear()
+        this._tempo_ratio_map.addAll(
+            PlaybackFrameMap.calculate_tempo_changes(
+                this.opus_manager.get_controller<OpusTempoEvent>(EffectType.Tempo) as TempoController
             )
         )
-
-        return output
     }
 
     private fun calculate_event_frame_range(beat: Int, duration: Int, relative_width: Rational, relative_offset: Rational): Pair<Int, Int> {
@@ -739,7 +758,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             beat_key,
             position
         )?.let { start_event ->
-            val merge_key_array = this.generate_merge_keys(beat_key.channel, beat_key.line_offset)
+            val merge_key_array = PlaybackFrameMap.generate_merge_keys(beat_key.channel, beat_key.line_offset)
             this._add_handles(start_frame, end_frame, start_event, next_event_frame, merge_key_array)
         }
 
@@ -785,14 +804,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             velocity = velocity shl 8,
             note = note,
             bend = bend
-        )
-    }
-
-    private fun generate_merge_keys(channel: Int, line_offset: Int): IntArray {
-        return intArrayOf(
-            PlaybackFrameMap.merge_offset_gen++,
-            line_offset + (channel * 1000), // LAYER_LINE
-            channel // LAYER_CHANNEL
         )
     }
 }

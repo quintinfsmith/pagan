@@ -61,4 +61,8 @@ dependencies {
     implementation 'androidx.test:rules:1.7.0'
     implementation 'androidx.fragment:fragment-ktx:1.8.9'
     testImplementation 'junit:junit:4.13.2'
+
+    testImplementation "io.mockk:mockk:1.14.5"
+    testImplementation "io.mockk:mockk-bdd:1.14.5"
+
 }

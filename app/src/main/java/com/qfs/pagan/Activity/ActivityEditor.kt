@@ -9,6 +9,7 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.database.Observable
 import android.graphics.Color
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri

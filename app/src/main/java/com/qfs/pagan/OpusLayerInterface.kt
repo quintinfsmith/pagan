@@ -43,7 +43,6 @@ class OpusLayerInterface : OpusLayerHistory() {
     class MissingEditorTableException: Exception()
 
     companion object {
-        @Suppress("unused")
         val global_controller_domain = listOf(
             Pair(EffectType.Tempo, R.drawable.icon_tempo),
             Pair(EffectType.Delay, R.drawable.icon_echo)

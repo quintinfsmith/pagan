@@ -21,7 +21,7 @@ Java_com_qfs_apres_soundfontplayer_ControllerEventData_00024Companion_create(
         env->GetIntArrayElements(indices, nullptr),
         env->GetIntArrayElements(end_indices, nullptr),
         env->GetFloatArrayElements(values, nullptr),
-        env->GetFloatArrayElements(increments, nullptr),
+        env->GetFloatArrayElements(increments, nullptr)
     );
 
     return (jlong)data_container;

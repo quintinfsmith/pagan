@@ -378,7 +378,6 @@ class DelayBuffer: public EffectProfileBuffer {
         this->active_input_frame = nullptr;
     }
 
-
     void create_chain() {
         if (this->active_delay_in_frames == 0) return;
 

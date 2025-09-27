@@ -17,19 +17,26 @@ public:
     int current_frame;
     int current_index;
     int data_width;
-    float* current_value;
-    int buffer_id;
-    int type;
+    float* current_value{};
 
     ~EffectProfileBuffer() {
-        delete this->current_value;
+        free(this->current_value);
     }
 
-    void init(ControllerEventData* controller_event_data, int current_frame) {
-        this->buffer_id = PROFILE_BUFFER_ID_GEN++;
+    EffectProfileBuffer(EffectProfileBuffer* original) {
+        this->data = original->data;
+        this->current_index = original->current_index;
+        this->data_width = original->data_width;
+        for (int i = 0; i < original->data_width; i++) {
+            this->current_value[i] = original->current_value[i];
+        }
+        this->current_frame = original->current_frame;
+        this->set_frame(0);
+    }
 
+    EffectProfileBuffer(ControllerEventData* controller_event_data, int start_frame) {
         this->data = controller_event_data;
-        this->current_frame = current_frame;
+        this->current_frame = start_frame;
         this->current_index = 0;
         this->data_width = this->data->frames[0]->data_width;
         this->current_value = (float*)malloc(sizeof(float) * this->data_width);
@@ -46,9 +53,8 @@ public:
     }
 
     void set_frame(int frame) {
-        if (this->data == nullptr || this->data->frames == nullptr) {
-            return;
-        }
+        if (this->data == nullptr || this->data->frames == nullptr) return;
+
         // First set the working frame
         this->current_frame = frame;
 
@@ -84,25 +90,12 @@ public:
         }
     }
 
-    void copy_to(EffectProfileBuffer* new_buffer) {
-        new_buffer->data = this->data;
-        new_buffer->type = this->type;
-        new_buffer->current_index = this->current_index;
-        new_buffer->data_width = this->data_width;
-        for (int i = 0; i < this->data_width; i++) {
-            new_buffer->current_value[i] = this->current_value[i];
-        }
-        new_buffer->current_frame = this->current_frame;
-        new_buffer->set_frame(0);
-        this->copy_from(new_buffer);
-    }
     void drain(int count) {
         this->set_frame(count + this->current_frame);
     }
 
 
 private:
-    virtual void copy_from(EffectProfileBuffer* original) = 0;
     void _move_to_next_frame() {
         this->current_frame++;
         if (this->current_index >= this->data->frame_count) {
@@ -112,9 +105,7 @@ private:
             bool frame_changed = false;
             while (this->current_frame > bframe->end) {
                 this->current_index++;
-                if (this->current_index >= this->data->frame_count) {
-                    return;
-                }
+                if (this->current_index >= this->data->frame_count) return;
 
                 bframe = this->data->frames[this->current_index];
                 frame_changed = true;
@@ -141,10 +132,10 @@ private:
 };
 
 class EqualizerBuffer: public EffectProfileBuffer {
-    int type = TYPE_EQUALIZER;
     float* working_eq;
-    void copy_from(EffectProfileBuffer* original) override {}
     public:
+        EqualizerBuffer(ControllerEventData* controller_event_data, int start_frame): EffectProfileBuffer(controller_event_data, start_frame) { }
+
         void apply(float* working_array, int array_size) {
             int i = 0;
             float *working_input_left;
@@ -197,9 +188,9 @@ class EqualizerBuffer: public EffectProfileBuffer {
 };
 
 class VolumeBuffer: public EffectProfileBuffer {
-    int type = TYPE_VOLUME;
-    void copy_from(EffectProfileBuffer* original) override {}
     public:
+        VolumeBuffer(ControllerEventData* controller_event_data, int start_frame): EffectProfileBuffer(controller_event_data, start_frame) { }
+        explicit VolumeBuffer(VolumeBuffer* original): EffectProfileBuffer(original) {}
         void apply(float* working_array, int array_size) {
             for (int i = 0; i < array_size; i++) {
                 float volume = this->get_next()[0];
@@ -210,9 +201,9 @@ class VolumeBuffer: public EffectProfileBuffer {
 };
 
 class PanBuffer: public EffectProfileBuffer {
-    int type = TYPE_PAN;
-    void copy_from(EffectProfileBuffer* original) override {}
     public:
+        PanBuffer(ControllerEventData* controller_event_data, int start_frame): EffectProfileBuffer(controller_event_data, start_frame) { }
+        explicit PanBuffer(PanBuffer* original): EffectProfileBuffer(original) {}
         void apply(float* working_array, int array_size) {
             for (int i = 0; i < array_size; i++) {
                 float pan_value = this->get_next()[0];
@@ -229,9 +220,17 @@ class DelayedFrameValue {
         float right = 0;
         int count = 0;
         DelayedFrameValue* next = nullptr;
+        DelayedFrameValue(float left, float right, int count, DelayedFrameValue* next) {
+            this->left = left;
+            this->right = right;
+            this->count = count;
+            this->next = next;
+        }
 
         ~DelayedFrameValue() {
-            delete this->next;
+            if (this->next == nullptr) return;
+            this->next->~DelayedFrameValue();
+            free(this->next);
         }
 };
 
@@ -240,33 +239,25 @@ class DelayedFrame {
     public:
         DelayedFrameValue* value_chain;
 
-        void init() {
-            this->next = nullptr;
-            this->value_chain = nullptr;
-        }
-
         ~DelayedFrame() {
-            delete this->value_chain;
-
-            if (this->next != nullptr) {
-                auto* tmp = this->next;
-                this->next = nullptr;
-                delete tmp;
+            if (this->value_chain != nullptr) {
+                this->value_chain->~DelayedFrameValue();
+                free(this->value_chain);
             }
+
+            // Need to separately destroy each link
+            //if (this->next != nullptr) {
+            //    auto* tmp = this->next;
+            //    this->next = nullptr;
+
+            //    tmp->~DelayedFrame();
+            //    free(tmp);
+            //}
         }
 
         DelayedFrame() {
             this->next = nullptr;
-        }
-
-        void move_to(DelayedFrame* new_frame) {
-            auto* ptr = this->value_chain;
-            while (ptr != nullptr) {
-                if (ptr->count > 0) {
-                    new_frame->add_value(ptr->left, ptr->right, ptr->count);
-                }
-                ptr = ptr->next;
-            }
+            this->value_chain = nullptr;
         }
 
         void set_next(DelayedFrame* next_frame) {
@@ -279,7 +270,7 @@ class DelayedFrame {
 
         DelayedFrame* init_next() {
             this->next = (DelayedFrame*)malloc(sizeof(DelayedFrame));
-            this->next->init();
+            new (this->next) DelayedFrame();
             return this->next;
         }
 
@@ -296,11 +287,9 @@ class DelayedFrame {
 
         void add_value(float left, float right, int repeat) {
             DelayedFrameValue* working_ptr = this->value_chain;
-            this->value_chain = (DelayedFrameValue*)malloc(sizeof(DelayedFrameValue));
-            this->value_chain->left = left;
-            this->value_chain->right = right;
-            this->value_chain->count = repeat;
-            this->value_chain->next = working_ptr;
+            auto* new_value = (DelayedFrameValue*)malloc(sizeof(DelayedFrameValue));
+            new (new_value) DelayedFrameValue(left, right, repeat, working_ptr);
+            this->value_chain = new_value;
         }
 
         // return number of values removed
@@ -327,18 +316,26 @@ class DelayedFrame {
                 working_ptr = working_ptr->next;
 
                 orig->next = nullptr;
-                delete orig;
+                orig->~DelayedFrameValue();
+                free(orig);
+
                 output++;
             }
+
             this->value_chain = working_ptr;
 
+            if (working_ptr == nullptr) return output;
+
             // now remove dead values in chain
-            while (working_ptr != nullptr && working_ptr->next != nullptr) {
+            while (working_ptr->next != nullptr) {
                 if (working_ptr->next->count == 0) {
                     DelayedFrameValue* orig = working_ptr->next;
                     working_ptr->next = working_ptr->next->next;
                     orig->next = nullptr;
-                    delete orig;
+
+                    orig->~DelayedFrameValue();
+                    free(orig);
+
                     output++;
                 } else {
                     working_ptr = working_ptr->next;
@@ -347,10 +344,25 @@ class DelayedFrame {
 
             return output;
         }
+
+        void destroy_chain() {
+            DelayedFrame* working_ptr = this;
+            working_ptr = working_ptr->get_next();
+
+            while (working_ptr != this) {
+                DelayedFrame* tmp = working_ptr->get_next();
+
+                working_ptr->~DelayedFrame();
+                free(working_ptr);
+
+                working_ptr = tmp;
+            }
+            this->~DelayedFrame();
+            free(this);
+        }
 };
 
 class DelayBuffer: public EffectProfileBuffer {
-    int type = TYPE_DELAY;
     float active_delay = 0;
     int active_fpb = 0; // Frames Per Beat
     int active_delay_in_frames = 0;
@@ -362,15 +374,16 @@ class DelayBuffer: public EffectProfileBuffer {
         if (this->active_input_frame == nullptr) return;
         this->active_value_count = 0;
 
-        delete this->active_input_frame;
+        this->active_input_frame->destroy_chain();
         this->active_input_frame = nullptr;
     }
+
 
     void create_chain() {
         if (this->active_delay_in_frames == 0) return;
 
         auto* working_ptr = (DelayedFrame*)malloc(sizeof(DelayedFrame));
-        working_ptr->init();
+        new (working_ptr) DelayedFrame();
 
         this->active_value_count = 0;
         this->active_input_frame = working_ptr;
@@ -397,17 +410,18 @@ class DelayBuffer: public EffectProfileBuffer {
             DelayedFrame* working_ptr = this->active_input_frame;
             int count = min(original_size, this->active_delay_in_frames);
             for (int i = 0; i < count; i++) {
-                DelayedFrameValue* chain = original_ptr->value_chain;
-                while (chain != nullptr) {
-                    working_ptr->add_value(chain->left, chain->right, chain->count);
+                DelayedFrameValue* node = original_ptr->value_chain;
+                while (node != nullptr) {
+                    working_ptr->add_value(node->left, node->right, node->count);
                     this->active_value_count += 1;
-                    chain = chain->next;
+                    node = node->next;
                 }
 
                 original_ptr = original_ptr->get_next();
                 working_ptr = working_ptr->get_next();
             }
-            free(original_ptr);
+
+            original_ptr->destroy_chain();
         }
     }
 
@@ -415,8 +429,22 @@ class DelayBuffer: public EffectProfileBuffer {
         this->active_input_frame = this->active_input_frame->get_next();
     }
 
-    void copy_from(EffectProfileBuffer* original) override {}
     public:
+        DelayBuffer(ControllerEventData* controller_event_data, int start_frame): EffectProfileBuffer(controller_event_data, start_frame) {
+            this->active_input_frame = nullptr;
+            this->active_delay = 0;
+            this->active_fpb = 0; // Frames Per Beat
+            this->active_delay_in_frames = 0;
+            this->active_value_count = 0;
+        }
+        explicit DelayBuffer(DelayBuffer* original): EffectProfileBuffer(original) {
+            this->active_input_frame = original->active_input_frame;
+            this->active_delay = original->active_delay;
+            this->active_fpb = original->active_fpb; // Frames Per Beat
+            this->active_delay_in_frames = original->active_delay_in_frames;
+            this->active_value_count = original->active_value_count;
+        }
+
         void apply(float* working_array, int array_size) {
             for (int i = 0; i < array_size; i++) {
                 float* frame_data = EffectProfileBuffer::get_next();
@@ -452,16 +480,8 @@ class DelayBuffer: public EffectProfileBuffer {
             }
         }
 
-        void also_init() {
-            this->active_input_frame = nullptr;
-            this->active_delay = 0;
-            this->active_fpb = 0; // Frames Per Beat
-            this->active_delay_in_frames = 0;
-            this->active_value_count = 0;
-        }
-
         ~DelayBuffer() {
-            delete this->active_input_frame;
+            this->active_input_frame->destroy_chain();
         }
 
         bool has_pending_echoes() {

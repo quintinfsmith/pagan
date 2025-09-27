@@ -41,6 +41,17 @@ public:
         this->set_sample_rate(sample_rate);
     }
 
+    explicit VolumeEnvelope(VolumeEnvelope* original) {
+        this->delay = original->delay;
+        this->attack = original->attack;
+        this->hold = original->hold;
+        this->decay = original->decay;
+        this->release = original->release;
+        this->sustain_attenuation = original->sustain_attenuation;
+        this->true_sustain_attenuation = pow((float)10, original->sustain_attenuation);
+        this->set_sample_rate(original->sample_rate);
+    }
+
     void set_sample_rate(int sample_rate) {
         this->sample_rate = sample_rate;
         auto float_rate = (float)sample_rate;
@@ -52,16 +63,6 @@ public:
         this->frames_release = (int)(float_rate * this->release);
     }
 
-    void copy_to(VolumeEnvelope* other) {
-        other->delay = this->delay;
-        other->attack = this->attack;
-        other->hold = this->hold;
-        other->decay = this->decay;
-        other->release = this->release;
-        other->sustain_attenuation = this->sustain_attenuation;
-        other->true_sustain_attenuation = pow((float)10, this->sustain_attenuation);
-        other->set_sample_rate(this->sample_rate);
-    }
 };
 
 

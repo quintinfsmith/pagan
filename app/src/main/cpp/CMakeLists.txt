@@ -39,7 +39,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         native-lib.cpp)
 
 if (ANDROID)
-# Specifies libraries CMake should link to your target library. You
+	# Specifies libraries CMake should link to your target library. You
 # can link libraries from various origins, such as libraries defined in this
 # build script, prebuilt third-party libraries, or Android system libraries.
 target_link_options(${CMAKE_PROJECT_NAME} PRIVATE "-Wl,-z,max-page-size=16384")

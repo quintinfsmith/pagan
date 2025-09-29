@@ -162,9 +162,7 @@ class SampleHandleManager(
                 output.add(new_linked_handle)
             }
 
-            if (this.sample_limit != null && output.size >= this.sample_limit!!) {
-                break
-            }
+            if (this.sample_limit != null && output.size >= this.sample_limit!!) break
         }
 
         return output

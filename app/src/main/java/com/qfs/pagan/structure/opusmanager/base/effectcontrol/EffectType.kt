@@ -6,5 +6,7 @@ enum class EffectType(val i: Int) {
     Reverb(2),
     Velocity(4),
     Delay(3),
-    Pan(5)
+    Pan(5),
+
+    BandPass(1024)
 }

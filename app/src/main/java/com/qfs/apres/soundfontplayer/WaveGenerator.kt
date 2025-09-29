@@ -194,9 +194,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         val handles_adj: MutableList<Pair<SampleHandle, IntArray>> = mutableListOf()
         for ((first_frame, handle_pair) in handles) {
             val (handle, _) = handle_pair
-            if (first_frame == frame) {
-                continue
-            }
+            if (first_frame == frame) continue
             handle.set_working_frame(frame - first_frame)
             handles_adj.add(handle_pair)
         }
@@ -218,7 +216,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
     fun clear() {
         this.kill_frame = null
-        for ((uuid, item) in this._active_sample_handles) {
+        for ((_, item) in this._active_sample_handles) {
             item.handle.destroy()
         }
         this._active_sample_handles.clear()

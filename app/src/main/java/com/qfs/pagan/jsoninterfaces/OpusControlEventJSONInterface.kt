@@ -17,24 +17,22 @@ class OpusControlEventJSONInterface {
         fun to_json(input: EffectEvent): JSONHashMap {
             val output = JSONHashMap()
             output["duration"] = input.duration
+            output["transition"] = input.transition.name
             when (input) {
                 is OpusTempoEvent -> {
                     output["tempo"] = input.value
                 }
                 is OpusVolumeEvent -> {
                     output["volume"] = input.value
-                    output["transition"] = input.transition.name
                 }
                 is OpusVelocityEvent -> {
                     output["velocity"] = input.value
-                    output["transition"] = input.transition.name
                 }
                 is OpusReverbEvent -> {
                     output["wetness"] = input.value
                 }
                 is OpusPanEvent -> {
                     output["value"] = input.value
-                    output["transition"] = input.transition.name
                 }
                 is DelayEvent -> {
                     output["frequency"] = JSONList(

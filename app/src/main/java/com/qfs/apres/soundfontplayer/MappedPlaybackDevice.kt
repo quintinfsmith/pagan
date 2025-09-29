@@ -97,9 +97,7 @@ abstract class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_r
                         var beat_frame = -1
                         while (true) {
                             beat_frame = this@MappedPlaybackDevice.sample_frame_map.get_marked_frame(i) ?: break
-                            if (beat_frame >= start_frame) {
-                                break
-                            }
+                            if (beat_frame >= start_frame) break
                             i++
                         }
 
@@ -118,9 +116,7 @@ abstract class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_r
                 }
 
                 override fun onMarkerReached(audio_track: AudioTrack?) {
-                    if (audio_track == null) {
-                        return
-                    }
+                    if (audio_track == null) return
                     val that = this@MappedPlaybackDevice
 
                     /*
@@ -137,15 +133,11 @@ abstract class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_r
                     if (that.wave_generator.kill_frame == null) {
                         while (true) {
                             val beat_frame = this@MappedPlaybackDevice.sample_frame_map.get_marked_frame(this.current_mark_index) ?: break
-                            if (beat_frame - start_frame + frame_delay >= 1) {
-                                break
-                            }
+                            if (beat_frame - start_frame + frame_delay >= 1) break
                             this.current_mark_index += 1
                         }
 
-                        if (this@MappedPlaybackDevice.sample_frame_map.get_marked_frame(this.current_mark_index) == null) {
-                            return
-                        }
+                        if (this@MappedPlaybackDevice.sample_frame_map.get_marked_frame(this.current_mark_index) == null) return
                     }
 
 

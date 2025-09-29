@@ -630,10 +630,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             )
         }
 
-
         this._effect_profiles.sortBy { (_, _, buffer) -> buffer.type }
     }
-
 
     fun map_tempo_changes() {
         this._tempo_ratio_map.clear()

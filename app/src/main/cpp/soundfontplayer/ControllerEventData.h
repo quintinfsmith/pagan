@@ -47,17 +47,6 @@ public:
         }
     }
 
-    explicit ControllerEventData(std::vector<ProfileBufferFrame> frames, int type) {
-        this->type = type;
-        this->frame_count = frames.size();
-        this->frames = (ProfileBufferFrame**)malloc(sizeof (ProfileBufferFrame*) * this->frame_count);
-
-        for (auto & frame : frames) {
-            auto* ptr = (ProfileBufferFrame*)malloc(sizeof(ProfileBufferFrame));
-            new (ptr) ProfileBufferFrame(frame);
-        }
-    }
-
     ~ControllerEventData() {
         for (int i = 0; i < this->frame_count; i++) {
             this->frames[i]->~ProfileBufferFrame();

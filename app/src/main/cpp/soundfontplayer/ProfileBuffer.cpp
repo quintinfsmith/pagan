@@ -66,7 +66,6 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_copy_1jni(JNIEnv* env, jobject,
         }
     }
 
-    __android_log_print(ANDROID_LOG_DEBUG, "START FRAME", "COPIED");
     return (jlong)buffer;
 }
 
@@ -118,13 +117,16 @@ extern "C" JNIEXPORT jboolean JNICALL
 Java_com_qfs_apres_soundfontplayer_ProfileBuffer_allow_1empty_1jni(JNIEnv* env, jobject, jlong ptr_long) {
     auto *ptr = (EffectProfileBuffer *) ptr_long;
 
-    bool output = false;
+    bool output;
     switch (ptr->data->type) {
         case TYPE_DELAY: {
             auto* typed_ptr = (DelayBuffer*) ptr_long;
             output = typed_ptr->has_pending_echoes();
+            break;
         }
-        default: { }
+        default: {
+            output = false;
+        }
     }
     return (jboolean)output;
 }

@@ -25,6 +25,7 @@ struct ProfileBufferFrame {
                 this->increment[j] = original->increment[j];
             }
         }
+
         ProfileBufferFrame(int frame, int end, int data_width) {
             this->frame = frame;
             this->end = end;
@@ -32,6 +33,7 @@ struct ProfileBufferFrame {
             this->initial_value = (float*)malloc(sizeof(float) * data_width);
             this->increment = (float*)malloc(sizeof(float) * data_width);
         }
+
         ~ProfileBufferFrame() {
             delete this->initial_value;
             delete this->increment;

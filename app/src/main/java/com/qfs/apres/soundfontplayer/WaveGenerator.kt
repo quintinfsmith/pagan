@@ -93,10 +93,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         }
 
         if (separated_lines_map.isEmpty() && force_empty_indices.isNotEmpty()) {
-            separated_lines_map[0] = Pair(
-                FloatArray(this.buffer_size * 2),
-                IntArray(0)
-            )
+            separated_lines_map[0] = Pair(FloatArray(this.buffer_size * 2), IntArray(0))
         }
 
         val keys = separated_lines_map.keys.toList()
@@ -170,10 +167,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         // First check for, and remove dead sample handles
         val remove_set = mutableSetOf<Int>()
         for ((key, item) in this._active_sample_handles) {
-            if (item.first_frame >= initial_frame) {
-                continue
-            }
-
+            if (item.first_frame >= initial_frame) continue
             if (item.handle.is_dead) {
                 remove_set.add(key)
             }

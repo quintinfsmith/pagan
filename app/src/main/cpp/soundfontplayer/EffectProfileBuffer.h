@@ -337,19 +337,17 @@ class DelayedFrame {
         }
 
         void destroy_chain() {
-            DelayedFrame* working_ptr = this;
-            working_ptr = working_ptr->get_next();
+            DelayedFrame* working_ptr = this->get_next();
+            this->next = nullptr;
 
-            while (working_ptr != this) {
-                DelayedFrame* tmp = working_ptr->get_next();
+            while (working_ptr != nullptr) {
+                DelayedFrame *tmp = working_ptr->get_next();
 
                 working_ptr->~DelayedFrame();
                 free(working_ptr);
 
                 working_ptr = tmp;
             }
-            this->~DelayedFrame();
-            free(this);
         }
 };
 
@@ -472,6 +470,7 @@ class DelayBuffer: public EffectProfileBuffer {
         }
 
         ~DelayBuffer() {
+            if (this->active_input_frame == nullptr) return;
             this->active_input_frame->destroy_chain();
         }
 

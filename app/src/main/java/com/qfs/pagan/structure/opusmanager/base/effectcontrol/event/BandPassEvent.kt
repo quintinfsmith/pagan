@@ -21,7 +21,34 @@ class BandPassEvent(var limit_lower: Float?, var limit_upper: Float?, var resona
         )
     }
 
-    override fun get_event_instant(position: Rational, preceding_event: EffectEvent): EffectEvent {
-        TODO("Not yet implemented")
+    override fun get_event_instant(position: Rational, preceding_event: EffectEvent): BandPassEvent {
+        if (preceding_event !is BandPassEvent) throw Exception("Invalid event passed")
+
+        val copy_event = this.copy()
+        when (this.transition) {
+            EffectTransition.Linear -> {
+                val diff_limit_lower = (this.limit_lower ?: 0f) - (preceding_event.limit_lower ?: 0f)
+                val diff_limit_upper = (this.limit_upper ?: 0f) - (preceding_event.limit_upper ?: 0f)
+                val diff_resonance = (this.resonance ?: 0f) - (preceding_event.resonance ?: 0f)
+
+                copy_event.limit_lower = (preceding_event.limit_lower ?: 0F) + (diff_limit_lower * position.toFloat())
+                copy_event.limit_upper = (preceding_event.limit_upper ?: 0F) + (diff_limit_upper * position.toFloat())
+                copy_event.resonance = (preceding_event.resonance ?: 0F) + (diff_resonance * position.toFloat())
+            }
+            EffectTransition.RLinear -> {
+                val diff_limit_lower = (preceding_event.limit_lower ?: 0F) - (this.limit_lower ?: 0F)
+                val diff_limit_upper = (preceding_event.limit_upper ?: 0F) - (this.limit_upper ?: 0F)
+                val diff_resonance = (preceding_event.resonance ?: 0F) - (this.resonance ?: 0F)
+
+                copy_event.limit_lower = (this.limit_lower ?: 0F) + (diff_limit_lower * position.toFloat())
+                copy_event.limit_upper = (this.limit_upper ?: 0F) + (diff_limit_upper * position.toFloat())
+                copy_event.resonance = (this.resonance ?: 0F) + (diff_resonance * position.toFloat())
+            }
+
+            EffectTransition.Instant -> {}
+            EffectTransition.RInstant -> {}
+        }
+
+        return copy_event
     }
 }

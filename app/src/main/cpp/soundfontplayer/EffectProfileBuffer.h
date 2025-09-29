@@ -64,6 +64,7 @@ public:
         while (this->current_index < this->data->frame_count && this->current_frame > this->data->frames[this->current_index]->end) {
             this->current_index++;
         }
+
         if (this->current_index >= this->data->frame_count) {
             ProfileBufferFrame* bframe_data = this->data->frames[this->data->frame_count - 1];
             auto frame_diff = (float)(bframe_data->end - bframe_data->frame);

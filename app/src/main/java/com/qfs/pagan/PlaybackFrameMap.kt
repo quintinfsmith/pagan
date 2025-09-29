@@ -38,6 +38,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         const val LAYER_GLOBAL = 3
         var merge_offset_gen = 1
 
+        val UNPROCESSABLE_TYPES = listOf(EffectType.Tempo, EffectType.Velocity)
+
         fun calculate_beat_frames(beat_count: Int, sample_rate: Int, tempo_map: List<Pair<Rational, Float>>): IntArray? {
             if (tempo_map.isEmpty()) return null
 
@@ -527,6 +529,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
                 if (!ignore_line_controls) {
                     for ((control_type, controller) in line.controllers.get_all()) {
+                        if (PlaybackFrameMap.UNPROCESSABLE_TYPES.contains(control_type)) continue
                         temp_data.add(
                             Quad(
                                 PlaybackFrameMap.LAYER_LINE, // layer (channel)
@@ -541,6 +544,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
             if (!ignore_channel_controls) {
                 for ((control_type, controller) in channel.controllers.get_all()) {
+                    if (PlaybackFrameMap.UNPROCESSABLE_TYPES.contains(control_type)) continue
                     temp_data.add(
                         Quad(
                             PlaybackFrameMap.LAYER_CHANNEL, // layer (channel)
@@ -555,7 +559,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         if (!ignore_global_controls) {
             for ((control_type, controller) in this.opus_manager.controllers.get_all()) {
-                if (control_type == EffectType.Tempo) continue
+                if (PlaybackFrameMap.UNPROCESSABLE_TYPES.contains(control_type)) continue
                 temp_data.add(
                     Quad(
                         PlaybackFrameMap.LAYER_GLOBAL, // layer (global)
@@ -566,6 +570,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 )
             }
         }
+
 
         for ((layer, layer_key, controller_profile, control_type) in temp_data) {
             val control_event_data = mutableListOf<ControllerEventData.IndexedProfileBufferFrame>()

@@ -1,0 +1,1 @@
+fixed: effect sometimes being incorrectly applied late or early

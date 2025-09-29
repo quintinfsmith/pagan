@@ -337,6 +337,7 @@ class DelayedFrame {
         }
 
         void destroy_chain() {
+            // Since the chain is a loop, we set the first next to null to create a terminal condition
             DelayedFrame* working_ptr = this->get_next();
             this->next = nullptr;
 

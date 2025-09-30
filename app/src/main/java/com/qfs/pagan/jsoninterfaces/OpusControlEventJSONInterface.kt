@@ -65,7 +65,11 @@ class OpusControlEventJSONInterface {
 
         // from_jsons-----------------
         fun tempo_event(map: JSONHashMap): OpusTempoEvent {
-            return OpusTempoEvent(map.get_float("tempo"), map.get_int("duration", 1))
+            return OpusTempoEvent(
+                map.get_float("tempo"),
+                map.get_int("duration", 1),
+                EffectTransition.valueOf(map.get_string("transition", "Instant"))
+            )
         }
 
         fun volume_event(map: JSONHashMap): OpusVolumeEvent {

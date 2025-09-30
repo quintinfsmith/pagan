@@ -53,6 +53,7 @@ class ActiveControllerJSONInterface {
                 else -> throw UnknownControllerException(label)
             }
 
+
             output.visible = obj.get_booleann("visible") ?: false
 
             return output
@@ -114,9 +115,7 @@ class ActiveControllerJSONInterface {
             val map = JSONHashMap()
             val event_list = JSONList()
             controller.beats.forEachIndexed { i: Int, event_tree: ReducibleTree<out EffectEvent>? ->
-                if (event_tree == null) {
-                    return@forEachIndexed
-                }
+                if (event_tree == null) return@forEachIndexed
                 val generalized_tree = OpusTreeJSONInterface.to_json(event_tree) { event: EffectEvent ->
                     OpusControlEventJSONInterface.to_json(event)
                 } ?: return@forEachIndexed

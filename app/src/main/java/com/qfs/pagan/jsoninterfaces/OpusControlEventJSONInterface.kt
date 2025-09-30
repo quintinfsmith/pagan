@@ -127,7 +127,9 @@ class OpusControlEventJSONInterface {
                 freq.get_int(0),
                 freq.get_int(1),
                 map.get_int("echo"),
-                map.get_float("fade")
+                map.get_float("fade"),
+                map.get_int("duration", 1),
+                EffectTransition.valueOf(map.get_string("transition", "Instant"))
             )
         }
         // ------------------------

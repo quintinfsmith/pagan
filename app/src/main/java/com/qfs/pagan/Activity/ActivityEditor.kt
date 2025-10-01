@@ -2856,7 +2856,7 @@ class ActivityEditor : PaganActivity() {
                 }
 
                 EffectType.Reverb -> TODO()
-                EffectType.BandPass -> TODO()
+                EffectType.LowPass -> TODO()
             }
 
 
@@ -2911,7 +2911,7 @@ class ActivityEditor : PaganActivity() {
                 }
 
                 EffectType.Reverb -> TODO()
-                EffectType.BandPass -> TODO()
+                EffectType.LowPass -> TODO()
             }
 
             this.active_context_menu = ContextMenuControlLeaf(

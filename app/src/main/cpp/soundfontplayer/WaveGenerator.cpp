@@ -23,18 +23,18 @@ bool apply_effect_buffer(EffectProfileBuffer* effect_buffer, float* working_arra
             buffer->apply(working_array, array_size);
             break;
         }
-        case TYPE_EQUALIZER: {
-            auto* buffer = (EqualizerBuffer *) effect_buffer;
-            buffer->apply(working_array, array_size);
-            break;
-        }
-        case TYPE_REVERB: {
-            auto* buffer = (ReverbBuffer *) effect_buffer;
-            buffer->apply(working_array, array_size);
-            break;
-        }
-        case TYPE_BANDPASS: {
-            auto* buffer = (BandPassBuffer *) effect_buffer;
+        // case TYPE_EQUALIZER: {
+        //     auto* buffer = (EqualizerBuffer *) effect_buffer;
+        //     buffer->apply(working_array, array_size);
+        //     break;
+        // }
+        // case TYPE_REVERB: {
+        //     auto* buffer = (ReverbBuffer *) effect_buffer;
+        //     buffer->apply(working_array, array_size);
+        //     break;
+        // }
+        case TYPE_LOWPASS: {
+            auto* buffer = (LowPassBuffer *) effect_buffer;
             buffer->apply(working_array, array_size);
             break;
         }

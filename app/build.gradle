@@ -2,6 +2,7 @@ plugins {
     id 'com.android.application'
     id "org.jetbrains.kotlin.android" version "2.2.20"
     id 'org.jetbrains.kotlinx.kover' version '0.9.2'
+    id "org.jetbrains.kotlin.plugin.compose" version "2.2.20"
 }
 
 android {
@@ -9,7 +10,7 @@ android {
     compileSdk 36
 
     defaultConfig {
-        applicationId "com.qfs.pagan"
+        applicationId "com.qfs.pagandevb"
         minSdk 27
         targetSdk 35
         versionCode 132
@@ -64,5 +65,32 @@ dependencies {
 
     testImplementation "io.mockk:mockk:1.14.5"
     testImplementation "io.mockk:mockk-bdd:1.14.5"
+
+    def composeBom = platform('androidx.compose:compose-bom:2025.09.01')
+    implementation composeBom
+    androidTestImplementation composeBom
+
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.foundation:foundation'
+
+    // Android Studio Preview support
+    implementation 'androidx.compose.ui:ui-tooling-preview'
+    debugImplementation 'androidx.compose.ui:ui-tooling'
+
+    // UI Tests
+    androidTestImplementation 'androidx.compose.ui:ui-test-junit4'
+    debugImplementation 'androidx.compose.ui:ui-test-manifest'
+
+    // Optional - Add window size utils
+    implementation 'androidx.compose.material3.adaptive:adaptive'
+
+    // Optional - Integration with activities
+    implementation 'androidx.activity:activity-compose:1.11.0'
+    // Optional - Integration with ViewModels
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.8.5'
+    // Optional - Integration with LiveData
+    implementation 'androidx.compose.runtime:runtime-livedata'
+    // Optional - Integration with RxJava
+    implementation 'androidx.compose.runtime:runtime-rxjava2'
 
 }

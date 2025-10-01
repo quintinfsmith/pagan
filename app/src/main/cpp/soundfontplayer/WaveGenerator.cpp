@@ -1,6 +1,3 @@
-//
-// Created by pent on 8/12/25.
-//
 
 bool array_contains(const int* array, int array_size, int value) {
     for (int k = 0; k < array_size; k++) {
@@ -11,6 +8,11 @@ bool array_contains(const int* array, int array_size, int value) {
 
 bool apply_effect_buffer(EffectProfileBuffer* effect_buffer, float* working_array, int array_size) {
     switch (effect_buffer->data->type) {
+        case TYPE_DELAY: {
+            auto* buffer = (DelayBuffer *) effect_buffer;
+            buffer->apply(working_array, array_size);
+            break;
+        }
         case TYPE_PAN: {
             auto* buffer = (PanBuffer *) effect_buffer;
             buffer->apply(working_array, array_size);
@@ -21,13 +23,18 @@ bool apply_effect_buffer(EffectProfileBuffer* effect_buffer, float* working_arra
             buffer->apply(working_array, array_size);
             break;
         }
-        case TYPE_DELAY: {
-            auto* buffer = (DelayBuffer *) effect_buffer;
+        case TYPE_EQUALIZER: {
+            auto* buffer = (EqualizerBuffer *) effect_buffer;
             buffer->apply(working_array, array_size);
             break;
         }
-        case TYPE_EQUALIZER: {
-            auto* buffer = (EqualizerBuffer *) effect_buffer;
+        case TYPE_REVERB: {
+            auto* buffer = (ReverbBuffer *) effect_buffer;
+            buffer->apply(working_array, array_size);
+            break;
+        }
+        case TYPE_BANDPASS: {
+            auto* buffer = (BandPassBuffer *) effect_buffer;
             buffer->apply(working_array, array_size);
             break;
         }
@@ -97,10 +104,41 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
                 if (depth < key_width && effect_keys[j] == -1) continue;
                 if (depth != effect_indices[j] || (depth < key_width && effect_keys[j] != working_keys[i][depth])) continue;
                 if (array_contains(effect_buffers_applied, effect_buffers_applied_count, j)) continue;
-                if (apply_effect_buffer((EffectProfileBuffer *) effect_buffers[j], working_arrays[i], (int) frames)) {
+                auto* effect_buffer = (EffectProfileBuffer *) effect_buffers[j];
+                if (apply_effect_buffer(effect_buffer, working_arrays[i], (int) frames)) {
                     effect_buffers_applied[effect_buffers_applied_count++] = j;
                 }
-            } }
+            }
+
+            //int require_fft[effect_buffer_count];
+            //int require_fft_count = 0;
+            //if (require_fft_count > 0) {
+            //    int new_size = 2;
+            //    while (new_size < frames) {
+            //        new_size *= 2;
+            //    }
+
+            //    Complex* frequency_domain_left = fft(working_arrays[i], frames, new_size);
+            //    Complex* frequency_domain_right = fft(working_arrays[i + frames], frames, new_size);
+            //    for (int j = 0; j < require_fft_count; j++) {
+            //        if (apply_effect_buffer((EffectProfileBuffer *) effect_buffers[j], frequency_domain_left, frequency_domain_right, (int) frames)) {
+            //            effect_buffers_applied[effect_buffers_applied_count++] = j;
+            //        }
+            //    }
+
+            //    Complex* amplitude_domain_left = ifft(frequency_domain_left, new_size);
+            //    Complex* amplitude_domain_right = ifft(frequency_domain_right, new_size);
+            //    for (int x = 0; x < frames; x++) {
+            //        working_arrays[i][x] = amplitude_domain_left[x].real;
+            //        working_arrays[i][x + frames] = amplitude_domain_right[x].real;
+            //    }
+
+            //    free(amplitude_domain_left);
+            //    free(amplitude_domain_right);
+            //    free(frequency_domain_left);
+            //    free(frequency_domain_right);
+            //}   
+        }
     }
 
     for (int i = 0; i < effect_buffer_count; i++) {

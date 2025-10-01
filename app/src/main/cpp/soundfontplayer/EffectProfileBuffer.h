@@ -132,6 +132,61 @@ private:
     }
 };
 
+class FrequencyDomainBuffer: public EffectProfileBuffer {
+    public:
+        FrequencyDomainBuffer(ControllerEventData* controller_event_data, int start_frame): EffectProfileBuffer(controller_event_data, start_frame) { }
+
+        void apply(float* working_array, int array_size) {
+            int i = 0;
+            float *working_input_left;
+            float *working_input_right;
+            int working_input_size = 0;
+            for (int x = 0; x < array_size; x++) {
+                float* next = this->get_next();
+                if (next != this->working_eq) {
+                    this->working_eq = next;
+
+                    int padded_size = 2;
+                    while (padded_size < working_input_size) {
+                        padded_size *= 2;
+                    }
+
+                    Complex* transformed_left = fft(working_input_left, working_input_size, padded_size);
+                    Complex* transformed_right = fft(working_input_right, working_input_size, padded_size);
+                    int size = (int)this->working_eq[0];
+
+                    for (int y = 0; y < size; y++) {
+                        float value = working_eq[(y * 3)];
+                        int first = (int)this->working_eq[(y * 3) + 1];
+                        int last = (int)this->working_eq[(y * 3) + 2];
+                        for (int z = first; z < last; z++) {
+                            transformed_left[z].real *= value;
+                            transformed_right[z].real *= value;
+                        }
+                    }
+
+                    Complex* reverted_left = ifft(transformed_left, working_input_size);
+                    Complex* reverted_right = ifft(transformed_right, working_input_size);
+                    for (int y = 0; y < working_input_size; y++) {
+                        working_array[y + i] = reverted_left[y].real;
+                        working_array[y + array_size + i] = reverted_right[y].real;
+                    }
+
+                    delete transformed_left;
+                    delete reverted_left;
+                    delete transformed_right;
+                    delete reverted_right;
+
+                    working_input_size = 0;
+                    i = x;
+                } else {
+                    working_input_left[working_input_size] = working_array[x];
+                    working_input_right[working_input_size++] = working_array[x + array_size];
+                }
+            }
+        }
+};
+
 class EqualizerBuffer: public EffectProfileBuffer {
     float* working_eq;
     public:

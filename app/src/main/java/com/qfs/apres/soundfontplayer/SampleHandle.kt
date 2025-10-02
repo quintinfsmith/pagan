@@ -20,7 +20,6 @@ class SampleHandle(var ptr: Long) {
         vibrato_delay: Float = 0f,
         vibrato_pitch: Float = 0f,
 
-
         // TODO: Modulations
         //modulation_envelope: ModulationEnvelope,
         //modulation_lfo: LFO?,
@@ -195,10 +194,6 @@ class SampleHandle(var ptr: Long) {
     external fun get_working_frame_jni(ptr: Long): Int
     val working_frame: Int
         get() = this.get_working_frame_jni(this.ptr)
-
-    external fun get_smoothing_factor_jni(ptr: Long): Float
-    val smoothing_factor: Float
-        get() = this.get_smoothing_factor_jni(this.ptr)
 
     external fun is_dead_jni(ptr: Long): Boolean
     val is_dead: Boolean

@@ -5,10 +5,10 @@ enum class EffectType(val i: Int) {
     Velocity(4),
 
     Volume(1),
+    LowPass(2),
     Delay(3),
     Pan(5),
 
-    LowPass(1024 + 1),
     Reverb(1024 + 2)
  //   Equalizer(1024 + 3),
 }

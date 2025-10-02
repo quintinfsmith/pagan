@@ -143,6 +143,11 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_allow_1empty_1jni(JNIEnv* env, 
             output = typed_ptr->has_pending_echoes();
             break;
         }
+        case TYPE_LOWPASS: {
+            auto* typed_ptr = (LowPassBuffer*) ptr_long;
+            output = typed_ptr->in_smoothing();
+            break;
+        }
         default: {
             output = false;
         }

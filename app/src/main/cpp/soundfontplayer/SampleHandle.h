@@ -20,18 +20,17 @@ float MAX_VOLUME = 1 / 1.27;
 
 // Values correspond with values defined in EffectType.kt
 const int TYPE_VOLUME = 1;
+const int TYPE_LOWPASS = 2;
 const int TYPE_DELAY = 3;
 const int TYPE_PAN = 5;
 
-const int TYPE_FREQUENCY_DOMAIN = 1024;
-const int TYPE_LOWPASS = TYPE_FREQUENCY_DOMAIN | 1;
-const int TYPE_REVERB = TYPE_FREQUENCY_DOMAIN | 2;
-const int TYPE_EQUALIZER = TYPE_FREQUENCY_DOMAIN | 3;
+//const int TYPE_FREQUENCY_DOMAIN = 1024;
+//const int TYPE_REVERB = TYPE_FREQUENCY_DOMAIN | 2;
+//const int TYPE_EQUALIZER = TYPE_FREQUENCY_DOMAIN | 3;
 
 // TODO Modulations
 // modulation_envelope, modulation_lfo, modulators
 class SampleHandle {
-    float RC;
     float initial_frame_factor;
     // int uuid;
 
@@ -49,14 +48,12 @@ class SampleHandle {
         float pan;
         PitchedBuffer** data_buffers;
         int buffer_count;
-        float smoothing_factor;
 
         int working_frame;
         int release_frame;
         int kill_frame;
         bool is_dead;
         int active_buffer;
-        float previous_value = 0;
 
         Oscillator* vibrato_oscillator;
         int vibrato_delay;
@@ -79,7 +76,6 @@ class SampleHandle {
         ) {
             this->uuid = SampleHandleUUIDGen++;
             this->data = data;
-            this->previous_value = 0;
             this->sample_rate = sample_rate;
             this->initial_attenuation = initial_attenuation;
             this->loop_end = loop_end;
@@ -120,7 +116,6 @@ class SampleHandle {
         ) {
             this->uuid = SampleHandleUUIDGen++;
             this->data = data;
-            this->previous_value = 0;
             this->sample_rate = sample_rate;
             this->initial_attenuation = initial_attenuation;
             this->loop_end = loop_end;
@@ -138,10 +133,6 @@ class SampleHandle {
         }
 
         void secondary_setup(PitchedBuffer** input_buffers, int count) {
-            this->RC = 1.0 / (this->filter_cutoff * M_2_PI);
-            float dt =  1.0 / this->sample_rate;
-            this->smoothing_factor = dt / (this->RC + dt);
-
             this->initial_frame_factor = 1 / std::pow(10, this->initial_attenuation);
             this->working_frame = 0;
             this->release_frame = -1;
@@ -206,7 +197,6 @@ class SampleHandle {
             this->release_frame = original->release_frame;
             this->kill_frame = original->kill_frame;
             this->is_dead = original->is_dead;
-            this->previous_value = original->previous_value;
 
             if (original->vibrato_oscillator != nullptr) {
                 this->vibrato_oscillator = new Oscillator(original->vibrato_oscillator->sample_rate, original->vibrato_oscillator->frequency);
@@ -227,14 +217,13 @@ class SampleHandle {
 
             this->volume_envelope->~VolumeEnvelope();
             free(this->volume_envelope);
-        };
+        }
 
         void set_release_frame(int frame) {
             this->release_frame = frame;
         }
 
         void set_working_frame(int frame) {
-            this->previous_value = 0;
             this->working_frame = frame;
             if (this->kill_frame > -1 && (this->working_frame >= this->kill_frame || (this->working_frame >= this->release_frame + this->volume_envelope->frames_release))) {
                 this->is_dead = true;
@@ -340,6 +329,7 @@ class SampleHandle {
                 buffer[i] = 0;
                 buffer[i + target_size] = 0;
             }
+
             for (int i = left_padding; i < target_size; i++) {
                 float frame;
                 try {
@@ -349,24 +339,13 @@ class SampleHandle {
                     break;
                 }
 
-                float v = this->previous_value + (this->smoothing_factor * (frame - this->previous_value));
-                buffer[i] = v * std::get<0>(working_pan);
-                buffer[i + target_size] = v * std::get<1>(working_pan);
-
-                this->previous_value = v;
+                buffer[i] = frame * std::get<0>(working_pan);
+                buffer[i + target_size] = frame * std::get<1>(working_pan);
             }
 
-            // Need to smooth into silence
             for (int i = actual_size; i < target_size; i++) {
-                if (this->previous_value != 0) {
-                    float v = this->previous_value + (this->smoothing_factor * (0 - this->previous_value));
-                    buffer[i] = v * std::get<0>(working_pan);
-                    buffer[i + target_size] = v * std::get<1>(working_pan);
-                    this->previous_value = v;
-                } else {
-                    buffer[i] = 0;
-                    buffer[i + target_size] = 0;
-                }
+                buffer[i] = 0;
+                buffer[i + target_size] = 0;
             }
         }
 

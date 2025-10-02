@@ -109,35 +109,6 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
                     effect_buffers_applied[effect_buffers_applied_count++] = j;
                 }
             }
-
-            //int require_fft[effect_buffer_count];
-            //int require_fft_count = 0;
-            //if (require_fft_count > 0) {
-            //    int new_size = 2;
-            //    while (new_size < frames) {
-            //        new_size *= 2;
-            //    }
-
-            //    Complex* frequency_domain_left = fft(working_arrays[i], frames, new_size);
-            //    Complex* frequency_domain_right = fft(working_arrays[i + frames], frames, new_size);
-            //    for (int j = 0; j < require_fft_count; j++) {
-            //        if (apply_effect_buffer((EffectProfileBuffer *) effect_buffers[j], frequency_domain_left, frequency_domain_right, (int) frames)) {
-            //            effect_buffers_applied[effect_buffers_applied_count++] = j;
-            //        }
-            //    }
-
-            //    Complex* amplitude_domain_left = ifft(frequency_domain_left, new_size);
-            //    Complex* amplitude_domain_right = ifft(frequency_domain_right, new_size);
-            //    for (int x = 0; x < frames; x++) {
-            //        working_arrays[i][x] = amplitude_domain_left[x].real;
-            //        working_arrays[i][x + frames] = amplitude_domain_right[x].real;
-            //    }
-
-            //    free(amplitude_domain_left);
-            //    free(amplitude_domain_right);
-            //    free(frequency_domain_left);
-            //    free(frequency_domain_right);
-            //}   
         }
     }
 

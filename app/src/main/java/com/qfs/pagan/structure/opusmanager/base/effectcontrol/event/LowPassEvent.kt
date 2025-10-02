@@ -37,7 +37,7 @@ class LowPassEvent(var limit_lower: Float?, var resonance: Float?, duration: Int
                 val diff_resonance = (preceding_event.resonance ?: 0F) - (this.resonance ?: 0F)
 
                 copy_event.limit_lower = (this.limit_lower ?: 0F) + (diff_limit_lower * position.toFloat())
-                copy_event.resonance = (this.resonance ?: 0F) + (diff_resonance * position.toFloat())
+                copy_event.resonance = (this.resonance ?: 1F) + (diff_resonance * position.toFloat())
             }
 
             EffectTransition.Instant -> {}

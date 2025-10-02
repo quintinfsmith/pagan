@@ -5,6 +5,7 @@ import com.qfs.apres.soundfont2.SampleData
 import kotlin.math.abs
 
 class SampleHandle(var ptr: Long) {
+    var filter_cutoff: Float? = null
     constructor(
         data: SampleData,
         sample_rate: Int,
@@ -13,7 +14,7 @@ class SampleHandle(var ptr: Long) {
         stereo_mode: Int,
         volume_envelope: VolumeEnvelope,
         pitch_shift: Float = 1F,
-        filter_cutoff: Float = 13500F,
+        filter_cutoff: Float? = null,
         pan: Float = 0F,
         vibrato_frequency: Float = 0f,
         vibrato_delay: Float = 0f,
@@ -34,7 +35,7 @@ class SampleHandle(var ptr: Long) {
             stereo_mode,
             volume_envelope.ptr,
             pitch_shift,
-            filter_cutoff,
+            filter_cutoff ?: 13500F,
             pan,
             vibrato_frequency,
             vibrato_delay,
@@ -43,7 +44,9 @@ class SampleHandle(var ptr: Long) {
             //modulation_lfo,
             //modulators
         )
-    )
+    ) {
+        this.filter_cutoff = filter_cutoff
+    }
 
     companion object {
         external fun create(
@@ -203,7 +206,9 @@ class SampleHandle(var ptr: Long) {
 
     external fun copy_jni(ptr: Long): Long
     fun copy(): SampleHandle {
-        return SampleHandle(this.copy_jni(this.ptr))
+        val new_handle = SampleHandle(this.copy_jni(this.ptr))
+        new_handle.filter_cutoff = this.filter_cutoff
+        return new_handle
     }
 
     external fun set_working_frame_jni(ptr: Long, frame: Int)

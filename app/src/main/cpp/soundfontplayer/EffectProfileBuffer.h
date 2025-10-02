@@ -136,38 +136,40 @@ class EffectProfileBuffer {
 class FrequencyDomainBuffer: public EffectProfileBuffer {
     public:
         FrequencyDomainBuffer(ControllerEventData* controller_event_data, int start_frame): EffectProfileBuffer(controller_event_data, start_frame) { }
+        FrequencyDomainBuffer(FrequencyDomainBuffer* original): EffectProfileBuffer(original) {}
 
         virtual bool working_value_check(float* next_value) = 0;
         virtual void apply_section(Complex* transformed_left, Complex* transformed_right, int size) {};
+        void setup_fft_and_apply(float* working_array, int array_size, int offset, float* working_input_left, float* working_input_right, int target_size) {
+            int padded_size = 2;
+            while (padded_size < target_size) {
+                padded_size *= 2;
+            }
+            Complex* transformed_left = fft(working_input_left, target_size, padded_size);
+            Complex* transformed_right = fft(working_input_right, target_size, padded_size);
+            this->apply_section(transformed_left, transformed_right, target_size);
+
+            Complex* reverted_left = ifft(transformed_left, padded_size);
+            Complex* reverted_right = ifft(transformed_right, padded_size);
+            for (int y = 0; y < target_size; y++) {
+                working_array[y + offset] = reverted_left[y].real;
+                working_array[y + array_size + offset] = reverted_right[y].real;
+            }
+
+            free(transformed_left);
+            free(reverted_left);
+            free(transformed_right);
+            free(reverted_right);
+        }
 
         void apply(float* working_array, int array_size) override {
             int i = 0;
-            float *working_input_left;
-            float *working_input_right;
+            float working_input_left[array_size];
+            float working_input_right[array_size];
             int working_input_size = 0;
             for (int x = 0; x < array_size; x++) {
                 if (this->working_value_check(this->get_next())) {
-                    int padded_size = 2;
-                    while (padded_size < working_input_size) {
-                        padded_size *= 2;
-                    }
-
-                    Complex* transformed_left = fft(working_input_left, working_input_size, padded_size);
-                    Complex* transformed_right = fft(working_input_right, working_input_size, padded_size);
-                    this->apply_section(transformed_left, transformed_right, working_input_size);
-
-                    Complex* reverted_left = ifft(transformed_left, working_input_size);
-                    Complex* reverted_right = ifft(transformed_right, working_input_size);
-                    for (int y = 0; y < working_input_size; y++) {
-                        working_array[y + i] = reverted_left[y].real;
-                        working_array[y + array_size + i] = reverted_right[y].real;
-                    }
-
-                    delete transformed_left;
-                    delete reverted_left;
-                    delete transformed_right;
-                    delete reverted_right;
-
+                    this->setup_fft_and_apply(working_array, array_size, i, working_input_left, working_input_right, working_input_size);
                     working_input_size = 0;
                     i = x;
                 } else {
@@ -175,32 +177,41 @@ class FrequencyDomainBuffer: public EffectProfileBuffer {
                     working_input_right[working_input_size++] = working_array[x + array_size];
                 }
             }
+            if (working_input_size > 0) {
+                this->setup_fft_and_apply(working_array, array_size, i, working_input_left, working_input_right, working_input_size);
+            }
         }
 };
 
 class LowPassBuffer: public FrequencyDomainBuffer {
     float frequency = 0;
     float resonance = 1;
-    LowPassBuffer(ControllerEventData* controller_event_data, int start_frame): FrequencyDomainBuffer(controller_event_data, start_frame) {
-        this->frequency = 0;
-        this->resonance = 1;
-    }
-
-    bool working_value_check(float* next_value) override {
-        if (next_value[0] == this->frequency && next_value[1] == resonance) return false;
-
-        this->frequency = next_value[0];
-        this->resonance = next_value[1];
-        return true;
-    }
-
-    // TODO: COnsider resonance and use roll-off
-    void apply_section(Complex* transformed_left, Complex* transformed_right, int size) override {
-        for (int y = (int)this->frequency; y < size; y++) {
-            transformed_left[y].real = 0;
-            transformed_right[y].real = 0;
+    private:
+        bool working_value_check(float* next_value) override {
+            if (next_value[0] == this->frequency && next_value[1] == this->resonance) return false;
+            this->frequency = next_value[0];
+            this->resonance = next_value[1];
+            return true;
         }
-    }
+
+        // TODO: COnsider resonance and use roll-off
+        void apply_section(Complex* transformed_left, Complex* transformed_right, int size) override {
+           for (int y = (int)this->frequency; y < size; y++) {
+               transformed_left[y].real = 0;
+               transformed_right[y].real = 0;
+           }
+        }
+
+    public:
+        explicit LowPassBuffer(LowPassBuffer* original): FrequencyDomainBuffer(original) {
+            this->frequency = original->frequency;
+            this->resonance = original->resonance;
+        }
+
+        LowPassBuffer(ControllerEventData* controller_event_data, int start_frame): FrequencyDomainBuffer(controller_event_data, start_frame) {
+            this->frequency = 0;
+            this->resonance = 1;
+        }
 };
 
 class VolumeBuffer: public EffectProfileBuffer {

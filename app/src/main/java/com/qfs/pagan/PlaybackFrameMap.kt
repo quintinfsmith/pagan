@@ -22,6 +22,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.ControllerProfile
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.TempoController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.plus
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
@@ -396,6 +397,30 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         val end_frame = handle.first.release_frame!! + start_frame
         val sample_start_frame = start_frame
         val sample_end_frame = end_frame + handle.first.get_release_duration()
+
+        handle.first.filter_cutoff?.let { filter_cutoff: Float ->
+            val working_event = LowPassEvent(filter_cutoff, 0F)
+            this._effect_profiles.add(
+                Triple(
+                    PlaybackFrameMap.LAYER_SAMPLE,
+                    handle.second[PlaybackFrameMap.LAYER_SAMPLE],
+                    ProfileBuffer(
+                        ControllerEventData(
+                            listOf(
+                                ControllerEventData.IndexedProfileBufferFrame(
+                                    start_frame,
+                                    start_frame,
+                                    working_event.to_float_array(),
+                                    FloatArray(2)
+                                )
+                            ),
+                            EffectType.LowPass
+                        )
+                    )
+                )
+            )
+        }
+
         val uuid = handle.first.uuid
         this._handle_range_map[uuid] = sample_start_frame .. sample_end_frame
         this._handle_map[uuid] = handle

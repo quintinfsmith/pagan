@@ -27,6 +27,12 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_00024Companion_create(JNIEnv* e
             buffer = derived_buffer;
             break;
         }
+        case TYPE_LOWPASS: {
+            auto* derived_buffer = (LowPassBuffer*)malloc(sizeof(LowPassBuffer));
+            new (derived_buffer) LowPassBuffer(controller_event_data, start_frame);
+            buffer = derived_buffer;
+            break;
+        }
         default: {
             buffer = (EffectProfileBuffer*)malloc(sizeof(EffectProfileBuffer));
         }
@@ -57,6 +63,13 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_copy_1jni(JNIEnv* env, jobject,
             auto* original = (VolumeBuffer*)ptr;
             auto* derived_buffer = (VolumeBuffer*)malloc(sizeof(VolumeBuffer));
             new (derived_buffer) VolumeBuffer(original);
+            buffer = derived_buffer;
+            break;
+        }
+        case TYPE_LOWPASS: {
+            auto* original = (LowPassBuffer*)ptr;
+            auto* derived_buffer = (LowPassBuffer*)malloc(sizeof(LowPassBuffer));
+            new (derived_buffer) LowPassBuffer(original);
             buffer = derived_buffer;
             break;
         }
@@ -97,6 +110,12 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_destroy_1jni(JNIEnv* env, jobje
         case TYPE_VOLUME: {
             auto* original =(VolumeBuffer*)ptr;
             original->~VolumeBuffer();
+            free(original);
+            break;
+        }
+        case TYPE_LOWPASS: {
+            auto* original =(LowPassBuffer*)ptr;
+            original->~LowPassBuffer();
             free(original);
             break;
         }

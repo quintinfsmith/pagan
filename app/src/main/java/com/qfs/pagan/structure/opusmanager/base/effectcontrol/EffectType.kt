@@ -1,14 +1,14 @@
 package com.qfs.pagan.structure.opusmanager.base.effectcontrol
+import com.qfs.apres.soundfontplayer.EffectType as ApresEffectType
+enum class EffectType(val apres_type: ApresEffectType?) {
+    Tempo(null),
+    Velocity(null),
 
-enum class EffectType(val i: Int) {
-    Tempo(0),
-    Velocity(4),
+    Volume(ApresEffectType.Volume),
+    LowPass(ApresEffectType.LowPass),
+    Delay(ApresEffectType.Delay),
+    Pan(ApresEffectType.Pan),
 
-    Volume(1),
-    LowPass(2),
-    Delay(3),
-    Pan(5),
-
-    Reverb(1024 + 2)
+    Reverb(null)
  //   Equalizer(1024 + 3),
 }

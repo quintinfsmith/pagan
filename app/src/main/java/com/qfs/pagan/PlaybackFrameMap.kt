@@ -4,6 +4,7 @@ import com.qfs.apres.event.GeneralMIDIEvent
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfontplayer.ControllerEventData
+import com.qfs.apres.soundfontplayer.EffectType
 import com.qfs.apres.soundfontplayer.FrameMap
 import com.qfs.apres.soundfontplayer.ProfileBuffer
 import com.qfs.apres.soundfontplayer.SampleHandle
@@ -19,7 +20,6 @@ import com.qfs.pagan.structure.opusmanager.base.OpusLineAbstract
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.ControllerProfile
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.TempoController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
@@ -29,16 +29,12 @@ import com.qfs.pagan.structure.times
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType as PaganEffectType
 
 class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_handle_manager: SampleHandleManager): FrameMap {
     companion object {
-        const val LAYER_SAMPLE = 0
-        const val LAYER_LINE = 1
-        const val LAYER_CHANNEL = 2
-        const val LAYER_GLOBAL = 3
         var merge_offset_gen = 1
 
-        val UNPROCESSABLE_TYPES = listOf(EffectType.Tempo, EffectType.Velocity)
 
         fun calculate_beat_frames(beat_count: Int, sample_rate: Int, tempo_map: List<Pair<Rational, Float>>): IntArray? {
             if (tempo_map.isEmpty()) return null
@@ -507,7 +503,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             this._sample_handle_manager.change_program(channel.get_midi_channel(), instrument.second)
         }
 
-        this.map_tempo_changes(this.opus_manager.get_controller<OpusTempoEvent>(EffectType.Tempo) as TempoController)
+        this.map_tempo_changes(this.opus_manager.get_controller<OpusTempoEvent>(PaganEffectType.Tempo) as TempoController)
         this._cache_beat_frames()
 
         this.setup_effect_buffers(ignore_global_controls, ignore_channel_controls, ignore_line_controls)
@@ -540,45 +536,48 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
                 if (!ignore_line_controls) {
                     for ((control_type, controller) in line.controllers.get_all()) {
-                        if (PlaybackFrameMap.UNPROCESSABLE_TYPES.contains(control_type)) continue
-                        temp_data.add(
-                            Quad(
-                                PlaybackFrameMap.LAYER_LINE, // layer (channel)
-                                PlaybackFrameMap.generate_merge_keys(c, l)[PlaybackFrameMap.LAYER_LINE], // key
-                                controller.generate_profile(),
-                                control_type
+                        control_type.apres_type?.let { apres_type ->
+                            temp_data.add(
+                                Quad(
+                                    FrameMap.LAYER_LINE, // layer (channel)
+                                    PlaybackFrameMap.generate_merge_keys(c, l)[FrameMap.LAYER_LINE], // key
+                                    controller.generate_profile(),
+                                    apres_type
+                                )
                             )
-                        )
+                        }
                     }
                 }
             }
 
             if (!ignore_channel_controls) {
                 for ((control_type, controller) in channel.controllers.get_all()) {
-                    if (PlaybackFrameMap.UNPROCESSABLE_TYPES.contains(control_type)) continue
-                    temp_data.add(
-                        Quad(
-                            PlaybackFrameMap.LAYER_CHANNEL, // layer (channel)
-                            PlaybackFrameMap.generate_merge_keys(c)[PlaybackFrameMap.LAYER_CHANNEL], // key
-                            controller.generate_profile(),
-                            control_type
+                    control_type.apres_type?.let { apres_type ->
+                        temp_data.add(
+                            Quad(
+                                FrameMap.LAYER_CHANNEL, // layer (channel)
+                                PlaybackFrameMap.generate_merge_keys(c)[FrameMap.LAYER_CHANNEL], // key
+                                controller.generate_profile(),
+                                apres_type
+                            )
                         )
-                    )
+                    }
                 }
             }
         }
 
         if (!ignore_global_controls) {
             for ((control_type, controller) in this.opus_manager.controllers.get_all()) {
-                if (PlaybackFrameMap.UNPROCESSABLE_TYPES.contains(control_type)) continue
-                temp_data.add(
-                    Quad(
-                        PlaybackFrameMap.LAYER_GLOBAL, // layer (global)
-                        -1,
-                        controller.generate_profile(),
-                        control_type
+                control_type.apres_type?.let { apres_type ->
+                    temp_data.add(
+                        Quad(
+                            FrameMap.LAYER_GLOBAL, // layer (global)
+                            -1,
+                            controller.generate_profile(),
+                            apres_type
+                        )
                     )
-                )
+                }
             }
         }
 
@@ -597,14 +596,14 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         val control_event_data = mutableListOf<ControllerEventData.IndexedProfileBufferFrame>()
         if (control_type == EffectType.Delay) {
-            val merged_events: MutableList<Pair<EffectType, ControllerProfile.ProfileEffectEvent>> = mutableListOf()
+            val merged_events: MutableList<Pair<EffectType?, ControllerProfile.ProfileEffectEvent>> = mutableListOf()
 
             for (event in controller_profile.get_events()) {
                 merged_events.add(Pair(control_type, event))
             }
 
             for (event in this.working_tempo_controller!!.get_events()) {
-                merged_events.add(Pair(EffectType.Tempo, event))
+                merged_events.add(Pair(null, event))
             }
             merged_events.sortBy { it.second.start_position }
 

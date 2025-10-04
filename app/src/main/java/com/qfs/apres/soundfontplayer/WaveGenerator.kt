@@ -1,7 +1,5 @@
 package com.qfs.apres.soundfontplayer
 
-import com.qfs.pagan.PlaybackFrameMap.Companion.LAYER_SAMPLE
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import kotlin.math.max
 
 class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int, var stereo_mode: StereoMode = StereoMode.Stereo) {
@@ -45,7 +43,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         val keys = this.temporary_sample_effects.keys.toList()
         return List(keys.size) { i: Int ->
             val key = keys[i]
-            Triple(LAYER_SAMPLE, key, this.temporary_sample_effects[key]!!)
+            Triple(FrameMap.LAYER_SAMPLE, key, this.temporary_sample_effects[key]!!)
         } + this.midi_frame_map.get_effect_buffers()
     }
 
@@ -184,7 +182,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
         for (key in remove_set) {
             this._active_sample_handles.remove(key)?.let { entry ->
-                this.temporary_sample_effects.remove(entry.merge_keys[LAYER_SAMPLE])?.destroy(true)
+                this.temporary_sample_effects.remove(entry.merge_keys[FrameMap.LAYER_SAMPLE])?.destroy(true)
                 entry.handle.destroy()
             }
         }
@@ -226,7 +224,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
 
             // Add sample-specific effects here
             new_handle.filter_cutoff?.let { filter_cutoff: Float ->
-                val key = merge_keys[LAYER_SAMPLE]
+                val key = merge_keys[FrameMap.LAYER_SAMPLE]
                 this.temporary_sample_effects[key] = ProfileBuffer(
                     ControllerEventData(
                         listOf(

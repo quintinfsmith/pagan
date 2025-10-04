@@ -3,13 +3,13 @@ package com.qfs.pagan
 import com.qfs.apres.VirtualMidiOutputDevice
 import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfontplayer.ControllerEventData
+import com.qfs.apres.soundfontplayer.EffectType
 import com.qfs.apres.soundfontplayer.FrameMap
 import com.qfs.apres.soundfontplayer.MappedPlaybackDevice
 import com.qfs.apres.soundfontplayer.ProfileBuffer
 import com.qfs.apres.soundfontplayer.SampleHandle
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WaveGenerator
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock

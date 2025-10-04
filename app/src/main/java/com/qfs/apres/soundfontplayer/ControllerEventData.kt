@@ -1,7 +1,5 @@
 package com.qfs.apres.soundfontplayer
 
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
-
 class ControllerEventData(val ptr: Long, val type: EffectType) {
     class IndexedProfileBufferFrame(val first_frame: Int, val last_frame: Int, val value: FloatArray, val increment: FloatArray)
 

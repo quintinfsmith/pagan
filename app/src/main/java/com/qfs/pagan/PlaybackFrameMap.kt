@@ -33,7 +33,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_handle_manager: SampleHandleManager): FrameMap {
-    data class ProfileMapEntry(var layer: Int, var key: Int, var profile: ProfileBuffer, var temporary: Boolean, var initialized: Boolean = false)
+    data class ProfileMapEntry(var layer: Int, var key: Int, var profile: ProfileBuffer, var temporary: Boolean)
     companion object {
         const val LAYER_SAMPLE = 0
         const val LAYER_LINE = 1
@@ -142,16 +142,11 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         private fun convert_to_indexed_profile_buffer_frames(sample_rate: Int, tempo_map: List<Pair<Rational, Float>>, beat_map: IntArray, effect_event: ControllerProfile.ProfileEffectEvent, event_type: EffectType): List<ControllerEventData.IndexedProfileBufferFrame> {
             val adjusted_event = when (event_type) {
                 EffectType.LowPass -> {
-                    // Convert frequency to smoothing factor
-                    // TODO: Resonance
-                    val two_pi: Float = (2F * PI.toFloat())
-                    val dt = 1F / sample_rate.toFloat()
-
                     ControllerProfile.ProfileEffectEvent(
                         effect_event.start_position,
                         effect_event.end_position,
-                        floatArrayOf(dt / ((two_pi / effect_event.start_value[0]) + dt), effect_event.start_value[1]),
-                        floatArrayOf(dt / ((two_pi / effect_event.end_value[0]) + dt), effect_event.end_value[1]),
+                        floatArrayOf(sample_rate.toFloat(), effect_event.start_value[0], effect_event.start_value[1]),
+                        floatArrayOf(sample_rate.toFloat(), effect_event.end_value[0], effect_event.end_value[1]),
                         effect_event.transition
                     )
                 }
@@ -367,12 +362,11 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     override fun get_effect_buffers(): List<Triple<Int, Int, ProfileBuffer>> {
         val output = mutableListOf<Triple<Int, Int, ProfileBuffer>>()
         val to_remove = mutableListOf<Int>()
-        this._effect_profiles.forEachIndexed { i: Int, (layer: Int, key: Int, profile_buffer: ProfileBuffer, temporary: Boolean, initialized: Boolean) ->
-            if (!temporary || !initialized || profile_buffer.allow_empty()) {
-                output.add(Triple(layer, key, profile_buffer))
-                this._effect_profiles[i].initialized = true
-            } else {
+        this._effect_profiles.forEachIndexed { i: Int, (layer: Int, key: Int, profile_buffer: ProfileBuffer, temporary: Boolean) ->
+            if (temporary && !profile_buffer.allow_empty()) {
                 to_remove.add(i)
+            } else {
+                output.add(Triple(layer, key, profile_buffer))
             }
         }
 
@@ -677,7 +671,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 control_event_data.addAll(PlaybackFrameMap.convert_to_indexed_profile_buffer_frames(sample_rate, tempo_map, beat_map, effect_event, control_type))
             }
         }
-
         this._effect_profiles.add(
             ProfileMapEntry(
                 layer,

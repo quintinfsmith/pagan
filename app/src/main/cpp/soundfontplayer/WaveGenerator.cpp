@@ -1,4 +1,9 @@
 
+#include "LowPassBuffer.h"
+#include "VolumeBuffer.h"
+#include "DelayBuffer.h"
+#include "PanBuffer.h"
+
 bool array_contains(const int* array, int array_size, int value) {
     for (int k = 0; k < array_size; k++) {
         if (array[k] == value) return true;

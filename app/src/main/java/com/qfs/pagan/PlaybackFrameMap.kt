@@ -22,18 +22,15 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.ControllerProfile
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.TempoController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.plus
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.structure.times
-import kotlin.math.PI
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 
 class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_handle_manager: SampleHandleManager): FrameMap {
-    data class ProfileMapEntry(var layer: Int, var key: Int, var profile: ProfileBuffer, var temporary: Boolean)
     companion object {
         const val LAYER_SAMPLE = 0
         const val LAYER_LINE = 1
@@ -299,7 +296,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     private val _pan_map = HashMap<Pair<Int, Int>, ControllerEventData>()
     private val _percussion_setter_ids = mutableSetOf<Int>()
 
-    private val _effect_profiles = mutableListOf<ProfileMapEntry>()
+    private val _effect_profiles = mutableListOf<Triple<Int, Int, ProfileBuffer>>()
 
     var clip_same_line_release = false
 
@@ -360,21 +357,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     override fun get_effect_buffers(): List<Triple<Int, Int, ProfileBuffer>> {
-        val output = mutableListOf<Triple<Int, Int, ProfileBuffer>>()
-        val to_remove = mutableListOf<Int>()
-        this._effect_profiles.forEachIndexed { i: Int, (layer: Int, key: Int, profile_buffer: ProfileBuffer, temporary: Boolean) ->
-            if (temporary && !profile_buffer.allow_empty()) {
-                to_remove.add(i)
-            } else {
-                output.add(Triple(layer, key, profile_buffer))
-            }
-        }
-
-        for (i in to_remove.reversed()) {
-            this._effect_profiles.removeAt(i).profile.destroy(true)
-        }
-
-        return output
+        return this._effect_profiles
     }
 
     override fun get_active_handles(frame: Int): Set<Pair<Int, Pair<SampleHandle, IntArray>>> {
@@ -426,17 +409,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         val end_frame = handle.first.release_frame!! + start_frame
         val sample_start_frame = start_frame
         val sample_end_frame = end_frame + handle.first.get_release_duration()
-
-        handle.first.filter_cutoff?.let { filter_cutoff: Float ->
-            val working_event = LowPassEvent(filter_cutoff, 0F)
-            this.add_effect_profile(
-                PlaybackFrameMap.LAYER_SAMPLE,
-                handle.second[PlaybackFrameMap.LAYER_SAMPLE],
-                ControllerProfile(working_event.to_float_array()),
-                EffectType.LowPass,
-                true
-            )
-        }
 
         val uuid = handle.first.uuid
         this._handle_range_map[uuid] = sample_start_frame .. sample_end_frame
@@ -618,7 +590,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this._effect_profiles.sortBy { (_, _, buffer) -> buffer.type }
     }
 
-    fun add_effect_profile(layer: Int, layer_key: Int, controller_profile: ControllerProfile, control_type: EffectType, temporary: Boolean = false) {
+    fun add_effect_profile(layer: Int, layer_key: Int, controller_profile: ControllerProfile, control_type: EffectType) {
         val sample_rate = this._sample_handle_manager.sample_rate
         val tempo_map = this._tempo_ratio_map
         val beat_map = this._cached_beat_frames!!
@@ -672,7 +644,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             }
         }
         this._effect_profiles.add(
-            ProfileMapEntry(
+            Triple(
                 layer,
                 layer_key,
                 ProfileBuffer(
@@ -680,8 +652,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                         control_event_data,
                         control_type
                     )
-                ),
-                temporary
+                )
             )
         )
     }

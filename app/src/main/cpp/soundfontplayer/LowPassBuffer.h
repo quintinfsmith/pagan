@@ -10,16 +10,16 @@
 class LowPassBuffer: public EffectProfileBuffer {
     constexpr static float minimum_threshold = .0001;
     constexpr static int lag = 2;
-    float previous_filtered_left[LowPassBuffer::lag];
-    float previous_filtered_right[LowPassBuffer::lag];
-    float previous_unfiltered_left[LowPassBuffer::lag];
-    float previous_unfiltered_right[LowPassBuffer::lag];
+    float previous_filtered_left[LowPassBuffer::lag]{};
+    float previous_filtered_right[LowPassBuffer::lag]{};
+    float previous_unfiltered_left[LowPassBuffer::lag]{};
+    float previous_unfiltered_right[LowPassBuffer::lag]{};
 
     float working_sample_rate;
     float working_cutoff;
     float working_q;
-    float a[LowPassBuffer::lag];
-    float b[LowPassBuffer::lag];
+    float a[LowPassBuffer::lag]{};
+    float b[LowPassBuffer::lag]{};
 
     bool initial_apply = false;
 
@@ -40,6 +40,7 @@ class LowPassBuffer: public EffectProfileBuffer {
         }
 
         LowPassBuffer(ControllerEventData* controller_event_data, int start_frame): EffectProfileBuffer(controller_event_data, start_frame) {
+
             for (int i = 0; i < LowPassBuffer::lag; i++) {
                 this->previous_filtered_left[i] = 0;
                 this->previous_filtered_right[i] = 0;
@@ -69,8 +70,7 @@ class LowPassBuffer: public EffectProfileBuffer {
             if (cutoff == 0) return;
 
             float correction_factor = 1;
-            //float corrected_cutoff_freq = tan(M_PI * this->working_cutoff / sample_rate) / correction_factor;
-            float corrected_cutoff_freq = tan(M_PI * 400 / sample_rate) / correction_factor;
+            float corrected_cutoff_freq = tan(M_PI * this->working_cutoff / sample_rate) / correction_factor;
             float k_0 = sqrt(2) * corrected_cutoff_freq;
             float k_1 = corrected_cutoff_freq * corrected_cutoff_freq;
             this->a[0] = k_1 / (1 + k_0 + k_1);

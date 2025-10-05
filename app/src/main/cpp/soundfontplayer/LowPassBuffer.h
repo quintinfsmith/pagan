@@ -21,8 +21,6 @@ class LowPassBuffer: public EffectProfileBuffer {
     float a[LowPassBuffer::lag]{};
     float b[LowPassBuffer::lag]{};
 
-    bool initial_apply = false;
-
     public:
         explicit LowPassBuffer(LowPassBuffer* original): EffectProfileBuffer(original) {
             for (int i = 0; i < LowPassBuffer::lag; i++) {
@@ -36,7 +34,6 @@ class LowPassBuffer: public EffectProfileBuffer {
             this->working_sample_rate = original->working_sample_rate;
             this->working_cutoff = original->working_cutoff;
             this->working_q = original->working_q;
-            this->initial_apply = false;
         }
 
         LowPassBuffer(ControllerEventData* controller_event_data, int start_frame): EffectProfileBuffer(controller_event_data, start_frame) {
@@ -54,7 +51,6 @@ class LowPassBuffer: public EffectProfileBuffer {
             this->working_cutoff = 0;
             this->working_q = 0;
 
-            this->initial_apply = false;
         }
 
         void value_check() {
@@ -68,11 +64,11 @@ class LowPassBuffer: public EffectProfileBuffer {
             this->working_q = q;
 
             if (cutoff == 0) return;
+            // Limit cutoff to sample rate / 2
+            float cutoff_freq = tan(M_PI * fmin(this->working_cutoff / sample_rate, .5));
 
-            float correction_factor = 1;
-            float corrected_cutoff_freq = tan(M_PI * this->working_cutoff / sample_rate) / correction_factor;
-            float k_0 = sqrt(2) * corrected_cutoff_freq;
-            float k_1 = corrected_cutoff_freq * corrected_cutoff_freq;
+            float k_0 = sqrt(2) * cutoff_freq;
+            float k_1 = cutoff_freq * cutoff_freq;
             this->a[0] = k_1 / (1 + k_0 + k_1);
             this->a[1] = 2 * this->a[0];
             float k_2 = this->a[1] / k_1;
@@ -81,7 +77,6 @@ class LowPassBuffer: public EffectProfileBuffer {
         }
 
         void apply(float* working_array, int array_size) override {
-            this->initial_apply = true;
             for (int i = 0; i < array_size; i++) {
                 this->value_check();
                 if (this->working_cutoff == 0) continue;
@@ -94,6 +89,7 @@ class LowPassBuffer: public EffectProfileBuffer {
                     + (this->a[0] * this->previous_unfiltered_left[1])
                     + (this->b[0] * this->previous_filtered_left[0])
                     + (this->b[1] * this->previous_filtered_left[1]);
+
                 float output_right = (this->a[0] * input_right)
                     + (this->a[1] * this->previous_unfiltered_right[0])
                     + (this->a[0] * this->previous_unfiltered_right[1])
@@ -108,18 +104,19 @@ class LowPassBuffer: public EffectProfileBuffer {
                     this->previous_filtered_right[j] = this->previous_filtered_right[j - 1];
                 }
 
-                working_array[i] = output_left;
-                working_array[i + array_size] = output_right;
-
                 this->previous_unfiltered_left[0] = input_left;
                 this->previous_unfiltered_right[0] = input_right;
                 this->previous_filtered_left[0] = output_left;
                 this->previous_filtered_right[0] = output_right;
+
+
+                working_array[i] = output_left;
+                working_array[i + array_size] = output_right;
             }
         }
 
         bool in_smoothing() const {
-            return !this->initial_apply ||  fabs(this->previous_unfiltered_right[0]) > LowPassBuffer::minimum_threshold || fabs(this->previous_unfiltered_left[0]) > LowPassBuffer::minimum_threshold;
+            return fabs(this->previous_unfiltered_right[0]) > LowPassBuffer::minimum_threshold || fabs(this->previous_unfiltered_left[0]) > LowPassBuffer::minimum_threshold;
         }
 };
 

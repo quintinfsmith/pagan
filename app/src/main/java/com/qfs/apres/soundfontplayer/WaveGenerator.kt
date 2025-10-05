@@ -11,7 +11,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     class DeadException: Exception()
     class InvalidArraySize: Exception()
 
-    data class ActiveHandleMapItem(
+    class ActiveHandleMapItem(
         var first_frame: Int,
         val handle: SampleHandle,
         val merge_keys: IntArray

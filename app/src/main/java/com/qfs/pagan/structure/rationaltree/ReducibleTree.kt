@@ -1,12 +1,9 @@
 package com.qfs.pagan.structure.rationaltree
 
-import android.database.Observable
+import androidx.databinding.BaseObservable
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.greatest_common_denominator
 import com.qfs.pagan.structure.lowest_common_multiple
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.iterator
 import kotlin.math.max
 import kotlin.math.round
 
@@ -14,7 +11,7 @@ import kotlin.math.round
  * A Tree data structure that can be flattened and re-inflated while keeping the proportional
  * positions of its data in-tact.
  */
-class ReducibleTree<T> {
+class ReducibleTree<T>: BaseObservable() {
     companion object {
         fun <T> get_set_tree(input: ReducibleTree<T>): ReducibleTree<Set<T>> {
             val output = ReducibleTree<Set<T>>()
@@ -44,6 +41,7 @@ class ReducibleTree<T> {
     var divisions = HashMap<Int, ReducibleTree<T>>()
     var event: T? = null
     var parent: ReducibleTree<T>? = null
+
 
     operator fun get(vararg rel_indices: Int): ReducibleTree<T> {
         var output: ReducibleTree<T> = this

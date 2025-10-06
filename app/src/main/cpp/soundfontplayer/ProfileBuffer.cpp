@@ -3,6 +3,10 @@
 #include "EffectProfileBuffer.h"
 #include "ControllerEventData.h"
 #include "SampleHandle.h"
+#include "LowPassBuffer.h"
+#include "VolumeBuffer.h"
+#include "DelayBuffer.h"
+#include "PanBuffer.h"
 
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_qfs_apres_soundfontplayer_ProfileBuffer_00024Companion_create(JNIEnv* env, jobject, jlong cev_ptr, jint start_frame) {
@@ -24,6 +28,12 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_00024Companion_create(JNIEnv* e
         case TYPE_VOLUME: {
             auto* derived_buffer = (VolumeBuffer*)malloc(sizeof(VolumeBuffer));
             new (derived_buffer) VolumeBuffer(controller_event_data, start_frame);
+            buffer = derived_buffer;
+            break;
+        }
+        case TYPE_LOWPASS: {
+            auto* derived_buffer = (LowPassBuffer*)malloc(sizeof(LowPassBuffer));
+            new (derived_buffer) LowPassBuffer(controller_event_data, start_frame);
             buffer = derived_buffer;
             break;
         }
@@ -57,6 +67,13 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_copy_1jni(JNIEnv* env, jobject,
             auto* original = (VolumeBuffer*)ptr;
             auto* derived_buffer = (VolumeBuffer*)malloc(sizeof(VolumeBuffer));
             new (derived_buffer) VolumeBuffer(original);
+            buffer = derived_buffer;
+            break;
+        }
+        case TYPE_LOWPASS: {
+            auto* original = (LowPassBuffer*)ptr;
+            auto* derived_buffer = (LowPassBuffer*)malloc(sizeof(LowPassBuffer));
+            new (derived_buffer) LowPassBuffer(original);
             buffer = derived_buffer;
             break;
         }
@@ -100,6 +117,12 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_destroy_1jni(JNIEnv* env, jobje
             free(original);
             break;
         }
+        case TYPE_LOWPASS: {
+            auto* original =(LowPassBuffer*)ptr;
+            original->~LowPassBuffer();
+            free(original);
+            break;
+        }
         default: {
             ptr->~EffectProfileBuffer();
             free(ptr);
@@ -122,6 +145,11 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_allow_1empty_1jni(JNIEnv* env, 
         case TYPE_DELAY: {
             auto* typed_ptr = (DelayBuffer*) ptr_long;
             output = typed_ptr->has_pending_echoes();
+            break;
+        }
+        case TYPE_LOWPASS: {
+            auto* typed_ptr = (LowPassBuffer*) ptr_long;
+            output = typed_ptr->in_smoothing();
             break;
         }
         default: {

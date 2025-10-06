@@ -129,12 +129,6 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1working_1frame_1jni(JNIEnv*
     return ptr->working_frame;
 }
 
-extern "C" JNIEXPORT jfloat JNICALL
-Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1smoothing_1factor_1jni(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (SampleHandle *) ptr_long;
-    return ptr->smoothing_factor;
-}
-
 extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_destroy_1jni(JNIEnv* env, jobject, jlong ptr_long) {
     auto *ptr = (SampleHandle *) ptr_long;

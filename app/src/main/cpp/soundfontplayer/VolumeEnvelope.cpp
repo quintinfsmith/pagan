@@ -17,14 +17,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_qfs_apres_soundfontplayer_SampleHand
         jfloat sustain_attenuation
 ) {
     auto* envelope = (VolumeEnvelope*)malloc(sizeof(VolumeEnvelope));
-    envelope->delay = delay;
-    envelope->attack = attack;
-    envelope->hold = hold;
-    envelope->decay = decay;
-    envelope->release = release;
-    envelope->sustain_attenuation = sustain_attenuation;
-    envelope->set_sample_rate(sample_rate);
-
+    new (envelope) VolumeEnvelope(sample_rate, delay, attack, hold, decay, release, sustain_attenuation);
     return (jlong)envelope;
 }
 

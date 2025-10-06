@@ -44,9 +44,9 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".Activity.ActivitySettingsComposer"
+        <activity android:name=".Activity.ActivityComposerSettings"
             android:exported="true"
-            android:label="@string/app_name"
+            android:label="@string/app_name_brief"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
             android:theme="@style/Theme.Pagan">
             <intent-filter>

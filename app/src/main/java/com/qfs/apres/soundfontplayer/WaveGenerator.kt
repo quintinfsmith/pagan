@@ -1,6 +1,5 @@
 package com.qfs.apres.soundfontplayer
 
-import androidx.collection.IntList
 import kotlin.math.max
 
 class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buffer_size: Int, var stereo_mode: StereoMode = StereoMode.Stereo) {
@@ -12,7 +11,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     class DeadException: Exception()
     class InvalidArraySize: Exception()
 
-    data class ActiveHandleMapItem(
+    class ActiveHandleMapItem(
         var first_frame: Int,
         val handle: SampleHandle,
         val merge_keys: IntArray
@@ -28,8 +27,8 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     var kill_frame: Int? = null
     private var _empty_chunks_count = 0
     private var _active_sample_handles = HashMap<Int, ActiveHandleMapItem>()
+    private var temporary_sample_effects = HashMap<Int, ProfileBuffer>()
     private var timeout: Int? = null
-
 
     external fun merge_arrays(
         arrays: Array<FloatArray>,
@@ -40,6 +39,14 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         profile_keys: IntArray
     ): FloatArray
 
+    fun get_effect_buffers(): List<Triple<Int, Int, ProfileBuffer>> {
+        val keys = this.temporary_sample_effects.keys.toList()
+        return List(keys.size) { i: Int ->
+            val key = keys[i]
+            Triple(FrameMap.LAYER_SAMPLE, key, this.temporary_sample_effects[key]!!)
+        } + this.midi_frame_map.get_effect_buffers()
+    }
+
     external fun tanh_array(array: FloatArray): FloatArray
     fun generate(): FloatArray {
         val working_array = FloatArray(this.buffer_size * 2)
@@ -48,7 +55,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         this.update_active_sample_handles(this.frame)
 
         val force_empty_indices = mutableSetOf<Int>()
-        val profiles = this.midi_frame_map.get_effect_buffers()
+        val profiles = this.get_effect_buffers()
 
         for (i in profiles.indices) {
             val (_, _, buffer) = profiles[i]
@@ -93,10 +100,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         }
 
         if (separated_lines_map.isEmpty() && force_empty_indices.isNotEmpty()) {
-            separated_lines_map[0] = Pair(
-                FloatArray(this.buffer_size * 2),
-                IntArray(0)
-            )
+            separated_lines_map[0] = Pair(FloatArray(this.buffer_size * 2), IntArray(0))
         }
 
         val keys = separated_lines_map.keys.toList()
@@ -170,17 +174,17 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         // First check for, and remove dead sample handles
         val remove_set = mutableSetOf<Int>()
         for ((key, item) in this._active_sample_handles) {
-            if (item.first_frame >= initial_frame) {
-                continue
-            }
-
+            if (item.first_frame >= initial_frame) continue
             if (item.handle.is_dead) {
                 remove_set.add(key)
             }
         }
 
         for (key in remove_set) {
-            this._active_sample_handles.remove(key)?.handle?.destroy()
+            this._active_sample_handles.remove(key)?.let { entry ->
+                this.temporary_sample_effects.remove(entry.merge_keys[FrameMap.LAYER_SAMPLE])?.destroy(true)
+                entry.handle.destroy()
+            }
         }
 
         for (i in 0 until this.buffer_size) {
@@ -200,9 +204,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         val handles_adj: MutableList<Pair<SampleHandle, IntArray>> = mutableListOf()
         for ((first_frame, handle_pair) in handles) {
             val (handle, _) = handle_pair
-            if (first_frame == frame) {
-                continue
-            }
+            if (first_frame == frame) continue
             handle.set_working_frame(frame - first_frame)
             handles_adj.add(handle_pair)
         }
@@ -219,12 +221,30 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 new_handle,
                 merge_keys
             )
+
+            // Add sample-specific effects here
+            new_handle.filter_cutoff?.let { filter_cutoff: Float ->
+                val key = merge_keys[FrameMap.LAYER_SAMPLE]
+                this.temporary_sample_effects[key] = ProfileBuffer(
+                    ControllerEventData(
+                        listOf(
+                            ControllerEventData.IndexedProfileBufferFrame(
+                                initial_frame + offset,
+                                initial_frame + offset,
+                                floatArrayOf(this.sample_rate.toFloat(), filter_cutoff, 0F),
+                                FloatArray(3)
+                            )
+                        ),
+                        EffectType.LowPass
+                    ),
+                )
+            }
         }
     }
 
     fun clear() {
         this.kill_frame = null
-        for ((uuid, item) in this._active_sample_handles) {
+        for ((_, item) in this._active_sample_handles) {
             item.handle.destroy()
         }
         this._active_sample_handles.clear()

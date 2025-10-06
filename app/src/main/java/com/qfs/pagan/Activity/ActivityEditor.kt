@@ -9,6 +9,7 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.database.Observable
 import android.graphics.Color
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri
@@ -158,6 +159,8 @@ class ActivityEditor : PaganActivity() {
         var opus_manager = OpusLayerInterface()
         var active_project: Uri? = null
         var active_midi_device: MidiDeviceInfo? = null
+
+
 
 
         fun export_wav(
@@ -2853,6 +2856,7 @@ class ActivityEditor : PaganActivity() {
                 }
 
                 EffectType.Reverb -> TODO()
+                EffectType.LowPass -> TODO()
             }
 
 
@@ -2907,6 +2911,7 @@ class ActivityEditor : PaganActivity() {
                 }
 
                 EffectType.Reverb -> TODO()
+                EffectType.LowPass -> TODO()
             }
 
             this.active_context_menu = ContextMenuControlLeaf(

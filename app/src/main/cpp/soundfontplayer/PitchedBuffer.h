@@ -24,28 +24,18 @@ struct PitchedBuffer {
     int real_position_preradix;
     int virtual_position; // position as viewed from the outside
     int virtual_size;
-
-public:
-    explicit PitchedBuffer(
-        SampleData* data,
-        float pitch,
-        int start,
-        int end,
-        bool is_loop,
-        int virtual_position,
-        float pitch_adjustment,
-        int virtual_size
-    ) {
-        this->data = data;
-        this->default_pitch = pitch;
-        this->start = start;
-        this->end = end;
-        this->is_loop = is_loop;
-        this->virtual_position = virtual_position;
-        this->pitched_increment = 1 / (pitch_adjustment * pitch);
-        this->real_position_preradix = std::floor((float)this->virtual_position * this->pitched_increment);
-        this->real_position_postradix = (this->virtual_position * this->pitched_increment) - (float)this->real_position_preradix;
-        this->virtual_size = virtual_size;
+ public:
+    explicit PitchedBuffer(PitchedBuffer* original) {
+        this->data = original->data;
+        this->default_pitch = original->default_pitch;
+        this->start = original->start;
+        this->end = original->end;
+        this->is_loop = original->is_loop;
+        this->virtual_position = original->virtual_position;
+        this->pitched_increment = original->pitched_increment;
+        this->real_position_preradix = original->real_position_preradix;
+        this->real_position_postradix = original->real_position_postradix;
+        this->virtual_size = original->virtual_size;
     }
 
     explicit PitchedBuffer(SampleData* data, float pitch, int start, int end, bool is_loop) {
@@ -103,19 +93,6 @@ public:
         this->virtual_position = frame;
         this->real_position_preradix = frame * this->pitched_increment;
         this->real_position_postradix = (frame * this->pitched_increment) - this->real_position_preradix;
-    }
-
-    void copy_to(PitchedBuffer* new_buffer) const {
-        new_buffer->data = this->data;
-        new_buffer->default_pitch = this->default_pitch;
-        new_buffer->start = this->start;
-        new_buffer->end = this->end;
-        new_buffer->is_loop = this->is_loop;
-        new_buffer->virtual_position = this->virtual_position;
-        new_buffer->pitched_increment = this->pitched_increment;
-        new_buffer->real_position_preradix = this->real_position_preradix;
-        new_buffer->real_position_postradix = this->real_position_postradix;
-        new_buffer->virtual_size = this->virtual_size;
     }
 };
 

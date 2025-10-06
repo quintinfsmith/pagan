@@ -20,22 +20,24 @@ float MAX_VOLUME = 1 / 1.27;
 
 // Values correspond with values defined in EffectType.kt
 const int TYPE_VOLUME = 1;
-const int TYPE_REVERB = 2;
+const int TYPE_LOWPASS = 2;
 const int TYPE_DELAY = 3;
 const int TYPE_PAN = 5;
-const int TYPE_EQUALIZER = 6;
+
+//const int TYPE_FREQUENCY_DOMAIN = 1024;
+//const int TYPE_REVERB = TYPE_FREQUENCY_DOMAIN | 2;
+//const int TYPE_EQUALIZER = TYPE_FREQUENCY_DOMAIN | 3;
 
 // TODO Modulations
 // modulation_envelope, modulation_lfo, modulators
 class SampleHandle {
-    float RC;
     float initial_frame_factor;
     // int uuid;
 
     public:
         int uuid;
         SampleData* data;
-        jint sample_rate;
+        int sample_rate;
         jfloat initial_attenuation;
         int loop_start;
         int loop_end;
@@ -46,14 +48,12 @@ class SampleHandle {
         float pan;
         PitchedBuffer** data_buffers;
         int buffer_count;
-        float smoothing_factor;
 
         int working_frame;
         int release_frame;
         int kill_frame;
         bool is_dead;
         int active_buffer;
-        float previous_value = 0;
 
         Oscillator* vibrato_oscillator;
         int vibrato_delay;
@@ -61,7 +61,45 @@ class SampleHandle {
 
         explicit SampleHandle(
                 SampleData* data,
-                jfloat sample_rate,
+                int sample_rate,
+                jfloat initial_attenuation,
+                jint loop_start,
+                jint loop_end,
+                int stereo_mode,
+                VolumeEnvelope* volume_envelope,
+                float pitch_shift,
+                float filter_cutoff,
+                float pan,
+                float vibrato_frequency,
+                float vibrato_delay,
+                float vibrato_pitch
+        ) {
+            this->uuid = SampleHandleUUIDGen++;
+            this->data = data;
+            this->sample_rate = sample_rate;
+            this->initial_attenuation = initial_attenuation;
+            this->loop_end = loop_end;
+            this->loop_start = loop_start;
+            this->stereo_mode = stereo_mode;
+            this->volume_envelope = volume_envelope;
+            this->pitch_shift = pitch_shift;
+            this->filter_cutoff = filter_cutoff;
+            this->pan = pan;
+            this->vibrato_delay = (int)(vibrato_delay * this->sample_rate);
+            this->vibrato_pitch = vibrato_pitch;
+
+            if (vibrato_frequency != 0 && vibrato_pitch != 1) {
+                this->vibrato_oscillator = new Oscillator(this->sample_rate, vibrato_frequency);
+            } else {
+                this->vibrato_oscillator = nullptr;
+            }
+
+            this->secondary_setup(nullptr, 0);
+        }
+
+        explicit SampleHandle(
+                SampleData* data,
+                int sample_rate,
                 jfloat initial_attenuation,
                 jint loop_start,
                 jint loop_end,
@@ -78,7 +116,6 @@ class SampleHandle {
         ) {
             this->uuid = SampleHandleUUIDGen++;
             this->data = data;
-            this->previous_value = 0;
             this->sample_rate = sample_rate;
             this->initial_attenuation = initial_attenuation;
             this->loop_end = loop_end;
@@ -96,10 +133,6 @@ class SampleHandle {
         }
 
         void secondary_setup(PitchedBuffer** input_buffers, int count) {
-            this->RC = 1.0 / (this->filter_cutoff * M_2_PI);
-            float dt =  1.0 / this->sample_rate;
-            this->smoothing_factor = dt / (this->RC + dt);
-
             this->initial_frame_factor = 1 / std::pow(10, this->initial_attenuation);
             this->working_frame = 0;
             this->release_frame = -1;
@@ -113,62 +146,66 @@ class SampleHandle {
                 for (int i = 0; i < count; i++) {
                     PitchedBuffer* buffer = input_buffers[i];
                     auto* ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
-                    buffer->copy_to(ptr);
+                    new (ptr) PitchedBuffer(buffer);
                     this->data_buffers[i] = ptr;
                 }
             } else if (this->loop_start > -1 && this->loop_start != this->loop_end) {
                 this->data_buffers = (PitchedBuffer**)malloc(sizeof(PitchedBuffer*) * 3);
                 auto* ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
-                ptr->virtual_position = 0;
-                ptr->real_position_preradix = 0;
-                ptr->real_position_postradix = 0;
-                ptr->data = this->data;
-                ptr->default_pitch = this->pitch_shift;
-                ptr->start = 0;
-                ptr->end = this->loop_start;
-                ptr->is_loop = false;
-                ptr->repitch(1);
+                new (ptr) PitchedBuffer(this->data, this->pitch_shift, 0, this->loop_start, false);
                 this->data_buffers[0] = ptr;
 
                 ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
-                ptr->virtual_position = 0;
-                ptr->real_position_preradix = 0;
-                ptr->real_position_postradix = 0;
-                ptr->data = this->data;
-                ptr->default_pitch = this->pitch_shift;
-                ptr->start = this->loop_start;
-                ptr->end = this->loop_end;
-                ptr->is_loop = true;
-                ptr->repitch(1);
+                new (ptr) PitchedBuffer(this->data, this->pitch_shift, this->loop_start, this->loop_end, true);
                 this->data_buffers[1] = ptr;
 
                 ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
-                ptr->virtual_position = 0;
-                ptr->real_position_preradix = 0;
-                ptr->real_position_postradix = 0;
-                ptr->data = this->data;
-                ptr->default_pitch = this->pitch_shift;
-                ptr->start = this->loop_end;
-                ptr->end = this->data->size;
-                ptr->repitch(1);
+                new (ptr) PitchedBuffer(this->data, this->pitch_shift, this->loop_end, this->data->size, false);
                 this->data_buffers[2] = ptr;
 
                 this->buffer_count = 3;
             } else {
                 this->data_buffers = (PitchedBuffer**)malloc(sizeof(PitchedBuffer*));
                 auto* ptr = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
-
-                ptr->virtual_position = 0;
-                ptr->real_position_preradix = 0;
-                ptr->real_position_postradix = 0;
-                ptr->data = this->data;
-                ptr->default_pitch = this->pitch_shift;
-                ptr->start = 0;
-                ptr->end = this->data->size;
-                ptr->is_loop = false;
-                ptr->repitch(1);
+                new (ptr) PitchedBuffer(this->data, this->pitch_shift, 0, this->data->size, false);
                 this->data_buffers[0] = ptr;
+
                 this->buffer_count = 1;
+            }
+        }
+
+        explicit SampleHandle(SampleHandle* original) {
+            this->uuid = SampleHandleUUIDGen++;
+            this->data = original->data;
+
+            this->sample_rate = original->sample_rate;
+            this->initial_attenuation = original->initial_attenuation;
+            this->loop_end = original->loop_end;
+            this->loop_start = original->loop_start;
+
+            this->stereo_mode = original->stereo_mode;
+            this->pitch_shift = original->pitch_shift;
+            this->filter_cutoff = original->filter_cutoff;
+            this->pan = original->pan;
+
+            this->volume_envelope = (VolumeEnvelope*)malloc(sizeof(VolumeEnvelope));
+            new (this->volume_envelope) VolumeEnvelope(original->volume_envelope);
+
+            this->secondary_setup(original->data_buffers, original->buffer_count);
+
+            this->working_frame = original->working_frame;
+            this->release_frame = original->release_frame;
+            this->kill_frame = original->kill_frame;
+            this->is_dead = original->is_dead;
+
+            if (original->vibrato_oscillator != nullptr) {
+                this->vibrato_oscillator = new Oscillator(original->vibrato_oscillator->sample_rate, original->vibrato_oscillator->frequency);
+                this->vibrato_pitch = original->vibrato_pitch;
+                this->vibrato_delay = original->vibrato_delay;
+            } else {
+                this->vibrato_oscillator = nullptr;
+                this->vibrato_pitch = 0;
+                this->vibrato_delay = 0;
             }
         }
 
@@ -177,28 +214,24 @@ class SampleHandle {
                 delete this->data_buffers[i];
             }
             delete[] this->data_buffers;
-            delete this->volume_envelope;
-        };
+
+            this->volume_envelope->~VolumeEnvelope();
+            free(this->volume_envelope);
+        }
 
         void set_release_frame(int frame) {
             this->release_frame = frame;
         }
 
         void set_working_frame(int frame) {
-            this->previous_value = 0;
             this->working_frame = frame;
-            if (this->kill_frame > -1 && this->working_frame >= this->kill_frame) {
-                this->is_dead = true;
-                return;
-            }
-
-            if (this->release_frame > -1 && this->working_frame >= this->release_frame + this->volume_envelope->frames_release) {
+            if (this->kill_frame > -1 && (this->working_frame >= this->kill_frame || (this->working_frame >= this->release_frame + this->volume_envelope->frames_release))) {
                 this->is_dead = true;
                 return;
             }
 
             try {
-                if (release_frame == -1 || release_frame > frame) {
+                if (this->release_frame == -1 || this->release_frame > frame) {
                     if (this->loop_start == -1 || frame < this->data_buffers[0]->virtual_size) {
                         this->data_buffers[0]->set_position(frame);
                         this->active_buffer = 0;
@@ -296,6 +329,7 @@ class SampleHandle {
                 buffer[i] = 0;
                 buffer[i + target_size] = 0;
             }
+
             for (int i = left_padding; i < target_size; i++) {
                 float frame;
                 try {
@@ -305,24 +339,13 @@ class SampleHandle {
                     break;
                 }
 
-                float v = this->previous_value + (this->smoothing_factor * (frame - this->previous_value));
-                buffer[i] = v * std::get<0>(working_pan);
-                buffer[i + target_size] = v * std::get<1>(working_pan);
-
-                this->previous_value = v;
+                buffer[i] = frame * std::get<0>(working_pan);
+                buffer[i + target_size] = frame * std::get<1>(working_pan);
             }
 
-            // Need to smooth into silence
             for (int i = actual_size; i < target_size; i++) {
-                if (this->previous_value != 0) {
-                    float v = this->previous_value + (this->smoothing_factor * (0 - this->previous_value));
-                    buffer[i] = v * std::get<0>(working_pan);
-                    buffer[i + target_size] = v * std::get<1>(working_pan);
-                    this->previous_value = v;
-                } else {
-                    buffer[i] = 0;
-                    buffer[i + target_size] = 0;
-                }
+                buffer[i] = 0;
+                buffer[i + target_size] = 0;
             }
         }
 

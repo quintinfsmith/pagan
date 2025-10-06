@@ -100,9 +100,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
      */
     fun change_project_path(new_uri: Uri, active_project_uri: Uri? = null): Uri? {
         val new_directory = DocumentFile.fromTreeUri(this.context, new_uri)
-        if (new_directory == null || !new_directory.isDirectory) {
-            throw InvalidDirectoryException(new_uri)
-        }
+        if (new_directory == null || !new_directory.isDirectory) throw InvalidDirectoryException(new_uri)
 
         val old_uri = this.uri
         this.uri = new_uri
@@ -123,9 +121,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
      * Check if [uri] is a uri contained by the ProjectManager's Uri.
      */
     fun contains(uri: Uri): Boolean {
-        if (this.uri == null) {
-            return false
-        }
+        if (this.uri == null) return false
 
         val parent_segments = this.uri!!.pathSegments.last().split("/")
         val child_segments = uri.pathSegments.last().split("/")
@@ -274,44 +270,6 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         val file = File(this._cache_path)
         file.writeText(project_list.to_string())
         return true
-    }
-
-    /**
-     * Read through and cache all of the projects with their titles.
-     * Reduces lag when opening "Load Project".
-     */
-    fun recache_project_list() {
-        if (this.ucheck_recache_external_storage_projects()) return
-        val project_list = JSONList()
-        val uris = this.get_existing_uris()
-        val file = File(this._cache_path)
-        if (uris.isEmpty()) {
-            if (file.exists()) {
-                file.delete()
-            }
-            return
-        }
-
-        val timestamp = System.currentTimeMillis()
-        for (uri in uris) {
-            val project_name = try {
-                this.get_file_project_name(uri) ?: this.generate_file_project_name(uri)
-            } catch (e: Exception) {
-                continue
-            }
-
-            project_list.add(JSONList(
-                JSONString(uri.toString()),
-                JSONString(project_name)
-            ))
-        }
-        val delta = System.currentTimeMillis() - timestamp
-
-        project_list.sort_by { it ->
-            (it as JSONList).get_string(1)
-        }
-
-        file.writeText(project_list.to_string())
     }
 
     /**

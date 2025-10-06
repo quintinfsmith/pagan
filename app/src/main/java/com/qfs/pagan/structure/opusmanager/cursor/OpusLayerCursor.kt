@@ -402,7 +402,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         var maximum = 0
 
         for (beat_key in this.get_beatkeys_in_range(first, second)) {
-            this.get_tree(beat_key).traverse { subtree: ReducibleTree<out InstrumentEvent>, event: InstrumentEvent? ->
+            this.get_tree(beat_key).traverse { _: ReducibleTree<out InstrumentEvent>, event: InstrumentEvent? ->
                 if (event is AbsoluteNoteEvent) {
                     minimum = min(minimum, event.note)
                     maximum = max(maximum, event.note)
@@ -893,7 +893,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 val beat_key = cursor.get_beatkey()
                 val position = cursor.get_position().toMutableList()
 
-                val (real_count, cursor_position) = this._calculate_new_position_after_remove(this.get_tree_copy(beat_key), position, count)
+                val (real_count, _) = this._calculate_new_position_after_remove(this.get_tree_copy(beat_key), position, count)
 
                 this.remove_repeat(beat_key, position, real_count)
             }
@@ -1377,10 +1377,10 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor_select_ctl_at_global(type, target_beat, cursor_position)
     }
 
-    override fun controller_line_move_leaf(type: EffectType, beatkey_from: BeatKey, position_from: List<Int>, beat_key_to: BeatKey, position_to: List<Int>) {
-        super.controller_line_move_leaf(type, beatkey_from, position_from, beat_key_to, position_to)
-        val cursor_position = this.get_first_position_line_ctl(type, beat_key_to, position_to)
-        this.cursor_select_ctl_at_line(type, beat_key_to, cursor_position)
+    override fun controller_line_move_leaf(type: EffectType, beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
+        super.controller_line_move_leaf(type, beatkey_from, position_from, beatkey_to, position_to)
+        val cursor_position = this.get_first_position_line_ctl(type, beatkey_to, position_to)
+        this.cursor_select_ctl_at_line(type, beatkey_to, cursor_position)
     }
 
     override fun controller_line_to_channel_move_leaf(type: EffectType, beatkey_from: BeatKey, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {

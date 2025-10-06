@@ -1,5 +1,6 @@
 package com.qfs.pagan.structure.opusmanager.base.effectcontrol
 
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.LowPassController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.DelayController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.PanController
@@ -7,6 +8,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.R
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.TempoController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.VelocityController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.VolumeController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 
 class EffectControlSet(var beat_count: Int, default_enabled: Set<EffectType>? = null) {
@@ -43,6 +45,7 @@ class EffectControlSet(var beat_count: Int, default_enabled: Set<EffectType>? = 
                 EffectType.Pan -> PanController(this.beat_count)
                 EffectType.Velocity -> VelocityController(this.beat_count)
                 EffectType.Delay -> DelayController(this.beat_count)
+                EffectType.LowPass -> LowPassController(this.beat_count)
             }
         } else {
             this.controllers[type] = controller

@@ -17,24 +17,22 @@ class OpusControlEventJSONInterface {
         fun to_json(input: EffectEvent): JSONHashMap {
             val output = JSONHashMap()
             output["duration"] = input.duration
+            output["transition"] = input.transition.name
             when (input) {
                 is OpusTempoEvent -> {
                     output["tempo"] = input.value
                 }
                 is OpusVolumeEvent -> {
                     output["volume"] = input.value
-                    output["transition"] = input.transition.name
                 }
                 is OpusVelocityEvent -> {
                     output["velocity"] = input.value
-                    output["transition"] = input.transition.name
                 }
                 is OpusReverbEvent -> {
                     output["wetness"] = input.value
                 }
                 is OpusPanEvent -> {
                     output["value"] = input.value
-                    output["transition"] = input.transition.name
                 }
                 is DelayEvent -> {
                     output["frequency"] = JSONList(
@@ -67,7 +65,11 @@ class OpusControlEventJSONInterface {
 
         // from_jsons-----------------
         fun tempo_event(map: JSONHashMap): OpusTempoEvent {
-            return OpusTempoEvent(map.get_float("tempo"), map.get_int("duration", 1))
+            return OpusTempoEvent(
+                map.get_float("tempo"),
+                map.get_int("duration", 1),
+                EffectTransition.valueOf(map.get_string("transition", "Instant"))
+            )
         }
 
         fun volume_event(map: JSONHashMap): OpusVolumeEvent {
@@ -125,7 +127,9 @@ class OpusControlEventJSONInterface {
                 freq.get_int(0),
                 freq.get_int(1),
                 map.get_int("echo"),
-                map.get_float("fade")
+                map.get_float("fade"),
+                map.get_int("duration", 1),
+                EffectTransition.valueOf(map.get_string("transition", "Instant"))
             )
         }
         // ------------------------

@@ -4,20 +4,8 @@
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_qfs_apres_soundfontplayer_PitchedBuffer_copy_1inner(JNIEnv* env, jobject, jlong ptr_long) {
     auto *ptr = (struct PitchedBuffer *)ptr_long;
-
-    PitchedBuffer* buffer = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
-
-    buffer->data = ptr->data;
-    buffer->default_pitch = ptr->default_pitch;
-    buffer->start = ptr->start;
-    buffer->end = ptr->end;
-    buffer->is_loop = ptr->is_loop;
-    buffer->virtual_position = ptr->virtual_position;
-    buffer->pitched_increment = ptr->pitched_increment;
-    buffer->real_position_preradix = ptr->real_position_preradix;
-    buffer->real_position_postradix = ptr->real_position_postradix;
-    buffer->virtual_size = ptr->virtual_size;
-
+    auto* buffer = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
+    new (buffer) PitchedBuffer(ptr);
     return (jlong)buffer;
 }
 
@@ -33,16 +21,7 @@ Java_com_qfs_apres_soundfontplayer_PitchedBuffer_00024Companion_create(
 ) {
 
     auto* buffer = (PitchedBuffer*)malloc(sizeof(PitchedBuffer));
-    buffer->data = (SampleData*)data_ptr_long;
-    buffer->default_pitch = pitch;
-    buffer->start = start;
-    buffer->end = end;
-    buffer->is_loop = is_loop;
-    buffer->virtual_position = 0;
-    buffer->real_position_preradix = 0;
-    buffer->real_position_postradix = 0;
-
-    buffer->repitch(1);
+    new (buffer) PitchedBuffer((SampleData*)data_ptr_long, pitch, start, end, is_loop);
     return (jlong)buffer;
 }
 
@@ -112,6 +91,7 @@ Java_com_qfs_apres_soundfontplayer_PitchedBuffer_is_1loop(JNIEnv* env, jobject, 
 extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfontplayer_PitchedBuffer_free(JNIEnv* env, jobject, jlong ptr_long) {
     auto *ptr = (PitchedBuffer *)ptr_long;
+    ptr->~PitchedBuffer();
     free(ptr);
 }
 

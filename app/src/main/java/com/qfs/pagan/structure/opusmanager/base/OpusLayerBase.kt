@@ -27,7 +27,9 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectControlSet
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.Effectable
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.DelayController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
@@ -3752,28 +3754,141 @@ open class OpusLayerBase: Effectable {
             }
         }
 
+        fun parse_delay_map(delay_controller: DelayController): List<Pair<IntRange, DelayEvent>> {
+            // NOTE: Assumes instant transition only
+            val intermediary = mutableListOf<Pair<Int, DelayEvent>>()
+            intermediary.add(Pair(0, delay_controller.initial_event))
+            for (b in delay_controller.beats.indices) {
+                val beat_tree = delay_controller.beats[b]
+                val stack: MutableList<StackItem<DelayEvent>> = mutableListOf(StackItem(beat_tree, 1, midi.ppqn * b, midi.ppqn, listOf()))
+                while (stack.isNotEmpty()) {
+                    val current = stack.removeAt(0)
+                    if (current.tree.has_event()) {
+                        if (!(b < start_beat || b >= (end_beat ?: this.length))) {
+                            val event = current.tree.get_event()!!
+                            intermediary.add(
+                                Pair(
+                                    current.offset,
+                                    event
+                                )
+                            )
+                        }
+                    } else if (!current.tree.is_leaf()) {
+                        val working_subdiv_size = current.size / current.tree.size
+                        for ((i, subtree) in current.tree.divisions) {
+                            stack.add(
+                                StackItem(
+                                    tree = subtree,
+                                    divisions = current.tree.size,
+                                    offset = current.offset + (working_subdiv_size * i),
+                                    size = working_subdiv_size,
+                                    position = current.position + listOf(i)
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+
+            val output = mutableListOf<Pair<IntRange, DelayEvent>>()
+            var previous_entry = intermediary[0]
+            for (i in 1 until intermediary.size) {
+                val current_entry = intermediary[i]
+                output.add(
+                    Pair(
+                        previous_entry.first until current_entry.first,
+                        previous_entry.second
+                    )
+                )
+                previous_entry = current_entry
+            }
+            output.add(
+                Pair(
+                    previous_entry.first until midi.ppqn * delay_controller.beats.size,
+                    previous_entry.second
+                )
+            )
+
+            return output
+        }
+
+        fun get_delayed_pseudo_events(input_event: PseudoMidiEvent, initial_offset: Int, delay_event_map: List<Pair<IntRange, DelayEvent>>?): List<Pair<Int,PseudoMidiEvent>> {
+            if (delay_event_map == null) return listOf()
+            val output = mutableListOf<Pair<Int, PseudoMidiEvent>>()
+
+            var repeats_remaining = -1
+            var echo_offset = initial_offset
+            var working_velocity = input_event.velocity
+
+            for ((delay_range, delay_event) in delay_event_map) {
+                if (!delay_range.contains(echo_offset)) continue
+                val attenuation = delay_event.fade
+                val delay_in_ticks = midi.ppqn * delay_event.denominator / delay_event.numerator
+
+                repeats_remaining = if (repeats_remaining == -1) {
+                    echo_offset += delay_in_ticks
+                    working_velocity = (working_velocity * attenuation).toInt()
+                    delay_event.echo
+                } else {
+                    min(repeats_remaining, delay_event.echo)
+                }
+
+                while (repeats_remaining > 0 && delay_range.contains(echo_offset)) {
+                    output.add(
+                        Pair(
+                            echo_offset,
+                            PseudoMidiEvent(
+                                input_event.channel,
+                                input_event.note,
+                                input_event.bend,
+                                working_velocity,
+                                event_uuid_gen++
+                            )
+                        )
+                    )
+                    echo_offset += delay_in_ticks
+                    working_velocity = (working_velocity * attenuation).toInt()
+                    repeats_remaining -= 1
+                }
+            }
+
+            return output
+        }
+
+        val global_delay_map = if (this.has_global_controller(EffectType.Delay)) {
+            parse_delay_map(this.get_global_controller<DelayEvent>(EffectType.Delay) as DelayController)
+        } else {
+            null
+        }
+
         var percussion_exported = false
         for (c in this.channels.indices) {
-            if (this.channels[c].muted) {
-                continue
-            }
+            if (this.channels[c].muted) continue
 
             val channel = this.get_channel(c)
             if (this.is_percussion(c)) {
-                if (!percussion_exported) {
-                    percussion_exported = true
-                } else {
-                    continue
-                }
+                if (percussion_exported) continue
+                percussion_exported = true
             }
+
+            val channel_delay_map = if (this.has_channel_controller(EffectType.Delay, c)) {
+                parse_delay_map(this.get_channel_controller<DelayEvent>(EffectType.Delay, c) as DelayController)
+            } else {
+                null
+            }
+
 
             midi.insert_event(0, 0, BankSelect(channel.get_midi_channel(), channel.get_midi_bank()))
             midi.insert_event(0, 0, ProgramChange(channel.get_midi_channel(), channel.midi_program))
 
             for (l in channel.lines.indices) {
                 val line = channel.lines[l]
-                if (line.muted) {
-                    continue
+                if (line.muted) continue
+
+                val line_delay_map = if (this.has_line_controller(EffectType.Delay, c, l)) {
+                    parse_delay_map(this.get_line_controller<DelayEvent>(EffectType.Delay, c, l) as DelayController)
+                } else {
+                    null
                 }
 
                 var current_tick = 0
@@ -3814,25 +3929,64 @@ open class OpusLayerBase: Effectable {
                             }
 
                             if (!(b < start_beat || b >= (end_beat ?: this.length))) {
+                                val event_velocity = (this.get_current_velocity(BeatKey(c, l, b), current.position) * 100F).toInt()
                                 val pseudo_event = PseudoMidiEvent(
                                     channel.get_midi_channel(),
                                     note,
                                     bend,
-                                    (this.get_current_velocity(BeatKey(c, l, b), current.position) * 100F).toInt(),
+                                    event_velocity,
                                     event_uuid_gen++
                                 )
-                                pseudo_midi_map.add(Triple(
+
+                                val original_start = Triple(
                                     current.offset,
                                     pseudo_event,
                                     true
-                                ))
-                                pseudo_midi_map.add(Triple(
+                                )
+
+                                val original_end = Triple(
                                     min(current.offset + (current.size * event.duration), max_tick),
                                     pseudo_event,
                                     false
-                                ))
-                            }
+                                )
 
+                                val line_repeats = get_delayed_pseudo_events(pseudo_event, current.offset, line_delay_map)
+                                val channel_repeats = get_delayed_pseudo_events(pseudo_event, current.offset, channel_delay_map).toMutableList()
+                                for ((offset, working_event) in line_repeats) {
+                                    channel_repeats.addAll(get_delayed_pseudo_events(working_event, offset, channel_delay_map))
+                                }
+                                val global_repeats = get_delayed_pseudo_events(pseudo_event, current.offset, global_delay_map).toMutableList()
+                                for ((offset, working_event) in channel_repeats) {
+                                    global_repeats.addAll(get_delayed_pseudo_events(working_event, offset, global_delay_map))
+                                }
+                                val all_repeats = line_repeats + channel_repeats + global_repeats
+
+                                var working_pair: Pair<Int, PseudoMidiEvent>? = null
+                                for ((offset, working_event) in all_repeats) {
+                                    working_pair?.let { (previous_offset: Int, previous_event: PseudoMidiEvent) ->
+                                        pseudo_midi_map.add(
+                                            Triple(
+                                                listOf(previous_offset + (current.size * event.duration), max_tick, offset).min(),
+                                                previous_event,
+                                                false
+                                            )
+                                        )
+                                    }
+                                    pseudo_midi_map.add(Triple(offset, working_event, true))
+                                    working_pair = Pair(offset, working_event)
+                                }
+                                working_pair?.let { (working_offset: Int, working_event: PseudoMidiEvent) ->
+                                    pseudo_midi_map.add(
+                                        Triple(
+                                            min(working_offset + (current.size * event.duration), max_tick),
+                                            working_event,
+                                            false
+                                        )
+                                    )
+                                }
+                                pseudo_midi_map.add(original_start)
+                                pseudo_midi_map.add(original_end)
+                            }
                         } else if (!current.tree.is_leaf()) {
                             val working_subdiv_size = current.size / current.tree.size
                             for ((i, subtree) in current.tree.divisions) {

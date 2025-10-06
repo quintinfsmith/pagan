@@ -1,0 +1,3 @@
+- improvements to low pass filtering
+- delay now working with midi output
+- fixed tempo transition type being forgotten

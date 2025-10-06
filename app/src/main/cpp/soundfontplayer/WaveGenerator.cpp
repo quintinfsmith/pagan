@@ -1,8 +1,10 @@
-//
-// Created by pent on 8/12/25.
-//
 
-bool array_contains(int* array, int array_size, int value) {
+#include "LowPassBuffer.h"
+#include "VolumeBuffer.h"
+#include "DelayBuffer.h"
+#include "PanBuffer.h"
+
+bool array_contains(const int* array, int array_size, int value) {
     for (int k = 0; k < array_size; k++) {
         if (array[k] == value) return true;
     }
@@ -11,6 +13,11 @@ bool array_contains(int* array, int array_size, int value) {
 
 bool apply_effect_buffer(EffectProfileBuffer* effect_buffer, float* working_array, int array_size) {
     switch (effect_buffer->data->type) {
+        case TYPE_DELAY: {
+            auto* buffer = (DelayBuffer *) effect_buffer;
+            buffer->apply(working_array, array_size);
+            break;
+        }
         case TYPE_PAN: {
             auto* buffer = (PanBuffer *) effect_buffer;
             buffer->apply(working_array, array_size);
@@ -21,13 +28,18 @@ bool apply_effect_buffer(EffectProfileBuffer* effect_buffer, float* working_arra
             buffer->apply(working_array, array_size);
             break;
         }
-        case TYPE_DELAY: {
-            auto* buffer = (DelayBuffer *) effect_buffer;
-            buffer->apply(working_array, array_size);
-            break;
-        }
-        case TYPE_EQUALIZER: {
-            auto* buffer = (EqualizerBuffer *) effect_buffer;
+        // case TYPE_EQUALIZER: {
+        //     auto* buffer = (EqualizerBuffer *) effect_buffer;
+        //     buffer->apply(working_array, array_size);
+        //     break;
+        // }
+        // case TYPE_REVERB: {
+        //     auto* buffer = (ReverbBuffer *) effect_buffer;
+        //     buffer->apply(working_array, array_size);
+        //     break;
+        // }
+        case TYPE_LOWPASS: {
+            auto* buffer = (LowPassBuffer *) effect_buffer;
             buffer->apply(working_array, array_size);
             break;
         }
@@ -63,7 +75,8 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
 
         auto working_keylist = reinterpret_cast<jintArray>(env->GetObjectArrayElement(merge_keys, i));
         working_keys[i] = env->GetIntArrayElements(working_keylist, nullptr);
-        key_width = max(key_width, env->GetArrayLength(working_keylist));
+        int working_key_width = env->GetArrayLength(working_keylist);
+        key_width = max(key_width, working_key_width);
     }
 
     // Set up effect buffers
@@ -95,7 +108,9 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
             for (int j = 0; j < effect_buffer_count; j++) {
                 if (depth < key_width && effect_keys[j] == -1) continue;
                 if (depth != effect_indices[j] || (depth < key_width && effect_keys[j] != working_keys[i][depth])) continue;
-                if (apply_effect_buffer((EffectProfileBuffer *) effect_buffers[j], working_arrays[i], (int) frames)) {
+                if (array_contains(effect_buffers_applied, effect_buffers_applied_count, j)) continue;
+                auto* effect_buffer = (EffectProfileBuffer *) effect_buffers[j];
+                if (apply_effect_buffer(effect_buffer, working_arrays[i], (int) frames)) {
                     effect_buffers_applied[effect_buffers_applied_count++] = j;
                 }
             }
@@ -103,7 +118,7 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
     }
 
     for (int i = 0; i < effect_buffer_count; i++) {
-        if (!array_contains(effect_buffers_applied, effect_buffer_count, i)) {
+        if (!array_contains(effect_buffers_applied, effect_buffers_applied_count, i)) {
             auto* effect_buffer = (EffectProfileBuffer*)effect_buffers[i];
             effect_buffer->drain((int)frames);
         }

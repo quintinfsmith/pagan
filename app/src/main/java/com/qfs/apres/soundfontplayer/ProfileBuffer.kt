@@ -1,7 +1,5 @@
 package com.qfs.apres.soundfontplayer
 
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
-
 class ProfileBuffer(var ptr: Long, val type: EffectType) {
     // TODO: Memory Management
     constructor(data: ControllerEventData, start_frame: Int = 0): this(

@@ -61,6 +61,7 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.4.0'
     implementation 'androidx.test:rules:1.7.0'
     implementation 'androidx.fragment:fragment-ktx:1.8.9'
+    implementation 'androidx.compose.material3:material3:1.4.0'
     testImplementation 'junit:junit:4.13.2'
 
     testImplementation "io.mockk:mockk:1.14.5"

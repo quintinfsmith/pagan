@@ -18,8 +18,6 @@ public:
         this->frame_count = array_length;
         this->type = type;
 
-
-
         for (int i = 0; i < array_length; i++) {
             auto* ptr = (ProfileBufferFrame*)malloc(sizeof(ProfileBufferFrame));
             new (ptr) ProfileBufferFrame((int)indices[i], (int)end_indices[i], data_width);

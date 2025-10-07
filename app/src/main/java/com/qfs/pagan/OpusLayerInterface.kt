@@ -187,7 +187,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
 
         val tree = this.get_tree(beat_key)
-        val new_weight = tree.get_total_child_weight()
+        val new_weight = tree.weighted_size
 
         val coord = EditorTable.Coordinate(
             y = this.get_visible_row_from_ctl_line(
@@ -226,7 +226,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         )
 
         val tree = controller.get_tree(beat)
-        val new_weight = tree.get_total_child_weight()
+        val new_weight = tree.weighted_size
 
         val editor_table = this.get_editor_table()
         if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
@@ -251,7 +251,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         )
 
         val tree = controller.get_tree(beat)
-        val new_weight = tree.get_total_child_weight()
+        val new_weight = tree.weighted_size
 
         val editor_table = this.get_editor_table()
         if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
@@ -273,7 +273,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         )
 
         val tree = this.get_line_ctl_tree<EffectEvent>(type, beat_key)
-        val new_weight = tree.get_total_child_weight()
+        val new_weight = tree.weighted_size
 
         val editor_table = this.get_editor_table()
         if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
@@ -2336,14 +2336,14 @@ class OpusLayerInterface : OpusLayerHistory() {
             this.get_visible_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*,*> ->
                 for (j in channel.lines.indices) {
                     val tree = this.get_tree(BeatKey(i, j, beat))
-                    column.add(tree.get_total_child_weight())
+                    column.add(tree.weighted_size)
 
                     for ((_, controller) in channel.lines[j].controllers.get_all()) {
                         if (!controller.visible) {
                             continue
                         }
                         val ctl_tree = controller.get_tree(beat)
-                        column.add(ctl_tree.get_total_child_weight())
+                        column.add(ctl_tree.weighted_size)
                     }
                 }
 
@@ -2352,7 +2352,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                         continue
                     }
                     val ctl_tree = controller.get_tree(beat)
-                    column.add(ctl_tree.get_total_child_weight())
+                    column.add(ctl_tree.weighted_size)
                 }
             }
 
@@ -2362,7 +2362,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 }
 
                 val ctl_tree = controller.get_tree(beat)
-                column.add(ctl_tree.get_total_child_weight())
+                column.add(ctl_tree.weighted_size)
             }
 
             editor_table.add_column_to_map(beat, column)
@@ -2378,7 +2378,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             y,
             List(this.length) { x: Int ->
                 val tree = line.beats[x]
-                tree.get_total_child_weight()
+                tree.weighted_size
             }
         )
 
@@ -2395,7 +2395,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             y,
             List(this.length) { x: Int ->
                 val tree = line.beats[x]
-                tree.get_total_child_weight()
+                tree.weighted_size
             }
         )
 

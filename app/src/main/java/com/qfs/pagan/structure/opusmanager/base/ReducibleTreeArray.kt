@@ -645,8 +645,8 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
         }
         // -------------------------------
 
-        if (overlapper != null) {
-            this.cache_tree_overlaps(overlapper.first, overlapper.second)
+        overlapper?.let { (beat: Int, position: List<Int>) ->
+            this.cache_tree_overlaps(beat, position)
         }
 
         this.cache_tree_overlaps(beat, working_position)
@@ -878,9 +878,7 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
     }
 
     fun insert(beat: Int, position: List<Int>) {
-        if (position.isEmpty()) {
-            throw BadInsertPosition()
-        }
+        if (position.isEmpty()) throw BadInsertPosition()
 
         val blocked_pair = this.is_blocked_insert(beat, position)
         if (blocked_pair != null) {
@@ -892,9 +890,7 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
             val tree = this.get_tree(beat, parent_position)
 
             val index = position.last()
-            if (index > tree.size) {
-                throw BadInsertPosition()
-            }
+            if (index > tree.size) throw BadInsertPosition()
             tree.insert(index)
         }
     }
@@ -904,15 +900,10 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
         this._decache_overlapping_leaf(beat, position)
 
         val tree = this.get_tree(beat, position)
-        tree.unset_event()
+        tree.empty()
 
-        if (tree.parent != null) {
-            val index = tree.get_index()
-            tree.parent!!.divisions.remove(index)
-        }
-
-        if (overlap != null) {
-            this.cache_tree_overlaps(overlap.first, overlap.second)
+        overlap?.let { (beat: Int, position: List<Int>) ->
+            this.cache_tree_overlaps(beat, position)
         }
     }
 
@@ -1010,13 +1001,11 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
                 next_position_pair = this.get_proceding_event_position(working_beat, working_position) ?: break
                 working_beat = next_position_pair.first
                 working_position = next_position_pair.second
-
             }
         }
 
         this.recache_blocked_tree_wrapper(beat, position.subList(0, position.size - 1)) {
-            val tree = this.get_tree(beat, position)
-            tree.detach()
+            this.get_tree(beat, position).detach()
         }
     }
 

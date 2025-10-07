@@ -9,9 +9,7 @@ import com.qfs.pagan.structure.rationaltree.ReducibleTree
 class OpusTreeJSONInterface {
     companion object {
         fun <T> to_json(input: ReducibleTree<T>, event_generalizer_callback: (T) -> JSONObject?): JSONObject? {
-            if (input.is_leaf() && !input.has_event()) {
-                return null
-            }
+            if (input.is_leaf() && !input.has_event()) return null
 
             val map = JSONHashMap()
             if (input.has_event()) {
@@ -23,11 +21,8 @@ class OpusTreeJSONInterface {
                 // Only add entries with data, don't want to bloat with [1, null], [2, null]...etc
                 val tmp_list = JSONList()
                 for (position in division_keys) {
-                    val tmp_entry = to_json(input.divisions[position]!!, event_generalizer_callback)
-                    if (tmp_entry != null) {
-                        tmp_list.add(
-                            JSONList(JSONInteger(position), tmp_entry)
-                        )
+                    this.to_json(input.divisions[position]!!, event_generalizer_callback)?.let { tmp_entry ->
+                        tmp_list.add(JSONList(JSONInteger(position), tmp_entry))
                     }
                 }
 
@@ -43,20 +38,15 @@ class OpusTreeJSONInterface {
             if (event_hashmap != null) {
                 new_tree.set_event(event_generalizer_callback(event_hashmap))
             } else {
-                new_tree.set_size(input.get_int("size"))
-                val divisions = input.get_listn("divisions")
-                if (divisions != null) {
+                input.get_listn("divisions")?.let { divisions ->
                     for (i in divisions.indices) {
                         val pair = divisions.get_list(i)
-                        if (pair.get_hashmapn(1) != null) {
-                            new_tree[pair.get_int(0)] = from_json(
-                                pair.get_hashmap(1),
-                                event_generalizer_callback
-                            )
-                        }
+                        new_tree[pair.get_int(0)] = this.from_json(pair.get_hashmap(1), event_generalizer_callback)
                     }
                 }
+                new_tree.set_size(input.get_int("size"))
             }
+
             return new_tree
         }
 
@@ -70,10 +60,8 @@ class OpusTreeJSONInterface {
                 if (children != null) {
                     new_tree.set_size(children.size)
                     children.forEachIndexed { i: Int, child_json: JSONObject? ->
-                        if (child_json == null) {
-                            return@forEachIndexed
-                        }
-                        new_tree[i] = from_v1_json(child_json as JSONHashMap, event_generalizer_callback)
+                        if (child_json == null) return@forEachIndexed
+                        new_tree[i] = this.from_v1_json(child_json as JSONHashMap, event_generalizer_callback)
                     }
                 }
             }
@@ -81,9 +69,7 @@ class OpusTreeJSONInterface {
         }
 
         fun <T> to_v1_json(input: ReducibleTree<T>, event_generalizer_callback: (T) -> JSONObject?): JSONObject? {
-            if (input.is_leaf() && !input.has_event()) {
-                return null
-            }
+            if (input.is_leaf() && !input.has_event()) return null
 
             val map = JSONHashMap()
             if (input.has_event()) {
@@ -92,7 +78,7 @@ class OpusTreeJSONInterface {
             } else {
                 map["event"] = null
                 map["children"] = JSONList(input.size) { i: Int ->
-                    to_v1_json(input[i], event_generalizer_callback)
+                    this.to_v1_json(input[i], event_generalizer_callback)
                 }
             }
 
@@ -100,9 +86,7 @@ class OpusTreeJSONInterface {
         }
 
         fun convert_v1_to_v3(input: JSONHashMap?, event_converter: (JSONHashMap) -> JSONHashMap?): JSONHashMap? {
-            if (input == null) {
-                return null
-            }
+            if (input == null) return null
 
             val output = JSONHashMap()
 
@@ -119,7 +103,7 @@ class OpusTreeJSONInterface {
                     val position = i
                     JSONList(
                         JSONInteger(position),
-                        convert_v1_to_v3(tmp_children.get_hashmapn(i), event_converter)
+                        this.convert_v1_to_v3(tmp_children.get_hashmapn(i), event_converter)
                     )
                 }
             }

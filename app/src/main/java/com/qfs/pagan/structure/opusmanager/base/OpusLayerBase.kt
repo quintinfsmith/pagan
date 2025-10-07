@@ -163,9 +163,7 @@ open class OpusLayerBase: Effectable {
                         val tree_divisions = tree.divisions.toList()
                         tree.set_size(new_beat_size)
                         for ((f, child) in tree_divisions) {
-                            if (!child.has_event()) {
-                                continue
-                            }
+                            if (!child.has_event()) continue
                             val new_index = f * new_beat_size / original_beat_size
 
                             val eventset = if (!tree[new_index].has_event()) {
@@ -2531,9 +2529,7 @@ open class OpusLayerBase: Effectable {
      */
     open fun remove(beat_key: BeatKey, position: List<Int>) {
         // Can't remove beat
-        if (position.isEmpty()) {
-            throw RemovingRootException()
-        }
+        if (position.isEmpty()) throw RemovingRootException()
 
         val tree = this.get_tree(beat_key, position)
         val parent_tree = tree.parent!!
@@ -2692,9 +2688,7 @@ open class OpusLayerBase: Effectable {
         val beat_keys = this._get_beat_keys_for_overwrite_beat_range_horizontally(channel, line_offset, first_key, second_key, count)
         // Need to unset all events FIRST so no replaces get blocked
         for ((target_key, key_list) in beat_keys) {
-            if (key_list.isEmpty()) {
-                continue
-            }
+            if (key_list.isEmpty()) continue
             for (overwrite_key in key_list) {
                 if (overwrite_key != target_key) {
                     this.unset(overwrite_key, listOf())
@@ -2707,9 +2701,7 @@ open class OpusLayerBase: Effectable {
         }
 
         for ((target_key, key_list) in beat_keys) {
-            if (key_list.isEmpty()) {
-                continue
-            }
+            if (key_list.isEmpty()) continue
             for (overwrite_key in key_list) {
                 if (target_key != overwrite_key) {
                     this.replace_tree(overwrite_key, null, this.get_tree_copy(target_key))
@@ -2795,9 +2787,8 @@ open class OpusLayerBase: Effectable {
 
         for (i in 0 until width) {
             for (j in 0 until count) {
-                if (j == 0) {
-                    continue
-                }
+                if (j == 0) continue
+
                 this.controller_line_replace_tree(
                     type,
                     BeatKey(
@@ -4539,11 +4530,11 @@ open class OpusLayerBase: Effectable {
                 var max_leafs = 0
                 for (channel in this.channels) {
                     for (line in channel.lines) {
-                        max_leafs = max(line.beats[i].get_total_child_weight(), max_leafs)
+                        max_leafs = max(line.beats[i].weighted_size, max_leafs)
                     }
                 }
 
-                if (max_leafs < tempo_tree.get_total_child_weight()) {
+                if (max_leafs < tempo_tree.weighted_size) {
                     tempo_tree.flatten()
                     val new_tree = ReducibleTree<OpusTempoEvent>()
                     new_tree.set_size(max_leafs)

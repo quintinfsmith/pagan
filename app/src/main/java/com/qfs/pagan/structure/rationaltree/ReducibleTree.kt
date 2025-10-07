@@ -1,6 +1,5 @@
 package com.qfs.pagan.structure.rationaltree
 
-import androidx.databinding.BaseObservable
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.greatest_common_denominator
 import com.qfs.pagan.structure.lowest_common_multiple
@@ -11,7 +10,7 @@ import kotlin.math.round
  * A Tree data structure that can be flattened and re-inflated while keeping the proportional
  * positions of its data in-tact.
  */
-class ReducibleTree<T>: BaseObservable() {
+class ReducibleTree<T> {
     companion object {
         fun <T> get_set_tree(input: ReducibleTree<T>): ReducibleTree<Set<T>> {
             val output = ReducibleTree<Set<T>>()
@@ -37,11 +36,15 @@ class ReducibleTree<T>: BaseObservable() {
     )
 
     private var _real_size: Int = 0
+    var weighted_size: Int = 1
+    var flat_size: Int = 1
+
     val size get() = max(1, this._real_size)
     var divisions = HashMap<Int, ReducibleTree<T>>()
+    var child_sizes_weighted = HashMap<Int, Int>()
+    var child_sizes_flat = HashMap<Int, Int>()
     var event: T? = null
     var parent: ReducibleTree<T>? = null
-
 
     operator fun get(vararg rel_indices: Int): ReducibleTree<T> {
         var output: ReducibleTree<T> = this
@@ -58,8 +61,11 @@ class ReducibleTree<T>: BaseObservable() {
 
             if (!output.divisions.containsKey(index)) {
                 val new_tree = ReducibleTree<T>()
-                new_tree.set_parent(output)
+                new_tree.parent = output
                 output.divisions[index] = new_tree
+                output.child_sizes_flat[index] = 1
+                output.child_sizes_weighted[index] = 1
+
             }
 
             output = output.divisions[index]!!
@@ -74,8 +80,13 @@ class ReducibleTree<T>: BaseObservable() {
         } else {
             rel_index
         }
+
         this.divisions[index] = tree
+        this.child_sizes_flat[index] = tree.flat_size
+        this.child_sizes_weighted[index] = tree.weighted_size
         tree.parent = this
+
+        this.update_adjusted_sizes()
     }
 
     fun get_parent(): ReducibleTree<T>? {
@@ -89,9 +100,7 @@ class ReducibleTree<T>: BaseObservable() {
         val parent = this.parent ?: return null
 
         for ((i, node) in parent.divisions) {
-            if (node === this) {
-                return i
-            }
+            if (node === this) return i
         }
 
         throw UntrackedInParentException()
@@ -105,6 +114,8 @@ class ReducibleTree<T>: BaseObservable() {
     fun set_size(new_size: Int, noclobber: Boolean = false) {
         if (! noclobber) {
             this.divisions.clear()
+            this.child_sizes_flat.clear()
+            this.child_sizes_weighted.clear()
         } else if (new_size < this.size) {
             val to_delete: MutableList<Int> = mutableListOf()
             for (key in this.divisions.keys) {
@@ -114,11 +125,12 @@ class ReducibleTree<T>: BaseObservable() {
             }
             for (key in to_delete) {
                 this.divisions.remove(key)
+                this.child_sizes_flat.remove(key)
+                this.child_sizes_weighted.remove(key)
             }
-
         }
 
-        this._real_size = new_size
+        this.set_real_size(new_size)
     }
 
     /**
@@ -128,15 +140,18 @@ class ReducibleTree<T>: BaseObservable() {
      */
     fun resize(new_size: Int) {
         val factor: Double = new_size.toDouble() / this._real_size.toDouble()
-        val new_divisions = HashMap<Int, ReducibleTree<T>>()
+        this.child_sizes_flat.clear()
+        this.child_sizes_weighted.clear()
         for (current_index in this.divisions.keys) {
-            val value = this.divisions[current_index]
-            val new_index = current_index * factor
-            new_divisions[new_index.toInt()] = value as ReducibleTree<T>
+            val new_index = (current_index * factor).toInt()
+            this.divisions[current_index]?.let { value ->
+                this.divisions[new_index] = value
+                this.child_sizes_flat[new_index] = value.flat_size
+                this.child_sizes_weighted[new_index] = value.weighted_size
+            }
         }
 
-        this.divisions = new_divisions
-        this._real_size = new_size
+        this.set_real_size(new_size)
     }
 
     /**
@@ -244,20 +259,22 @@ class ReducibleTree<T>: BaseObservable() {
      */
     fun copy(copy_func: ((event: T) -> T)? = null): ReducibleTree<T> {
         val copied = ReducibleTree<T>()
-        copied._real_size = this._real_size
         for (key in this.divisions.keys) {
-            val subdivision: ReducibleTree<T> = this.divisions[key] as ReducibleTree<T>
-            val subcopy: ReducibleTree<T> = subdivision.copy(copy_func)
-            subcopy.set_parent(copied)
-            copied.divisions[key] = subcopy
-        }
-        if (this.event != null) {
-            copied.event = if (copy_func == null) {
-                this.event
-            } else {
-                 copy_func(this.event!!)
+            this.divisions[key]?.let { subdivision ->
+                val subcopy: ReducibleTree<T> = subdivision.copy(copy_func)
+                subcopy.parent = copied
+                copied[key] = subcopy
             }
         }
+
+        this.event?.let { event ->
+            copied.event = copy_func?.let { it(event) } ?: event
+        }
+
+        copied._real_size = this._real_size
+        copied.flat_size = this.flat_size
+        copied.weighted_size = this.weighted_size
+
         return copied
     }
 
@@ -268,7 +285,7 @@ class ReducibleTree<T>: BaseObservable() {
         val subnode_backup: MutableList<Pair<Int, ReducibleTree<T>>> = mutableListOf()
 
         for (key in this.divisions.keys) {
-            val child = this.divisions[key]!!
+            val child = this[key]
             if (! child.is_leaf()) {
                 child.flatten()
                 sizes.add(child.size)
@@ -285,26 +302,25 @@ class ReducibleTree<T>: BaseObservable() {
             val offset: Int = i * new_chunk_size
             if (! child.is_leaf()) {
                 for (key in child.divisions.keys) {
-                    val grandchild = child.divisions[key]!!
+                    val grandchild = child[key]
                     if (grandchild.is_leaf()) {
                         val fine_offset: Int = (key * new_chunk_size) / child.size
-                        this.divisions[offset + fine_offset] = grandchild
+                        this[offset + fine_offset] = grandchild
                     }
                 }
             } else {
-                this.divisions[offset] = child
+                this[offset] = child
             }
         }
     }
 
     fun is_flat(): Boolean {
-        var noutput = false
-
+        var output = false
         for (key in this.divisions.keys) {
-            val child = this.divisions[key]!!
-            noutput = noutput || ! child.is_leaf()
+            val child = this[key]
+            output = output || !child.is_leaf()
         }
-        return ! noutput
+        return !output
     }
 
     fun is_leaf(): Boolean {
@@ -315,16 +331,49 @@ class ReducibleTree<T>: BaseObservable() {
         return this.event != null
     }
 
+    fun set_real_size(n: Int) {
+        this._real_size = n
+        this.update_adjusted_sizes()
+    }
+
+    fun update_adjusted_sizes() {
+        if (this.is_leaf()) {
+            this.set_adjusted_sizes(1, 1)
+        } else {
+            val children = this.divisions.values.toList()
+            var weighted_max = 1
+            for (child in children) {
+                weighted_max = max(weighted_max, child.weighted_size)
+            }
+            this.set_adjusted_sizes(
+                weighted_max * this.size,
+                max(1, IntArray(children.size) { i: Int -> children[i].flat_size }.sum())
+            )
+        }
+    }
+
+    fun set_adjusted_sizes(new_weighted_size: Int, new_flat_size: Int) {
+        this.weighted_size = max(1, new_weighted_size)
+        this.flat_size = max(1, new_flat_size)
+
+        val index = this.get_index() ?: return
+        this.parent?.let {
+            it.child_sizes_weighted[index] = this.weighted_size
+            it.child_sizes_flat[index] = this.flat_size
+            it.update_adjusted_sizes()
+        }
+    }
+
     fun set_event(event: T?) {
         this.event = event
-        this._real_size = 0
         this.divisions.clear()
+        this.set_real_size(0)
     }
 
     fun unset_event() {
         this.event = null
-        this._real_size = 0
         this.divisions.clear()
+        this.set_real_size(0)
     }
 
     fun get_event(): T? {
@@ -351,11 +400,10 @@ class ReducibleTree<T>: BaseObservable() {
         if (this.size == 1 && this.divisions.size == 1) {
             val child = this.divisions.remove(0)!!
             if (!child.has_event()) {
-                this.set_size(child.size)
                 for ((i, grandchild) in child.divisions) {
-                    this.divisions[i] = grandchild
-                    grandchild.parent = this
+                    this[i] = grandchild
                 }
+                this.set_size(child.size)
             } else {
                 this.set_event(child.get_event())
             }
@@ -363,15 +411,10 @@ class ReducibleTree<T>: BaseObservable() {
     }
 
     fun replace_with(new_node: ReducibleTree<T>) {
-        if (this.parent != null) {
-            val parent = this.parent!!
-            for (i in parent.divisions.keys) {
-                if (parent.divisions[i] !== this) continue
-                parent.divisions[i] = new_node
-                break
-            }
-            new_node.set_parent(parent)
-            this.parent = null
+        val index = this.get_index() ?: return
+        this.parent?.let {
+            this.detach()
+            it[index] = new_node
         }
     }
 
@@ -379,19 +422,20 @@ class ReducibleTree<T>: BaseObservable() {
         val adj_index = index ?: this.size
         val adj_new_tree = new_tree ?: ReducibleTree()
 
-        this._real_size += 1
-        val new_indices = HashMap<Int, ReducibleTree<T>>()
-        for (old_index in this.divisions.keys) {
-            val node = this.divisions[old_index]!!
-            if (old_index < adj_index) {
-                new_indices[old_index] = node
-            } else {
-                new_indices[old_index + 1] = node
-            }
+        val division_keys = this.divisions.keys.sorted().reversed()
+        for (old_index in division_keys) {
+            if (old_index < adj_index) continue
+            val node = this.divisions.remove(old_index)!!
+            this.divisions[old_index + 1] = node
+            this.child_sizes_weighted[old_index + 1] = this.child_sizes_weighted.remove(old_index)!!
+            this.child_sizes_flat[old_index + 1] = this.child_sizes_flat.remove(old_index)!!
         }
-        new_indices[adj_index] = adj_new_tree
-        this.divisions = new_indices
-        adj_new_tree.set_parent(this)
+
+        adj_new_tree.parent = this
+        this.divisions[adj_index] = adj_new_tree
+        this.child_sizes_weighted[adj_index] = adj_new_tree.weighted_size
+        this.child_sizes_flat[adj_index] = adj_new_tree.flat_size
+        this.set_real_size(this._real_size + 1)
     }
 
     private fun set_parent(new_parent: ReducibleTree<T>) {
@@ -404,12 +448,18 @@ class ReducibleTree<T>: BaseObservable() {
     fun pop(x: Int? = null): ReducibleTree<T> {
         val index = x ?: (this.size - 1)
         val output = this.divisions.remove(index)!!
+        this.child_sizes_weighted.remove(index)!!
+        this.child_sizes_flat.remove(index)!!
         for (i in this.divisions.keys.sorted()) {
-            if (i > index) {
-                this.divisions[i - 1] = this.divisions.remove(i)!!
-            }
+            if (i <= index) continue
+            this.divisions[i - 1] = this.divisions.remove(i)!!
+            this.child_sizes_weighted[i - 1] = this.child_sizes_weighted.remove(i)!!
+            this.child_sizes_flat[i - 1] = this.child_sizes_flat.remove(i)!!
         }
-        this._real_size = max(this._real_size - 1, 0)
+
+        output.parent = null
+        this.set_real_size(max(this._real_size - 1, 0))
+
         return output
     }
 
@@ -418,27 +468,18 @@ class ReducibleTree<T>: BaseObservable() {
      */
     fun detach() {
         val parent = this.get_parent() ?: return
-
-        var index: Int? = null
-
-        for ((i, node) in parent.divisions) {
-            if (this === node) {
-                index = i
-                break
-            }
-        }
-        if (index != null) {
-            parent.pop(index)
-        }
-        this.parent = null
+        val index = this.get_index()
+        parent.pop(index)
     }
 
     /**
      * Remove all children of the tree.
      */
     fun empty() {
-        this.divisions = HashMap()
-        this._real_size = 0
+        this.divisions.clear()
+        this.child_sizes_weighted.clear()
+        this.child_sizes_flat.clear()
+        this.set_real_size(0)
     }
 
     fun split(split_func: (event: T) -> Int): List<ReducibleTree<T>> {
@@ -502,39 +543,6 @@ class ReducibleTree<T>: BaseObservable() {
         }
 
         return output
-    }
-
-    /**
-     * Get the largest size of all branches.
-     */
-    fun get_max_child_weight(): Int {
-        if (this.is_leaf()) return 1
-
-        var max_weight = 1
-        for (node in this.divisions.values) {
-            if (node.is_leaf()) {
-                continue
-            }
-
-            max_weight = max(max_weight, (node.size * node.get_max_child_weight()))
-        }
-
-        return max_weight
-    }
-
-    fun get_total_child_weight(): Int {
-        if (this.is_leaf()) return 1
-
-        var max_weight = 1
-        for (node in this.divisions.values) {
-            if (node.is_leaf()) {
-                continue
-            }
-
-            max_weight = max(max_weight, node.get_total_child_weight())
-        }
-
-        return max_weight * this.size
     }
 
     /**
@@ -677,15 +685,12 @@ class ReducibleTree<T>: BaseObservable() {
      * Do a depth-first search and return the path taken to find the first event, if it exists.
      */
     fun get_first_event_tree_position(): List<Int>? {
-        if (this.has_event()) {
-            return listOf()
-        } else if (this.is_leaf()) {
-            return null
-        }
+        if (this.has_event()) return listOf()
+        if (this.is_leaf()) return null
+
         val output = mutableListOf<Int>()
         for (i in this.divisions.keys.toList().sorted()) {
-            val child = this.divisions[i]!!
-            val result = child.get_first_event_tree_position() ?: continue
+            val result = this.divisions[i]?.get_first_event_tree_position() ?: continue
 
             output.add(i)
             for (j in result) {
@@ -728,9 +733,7 @@ class ReducibleTree<T>: BaseObservable() {
     // Relative Position and Size
     fun get_flat_ratios(): Pair<Float, Float> {
         var top = this
-        if (top.parent == null) {
-            return Pair(0F, 1F)
-        }
+        if (top.parent == null) return Pair(0F, 1F)
 
         var ratio = top.get_index()!!.toFloat() / top.parent!!.size.toFloat()
         var total_divs = top.parent!!.size
@@ -809,7 +812,7 @@ class ReducibleTree<T>: BaseObservable() {
             for (i in 0 until this.size) {
                 output = (output shl 1)
                 if (this.divisions.containsKey(i)) {
-                    output = output.xor(this.divisions[i].hashCode())
+                    output = output.xor(this[i].hashCode())
                 }
             }
             output

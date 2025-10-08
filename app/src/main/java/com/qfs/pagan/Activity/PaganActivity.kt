@@ -32,9 +32,11 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.MenuDialogEventHandler
 import com.qfs.pagan.PaganConfiguration
+import com.qfs.pagan.PaganViewModel
 import com.qfs.pagan.PopupMenuRecyclerAdapter
 import com.qfs.pagan.R
 import com.qfs.pagan.projectmanager.ProjectManager
@@ -52,6 +54,7 @@ import kotlin.math.roundToInt
 open class PaganActivity: AppCompatActivity() {
     companion object {
         const val EXTRA_ACTIVE_PROJECT = "active_project"
+        const val EXTRA_CONFIGURATION = "configuration"
 
         fun coerce_relative_path(descendant: Uri, ancestor: Uri?): String? {
             if (ancestor == null) return null
@@ -68,11 +71,8 @@ open class PaganActivity: AppCompatActivity() {
             return relative_path.joinToString("/")
         }
     }
-    class PaganViewModel: ViewModel() {
-        internal lateinit var project_manager: ProjectManager
-    }
 
-    val view_model: PaganViewModel by this.viewModels()
+    lateinit var view_model: PaganViewModel
 
     internal lateinit var configuration_path: String
     lateinit var configuration: PaganConfiguration
@@ -82,7 +82,7 @@ open class PaganActivity: AppCompatActivity() {
     internal var _set_soundfont_directory_intent_launcher =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
-                result?.data?.also { result_data ->
+                result.data?.also { result_data ->
                     result_data.data?.also { uri  ->
                         val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
                         this.contentResolver.takePersistableUriPermission(uri, new_flags)
@@ -255,6 +255,7 @@ open class PaganActivity: AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        this.view_model = ViewModelProvider(this)[PaganViewModel::class.java]
         this.enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         this.set_latest_launched_version()

@@ -2339,28 +2339,21 @@ class OpusLayerInterface : OpusLayerHistory() {
                     column.add(tree.weighted_size)
 
                     for ((_, controller) in channel.lines[j].controllers.get_all()) {
-                        if (!controller.visible) {
-                            continue
-                        }
+                        if (!controller.visible) continue
                         val ctl_tree = controller.get_tree(beat)
                         column.add(ctl_tree.weighted_size)
                     }
                 }
 
                 for ((_, controller) in channel.controllers.get_all()) {
-                    if (!controller.visible) {
-                        continue
-                    }
+                    if (!controller.visible) continue
                     val ctl_tree = controller.get_tree(beat)
                     column.add(ctl_tree.weighted_size)
                 }
             }
 
             for ((_, controller) in this.controllers.get_all()) {
-                if (!controller.visible) {
-                    continue
-                }
-
+                if (!controller.visible) continue
                 val ctl_tree = controller.get_tree(beat)
                 column.add(ctl_tree.weighted_size)
             }
@@ -2370,9 +2363,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     private fun _add_line_to_column_width_map(y: Int, line: OpusLineAbstract<*>) {
-        if (this._ui_change_bill.is_full_locked()) {
-            return
-        }
+        if (this._ui_change_bill.is_full_locked()) return
 
         val column_updates = this.get_editor_table().add_line_to_map(
             y,
@@ -2387,9 +2378,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     private fun _add_controller_to_column_width_map(y: Int, line: EffectController<*>) {
-        if (this._ui_change_bill.is_full_locked()) {
-            return
-        }
+        if (this._ui_change_bill.is_full_locked()) return
 
         val column_updates = this.get_editor_table().add_line_to_map(
             y,
@@ -2408,9 +2397,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         val adj_line_offset = line_offset ?: (working_channel.lines.size - 1)
 
 
-        if (this._ui_change_bill.is_full_locked() || this.get_activity() == null) {
-            return
-        }
+        if (this._ui_change_bill.is_full_locked() || this.get_activity() == null) return
 
         val abs_offset = this.get_instrument_line_index(channel, adj_line_offset)
         val row_index = this.get_actual_line_index(abs_offset)
@@ -2440,24 +2427,18 @@ class OpusLayerInterface : OpusLayerHistory() {
             for (j in channel.lines.indices) {
                 column.add(1)
                 for ((_, controller) in channel.lines[j].controllers.get_all()) {
-                    if (!controller.visible) {
-                        continue
-                    }
+                    if (!controller.visible) continue
                     column.add(1)
                 }
             }
 
             for ((_, controller) in channel.controllers.get_all()) {
-                if (!controller.visible) {
-                    continue
-                }
+                if (!controller.visible) continue
                 column.add(1)
             }
         }
         for ((_, controller) in this.controllers.get_all()) {
-            if (!controller.visible) {
-                continue
-            }
+            if (!controller.visible) continue
             column.add(1)
         }
 

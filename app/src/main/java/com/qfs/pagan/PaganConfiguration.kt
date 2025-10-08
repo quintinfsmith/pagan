@@ -6,8 +6,10 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.net.toUri
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONParser
+import kotlinx.serialization.Serializable
 import java.io.File
 
+@Serializable
 data class PaganConfiguration(
     var soundfont: String? = null,
     var relative_mode: Boolean = false,

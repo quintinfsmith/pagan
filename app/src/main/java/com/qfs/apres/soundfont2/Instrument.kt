@@ -1,5 +1,7 @@
 package com.qfs.apres.soundfont2
 
+import kotlin.math.min
+
 class Instrument(var name: String) {
     var sample_directives = HashMap<Int, SampleDirective>()
     var global_zone: SampleDirective = SampleDirective()
@@ -17,7 +19,7 @@ class Instrument(var name: String) {
         val key_range = if (sample_directive.key_range == null) {
             0..127
         } else {
-            sample_directive.key_range!!.first..sample_directive.key_range!!.second
+            sample_directive.key_range!!.first..min(127,sample_directive.key_range!!.second)
         }
 
         for (i in key_range) {
@@ -27,7 +29,7 @@ class Instrument(var name: String) {
         val vel_range = if (sample_directive.velocity_range == null) {
             0..127
         } else {
-            sample_directive.velocity_range!!.first..sample_directive.velocity_range!!.second
+            sample_directive.velocity_range!!.first..min(127, sample_directive.velocity_range!!.second)
         }
 
         for (i in vel_range) {

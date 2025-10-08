@@ -11,6 +11,7 @@ import android.widget.Space
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.net.toUri
+import com.qfs.pagan.ComponentActivity.ActivityComposerSettings
 import com.qfs.pagan.R
 import com.qfs.pagan.databinding.ActivityLandingBinding
 import java.io.File

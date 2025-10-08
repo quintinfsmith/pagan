@@ -44,7 +44,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".Activity.ActivityComposerSettings"
+        <activity android:name=".ComponentActivity.ActivityComposerSettings"
             android:exported="true"
             android:label="@string/app_name_brief"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"

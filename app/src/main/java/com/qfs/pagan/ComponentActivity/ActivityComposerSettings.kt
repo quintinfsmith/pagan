@@ -6,7 +6,6 @@ import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.provider.DocumentsContract
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -29,17 +28,18 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.integerArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.qfs.pagan.ViewModelSettings
 import com.qfs.pagan.find_activity
 
 class ActivityComposerSettings: PaganComponentActivity() {
@@ -51,7 +51,13 @@ class ActivityComposerSettings: PaganComponentActivity() {
                         val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
                         this.contentResolver.takePersistableUriPermission(uri, new_flags)
                         TODO()
-                     //   this.set_soundfont_directory(uri)
+                        //fun set_soundfont_directory(uri: Uri) {
+                        //    this.configuration.soundfont_directory = uri
+                        //    this.save_configuration()
+                        //    this.ucheck_move_soundfonts()
+                        //}
+
+                        //   this.set_soundfont_directory(uri)
                      //   this.on_soundfont_directory_set(uri)
                     }//
                 }
@@ -79,39 +85,48 @@ class ActivityComposerSettings: PaganComponentActivity() {
             }
         }
 
-    val view_model: ViewModelSettings by this.viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
+        this.view_model.title = this.resources.getString(R.string.settings_fragment_label)
         this.view_model.configuration_path = "${this.applicationContext.cacheDir}/pagan.cfg"
         super.onCreate(savedInstanceState)
-
         //ScaffoldWithTopBar(stringResource(R.string.settings_fragment_label))
     }
 
+    //fun set_soundfont_directory(uri: Uri) {
+    //    this.view_model.configuration.soundfont_directory = uri
+    //    this.save_configuration()
+    //    this.ucheck_move_soundfonts()
+    //}
+
     @Composable
     override fun LayoutXLarge() {
-        Row(
-            modifier = Modifier
-                .width(WIDTH_XL - 8.dp)
-                .padding(horizontal = 4.dp, vertical = 8.dp)
-                .align(Alignment.Center),
-            verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.SpaceBetween
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
+            Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp)
-                    .weight(.8f)
+                    .width(WIDTH_XL - 8.dp)
+                    .padding(horizontal = 4.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                SettingsSectionA()
-            }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp)
-                    .weight(1f)
-            ) {
-                SettingsSectionB()
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp)
+                        .weight(.8f)
+                ) {
+                    SettingsSectionA()
+                }
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp)
+                        .weight(1f)
+                ) {
+                    SettingsSectionB()
+                }
             }
         }
     }
@@ -144,7 +159,7 @@ class ActivityComposerSettings: PaganComponentActivity() {
             Text(stringResource(R.string.label_settings_sf))
             Button(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = { }
+                onClick = {}
             ) {
                 Text(soundfont_button_label)
             }
@@ -157,9 +172,9 @@ class ActivityComposerSettings: PaganComponentActivity() {
                         Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also { intent ->
                             intent.putExtra(Intent.EXTRA_TITLE, "Soundfonts")
                             intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                            //configuration.soundfont_directory?.let {
-                            //    intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, it)
-                            //}
+                            view_model.configuration.soundfont_directory?.let {
+                                intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, it)
+                            }
                         }
                     )
                 }) {
@@ -202,15 +217,24 @@ class ActivityComposerSettings: PaganComponentActivity() {
             Pair(AppCompatDelegate.MODE_NIGHT_NO, R.string.settings_night_mode_no)
         )
         val options_playback = integerArrayResource(R.array.sample_rates)
-        var slider_position by remember { mutableFloatStateOf(0F) }
-        var slider_option_index by remember { mutableIntStateOf(0) }
+
         val context = LocalContext.current.find_activity()
         val view_model = (context as ActivityComposerSettings).view_model
 
+        var slider_position by remember { mutableFloatStateOf(0F) }
+        var slider_option_index by remember { mutableIntStateOf(0) }
+
         var clip_same_line_release by remember { mutableStateOf(view_model.configuration.clip_same_line_release) }
+        view_model.configuration.callbacks_clip_same_line_release.add { clip_same_line_release = it }
+
         var relative_mode by remember { mutableStateOf(view_model.configuration.relative_mode) }
+        view_model.configuration.callbacks_relative_mode.add { relative_mode = it }
+
         var use_preferred_soundfont by remember { mutableStateOf(view_model.configuration.use_preferred_soundfont) }
+        view_model.configuration.callbacks_use_preferred_soundfont.add { use_preferred_soundfont = it }
+
         var allow_std_percussion by remember { mutableStateOf(view_model.configuration.allow_std_percussion) }
+        view_model.configuration.callbacks_allow_std_percussion.add { allow_std_percussion = it }
 
         var selected_orientation_index by remember {
             for (i in options_orientation.indices) {
@@ -220,6 +244,7 @@ class ActivityComposerSettings: PaganComponentActivity() {
             }
             mutableIntStateOf(1)
         }
+
         var selected_night_mode_index by remember {
             for (i in options_nightmode.indices) {
                 if (options_nightmode[i].first == view_model.configuration.night_mode) {
@@ -268,10 +293,7 @@ class ActivityComposerSettings: PaganComponentActivity() {
                 Text(stringResource(R.string.label_settings_same_line_release))
                 Switch(
                     checked = clip_same_line_release,
-                    onCheckedChange = {
-                        view_model.configuration.clip_same_line_release = it
-                        clip_same_line_release = it
-                    }
+                    onCheckedChange = { view_model.configuration.clip_same_line_release = it }
                 )
             }
             Row(
@@ -282,10 +304,7 @@ class ActivityComposerSettings: PaganComponentActivity() {
                 Text(stringResource(R.string.label_settings_relative))
                 Switch(
                     checked = relative_mode,
-                    onCheckedChange = {
-                        relative_mode = it
-                        view_model.configuration.relative_mode = it
-                    }
+                    onCheckedChange = { view_model.configuration.relative_mode = it }
                 )
             }
             Row(
@@ -296,10 +315,7 @@ class ActivityComposerSettings: PaganComponentActivity() {
                 Text(stringResource(R.string.label_settings_use_preferred_sf))
                 Switch(
                     checked = use_preferred_soundfont,
-                    onCheckedChange = {
-                        use_preferred_soundfont = it
-                        view_model.configuration.use_preferred_soundfont = it
-                    }
+                    onCheckedChange = { view_model.configuration.use_preferred_soundfont = it }
                 )
             }
             Row(
@@ -310,10 +326,7 @@ class ActivityComposerSettings: PaganComponentActivity() {
                 Text(stringResource(R.string.label_settings_allow_std_percussion))
                 Switch(
                     checked = allow_std_percussion,
-                    onCheckedChange = {
-                        allow_std_percussion = it
-                        view_model.configuration.allow_std_percussion
-                    }
+                    onCheckedChange = { view_model.configuration.allow_std_percussion }
                 )
             }
 
@@ -326,9 +339,8 @@ class ActivityComposerSettings: PaganComponentActivity() {
                             count = options_orientation.size
                         ),
                         onClick = {
-                            selected_orientation_index = index
                             view_model.configuration.force_orientation = mode
-                            context.requestedOrientation = mode
+                            selected_orientation_index = index
                         },
                         selected = index == selected_orientation_index,
                         label = { Text(stringResource(resource)) }
@@ -347,7 +359,6 @@ class ActivityComposerSettings: PaganComponentActivity() {
                         onClick = {
                             selected_night_mode_index = index
                             view_model.configuration.night_mode = mode
-                            AppCompatDelegate.setDefaultNightMode(mode)
                         },
                         selected = index == selected_night_mode_index,
                         label = { Text(stringResource(resource)) }

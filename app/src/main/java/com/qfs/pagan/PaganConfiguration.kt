@@ -3,26 +3,28 @@ package com.qfs.pagan
 import android.content.pm.ActivityInfo
 import android.net.Uri
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.core.net.toUri
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONParser
 import kotlinx.serialization.Serializable
 import java.io.File
-
 @Serializable
-data class PaganConfiguration(
-    var soundfont: String? = null,
-    var relative_mode: Boolean = false,
-    var sample_rate: Int = 32000,
-    var move_mode: MoveMode = MoveMode.COPY,
-    var clip_same_line_release: Boolean = true,
-    var use_preferred_soundfont: Boolean = true,
-    var force_orientation: Int = ActivityInfo.SCREEN_ORIENTATION_USER,
-    var allow_std_percussion: Boolean = false,
-    var project_directory: Uri? = null,
-    var soundfont_directory: Uri? = null,
-    var night_mode: Int = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM,
-    var indent_json: Boolean = false
+class PaganConfiguration(
+    soundfont: String? = null,
+    relative_mode: Boolean = false,
+    sample_rate: Int = 32000,
+    move_mode: MoveMode = MoveMode.COPY,
+    clip_same_line_release: Boolean = true,
+    use_preferred_soundfont: Boolean = true,
+    force_orientation: Int = ActivityInfo.SCREEN_ORIENTATION_USER,
+    allow_std_percussion: Boolean = false,
+    project_directory: Uri? = null,
+    soundfont_directory: Uri? = null,
+    night_mode: Int = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM,
+    indent_json: Boolean = false
 ) {
     enum class MoveMode {
         MOVE,
@@ -53,21 +55,111 @@ data class PaganConfiguration(
             return if (file.exists()) {
                 val string = file.readText()
                 val content = JSONParser.parse<JSONHashMap>(string)
-                if (content == null) {
-                    PaganConfiguration()
-                } else {
-                    this.from_json(content)
-                }
+                content?.let { this.from_json(it) } ?: PaganConfiguration()
             } else {
                 PaganConfiguration()
             }
         }
     }
 
+    var callbacks_soundfont = mutableListOf<(String?) -> Unit>()
+    var soundfont: String? = soundfont
+        set(value) {
+            val original = field
+            field = value
+            this.callbacks_soundfont.forEach { if (original != value) { it(value) } }
+        }
+
+    var callbacks_sample_rate = mutableListOf<(Int) -> Unit>()
+    var sample_rate: Int = sample_rate
+        set(value) {
+            val original = field
+            field = value
+            this.callbacks_sample_rate.forEach { if (original != value) { it(value) } }
+        }
+
+    var callbacks_relative_mode = mutableListOf<(Boolean) -> Unit>()
+    var relative_mode: Boolean = relative_mode
+        set(value) {
+            val original = field
+            field = value
+            this.callbacks_relative_mode.forEach { if (original != value) { it(value) } }
+        }
+
+    var callbacks_move_mode = mutableListOf<(MoveMode) -> Unit>()
+    var move_mode: MoveMode = move_mode
+        set(value) {
+            val original = field
+            field = value
+            this.callbacks_move_mode.forEach { if (original != value) { it(value) } }
+        }
+
+    var callbacks_clip_same_line_release = mutableListOf<(Boolean) -> Unit>()
+    var clip_same_line_release: Boolean = clip_same_line_release
+        set(value) {
+            val original = field
+            field = value
+            this.callbacks_clip_same_line_release.forEach { if (original != value) { it(value) } }
+        }
+
+    var callbacks_use_preferred_soundfont = mutableListOf<(Boolean) -> Unit>()
+    var use_preferred_soundfont: Boolean = use_preferred_soundfont
+        set(value) {
+            val original = field
+            field = value
+            this.callbacks_use_preferred_soundfont.forEach { if (original != value) { it(value) } }
+        }
+
+    var callbacks_allow_std_percussion = mutableListOf<(Boolean) -> Unit>()
+    var allow_std_percussion: Boolean = allow_std_percussion
+        set(value) {
+            val original = field
+            field = value
+            this.callbacks_allow_std_percussion.forEach { if (original != value) { it(value) } }
+        }
+
+    var callbacks_indent_json = mutableListOf<(Boolean) -> Unit>()
+    var indent_json: Boolean = indent_json
+        set(value) {
+            val original = field
+            field = value
+            this.callbacks_indent_json.forEach { if (original != value) { it(value) } }
+        }
+
+    var callbacks_night_mode = mutableListOf<(Int) -> Unit>()
+    var night_mode: Int = night_mode
+        set(value) {
+            val original = field
+            field = value
+            this.callbacks_night_mode.forEach { if (original != value) { it(value) } }
+        }
+
+    var callbacks_force_orientation = mutableListOf<(Int) -> Unit>()
+    var force_orientation: Int = force_orientation
+        set(value) {
+            val original = field
+            field = value
+            this.callbacks_force_orientation.forEach { if (original != value) { it(value) } }
+        }
+
+    var callbacks_project_directory = mutableListOf<(Uri?) -> Unit>()
+    var project_directory: Uri? = project_directory
+        set(value) {
+            val original = field
+            field = value
+            this.callbacks_project_directory.forEach { if (original != value) { it(value) } }
+        }
+
+    var callbacks_soundfont_directory = mutableListOf<(Uri?) -> Unit>()
+    var soundfont_directory: Uri? = soundfont_directory
+        set(value) {
+            val original = field
+            field = value
+            this.callbacks_soundfont_directory.forEach { if (original != value) { it(value) } }
+        }
+
     fun save(path: String) {
-        val json_map = this.to_json()
-        val file = File(path)
-        file.writeText(json_map.to_string())
+        File(path).writeText(this.to_json().to_string())
     }
 
     fun to_json(): JSONHashMap {

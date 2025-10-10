@@ -44,10 +44,7 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
         var transition: EffectTransition? = null
         while (true) {
             val tree = this.get_tree(working_beat, working_position)
-
-            if (tree.has_event() && tree.event!!.is_persistent()) {
-                break
-            }
+            if (tree.has_event() && tree.event!!.is_persistent()) break
 
             if (transition == null && tree.has_event()) {
                 transition = tree.get_event()!!.transition
@@ -96,9 +93,7 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
         var pair = this.get_preceding_event_position(event_beat, event_position)
         while (pair != null) {
             val event = this.get_tree(pair.first, pair.second).get_event()!!
-            if (event.is_persistent()) {
-                break
-            }
+            if (event.is_persistent()) break
 
             pair = this.get_preceding_event_position(pair.first, pair.second)
         }

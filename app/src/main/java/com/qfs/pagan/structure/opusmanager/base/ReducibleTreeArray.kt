@@ -509,21 +509,22 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
 
     }
 
+    fun get_actual_position(beat: Int, position: List<Int>): Pair<Int, List<Int>> {
+        return this.get_blocking_position(beat, position) ?: Pair(beat, position)
+    }
+
     fun get_latest_event_position(beat: Int, position: List<Int>): Pair<Int, List<Int>>? {
         var current_tree = this.get_tree(beat)
         val adj_position = mutableListOf<Int>()
         for (p in position) {
             // Allow invalid positions. we only need to event that *would* be here.
-            if (current_tree.is_leaf() || p >= current_tree.size) {
-                break
-            }
+            if (current_tree.is_leaf() || p >= current_tree.size) break
+
             adj_position.add(p)
             current_tree = current_tree[p]
         }
 
-        if (current_tree.has_event()) {
-            return Pair(beat, position)
-        }
+        if (current_tree.has_event()) return Pair(beat, position)
 
         var working_beat = beat
         var working_position = adj_position.toList()

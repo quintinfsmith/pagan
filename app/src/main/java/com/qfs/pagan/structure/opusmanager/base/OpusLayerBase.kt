@@ -1065,11 +1065,13 @@ open class OpusLayerBase: Effectable {
      */
     fun <T : EffectEvent> get_current_line_controller_event(type: EffectType, beat_key: BeatKey, position: List<Int>): T {
         val controller = this.get_channel(beat_key.channel).lines[beat_key.line_offset].get_controller<T>(type)
-        controller.get_tree(beat_key.beat, position).get_event()?.let {
+
+        val (real_beat, real_position) = controller.get_actual_position(beat_key.beat, position)
+        controller.get_tree(real_beat, real_position).get_event()?.let {
             return it
         }
 
-        return controller.coerce_latest_persistent_event(beat_key.beat, position)
+        return controller.coerce_latest_persistent_event(real_beat, real_position)
     }
 
     /**

@@ -2443,7 +2443,4 @@ open class OpusLayerCursor: OpusLayerBase() {
 
         this.cursor_select_line(adj_channel, adj_line_offset)
     }
-
-
-
 }

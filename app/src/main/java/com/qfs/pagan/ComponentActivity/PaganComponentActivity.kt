@@ -5,10 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -23,22 +21,28 @@ import kotlin.getValue
 
 abstract class PaganComponentActivity: ComponentActivity() {
     companion object {
-        val WIDTH_XL = 800.dp
-        val WIDTH_L = 600.dp
-        val WIDTH_M = 480.dp
-        val WIDTH_S = 380.dp
+        val SIZE_XL = Pair(960.dp, 720.dp)
+        val SIZE_L = Pair(640.dp, 480.dp)
+        val SIZE_M = Pair(470.dp, 320.dp)
+        val SIZE_S = Pair(426.dp, 320.dp)
     }
 
     @Composable
-    abstract fun LayoutXLarge()
+    abstract fun LayoutXLargePortrait()
     @Composable
-    abstract fun LayoutLarge()
+    abstract fun LayoutLargePortrait()
     @Composable
-    abstract fun LayoutMedium()
+    abstract fun LayoutMediumPortrait()
     @Composable
-    abstract fun LayoutSmall()
+    abstract fun LayoutSmallPortrait()
     @Composable
-    abstract fun LayoutXSmall()
+    abstract fun LayoutXLargeLandscape()
+    @Composable
+    abstract fun LayoutLargeLandscape()
+    @Composable
+    abstract fun LayoutMediumLandscape()
+    @Composable
+    abstract fun LayoutSmallLandscape()
 
     val view_model: ViewModelPagan by this.viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,19 +60,42 @@ abstract class PaganComponentActivity: ComponentActivity() {
             // Allow night mode mutability
             val night_mode = remember { mutableIntStateOf(view_model.configuration.night_mode) }
             view_model.configuration.callbacks_night_mode.add { night_mode.intValue = it }
-
             ScaffoldWithTopBar(title, night_mode) {
                 BoxWithConstraints(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
+                        .fillMaxHeight()
                         .padding(it)
                 ) {
-                    if (this.minWidth >= WIDTH_XL) LayoutXLarge()
-                    else if (this.minWidth > WIDTH_L) LayoutLarge()
-                    else if (this.minWidth > WIDTH_M) LayoutMedium()
-                    else if (this.minWidth > WIDTH_S) LayoutSmall()
-                    else LayoutXSmall()
+                    println("---------- $maxWidth, $maxHeight --------------")
+                    if (this.maxWidth >= this.maxHeight) {
+                        if (this.maxWidth >= SIZE_XL.first && this.maxHeight >= SIZE_XL.second) {
+                            println("LANDSCAPE XL")
+                            LayoutXLargeLandscape()
+                        } else if (this.maxWidth >= SIZE_L.first && this.maxHeight >= SIZE_L.second) {
+                            println("LANDSCAPE L")
+                            LayoutLargeLandscape()
+                        } else if (this.maxWidth >= SIZE_M.first && this.maxHeight >= SIZE_M.second) {
+                            println("LANDSCAPE M")
+                            LayoutMediumLandscape()
+                        } else {
+                            println("LANDSCAPE S")
+                            LayoutSmallLandscape()
+                        }
+                    } else {
+                        if (this.maxWidth >= SIZE_XL.second && this.maxHeight >= SIZE_XL.first) {
+                            println("PORTRAIT XL")
+                            LayoutXLargePortrait()
+                        } else if (this.maxWidth >= SIZE_L.second && this.maxHeight >= SIZE_L.first) {
+                            println("PORTRAIT L")
+                            LayoutLargePortrait()
+                        } else if (this.maxWidth >= SIZE_M.second && this.maxHeight >= SIZE_M.first) {
+                            println("PORTRAIT M")
+                            LayoutMediumPortrait()
+                        } else {
+                            println("PORTRAIT S")
+                            LayoutSmallPortrait()
+                        }
+                    }
                 }
             }
         }

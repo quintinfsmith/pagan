@@ -12,12 +12,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -99,14 +102,16 @@ class ActivityComposerSettings: PaganComponentActivity() {
     //}
 
     @Composable
-    override fun LayoutXLarge() {
+    override fun LayoutXLargePortrait() {
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(
                 modifier = Modifier
-                    .width(WIDTH_XL - 8.dp)
+                    .width(SIZE_XL.first - 8.dp)
                     .padding(horizontal = 4.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -132,17 +137,31 @@ class ActivityComposerSettings: PaganComponentActivity() {
     }
 
     @Composable
-    override fun LayoutLarge() = LayoutStandard()
+    override fun LayoutLargePortrait() = LayoutStandardPortrait()
     @Composable
-    override fun LayoutMedium() = LayoutStandard()
+    override fun LayoutMediumPortrait() = LayoutStandardPortrait()
     @Composable
-    override fun LayoutSmall() = LayoutStandard()
-    @Composable
-    override fun LayoutXSmall() = LayoutStandard()
+    override fun LayoutSmallPortrait() = LayoutStandardPortrait()
 
     @Composable
-    fun LayoutStandard() {
-        Column(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
+    override fun LayoutXLargeLandscape() = LayoutXLargePortrait()
+    @Composable
+    override fun LayoutLargeLandscape() = LayoutStandardLandscape()
+    @Composable
+    override fun LayoutMediumLandscape() = LayoutStandardLandscape()
+    @Composable
+    override fun LayoutSmallLandscape() = LayoutStandardLandscape()
+    @Composable
+    fun LayoutStandardLandscape() = LayoutXLargePortrait()
+
+    @Composable
+    fun LayoutStandardPortrait() {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(8.dp)
+        ) {
             Row(modifier = Modifier.fillMaxWidth()) { SettingsSectionA() }
             Row(modifier = Modifier.fillMaxWidth()) { SettingsSectionB() }
         }

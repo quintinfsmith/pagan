@@ -20,9 +20,10 @@
     <string name="cd_split">Split this beat or subdivision</string>
     <string name="cd_remove">Remove this subdivision</string>
     <string name="cd_unset">Unset this subdivision</string>
-    <string name="warning_nosoundfont">A soundfont is needed for playback. The Fluid General Midi soundfont can be found here:</string>
-    <string name="warning_nosoundfont_2">You can import and select soundfonts from the settings menu</string>
     <string name="url_fluid">https://archive.org/download/fluidr3-gm-gs/FluidR3_GM_GS.sf2</string>
+    <string name="warning_nosoundfont">A soundfont is needed for playback.\nFluidR3 soundfont can be found here:</string>
+    <string name="fluid_download">Download Fluid3 Soundfont</string>
+    <string name="warning_nosoundfont_2">You can import and select soundfonts from the settings menu</string>
     <string name="url_git">https://github.com/quintinfsmith/pagan</string>
     <string name="url_issues">https://github.com/quintinfsmith/pagan/issues</string>
     <string name="url_manual">https://burnsomni.net/manual/pagan</string>

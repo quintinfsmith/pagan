@@ -1,0 +1,5 @@
+Bugfixes:
+    - Crash when moving only line in channel sometimes.
+    - Was finicky to change radix back after setting it to 2
+    - Soundfonts with instruments with key range > 127 causing crash.
+    - Selecting tail of effect event wasn't always displaying correct value.

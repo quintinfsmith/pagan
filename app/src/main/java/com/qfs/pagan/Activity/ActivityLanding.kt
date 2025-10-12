@@ -11,7 +11,7 @@ import android.widget.Space
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.net.toUri
-import com.qfs.pagan.ComponentActivity.ActivityComposerSettings
+import com.qfs.pagan.ComponentActivity.ComponentActivitySettings
 import com.qfs.pagan.R
 import com.qfs.pagan.databinding.ActivityLandingBinding
 import java.io.File
@@ -121,7 +121,7 @@ class ActivityLanding : PaganActivity() {
 
         this.findViewById<View>(R.id.btnFrontSettings).setOnClickListener {
             this.loading_reticle_show()
-            this.startActivity(Intent(this, ActivityComposerSettings::class.java))
+            this.startActivity(Intent(this, ComponentActivitySettings::class.java))
             //this.startActivity(Intent(this, ActivitySettings::class.java))
         }
 

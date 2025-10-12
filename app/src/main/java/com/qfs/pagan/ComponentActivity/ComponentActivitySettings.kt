@@ -45,7 +45,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.find_activity
 
-class ActivityComposerSettings: PaganComponentActivity() {
+class ComponentActivitySettings: PaganComponentActivity() {
     internal var _set_soundfont_directory_intent_launcher =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
@@ -170,7 +170,7 @@ class ActivityComposerSettings: PaganComponentActivity() {
     @Composable
     fun SettingsSectionA() {
         val context = LocalContext.current.find_activity()
-        val view_model = (context as ActivityComposerSettings).view_model
+        val view_model = (context as ComponentActivitySettings).view_model
         val no_soundfont_text = stringResource(R.string.no_soundfont)
         val soundfont_button_label by remember { mutableStateOf<String>(view_model.configuration.soundfont ?: no_soundfont_text) }
 
@@ -238,7 +238,7 @@ class ActivityComposerSettings: PaganComponentActivity() {
         val options_playback = integerArrayResource(R.array.sample_rates)
 
         val context = LocalContext.current.find_activity()
-        val view_model = (context as ActivityComposerSettings).view_model
+        val view_model = (context as ComponentActivitySettings).view_model
 
         var slider_position by remember { mutableFloatStateOf(0F) }
         var slider_option_index by remember { mutableIntStateOf(0) }

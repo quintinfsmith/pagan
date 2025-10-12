@@ -3,6 +3,7 @@ package com.qfs.pagan.composable
 import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
@@ -39,11 +41,16 @@ fun SoundFontWarning() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
-                Button(content = { Text(stringResource(R.string.fluid_download)) }, onClick = {
-                    val intent = Intent(Intent.ACTION_VIEW)
-                    intent.data = url.toUri()
-                    context.startActivity(intent)
-                })
+                SelectionContainer {
+                    Text(
+                        text = url,
+                        modifier = Modifier.clickable {
+                            val intent = Intent(Intent.ACTION_VIEW)
+                            intent.data = url.toUri()
+                            context.startActivity(intent)
+                        }
+                    )
+                }
             }
             Row {
                 Text(stringResource(R.string.warning_nosoundfont_2))

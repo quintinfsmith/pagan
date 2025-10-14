@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
@@ -139,13 +140,26 @@ class ComponentActivityAbout: PaganComponentActivity() {
     }
 
     @Composable
-    override fun LayoutXLargePortrait() {
-        TODO("Not yet implemented")
-    }
+    override fun LayoutXLargePortrait() = LayoutLargePortrait()
 
     @Composable
     override fun LayoutLargePortrait() {
-        TODO("Not yet implemented")
+        FillRow {
+            Column(Modifier.fillMaxWidth().weight(1F)) { }
+            Column(
+                Modifier
+                    .verticalScroll(rememberScrollState())
+                    .width(SIZE_L.second).weight(1F)
+                    .fillMaxHeight(),
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                FillRow { SectionUrls() }
+                FillRow { HorizontalDivider(thickness = 1.dp) }
+                FillRow { SectionLicense() }
+            }
+            Column(Modifier.fillMaxWidth().weight(1F)) { }
+        }
     }
 
     @Composable
@@ -164,27 +178,34 @@ class ComponentActivityAbout: PaganComponentActivity() {
     }
 
     @Composable
-    override fun LayoutSmallPortrait() {
-        TODO("Not yet implemented")
-    }
+    override fun LayoutSmallPortrait() = LayoutMediumPortrait()
 
     @Composable
-    override fun LayoutXLargeLandscape() {
-        TODO("Not yet implemented")
-    }
+    override fun LayoutXLargeLandscape() = LayoutLargeLandscape()
 
     @Composable
     override fun LayoutLargeLandscape() {
-        TODO("Not yet implemented")
+        FillRow {
+            Column(Modifier.fillMaxWidth().weight(1F)) { }
+            Column(
+                Modifier
+                    .verticalScroll(rememberScrollState())
+                    .width(SIZE_L.first).weight(1F)
+                    .fillMaxHeight(),
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                FillRow { SectionUrls() }
+                FillRow { HorizontalDivider(thickness = 1.dp) }
+                FillRow { SectionLicense() }
+            }
+            Column(Modifier.fillMaxWidth().weight(1F)) { }
+        }
     }
 
     @Composable
-    override fun LayoutMediumLandscape() {
-        TODO("Not yet implemented")
-    }
+    override fun LayoutMediumLandscape() = LayoutMediumPortrait()
 
     @Composable
-    override fun LayoutSmallLandscape() {
-        TODO("Not yet implemented")
-    }
+    override fun LayoutSmallLandscape() = LayoutMediumPortrait()
 }

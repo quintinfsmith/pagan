@@ -3640,10 +3640,20 @@ open class OpusLayerBase: Effectable {
         }
 
         val tempo_controller = this.get_controller<OpusTempoEvent>(EffectType.Tempo)
-        apply_active_controller(tempo_controller) { event: OpusTempoEvent, _: OpusTempoEvent?, _: Int ->
-            listOf(
-                Pair(0, SetTempo.Companion.from_bpm((event.value * 1000f).roundToInt() / 1000F))
-            )
+        apply_active_controller(tempo_controller) { event: OpusTempoEvent, previous_event: OpusTempoEvent?, frames: Int ->
+            when (event.transition) {
+                EffectTransition.RInstant -> {
+                    listOf(
+                        Pair(0, SetTempo.Companion.from_bpm((event.value * 1000f).roundToInt() / 1000F)),
+                        Pair(frames, SetTempo.Companion.from_bpm(((previous_event?.value ?: 120F) * 1000f).roundToInt() / 1000F))
+                    )
+                }
+                else -> {
+                    listOf(
+                        Pair(0, SetTempo.Companion.from_bpm((event.value * 1000f).roundToInt() / 1000F))
+                    )
+                }
+            }
         }
 
         val channels = this.get_all_channels()

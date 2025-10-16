@@ -18,6 +18,7 @@ class PlaybackDevice(var activity: ActivityEditor, sample_handle_manager: Sample
     private var _first_beat_passed = false
     private var _buffering_cancelled = false
     private var _buffering_mutex = Mutex()
+    private var is_looping = false
     /*
         All of this notification stuff is used with the understanding that the PaganPlaybackDevice
         used to export wavs will be discarded after a single use. It'll need to be cleaned up to
@@ -65,9 +66,7 @@ class PlaybackDevice(var activity: ActivityEditor, sample_handle_manager: Sample
     }
 
     override fun on_mark(i: Int) {
-        if (!this.is_playing || this.play_cancelled) {
-            return
-        }
+        if (!this.is_playing || this.play_cancelled) return
 
         // used to hide the loading reticle at on_start, but first beat prevents
         // hiding it, then [potentially] waiting to buffer
@@ -81,12 +80,13 @@ class PlaybackDevice(var activity: ActivityEditor, sample_handle_manager: Sample
         }
 
         val opus_manager = this.activity.get_opus_manager()
-        if (i >= opus_manager.length) {
+
+        if (!this.is_looping && i >= opus_manager.length) {
             this.kill()
             return
         }
 
-        opus_manager.cursor_select_column(max(i, 0))
+        opus_manager.cursor_select_column(max(i % opus_manager.length, 0))
     }
 
     override fun on_cancelled() {
@@ -94,7 +94,7 @@ class PlaybackDevice(var activity: ActivityEditor, sample_handle_manager: Sample
         (this.sample_frame_map as PlaybackFrameMap).clear()
     }
 
-    fun play_opus(start_beat: Int) {
+    fun play_opus(start_beat: Int, play_in_loop: Boolean = false) {
         this._first_beat_passed = false
         (this.sample_frame_map as PlaybackFrameMap).clip_same_line_release = this.activity.configuration.clip_same_line_release
         (this.sample_frame_map as PlaybackFrameMap).parse_opus()
@@ -104,6 +104,7 @@ class PlaybackDevice(var activity: ActivityEditor, sample_handle_manager: Sample
             (this.sample_frame_map as PlaybackFrameMap).check_frame(i)
         }
 
+        this.is_looping = play_in_loop
         this.play(start_frame)
     }
 }

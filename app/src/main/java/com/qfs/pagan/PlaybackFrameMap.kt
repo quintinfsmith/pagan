@@ -35,7 +35,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     companion object {
         var merge_offset_gen = 1
 
-
         fun calculate_beat_frames(beat_count: Int, sample_rate: Int, tempo_map: List<Pair<Rational, Float>>): IntArray? {
             if (tempo_map.isEmpty()) return null
 

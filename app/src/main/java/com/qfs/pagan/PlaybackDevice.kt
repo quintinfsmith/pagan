@@ -18,7 +18,6 @@ class PlaybackDevice(var activity: ActivityEditor, sample_handle_manager: Sample
     private var _first_beat_passed = false
     private var _buffering_cancelled = false
     private var _buffering_mutex = Mutex()
-    private var is_looping = false
     /*
         All of this notification stuff is used with the understanding that the PaganPlaybackDevice
         used to export wavs will be discarded after a single use. It'll need to be cleaned up to
@@ -81,7 +80,7 @@ class PlaybackDevice(var activity: ActivityEditor, sample_handle_manager: Sample
 
         val opus_manager = this.activity.get_opus_manager()
 
-        if (!this.is_looping && i >= opus_manager.length) {
+        if (!(this.sample_frame_map as PlaybackFrameMap).is_looping && i >= opus_manager.length) {
             this.kill()
             return
         }
@@ -97,6 +96,7 @@ class PlaybackDevice(var activity: ActivityEditor, sample_handle_manager: Sample
     fun play_opus(start_beat: Int, play_in_loop: Boolean = false) {
         this._first_beat_passed = false
         (this.sample_frame_map as PlaybackFrameMap).clip_same_line_release = this.activity.configuration.clip_same_line_release
+        (this.sample_frame_map as PlaybacFrameMap).is_looping = play_in_loop
         (this.sample_frame_map as PlaybackFrameMap).parse_opus()
         val start_frame = this.sample_frame_map.get_marked_frame(start_beat)!!
         // Prebuild the first buffer's worth of sample handles, the rest happen in the get_new_handles()
@@ -104,7 +104,6 @@ class PlaybackDevice(var activity: ActivityEditor, sample_handle_manager: Sample
             (this.sample_frame_map as PlaybackFrameMap).check_frame(i)
         }
 
-        this.is_looping = play_in_loop
         this.play(start_frame)
     }
 }

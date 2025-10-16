@@ -293,6 +293,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     private val _percussion_setter_ids = mutableSetOf<Int>()
 
     private val _effect_profiles = mutableListOf<Triple<Int, Int, ProfileBuffer>>()
+    private var frame_count = 0
+    var is_looping: Boolean = false
 
     var clip_same_line_release = false
 
@@ -342,7 +344,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     override fun has_frames_remaining(frame: Int): Boolean {
-        return (this._frame_map.isNotEmpty() && this._frame_map.keys.maxOf { it } >= frame)
+        return this.is_looping
+                || (this._frame_map.isNotEmpty() && this._frame_map.keys.maxOf { it } >= frame)
                 || (this._setter_frame_map.isNotEmpty() && this._setter_frame_map.keys.maxOf { it } >= frame)
                 || this.get_marked_frames().last() >= frame
     }
@@ -380,8 +383,20 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 )
             }
 
+            // TODO: I don't think this is necessary as a loop
             for (i in range.first until frame) {
                 this._setter_frame_map.remove(i)
+            }
+
+            if (this.is_looping) {
+                this._setter_map[setter_id] = handle_getter
+                this._setter_range_map[setter_id] = range.first + this.frame_count .. range.last + this.frame_count
+
+                if (!this._setter_frame_map.containsKey(range.first + this.frame_count)) {
+                    this._setter_frame_map[range.first + this.frame_count] = mutableSetOf()
+                }
+
+                this._setter_frame_map[range.first + this.frame_count]!!.add(setter_id)
             }
         }
 
@@ -505,6 +520,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         this.map_tempo_changes(this.opus_manager.get_controller<OpusTempoEvent>(PaganEffectType.Tempo) as TempoController)
         this._cache_beat_frames()
+
+        this.frame_count = PlaybackFrameMap.calculate_beat_frames(this.opus_manager.length, this._sample_handle_manager.sample_rate, this._tempo_ratio_map).second
 
         this.setup_effect_buffers(ignore_global_controls, ignore_channel_controls, ignore_line_controls)
         this.opus_manager.channels.forEachIndexed { c: Int, channel: OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>> ->

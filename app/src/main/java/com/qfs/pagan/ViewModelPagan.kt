@@ -1,20 +1,11 @@
 package com.qfs.pagan
 
-import android.content.pm.ActivityInfo
-import android.net.Uri
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.qfs.pagan.PaganConfiguration.MoveMode
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlin.properties.Delegates
+import kotlin.properties.Delegates.observable
 
 class ViewModelPagan: ViewModel() {
     var _title_callbacks = mutableListOf<(String?) -> Unit>()
-    var title: String? by Delegates.observable(null) { _, _, new_value ->
+    var title: String? by observable(null) { _, _, new_value ->
         this._title_callbacks.forEach { it(new_value) }
     }
 

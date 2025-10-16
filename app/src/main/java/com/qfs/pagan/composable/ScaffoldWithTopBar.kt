@@ -21,7 +21,6 @@ fun ScaffoldWithTopBar(title: String, force_night_mode: MutableState<Int>, conte
         AppCompatDelegate.MODE_NIGHT_NO -> false
         else -> isSystemInDarkTheme()
     }
-
     PaganTheme(is_night_mode) {
         Scaffold(
             contentWindowInsets = WindowInsets.systemBars,

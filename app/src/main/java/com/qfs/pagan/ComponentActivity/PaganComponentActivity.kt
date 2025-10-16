@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ViewModelPagan
 import com.qfs.pagan.composable.ScaffoldWithTopBar
+import androidx.lifecycle.ViewModel
 import kotlin.getValue
 
 abstract class PaganComponentActivity: ComponentActivity() {

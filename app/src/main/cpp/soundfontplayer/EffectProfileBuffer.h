@@ -58,7 +58,11 @@ class EffectProfileBuffer {
             if (this->data == nullptr || this->data->frames == nullptr) return;
 
             // First set the working frame
-            this->current_frame = frame;
+            if (this->data->actual_size > 0) {
+                this->current_frame = frame % this->data->actual_size;
+            } else {
+                this->current_frame = frame;
+            }
 
             // Find the active event
             this->current_index = 0;
@@ -100,6 +104,12 @@ class EffectProfileBuffer {
     private:
         void _move_to_next_frame() {
             this->current_frame++;
+
+            if (this->data->actual_size > 0 && this->current_frame > this->data->actual_size) {
+                this->set_frame(this->current_frame % this->data->actual_size);
+                return;
+            }
+
             if (this->current_index >= this->data->frame_count) {
                 // Nothing to be done
             } else {

@@ -22,6 +22,7 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
         var max_frame = -1
         var volume = .6F
         val volume_event_data = ControllerEventData(
+            0,
             listOf(ControllerEventData.IndexedProfileBufferFrame(
                 first_frame = 0,
                 last_frame = 0,

@@ -323,14 +323,17 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         )
     }
 
-    override fun get_marked_frame(i: Int): Int {
+    override fun get_marked_frame(i: Int): Int? {
         val marked_frames = this.get_marked_frames()
+
         return if (marked_frames.isEmpty()) {
             0
-        } else {
+        } else if (this.is_looping) {
             marked_frames.let {
-                it[i % it.size]
+                it[i % (it.size - 1)] + (i / (it.size - 1) * this.frame_count)
             }
+        } else {
+            marked_frames.let { it[i % it.size] }
         }
     }
 
@@ -388,31 +391,43 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 this._setter_frame_map.remove(i)
             }
 
-            if (this.is_looping) {
-                this._setter_map[setter_id] = handle_getter
-                this._setter_range_map[setter_id] = range.first + this.frame_count .. range.last + this.frame_count
-
-                if (!this._setter_frame_map.containsKey(range.first + this.frame_count)) {
-                    this._setter_frame_map[range.first + this.frame_count] = mutableSetOf()
-                }
-
-                this._setter_frame_map[range.first + this.frame_count]!!.add(setter_id)
-            }
+            this.replace_handle(handle_getter, setter_id, range.first + this.frame_count .. range.last + this.frame_count)
         }
 
         return output
+    }
+
+    fun replace_handle(handle_getter: () -> Set<Pair<SampleHandle, IntArray>>, map_id: Int, new_range: IntRange) {
+        if (!this.is_looping) return
+
+        this._setter_map[map_id] = handle_getter
+        this._setter_range_map[map_id] = new_range
+
+        if (!this._setter_frame_map.containsKey(new_range.first)) {
+            this._setter_frame_map[new_range.first] = mutableSetOf()
+        }
+
+        this._setter_frame_map[new_range.first]!!.add(map_id)
     }
 
     // End FrameMap Interface --------------------------
     fun check_frame(frame: Int) {
         if (!this._setter_frame_map.containsKey(frame)) return
 
+        val setter_ids = mutableListOf<Int>()
         for (setter_id in this._setter_frame_map.remove(frame)!!) {
-            val handles = this._setter_map.remove(setter_id)?.let { it() } ?: continue
-            this._setter_range_map.remove(setter_id)
+            setter_ids.add(setter_id)
+        }
+
+        for (setter_id in setter_ids) {
+            val handle_function = this._setter_map.remove(setter_id) ?: continue
+            val previous_range = this._setter_range_map.remove(setter_id) ?: continue
+
+            val handles = handle_function()
             for (handle in handles) {
                 this._map_real_handle(handle, frame)
             }
+            this.replace_handle(handle_function, setter_id, previous_range.first + this.frame_count .. previous_range.last + this.frame_count)
         }
     }
 
@@ -490,7 +505,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             val handle_uuid_set = mutableSetOf<Int>()
             for (handle in handles) {
                 handle.release_frame = end_frame - start_frame
-
                 if (next_event_frame != null) {
                     // Remove release phase. can get noisy on things like tubular bells with long fade outs
                     //handle.volume_envelope.frames_release = min(this._sample_handle_manager.sample_rate / 11, handle.volume_envelope.frames_release)
@@ -521,7 +535,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this.map_tempo_changes(this.opus_manager.get_controller<OpusTempoEvent>(PaganEffectType.Tempo) as TempoController)
         this._cache_beat_frames()
 
-        this.frame_count = PlaybackFrameMap.calculate_beat_frames(this.opus_manager.length, this._sample_handle_manager.sample_rate, this._tempo_ratio_map).second
+         this.frame_count = this._cached_beat_frames!!.last()
 
         this.setup_effect_buffers(ignore_global_controls, ignore_channel_controls, ignore_line_controls)
         this.opus_manager.channels.forEachIndexed { c: Int, channel: OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>> ->
@@ -665,6 +679,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 layer_key,
                 ProfileBuffer(
                     ControllerEventData(
+                        this.frame_count,
                         control_event_data,
                         control_type
                     )

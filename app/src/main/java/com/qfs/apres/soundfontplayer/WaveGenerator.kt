@@ -227,6 +227,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                 val key = merge_keys[FrameMap.LAYER_SAMPLE]
                 this.temporary_sample_effects[key] = ProfileBuffer(
                     ControllerEventData(
+                        0,
                         listOf(
                             ControllerEventData.IndexedProfileBufferFrame(
                                 initial_frame + offset,

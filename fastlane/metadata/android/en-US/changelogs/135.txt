@@ -1,0 +1,7 @@
+Looped Playback!
+    You asked for it - I finally got around to it! Tap-and-Hold play button to play song in loop.
+
+Bugfixes
+    Temporary tempo changes apply to midi.
+    Changes in tempo during events skewing the end position of those events
+

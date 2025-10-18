@@ -24,8 +24,8 @@ class MidiPlayer: VirtualMidiInputDevice() {
 
         this.playing = true
         val grouped_events = midi.get_all_events_grouped()
+        val ppqn = midi.get_ppqn()
         while (true) {
-            val ppqn = midi.get_ppqn()
             var us_per_tick = 60000000 / (ppqn * 120)
             var previous_tick = 0
             val start_time = System.currentTimeMillis()
@@ -93,8 +93,11 @@ class MidiPlayer: VirtualMidiInputDevice() {
                 }
             }
 
-            if (!loop_playback) break
+            if (!loop_playback || !this.playing) break
         }
+
+        // Ensure playing is off
+        this.playing = false
 
         for ((channel, index, is_midi2) in notes_on) {
             val event: GeneralMIDIEvent = if (is_midi2) {
@@ -116,7 +119,6 @@ class MidiPlayer: VirtualMidiInputDevice() {
 
         this.send_event(MIDIStop())
 
-        this.playing = false
 
         if (callback != null) {
             callback()

@@ -95,13 +95,19 @@ class PlaybackDevice(var activity: ActivityEditor, sample_handle_manager: Sample
 
     fun play_opus(start_beat: Int, play_in_loop: Boolean = false) {
         this._first_beat_passed = false
-        (this.sample_frame_map as PlaybackFrameMap).clip_same_line_release = this.activity.configuration.clip_same_line_release
-        (this.sample_frame_map as PlaybackFrameMap).is_looping = play_in_loop
-        (this.sample_frame_map as PlaybackFrameMap).parse_opus()
-        val start_frame = this.sample_frame_map.get_marked_frame(start_beat)!!
+        val sample_frame_map = this.sample_frame_map as PlaybackFrameMap
+        sample_frame_map.clip_same_line_release = this.activity.configuration.clip_same_line_release
+        sample_frame_map.is_looping = play_in_loop
+        sample_frame_map.parse_opus()
+        val start_frame = sample_frame_map.get_marked_frame(start_beat)!!
+
         // Prebuild the first buffer's worth of sample handles, the rest happen in the get_new_handles()
         for (i in start_frame .. start_frame + this.buffer_size) {
-            (this.sample_frame_map as PlaybackFrameMap).check_frame(i)
+            sample_frame_map.check_frame(i)
+        }
+
+        if (play_in_loop && start_frame != 0) {
+            sample_frame_map.shift_before_frame(start_frame)
         }
 
         this.play(start_frame)

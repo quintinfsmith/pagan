@@ -386,11 +386,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 )
             }
 
-            // TODO: I don't think this is necessary as a loop
-            for (i in range.first until frame) {
-                this._setter_frame_map.remove(i)
-            }
-
+            this._setter_frame_map.remove(range.first)
             this.replace_handle(handle_getter, setter_id, range.first + this.frame_count .. range.last + this.frame_count)
         }
 
@@ -535,7 +531,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this.map_tempo_changes(this.opus_manager.get_controller<OpusTempoEvent>(PaganEffectType.Tempo) as TempoController)
         this._cache_beat_frames()
 
-         this.frame_count = this._cached_beat_frames!!.last()
+        this.frame_count = this._cached_beat_frames!!.last()
+
 
         this.setup_effect_buffers(ignore_global_controls, ignore_channel_controls, ignore_line_controls)
         this.opus_manager.channels.forEachIndexed { c: Int, channel: OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>> ->
@@ -552,6 +549,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 }
             }
         }
+
     }
 
     fun setup_effect_buffers(ignore_global_controls: Boolean = false, ignore_channel_controls: Boolean = false, ignore_line_controls: Boolean = false) {
@@ -861,5 +859,21 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             note = note,
             bend = bend
         )
+    }
+
+    fun shift_before_frame(frame: Int) {
+        val setter_ids_to_remove = mutableSetOf<Int>()
+        for ((setter_id, range) in this._setter_range_map) {
+            if ((0 until frame).contains(range.first)) {
+                setter_ids_to_remove.add(setter_id)
+            }
+        }
+
+        for (setter_id in setter_ids_to_remove) {
+            val range = this._setter_range_map[setter_id] ?: continue
+            val handle_getter = this._setter_map.remove(setter_id) ?: continue
+            this._setter_frame_map.remove(range.first)
+            this.replace_handle(handle_getter, setter_id, range.first + this.frame_count .. range.last + this.frame_count)
+        }
     }
 }

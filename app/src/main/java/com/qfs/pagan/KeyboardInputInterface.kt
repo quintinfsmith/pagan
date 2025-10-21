@@ -504,11 +504,11 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
         Pair(KeyEvent.KEYCODE_R, true) to object: CursorSpecificKeyStrokeNode(this) {
             private fun _set_relative_mode(opus_manager: OpusManager, force_mode: RelativeInputMode = RelativeInputMode.Absolute) {
                 if (opus_manager.relative_mode == RelativeInputMode.Absolute) {
-                    val activity = opus_manager.get_activity()
-                    if (activity != null) {
-                        activity.configuration.relative_mode = true
-                        activity.save_configuration()
-                    }
+                    //val activity = opus_manager.get_activity()
+                    //if (activity != null) {
+                    //    activity.configuration.relative_mode = true
+                    //    activity.save_configuration()
+                    //}
                 }
 
                 if (opus_manager.relative_mode != force_mode) {
@@ -676,7 +676,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
         Pair(KeyEvent.KEYCODE_W, true) to object: KeyStrokeNode(this) {
             override fun call(opus_manager: OpusLayerInterface, ctrl_pressed: Boolean): Boolean {
                 println("???")
-                opus_manager.get_activity()?.project_save()
+                //opus_manager.get_activity()?.project_save()
                 return true
             }
         },

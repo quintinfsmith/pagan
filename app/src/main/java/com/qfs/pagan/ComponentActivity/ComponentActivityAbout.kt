@@ -34,9 +34,11 @@ class ComponentActivityAbout: PaganComponentActivity() {
             content = content
         )
     }
+
     @Composable
     fun SectionLicense() {
-        val stream = this.assets.open("LICENSE")
+        val context = LocalContext.current.find_activity() ?: return
+        val stream = context.assets.open("LICENSE")
         val bytes = ByteArray(stream.available())
         stream.read(bytes)
         stream.close()

@@ -9,7 +9,6 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.database.Observable
 import android.graphics.Color
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri
@@ -1074,7 +1073,7 @@ class ActivityEditor : PaganActivity() {
         }
 
         this.editor_view_model.action_interface.attach_activity(this)
-        this.editor_view_model.opus_manager.attach_activity(this)
+        // this.editor_view_model.opus_manager.attach_activity(this)
 
         //////////////////////////////////////////
         if (this.editor_view_model.active_midi_device == null) {

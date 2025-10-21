@@ -1,12 +1,4 @@
 package com.qfs.pagan
-import android.content.res.Configuration
-import android.view.View
-import android.widget.TextView
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import com.qfs.apres.Midi
 import com.qfs.json.JSONHashMap
 import com.qfs.pagan.Activity.ActivityEditor
@@ -21,7 +13,6 @@ import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.GlobalEffectRowNotVisible
 import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.LineEffectRowNotVisible
-import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusLineAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusPercussionChannel
@@ -36,7 +27,6 @@ import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import com.qfs.pagan.structure.opusmanager.history.OpusLayerHistory
 import com.qfs.pagan.structure.rationaltree.InvalidGetCall
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
-import com.qfs.pagan.uibill.BillableItem
 import com.qfs.pagan.uibill.UIChangeBill
 import kotlin.math.abs
 import kotlin.math.max
@@ -945,7 +935,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 )
             )!!
 
-            this.get_editor_table().swap_mapped_lines(vis_line_a, vis_line_b)
+            // this.get_editor_table().swap_mapped_lines(vis_line_a, vis_line_b)
             this._swap_line_ui_update(channel_index_a, line_offset_a, channel_index_b, line_offset_b)
         }
     }
@@ -1159,47 +1149,47 @@ class OpusLayerInterface : OpusLayerHistory() {
         return true
     }
 
-    private fun _pre_remove_channel(channel: Int): Triple<Int, Int, List<Int>> {
-        val y = try {
-            this.get_instrument_line_index(channel, 0)
-        } catch (_: IndexOutOfBoundsException) {
-            this.get_total_line_count()
-        }
+    // private fun _pre_remove_channel(channel: Int): Triple<Int, Int, List<Int>> {
+    //     val y = try {
+    //         this.get_instrument_line_index(channel, 0)
+    //     } catch (_: IndexOutOfBoundsException) {
+    //         this.get_total_line_count()
+    //     }
 
-        val ctl_row = this.get_visible_row_from_ctl_line(this.get_actual_line_index(y))!!
-        val channels = this.get_all_channels()
-        var removed_row_count = channels[channel].size
+    //     val ctl_row = this.get_visible_row_from_ctl_line(this.get_actual_line_index(y))!!
+    //     val channels = this.get_all_channels()
+    //     var removed_row_count = channels[channel].size
 
-        // NOTE: Accessing this.channels instead of this.get_all_channels since it's not possible to remove percussion channel
-        for ((_, controller) in channels[channel].controllers.get_all()) {
-            if (controller.visible) {
-                removed_row_count += 1
-            }
-        }
+    //     // NOTE: Accessing this.channels instead of this.get_all_channels since it's not possible to remove percussion channel
+    //     for ((_, controller) in channels[channel].controllers.get_all()) {
+    //         if (controller.visible) {
+    //             removed_row_count += 1
+    //         }
+    //     }
 
-        for (j in 0 until channels[channel].lines.size) {
-            val line = channels[channel].lines[j]
-            for ((_, controller) in line.controllers.get_all()) {
-                if (controller.visible) {
-                    removed_row_count += 1
-                }
-            }
-        }
+    //     for (j in 0 until channels[channel].lines.size) {
+    //         val line = channels[channel].lines[j]
+    //         for ((_, controller) in line.controllers.get_all()) {
+    //             if (controller.visible) {
+    //                 removed_row_count += 1
+    //             }
+    //         }
+    //     }
 
-        val changed_columns = this.get_editor_table().remove_mapped_lines(ctl_row, removed_row_count)
+    //     val changed_columns = this.get_editor_table().remove_mapped_lines(ctl_row, removed_row_count)
 
-        return Triple(ctl_row, removed_row_count, changed_columns)
-    }
+    //     return Triple(ctl_row, removed_row_count, changed_columns)
+    // }
 
     override fun remove_channel(channel: Int) {
         if (!this._ui_change_bill.is_full_locked()) {
             this.lock_ui_partial {
-                val (ctl_row, removed_row_count, changed_columns) = this._pre_remove_channel(channel)
+                //val (ctl_row, removed_row_count, changed_columns) = this._pre_remove_channel(channel)
                 super.remove_channel(channel)
                 // this.get_activity()?.shift_down_percussion_names(channel)
                 this._ui_change_bill.queue_remove_channel(channel)
-                this._ui_change_bill.queue_row_removal(ctl_row, removed_row_count)
-                this._ui_change_bill.queue_column_changes(changed_columns, false)
+                // this._ui_change_bill.queue_row_removal(ctl_row, removed_row_count)
+                // this._ui_change_bill.queue_column_changes(changed_columns, false)
             }
         } else {
             super.remove_channel(channel)
@@ -1346,35 +1336,33 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     override fun to_json(): JSONHashMap {
         val output = super.to_json()
-        val activity = this.get_activity() ?: return output
-        if (activity.configuration.soundfont != null) {
-            output.get_hashmap("d")["sf"] = activity.configuration.soundfont
-        }
+        //val activity = this.get_activity() ?: return output
+        //if (activity.configuration.soundfont != null) {
+        //    output.get_hashmap("d")["sf"] = activity.configuration.soundfont
+        //}
         return output
     }
 
     override fun _project_change_json(json_data: JSONHashMap) {
         super._project_change_json(json_data)
         if (!this._in_reload) {
-            val activity = this.get_activity() ?: return
-            if (! activity.configuration.use_preferred_soundfont) {
-                return
-            }
+            //val activity = this.get_activity() ?: return
+            //if (! activity.configuration.use_preferred_soundfont) return
 
-            val sf_path = json_data.get_hashmap("d").get_stringn("sf") ?: return
-            if (sf_path != activity.configuration.soundfont) {
-                val original_soundfont = activity.configuration.soundfont
-                activity.configuration.soundfont = sf_path
-                // Try opening the assigned soundfont, but if it fails for any reason, go back to the
-                // Currently active one.
-                try {
-                    activity.set_soundfont()
-                } catch (_: Exception) {
-                    activity.configuration.soundfont = original_soundfont
-                    activity.set_soundfont()
-                }
-                activity.save_configuration()
-            }
+            //val sf_path = json_data.get_hashmap("d").get_stringn("sf") ?: return
+            //if (sf_path != activity.configuration.soundfont) {
+            //    val original_soundfont = activity.configuration.soundfont
+            //    activity.configuration.soundfont = sf_path
+            //    // Try opening the assigned soundfont, but if it fails for any reason, go back to the
+            //    // Currently active one.
+            //    try {
+            //        activity.set_soundfont()
+            //    } catch (_: Exception) {
+            //        activity.configuration.soundfont = original_soundfont
+            //        activity.set_soundfont()
+            //    }
+            //    activity.save_configuration()
+            //}
         }
     }
 
@@ -1413,11 +1401,11 @@ class OpusLayerInterface : OpusLayerHistory() {
             if (!this._ui_change_bill.is_full_locked()) {
                 // Updating channel instruments doesn't strictly need to be gated behind the full lock,
                 // BUT this way these don't get called multiple times every setup
-                val activity = this.get_activity()
-                activity?.update_channel_instrument(
-                    this.get_all_channels()[channel].get_midi_channel(),
-                    instrument
-                )
+                // val activity = this.get_activity()
+                // activity?.update_channel_instrument(
+                //     this.get_all_channels()[channel].get_midi_channel(),
+                //     instrument
+                // )
 
                 this._ui_change_bill.queue_refresh_channel(channel)
                 this._ui_change_bill.queue_refresh_context_menu()
@@ -1744,7 +1732,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     // CURSOR FUNCTIONS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     //------------------------------------------------------------------------
     private fun _set_temporary_blocker(beat_key: BeatKey, position: List<Int>) {
-        this.get_activity()?.vibrate()
+        //this.get_activity()?.vibrate()
         this.lock_ui_partial {
             this.temporary_blocker = OpusManagerCursor(
                 mode = CursorMode.Single,
@@ -1757,7 +1745,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     private fun _set_temporary_blocker_line_ctl(type: EffectType, beat_key: BeatKey, position: List<Int>) {
-        this.get_activity()?.vibrate()
+        //this.get_activity()?.vibrate()
         this.lock_ui_partial {
             this.temporary_blocker = OpusManagerCursor(
                 mode = CursorMode.Single,
@@ -2326,72 +2314,70 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     private fun _init_editor_table_width_map() {
-        if (this._ui_change_bill.is_full_locked()) {
-            return
-        }
+        if (this._ui_change_bill.is_full_locked()) return
+       //
+       //  val editor_table = this.get_editor_table()
+       //  editor_table.clear_column_map()
 
-        val editor_table = this.get_editor_table()
-        editor_table.clear_column_map()
+       //  for (beat in 0 until this.length) {
+       //      val column = mutableListOf<Int>()
+       //      this.get_visible_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*,*> ->
+       //          for (j in channel.lines.indices) {
+       //              val tree = this.get_tree(BeatKey(i, j, beat))
+       //              column.add(tree.weighted_size)
 
-        for (beat in 0 until this.length) {
-            val column = mutableListOf<Int>()
-            this.get_visible_channels().forEachIndexed { i: Int, channel: OpusChannelAbstract<*,*> ->
-                for (j in channel.lines.indices) {
-                    val tree = this.get_tree(BeatKey(i, j, beat))
-                    column.add(tree.weighted_size)
+       //              for ((_, controller) in channel.lines[j].controllers.get_all()) {
+       //                  if (!controller.visible) continue
+       //                  val ctl_tree = controller.get_tree(beat)
+       //                  column.add(ctl_tree.weighted_size)
+       //              }
+       //          }
 
-                    for ((_, controller) in channel.lines[j].controllers.get_all()) {
-                        if (!controller.visible) continue
-                        val ctl_tree = controller.get_tree(beat)
-                        column.add(ctl_tree.weighted_size)
-                    }
-                }
+       //          for ((_, controller) in channel.controllers.get_all()) {
+       //              if (!controller.visible) continue
+       //              val ctl_tree = controller.get_tree(beat)
+       //              column.add(ctl_tree.weighted_size)
+       //          }
+       //      }
 
-                for ((_, controller) in channel.controllers.get_all()) {
-                    if (!controller.visible) continue
-                    val ctl_tree = controller.get_tree(beat)
-                    column.add(ctl_tree.weighted_size)
-                }
-            }
+       //      for ((_, controller) in this.controllers.get_all()) {
+       //          if (!controller.visible) continue
+       //          val ctl_tree = controller.get_tree(beat)
+       //          column.add(ctl_tree.weighted_size)
+       //      }
 
-            for ((_, controller) in this.controllers.get_all()) {
-                if (!controller.visible) continue
-                val ctl_tree = controller.get_tree(beat)
-                column.add(ctl_tree.weighted_size)
-            }
-
-            editor_table.add_column_to_map(beat, column)
-        }
+       //      editor_table.add_column_to_map(beat, column)
+       //  }
     }
 
     private fun _add_line_to_column_width_map(y: Int, line: OpusLineAbstract<*>) {
         if (this._ui_change_bill.is_full_locked()) return
 
-        val column_updates = this.get_editor_table().add_line_to_map(
-            y,
-            List(this.length) { x: Int ->
-                val tree = line.beats[x]
-                tree.weighted_size
-            }
-        )
+       // val column_updates = this.get_editor_table().add_line_to_map(
+       //     y,
+       //     List(this.length) { x: Int ->
+       //         val tree = line.beats[x]
+       //         tree.weighted_size
+       //     }
+       // )
 
         this._ui_change_bill.queue_new_row(y)
-        this._ui_change_bill.queue_column_changes(column_updates, false)
+        //this._ui_change_bill.queue_column_changes(column_updates, false)
     }
 
     private fun _add_controller_to_column_width_map(y: Int, line: EffectController<*>) {
         if (this._ui_change_bill.is_full_locked()) return
 
-        val column_updates = this.get_editor_table().add_line_to_map(
-            y,
-            List(this.length) { x: Int ->
-                val tree = line.beats[x]
-                tree.weighted_size
-            }
-        )
+        // val column_updates = this.get_editor_table().add_line_to_map(
+        //     y,
+        //     List(this.length) { x: Int ->
+        //         val tree = line.beats[x]
+        //         tree.weighted_size
+        //     }
+        // )
 
         this._ui_change_bill.queue_new_row(y)
-        this._ui_change_bill.queue_column_changes(column_updates, false)
+        // this._ui_change_bill.queue_column_changes(column_updates, false)
     }
 
     private fun _update_after_new_line(channel: Int, line_offset: Int?) {
@@ -2399,7 +2385,8 @@ class OpusLayerInterface : OpusLayerHistory() {
         val adj_line_offset = line_offset ?: (working_channel.lines.size - 1)
 
 
-        if (this._ui_change_bill.is_full_locked() || this.get_activity() == null) return
+        //if (this._ui_change_bill.is_full_locked() || this.get_activity() == null) return
+        if (this._ui_change_bill.is_full_locked()) return
 
         val abs_offset = this.get_instrument_line_index(channel, adj_line_offset)
         val row_index = this.get_actual_line_index(abs_offset)
@@ -2444,255 +2431,257 @@ class OpusLayerInterface : OpusLayerHistory() {
             column.add(1)
         }
 
-        this.get_editor_table().add_column_to_map(index, column)
+       // this.get_editor_table().add_column_to_map(index, column)
     }
 
     // UI FUNCS -----------------------
     private fun _apply_bill_changes() {
-        val editor_table = try {
-            this.get_editor_table()
-        } catch (_: MissingEditorTableException) {
-            this._ui_change_bill.clear()
-            return
-        }
+        return
+    //    
+    //    val editor_table = try {
+    //        this.get_editor_table()
+    //    } catch (_: MissingEditorTableException) {
+    //        this._ui_change_bill.clear()
+    //        return
+    //    }
 
-        this.run_on_ui_thread { activity: ActivityEditor ->
-            this._ui_change_bill.consolidate()
-            while (true) {
-                val entry = this._ui_change_bill.get_next_entry()
-                when (entry) {
-                    BillableItem.ForceScroll -> {
-                        val y = this._ui_change_bill.get_next_int()
-                        val x = this._ui_change_bill.get_next_int()
-                        val offset = Rational(
-                            this._ui_change_bill.get_next_int(),
-                            this._ui_change_bill.get_next_int()
-                        )
+    //    this.run_on_ui_thread { activity: ActivityEditor ->
+    //        this._ui_change_bill.consolidate()
+    //        while (true) {
+    //            val entry = this._ui_change_bill.get_next_entry()
+    //            when (entry) {
+    //                BillableItem.ForceScroll -> {
+    //                    val y = this._ui_change_bill.get_next_int()
+    //                    val x = this._ui_change_bill.get_next_int()
+    //                    val offset = Rational(
+    //                        this._ui_change_bill.get_next_int(),
+    //                        this._ui_change_bill.get_next_int()
+    //                    )
 
-                        val offset_width = Rational(
-                            this._ui_change_bill.get_next_int(),
-                            this._ui_change_bill.get_next_int()
-                        )
-                        val force = this._ui_change_bill.get_next_int() != 0
+    //                    val offset_width = Rational(
+    //                        this._ui_change_bill.get_next_int(),
+    //                        this._ui_change_bill.get_next_int()
+    //                    )
+    //                    val force = this._ui_change_bill.get_next_int() != 0
 
-                        // Detach from order and thread after ui updates are finished
-                        editor_table.scroll_to_position(
-                            y = if (y == -1) null else y,
-                            x = if (x == -1) null else x,
-                            offset = offset.numerator.toFloat() / offset.denominator.toFloat(),
-                            offset_width = offset_width.numerator.toFloat() / offset_width.denominator.toFloat(),
-                            force = force
-                        )
-                    }
+    //                    // Detach from order and thread after ui updates are finished
+    //                    editor_table.scroll_to_position(
+    //                        y = if (y == -1) null else y,
+    //                        x = if (x == -1) null else x,
+    //                        offset = offset.numerator.toFloat() / offset.denominator.toFloat(),
+    //                        offset_width = offset_width.numerator.toFloat() / offset_width.denominator.toFloat(),
+    //                        force = force
+    //                    )
+    //                }
 
-                    BillableItem.FullRefresh -> {
-                        activity.setup_project_config_drawer()
-                        activity.update_menu_options()
+    //                BillableItem.FullRefresh -> {
+    //                    activity.setup_project_config_drawer()
+    //                    activity.update_menu_options()
 
-                        this._init_editor_table_width_map()
-                        editor_table.setup(this.get_row_count(), this.length)
-                        activity.update_title_text()
-                        activity.clear_context_menu()
-                    }
+    //                    this._init_editor_table_width_map()
+    //                    editor_table.setup(this.get_row_count(), this.length)
+    //                    activity.update_title_text()
+    //                    activity.clear_context_menu()
+    //                }
 
-                    BillableItem.RowAdd -> {
-                        editor_table.new_row(
-                            this._ui_change_bill.get_next_int()
-                        )
-                    }
+    //                BillableItem.RowAdd -> {
+    //                    editor_table.new_row(
+    //                        this._ui_change_bill.get_next_int()
+    //                    )
+    //                }
 
-                    BillableItem.RowRemove -> {
-                        editor_table.remove_rows(
-                            this._ui_change_bill.get_next_int(),
-                            this._ui_change_bill.get_next_int()
-                        )
-                    }
+    //                BillableItem.RowRemove -> {
+    //                    editor_table.remove_rows(
+    //                        this._ui_change_bill.get_next_int(),
+    //                        this._ui_change_bill.get_next_int()
+    //                    )
+    //                }
 
-                    BillableItem.RowChange -> {
-                        editor_table.notify_row_changed(
-                            this._ui_change_bill.get_next_int()
-                        )
-                    }
+    //                BillableItem.RowChange -> {
+    //                    editor_table.notify_row_changed(
+    //                        this._ui_change_bill.get_next_int()
+    //                    )
+    //                }
 
-                    BillableItem.ColumnAdd -> {
-                        editor_table.new_column(
-                            this._ui_change_bill.get_next_int()
-                        )
-                    }
+    //                BillableItem.ColumnAdd -> {
+    //                    editor_table.new_column(
+    //                        this._ui_change_bill.get_next_int()
+    //                    )
+    //                }
 
-                    BillableItem.ColumnRemove -> {
-                        editor_table.remove_column(
-                            this._ui_change_bill.get_next_int()
-                        )
-                    }
+    //                BillableItem.ColumnRemove -> {
+    //                    editor_table.remove_column(
+    //                        this._ui_change_bill.get_next_int()
+    //                    )
+    //                }
 
-                    BillableItem.ColumnChange -> {
-                        val column = this._ui_change_bill.get_next_int()
-                        if (column < editor_table.get_column_map_size()) {
-                            editor_table.recalculate_column_max(column)
-                            editor_table.notify_column_changed(column)
-                        }
-                    }
+    //                BillableItem.ColumnChange -> {
+    //                    val column = this._ui_change_bill.get_next_int()
+    //                    if (column < editor_table.get_column_map_size()) {
+    //                        editor_table.recalculate_column_max(column)
+    //                        editor_table.notify_column_changed(column)
+    //                    }
+    //                }
 
-                    BillableItem.CellChange -> {
-                        val cells = List(this._ui_change_bill.get_next_int()) {
-                            EditorTable.Coordinate(
-                                y = this._ui_change_bill.get_next_int(),
-                                x = this._ui_change_bill.get_next_int()
-                            )
-                        }
-                        editor_table.notify_cell_changes(cells)
-                    }
+    //                BillableItem.CellChange -> {
+    //                    val cells = List(this._ui_change_bill.get_next_int()) {
+    //                        EditorTable.Coordinate(
+    //                            y = this._ui_change_bill.get_next_int(),
+    //                            x = this._ui_change_bill.get_next_int()
+    //                        )
+    //                    }
+    //                    editor_table.notify_cell_changes(cells)
+    //                }
 
-                    BillableItem.ChannelChange -> {
-                        val channel = this._ui_change_bill.get_next_int()
+    //                BillableItem.ChannelChange -> {
+    //                    val channel = this._ui_change_bill.get_next_int()
 
-                        if (this.is_percussion(channel)) {
-                            activity.populate_active_percussion_names(channel, true)
-                        }
+    //                    if (this.is_percussion(channel)) {
+    //                        activity.populate_active_percussion_names(channel, true)
+    //                    }
 
-                        val channel_recycler = activity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-                        (channel_recycler.adapter as ChannelOptionAdapter?)?.let { adapter ->
-                            for (i in adapter.itemCount until this.channels.size) {
-                                adapter.add_channel()
-                            }
-                            (channel_recycler.adapter as ChannelOptionAdapter).notifyItemChanged(channel)
-                        }
-                    }
+    //                    val channel_recycler = activity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+    //                    (channel_recycler.adapter as ChannelOptionAdapter?)?.let { adapter ->
+    //                        for (i in adapter.itemCount until this.channels.size) {
+    //                            adapter.add_channel()
+    //                        }
+    //                        (channel_recycler.adapter as ChannelOptionAdapter).notifyItemChanged(channel)
+    //                    }
+    //                }
 
-                    BillableItem.ChannelAdd -> {
-                        val channel = this._ui_change_bill.get_next_int()
-                        val channel_recycler = activity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-                        (channel_recycler.adapter as ChannelOptionAdapter?)?.let { adapter ->
-                            for (i in adapter.itemCount until this.channels.size) {
-                                adapter.add_channel()
-                            }
-                        }
+    //                BillableItem.ChannelAdd -> {
+    //                    val channel = this._ui_change_bill.get_next_int()
+    //                    val channel_recycler = activity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+    //                    (channel_recycler.adapter as ChannelOptionAdapter?)?.let { adapter ->
+    //                        for (i in adapter.itemCount until this.channels.size) {
+    //                            adapter.add_channel()
+    //                        }
+    //                    }
 
-                        activity.update_channel_instruments(channel)
-                    }
+    //                    activity.update_channel_instruments(channel)
+    //                }
 
-                    BillableItem.ChannelRemove -> {
-                        val channel = this._ui_change_bill.get_next_int()
-                        val channel_recycler = activity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-                        (channel_recycler.adapter as ChannelOptionAdapter?)?.let { adapter ->
-                            for (i in adapter.itemCount until this.channels.size + 1) {
-                                adapter.add_channel()
-                            }
-                            adapter.remove_channel(channel)
-                        }
-                    }
+    //                BillableItem.ChannelRemove -> {
+    //                    val channel = this._ui_change_bill.get_next_int()
+    //                    val channel_recycler = activity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+    //                    (channel_recycler.adapter as ChannelOptionAdapter?)?.let { adapter ->
+    //                        for (i in adapter.itemCount until this.channels.size + 1) {
+    //                            adapter.add_channel()
+    //                        }
+    //                        adapter.remove_channel(channel)
+    //                    }
+    //                }
 
-                    BillableItem.ProjectNameChange -> {
-                        activity.update_title_text()
-                    }
+    //                BillableItem.ProjectNameChange -> {
+    //                    activity.update_title_text()
+    //                }
 
-                    BillableItem.ContextMenuRefresh -> {
-                        activity.refresh_context_menu()
-                    }
+    //                BillableItem.ContextMenuRefresh -> {
+    //                    activity.refresh_context_menu()
+    //                }
 
-                    BillableItem.ContextMenuSetLine -> {
-                        activity.set_context_menu_line()
-                    }
+    //                BillableItem.ContextMenuSetLine -> {
+    //                    activity.set_context_menu_line()
+    //                }
 
-                    BillableItem.ContextMenuSetLeaf -> {
-                        activity.set_context_menu_leaf()
-                    }
+    //                BillableItem.ContextMenuSetLeaf -> {
+    //                    activity.set_context_menu_leaf()
+    //                }
 
-                    BillableItem.ContextMenuSetLeafPercussion -> {
-                        activity.set_context_menu_leaf_percussion()
-                    }
+    //                BillableItem.ContextMenuSetLeafPercussion -> {
+    //                    activity.set_context_menu_leaf_percussion()
+    //                }
 
-                    BillableItem.ContextMenuSetControlLeaf -> {
-                        activity.set_context_menu_line_control_leaf()
-                    }
+    //                BillableItem.ContextMenuSetControlLeaf -> {
+    //                    activity.set_context_menu_line_control_leaf()
+    //                }
 
-                    BillableItem.ContextMenuSetControlLeafB -> {
-                        activity.set_context_menu_line_control_leaf_b()
-                    }
+    //                BillableItem.ContextMenuSetControlLeafB -> {
+    //                    activity.set_context_menu_line_control_leaf_b()
+    //                }
 
-                    BillableItem.ContextMenuSetRange -> {
-                        activity.set_context_menu_range()
-                    }
+    //                BillableItem.ContextMenuSetRange -> {
+    //                    activity.set_context_menu_range()
+    //                }
 
-                    BillableItem.ContextMenuSetColumn -> {
-                        activity.set_context_menu_column()
-                    }
+    //                BillableItem.ContextMenuSetColumn -> {
+    //                    activity.set_context_menu_column()
+    //                }
 
-                    BillableItem.ContextMenuSetControlLine -> {
-                        activity.set_context_menu_control_line()
-                    }
+    //                BillableItem.ContextMenuSetControlLine -> {
+    //                    activity.set_context_menu_control_line()
+    //                }
 
-                    BillableItem.ContextMenuSetChannel -> {
-                        activity.set_context_menu_channel()
-                    }
+    //                BillableItem.ContextMenuSetChannel -> {
+    //                    activity.set_context_menu_channel()
+    //                }
 
-                    BillableItem.ContextMenuClear -> {
-                        activity.clear_context_menu()
-                    }
+    //                BillableItem.ContextMenuClear -> {
+    //                    activity.clear_context_menu()
+    //                }
 
-                    BillableItem.ConfigDrawerEnableCopyAndDelete -> {
-                        // TODO: Move to MainActivity method
-                        activity.findViewById<View>(R.id.btnDeleteProject).isEnabled = true
-                        activity.findViewById<View>(R.id.btnCopyProject).isEnabled = true
-                    }
+    //                BillableItem.ConfigDrawerEnableCopyAndDelete -> {
+    //                    // TODO: Move to MainActivity method
+    //                    activity.findViewById<View>(R.id.btnDeleteProject).isEnabled = true
+    //                    activity.findViewById<View>(R.id.btnCopyProject).isEnabled = true
+    //                }
 
-                    BillableItem.ConfigDrawerRefreshExportButton -> {
-                        activity.setup_project_config_drawer_export_button()
-                    }
+    //                BillableItem.ConfigDrawerRefreshExportButton -> {
+    //                    activity.setup_project_config_drawer_export_button()
+    //                }
 
-                    BillableItem.PercussionButtonRefresh -> {
-                        val channel = this._ui_change_bill.get_next_int()
-                        val line_offset = this._ui_change_bill.get_next_int()
-                        val btn_choose_percussion: TextView = activity.findViewById(R.id.btnChoosePercussion) ?: continue
-                        val instrument = this.get_percussion_instrument(channel, line_offset)
+    //                BillableItem.PercussionButtonRefresh -> {
+    //                    val channel = this._ui_change_bill.get_next_int()
+    //                    val line_offset = this._ui_change_bill.get_next_int()
+    //                    val btn_choose_percussion: TextView = activity.findViewById(R.id.btnChoosePercussion) ?: continue
+    //                    val instrument = this.get_percussion_instrument(channel, line_offset)
 
-                        if (activity.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                            btn_choose_percussion.text = activity.getString(R.string.label_short_percussion, instrument)
-                        } else {
-                            btn_choose_percussion.text = activity.getString(
-                                R.string.label_choose_percussion,
-                                instrument,
-                                activity.get_drum_name(channel, instrument)
-                            )
-                        }
-                    }
+    //                    if (activity.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+    //                        btn_choose_percussion.text = activity.getString(R.string.label_short_percussion, instrument)
+    //                    } else {
+    //                        btn_choose_percussion.text = activity.getString(
+    //                            R.string.label_choose_percussion,
+    //                            instrument,
+    //                            activity.get_drum_name(channel, instrument)
+    //                        )
+    //                    }
+    //                }
 
-                    BillableItem.LineLabelRefresh -> {
-                        editor_table.update_line_label(this._ui_change_bill.get_next_int())
-                    }
-                    BillableItem.ColumnLabelRefresh -> {
-                        editor_table.update_column_label(this._ui_change_bill.get_next_int())
-                    }
-                    BillableItem.ColumnStateChange -> {
-                        val column = this._ui_change_bill.get_next_int()
-                        if (column < editor_table.get_column_map_size()) {
-                            editor_table.notify_column_changed(column, true)
-                        }
-                    }
-                    BillableItem.RowStateChange -> {
-                        val y = this._ui_change_bill.get_next_int()
-                        editor_table.notify_row_changed(y,true)
-                    }
-                    BillableItem.CellStateChange -> {
-                        val cells = List(this._ui_change_bill.get_next_int()) {
-                            EditorTable.Coordinate(
-                                y = this._ui_change_bill.get_next_int(),
-                                x = this._ui_change_bill.get_next_int()
-                            )
-                        }
-                        editor_table.notify_cell_changes(cells, true)
-                    }
+    //                BillableItem.LineLabelRefresh -> {
+    //                    editor_table.update_line_label(this._ui_change_bill.get_next_int())
+    //                }
+    //                BillableItem.ColumnLabelRefresh -> {
+    //                    editor_table.update_column_label(this._ui_change_bill.get_next_int())
+    //                }
+    //                BillableItem.ColumnStateChange -> {
+    //                    val column = this._ui_change_bill.get_next_int()
+    //                    if (column < editor_table.get_column_map_size()) {
+    //                        editor_table.notify_column_changed(column, true)
+    //                    }
+    //                }
+    //                BillableItem.RowStateChange -> {
+    //                    val y = this._ui_change_bill.get_next_int()
+    //                    editor_table.notify_row_changed(y,true)
+    //                }
+    //                BillableItem.CellStateChange -> {
+    //                    val cells = List(this._ui_change_bill.get_next_int()) {
+    //                        EditorTable.Coordinate(
+    //                            y = this._ui_change_bill.get_next_int(),
+    //                            x = this._ui_change_bill.get_next_int()
+    //                        )
+    //                    }
+    //                    editor_table.notify_cell_changes(cells, true)
+    //                }
 
-                    null -> break
-                }
-            }
+    //                null -> break
+    //            }
+    //        }
 
-            // Temporary function call while I work on a spot-update solution
-            editor_table.table_ui.finalize_update()
+    //        // Temporary function call while I work on a spot-update solution
+    //        editor_table.table_ui.finalize_update()
 
-            this._ui_change_bill.clear()
-        }
+    //        this._ui_change_bill.clear()
+    //    }
     }
 
     private fun run_on_ui_thread(callback: (ActivityEditor) -> Unit) {

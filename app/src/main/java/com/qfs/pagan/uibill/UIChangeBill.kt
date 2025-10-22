@@ -13,12 +13,8 @@ class UIChangeBill {
     private val working_path = mutableListOf<Int>()
 
     fun consolidate() {
-        val queued_cells = Array<MutableSet<EditorTable.Coordinate>>(2) {
-            mutableSetOf()
-        }
-        val queued_columns = Array<MutableSet<Int>>(2) {
-            mutableSetOf()
-        }
+        val queued_cells = mutableSetOf<Pair<EditorTable.Coordinate, ReducibleTree<*>?>>()
+        val queued_columns = Array<MutableSet<Int>>(2) { mutableSetOf() }
         val queued_line_labels = mutableSetOf<Int>()
         val queued_column_labels = mutableSetOf<Int>()
         var queued_context_menu: BillableItem? = null
@@ -70,11 +66,9 @@ class UIChangeBill {
 
                     BillableItem.RowAdd -> {
                         val y = node.int_queue.removeAt(0)
-                        for (element in queued_cells) {
-                            for (coord in element) {
-                                if (coord.y >= y) {
-                                    coord.y += 1
-                                }
+                        for ((coord, _) in queued_cells) {
+                            if (coord.y >= y) {
+                                coord.y += 1
                             }
                         }
 
@@ -98,15 +92,13 @@ class UIChangeBill {
                         val count = node.int_queue.removeAt(0)
 
                         val check_range = y until y + count
-                        for (i in queued_cells.indices) {
-                            queued_cells[i] -= queued_cells[i].filter { coord: EditorTable.Coordinate ->
-                                check_range.contains(coord.y)
-                            }.toSet()
+                        queued_cells -= queued_cells.filter { (coord: EditorTable.Coordinate, _: ReducibleTree<*>?) ->
+                            check_range.contains(coord.y)
+                        }.toSet()
 
-                            for (coord in queued_cells[i]) {
-                                if (coord.y >= y + count) {
-                                    coord.y -= count
-                                }
+                        for ((coord, _) in queued_cells) {
+                            if (coord.y >= y + count) {
+                                coord.y -= count
                             }
                         }
 
@@ -128,13 +120,13 @@ class UIChangeBill {
                     BillableItem.ColumnAdd -> {
                         val column = node.int_queue.removeAt(0)
 
-                        for (i in 0 until queued_cells.size) {
-                            for (coord in queued_cells[i]) {
-                                if (coord.x >= column) {
-                                    coord.x += 1
-                                }
+                        for ((coord, _) in queued_cells) {
+                            if (coord.x >= column) {
+                                coord.x += 1
                             }
+                        }
 
+                        for (i in 0 until queued_columns.size) {
                             val old_columns = queued_columns[i].toSet()
                             queued_columns[i].clear()
                             for (x in old_columns) {
@@ -163,18 +155,18 @@ class UIChangeBill {
 
                     BillableItem.ColumnRemove -> {
                         val column = node.int_queue.removeAt(0)
-                        for (i in 0 until queued_cells.size) {
-                            val queued_cell_set = queued_cells[i]
-                            queued_cell_set -= queued_cell_set.filter { coord: EditorTable.Coordinate ->
-                                coord.x == column
-                            }.toSet()
 
-                            for (coord in queued_cell_set) {
-                                if (coord.x > column) {
-                                    coord.x -= 1
-                                }
+                        queued_cells -= queued_cells.filter { (coord: EditorTable.Coordinate, _) ->
+                            coord.x == column
+                        }.toSet()
+
+                        for ((coord, _) in queued_cells) {
+                            if (coord.x > column) {
+                                coord.x -= 1
                             }
+                        }
 
+                        for (i in 0 until queued_columns.size) {
                             val old_columns = queued_columns[i].toSet()
                             queued_columns[i].clear()
 
@@ -222,54 +214,52 @@ class UIChangeBill {
                         this._tree.int_queue.add(node.int_queue.removeAt(0))
                     }
 
-                    BillableItem.RowChange,
-                    BillableItem.RowStateChange -> {
-                        val i = if (bill_item == BillableItem.RowChange) {
-                            1
-                        } else {
-                            0
-                        }
-
+                    BillableItem.RowChange -> {
                         val y = node.int_queue.removeAt(0)
-
-                        queued_cells[i] -= queued_cells[i].filter { coord: EditorTable.Coordinate ->
+                        queued_cells -= queued_cells.filter { (coord: EditorTable.Coordinate, _) ->
                             coord.y == y
                         }.toSet()
-
                         this._tree.int_queue.add(y)
                     }
 
-                    BillableItem.ColumnChange,
-                    BillableItem.ColumnStateChange -> {
+                    BillableItem.RowStateChange -> {
+                        val y = node.int_queue.removeAt(0)
+                        queued_cells -= queued_cells.filter { (coord: EditorTable.Coordinate, cell_tree: ReducibleTree<*>?) ->
+                            coord.y == y && cell_tree == null
+                        }.toSet()
+                        this._tree.int_queue.add(y)
+                    }
+
+                    BillableItem.ColumnChange -> {
                         val column = node.int_queue.removeAt(0)
-
-                        val i = if (bill_item == BillableItem.ColumnChange) {
-                            1
-                        } else {
-                            0
-                        }
-
-                        queued_cells[i] -= queued_cells[i].filter { coord: EditorTable.Coordinate ->
+                        queued_cells -= queued_cells.filter { (coord: EditorTable.Coordinate, _) ->
                             coord.x == column
                         }.toSet()
 
-                        queued_columns[i].add(column)
+                        queued_columns[1].add(column)
                     }
 
-                    BillableItem.CellChange,
-                    BillableItem.CellStateChange -> {
-                        val count = node.int_queue.removeAt(0)
-                        val i = if (bill_item == BillableItem.CellChange) {
-                            1
-                        } else {
-                            0
-                        }
+                    BillableItem.ColumnStateChange -> {
+                        val column = node.int_queue.removeAt(0)
+                        queued_cells -= queued_cells.filter { (coord: EditorTable.Coordinate, cell_tree: ReducibleTree<*>?) ->
+                            coord.x == column && cell_tree == null
+                        }.toSet()
 
+                        queued_columns[0].add(column)
+                    }
+
+                    BillableItem.CellStateChange,
+                    BillableItem.CellChange -> {
+                        val count = node.int_queue.removeAt(0)
+                        val state_only = bill_item == BillableItem.CellStateChange
                         for (j in 0 until count) {
-                            queued_cells[i].add(
-                                EditorTable.Coordinate(
-                                    node.int_queue.removeAt(0),
-                                    node.int_queue.removeAt(0)
+                            queued_cells.add(
+                                Pair(
+                                    EditorTable.Coordinate(
+                                        node.int_queue.removeAt(0),
+                                        node.int_queue.removeAt(0)
+                                    ),
+                                    if (state_only) null else node.tree_queue.removeAt(0)
                                 )
                             )
                         }
@@ -321,26 +311,30 @@ class UIChangeBill {
             }
         }
 
-        if (queued_cells[0].isNotEmpty()) {
-            val cells = (queued_cells[0] - queued_cells[1]).toList()
+        val processed_cell_coord = mutableSetOf<EditorTable.Coordinate>()
+
+        queued_cells.filter { (_, tree) -> tree != null }.let { cells ->
+            if (cells.isEmpty()) return@let
 
             this._tree.int_queue.add(cells.size)
-            for (cell in cells.toList()) {
-                this._tree.int_queue.add(cell.y)
-                this._tree.int_queue.add(cell.x)
-            }
-            this._tree.bill.add(BillableItem.CellStateChange)
-        }
-
-        if (queued_cells[1].isNotEmpty()) {
-            val cells = queued_cells[1].toList()
-
-            this._tree.int_queue.add(cells.size)
-            for (cell in cells.toList()) {
-                this._tree.int_queue.add(cell.y)
-                this._tree.int_queue.add(cell.x)
+            for ((coord, tree) in cells) {
+                processed_cell_coord.add(coord)
+                this._tree.int_queue.add(coord.y)
+                this._tree.int_queue.add(coord.x)
+                this._tree.tree_queue.add(tree!!)
             }
             this._tree.bill.add(BillableItem.CellChange)
+        }
+
+        queued_cells.filter { (coord, tree) -> processed_cell_coord.contains(coord) && tree == null }.let { cells ->
+            if (cells.isEmpty()) return@let
+
+            this._tree.int_queue.add(cells.size)
+            for ((coord, _) in cells) {
+                this._tree.int_queue.add(coord.y)
+                this._tree.int_queue.add(coord.x)
+            }
+            this._tree.bill.add(BillableItem.CellStateChange)
         }
 
         for (y in queued_line_labels) {

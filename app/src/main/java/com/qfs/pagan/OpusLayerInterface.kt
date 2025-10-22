@@ -212,13 +212,7 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     private fun _queue_global_ctl_cell_change(type: EffectType, beat: Int) {
         val controller = this.get_controller<EffectEvent>(type)
-        if (!controller.visible) {
-            return
-        }
-
-        if (this._ui_change_bill.is_full_locked()) {
-            return
-        }
+        if (!controller.visible || this._ui_change_bill.is_full_locked()) return
 
         val coord = EditorTable.Coordinate(
             y = this.get_visible_row_from_ctl_line_global(type),
@@ -238,12 +232,7 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     private fun _queue_channel_ctl_cell_change(type: EffectType, channel: Int, beat: Int) {
         val controller = this.get_all_channels()[channel].get_controller<EffectEvent>(type)
-        if (!controller.visible) {
-            return
-        }
-        if (this._ui_change_bill.is_full_locked()) {
-            return
-        }
+        if (!controller.visible || this._ui_change_bill.is_full_locked()) return
 
         val coord = EditorTable.Coordinate(
             y = this.get_visible_row_from_ctl_line_channel(type, channel),
@@ -263,9 +252,7 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     private fun _queue_line_ctl_cell_change(type: EffectType, beat_key: BeatKey) {
         val controller = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].get_controller<EffectEvent>(type)
-        if (!controller.visible) {
-           return
-        }
+        if (!controller.visible || this._ui_change_bill.is_full_locked()) return
 
         val coord = EditorTable.Coordinate(
             y = this.get_visible_row_from_ctl_line_line(type, beat_key.channel, beat_key.line_offset),
@@ -1353,27 +1340,25 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     override fun _project_change_json(json_data: JSONHashMap) {
         super._project_change_json(json_data)
-        if (!this._in_reload) {
-            val activity = this.get_activity() ?: return
-            if (! activity.configuration.use_preferred_soundfont) {
-                return
-            }
+        if (this._in_reload) return
 
-            val sf_path = json_data.get_hashmap("d").get_stringn("sf") ?: return
-            if (sf_path != activity.configuration.soundfont) {
-                val original_soundfont = activity.configuration.soundfont
-                activity.configuration.soundfont = sf_path
-                // Try opening the assigned soundfont, but if it fails for any reason, go back to the
-                // Currently active one.
-                try {
-                    activity.set_soundfont()
-                } catch (_: Exception) {
-                    activity.configuration.soundfont = original_soundfont
-                    activity.set_soundfont()
-                }
-                activity.save_configuration()
-            }
+        val activity = this.get_activity() ?: return
+        if (! activity.configuration.use_preferred_soundfont) return
+        val original_soundfont = activity.configuration.soundfont
+
+        val sf_path = json_data.get_hashmap("d").get_stringn("sf") ?: return
+        if (sf_path == original_soundfont) return
+
+        activity.configuration.soundfont = sf_path
+        // Try opening the assigned soundfont, but if it fails for any reason, go back to the
+        // Currently active one.
+        try {
+            activity.set_soundfont()
+        } catch (_: Exception) {
+            activity.configuration.soundfont = original_soundfont
+            activity.set_soundfont()
         }
+        activity.save_configuration()
     }
 
     override fun move_channel(channel_index: Int, new_channel_index: Int) {

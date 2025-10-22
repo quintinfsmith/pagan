@@ -67,9 +67,6 @@ class EditorTable(context: Context, attrs: AttributeSet): ScrollView(context, at
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
 
-        this.layoutParams.width = WRAP_CONTENT
-        this.layoutParams.height = MATCH_PARENT
-
         this.inner_scroll_view.overScrollMode = OVER_SCROLL_NEVER
         this.inner_scroll_view.isHorizontalScrollBarEnabled = false
 

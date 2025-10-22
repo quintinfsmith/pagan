@@ -9,7 +9,6 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.database.Observable
 import android.graphics.Color
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri
@@ -933,7 +932,7 @@ class ActivityEditor : PaganActivity() {
 
         this.get_opus_manager().project_refresh()
         this.runOnUiThread {
-            editor_table?.table_ui?.scroll(x, y)
+            editor_table?.scroll(x, y)
         }
     }
 
@@ -1369,7 +1368,7 @@ class ActivityEditor : PaganActivity() {
                 if (motion_event?.action == 1) {
                     this._blocker_scroll_y = null
                 } else if (motion_event?.action == MotionEvent.ACTION_MOVE) {
-                    val scroll_view = this.findViewById<EditorTable>(R.id.etEditorTable).get_scroll_view()
+                    val scroll_view = this.findViewById<EditorTable>(R.id.etEditorTable)
                     val rel_y = (motion_event.y - scroll_view.y)
                     scroll_view.scrollBy(0, ((this._blocker_scroll_y ?: rel_y) - rel_y).toInt())
                     this._blocker_scroll_y = rel_y

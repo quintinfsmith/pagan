@@ -2526,7 +2526,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                     }
 
                     BillableItem.RowChange -> {
-                        editor_table.notify_row_changed(
+                        editor_table.notify_row_change(
                             this._ui_change_bill.get_next_int()
                         )
                     }
@@ -2553,9 +2553,12 @@ class OpusLayerInterface : OpusLayerHistory() {
 
                     BillableItem.CellChange -> {
                         val cells = List(this._ui_change_bill.get_next_int()) {
-                            EditorTable.Coordinate(
-                                y = this._ui_change_bill.get_next_int(),
-                                x = this._ui_change_bill.get_next_int()
+                            Pair(
+                                this._ui_change_bill.get_next_tree(),
+                                EditorTable.Coordinate(
+                                    y = this._ui_change_bill.get_next_int(),
+                                    x = this._ui_change_bill.get_next_int()
+                                )
                             )
                         }
                         editor_table.notify_cell_changes(cells)
@@ -2676,21 +2679,25 @@ class OpusLayerInterface : OpusLayerHistory() {
                     }
 
                     BillableItem.LineLabelRefresh -> {
-                        editor_table.update_line_label(this._ui_change_bill.get_next_int())
+                        editor_table.notify_row_change(this._ui_change_bill.get_next_int(), false)
                     }
+
                     BillableItem.ColumnLabelRefresh -> {
                         editor_table.update_column_label(this._ui_change_bill.get_next_int())
                     }
+
                     BillableItem.ColumnStateChange -> {
                         val column = this._ui_change_bill.get_next_int()
                         if (column < editor_table.get_column_map_size()) {
                             editor_table.notify_column_changed(column, true)
                         }
                     }
+
                     BillableItem.RowStateChange -> {
                         val y = this._ui_change_bill.get_next_int()
-                        editor_table.notify_row_changed(y,true)
+                        editor_table.notify_row_change(y,true)
                     }
+
                     BillableItem.CellStateChange -> {
                         val cells = List(this._ui_change_bill.get_next_int()) {
                             EditorTable.Coordinate(
@@ -2698,7 +2705,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                                 x = this._ui_change_bill.get_next_int()
                             )
                         }
-                        editor_table.notify_cell_changes(cells, true)
+                        editor_table.notify_cell_state_changes(cells)
                     }
 
                     null -> break
@@ -2706,7 +2713,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
 
             // Temporary function call while I work on a spot-update solution
-            editor_table.table_ui.finalize_update()
+            editor_table.finalize_update()
 
             this._ui_change_bill.clear()
         }

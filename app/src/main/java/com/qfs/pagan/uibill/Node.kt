@@ -1,7 +1,11 @@
 package com.qfs.pagan.uibill
 
+import com.qfs.pagan.structure.rationaltree.ReducibleTree
+
 class Node {
     val bill = mutableListOf<BillableItem>()
+    val tree_queue = mutableListOf<ReducibleTree<*>>()
+
     val int_queue = mutableListOf<Int>()
     val sub_nodes = mutableListOf<Node>()
     fun new_node() {
@@ -52,5 +56,6 @@ class Node {
         this.sub_nodes.clear()
         this.bill.clear()
         this.int_queue.clear()
+        this.tree_queue.clear()
     }
 }

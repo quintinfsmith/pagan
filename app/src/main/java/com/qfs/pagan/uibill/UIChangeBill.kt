@@ -2,6 +2,7 @@ package com.qfs.pagan.uibill
 
 import com.qfs.pagan.EditorTable
 import com.qfs.pagan.structure.Rational
+import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
 /**
 * A queue of UI update commands to be executed once it is safe to do so.
@@ -367,6 +368,10 @@ class UIChangeBill {
 
     fun get_next_int(): Int {
         return this._tree.int_queue.removeAt(0)
+    }
+
+    fun get_next_tree(): ReducibleTree<*> {
+        return this._tree.tree_queue.removeAt(0)
     }
 
     fun clear() {

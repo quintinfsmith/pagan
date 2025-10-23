@@ -152,9 +152,7 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     /* Notify the editor table to update cells */
     private fun _queue_cell_changes(beat_keys: List<BeatKey>) {
-        if (this._ui_change_bill.is_full_locked()) {
-            return
-        }
+        if (this._ui_change_bill.is_full_locked()) return
 
         val coord_list = List(beat_keys.size) { i: Int ->
             EditorTable.Coordinate(
@@ -174,17 +172,12 @@ class OpusLayerInterface : OpusLayerHistory() {
             )
         }
 
-        this._ui_change_bill.queue_cell_changes(coord_list)
+        this._ui_change_bill.queue_cell_state_changes(coord_list)
     }
 
     /* Notify the editor table to update a cell */
     private fun _queue_cell_change(beat_key: BeatKey) {
-        if (this.project_changing) {
-            return
-        }
-        if (this._ui_change_bill.is_full_locked()) {
-            return
-        }
+        if (this.project_changing || this._ui_change_bill.is_full_locked()) return
 
         val tree = this.get_tree(beat_key)
         val new_weight = tree.get_total_child_weight()
@@ -206,7 +199,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
             this._ui_change_bill.queue_column_change(coord.x)
         } else {
-            this._ui_change_bill.queue_cell_change(coord)
+            this._ui_change_bill.queue_cell_change(coord, tree)
         }
     }
 
@@ -226,7 +219,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
             this._ui_change_bill.queue_column_change(coord.x)
         } else {
-            this._ui_change_bill.queue_cell_change(coord)
+            this._ui_change_bill.queue_cell_change(coord, tree)
         }
     }
 
@@ -246,7 +239,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
             this._ui_change_bill.queue_column_change(coord.x)
         } else {
-            this._ui_change_bill.queue_cell_change(coord)
+            this._ui_change_bill.queue_cell_change(coord, tree)
         }
     }
 
@@ -266,7 +259,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
             this._ui_change_bill.queue_column_change(coord.x)
         } else {
-            this._ui_change_bill.queue_cell_change(coord)
+            this._ui_change_bill.queue_cell_change(coord, tree)
         }
     }
     // UI BILL Interface functions ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2305,7 +2298,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
         }
 
-        this._ui_change_bill.queue_cell_changes(coordinates_to_update.toList(), true)
+        this._ui_change_bill.queue_cell_state_changes(coordinates_to_update.toList())
     }
 
     private fun _init_editor_table_width_map() {

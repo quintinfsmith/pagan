@@ -372,15 +372,9 @@ class UIChangeBill {
         this._tree.clear()
     }
 
-    fun queue_cell_changes(cells: List<EditorTable.Coordinate>, state_only: Boolean = false) {
+    fun queue_cell_state_changes(cells: List<EditorTable.Coordinate>) {
         val working_tree = this.get_working_tree() ?: return
-        working_tree.bill.add(
-            if (state_only) {
-                BillableItem.CellStateChange
-            } else {
-                BillableItem.CellChange
-            }
-        )
+        working_tree.bill.add(BillableItem.CellStateChange)
 
         working_tree.int_queue.add(cells.size)
         for (cell in cells) {
@@ -389,9 +383,9 @@ class UIChangeBill {
         }
     }
 
-    fun queue_cell_change(cell: EditorTable.Coordinate, state_only: Boolean = false) {
+    fun queue_cell_change(cell: EditorTable.Coordinate, tree: ReducibleTree<*>? = null) {
         val working_tree = this.get_working_tree() ?: return
-        if (state_only) {
+        if (tree == null) {
             working_tree.bill.add(BillableItem.CellStateChange)
         } else {
             working_tree.bill.add(BillableItem.CellChange)

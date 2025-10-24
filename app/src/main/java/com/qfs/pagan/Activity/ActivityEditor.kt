@@ -919,7 +919,6 @@ class ActivityEditor : PaganActivity() {
         )
     }
 
-
     override fun onSaveInstanceState(outState: Bundle) {
         // Can't reliably put json in outstate. there is a size limit
         val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)

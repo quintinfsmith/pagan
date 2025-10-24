@@ -105,9 +105,7 @@ class EditorTable(context: Context, attrs: AttributeSet): ScrollView(context, at
         val opus_manager = this.get_opus_manager()
         val channels = opus_manager.get_all_channels()
 
-        if (y - this.scrollY < line_height) {
-            return -1
-        }
+        if (y - this.scrollY < line_height) return -1
 
         var check_y = line_height // consider column labels
         for (i in channels.indices) {

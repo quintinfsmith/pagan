@@ -179,7 +179,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     private fun _queue_cell_change(beat_key: BeatKey) {
         if (this.project_changing || this._ui_change_bill.is_full_locked()) return
 
-        val tree = this.get_tree(beat_key)
+        val tree = this.get_tree_copy(beat_key)
         val new_weight = tree.get_total_child_weight()
 
         val coord = EditorTable.Coordinate(

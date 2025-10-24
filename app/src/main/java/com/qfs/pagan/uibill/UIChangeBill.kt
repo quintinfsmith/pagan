@@ -250,19 +250,16 @@ class UIChangeBill {
 
                     BillableItem.CellStateChange,
                     BillableItem.CellChange -> {
-                        val count = node.int_queue.removeAt(0)
                         val state_only = bill_item == BillableItem.CellStateChange
-                        for (j in 0 until count) {
-                            queued_cells.add(
-                                Pair(
-                                    EditorTable.Coordinate(
-                                        node.int_queue.removeAt(0),
-                                        node.int_queue.removeAt(0)
-                                    ),
-                                    if (state_only) null else node.tree_queue.removeAt(0)
-                                )
+                        queued_cells.add(
+                            Pair(
+                                EditorTable.Coordinate(
+                                    node.int_queue.removeAt(0),
+                                    node.int_queue.removeAt(0)
+                                ),
+                                if (state_only) null else node.tree_queue.removeAt(0)
                             )
-                        }
+                        )
                     }
 
                     BillableItem.ContextMenuRefresh,
@@ -373,13 +370,8 @@ class UIChangeBill {
     }
 
     fun queue_cell_state_changes(cells: List<EditorTable.Coordinate>) {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.bill.add(BillableItem.CellStateChange)
-
-        working_tree.int_queue.add(cells.size)
         for (cell in cells) {
-            working_tree.int_queue.add(cell.y)
-            working_tree.int_queue.add(cell.x)
+            this.queue_cell_change(cell)
         }
     }
 
@@ -389,10 +381,9 @@ class UIChangeBill {
             working_tree.bill.add(BillableItem.CellStateChange)
         } else {
             working_tree.bill.add(BillableItem.CellChange)
+            working_tree.tree_queue.add(tree)
         }
 
-
-        working_tree.int_queue.add(1)
         working_tree.int_queue.add(cell.y)
         working_tree.int_queue.add(cell.x)
     }

@@ -14,6 +14,8 @@ import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -916,7 +918,6 @@ class ActivityEditor : PaganActivity() {
         )
     }
 
-
     override fun onSaveInstanceState(outState: Bundle) {
         // Can't reliably put json in outstate. there is a size limit
         val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
@@ -1196,6 +1197,15 @@ class ActivityEditor : PaganActivity() {
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         this.menuInflater.inflate(R.menu.main_options_menu, menu)
         this._options_menu = menu
+
+        Handler(Looper.getMainLooper()).post {
+            val view: View = this.findViewById<View?>(R.id.itmPlay) ?: return@post
+            view.setOnLongClickListener {
+                this@ActivityEditor.handle_play_press(true)
+                true
+            }
+        }
+
         val output = super.onCreateOptionsMenu(menu)
         this.update_menu_options()
         return output
@@ -1248,31 +1258,7 @@ class ActivityEditor : PaganActivity() {
             }
 
             R.id.itmPlay -> {
-                if (this.editor_view_model.active_midi_device == null) {
-                    when (this.playback_state_soundfont) {
-                        PlaybackState.Ready -> {
-                            this.playback_start()
-                        }
-
-                        PlaybackState.Queued,
-                        PlaybackState.Playing -> {
-                            this.playback_stop()
-                        }
-
-                        else -> {}
-                    }
-                } else {
-                    when (this.playback_state_midi) {
-                        PlaybackState.Ready -> {
-                            this.playback_start_midi_output()
-                        }
-                        PlaybackState.Queued,
-                        PlaybackState.Playing -> {
-                            this.playback_stop_midi_output()
-                        }
-                        else -> { /* pass */ }
-                    }
-                }
+                this.handle_play_press(false)
             }
 
             R.id.itmSettings -> {
@@ -1290,6 +1276,34 @@ class ActivityEditor : PaganActivity() {
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    fun handle_play_press(long_press: Boolean) {
+        if (this.editor_view_model.active_midi_device == null) {
+            when (this.playback_state_soundfont) {
+                PlaybackState.Ready -> {
+                    this.playback_start(long_press)
+                }
+
+                PlaybackState.Queued,
+                PlaybackState.Playing -> {
+                    this.playback_stop()
+                }
+
+                else -> {}
+            }
+        } else {
+            when (this.playback_state_midi) {
+                PlaybackState.Ready -> {
+                    this.playback_start_midi_output(long_press)
+                }
+                PlaybackState.Queued,
+                PlaybackState.Playing -> {
+                    this.playback_stop_midi_output()
+                }
+                else -> { /* pass */ }
+            }
+        }
     }
 
     fun open_settings() {
@@ -1392,7 +1406,7 @@ class ActivityEditor : PaganActivity() {
         blocker_view.visibility = View.GONE
     }
 
-    private fun playback_start() {
+    private fun playback_start(loop_playback: Boolean = false) {
         if (!this.update_playback_state_soundfont(PlaybackState.Queued)) {
             this.feedback_msg(this.getString(R.string.playback_failed))
             return
@@ -1419,15 +1433,16 @@ class ActivityEditor : PaganActivity() {
             //    opus_manager.sample_handle_manager?.change_program(channel.midi_channel, program)
             //}
 
-            this._midi_playback_device?.play_opus(start_point)
+            this._midi_playback_device?.play_opus(start_point, loop_playback)
         }
     }
 
-    private fun playback_start_midi_output() {
+    private fun playback_start_midi_output(loop_playback: Boolean = false) {
         if (!this.update_playback_state_midi(PlaybackState.Queued)) {
             this.feedback_msg(this.getString(R.string.playback_failed))
             return
         }
+
         if (this.editor_view_model.active_midi_device == null) {
             this.feedback_msg(this.getString(R.string.midi_device_unset))
             return
@@ -1448,7 +1463,7 @@ class ActivityEditor : PaganActivity() {
         this.loading_reticle_hide()
         this.runOnUiThread {
             this.clear_forced_title()
-            this.set_playback_button(R.drawable.icon_pause)
+            this.set_playback_button(if (loop_playback) R.drawable.icon_pause_loop else R.drawable.icon_pause)
         }
 
         if (!this.update_playback_state_midi(PlaybackState.Playing)) {
@@ -1459,7 +1474,7 @@ class ActivityEditor : PaganActivity() {
         thread {
             try {
                 this._midi_interface.open_output_device(this.editor_view_model.active_midi_device!!)
-                this._virtual_input_device.play_midi(midi) {
+                this._virtual_input_device.play_midi(midi, loop_playback) {
                     this.runOnUiThread {
                         this.playback_stop_midi_output()
                     }

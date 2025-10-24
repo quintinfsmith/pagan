@@ -231,14 +231,10 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
 
     // NOTE: output device has input port
     fun open_output_device(device_info: MidiDeviceInfo, port: Int? = null) {
-        if (this.midi_manager == null) {
-            return
-        }
+        if (this.midi_manager == null) return
 
         val input_device_info = device_info.ports.filter { it.type == TYPE_INPUT }
-        if (input_device_info.isEmpty()) {
-            return
-        }
+        if (input_device_info.isEmpty()) return
 
         val port_number = port ?: input_device_info.first().portNumber
 
@@ -259,13 +255,9 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
 
     // NOTE: input device has output port
     fun open_input_device(device_info: MidiDeviceInfo, port: Int? = null) {
-        if (this.midi_manager == null) {
-            return
-        }
+        if (this.midi_manager == null) return
         val output_device_info = device_info.ports.filter { it.type == TYPE_OUTPUT }
-        if (output_device_info.isEmpty()) {
-            return
-        }
+        if (output_device_info.isEmpty()) return
 
         val port_number = port ?: output_device_info.first().portNumber
 
@@ -304,6 +296,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
             }
             this.mapped_input_ports.remove(device_info.id)
         }
+
         if (this.mapped_output_ports.containsKey(device_info.id)) {
             for (output_port in this.mapped_output_ports[device_info.id]!!) {
                 try {

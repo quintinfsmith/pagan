@@ -12,9 +12,11 @@ public:
     ProfileBufferFrame** frames;
     int type;
     int frame_count;
+    int actual_size;
 
-    ControllerEventData(int type, int array_length, int data_width, int* indices, int* end_indices, const float* values, const float* increments) {
+    ControllerEventData(int type, int actual_size, int array_length, int data_width, int* indices, int* end_indices, const float* values, const float* increments) {
         this->frames = (ProfileBufferFrame**)malloc(sizeof (ProfileBufferFrame*) * array_length);
+        this->actual_size = actual_size;
         this->frame_count = array_length;
         this->type = type;
 
@@ -33,6 +35,7 @@ public:
 
     explicit ControllerEventData(ControllerEventData* original) {
         this->type = original->type;
+        this->actual_size = original->actual_size;
         if (original->frames != nullptr) {
             this->frames = (ProfileBufferFrame**)malloc(sizeof (ProfileBufferFrame*) * original->frame_count);
             for (int i = 0; i < original->frame_count; i++) {

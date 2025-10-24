@@ -293,6 +293,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     private val _percussion_setter_ids = mutableSetOf<Int>()
 
     private val _effect_profiles = mutableListOf<Triple<Int, Int, ProfileBuffer>>()
+    private var frame_count = 0
+    var is_looping: Boolean = false
 
     var clip_same_line_release = false
 
@@ -321,14 +323,17 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         )
     }
 
-    override fun get_marked_frame(i: Int): Int {
+    override fun get_marked_frame(i: Int): Int? {
         val marked_frames = this.get_marked_frames()
+
         return if (marked_frames.isEmpty()) {
             0
-        } else {
+        } else if (this.is_looping) {
             marked_frames.let {
-                it[i % it.size]
+                it[i % (it.size - 1)] + (i / (it.size - 1) * this.frame_count)
             }
+        } else {
+            marked_frames.let { it[i % it.size] }
         }
     }
 
@@ -342,7 +347,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     override fun has_frames_remaining(frame: Int): Boolean {
-        return (this._frame_map.isNotEmpty() && this._frame_map.keys.maxOf { it } >= frame)
+        return this.is_looping
+                || (this._frame_map.isNotEmpty() && this._frame_map.keys.maxOf { it } >= frame)
                 || (this._setter_frame_map.isNotEmpty() && this._setter_frame_map.keys.maxOf { it } >= frame)
                 || this.get_marked_frames().last() >= frame
     }
@@ -380,24 +386,44 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 )
             }
 
-            for (i in range.first until frame) {
-                this._setter_frame_map.remove(i)
-            }
+            this._setter_frame_map.remove(range.first)
+            this.replace_handle(handle_getter, setter_id, range.first + this.frame_count .. range.last + this.frame_count)
         }
 
         return output
+    }
+
+    fun replace_handle(handle_getter: () -> Set<Pair<SampleHandle, IntArray>>, map_id: Int, new_range: IntRange) {
+        if (!this.is_looping) return
+
+        this._setter_map[map_id] = handle_getter
+        this._setter_range_map[map_id] = new_range
+
+        if (!this._setter_frame_map.containsKey(new_range.first)) {
+            this._setter_frame_map[new_range.first] = mutableSetOf()
+        }
+
+        this._setter_frame_map[new_range.first]!!.add(map_id)
     }
 
     // End FrameMap Interface --------------------------
     fun check_frame(frame: Int) {
         if (!this._setter_frame_map.containsKey(frame)) return
 
+        val setter_ids = mutableListOf<Int>()
         for (setter_id in this._setter_frame_map.remove(frame)!!) {
-            val handles = this._setter_map.remove(setter_id)?.let { it() } ?: continue
-            this._setter_range_map.remove(setter_id)
+            setter_ids.add(setter_id)
+        }
+
+        for (setter_id in setter_ids) {
+            val handle_function = this._setter_map.remove(setter_id) ?: continue
+            val previous_range = this._setter_range_map.remove(setter_id) ?: continue
+
+            val handles = handle_function()
             for (handle in handles) {
                 this._map_real_handle(handle, frame)
             }
+            this.replace_handle(handle_function, setter_id, previous_range.first + this.frame_count .. previous_range.last + this.frame_count)
         }
     }
 
@@ -475,7 +501,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             val handle_uuid_set = mutableSetOf<Int>()
             for (handle in handles) {
                 handle.release_frame = end_frame - start_frame
-
                 if (next_event_frame != null) {
                     // Remove release phase. can get noisy on things like tubular bells with long fade outs
                     //handle.volume_envelope.frames_release = min(this._sample_handle_manager.sample_rate / 11, handle.volume_envelope.frames_release)
@@ -506,6 +531,9 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this.map_tempo_changes(this.opus_manager.get_controller<OpusTempoEvent>(PaganEffectType.Tempo) as TempoController)
         this._cache_beat_frames()
 
+        this.frame_count = this._cached_beat_frames!!.last()
+
+
         this.setup_effect_buffers(ignore_global_controls, ignore_channel_controls, ignore_line_controls)
         this.opus_manager.channels.forEachIndexed { c: Int, channel: OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>> ->
             if (channel.muted) return@forEachIndexed
@@ -521,6 +549,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 }
             }
         }
+
     }
 
     fun setup_effect_buffers(ignore_global_controls: Boolean = false, ignore_channel_controls: Boolean = false, ignore_line_controls: Boolean = false) {
@@ -648,6 +677,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 layer_key,
                 ProfileBuffer(
                     ControllerEventData(
+                        this.frame_count,
                         control_event_data,
                         control_type
                     )
@@ -829,5 +859,21 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             note = note,
             bend = bend
         )
+    }
+
+    fun shift_before_frame(frame: Int) {
+        val setter_ids_to_remove = mutableSetOf<Int>()
+        for ((setter_id, range) in this._setter_range_map) {
+            if ((0 until frame).contains(range.first)) {
+                setter_ids_to_remove.add(setter_id)
+            }
+        }
+
+        for (setter_id in setter_ids_to_remove) {
+            val range = this._setter_range_map[setter_id] ?: continue
+            val handle_getter = this._setter_map.remove(setter_id) ?: continue
+            this._setter_frame_map.remove(range.first)
+            this.replace_handle(handle_getter, setter_id, range.first + this.frame_count .. range.last + this.frame_count)
+        }
     }
 }

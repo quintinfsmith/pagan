@@ -1,7 +1,9 @@
 package com.qfs.pagan.uibill
 
+import com.qfs.apres.soundfontplayer.EffectType
 import com.qfs.pagan.EditorTable
 import com.qfs.pagan.structure.Rational
+import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
 /**
@@ -15,7 +17,7 @@ class UIChangeBill {
     fun consolidate() {
         val queued_cells = mutableSetOf<Pair<EditorTable.Coordinate, ReducibleTree<*>?>>()
         val queued_columns = Array<MutableSet<Int>>(2) { mutableSetOf() }
-        val queued_line_labels = mutableSetOf<Int>()
+        val queued_line_labels = mutableSetOf<IntArray>()
         val queued_column_labels = mutableSetOf<Int>()
         var queued_context_menu: BillableItem? = null
         var queued_cursor_scroll: Array<Int>? = null
@@ -32,7 +34,7 @@ class UIChangeBill {
                     BillableItem.CellStateChange,
                     BillableItem.ColumnChange,
                     BillableItem.ColumnStateChange,
-                    BillableItem.LineLabelRefresh,
+                    BillableItem.UpdateLineInfo,
                     BillableItem.ColumnLabelRefresh,
                     BillableItem.ContextMenuRefresh,
                     BillableItem.ContextMenuSetLine,
@@ -202,8 +204,8 @@ class UIChangeBill {
                         this._tree.int_queue.add(node.int_queue.removeAt(0))
                     }
 
-                    BillableItem.LineLabelRefresh -> {
-                        queued_line_labels.add(node.int_queue.removeAt(0))
+                    BillableItem.UpdateLineInfo -> {
+                        queued_line_labels.add(IntArray(6) { node.int_queue.removeAt(0) })
                     }
                     BillableItem.ColumnLabelRefresh -> {
                         queued_column_labels.add(node.int_queue.removeAt(0))
@@ -334,9 +336,11 @@ class UIChangeBill {
             this._tree.bill.add(BillableItem.CellStateChange)
         }
 
-        for (y in queued_line_labels) {
-            this._tree.bill.add(BillableItem.LineLabelRefresh)
-            this._tree.int_queue.add(y)
+        for (line_data in queued_line_labels) {
+            this._tree.bill.add(BillableItem.UpdateLineInfo)
+            for (i in line_data) {
+                this._tree.int_queue.add(i)
+            }
         }
 
         for (x in queued_column_labels) {
@@ -496,10 +500,15 @@ class UIChangeBill {
         working_tree.bill.add(BillableItem.ColumnLabelRefresh)
     }
 
-    fun queue_line_label_refresh(y: Int) {
+    fun queue_line_label_refresh(y: Int, is_percussion: Boolean?, channel: Int?, line_offset: Int?, control_level: CtlLineLevel? = null, control_type: EffectType? = null) {
         val working_tree = this.get_working_tree() ?: return
         working_tree.int_queue.add(y)
-        working_tree.bill.add(BillableItem.LineLabelRefresh)
+        working_tree.int_queue.add(if (is_percussion == true) 1 else 0)
+        working_tree.int_queue.add(channel ?: -1)
+        working_tree.int_queue.add(line_offset ?: -1)
+        working_tree.int_queue.add(control_level?.ordinal ?: -1)
+        working_tree.int_queue.add(control_type?.ordinal ?: -1)
+        working_tree.bill.add(BillableItem.UpdateLineInfo)
     }
 
     fun queue_row_change(y: Int, state_only: Boolean = false) {

@@ -18,7 +18,9 @@ import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.LineEffectRowNotVisible
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
+import com.qfs.pagan.structure.opusmanager.base.OpusLine
 import com.qfs.pagan.structure.opusmanager.base.OpusLineAbstract
+import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
 import com.qfs.pagan.structure.opusmanager.base.OpusPercussionChannel
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.TunedInstrumentEvent
@@ -194,9 +196,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             x = beat_key.beat
         )
 
-        val editor_table = this.get_editor_table()
-
-        if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
+        if (this.get_editor_table().set_mapped_width(coord.y, coord.x, new_weight)) {
             this._ui_change_bill.queue_column_change(coord.x)
         } else {
             this._ui_change_bill.queue_cell_change(coord, tree)
@@ -320,7 +320,6 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.lock_ui_partial {
             if (visibility) {
                 super.set_channel_controller_visibility(type, channel_index, true)
-
                 val visible_row = this.get_visible_row_from_ctl_line_channel(type, channel_index)
                 val working_channel = this.get_channel(channel_index)
                 val controller = working_channel.get_controller<EffectEvent>(type)
@@ -713,7 +712,10 @@ class OpusLayerInterface : OpusLayerHistory() {
                     this.get_actual_line_index(
                         this.get_instrument_line_index(channel, line_offset)
                     )
-                )!!
+                )!!,
+                true,
+                channel,
+                line_offset
             )
         }
     }
@@ -878,38 +880,42 @@ class OpusLayerInterface : OpusLayerHistory() {
             this.get_instrument_line_index(channel_b, line_b)
         )
 
-        for (channel in this.get_all_channels()) {
-            for (line in channel.lines) {
+        for (c in 0 until this.channels.size) {
+            val channel = this.channels[c]
+            val is_percussion = this.is_percussion(c)
+            for (l in 0 until channel.lines.size) {
+                val line = channel.lines[l]
+
                 if (y >= first_swapped_line) {
-                    this._ui_change_bill.queue_line_label_refresh(y)
+                    this._ui_change_bill.queue_line_label_refresh(y, is_percussion, c, if (is_percussion) (line as OpusLinePercussion).instrument else l)
                 }
 
                 this._ui_change_bill.queue_row_change(y++)
 
-                for ((_, controller) in line.controllers.get_all()) {
+                for ((type, controller) in line.controllers.get_all()) {
                     if (controller.visible) {
                         if (y >= first_swapped_line) {
-                            this._ui_change_bill.queue_line_label_refresh(y)
+                            this._ui_change_bill.queue_line_label_refresh(y, is_percussion, c, if (is_percussion) (line as OpusLinePercussion).instrument else l, CtlLineLevel.Line, type)
                         }
                         this._ui_change_bill.queue_row_change(y++)
                     }
                 }
             }
 
-            for ((_, controller) in channel.controllers.get_all()) {
+            for ((type, controller) in channel.controllers.get_all()) {
                 if (controller.visible) {
                     if (y >= first_swapped_line) {
-                        this._ui_change_bill.queue_line_label_refresh(y)
+                        this._ui_change_bill.queue_line_label_refresh(y, is_percussion, c, -1, CtlLineLevel.Channel, type)
                     }
                     this._ui_change_bill.queue_row_change(y++)
                 }
             }
         }
 
-        for ((_, controller) in this.controllers.get_all()) {
+        for ((type, controller) in this.controllers.get_all()) {
             if (controller.visible) {
                 if (y >= first_swapped_line) {
-                    this._ui_change_bill.queue_line_label_refresh(y)
+                    this._ui_change_bill.queue_line_label_refresh(y, false, -1, -1, CtlLineLevel.Global, type)
                 }
                 this._ui_change_bill.queue_row_change(y++)
             }
@@ -1014,45 +1020,42 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     private fun _queue_remove_rows(y: Int, count: Int) {
-        if (!this._ui_change_bill.is_full_locked()) {
-            val column_updates = this.get_editor_table().remove_mapped_lines(y, count)
-            this._ui_change_bill.queue_row_removal(y, count)
-            for (column in column_updates) {
-                this._ui_change_bill.queue_column_change(column)
-            }
+        if (this._ui_change_bill.is_full_locked()) return
+        val column_updates = this.get_editor_table().remove_mapped_lines(y, count)
+        this._ui_change_bill.queue_row_removal(y, count)
+        for (column in column_updates) {
+            this._ui_change_bill.queue_column_change(column)
         }
     }
 
     /* Used to update the ui after new_channel and set_channel_visibility(n, true) */
     private fun _post_new_channel(channel: Int, lines: Int) {
-        if (!this._ui_change_bill.is_full_locked()) {
-            val channels = this.get_all_channels()
-            val line_list = mutableListOf<OpusLineAbstract<*>>()
-            for (i in 0 until lines) {
-                line_list.add(channels[channel].lines[i])
-            }
-            val y = this.get_instrument_line_index(channel, 0)
+        if (this._ui_change_bill.is_full_locked()) return
 
-            var ctl_row = this.get_visible_row_from_ctl_line(
-                this.get_actual_line_index(y)
-            )!!
+        val channels = this.get_all_channels()
+        val line_list = mutableListOf<OpusLineAbstract<*>>()
+        for (i in 0 until lines) {
+            line_list.add(channels[channel].lines[i])
+        }
+        val y = this.get_instrument_line_index(channel, 0)
 
-            for (j in 0 until line_list.size) {
-                val line = line_list[j]
-                this._add_line_to_column_width_map(ctl_row++, line)
-                for ((_, controller) in line.controllers.get_all()) {
-                    if (controller.visible) {
-                        this._add_controller_to_column_width_map(ctl_row++, controller)
-                    }
-                }
-            }
+        var ctl_row = this.get_visible_row_from_ctl_line(
+            this.get_actual_line_index(y)
+        )!!
 
-            val controllers = channels[channel].controllers.get_all()
-            for ((_, controller) in controllers) {
-                if (controller.visible) {
-                    this._add_controller_to_column_width_map(ctl_row++, controller)
-                }
+        for (j in 0 until line_list.size) {
+            val line = line_list[j]
+            this._add_line_to_column_width_map(ctl_row++, line)
+            for ((_, controller) in line.controllers.get_all()) {
+                if (!controller.visible) continue
+                this._add_controller_to_column_width_map(ctl_row++, controller)
             }
+        }
+
+        val controllers = channels[channel].controllers.get_all()
+        for ((_, controller) in controllers) {
+            if (! controller.visible) continue
+            this._add_controller_to_column_width_map(ctl_row++, controller)
         }
     }
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?, is_percussion: Boolean) {
@@ -1127,9 +1130,7 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     fun all_global_controllers_visible(): Boolean {
         for ((type, _) in OpusLayerInterface.global_controller_domain) {
-            if (!this.has_global_controller(type) || !this.get_controller<EffectEvent>(type).visible) {
-                return false
-            }
+            if (!this.has_global_controller(type) || !this.get_controller<EffectEvent>(type).visible) return false
         }
         return true
     }
@@ -1217,9 +1218,7 @@ class OpusLayerInterface : OpusLayerHistory() {
 
         // set the default instrument to the first available in the soundfont (if applicable)
         for (c in this.channels.indices) {
-            if (!this.is_percussion(c)) {
-                continue
-            }
+            if (!this.is_percussion(c)) continue
             // Need to prematurely update the channel instrument to find the lowest possible instrument
             activity.update_channel_instruments(c)
             activity.populate_active_percussion_names(c, true)
@@ -1236,8 +1235,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     // It's implicitly wrapped in a lock_ui_full call
     override fun _project_change_midi(midi: Midi) {
         super._project_change_midi(midi)
-        val activity = this.get_activity()!!
-        activity.active_project = null
+        this.get_activity()?.active_project = null
     }
 
 
@@ -1417,30 +1415,26 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     override fun on_action_blocked(blocker_key: BeatKey, blocker_position: List<Int>) {
         super.on_action_blocked(blocker_key, blocker_position)
-        if (!this.project_changing) {
-            this._set_temporary_blocker(blocker_key, blocker_position)
-        }
+        if (this.project_changing) return
+        this._set_temporary_blocker(blocker_key, blocker_position)
     }
 
     override fun on_action_blocked_line_ctl(type: EffectType, blocker_key: BeatKey, blocker_position: List<Int>) {
         super.on_action_blocked_line_ctl(type, blocker_key, blocker_position)
-        if (!this.project_changing) {
-            this._set_temporary_blocker_line_ctl(type, blocker_key, blocker_position)
-        }
+        if (this.project_changing) return
+        this._set_temporary_blocker_line_ctl(type, blocker_key, blocker_position)
     }
 
     override fun on_action_blocked_channel_ctl(type: EffectType, blocker_channel: Int, blocker_beat: Int, blocker_position: List<Int>) {
         super.on_action_blocked_channel_ctl(type, blocker_channel, blocker_beat, blocker_position)
-        if (!this.project_changing) {
-            this._set_temporary_blocker_channel_ctl(type, blocker_channel, blocker_beat, blocker_position)
-        }
+        if (this.project_changing) return
+        this._set_temporary_blocker_channel_ctl(type, blocker_channel, blocker_beat, blocker_position)
     }
 
     override fun on_action_blocked_global_ctl(type: EffectType, blocker_beat: Int, blocker_position: List<Int>) {
         super.on_action_blocked_global_ctl(type, blocker_beat, blocker_position)
-        if (!this.project_changing) {
-            this._set_temporary_blocker_global_ctl(type, blocker_beat, blocker_position)
-        }
+        if (this.project_changing) return
+        this._set_temporary_blocker_global_ctl(type, blocker_beat, blocker_position)
     }
 
     // BASE FUNCTIONS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1619,14 +1613,11 @@ class OpusLayerInterface : OpusLayerHistory() {
             } else {
                 this._ui_change_bill.queue_set_context_menu_leaf()
             }
-
         }
     }
 
     override fun cursor_select_ctl_at_line(ctl_type: EffectType, beat_key: BeatKey, position: List<Int>) {
-        if (this._block_cursor_selection()) {
-            return
-        }
+        if (this._block_cursor_selection()) return
 
         this.lock_ui_partial {
             this._unset_temporary_blocker()
@@ -2292,9 +2283,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     private fun _init_editor_table_width_map() {
-        if (this._ui_change_bill.is_full_locked()) {
-            return
-        }
+        if (this._ui_change_bill.is_full_locked()) return
 
         val editor_table = this.get_editor_table()
         editor_table.clear_column_map()
@@ -2307,28 +2296,21 @@ class OpusLayerInterface : OpusLayerHistory() {
                     column.add(tree.get_total_child_weight())
 
                     for ((_, controller) in channel.lines[j].controllers.get_all()) {
-                        if (!controller.visible) {
-                            continue
-                        }
+                        if (!controller.visible) continue
                         val ctl_tree = controller.get_tree(beat)
                         column.add(ctl_tree.get_total_child_weight())
                     }
                 }
 
                 for ((_, controller) in channel.controllers.get_all()) {
-                    if (!controller.visible) {
-                        continue
-                    }
+                    if (!controller.visible) continue
                     val ctl_tree = controller.get_tree(beat)
                     column.add(ctl_tree.get_total_child_weight())
                 }
             }
 
             for ((_, controller) in this.controllers.get_all()) {
-                if (!controller.visible) {
-                    continue
-                }
-
+                if (!controller.visible) continue
                 val ctl_tree = controller.get_tree(beat)
                 column.add(ctl_tree.get_total_child_weight())
             }
@@ -2338,9 +2320,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     private fun _add_line_to_column_width_map(y: Int, line: OpusLineAbstract<*>) {
-        if (this._ui_change_bill.is_full_locked()) {
-            return
-        }
+        if (this._ui_change_bill.is_full_locked()) return
 
         val column_updates = this.get_editor_table().add_line_to_map(
             y,
@@ -2355,9 +2335,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     private fun _add_controller_to_column_width_map(y: Int, line: EffectController<*>) {
-        if (this._ui_change_bill.is_full_locked()) {
-            return
-        }
+        if (this._ui_change_bill.is_full_locked()) return
 
         val column_updates = this.get_editor_table().add_line_to_map(
             y,
@@ -2439,15 +2417,8 @@ class OpusLayerInterface : OpusLayerHistory() {
                     BillableItem.ForceScroll -> {
                         val y = this._ui_change_bill.get_next_int()
                         val x = this._ui_change_bill.get_next_int()
-                        val offset = Rational(
-                            this._ui_change_bill.get_next_int(),
-                            this._ui_change_bill.get_next_int()
-                        )
-
-                        val offset_width = Rational(
-                            this._ui_change_bill.get_next_int(),
-                            this._ui_change_bill.get_next_int()
-                        )
+                        val offset = Rational(this._ui_change_bill.get_next_int(), this._ui_change_bill.get_next_int())
+                        val offset_width = Rational(this._ui_change_bill.get_next_int(), this._ui_change_bill.get_next_int())
                         val force = this._ui_change_bill.get_next_int() != 0
 
                         // Detach from order and thread after ui updates are finished
@@ -2471,9 +2442,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                     }
 
                     BillableItem.RowAdd -> {
-                        editor_table.new_row(
-                            this._ui_change_bill.get_next_int()
-                        )
+                        editor_table.new_row(this._ui_change_bill.get_next_int())
                     }
 
                     BillableItem.RowRemove -> {
@@ -2484,21 +2453,15 @@ class OpusLayerInterface : OpusLayerHistory() {
                     }
 
                     BillableItem.RowChange -> {
-                        editor_table.notify_row_change(
-                            this._ui_change_bill.get_next_int()
-                        )
+                        editor_table.notify_row_change(this._ui_change_bill.get_next_int())
                     }
 
                     BillableItem.ColumnAdd -> {
-                        editor_table.new_column(
-                            this._ui_change_bill.get_next_int()
-                        )
+                        editor_table.new_column(this._ui_change_bill.get_next_int())
                     }
 
                     BillableItem.ColumnRemove -> {
-                        editor_table.remove_column(
-                            this._ui_change_bill.get_next_int()
-                        )
+                        editor_table.remove_column(this._ui_change_bill.get_next_int())
                     }
 
                     BillableItem.ColumnChange -> {
@@ -2636,8 +2599,27 @@ class OpusLayerInterface : OpusLayerHistory() {
                         }
                     }
 
-                    BillableItem.LineLabelRefresh -> {
-                        editor_table.notify_row_change(this._ui_change_bill.get_next_int(), false)
+                    BillableItem.UpdateLineInfo -> {
+                        editor_table.notify_row_change(
+                            y = this._ui_change_bill.get_next_int(),
+                            percussion = this._ui_change_bill.get_next_int() != 0,
+                            channel = this._ui_change_bill.get_next_int(),
+                            offset = this._ui_change_bill.get_next_int(),
+                            level = this._ui_change_bill.get_next_int().let {
+                                if (it == -1) {
+                                    null
+                                } else {
+                                    CtlLineLevel.entries[it] // TODO: Check if ordinal always corresponds here
+                                }
+                            },
+                            type = this._ui_change_bill.get_next_int().let {
+                                if (it == -1) {
+                                    null
+                                } else {
+                                    EffectType.entries[it]
+                                }
+                            }
+                        )
                     }
 
                     BillableItem.ColumnLabelRefresh -> {
@@ -2653,7 +2635,7 @@ class OpusLayerInterface : OpusLayerHistory() {
 
                     BillableItem.RowStateChange -> {
                         val y = this._ui_change_bill.get_next_int()
-                        editor_table.notify_row_change(y,true)
+                        editor_table.notify_row_change(y, true)
                     }
 
                     BillableItem.CellStateChange -> {
@@ -2701,10 +2683,9 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     fun set_relative_mode(mode: RelativeInputMode, update_ui: Boolean = true) {
         this.relative_mode = mode
+        if (!update_ui) return
         this.lock_ui_partial {
-            if (update_ui) {
-                this._ui_change_bill.queue_refresh_context_menu()
-            }
+            this._ui_change_bill.queue_refresh_context_menu()
         }
     }
 
@@ -2729,10 +2710,7 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     // Note: set_note_octave/offset functions need to be in interface layer since they require access to 'relative_mode' property
     private fun _set_note_octave(beat_key: BeatKey, position: List<Int>, octave: Int) {
-        val current_tree_position = this.get_actual_position(
-            beat_key,
-            position
-        )
+        val current_tree_position = this.get_actual_position(beat_key, position)
         val current_tree = this.get_tree(current_tree_position.first, current_tree_position.second)
         val current_event = current_tree.get_event()
         val duration = current_event?.duration ?: 1
@@ -2857,6 +2835,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         if (this.cursor.mode != CursorMode.Single) {
             throw IncorrectCursorMode(this.cursor.mode, CursorMode.Single)
         }
+
         val current_tree_position = this.get_actual_position(
             this.cursor.get_beatkey(),
             this.cursor.get_position()

@@ -29,7 +29,7 @@ enum class BillableItem {
     ConfigDrawerEnableCopyAndDelete,
     ConfigDrawerRefreshExportButton,
     PercussionButtonRefresh,
-    LineLabelRefresh,
+    UpdateLineInfo,
     ColumnLabelRefresh,
     FullRefresh,
     ForceScroll

@@ -223,11 +223,11 @@ class EditorTable(context: Context, attrs: AttributeSet): ScrollView(context, at
     }
 
     // FIXME: Redundant
-    fun notify_row_change(y: Int, state_only: Boolean = false) {
-        if (!state_only) {
-            this.reset_table_size()
-        }
-        this.painted_layer.notify_row_change(y, state_only)
+    fun notify_row_change(y: Int, percussion: Boolean, channel: Int, offset: Int, level: CtlLineLevel? = null, type: EffectType? = null) {
+        // if (!state_only) {
+        //     this.reset_table_size()
+        // }
+        this.painted_layer.notify_row_change(y)
     }
 
     fun get_column_map_size(): Int {

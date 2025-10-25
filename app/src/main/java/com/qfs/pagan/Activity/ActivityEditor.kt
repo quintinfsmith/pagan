@@ -1596,32 +1596,24 @@ class ActivityEditor : PaganActivity() {
         this.findViewById<MaterialButton?>(R.id.btnChangeProjectName)?.setOnClickListener {
             this.get_action_interface().set_project_name_and_notes()
         }
-        //-------------------------------------------
         this.findViewById<MaterialButton?>(R.id.btnRadix)?.setOnClickListener {
             this.get_action_interface().set_tuning_table_and_transpose()
         }
-        //-------------------------------------------
         this.findViewById<View>(R.id.btnAddChannel).setOnClickListener {
             this.get_action_interface().insert_channel(opus_manager.channels.size)
         }
-
         this.findViewById<View>(R.id.btnAddPercussion).setOnClickListener {
             this.get_action_interface().insert_percussion_channel(opus_manager.channels.size)
         }
 
         this.setup_project_config_drawer_export_button()
         this.findViewById<View>(R.id.btnSaveProject).setOnClickListener {
-            if (!it.isEnabled) {
-                return@setOnClickListener
-            }
+            if (!it.isEnabled) return@setOnClickListener
             this.get_action_interface().save()
         }
 
         this.findViewById<View>(R.id.btnSaveProject).setOnLongClickListener {
-            if (!it.isEnabled) {
-                return@setOnLongClickListener false
-            }
-
+            if (!it.isEnabled) return@setOnLongClickListener false
             this.export_project()
             true
         }
@@ -1643,9 +1635,8 @@ class ActivityEditor : PaganActivity() {
         this.findViewById<View?>(R.id.btnCopyProject)?.let { button ->
             button.isEnabled = file_exists
             button.setOnClickListener {
-                if (it.isEnabled) {
-                    this.get_action_interface().project_copy()
-                }
+                if (!it.isEnabled) return@setOnClickListener
+                this.get_action_interface().project_copy()
             }
         }
 
@@ -1733,9 +1724,7 @@ class ActivityEditor : PaganActivity() {
 
         val available_drum_keys = mutableSetOf<Pair<String, Int>>()
         for ((_, preset_instrument) in preset.instruments) {
-            if (preset_instrument.instrument == null) {
-                continue
-            }
+            if (preset_instrument.instrument == null) continue
 
             val instrument_range = preset_instrument.key_range ?: Pair(0, 127)
 
@@ -1831,9 +1820,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun play_event(channel: Int, event_value: Int, velocity: Float = .5F) {
-        if (event_value < 0) {
-            return // No sound to play
-        }
+        if (event_value < 0) return // No sound to play
 
         val opus_manager = this.get_opus_manager()
         val midi_channel = opus_manager.get_channel(channel).get_midi_channel()
@@ -1854,10 +1841,7 @@ class ActivityEditor : PaganActivity() {
             Pair(new_note, bend)
         }
 
-        if (note > 127) {
-            return
-        }
-
+        if (note > 127) return
 
         this._feedback_sample_manager?.let { handle_manager : SampleHandleManager ->
             if (this._temporary_feedback_devices[this._current_feedback_device] == null) {
@@ -1999,9 +1983,7 @@ class ActivityEditor : PaganActivity() {
     fun shift_up_percussion_names(channel: Int) {
         val keys = this.active_percussion_names.keys.sorted().reversed()
         for (k in keys) {
-            if (k < channel) {
-                continue
-            }
+            if (k < channel) continue
             this.active_percussion_names[k + 1] = this.active_percussion_names.remove(k)!!
         }
     }
@@ -2082,9 +2064,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun disable_soundfont() {
-        if (!this.update_playback_state_soundfont(PlaybackState.NotReady)) {
-            return
-        }
+        if (!this.update_playback_state_soundfont(PlaybackState.NotReady)) return
 
         if (this._feedback_sample_manager != null) {
             this.disconnect_feedback_device()
@@ -2153,9 +2133,7 @@ class ActivityEditor : PaganActivity() {
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
             override fun afterTextChanged(p0: Editable?) {
-                if (lockout || p0.toString().isEmpty()) {
-                    return
-                }
+                if (lockout || p0.toString().isEmpty()) return
                 lockout = true
                 sbRed.progress = p0.toString().toInt()
                 lockout = false
@@ -2165,9 +2143,7 @@ class ActivityEditor : PaganActivity() {
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
             override fun afterTextChanged(p0: Editable?) {
-                if (lockout || p0.toString().isEmpty()) {
-                    return
-                }
+                if (lockout || p0.toString().isEmpty()) return
                 lockout = true
                 sbGreen.progress = p0.toString().toInt()
                 lockout = false
@@ -2177,9 +2153,7 @@ class ActivityEditor : PaganActivity() {
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
             override fun afterTextChanged(p0: Editable?) {
-                if (lockout || p0.toString().isEmpty()) {
-                    return
-                }
+                if (lockout || p0.toString().isEmpty()) return
                 lockout = true
                 sbBlue.progress = p0.toString().toInt()
                 lockout = false
@@ -2188,9 +2162,7 @@ class ActivityEditor : PaganActivity() {
 
         val seekbar_listener = object: SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) {
-                if (lockout) {
-                    return
-                }
+                if (lockout) return
                 lockout = true
                 when (p0) {
                     sbRed -> rniRed.set_value(p1)
@@ -2226,24 +2198,21 @@ class ActivityEditor : PaganActivity() {
 
             override fun afterTextChanged(s: Editable?) {
                 val string = s.toString()
+                if (lockout || string.length == 6) return
 
-                if (!lockout) {
-                    if (string.length == 6) {
-                        val red = string.substring(0, 2).toInt(16)
-                        val green = string.substring(2, 4).toInt(16)
-                        val blue = string.substring(4, 6).toInt(16)
+                val red = string.substring(0, 2).toInt(16)
+                val green = string.substring(2, 4).toInt(16)
+                val blue = string.substring(4, 6).toInt(16)
 
-                        lockout = true
-                        rniRed.set_value(red)
-                        rniGreen.set_value(green)
-                        rniBlue.set_value(blue)
-                        sbRed.progress = red
-                        sbGreen.progress = green
-                        sbBlue.progress = blue
-                        flColorDisplay.setBackgroundColor(Color.rgb(red, green, blue))
-                        lockout = false
-                    }
-                }
+                lockout = true
+                rniRed.set_value(red)
+                rniGreen.set_value(green)
+                rniBlue.set_value(blue)
+                sbRed.progress = red
+                sbGreen.progress = green
+                sbBlue.progress = blue
+                flColorDisplay.setBackgroundColor(Color.rgb(red, green, blue))
+                lockout = false
             }
         })
 
@@ -2397,13 +2366,8 @@ class ActivityEditor : PaganActivity() {
     private fun needs_save(): Boolean {
         val opus_manager = this.get_opus_manager()
 
-        if (this.active_project == null) {
-            return !opus_manager.history_cache.is_empty()
-        }
-
-        if (DocumentFile.fromSingleUri(this, this.active_project!!)?.exists() != true) {
-            return true
-        }
+        if (this.active_project == null) return !opus_manager.history_cache.is_empty()
+        if (DocumentFile.fromSingleUri(this, this.active_project!!)?.exists() != true) return true
 
         val input_stream = this.contentResolver.openInputStream(this.active_project!!)
         val reader = BufferedReader(InputStreamReader(input_stream))
@@ -2488,7 +2452,7 @@ class ActivityEditor : PaganActivity() {
     fun export_midi_check() {
         val opus_manager = this.get_opus_manager()
         if (opus_manager.get_percussion_channels().size > 1) {
-            val text_view: TextView = TextView(this)
+            val text_view = TextView(this)
             text_view.text = this.getString(R.string.multiple_kit_warning)
 
             AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
@@ -2606,9 +2570,8 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun connect_feedback_device() {
-        if (this._soundfont == null) {
-            return
-        }
+        if (this._soundfont == null) return
+
         this.disconnect_feedback_device()
 
         val buffer_size = this.configuration.sample_rate / 2
@@ -2625,9 +2588,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun get_notification(): NotificationCompat.Builder? {
-        if (!this.has_notification_permission()) {
-            return null
-        }
+        if (!this.has_notification_permission()) return null
 
         if (this._active_notification == null) {
             this.get_notification_channel()

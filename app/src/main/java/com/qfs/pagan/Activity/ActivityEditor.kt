@@ -3137,14 +3137,15 @@ class ActivityEditor : PaganActivity() {
 
         val default_value = opus_manager.tuning_map.size
 
-        val etRadix = viewInflated.findViewById<RangedIntegerInput>(R.id.etRadix)
-        etRadix.set_value(default_value)
-        etRadix.set_range(
-            this.resources.getInteger(R.integer.minimum_octave_size),
-            this.resources.getInteger(R.integer.maximum_octave_size)
-        )
-        etRadix.value_set_callback = { new_radix: Int? ->
-            rvTuningMap.reset_tuning_map(new_radix)
+        viewInflated.findViewById<RangedIntegerInput?>(R.id.etRadix)?.let { input_view ->
+            input_view.set_value(default_value)
+            input_view.set_range(
+                this.resources.getInteger(R.integer.minimum_octave_size),
+                this.resources.getInteger(R.integer.maximum_octave_size)
+            )
+            input_view.value_set_callback = { new_radix: Int? ->
+                rvTuningMap.reset_tuning_map(new_radix)
+            }
         }
     }
 
@@ -3184,7 +3185,6 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun dialog_midi_device_management() {
-
         val options = mutableListOf<Triple<MidiDeviceInfo?, Int?, String>>(
             Triple(null, null, this.getString(R.string.device_menu_default_name))
         )
@@ -3227,9 +3227,7 @@ class ActivityEditor : PaganActivity() {
 
     fun set_active_midi_device(device_info: MidiDeviceInfo?) {
         val current_device_info = this.editor_view_model.active_midi_device
-        if (device_info == current_device_info) {
-            return
-        }
+        if (device_info == current_device_info) return
 
         when (this.playback_state_soundfont) {
             PlaybackState.Playing,

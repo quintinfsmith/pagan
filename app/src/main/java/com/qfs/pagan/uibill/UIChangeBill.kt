@@ -1,10 +1,13 @@
 package com.qfs.pagan.uibill
 
-import com.qfs.apres.soundfontplayer.EffectType
 import com.qfs.pagan.EditorTable
 import com.qfs.pagan.structure.Rational
-import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
+import com.qfs.pagan.structure.opusmanager.base.OpusEvent
+import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
+
+// IN PROGRESS: converting this into  a UI State representation of the Editor....
 
 /**
 * A queue of UI update commands to be executed once it is safe to do so.
@@ -14,344 +17,23 @@ class UIChangeBill {
     private var _tree: Node = Node()
     private val working_path = mutableListOf<Int>()
 
-    fun consolidate() {
-        val queued_cells = mutableSetOf<Pair<EditorTable.Coordinate, ReducibleTree<*>?>>()
-        val queued_columns = Array<MutableSet<Int>>(2) { mutableSetOf() }
-        val queued_line_labels = mutableSetOf<IntArray>()
-        val queued_column_labels = mutableSetOf<Int>()
-        var queued_context_menu: BillableItem? = null
-        var queued_cursor_scroll: Array<Int>? = null
-        val stack = mutableListOf<Node>(this._tree)
-        this._tree = Node()
-        while (stack.isNotEmpty()) {
-            val node = stack.removeAt(0)
-            for (bill_item in node.bill) {
-                // The Specified BillableItems will be manually added to the end of the queue after some calculations
-                // The rest can be handled FIFO
-                when (bill_item) {
-                    BillableItem.FullRefresh,
-                    BillableItem.CellChange,
-                    BillableItem.CellStateChange,
-                    BillableItem.ColumnChange,
-                    BillableItem.ColumnStateChange,
-                    BillableItem.UpdateLineInfo,
-                    BillableItem.ColumnLabelRefresh,
-                    BillableItem.ContextMenuRefresh,
-                    BillableItem.ContextMenuSetLine,
-                    BillableItem.ContextMenuSetChannel,
-                    BillableItem.ContextMenuSetLeaf,
-                    BillableItem.ContextMenuSetLeafPercussion,
-                    BillableItem.ContextMenuSetControlLeaf,
-                    BillableItem.ContextMenuSetControlLeafB,
-                    BillableItem.ContextMenuSetRange,
-                    BillableItem.ContextMenuSetColumn,
-                    BillableItem.ContextMenuSetControlLine,
-                    BillableItem.ForceScroll,
-                    BillableItem.ContextMenuClear -> {}
-                    else -> {
-                        this._tree.bill.add(bill_item)
-                    }
-                }
-
-                when (bill_item) {
-                    BillableItem.FullRefresh -> {
-                        this._tree.clear()
-                        this._tree.bill.add(bill_item)
-                        return
-                    }
-
-                    BillableItem.ForceScroll -> {
-                        queued_cursor_scroll = Array(7) {
-                            node.int_queue.removeAt(0)
-                        }
-                    }
-
-                    BillableItem.RowAdd -> {
-                        val y = node.int_queue.removeAt(0)
-                        for ((coord, _) in queued_cells) {
-                            if (coord.y >= y) {
-                                coord.y += 1
-                            }
-                        }
-
-                        val new_queue_line_labels = mutableSetOf<Int>()
-                        for (i in queued_line_labels) {
-                            if (i > y) {
-                                new_queue_line_labels.add(i + 1)
-                            } else {
-                                new_queue_line_labels.add(i)
-                            }
-                        }
-
-                        queued_line_labels.clear()
-                        queued_line_labels += new_queue_line_labels
-
-                        this._tree.int_queue.add(y)
-                    }
-
-                    BillableItem.RowRemove -> {
-                        val y = node.int_queue.removeAt(0)
-                        val count = node.int_queue.removeAt(0)
-
-                        val check_range = y until y + count
-                        queued_cells -= queued_cells.filter { (coord: EditorTable.Coordinate, _: ReducibleTree<*>?) ->
-                            check_range.contains(coord.y)
-                        }.toSet()
-
-                        for ((coord, _) in queued_cells) {
-                            if (coord.y >= y + count) {
-                                coord.y -= count
-                            }
-                        }
-
-                        val new_queue_line_labels = mutableSetOf<Int>()
-                        for (i in queued_line_labels) {
-                            if (i >= y + count) {
-                                new_queue_line_labels.add(i - count)
-                            } else if (i < y) {
-                                new_queue_line_labels.add(i)
-                            }
-                        }
-
-                        queued_line_labels.clear()
-                        queued_line_labels += new_queue_line_labels
-                        this._tree.int_queue.add(y)
-                        this._tree.int_queue.add(count)
-                    }
-
-                    BillableItem.ColumnAdd -> {
-                        val column = node.int_queue.removeAt(0)
-
-                        for ((coord, _) in queued_cells) {
-                            if (coord.x >= column) {
-                                coord.x += 1
-                            }
-                        }
-
-                        for (i in 0 until queued_columns.size) {
-                            val old_columns = queued_columns[i].toSet()
-                            queued_columns[i].clear()
-                            for (x in old_columns) {
-                                if (x < column) {
-                                    queued_columns[i].add(x)
-                                } else {
-                                    queued_columns[i].add(x + 1)
-                                }
-                            }
-                        }
-
-                        val new_queue_column_labels = mutableSetOf<Int>()
-                        for (i in queued_column_labels) {
-                            if (i > column) {
-                                new_queue_column_labels.add(i + 1)
-                            } else {
-                                new_queue_column_labels.add(i)
-                            }
-                        }
-
-                        queued_column_labels.clear()
-                        queued_column_labels += new_queue_column_labels
-
-                        this._tree.int_queue.add(column)
-                    }
-
-                    BillableItem.ColumnRemove -> {
-                        val column = node.int_queue.removeAt(0)
-
-                        queued_cells -= queued_cells.filter { (coord: EditorTable.Coordinate, _) ->
-                            coord.x == column
-                        }.toSet()
-
-                        for ((coord, _) in queued_cells) {
-                            if (coord.x > column) {
-                                coord.x -= 1
-                            }
-                        }
-
-                        for (i in 0 until queued_columns.size) {
-                            val old_columns = queued_columns[i].toSet()
-                            queued_columns[i].clear()
-
-                            for (x in old_columns) {
-                                if (x == column) {
-                                    continue
-                                } else if (x < column) {
-                                    queued_columns[i].add(x)
-                                } else {
-                                    queued_columns[i].add(x - 1)
-                                }
-                            }
-                        }
-
-                        val new_queue_column_labels = mutableSetOf<Int>()
-                        for (i in queued_column_labels) {
-                            if (i > column) {
-                                new_queue_column_labels.add(i + 1)
-                            } else if (i < column) {
-                                new_queue_column_labels.add(i)
-                            }
-                        }
-
-                        queued_column_labels.clear()
-                        queued_column_labels += new_queue_column_labels
-
-                        this._tree.int_queue.add(column)
-                    }
-
-                    BillableItem.ChannelChange,
-                    BillableItem.ChannelAdd,
-                    BillableItem.ChannelRemove -> {
-                        this._tree.int_queue.add(node.int_queue.removeAt(0))
-                    }
-
-                    BillableItem.UpdateLineInfo -> {
-                        queued_line_labels.add(IntArray(6) { node.int_queue.removeAt(0) })
-                    }
-                    BillableItem.ColumnLabelRefresh -> {
-                        queued_column_labels.add(node.int_queue.removeAt(0))
-                    }
-
-                    BillableItem.PercussionButtonRefresh -> {
-                        this._tree.int_queue.add(node.int_queue.removeAt(0))
-                        this._tree.int_queue.add(node.int_queue.removeAt(0))
-                    }
-
-                    BillableItem.RowChange -> {
-                        val y = node.int_queue.removeAt(0)
-                        queued_cells -= queued_cells.filter { (coord: EditorTable.Coordinate, _) ->
-                            coord.y == y
-                        }.toSet()
-                        this._tree.int_queue.add(y)
-                    }
-
-                    BillableItem.RowStateChange -> {
-                        val y = node.int_queue.removeAt(0)
-                        queued_cells -= queued_cells.filter { (coord: EditorTable.Coordinate, cell_tree: ReducibleTree<*>?) ->
-                            coord.y == y && cell_tree == null
-                        }.toSet()
-                        this._tree.int_queue.add(y)
-                    }
-
-                    BillableItem.ColumnChange -> {
-                        val column = node.int_queue.removeAt(0)
-                        queued_cells -= queued_cells.filter { (coord: EditorTable.Coordinate, _) ->
-                            coord.x == column
-                        }.toSet()
-
-                        queued_columns[1].add(column)
-                    }
-
-                    BillableItem.ColumnStateChange -> {
-                        val column = node.int_queue.removeAt(0)
-                        queued_cells -= queued_cells.filter { (coord: EditorTable.Coordinate, cell_tree: ReducibleTree<*>?) ->
-                            coord.x == column && cell_tree == null
-                        }.toSet()
-
-                        queued_columns[0].add(column)
-                    }
-
-                    BillableItem.CellStateChange,
-                    BillableItem.CellChange -> {
-                        val state_only = bill_item == BillableItem.CellStateChange
-                        queued_cells.add(
-                            Pair(
-                                EditorTable.Coordinate(
-                                    node.int_queue.removeAt(0),
-                                    node.int_queue.removeAt(0)
-                                ),
-                                if (state_only) null else node.tree_queue.removeAt(0)
-                            )
-                        )
-                    }
-
-                    BillableItem.ContextMenuRefresh,
-                    BillableItem.ContextMenuSetLine,
-                    BillableItem.ContextMenuSetLeaf,
-                    BillableItem.ContextMenuSetLeafPercussion,
-                    BillableItem.ContextMenuSetControlLeaf,
-                    BillableItem.ContextMenuSetControlLeafB,
-                    BillableItem.ContextMenuSetRange,
-                    BillableItem.ContextMenuSetColumn,
-                    BillableItem.ContextMenuSetControlLine,
-                    BillableItem.ContextMenuClear,
-                    BillableItem.ContextMenuSetChannel -> {
-                        queued_context_menu = bill_item
-                    }
-
-                    BillableItem.ProjectNameChange,
-                    BillableItem.ConfigDrawerEnableCopyAndDelete,
-                    BillableItem.ConfigDrawerRefreshExportButton -> { }
-
-                }
-            }
-
-            stack.addAll(0, node.sub_nodes)
-        }
-
-        if (queued_cursor_scroll != null) {
-            this._tree.bill.add(BillableItem.ForceScroll)
-            this._tree.int_queue.addAll(queued_cursor_scroll)
-        }
-
-        if (queued_columns[0].isNotEmpty()) {
-            val columns = (queued_columns[0] - queued_columns[1]).toList()
-
-            for (x in columns) {
-                this._tree.bill.add(BillableItem.ColumnStateChange)
-                this._tree.int_queue.add(x)
-            }
-        }
-
-        if (queued_columns[1].isNotEmpty()) {
-            val columns = queued_columns[1].toList()
-            for (x in columns) {
-                this._tree.bill.add(BillableItem.ColumnChange)
-                this._tree.int_queue.add(x)
-            }
-        }
-
-        val processed_cell_coord = mutableSetOf<EditorTable.Coordinate>()
-
-        queued_cells.filter { (_, tree) -> tree != null }.let { cells ->
-            if (cells.isEmpty()) return@let
-
-            this._tree.int_queue.add(cells.size)
-            for ((coord, tree) in cells) {
-                processed_cell_coord.add(coord)
-                this._tree.int_queue.add(coord.y)
-                this._tree.int_queue.add(coord.x)
-                this._tree.tree_queue.add(tree!!)
-            }
-            this._tree.bill.add(BillableItem.CellChange)
-        }
-
-        queued_cells.filter { (coord, tree) -> processed_cell_coord.contains(coord) && tree == null }.let { cells ->
-            if (cells.isEmpty()) return@let
-
-            this._tree.int_queue.add(cells.size)
-            for ((coord, _) in cells) {
-                this._tree.int_queue.add(coord.y)
-                this._tree.int_queue.add(coord.x)
-            }
-            this._tree.bill.add(BillableItem.CellStateChange)
-        }
-
-        for (line_data in queued_line_labels) {
-            this._tree.bill.add(BillableItem.UpdateLineInfo)
-            for (i in line_data) {
-                this._tree.int_queue.add(i)
-            }
-        }
-
-        for (x in queued_column_labels) {
-            this._tree.bill.add(BillableItem.ColumnLabelRefresh)
-            this._tree.int_queue.add(x)
-        }
-
-        if (queued_context_menu != null) {
-            this._tree.bill.add(queued_context_menu)
-        }
+    enum class SelectionLevel {
+        Unselected,
+        Primary,
+        Secondary
     }
+
+    data class LineData(var channel: Int?, var offset: Int?, var ctl_type: EffectType?, var selected: SelectionLevel)
+    data class ColumnData(var is_tagged: Boolean, var selected: SelectionLevel)
+
+    var project_name: String? = null
+    val beat_count: Int = 0
+    val line_data: MutableList<LineData> = mutableListOf()
+    val column_data: MutableList<ColumnData> = mutableListOf()
+    val cell_map: MutableList<MutableList<ReducibleTree<OpusEvent>>> = mutableListOf()
+    val active_event: OpusEvent? = null
+    val active_cursor: OpusManagerCursor = OpusManagerCursor()
+    var project_exists: Boolean = false
 
     fun get_next_entry(): BillableItem? {
         return if (this._tree.bill.isNotEmpty()) {
@@ -373,14 +55,15 @@ class UIChangeBill {
         this._tree.clear()
     }
 
-    fun queue_cell_state_changes(cells: List<EditorTable.Coordinate>) {
-        for (cell in cells) {
-            this.queue_cell_change(cell)
+    fun queue_cell_state_changes(coordinates: List<EditorTable.Coordinate>) {
+        for (coordinate in coordinates) {
+            this.queue_cell_change(coordinate)
         }
     }
 
-    fun queue_cell_change(cell: EditorTable.Coordinate, tree: ReducibleTree<*>? = null) {
+    fun queue_cell_change(coordinate: EditorTable.Coordinate, tree: ReducibleTree<*>? = null) {
         val working_tree = this.get_working_tree() ?: return
+
         if (tree == null) {
             working_tree.bill.add(BillableItem.CellStateChange)
         } else {
@@ -388,8 +71,8 @@ class UIChangeBill {
             working_tree.tree_queue.add(tree)
         }
 
-        working_tree.int_queue.add(cell.y)
-        working_tree.int_queue.add(cell.x)
+        working_tree.int_queue.add(coordinate.y)
+        working_tree.int_queue.add(coordinate.x)
     }
 
     fun queue_column_changes(columns: List<Int>, state_only: Boolean = false) {
@@ -404,6 +87,7 @@ class UIChangeBill {
             working_tree.bill.add(bill_item)
             working_tree.int_queue.add(column)
         }
+
     }
 
     fun queue_column_change(column: Int, state_only: Boolean = false) {
@@ -483,6 +167,9 @@ class UIChangeBill {
     fun queue_enable_delete_and_copy_buttons() {
         val working_tree = this.get_working_tree() ?: return
         working_tree.bill.add(BillableItem.ConfigDrawerEnableCopyAndDelete)
+        this.project_exists = true
+        // activity.findViewById<View>(R.id.btnDeleteProject).isEnabled = true
+        // activity.findViewById<View>(R.id.btnCopyProject).isEnabled = true
     }
 
     fun queue_config_drawer_redraw_export_button() {
@@ -500,15 +187,12 @@ class UIChangeBill {
         working_tree.bill.add(BillableItem.ColumnLabelRefresh)
     }
 
-    fun queue_line_label_refresh(y: Int, is_percussion: Boolean?, channel: Int?, line_offset: Int?, control_level: CtlLineLevel? = null, control_type: EffectType? = null) {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.int_queue.add(y)
-        working_tree.int_queue.add(if (is_percussion == true) 1 else 0)
-        working_tree.int_queue.add(channel ?: -1)
-        working_tree.int_queue.add(line_offset ?: -1)
-        working_tree.int_queue.add(control_level?.ordinal ?: -1)
-        working_tree.int_queue.add(control_type?.ordinal ?: -1)
-        working_tree.bill.add(BillableItem.UpdateLineInfo)
+    fun queue_line_label_refresh(y: Int, is_percussion: Boolean?, channel: Int?, offset: Int?, control_type: EffectType? = null) {
+        this.line_data[y].let { line_data ->
+            line_data.channel = channel
+            line_data.offset = offset
+            line_data.ctl_type = control_type
+        }
     }
 
     fun queue_row_change(y: Int, state_only: Boolean = false) {
@@ -629,6 +313,49 @@ class UIChangeBill {
 
     fun cancel_most_recent() {
         this._tree.remove_last()
+    }
+
+    fun move_channel(channel_index: Int, new_channel_index: Int) {
+        var from_index = -1
+        var to_index = -1
+
+        // First, Get the 2 channel start indices...
+        for (y in this.line_data.indices) {
+            this.line_data[y].channel?.let { working_channel ->
+                if (to_index == -1 && new_channel_index == working_channel) {
+                    to_index = y
+                }
+                if (from_index == -1 && channel_index == working_channel) {
+                    from_index = y
+                }
+            }
+            if (to_index > -1 && from_index > -1) break
+        }
+
+        // ... Then move the lines ...
+        if (from_index > to_index) {
+            while (from_index < this.line_data.size && this.line_data[from_index].channel != channel_index) {
+                this.cell_map.add(to_index, this.cell_map.removeAt(from_index))
+                this.line_data.add(to_index++, this.line_data.removeAt(from_index))
+            }
+        } else if (to_index > from_index) {
+            while (true) {
+                this.cell_map.add(to_index - 1, this.cell_map.removeAt(from_index))
+                this.line_data.add(to_index++ - 1, this.line_data.removeAt(from_index))
+            }
+        }
+
+        // ... Finally update the channels
+        var working_channel = -1
+        var c = -1
+        for (line in this.line_data) {
+            if (line.channel == null) continue
+            if (line.channel != working_channel) {
+                working_channel++
+                c++
+            }
+            line.channel = c
+        }
     }
 
 }

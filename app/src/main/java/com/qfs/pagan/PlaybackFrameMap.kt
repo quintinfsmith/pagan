@@ -522,17 +522,18 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     fun parse_opus(ignore_global_controls: Boolean = false, ignore_channel_controls: Boolean = false, ignore_line_controls: Boolean = false) {
         this.clear()
 
-        for (channel in this.opus_manager.get_all_channels()) {
+        for (i in this.opus_manager.channels.indices) {
+            val channel = this.opus_manager.get_channel(i)
             val instrument = channel.get_instrument()
-            this._sample_handle_manager.select_bank(channel.get_midi_channel(), instrument.first)
-            this._sample_handle_manager.change_program(channel.get_midi_channel(), instrument.second)
+            val midi_channel =  this.opus_manager.get_midi_channel(i)
+            this._sample_handle_manager.select_bank(midi_channel, instrument.first)
+            this._sample_handle_manager.change_program(midi_channel, instrument.second)
         }
 
         this.map_tempo_changes(this.opus_manager.get_controller<OpusTempoEvent>(PaganEffectType.Tempo) as TempoController)
         this._cache_beat_frames()
 
         this.frame_count = this._cached_beat_frames!!.last()
-
 
         this.setup_effect_buffers(ignore_global_controls, ignore_channel_controls, ignore_line_controls)
         this.opus_manager.channels.forEachIndexed { c: Int, channel: OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>> ->
@@ -549,7 +550,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 }
             }
         }
-
     }
 
     fun setup_effect_buffers(ignore_global_controls: Boolean = false, ignore_channel_controls: Boolean = false, ignore_line_controls: Boolean = false) {
@@ -833,9 +833,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             }
             is AbsoluteNoteEvent -> {
                 // Can happen since we convert RelativeNotes to Absolute ones before passing them to this function
-                if (event.note < 0) {
-                    return null
-                }
+                if (event.note < 0) return null
+
                 val radix = this.opus_manager.tuning_map.size
                 val octave = event.note / radix
                 val offset = this.opus_manager.tuning_map[event.note % radix]
@@ -854,7 +853,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         return NoteOn79(
             index = 0, // Set index as note is applied
-            channel = this.opus_manager.get_channel(beat_key.channel).get_midi_channel(),
+            channel = this.opus_manager.get_midi_channel(beat_key.channel),
             velocity = velocity shl 8,
             note = note,
             bend = bend

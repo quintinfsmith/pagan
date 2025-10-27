@@ -1374,6 +1374,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.lock_ui_partial {
             super.move_channel(channel_index, new_channel_index)
             this._ui_change_bill.move_channel(channel_index, new_channel_index)
+            this._activity?.update_channel_instruments()
         }
     }
 
@@ -1401,7 +1402,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 // BUT this way these don't get called multiple times every setup
                 val activity = this.get_activity()
                 activity?.update_channel_instrument(
-                    this.get_all_channels()[channel].get_midi_channel(),
+                    this.get_midi_channel(channel),
                     instrument
                 )
 

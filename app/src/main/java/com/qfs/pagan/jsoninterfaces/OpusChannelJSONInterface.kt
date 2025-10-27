@@ -39,7 +39,6 @@ class OpusChannelJSONInterface {
                 else -> "???"
             }
             channel_map["lines"] = lines
-            channel_map["midi_channel"] = channel.get_midi_channel()
             channel_map["midi_bank"] = channel.get_midi_bank()
             channel_map["midi_program"] = channel.midi_program
             channel_map["controllers"] = ActiveControlSetJSONInterface.to_json(channel.controllers)
@@ -85,7 +84,6 @@ class OpusChannelJSONInterface {
 
             channel.size = channel.lines.size
             channel.set_beat_count(beat_count)
-            channel.midi_channel = input_map.get_int("midi_channel")
             channel.midi_program = input_map.get_int("midi_program")
             channel.controllers = ActiveControlSetJSONInterface.from_json(input_map.get_hashmap("controllers"), beat_count)
             channel.muted = input_map.get_boolean("muted", false)

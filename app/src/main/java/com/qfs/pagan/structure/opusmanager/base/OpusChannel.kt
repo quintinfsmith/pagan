@@ -28,8 +28,7 @@ data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int) {
     }
 }
 
-abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(var uuid: Int):
-    Effectable {
+abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(var uuid: Int): Effectable {
     class InvalidChannelUUID(uuid: Int): Exception("No such channel uuid: $uuid")
     class LineSizeMismatch(incoming_size: Int, required_size: Int): Exception("Line is $incoming_size beats but OpusManager is $required_size beats")
     class LastLineException: Exception("Can't remove final line in channel")
@@ -39,7 +38,6 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
 
     var lines: MutableList<T> = mutableListOf()
     var controllers = EffectControlSet(0)
-    var midi_channel: Int = 0
     var midi_program = 0
     private var _beat_count: Int = 0
     var size: Int = 0
@@ -48,7 +46,6 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
     abstract fun gen_line(): T
     open fun clear() {
         this.lines.clear()
-        this.midi_channel = 0
         this.midi_program = 0
         this._beat_count = 0
         this.size = 0
@@ -260,9 +257,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
 
         return (this.controllers == other.controllers)
     }
-    fun get_midi_channel(): Int {
-        return this.midi_channel
-    }
+
     abstract fun get_midi_bank(): Int
     fun get_midi_program(): Int {
         return this.midi_program

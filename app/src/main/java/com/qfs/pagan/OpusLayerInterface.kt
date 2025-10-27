@@ -1379,6 +1379,8 @@ class OpusLayerInterface : OpusLayerHistory() {
     override fun move_channel(channel_index: Int, new_channel_index: Int) {
         this.lock_ui_partial {
             super.move_channel(channel_index, new_channel_index)
+
+
             for (y in min(channel_index, new_channel_index) until this.channels.size) {
                 this._ui_change_bill.queue_refresh_channel(y)
             }
@@ -1386,6 +1388,8 @@ class OpusLayerInterface : OpusLayerHistory() {
             for (y in 0 until this.get_total_line_count()) {
                 this._ui_change_bill.queue_line_label_refresh(y)
             }
+
+            this._activity?.update_channel_instruments()
         }
     }
 
@@ -1413,7 +1417,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 // BUT this way these don't get called multiple times every setup
                 val activity = this.get_activity()
                 activity?.update_channel_instrument(
-                    this.get_all_channels()[channel].get_midi_channel(),
+                    this.get_midi_channel(channel),
                     instrument
                 )
 

@@ -1724,20 +1724,18 @@ class ActivityEditor : PaganActivity() {
             return this._get_default_drum_options()
         }
 
-        val channel = this.get_opus_manager().get_channel(channel_index)
+        val opus_manager = this.get_opus_manager()
+        val midi_channel = opus_manager.get_midi_channel(channel_index)
 
         val preset = try {
-            this._sample_handle_manager!!.get_preset(channel.get_midi_channel()) ?: return this._get_default_drum_options()
+            this._sample_handle_manager!!.get_preset(midi_channel) ?: return this._get_default_drum_options()
         } catch (_: SoundFont.InvalidPresetIndex) {
             return this._get_default_drum_options()
         }
 
         val available_drum_keys = mutableSetOf<Pair<String, Int>>()
         for ((_, preset_instrument) in preset.instruments) {
-            if (preset_instrument.instrument == null) {
-                continue
-            }
-
+            if (preset_instrument.instrument == null) continue
             val instrument_range = preset_instrument.key_range ?: Pair(0, 127)
 
             for (sample_directive in preset_instrument.instrument!!.sample_directives.values) {
@@ -1794,12 +1792,14 @@ class ActivityEditor : PaganActivity() {
     }
 
     // Update peripheral device instruments, ie feedback device and midi devices
+    // NOTE: Not conforming to GM
     fun update_channel_instruments(index: Int? = null) {
         val opus_manager = this.get_opus_manager()
         if (index == null) {
             this._feedback_sample_manager?.let { handle_manager: SampleHandleManager ->
-                for (channel in opus_manager.get_all_channels()) {
-                    val midi_channel = channel.get_midi_channel()
+                for (i in opus_manager.channels.indices) {
+                    val channel = opus_manager.channels[i]
+                    val midi_channel = opus_manager.get_midi_channel(i)
                     val (midi_bank, midi_program) = channel.get_instrument()
                     this._midi_interface.broadcast_event(BankSelect(midi_channel, midi_bank))
                     this._midi_interface.broadcast_event(ProgramChange(midi_channel, midi_program))
@@ -1811,8 +1811,8 @@ class ActivityEditor : PaganActivity() {
 
             this._sample_handle_manager?.let { handle_manager: SampleHandleManager ->
                 // Don't need to update anything but percussion here
-                for ((_, channel) in opus_manager.get_percussion_channels()) {
-                    val midi_channel = channel.get_midi_channel()
+                for ((i, channel) in opus_manager.get_percussion_channels()) {
+                    val midi_channel = opus_manager.get_midi_channel(i)
                     val (midi_bank, midi_program) = channel.get_instrument()
                     handle_manager.select_bank(midi_channel, midi_bank)
                     handle_manager.change_program(midi_channel, midi_program)
@@ -1821,7 +1821,7 @@ class ActivityEditor : PaganActivity() {
         } else {
             val opus_channel = opus_manager.get_channel(index)
             this.update_channel_instrument(
-                opus_channel.get_midi_channel(),
+                opus_manager.get_midi_channel(index),
                 opus_channel.get_instrument()
             )
         }
@@ -1832,12 +1832,10 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun play_event(channel: Int, event_value: Int, velocity: Float = .5F) {
-        if (event_value < 0) {
-            return // No sound to play
-        }
+        if (event_value < 0) return // No sound to play
 
         val opus_manager = this.get_opus_manager()
-        val midi_channel = opus_manager.get_channel(channel).get_midi_channel()
+        val midi_channel = opus_manager.get_midi_channel(channel)
 
         val radix = opus_manager.tuning_map.size
         val (note, bend) = if (opus_manager.is_percussion(channel)) { // Ignore the event data and use percussion map
@@ -1855,10 +1853,7 @@ class ActivityEditor : PaganActivity() {
             Pair(new_note, bend)
         }
 
-        if (note > 127) {
-            return
-        }
-
+        if (note > 127) return
 
         this._feedback_sample_manager?.let { handle_manager : SampleHandleManager ->
             if (this._temporary_feedback_devices[this._current_feedback_device] == null) {

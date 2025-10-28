@@ -26,12 +26,15 @@ class UIChangeBill {
 
     data class LineData(var channel: Int?, var offset: Int?, var ctl_type: EffectType?, var selected: SelectionLevel)
     data class ColumnData(var is_tagged: Boolean, var selected: SelectionLevel)
+    data class ChannelData(var percussion: Boolean, var instrument: Pair<Int, Int>)
 
     var project_name: String? = null
     var beat_count: Int = 0
     val line_data: MutableList<LineData> = mutableListOf()
     val column_data: MutableList<ColumnData> = mutableListOf()
     val cell_map: MutableList<MutableList<ReducibleTree<out OpusEvent>>> = mutableListOf()
+    val channel_data: MutableList<ChannelData> = mutableListOf()
+
     val active_event: OpusEvent? = null
     val active_cursor: OpusManagerCursor = OpusManagerCursor()
     var project_exists: Boolean = false
@@ -104,10 +107,6 @@ class UIChangeBill {
     }
 
     fun queue_new_row(y: Int, cells: MutableList<ReducibleTree<out OpusEvent>>, channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.int_queue.add(y)
-        working_tree.bill.add(BillableItem.RowAdd)
-
         this.line_data.add(y, LineData(channel, line_offset, ctl_type, SelectionLevel.Unselected))
         this.cell_map.add(y, cells)
     }
@@ -217,34 +216,20 @@ class UIChangeBill {
         working_tree.bill.add(BillableItem.RowRemove)
     }
 
-    fun queue_add_channel(channel: Int) {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.int_queue.add(channel)
-        working_tree.bill.add(BillableItem.ChannelAdd)
-    }
-
-    fun queue_refresh_channel(channel: Int) {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.int_queue.add(channel)
-        working_tree.bill.add(BillableItem.ChannelChange)
+    fun queue_add_channel(channel: Int, percussion: Boolean, instrument: Pair<Int, Int>>) {
+        this.channel_data.add(channel, ChannelData(percussion, instrument))
     }
 
     fun queue_remove_channel(channel: Int) {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.int_queue.add(channel)
-        working_tree.bill.add(BillableItem.ChannelRemove)
+        this.channel_data.removeAt(channel)
     }
 
-    fun queue_add_column(column: Int) {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.int_queue.add(column)
-        working_tree.bill.add(BillableItem.ColumnAdd)
+    fun queue_add_column(column: Int, is_tagged: Boolean) {
+        this.column_data.add(column, ColumnData(is_tagged, SelectionLevel.UnSelected))
     }
 
     fun queue_remove_column(column: Int) {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.int_queue.add(column)
-        working_tree.bill.add(BillableItem.ColumnRemove)
+        this.column_data.removeAt(column)
     }
 
     fun queue_refresh_choose_percussion_button(channel: Int, line_offset: Int) {
@@ -359,6 +344,14 @@ class UIChangeBill {
             }
             line.channel = c
         }
+    }
+
+    fun set_channel_data(channel_index: Int, percussion: Boolean, instrument: Pair<Int, Int>) {
+        this.channel_data[channel_index] = ChannelData(percussion, instrument)
+    }
+
+    fun set_project_name(name: String? = null) {
+        this.project_name = title
     }
 
 }

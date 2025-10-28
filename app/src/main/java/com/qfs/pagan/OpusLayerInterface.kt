@@ -1027,7 +1027,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.lock_ui_partial {
             val notify_index = channel ?: this.channels.size
             super.new_channel(channel, lines, uuid, is_percussion)
-            this._ui_change_bill.queue_add_channel(notify_index)
+            this._ui_change_bill.queue_add_channel(notify_index, is_percussion, this.channels[channel].get_instrument())
             this._post_new_channel(notify_index, lines)
             this.get_activity()?.shift_up_percussion_names(notify_index)
         }
@@ -1060,36 +1060,10 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.lock_ui_partial {
             if (!this._ui_change_bill.is_full_locked()) {
                 this._queue_cursor_update(this.cursor)
-                this._ui_change_bill.queue_add_column(beat_index)
-
-                // Need to find all notes that overflow into the proceeding beats and queue a column refresh on those beats
-                if (beat_index > 0 && beat_index < this.length) {
-                    val channels = this.get_all_channels()
-                    for (i in channels.indices) {
-                        for (j in 0 until channels[i].lines.size) {
-                            val line = channels[i].lines[j]
-                            val working_position = line.get_first_position(beat_index, listOf())
-
-                            val head_position = line.get_blocking_position(beat_index, working_position) ?: Pair(beat_index, working_position)
-                            if (head_position.first < beat_index) {
-                                var max_beat_blocked = beat_index
-                                for ((blocked_beat, _) in line.get_all_blocked_positions(head_position.first, head_position.second)) {
-                                    max_beat_blocked = max(max_beat_blocked, blocked_beat)
-                                }
-
-                                if (max_beat_blocked > beat_index) {
-                                    for (b in beat_index .. max_beat_blocked) {
-                                        this._ui_change_bill.queue_column_change(b + 1, true)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                this._new_column_in_column_width_map(beat_index)
             }
 
             super.insert_beat(beat_index, beats_in_column)
+            this._ui_change_bill.queue_add_column(beat_index, this.is_beat_tagged(beat_index))
         }
     }
 
@@ -1364,7 +1338,8 @@ class OpusLayerInterface : OpusLayerHistory() {
                     instrument
                 )
 
-                this._ui_change_bill.queue_refresh_channel(channel)
+                this._ui_change_bill.set_channel_data(channel, this.is_percussion(channel), instrument)
+
                 this._ui_change_bill.queue_refresh_context_menu()
             }
         }

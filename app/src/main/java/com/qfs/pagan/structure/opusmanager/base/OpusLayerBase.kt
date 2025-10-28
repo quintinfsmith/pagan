@@ -1480,14 +1480,6 @@ open class OpusLayerBase: Effectable {
         this.recache_line_maps()
     }
 
-    open fun swap_channels(channel_a: Int, channel_b: Int) {
-        val tmp_channel = this.channels[channel_a]
-        this.channels[channel_a] = this.channels[channel_b]
-        this.channels[channel_b] = tmp_channel
-
-        this.recache_line_maps()
-    }
-
     /**
      * Insert a beat at [beat_index] into all existing controllers, channels and lines.
      * populate the new beat with [beats_in_column]

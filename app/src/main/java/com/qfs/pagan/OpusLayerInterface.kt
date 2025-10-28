@@ -961,59 +961,6 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
-    override fun swap_channels(channel_a: Int, channel_b: Int) {
-        this.lock_ui_partial {
-            val vis_line_a = this.get_visible_row_from_ctl_line(
-                this.get_actual_line_index(
-                    this.get_instrument_line_index(channel_a, 0)
-                )
-            )!!
-            val vis_line_b = this.get_visible_row_from_ctl_line(
-                this.get_actual_line_index(
-                    this.get_instrument_line_index(channel_b, 0)
-                )
-            )!!
-
-            super.swap_channels(channel_a, channel_b)
-
-            var channel_a_size = 0
-            for (line in this.get_channel(channel_a).lines) {
-                channel_a_size += 1
-                for ((_, controller) in line.controllers.get_all()) {
-                    if (controller.visible) {
-                        channel_a_size += 1
-                    }
-                }
-            }
-            for ((_, controller) in this.get_channel(channel_a).controllers.get_all()) {
-                if (controller.visible) {
-                    channel_a_size += 1
-                }
-            }
-
-            var channel_b_size = 0
-            for (line in this.get_channel(channel_b).lines) {
-                channel_b_size += 1
-                for ((_, controller) in line.controllers.get_all()) {
-                    if (controller.visible) {
-                        channel_b_size += 1
-                    }
-                }
-            }
-            for ((_, controller) in this.get_channel(channel_b).controllers.get_all()) {
-                if (controller.visible) {
-                    channel_b_size += 1
-                }
-            }
-
-            this.get_activity()?.swap_percussion_channels(channel_a, channel_b)
-            this.get_editor_table().swap_mapped_channels(vis_line_b, channel_a_size, vis_line_a, channel_b_size)
-            this._swap_line_ui_update(channel_a, 0, channel_b, 0)
-            this._ui_change_bill.queue_refresh_channel(channel_a)
-            this._ui_change_bill.queue_refresh_channel(channel_b)
-        }
-    }
-
     override fun remove_line(channel: Int, line_offset: Int): OpusLineAbstract<*> {
         return this.lock_ui_partial {
             val abs_line = this.get_visible_row_from_ctl_line(

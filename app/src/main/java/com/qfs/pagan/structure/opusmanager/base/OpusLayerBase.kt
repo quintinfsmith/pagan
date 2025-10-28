@@ -1,6 +1,5 @@
 package com.qfs.pagan.structure.opusmanager.base
 
-import android.icu.lang.UCharacter
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BalanceMSB
 import com.qfs.apres.event.BankSelect
@@ -20,6 +19,7 @@ import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONParser
 import com.qfs.json.JSONString
+import com.qfs.pagan.enumerate
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.ActiveControlSetJSONInterface
@@ -219,7 +219,7 @@ open class OpusLayerBase: Effectable {
             opus.set_size(beat_values.size)
 
             var overflow_events = mutableSetOf<Array<Int>>()
-            beat_values.forEachIndexed { i: Int, beat_tree: ReducibleTree<Set<Array<Int>>> ->
+            for ((i, beat_tree) in beat_values.enumerate()) {
                 // Quantize the beat ////////////
                 val quantized_tree = ReducibleTree<Set<Array<Int>>>()
                 quantized_tree.set_size(beat_tree.size)

@@ -116,7 +116,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
 
         if (!this._ui_change_bill.is_locked()) {
-            this._apply_bill_changes()
+            //this._apply_bill_changes()
         }
 
         return output
@@ -146,7 +146,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
 
         if (!this._ui_change_bill.is_locked()) {
-            this._apply_bill_changes()
+            //this._apply_bill_changes()
         }
 
         return output
@@ -308,7 +308,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 val visible_row = this.get_visible_row_from_ctl_line_line(type, channel_index, line_offset)
                 val working_channel = this.get_channel(channel_index)
                 val controller = working_channel.lines[line_offset].get_controller<EffectEvent>(type)
-                this._add_controller_to_column_width_map(visible_row, controller)
+                this._add_controller_to_column_width_map(visible_row, controller, channel_index, line_offset, type)
             } else {
                 val visible_row = this.get_visible_row_from_ctl_line_line(type, channel_index, line_offset)
                 super.set_line_controller_visibility(type, channel_index, line_offset, false)
@@ -323,7 +323,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 val visible_row = this.get_visible_row_from_ctl_line_channel(type, channel_index)
                 val working_channel = this.get_channel(channel_index)
                 val controller = working_channel.get_controller<EffectEvent>(type)
-                this._add_controller_to_column_width_map(visible_row, controller)
+                this._add_controller_to_column_width_map(visible_row, controller, channel_index, null, type)
             } else {
                 val visible_row = this.get_visible_row_from_ctl_line_channel(type, channel_index)
                 super.set_channel_controller_visibility(type, channel_index, false)
@@ -338,7 +338,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 super.set_global_controller_visibility(type, true)
                 val visible_row = this.get_visible_row_from_ctl_line_global(type)
                 val controller = this.get_controller<EffectEvent>(type)
-                this._add_controller_to_column_width_map(visible_row, controller)
+                this._add_controller_to_column_width_map(visible_row, controller, null, null, type)
             } else {
                 val visible_row = this.get_visible_row_from_ctl_line_global(type)
                 super.set_global_controller_visibility(type, false)
@@ -1063,17 +1063,17 @@ class OpusLayerInterface : OpusLayerHistory() {
 
         for (j in 0 until line_list.size) {
             val line = line_list[j]
-            this._add_line_to_column_width_map(ctl_row++, line)
-            for ((_, controller) in line.controllers.get_all()) {
+            this._add_line_to_column_width_map(ctl_row++, line, channel, j)
+            for ((type, controller) in line.controllers.get_all()) {
                 if (!controller.visible) continue
-                this._add_controller_to_column_width_map(ctl_row++, controller)
+                this._add_controller_to_column_width_map(ctl_row++, controller, channel, j, type)
             }
         }
 
         val controllers = channels[channel].controllers.get_all()
-        for ((_, controller) in controllers) {
+        for ((type, controller) in controllers) {
             if (! controller.visible) continue
-            this._add_controller_to_column_width_map(ctl_row++, controller)
+            this._add_controller_to_column_width_map(ctl_row++, controller, channel, null, type)
         }
     }
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?, is_percussion: Boolean) {
@@ -1207,8 +1207,20 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.get_activity()?.update_channel_instruments()
 
         this.recache_line_maps()
-        this._ui_change_bill.queue_full_refresh(this._in_reload)
+        this.ui_full_refresh()
         this.initialized = true
+    }
+
+    fun ui_full_refresh() {
+        this._ui_change_bill.clear()
+        this._ui_change_bill.beat_count = this.length
+        for (c in this.channels.indices) {
+            val channel = this.channels[c]
+            for (l in channel.lines.indices) {
+                val line = channel.lines[l]
+            }
+        }
+        this._ui_change_bill.queue_full_refresh(this._in_reload)
     }
 
     override fun project_change_wrapper(callback: () -> Unit)  {
@@ -1380,8 +1392,7 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     override fun clear() {
         super.clear()
-        val editor_table = this.get_editor_table()
-        editor_table.clear()
+        this.get_editor_table().clear()
     }
 
     override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
@@ -2437,7 +2448,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
-    private fun _add_line_to_column_width_map(y: Int, line: OpusLineAbstract<*>) {
+    private fun _add_line_to_column_width_map(y: Int, line: OpusLineAbstract<*>, channel: Int, line_offset: Int) {
         if (this._ui_change_bill.is_full_locked()) return
 
         val column_updates = this.get_editor_table().add_line_to_map(
@@ -2448,11 +2459,11 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
         )
 
-        this._ui_change_bill.queue_new_row(y)
+        this._ui_change_bill.queue_new_row(y, line.beats.toMutableList(), channel, line_offset, null)
         this._ui_change_bill.queue_column_changes(column_updates, false)
     }
 
-    private fun _add_controller_to_column_width_map(y: Int, line: EffectController<*>) {
+    private fun _add_controller_to_column_width_map(y: Int, line: EffectController<*>, channel: Int?, line_offset: Int?, ctl_type: EffectType) {
         if (this._ui_change_bill.is_full_locked()) return
 
         val column_updates = this.get_editor_table().add_line_to_map(
@@ -2463,7 +2474,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
         )
 
-        this._ui_change_bill.queue_new_row(y)
+        this._ui_change_bill.queue_new_row(y, line.beats.toMutableList(), channel, line_offset, ctl_type)
         this._ui_change_bill.queue_column_changes(column_updates, false)
     }
 
@@ -2482,13 +2493,13 @@ class OpusLayerInterface : OpusLayerHistory() {
             working_channel.lines[line_offset]
         }
 
-        this._add_line_to_column_width_map(visible_row, new_line)
+        this._add_line_to_column_width_map(visible_row, new_line, channel, adj_line_offset)
 
         val controllers = working_channel.lines[adj_line_offset].controllers.get_all()
-        controllers.forEachIndexed { i: Int, (_, controller): Pair<EffectType, EffectController<*>> ->
-            if (controller.visible) {
-                this._add_controller_to_column_width_map(visible_row + i + 1, controller)
-            }
+        for (i in controllers.indices) {
+            val (type, controller) = controllers[i]
+            if (!controller.visible) continue
+            this._add_controller_to_column_width_map(visible_row + i + 1, controller, channel, adj_line_offset, type)
         }
     }
 
@@ -2516,259 +2527,6 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
 
         this.get_editor_table().add_column_to_map(index, column)
-    }
-
-    // UI FUNCS -----------------------
-    private fun _apply_bill_changes() {
-        val editor_table = try {
-            this.get_editor_table()
-        } catch (_: MissingEditorTableException) {
-            this._ui_change_bill.clear()
-            return
-        }
-
-        this.run_on_ui_thread { activity: ActivityEditor ->
-            while (true) {
-                val entry = this._ui_change_bill.get_next_entry()
-                when (entry) {
-                    BillableItem.ForceScroll -> {
-                        val y = this._ui_change_bill.get_next_int()
-                        val x = this._ui_change_bill.get_next_int()
-                        val offset = Rational(this._ui_change_bill.get_next_int(), this._ui_change_bill.get_next_int())
-                        val offset_width = Rational(this._ui_change_bill.get_next_int(), this._ui_change_bill.get_next_int())
-                        val force = this._ui_change_bill.get_next_int() != 0
-
-                        // Detach from order and thread after ui updates are finished
-                        editor_table.scroll_to_position(
-                            y = if (y == -1) null else y,
-                            x = if (x == -1) null else x,
-                            offset = offset.numerator.toFloat() / offset.denominator.toFloat(),
-                            offset_width = offset_width.numerator.toFloat() / offset_width.denominator.toFloat(),
-                            force = force
-                        )
-                    }
-
-                    BillableItem.FullRefresh -> {
-                        activity.setup_project_config_drawer()
-                        activity.update_menu_options()
-
-                        this._init_editor_table_width_map()
-                        editor_table.setup(this.get_row_count(), this.length)
-                        activity.update_title_text()
-                        activity.clear_context_menu()
-                    }
-
-                    BillableItem.RowAdd -> {
-                        editor_table.new_row(this._ui_change_bill.get_next_int())
-                    }
-
-                    BillableItem.RowRemove -> {
-                        editor_table.remove_rows(
-                            this._ui_change_bill.get_next_int(),
-                            this._ui_change_bill.get_next_int()
-                        )
-                    }
-
-                    BillableItem.RowChange -> {
-                        editor_table.notify_row_change(
-                            this._ui_change_bill.get_next_int()
-                        )
-                    }
-
-                    BillableItem.ColumnAdd -> {
-                        editor_table.new_column(this._ui_change_bill.get_next_int())
-                    }
-
-                    BillableItem.ColumnRemove -> {
-                        editor_table.remove_column(this._ui_change_bill.get_next_int())
-                    }
-
-                    BillableItem.ColumnChange -> {
-                        val column = this._ui_change_bill.get_next_int()
-                        if (column < editor_table.get_column_map_size()) {
-                            editor_table.recalculate_column_max(column)
-                            editor_table.notify_column_changed(column)
-                        }
-                    }
-
-                    BillableItem.CellChange -> {
-                        val cells = List(this._ui_change_bill.get_next_int()) {
-                            Pair(
-                                this._ui_change_bill.get_next_tree(),
-                                EditorTable.Coordinate(
-                                    y = this._ui_change_bill.get_next_int(),
-                                    x = this._ui_change_bill.get_next_int()
-                                )
-                            )
-                        }
-                        editor_table.notify_cell_changes(cells)
-                    }
-
-                    BillableItem.ChannelChange -> {
-                        val channel = this._ui_change_bill.get_next_int()
-
-                        if (this.is_percussion(channel)) {
-                            activity.populate_active_percussion_names(channel, true)
-                        }
-
-                        val channel_recycler = activity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-                        (channel_recycler.adapter as ChannelOptionAdapter?)?.let { adapter ->
-                            for (i in adapter.itemCount until this.channels.size) {
-                                adapter.add_channel()
-                            }
-                            (channel_recycler.adapter as ChannelOptionAdapter).notifyItemChanged(channel)
-                        }
-                    }
-
-                    BillableItem.ChannelAdd -> {
-                        val channel = this._ui_change_bill.get_next_int()
-                        val channel_recycler = activity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-                        (channel_recycler.adapter as ChannelOptionAdapter?)?.let { adapter ->
-                            for (i in adapter.itemCount until this.channels.size) {
-                                adapter.add_channel()
-                            }
-                        }
-
-                        activity.update_channel_instruments(channel)
-                    }
-
-                    BillableItem.ChannelRemove -> {
-                        val channel = this._ui_change_bill.get_next_int()
-                        val channel_recycler = activity.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-                        (channel_recycler.adapter as ChannelOptionAdapter?)?.let { adapter ->
-                            for (i in adapter.itemCount until this.channels.size + 1) {
-                                adapter.add_channel()
-                            }
-                            adapter.remove_channel(channel)
-                        }
-                    }
-
-                    BillableItem.ProjectNameChange -> {
-                        activity.update_title_text()
-                    }
-
-                    BillableItem.ContextMenuRefresh -> {
-                        activity.refresh_context_menu()
-                    }
-
-                    BillableItem.ContextMenuSetLine -> {
-                        activity.set_context_menu_line()
-                    }
-
-                    BillableItem.ContextMenuSetLeaf -> {
-                        activity.set_context_menu_leaf()
-                    }
-
-                    BillableItem.ContextMenuSetLeafPercussion -> {
-                        activity.set_context_menu_leaf_percussion()
-                    }
-
-                    BillableItem.ContextMenuSetControlLeaf -> {
-                        activity.set_context_menu_line_control_leaf()
-                    }
-
-                    BillableItem.ContextMenuSetControlLeafB -> {
-                        activity.set_context_menu_line_control_leaf_b()
-                    }
-
-                    BillableItem.ContextMenuSetRange -> {
-                        activity.set_context_menu_range()
-                    }
-
-                    BillableItem.ContextMenuSetColumn -> {
-                        activity.set_context_menu_column()
-                    }
-
-                    BillableItem.ContextMenuSetControlLine -> {
-                        activity.set_context_menu_control_line()
-                    }
-
-                    BillableItem.ContextMenuSetChannel -> {
-                        activity.set_context_menu_channel()
-                    }
-
-                    BillableItem.ContextMenuClear -> {
-                        activity.clear_context_menu()
-                    }
-
-                    BillableItem.ConfigDrawerEnableCopyAndDelete -> {
-                        // TODO: Move to MainActivity method
-                        activity.findViewById<View>(R.id.btnDeleteProject).isEnabled = true
-                        activity.findViewById<View>(R.id.btnCopyProject).isEnabled = true
-                    }
-
-                    BillableItem.ConfigDrawerRefreshExportButton -> {
-                        activity.setup_project_config_drawer_export_button()
-                    }
-
-                    BillableItem.PercussionButtonRefresh -> {
-                        val channel = this._ui_change_bill.get_next_int()
-                        val line_offset = this._ui_change_bill.get_next_int()
-                        val btn_choose_percussion: TextView = activity.findViewById(R.id.btnChoosePercussion) ?: continue
-                        val instrument = this.get_percussion_instrument(channel, line_offset)
-
-                        if (activity.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                            btn_choose_percussion.text = activity.getString(R.string.label_short_percussion, instrument)
-                        } else {
-                            btn_choose_percussion.text = activity.getString(
-                                R.string.label_choose_percussion,
-                                instrument,
-                                activity.get_drum_name(channel, instrument)
-                            )
-                        }
-                    }
-
-                    BillableItem.UpdateLineInfo -> {
-                        //editor_table.notify_row_change(
-                        //    y = this._ui_change_bill.get_next_int(),
-                        //    percussion = this._ui_change_bill.get_next_int() != 0,
-                        //    channel = this._ui_change_bill.get_next_int(),
-                        //    offset = this._ui_change_bill.get_next_int(),
-                        //    type = this._ui_change_bill.get_next_int().let {
-                        //        if (it == -1) {
-                        //            null
-                        //        } else {
-                        //            EffectType.entries[it]
-                        //        }
-                        //    }
-                        //)
-                    }
-
-                    BillableItem.ColumnLabelRefresh -> {
-                        editor_table.update_column_label(this._ui_change_bill.get_next_int())
-                    }
-
-                    BillableItem.ColumnStateChange -> {
-                        val column = this._ui_change_bill.get_next_int()
-                        if (column < editor_table.get_column_map_size()) {
-                            editor_table.notify_column_changed(column, true)
-                        }
-                    }
-
-                    BillableItem.RowStateChange -> {
-                        val y = this._ui_change_bill.get_next_int()
-                        editor_table.notify_row_change(y, true)
-                    }
-
-                    BillableItem.CellStateChange -> {
-                        val cells = List(this._ui_change_bill.get_next_int()) {
-                            EditorTable.Coordinate(
-                                y = this._ui_change_bill.get_next_int(),
-                                x = this._ui_change_bill.get_next_int()
-                            )
-                        }
-                        editor_table.notify_cell_state_changes(cells)
-                    }
-
-                    null -> break
-                }
-            }
-
-            // Temporary function call while I work on a spot-update solution
-            editor_table.finalize_update()
-
-            this._ui_change_bill.clear()
-        }
     }
 
     private fun run_on_ui_thread(callback: (ActivityEditor) -> Unit) {

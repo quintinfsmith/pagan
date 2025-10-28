@@ -2,6 +2,7 @@ package com.qfs.pagan.uibill
 
 import com.qfs.pagan.EditorTable
 import com.qfs.pagan.structure.Rational
+import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
@@ -27,10 +28,10 @@ class UIChangeBill {
     data class ColumnData(var is_tagged: Boolean, var selected: SelectionLevel)
 
     var project_name: String? = null
-    val beat_count: Int = 0
+    var beat_count: Int = 0
     val line_data: MutableList<LineData> = mutableListOf()
     val column_data: MutableList<ColumnData> = mutableListOf()
-    val cell_map: MutableList<MutableList<ReducibleTree<OpusEvent>>> = mutableListOf()
+    val cell_map: MutableList<MutableList<ReducibleTree<out OpusEvent>>> = mutableListOf()
     val active_event: OpusEvent? = null
     val active_cursor: OpusManagerCursor = OpusManagerCursor()
     var project_exists: Boolean = false
@@ -87,7 +88,6 @@ class UIChangeBill {
             working_tree.bill.add(bill_item)
             working_tree.int_queue.add(column)
         }
-
     }
 
     fun queue_column_change(column: Int, state_only: Boolean = false) {
@@ -103,10 +103,13 @@ class UIChangeBill {
         working_tree.int_queue.add(column)
     }
 
-    fun queue_new_row(y: Int) {
+    fun queue_new_row(y: Int, cells: MutableList<ReducibleTree<out OpusEvent>>, channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
         val working_tree = this.get_working_tree() ?: return
         working_tree.int_queue.add(y)
         working_tree.bill.add(BillableItem.RowAdd)
+
+        this.line_data.add(y, LineData(channel, line_offset, ctl_type, SelectionLevel.Unselected))
+        this.cell_map.add(y, cells)
     }
 
     fun queue_refresh_context_menu() {

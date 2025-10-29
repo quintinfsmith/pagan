@@ -742,21 +742,6 @@ class EditorTable(context: Context, attrs: AttributeSet): ScrollView(context, at
         return output
     }
 
-    fun set_mapped_width(y: Int, x: Int, width: Int): Boolean {
-        if (x >= this._column_width_map.size || this._column_width_map[x].size <= y) {
-            return false
-        }
-
-        val is_trivial = this._column_width_map[x][y] == width
-        if (! is_trivial) {
-            this._column_width_map[x][y] = width
-            this._update_inv_column_map(x)
-        }
-
-        return !is_trivial
-    }
-
-
     fun _calculate_table_size(): Pair<Int, Int> {
         val base_width = this.resources.getDimension(R.dimen.base_leaf_width).toInt()
         val channel_gap_size = this.resources.getDimension(R.dimen.channel_gap_size).toInt()

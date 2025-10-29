@@ -181,86 +181,60 @@ class OpusLayerInterface : OpusLayerHistory() {
     private fun _queue_cell_change(beat_key: BeatKey) {
         if (this.project_changing || this._ui_change_bill.is_full_locked()) return
 
-        val tree = this.get_tree_copy(beat_key)
-        val new_weight = tree.get_total_child_weight()
 
-        val coord = EditorTable.Coordinate(
-            y = this.get_visible_row_from_ctl_line(
-                this.get_actual_line_index(
-                    this.get_instrument_line_index(
-                        beat_key.channel,
-                        beat_key.line_offset
+        this._ui_change_bill.queue_cell_change(
+            EditorTable.Coordinate(
+                y = this.get_visible_row_from_ctl_line(
+                    this.get_actual_line_index(
+                        this.get_instrument_line_index(
+                            beat_key.channel,
+                            beat_key.line_offset
+                        )
                     )
-                )
-            )!!,
-            x = beat_key.beat
+                )!!,
+                x = beat_key.beat
+            ),
+            this.get_tree_copy(beat_key)
         )
-
-        if (this.get_editor_table().set_mapped_width(coord.y, coord.x, new_weight)) {
-            this._ui_change_bill.queue_column_change(coord.x)
-        } else {
-            this._ui_change_bill.queue_cell_change(coord, tree)
-        }
     }
 
     private fun _queue_global_ctl_cell_change(type: EffectType, beat: Int) {
         val controller = this.get_controller<EffectEvent>(type)
         if (!controller.visible || this._ui_change_bill.is_full_locked()) return
 
-        val coord = EditorTable.Coordinate(
-            y = this.get_visible_row_from_ctl_line_global(type),
-            x = beat
+        this._ui_change_bill.queue_cell_change(
+            EditorTable.Coordinate(
+                y = this.get_visible_row_from_ctl_line_global(type),
+                x = beat
+            ),
+            controller.get_tree(beat).copy { it.copy() }
         )
-
-        val tree = controller.get_tree(beat)
-        val new_weight = tree.get_total_child_weight()
-
-        val editor_table = this.get_editor_table()
-        if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
-            this._ui_change_bill.queue_column_change(coord.x)
-        } else {
-            this._ui_change_bill.queue_cell_change(coord, tree)
-        }
     }
 
     private fun _queue_channel_ctl_cell_change(type: EffectType, channel: Int, beat: Int) {
         val controller = this.get_all_channels()[channel].get_controller<EffectEvent>(type)
         if (!controller.visible || this._ui_change_bill.is_full_locked()) return
 
-        val coord = EditorTable.Coordinate(
-            y = this.get_visible_row_from_ctl_line_channel(type, channel),
-            x = beat
+        this._ui_change_bill.queue_cell_change(
+            EditorTable.Coordinate(
+                y = this.get_visible_row_from_ctl_line_channel(type, channel),
+                x = beat
+            ),
+            controller.get_tree(beat).copy { it.copy() }
         )
-
-        val tree = controller.get_tree(beat)
-        val new_weight = tree.get_total_child_weight()
-
-        val editor_table = this.get_editor_table()
-        if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
-            this._ui_change_bill.queue_column_change(coord.x)
-        } else {
-            this._ui_change_bill.queue_cell_change(coord, tree)
-        }
     }
 
     private fun _queue_line_ctl_cell_change(type: EffectType, beat_key: BeatKey) {
         val controller = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].get_controller<EffectEvent>(type)
         if (!controller.visible || this._ui_change_bill.is_full_locked()) return
 
-        val coord = EditorTable.Coordinate(
-            y = this.get_visible_row_from_ctl_line_line(type, beat_key.channel, beat_key.line_offset),
-            x = beat_key.beat
+        this._ui_change_bill.queue_cell_change(
+            EditorTable.Coordinate(
+                y = this.get_visible_row_from_ctl_line_line(type, beat_key.channel, beat_key.line_offset),
+                x = beat_key.beat
+            ),
+            controller.get_tree(beat_key.beat).copy { it.copy() }
         )
-
-        val tree = this.get_line_ctl_tree<EffectEvent>(type, beat_key)
-        val new_weight = tree.get_total_child_weight()
-
-        val editor_table = this.get_editor_table()
-        if (editor_table.set_mapped_width(coord.y, coord.x, new_weight)) {
-            this._ui_change_bill.queue_column_change(coord.x)
-        } else {
-            this._ui_change_bill.queue_cell_change(coord, tree)
-        }
     }
     // UI BILL Interface functions ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -1027,7 +1001,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.lock_ui_partial {
             val notify_index = channel ?: this.channels.size
             super.new_channel(channel, lines, uuid, is_percussion)
-            this._ui_change_bill.queue_add_channel(notify_index, is_percussion, this.channels[channel].get_instrument())
+            this._ui_change_bill.queue_add_channel(notify_index, is_percussion, this.channels[notify_index].get_instrument())
             this._post_new_channel(notify_index, lines)
             this.get_activity()?.shift_up_percussion_names(notify_index)
         }
@@ -1035,7 +1009,6 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     override fun remove_beat(beat_index: Int, count: Int) {
         this.lock_ui_partial {
-            this._queue_cursor_update(this.cursor.copy())
             val original_beat_count = this.length
             super.remove_beat(beat_index, count)
 
@@ -1045,7 +1018,6 @@ class OpusLayerInterface : OpusLayerHistory() {
                 this._ui_change_bill.queue_remove_column(x)
             }
 
-            this._queue_cursor_update(this.cursor.copy())
             this._ui_change_bill.queue_refresh_context_menu()
         }
     }
@@ -1058,10 +1030,6 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<ReducibleTree<OpusEvent>>?) {
         this.lock_ui_partial {
-            if (!this._ui_change_bill.is_full_locked()) {
-                this._queue_cursor_update(this.cursor)
-            }
-
             super.insert_beat(beat_index, beats_in_column)
             this._ui_change_bill.queue_add_column(beat_index, this.is_beat_tagged(beat_index))
         }

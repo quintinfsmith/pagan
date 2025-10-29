@@ -216,7 +216,7 @@ class UIChangeBill {
         working_tree.bill.add(BillableItem.RowRemove)
     }
 
-    fun queue_add_channel(channel: Int, percussion: Boolean, instrument: Pair<Int, Int>>) {
+    fun queue_add_channel(channel: Int, percussion: Boolean, instrument: Pair<Int, Int>) {
         this.channel_data.add(channel, ChannelData(percussion, instrument))
     }
 
@@ -225,7 +225,7 @@ class UIChangeBill {
     }
 
     fun queue_add_column(column: Int, is_tagged: Boolean) {
-        this.column_data.add(column, ColumnData(is_tagged, SelectionLevel.UnSelected))
+        this.column_data.add(column, ColumnData(is_tagged, SelectionLevel.Unselected))
     }
 
     fun queue_remove_column(column: Int) {
@@ -351,7 +351,7 @@ class UIChangeBill {
     }
 
     fun set_project_name(name: String? = null) {
-        this.project_name = title
+        this.project_name = name
     }
 
 }

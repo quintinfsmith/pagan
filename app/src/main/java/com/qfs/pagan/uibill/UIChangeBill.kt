@@ -2,9 +2,9 @@ package com.qfs.pagan.uibill
 
 import com.qfs.pagan.EditorTable
 import com.qfs.pagan.structure.Rational
-import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
+import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
@@ -27,6 +27,7 @@ class UIChangeBill {
     data class LineData(var channel: Int?, var offset: Int?, var ctl_type: EffectType?, var selected: SelectionLevel)
     data class ColumnData(var is_tagged: Boolean, var selected: SelectionLevel)
     data class ChannelData(var percussion: Boolean, var instrument: Pair<Int, Int>)
+    data class CacheCursor(var type: CursorMode, var ints: List<Int>)
 
     var project_name: String? = null
     var beat_count: Int = 0
@@ -35,8 +36,8 @@ class UIChangeBill {
     val cell_map: MutableList<MutableList<ReducibleTree<out OpusEvent>>> = mutableListOf()
     val channel_data: MutableList<ChannelData> = mutableListOf()
 
-    val active_event: OpusEvent? = null
-    val active_cursor: OpusManagerCursor = OpusManagerCursor()
+    var active_event: OpusEvent? = null
+    var active_cursor: CacheCursor? = null
     var project_exists: Boolean = false
 
     fun get_next_entry(): BillableItem? {
@@ -352,6 +353,14 @@ class UIChangeBill {
 
     fun set_project_name(name: String? = null) {
         this.project_name = name
+    }
+
+    fun <T: OpusEvent> set_active_event(event: T) {
+        this.active_event = event
+    }
+
+    fun set_cursor(cursor: CacheCursor) {
+        this.active_cursor = cursor
     }
 
 }

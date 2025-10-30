@@ -181,7 +181,6 @@ class OpusLayerInterface : OpusLayerHistory() {
     private fun _queue_cell_change(beat_key: BeatKey) {
         if (this.project_changing || this._ui_change_bill.is_full_locked()) return
 
-
         this._ui_change_bill.queue_cell_change(
             EditorTable.Coordinate(
                 y = this.get_visible_row_from_ctl_line(
@@ -632,6 +631,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.lock_ui_partial {
             super.controller_global_set_event(type, beat, position, event)
             this._queue_global_ctl_cell_change(type, beat)
+            this._ui_change_bill.set_active_event(event.copy())
         }
     }
 
@@ -640,6 +640,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             super.controller_channel_set_event(type, channel, beat, position, event)
             this._queue_channel_ctl_cell_change(type, channel, beat)
             this._ui_change_bill.queue_refresh_context_menu()
+            this._ui_change_bill.set_active_event(event.copy())
         }
     }
 
@@ -647,7 +648,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.lock_ui_partial {
             super.controller_line_set_event(type, beat_key, position, event)
             this._queue_line_ctl_cell_change(type, beat_key)
-
+            this._ui_change_bill.set_active_event(event.copy())
         }
     }
 
@@ -661,7 +662,7 @@ class OpusLayerInterface : OpusLayerHistory() {
 
             if (!this._ui_change_bill.is_full_locked()) {
                 this._queue_cell_change(beat_key)
-                this._ui_change_bill.queue_refresh_context_menu()
+                this._ui_change_bill.set_active_event(event.copy())
             }
         }
     }
@@ -1822,326 +1823,71 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     private fun _queue_cursor_update(cursor: OpusManagerCursor) {
-        if (cursor != this._cache_cursor) {
-            try {
-                this._queue_cursor_update(this._cache_cursor)
-            }  catch (e: Exception) {
-                when (e) {
-                    is GlobalEffectRowNotVisible,
-                    is ChannelEffectRowNotVisible,
-                    is LineEffectRowNotVisible,
-                    is InvalidGetCall -> {}
-                    else -> throw e
-                }
-            }
-
-            this._cache_cursor = cursor.copy()
-            this._queue_scroll_to_cursor(cursor)
-        }
-        val coordinates_to_update = mutableSetOf<EditorTable.Coordinate>()
-
         when (cursor.mode) {
             CursorMode.Single -> {
-                when (cursor.ctl_level) {
-                    null -> {
-                        val beat_key = cursor.get_beatkey()
-                        // TODO: I think its possible to have oob beats from get_all_blocked_keys, NEED CHECK
-                        val y = try {
-                            this.get_visible_row_from_ctl_line(
-                                this.get_actual_line_index(
-                                    this.get_instrument_line_index(
-                                        beat_key.channel,
-                                        beat_key.line_offset
-                                    )
-                                )
-                            )
-                        } catch (_: IndexOutOfBoundsException) {
-                            return
-                        }
-
-                        this._ui_change_bill.queue_column_label_refresh(beat_key.beat)
-                        if (y == null) return
-
-                        val line = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset]
-                        val shadow_beats = mutableSetOf<Int>()
-                        val event_head = try {
-                            line.get_blocking_position(beat_key.beat, cursor.get_position()) ?: Pair(beat_key.beat, cursor.get_position())
-                        } catch (_: IndexOutOfBoundsException) {
-                            return // dead cursor
-                        }
-
-                        for ((shadow_beat, _) in line.get_all_blocked_positions(event_head.first, event_head.second)) {
-                            shadow_beats.add(shadow_beat)
-                        }
-
-                        for (shadow_beat in shadow_beats) {
-                            coordinates_to_update.add(EditorTable.Coordinate(y, shadow_beat))
-                        }
-
-                        val is_percussion = this.is_percussion(beat_key.channel)
-                        this._ui_change_bill.queue_line_label_refresh(
-                            y,
-                            is_percussion,
-                            beat_key.channel,
-                            if (is_percussion) {
-                                (line as OpusLinePercussion).instrument
-                            } else {
-                                beat_key.line_offset
-                            }
-                        )
+                val y = try {
+                    when (cursor.ctl_level) {
+                        null -> this.get_visible_row_from_ctl_line(this.get_actual_line_index(this.get_instrument_line_index(cursor.channel, cursor.line_offset)))
+                        CtlLineLevel.Line -> this.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
+                        CtlLineLevel.Channel -> this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.channel)
+                        CtlLineLevel.Global -> this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
                     }
+                } catch (_: IndexOutOfBoundsException) {
+                    null
+                } ?: return
 
-                    else -> {
-                        val (y, controller) = when (cursor.ctl_level!!) {
-                            CtlLineLevel.Line -> {
-                                // Update Standard Line label attached to controller
-                                val line_y = this.get_visible_row_from_ctl_line(
-                                    this.get_actual_line_index(
-                                        this.get_instrument_line_index(
-                                            cursor.channel,
-                                            cursor.line_offset
-                                        )
-                                    )
-                                )
-                                if (line_y != null) {
-                                    this._ui_change_bill.queue_line_label_refresh(
-                                        line_y,
-                                        false,
-                                        cursor.channel,
-                                        cursor.line_offset,
-                                        cursor.ctl_type
-                                    )
-                                }
-
-                                val channel = this.get_all_channels()[cursor.channel]
-                                try {
-                                    Pair(
-                                        this.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, cursor.channel, cursor.line_offset),
-                                        channel.lines[cursor.line_offset].get_controller(cursor.ctl_type!!)
-                                    )
-                                } catch (_: NullPointerException) {
-                                    // Dead cursor
-                                    return
-                                }
-                            }
-
-                            CtlLineLevel.Channel -> {
-                                val channel = this.get_all_channels()[cursor.channel]
-                                val is_percussion = this.is_percussion(cursor.channel)
-                                // Update All Standard Line labels attached to controller
-                                for (line_offset in channel.lines.indices) {
-                                    var line_y = this.get_visible_row_from_ctl_line(
-                                        this.get_actual_line_index(
-                                            this.get_instrument_line_index(
-                                                cursor.channel,
-                                                line_offset
-                                            )
-                                        )
-                                    ) ?: continue
-                                    this._ui_change_bill.queue_line_label_refresh(
-                                        line_y++,
-                                        is_percussion,
-                                        cursor.channel,
-                                        if (is_percussion) {
-                                            (channel.lines[cursor.line_offset] as OpusLinePercussion).instrument
-                                        } else {
-                                            cursor.line_offset
-                                        }
-                                    )
-                                    for ((type, controller) in channel.lines[line_offset].controllers.get_all()) {
-                                        if (!controller.visible) continue
-                                        this._ui_change_bill.queue_line_label_refresh(
-                                            line_y++,
-                                            false,
-                                            cursor.channel,
-                                            cursor.line_offset,
-                                            type
-                                        )
-                                    }
-                                }
-                                try {
-                                    Pair(
-                                        this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.channel),
-                                        this.get_all_channels()[cursor.channel].get_controller(cursor.ctl_type!!)
-                                    )
-                                } catch (_: NullPointerException) {
-                                    // Dead cursor
-                                    return
-                                }
-                            }
-
-                            CtlLineLevel.Global -> {
-                                try {
-                                    Pair(
-                                        this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!),
-                                        this.get_controller<EffectEvent>(cursor.ctl_type!!)
-                                    )
-                                } catch (_: NullPointerException) {
-                                    // Dead cursor
-                                    return
-                                }
-                            }
-                        }
-
-                        val shadow_beats = mutableSetOf<Int>()
-                        val beat = cursor.beat
-                        val event_head = try {
-                            controller.get_blocking_position(beat, cursor.get_position()) ?: Pair(beat, cursor.get_position())
-                        } catch (_: IndexOutOfBoundsException) {
-                            return // Dead Cursor
-                        }
-                        for ((shadow_beat, _) in controller.get_all_blocked_positions(event_head.first, event_head.second)) {
-                            shadow_beats.add(shadow_beat)
-                        }
-
-                        for (shadow_beat in shadow_beats) {
-                            if (shadow_beat == beat) {
-                                this._ui_change_bill.queue_column_label_refresh(shadow_beat)
-                            }
-                            coordinates_to_update.add(EditorTable.Coordinate(y, shadow_beat))
-                        }
-
-                        this._ui_change_bill.queue_line_label_refresh(
-                            y,
-                            false,
-                            if (cursor.ctl_level == CtlLineLevel.Global) {
-                                null
-                            } else {
-                                cursor.channel
-                            },
-                            if (cursor.ctl_level == CtlLineLevel.Line) {
-                                cursor.line_offset
-                            } else {
-                                null
-                            },
-                            cursor.ctl_type
-                        )
-
-                        this._ui_change_bill.queue_column_label_refresh(beat)
-                    }
-                }
+                this._ui_change_bill.set_cursor(UIChangeBill.CacheCursor(cursor.mode, listOf(y, cursor.beat) + cursor.get_position()))
             }
 
             CursorMode.Range -> {
-                when (cursor.ctl_level) {
-                    null -> {
-                        val (top_left, bottom_right) = cursor.get_ordered_range()!!
-                        for (beat_key in this.get_beatkeys_in_range(top_left, bottom_right)) {
-                            val y = try {
-                                this.get_visible_row_from_ctl_line(
-                                    this.get_actual_line_index(
-                                        this.get_instrument_line_index(
-                                            beat_key.channel, beat_key.line_offset
-                                        )
-                                    )
-                                ) ?: continue
-                            } catch (_: IndexOutOfBoundsException) {
-                                continue
-                            }
-
-                            val is_percussion = this.is_percussion(beat_key.channel)
-                            this._ui_change_bill.queue_line_label_refresh(
-                                y,
-                                is_percussion,
-                                beat_key.channel,
-                                beat_key.line_offset
-                            )
-
-                            var i = 1
-                            for ((type, controller) in this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].controllers.get_all()) {
-                                if (controller.visible) {
-                                    this._ui_change_bill.queue_line_label_refresh(
-                                        y + i++,
-                                        false,
-                                        beat_key.channel,
-                                        beat_key.line_offset,
-                                        type
-                                    )
-                                }
-                            }
-
-
-
-                            this._ui_change_bill.queue_column_label_refresh(beat_key.beat)
-
-                            coordinates_to_update.add(EditorTable.Coordinate(y, beat_key.beat))
-                        }
-                    }
-                    else -> {
-                        val (top_left, bottom_right) = cursor.get_ordered_range()!!
-                        val y = when (cursor.ctl_level!!) {
-                            // Can assume top_left.channel == bottom_right.channel and top_left.line_offset == bottom_right.line_offset
-                            CtlLineLevel.Line -> {
-                                val is_percussion = this.is_percussion(top_left.channel)
-                                val line = this.channels[top_left.channel].lines[top_left.line_offset]
-                                this._ui_change_bill.queue_line_label_refresh(
+                val (top_left, bottom_right) = try {
+                    when (cursor.ctl_level) {
+                        null -> {
+                            val (top_left, bottom_right) = cursor.get_ordered_range()!!
+                            Pair(
+                                Pair(
                                     this.get_visible_row_from_ctl_line(
                                         this.get_actual_line_index(
                                             this.get_instrument_line_index(
-                                                top_left.channel,
-                                                top_left.line_offset
+                                                top_left.channel, top_left.line_offset
                                             )
                                         )
-                                    )!!,
-                                    is_percussion,
-                                    top_left.channel,
-                                    if (is_percussion) (line as OpusLinePercussion).instrument else top_left.line_offset
-                                )
-
-                                this.get_visible_row_from_ctl_line_line(
-                                    cursor.ctl_type!!,
-                                    top_left.channel,
-                                    top_left.line_offset
-                                )
-                            }
-                            // Can assume top_left.channel == bottom_right.channel
-                            CtlLineLevel.Channel -> {
-                                val is_percussion = this.is_percussion(top_left.channel)
-                                for (i in 0 until this.get_channel(top_left.channel).lines.size) {
-                                    val line = this.channels[top_left.channel].lines[i]
-                                    this._ui_change_bill.queue_line_label_refresh(
-                                        this.get_visible_row_from_ctl_line(
-                                            this.get_actual_line_index(
-                                                this.get_instrument_line_index(
-                                                    top_left.channel,
-                                                    i
-                                                )
+                                    ) ?: return,
+                                    top_left.beat
+                                ),
+                                Pair(
+                                    this.get_visible_row_from_ctl_line(
+                                        this.get_actual_line_index(
+                                            this.get_instrument_line_index(
+                                                bottom_right.channel, bottom_right.line_offset
                                             )
-                                        )!!,
-                                        is_percussion,
-                                        top_left.channel,
-                                        if (is_percussion) (line as OpusLinePercussion).instrument else i
-                                    )
-                                }
-                                this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, top_left.channel)
-                            }
-                            CtlLineLevel.Global -> this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
+                                        )
+                                    ) ?: return,
+                                    bottom_right.beat
+                                )
+                            )
                         }
 
-                        val first_beat = min(top_left.beat, bottom_right.beat)
-                        val last_beat = max(top_left.beat, bottom_right.beat)
-                        this._ui_change_bill.queue_line_label_refresh(
-                            y,
-                            false,
-                            if (cursor.ctl_level == CtlLineLevel.Global) {
-                                null
-                            } else {
-                                top_left.channel
-                            },
-                            if (cursor.ctl_level == CtlLineLevel.Line) {
-                                top_left.line_offset
-                            } else {
-                                null
-                            },
-                            cursor.ctl_type
-                        )
+                        else -> {
+                            val (top_left, bottom_right) = cursor.get_ordered_range()!!
+                            val y = when (cursor.ctl_level!!) {
+                                // Can assume top_left.channel == bottom_right.channel and top_left.line_offset == bottom_right.line_offset
+                                CtlLineLevel.Line -> this.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, top_left.channel, top_left.line_offset)
+                                CtlLineLevel.Channel -> this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, top_left.channel)
+                                CtlLineLevel.Global -> this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
+                            }
 
-                        for (x in first_beat..last_beat) {
-                            this._ui_change_bill.queue_column_label_refresh(x)
-                            coordinates_to_update.add(EditorTable.Coordinate(y, x))
+                            Pair(
+                                Pair(y, min(top_left.beat, bottom_right.beat)),
+                                Pair(y, max(top_left.beat, bottom_right.beat))
+                            )
                         }
                     }
+                } catch (_: IndexOutOfBoundsException) {
+                    return
                 }
+
+                this._ui_change_bill.set_cursor(UIChangeBill.CacheCursor(cursor.mode, listOf(top_left.first, top_left.second, bottom_right.first, bottom_right.second)))
             }
 
             CursorMode.Line -> {

@@ -2,6 +2,7 @@ package com.qfs.apres.soundfontplayer
 
 import android.media.AudioFormat
 import android.media.AudioTrack
+import com.qfs.apres.Midi
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfont2.InstrumentDirective
@@ -64,7 +65,7 @@ class SampleHandleManager(
             this.loaded_presets[key] = try {
                 this.soundfont.get_preset(program, bank)
             } catch (e: SoundFont.InvalidPresetIndex) {
-                if (channel == 9) {
+                if (channel == Midi.PERCUSSION_CHANNEL) {
                     if (Pair(bank, 0) in this.loaded_presets) {
                         this.loaded_presets[Pair(bank, 0)]!!
                     } else {
@@ -191,7 +192,7 @@ class SampleHandleManager(
     private fun get_channel_preset(channel: Int): Pair<Int, Int> {
         return if (this.preset_channel_map.containsKey(channel)) {
             this.preset_channel_map[channel]!!
-        } else if (channel == 9) {
+        } else if (channel == Midi.PERCUSSION_CHANNEL) {
             Pair(128, 0)
         } else {
             Pair(0,0)

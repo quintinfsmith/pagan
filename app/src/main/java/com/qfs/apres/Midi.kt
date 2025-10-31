@@ -110,6 +110,7 @@ class StandardMidiFileInterface {
     class InvalidChunkType(string: String): Exception("Invalid Chunk Type: $string")
     class MissingMThd : Exception("Missing MThd")
     companion object {
+        val PERCUSSION_CHANNEL = 9
         fun is_compatible(bytes: ByteArray): Boolean {
             return try {
                 val first_four = ByteArray(4) { i -> bytes[i] }

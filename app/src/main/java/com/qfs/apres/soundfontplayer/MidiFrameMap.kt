@@ -73,7 +73,7 @@ class MidiFrameMap(val sample_handle_manager: SampleHandleManager): FrameMap {
                                 handles,
                                 tick_frame
                             )
-                            if (event.channel == 9) {
+                            if (event.channel == Midi.PERCUSSION_CHANNEL) {
                                 for (handle in handles) {
                                     this.percussion_handles.add(handle.uuid)
                                 }

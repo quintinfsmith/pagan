@@ -24,6 +24,7 @@ import com.qfs.pagan.structure.opusmanager.base.OpusChannel
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusPercussionChannel
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
+import com.qfs.apres.Midi
 
 class OpusChannelJSONInterface {
     companion object {
@@ -227,7 +228,7 @@ class OpusChannelJSONInterface {
             val lines = input_map.get_list("lines")
 
             val static_values = JSONList(lines.size) { i: Int ->
-                if (midi_channel == 9) {
+                if (midi_channel == Midi.PERCUSSION_CHANNEL) {
                     var static_value: Int? = null
                     val stack = mutableListOf(lines.get_hashmap(i))
                     while (stack.isNotEmpty()) {
@@ -311,7 +312,7 @@ class OpusChannelJSONInterface {
                     val beats = JSONList()
                     for (j in 0 until child_list.size) {
                         val generalized_beat = OpusTreeJSONInterface.convert_v1_to_v3(child_list.get_hashmapn(j)) { event_map: JSONHashMap ->
-                            if (midi_channel == 9) {
+                            if (midi_channel == Midi.PERCUSSION_CHANNEL) {
                                 InstrumentEventJSONInterface.convert_v1_to_v3_percussion(event_map)
                             } else {
                                 InstrumentEventJSONInterface.convert_v1_to_v3_tuned(event_map)
@@ -327,7 +328,7 @@ class OpusChannelJSONInterface {
                         "beats" to beats
                     )
 
-                    if (midi_channel == 9) {
+                    if (midi_channel == Midi.PERCUSSION_CHANNEL) {
                         output_line["instrument"] = input_map.get_list("line_static_values").get_int(i)
                     }
 
@@ -338,7 +339,7 @@ class OpusChannelJSONInterface {
 
         fun convert_v3_to_v4(input_map: JSONHashMap): JSONHashMap {
             val output_map = input_map.copy()
-            output_map["type"] = if (input_map.get_intn("midi_channel") == 9) {
+            output_map["type"] = if (input_map.get_intn("midi_channel") == Midi.PERCUSSION_CHANNEL) {
                 "kit"
             } else {
                 "std"

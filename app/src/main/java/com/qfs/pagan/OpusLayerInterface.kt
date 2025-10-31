@@ -1005,6 +1005,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             this._ui_change_bill.queue_add_channel(notify_index, is_percussion, this.channels[notify_index].get_instrument())
             this._post_new_channel(notify_index, lines)
             this.get_activity()?.shift_up_percussion_names(notify_index)
+            this._activity?.update_channel_instruments()
         }
     }
 
@@ -1084,10 +1085,12 @@ class OpusLayerInterface : OpusLayerHistory() {
                 this._ui_change_bill.queue_remove_channel(channel)
                 this._ui_change_bill.queue_row_removal(ctl_row, removed_row_count)
                 this._ui_change_bill.queue_column_changes(changed_columns, false)
+                this._activity?.update_channel_instruments()
             }
         } else {
             super.remove_channel(channel)
             this.get_activity()?.shift_down_percussion_names(channel)
+            this._activity?.update_channel_instruments()
         }
     }
 

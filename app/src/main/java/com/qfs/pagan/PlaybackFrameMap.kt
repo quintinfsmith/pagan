@@ -481,8 +481,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this._cached_frame_count = null
 
         val is_percussion = when (start_event) {
-            is NoteOn -> start_event.channel == 9
-            is NoteOn79 -> start_event.channel == 9
+            is NoteOn -> start_event.channel == Midi.PERCUSSION_CHANNEL
+            is NoteOn79 -> start_event.channel == MIDI.PERCUSSION_CHANNEL
             else -> return
         }
 

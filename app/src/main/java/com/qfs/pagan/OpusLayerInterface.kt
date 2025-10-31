@@ -1,7 +1,4 @@
 package com.qfs.pagan
-import android.content.res.Configuration
-import android.view.View
-import android.widget.TextView
 import com.qfs.apres.Midi
 import com.qfs.json.JSONHashMap
 import com.qfs.pagan.Activity.ActivityEditor
@@ -11,14 +8,10 @@ import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.BlockedActionException
-import com.qfs.pagan.structure.opusmanager.base.ChannelEffectRowNotVisible
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
-import com.qfs.pagan.structure.opusmanager.base.GlobalEffectRowNotVisible
 import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
-import com.qfs.pagan.structure.opusmanager.base.LineEffectRowNotVisible
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
-import com.qfs.pagan.structure.opusmanager.base.OpusLine
 import com.qfs.pagan.structure.opusmanager.base.OpusLineAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
 import com.qfs.pagan.structure.opusmanager.base.OpusPercussionChannel
@@ -31,9 +24,7 @@ import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.IncorrectCursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import com.qfs.pagan.structure.opusmanager.history.OpusLayerHistory
-import com.qfs.pagan.structure.rationaltree.InvalidGetCall
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
-import com.qfs.pagan.uibill.BillableItem
 import com.qfs.pagan.uibill.UIChangeBill
 import kotlin.math.abs
 import kotlin.math.max
@@ -1294,7 +1285,6 @@ class OpusLayerInterface : OpusLayerHistory() {
 
             // Needs to be set to trigger potentially queued cell changes from on_overlap()
             this._queue_cell_change(beat_key)
-            this._ui_change_bill.queue_refresh_context_menu()
         }
     }
 
@@ -1378,48 +1368,23 @@ class OpusLayerInterface : OpusLayerHistory() {
             this._queue_cursor_update(this.cursor)
 
             when (cursor.mode) {
-                CursorMode.Line -> {
-                    if (cursor.ctl_level == null) {
-                        this._ui_change_bill.queue_set_context_menu_line()
-                    } else {
-                        this._ui_change_bill.queue_set_context_menu_control_line()
-                    }
-                }
-                CursorMode.Column -> {
-                    this._ui_change_bill.queue_set_context_menu_column()
-                }
                 CursorMode.Single -> {
-                    if (cursor.ctl_level == null) {
-                        if (this.is_percussion(cursor.channel)) {
-                            this._ui_change_bill.queue_set_context_menu_leaf_percussion()
-                        } else {
-                            /*
-                                Need to set relative mode here since cursor_apply is called after history is applied
-                                and set_relative_mode isn't called in replace_tree
-                            */
-                            val event = this.get_tree().get_event()
-                            if (event is TunedInstrumentEvent) {
-                                this.set_relative_mode(event)
-                            }
-
-                            this._ui_change_bill.queue_set_context_menu_leaf()
+                    if (cursor.ctl_level == null && !this.is_percussion(cursor.channel)) {
+                        /*
+                            Need to set relative mode here since cursor_apply is called after history is applied
+                            and set_relative_mode isn't called in replace_tree
+                        */
+                        val event = this.get_tree().get_event()
+                        if (event is TunedInstrumentEvent) {
+                            this.set_relative_mode(event)
                         }
-                    } else {
-                        this._ui_change_bill.queue_set_context_menu_line_control_leaf()
                     }
                 }
-
-                CursorMode.Range -> {
-                    this._ui_change_bill.queue_set_context_menu_range()
-                }
-
-                CursorMode.Unset -> {
-                    this._ui_change_bill.queue_clear_context_menu()
-                }
-
-                CursorMode.Channel -> {
-                    this._ui_change_bill.queue_set_context_menu_channel()
-                }
+                CursorMode.Line,
+                CursorMode.Column,
+                CursorMode.Range,
+                CursorMode.Unset,
+                CursorMode.Channel -> { }
             }
         }
     }
@@ -1526,11 +1491,6 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
 
             this._queue_cursor_update(this.cursor)
-            if (this.is_percussion(beat_key.channel)) {
-                this._ui_change_bill.queue_set_context_menu_leaf_percussion()
-            } else {
-                this._ui_change_bill.queue_set_context_menu_leaf()
-            }
         }
     }
 
@@ -1542,7 +1502,6 @@ class OpusLayerInterface : OpusLayerHistory() {
             super.cursor_select_ctl_at_line(ctl_type, beat_key, position)
 
             this._queue_cursor_update(this.cursor)
-            this._ui_change_bill.queue_set_context_menu_line_control_leaf()
         }
     }
 
@@ -1552,9 +1511,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.lock_ui_partial {
             this._unset_temporary_blocker()
             super.cursor_select_ctl_at_channel(ctl_type, channel, beat, position)
-
             this._queue_cursor_update(this.cursor)
-            this._ui_change_bill.queue_set_context_menu_line_control_leaf()
         }
     }
 
@@ -1566,7 +1523,6 @@ class OpusLayerInterface : OpusLayerHistory() {
             super.cursor_select_ctl_at_global(ctl_type, beat, position)
 
             this._queue_cursor_update(this.cursor)
-            this._ui_change_bill.queue_set_context_menu_line_control_leaf()
         }
     }
 
@@ -1578,7 +1534,6 @@ class OpusLayerInterface : OpusLayerHistory() {
             super.cursor_select_global_ctl_range(type, first, second)
 
             this._queue_cursor_update(this.cursor)
-            this._ui_change_bill.queue_set_context_menu_line_control_leaf_b()
         }
     }
 
@@ -1588,8 +1543,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.lock_ui_partial {
             this._unset_temporary_blocker()
             super.cursor_select_channel_ctl_range(type, channel, first, second)
-            this._queue_cursor_update(this.cursor.copy())
-            this._ui_change_bill.queue_set_context_menu_line_control_leaf_b()
+            this._queue_cursor_update(this.cursor)
         }
     }
 
@@ -1600,8 +1554,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             this._unset_temporary_blocker()
             super.cursor_select_line_ctl_range(type, beat_key_a, beat_key_b)
 
-            this._queue_cursor_update(this.cursor.copy())
-            this._ui_change_bill.queue_set_context_menu_line_control_leaf_b()
+            this._queue_cursor_update(this.cursor)
         }
     }
 
@@ -1612,7 +1565,6 @@ class OpusLayerInterface : OpusLayerHistory() {
             this._unset_temporary_blocker()
             super.cursor_select_range(beat_key_a, beat_key_b)
             this._queue_cursor_update(this.cursor)
-            this._ui_change_bill.queue_set_context_menu_range()
         }
     }
 
@@ -1839,7 +1791,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                     null
                 } ?: return
 
-                this._ui_change_bill.set_cursor(UIChangeBill.CacheCursor(cursor.mode, listOf(y, cursor.beat) + cursor.get_position()))
+                this._ui_change_bill.set_cursor(UIChangeBill.CacheCursor(cursor.mode, y, cursor.beat, *(cursor.get_position().toIntArray())))
             }
 
             CursorMode.Range -> {
@@ -1890,133 +1842,31 @@ class OpusLayerInterface : OpusLayerHistory() {
                     return
                 }
 
-                this._ui_change_bill.set_cursor(UIChangeBill.CacheCursor(cursor.mode, listOf(top_left.first, top_left.second, bottom_right.first, bottom_right.second)))
+                this._ui_change_bill.set_cursor(UIChangeBill.CacheCursor(cursor.mode, top_left.first, top_left.second, bottom_right.first, bottom_right.second))
             }
 
             CursorMode.Line -> {
-                val y = when (cursor.ctl_level) {
-                    null -> {
-                        try {
-                            val is_percussion = this.is_percussion(cursor.channel)
-                            val line_y = this.get_visible_row_from_ctl_line(
-                                this.get_actual_line_index(
-                                    this.get_instrument_line_index(
-                                        cursor.channel,
-                                        cursor.line_offset
-                                    )
-                                )
-                            ) ?: return
-
-                            val channels = this.get_all_channels()
-                            val line = channels[cursor.channel].lines[cursor.line_offset]
-                            var j = 1
-                            for ((type, controller) in line.controllers.get_all()) {
-                                if (!controller.visible) continue
-                                this._ui_change_bill.queue_line_label_refresh(
-                                    line_y + j++,
-                                    false,
-                                    cursor.channel,
-                                    if (is_percussion) (line as OpusLinePercussion).instrument else cursor.line_offset,
-                                    type
-                                )
-                            }
-
-                            line_y
-                        } catch (_: IndexOutOfBoundsException) {
-                            return
-                        }
-                    }
-                    CtlLineLevel.Line -> {
-                        // Update Standard Line label attached to controller
-                        val line_y = this.get_visible_row_from_ctl_line(
+                val y = try {
+                    when (cursor.ctl_level) {
+                        null -> this.get_visible_row_from_ctl_line(
                             this.get_actual_line_index(
                                 this.get_instrument_line_index(cursor.channel, cursor.line_offset)
                             )
                         )
-
-                        val row_index = try {
-                            this.get_visible_row_from_ctl_line_line(
-                                cursor.ctl_type!!,
-                                cursor.channel,
-                                cursor.line_offset
-                            )
-                        } catch (_: NullPointerException) {
-                            return
-                        }
-
-                        if (line_y != null) {
-                            val line = this.channels[cursor.channel].lines[cursor.line_offset]
-                            val is_percussion = this.is_percussion(cursor.channel)
-                            this._ui_change_bill.queue_line_label_refresh(
-                                line_y,
-                                is_percussion,
-                                cursor.channel,
-                                if (is_percussion) (line as OpusLinePercussion).instrument else cursor.line_offset,
-                                cursor.ctl_type
-                            )
-                        }
-
-                        row_index
+                        CtlLineLevel.Line -> this.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
+                        CtlLineLevel.Channel -> this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.channel)
+                        CtlLineLevel.Global -> this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
                     }
-                    CtlLineLevel.Channel -> {
-                        val channel = this.get_all_channels()[cursor.channel]
-                        val is_percussion = this.is_percussion(cursor.channel)
-                        // Update All Standard Line labels attached to controller
-                        var line_y = this.get_visible_row_from_ctl_line(
-                            this.get_actual_line_index(
-                                this.get_instrument_line_index(
-                                    cursor.channel,
-                                    0
-                                )
-                            )
-                        ) ?: return
+                } catch (_: IndexOutOfBoundsException) {
+                    null
+                } ?: return
 
-                        for (line_offset in channel.lines.indices) {
-                            val line = channel.lines[line_offset]
-                            this._ui_change_bill.queue_line_label_refresh(
-                                line_y++,
-                                is_percussion,
-                                cursor.channel,
-                                if (is_percussion) (line as OpusLinePercussion).instrument else line_offset
-                            )
-                            for ((type, controller) in line.controllers.get_all()) {
-                                if (!controller.visible) continue
-                                this._ui_change_bill.queue_line_label_refresh(
-                                    line_y++,
-                                    is_percussion,
-                                    cursor.channel,
-                                    if (is_percussion) (line as OpusLinePercussion).instrument else line_offset,
-                                    type
-                                )
-                            }
-                        }
-                        for ((type, controller) in channel.controllers.get_all()) {
-                            if (!controller.visible) continue
-                            this._ui_change_bill.queue_line_label_refresh(
-                                line_y++,
-                                is_percussion,
-                                cursor.channel,
-                                null,
-                                type
-                            )
-                        }
-
-                        try {
-                            this.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.channel)
-                        } catch (_: NullPointerException) {
-                            return
-                        }
-                    }
-                    CtlLineLevel.Global -> this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
-                }
-
-                this._ui_change_bill.queue_row_change(y, true)
+                this._ui_change_bill.set_cursor(UIChangeBill.CacheCursor(cursor.mode, y))
             }
 
             CursorMode.Column -> {
-                this._ui_change_bill.queue_column_change(cursor.beat, false)
+                this._ui_change_bill.set_cursor(UIChangeBill.CacheCursor(cursor.mode, cursor.beat))
             }
-            CursorMode.Unset -> { }
             CursorMode.Channel -> {
                 val y = when (cursor.ctl_level) {
                     null -> {
@@ -2034,20 +1884,24 @@ class OpusLayerInterface : OpusLayerHistory() {
                 }
 
                 val channels = this.get_all_channels()
-                var x = 0
+                var line_count = 0
                 for (line in channels[cursor.channel].lines) {
-                    this._ui_change_bill.queue_row_change(y + x++, true)
-                    for (j in 0 until line.controllers.get_all().size) {
-                        this._ui_change_bill.queue_row_change(y + x++, true)
+                    line_count++
+                    for ((_, controller) in line.controllers.get_all()) {
+                        if (!controller.visible) continue
+                        line_count++
                     }
                 }
-                for (j in 0 until channels[cursor.channel].controllers.get_all().size) {
-                    this._ui_change_bill.queue_row_change(y + x++, true)
-                }
-            }
-        }
 
-        this._ui_change_bill.queue_cell_state_changes(coordinates_to_update.toList())
+                for ((_, controller) in channels[cursor.channel].controllers.get_all()) {
+                    if (!controller.visible) continue
+                    line_count++
+                }
+
+                this._ui_change_bill.set_cursor(UIChangeBill.CacheCursor(cursor.mode, y, line_count))
+            }
+            CursorMode.Unset -> { }
+        }
     }
 
     private fun _init_editor_table_width_map() {

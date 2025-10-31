@@ -27,7 +27,7 @@ class UIChangeBill {
     data class LineData(var channel: Int?, var offset: Int?, var ctl_type: EffectType?, var selected: SelectionLevel)
     data class ColumnData(var is_tagged: Boolean, var selected: SelectionLevel)
     data class ChannelData(var percussion: Boolean, var instrument: Pair<Int, Int>)
-    data class CacheCursor(var type: CursorMode, var ints: List<Int>)
+    class CacheCursor(var type: CursorMode, vararg ints: Int)
 
     var project_name: String? = null
     var beat_count: Int = 0

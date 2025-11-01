@@ -6,6 +6,7 @@ extern "C" JNIEXPORT jlong JNICALL
 Java_com_qfs_apres_soundfontplayer_ControllerEventData_00024Companion_create(
         JNIEnv* env,
         jobject,
+        jint size,
         jintArray indices,
         jintArray end_indices,
         jint value_width,
@@ -16,6 +17,7 @@ Java_com_qfs_apres_soundfontplayer_ControllerEventData_00024Companion_create(
     auto* data_container = (ControllerEventData *)malloc(sizeof(ControllerEventData));
     new (data_container) ControllerEventData(
         type,
+        size,
         env->GetArrayLength(indices),
         value_width,
         env->GetIntArrayElements(indices, nullptr),

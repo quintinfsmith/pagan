@@ -19,6 +19,7 @@ import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONParser
 import com.qfs.json.JSONString
+import com.qfs.pagan.enumerate
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.ActiveControlSetJSONInterface
@@ -216,7 +217,7 @@ open class OpusLayerBase: Effectable {
             opus.set_size(beat_values.size)
 
             var overflow_events = mutableSetOf<Array<Int>>()
-            beat_values.forEachIndexed { i: Int, beat_tree: ReducibleTree<Set<Array<Int>>> ->
+            for ((i, beat_tree) in beat_values.enumerate()) {
                 // Quantize the beat ////////////
                 val quantized_tree = ReducibleTree<Set<Array<Int>>>()
                 quantized_tree.set_size(beat_tree.size)
@@ -1406,13 +1407,9 @@ open class OpusLayerBase: Effectable {
     open fun new_channel(channel: Int? = null, lines: Int = 1, uuid: Int? = null, is_percussion: Boolean = false) {
         val actual_uuid = uuid ?: OpusLayerBase.gen_channel_uuid()
         val new_channel = if (is_percussion) {
-            OpusPercussionChannel(actual_uuid).apply {
-                this.midi_channel = 9
-            }
+            OpusPercussionChannel(actual_uuid)
         } else {
-            OpusChannel(actual_uuid).apply {
-                this.midi_channel = this@OpusLayerBase.get_next_available_midi_channel()
-            }
+            OpusChannel(actual_uuid)
         }
         new_channel.set_beat_count(this.length)
 
@@ -1477,14 +1474,6 @@ open class OpusLayerBase: Effectable {
             channel_a.lines[line_offset_a] = channel_b.lines[line_offset_b]
             channel_b.lines[line_offset_b] = tmp_line
         }
-
-        this.recache_line_maps()
-    }
-
-    open fun swap_channels(channel_a: Int, channel_b: Int) {
-        val tmp_channel = this.channels[channel_a]
-        this.channels[channel_a] = this.channels[channel_b]
-        this.channels[channel_b] = tmp_channel
 
         this.recache_line_maps()
     }
@@ -3451,27 +3440,6 @@ open class OpusLayerBase: Effectable {
         }
     }
 
-    private fun get_next_available_midi_channel(prefer: Int? = null): Int {
-        // Find the next available MIDI channel, ignore '9' which needs to be manually set
-        // NOTE: This *will* generate past MIDI 1's limit of 16 channels
-        val used_channels: MutableSet<Int> = mutableSetOf(9)
-
-        for (channel in this.channels) {
-            used_channels.add(channel.get_midi_channel())
-        }
-
-        var new_channel = 0
-        if (prefer != null && !used_channels.contains(prefer)) {
-            new_channel = prefer
-        } else {
-            while (new_channel in used_channels) {
-                new_channel += 1
-            }
-        }
-
-        return new_channel
-    }
-
     /* only used in insert_beat. NO WHERE ELSE */
     open fun _apply_column_trees(beat_index: Int, beats_in_column: List<ReducibleTree<OpusEvent>>) {
         var y = 0
@@ -3558,6 +3526,33 @@ open class OpusLayerBase: Effectable {
         this.controllers.set_beat_count(new_count)
     }
 
+    // Try to stick to GM by forcing percussion to channel 9
+    fun get_midi_channel(real_channel: Int): Int {
+        var first_percussion_index = this.channels.size + 1
+        for (i in this.channels.indices) {
+            if (this.is_percussion(i)) {
+                first_percussion_index = i
+                break
+            }
+        }
+
+        return if (first_percussion_index > real_channel) {
+            if (real_channel >= Midi.PERCUSSION_CHANNEL) {
+                real_channel + 1
+            } else {
+                real_channel
+            }
+        } else if (first_percussion_index == real_channel) {
+            Midi.PERCUSSION_CHANNEL
+        } else {
+            if (real_channel <= Midi.PERCUSSION_CHANNEL) {
+                real_channel - 1
+            } else {
+                real_channel
+            }
+        }
+    }
+
     fun get_midi(start_beat: Int = 0, end_beat: Int? = null): Midi {
         data class StackItem<T>(var tree: ReducibleTree<T>, var divisions: Int, var offset: Int, var size: Int, var position: List<Int>)
         data class PseudoMidiEvent(var channel: Int, var note: Int, var bend: Int, var velocity: Int, var uuid: Int)
@@ -3571,11 +3566,10 @@ open class OpusLayerBase: Effectable {
         }
 
         // Set default values
-        for (channel in this.channels) {
-            if (channel.muted) {
-                continue
-            }
-            midi.insert_event(0, 0, VolumeMSB(channel.get_midi_channel(), 0x64))
+        for (i in this.channels.indices) {
+            val channel = this.channels[i]
+            if (channel.muted) continue
+            midi.insert_event(0, 0, VolumeMSB(i, 0x64))
         }
 
         val pseudo_midi_map = mutableListOf<Triple<Int, PseudoMidiEvent, Boolean>>()
@@ -3631,10 +3625,20 @@ open class OpusLayerBase: Effectable {
         }
 
         val tempo_controller = this.get_controller<OpusTempoEvent>(EffectType.Tempo)
-        apply_active_controller(tempo_controller) { event: OpusTempoEvent, _: OpusTempoEvent?, _: Int ->
-            listOf(
-                Pair(0, SetTempo.Companion.from_bpm((event.value * 1000f).roundToInt() / 1000F))
-            )
+        apply_active_controller(tempo_controller) { event: OpusTempoEvent, previous_event: OpusTempoEvent?, frames: Int ->
+            when (event.transition) {
+                EffectTransition.RInstant -> {
+                    listOf(
+                        Pair(0, SetTempo.Companion.from_bpm((event.value * 1000f).roundToInt() / 1000F)),
+                        Pair(frames, SetTempo.Companion.from_bpm(((previous_event?.value ?: 120F) * 1000f).roundToInt() / 1000F))
+                    )
+                }
+                else -> {
+                    listOf(
+                        Pair(0, SetTempo.Companion.from_bpm((event.value * 1000f).roundToInt() / 1000F))
+                    )
+                }
+            }
         }
 
         val channels = this.get_all_channels()
@@ -3855,13 +3859,21 @@ open class OpusLayerBase: Effectable {
         }
 
         var percussion_exported = false
+        var working_midi_channel = 0
         for (c in this.channels.indices) {
             if (this.channels[c].muted) continue
-
             val channel = this.get_channel(c)
-            if (this.is_percussion(c)) {
+
+            val midi_channel = if (this.is_percussion(c)) {
                 if (percussion_exported) continue
                 percussion_exported = true
+                Midi.PERCUSSION_CHANNEL
+            } else {
+                if (working_midi_channel > 15) continue
+                if (working_midi_channel == Midi.PERCUSSION_CHANNEL) {
+                    working_midi_channel++
+                }
+                working_midi_channel++
             }
 
             val channel_delay_map = if (this.has_channel_controller(EffectType.Delay, c)) {
@@ -3870,9 +3882,8 @@ open class OpusLayerBase: Effectable {
                 null
             }
 
-
-            midi.insert_event(0, 0, BankSelect(channel.get_midi_channel(), channel.get_midi_bank()))
-            midi.insert_event(0, 0, ProgramChange(channel.get_midi_channel(), channel.midi_program))
+            midi.insert_event(0, 0, BankSelect(midi_channel, channel.get_midi_bank()))
+            midi.insert_event(0, 0, ProgramChange(midi_channel, channel.midi_program))
 
             for (l in channel.lines.indices) {
                 val line = channel.lines[l]
@@ -3924,7 +3935,7 @@ open class OpusLayerBase: Effectable {
                             if (!(b < start_beat || b >= (end_beat ?: this.length))) {
                                 val event_velocity = (this.get_current_velocity(BeatKey(c, l, b), current.position) * 100F).toInt()
                                 val pseudo_event = PseudoMidiEvent(
-                                    channel.get_midi_channel(),
+                                    midi_channel,
                                     note,
                                     bend,
                                     event_velocity,
@@ -4293,7 +4304,7 @@ open class OpusLayerBase: Effectable {
                 val event_size = Rational(event[2], position[1].second)
                 val working_end = working_start + event_size
 
-                if (event[0] == 9) {
+                if (event_channel == Midi.PERCUSSION_CHANNEL) {
                     val event_note = event[1]
                     if (!percussion_map.contains(event_note)) {
                         percussion_map[event_note] = blocked_percussion_ranges.size
@@ -4310,9 +4321,8 @@ open class OpusLayerBase: Effectable {
                             }
                         }
 
-                        if (i == insertion_index) { // passed all the checks, no need to keep looping
-                            break
-                        }
+                        // passed all the checks, no need to keep looping
+                        if (i == insertion_index) break
                     }
 
                     if (insertion_index == blocked_percussion_ranges[index].size) {
@@ -4335,9 +4345,8 @@ open class OpusLayerBase: Effectable {
                             }
                         }
 
-                        if (i == insertion_index) { // passed all the checks, no need to keep looping
-                            break
-                        }
+                        // passed all the checks, no need to keep looping
+                        if (i == insertion_index) break
                     }
 
                     if (insertion_index == blocked_ranges[channel_index]!!.size) {
@@ -4357,9 +4366,9 @@ open class OpusLayerBase: Effectable {
             channel_sizes[channel] = blocks.size
         }
 
-        if (midi_channel_map.containsKey(9)) {
+        if (midi_channel_map.containsKey(Midi.PERCUSSION_CHANNEL)) {
             // Add Percussion to channel_sizes list
-            val adj_channel = midi_channel_map[9]!!
+            val adj_channel = midi_channel_map[Midi.PERCUSSION_CHANNEL]!!
             while (adj_channel >= channel_sizes.size) {
                 channel_sizes.add(0)
             }
@@ -4369,15 +4378,16 @@ open class OpusLayerBase: Effectable {
             }
 
             // Move Percussion to Last Opus Manager Channel
+            // TODO: No Longer Necessary
             for ((mchannel, ochannel) in midi_channel_map) {
-                if (mchannel == 9) continue
+                if (mchannel == Midi.PERCUSSION_CHANNEL) continue
                 if (ochannel > adj_channel) {
                     midi_channel_map[mchannel] = ochannel - 1
                 }
             }
 
             val percussion_line_count = channel_sizes.removeAt(adj_channel)
-            midi_channel_map[9] = channel_sizes.size
+            midi_channel_map[Midi.PERCUSSION_CHANNEL] = channel_sizes.size
             channel_sizes.add(percussion_line_count)
         }
 
@@ -4388,7 +4398,7 @@ open class OpusLayerBase: Effectable {
 
         sorted_channels.forEachIndexed { i: Int, pair: Pair<Int, Int> ->
             val (channel, midi_channel) = pair
-            this.new_channel(lines = channel_sizes[channel], is_percussion = midi_channel == 9)
+            this.new_channel(lines = channel_sizes[channel], is_percussion = midi_channel == Midi.PERCUSSION_CHANNEL)
         }
 
         // Flag ignore blocking so we don't keep rechecking
@@ -4411,7 +4421,7 @@ open class OpusLayerBase: Effectable {
                 val channel_index = midi_channel_map[event_channel]!!
 
                 // line_offset needs to be recalculated HERE for percussion as the percussion block map will change size during init
-                val adj_line_offset = if (event_channel == 9) {
+                val adj_line_offset = if (event_channel == Midi.PERCUSSION_CHANNEL) {
                     val event_note = event[1]
                     var re_adj_line_offset = 0
                     val coarse_index = percussion_map[event_note]!!
@@ -4449,7 +4459,7 @@ open class OpusLayerBase: Effectable {
         }
 
         for ((beatkey, position, event) in events_to_set) {
-            if (event[0] == 9) {
+            if (event[0] == Midi.PERCUSSION_CHANNEL) {
                 val tree = (this.get_channel(beatkey.channel) as OpusPercussionChannel).lines[beatkey.line_offset].get_tree(beatkey.beat, position)
                 tree.set_event(PercussionEvent(event[2]))
 
@@ -4516,9 +4526,7 @@ open class OpusLayerBase: Effectable {
         }
 
         for (c in this.channels.indices) {
-            if (!this.is_percussion(c)) {
-                continue
-            }
+            if (!this.is_percussion(c)) continue
             for ((line_offset, instrument) in percussion_instrument_map) {
                 this.percussion_set_instrument(c, line_offset, instrument)
             }

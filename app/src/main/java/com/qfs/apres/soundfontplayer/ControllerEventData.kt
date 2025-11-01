@@ -3,12 +3,12 @@ package com.qfs.apres.soundfontplayer
 class ControllerEventData(val ptr: Long, val type: EffectType) {
     class IndexedProfileBufferFrame(val first_frame: Int, val last_frame: Int, val value: FloatArray, val increment: FloatArray)
 
-    constructor(frames: List<IndexedProfileBufferFrame>, type: EffectType): this(
-        ControllerEventData.intermediary_create(frames, type), type
+    constructor(size: Int, frames: List<IndexedProfileBufferFrame>, type: EffectType): this(
+        ControllerEventData.intermediary_create(size, frames, type), type
     )
 
     companion object {
-        fun intermediary_create(frames: List<IndexedProfileBufferFrame>, type: EffectType): Long {
+        fun intermediary_create(size: Int, frames: List<IndexedProfileBufferFrame>, type: EffectType): Long {
             val value_width = frames[0].value.size
             val values = FloatArray(frames.size * value_width)
             val increments = FloatArray(frames.size * value_width)
@@ -21,6 +21,7 @@ class ControllerEventData(val ptr: Long, val type: EffectType) {
             }
 
             return this.create(
+                size,
                 IntArray(frames.size) { i: Int -> frames[i].first_frame },
                 IntArray(frames.size) { i: Int -> frames[i].last_frame },
                 value_width,
@@ -30,7 +31,7 @@ class ControllerEventData(val ptr: Long, val type: EffectType) {
             )
         }
 
-        external fun create(frame_indices: IntArray, frame_end_indices: IntArray, value_width: Int, values: FloatArray, increments: FloatArray, type: Int): Long
+        external fun create(size: Int, frame_indices: IntArray, frame_end_indices: IntArray, value_width: Int, values: FloatArray, increments: FloatArray, type: Int): Long
     }
 
     external fun destroy_jni(ptr: Long)

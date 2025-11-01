@@ -65,9 +65,7 @@ class PlaybackDevice(var activity: ActivityEditor, sample_handle_manager: Sample
     }
 
     override fun on_mark(i: Int) {
-        if (!this.is_playing || this.play_cancelled) {
-            return
-        }
+        if (!this.is_playing || this.play_cancelled) return
 
         // used to hide the loading reticle at on_start, but first beat prevents
         // hiding it, then [potentially] waiting to buffer
@@ -75,18 +73,19 @@ class PlaybackDevice(var activity: ActivityEditor, sample_handle_manager: Sample
             this.activity.runOnUiThread {
                 this.activity.loading_reticle_hide()
                 this.activity.clear_forced_title()
-                this.activity.set_playback_button(R.drawable.icon_pause)
+                this.activity.set_playback_button(if ((this.sample_frame_map as PlaybackFrameMap).is_looping) R.drawable.icon_pause_loop else R.drawable.icon_pause)
             }
             this._first_beat_passed = true
         }
 
         val opus_manager = this.activity.get_opus_manager()
-        if (i >= opus_manager.length) {
+
+        if (!(this.sample_frame_map as PlaybackFrameMap).is_looping && i >= opus_manager.length) {
             this.kill()
             return
         }
 
-        opus_manager.cursor_select_column(max(i, 0))
+        opus_manager.cursor_select_column(max(i % opus_manager.length, 0))
     }
 
     override fun on_cancelled() {
@@ -94,14 +93,21 @@ class PlaybackDevice(var activity: ActivityEditor, sample_handle_manager: Sample
         (this.sample_frame_map as PlaybackFrameMap).clear()
     }
 
-    fun play_opus(start_beat: Int) {
+    fun play_opus(start_beat: Int, play_in_loop: Boolean = false) {
         this._first_beat_passed = false
-        (this.sample_frame_map as PlaybackFrameMap).clip_same_line_release = this.activity.configuration.clip_same_line_release
-        (this.sample_frame_map as PlaybackFrameMap).parse_opus()
-        val start_frame = this.sample_frame_map.get_marked_frame(start_beat)!!
+        val sample_frame_map = this.sample_frame_map as PlaybackFrameMap
+        sample_frame_map.clip_same_line_release = this.activity.configuration.clip_same_line_release
+        sample_frame_map.is_looping = play_in_loop
+        sample_frame_map.parse_opus()
+        val start_frame = sample_frame_map.get_marked_frame(start_beat)!!
+
         // Prebuild the first buffer's worth of sample handles, the rest happen in the get_new_handles()
         for (i in start_frame .. start_frame + this.buffer_size) {
-            (this.sample_frame_map as PlaybackFrameMap).check_frame(i)
+            sample_frame_map.check_frame(i)
+        }
+
+        if (play_in_loop && start_frame != 0) {
+            sample_frame_map.shift_before_frame(start_frame)
         }
 
         this.play(start_frame)

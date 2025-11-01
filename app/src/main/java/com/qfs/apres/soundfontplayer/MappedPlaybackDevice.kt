@@ -140,11 +140,9 @@ abstract class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_r
                         if (this@MappedPlaybackDevice.sample_frame_map.get_marked_frame(this.current_mark_index) == null) return
                     }
 
-
                     that.on_mark(this.current_mark_index++)
 
                     val frame = this@MappedPlaybackDevice.sample_frame_map.get_marked_frame(this.current_mark_index) ?: return
-
                     that.active_audio_track_handle?.set_next_notification_position(
                         if (that.wave_generator.kill_frame != null) {
                             min(that.wave_generator.kill_frame!!, frame) - start_frame

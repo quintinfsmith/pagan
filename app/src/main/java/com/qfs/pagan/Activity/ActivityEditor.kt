@@ -78,6 +78,7 @@ import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.apres.soundfontplayer.WaveGenerator
+import com.qfs.json.JSONHashMap
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.CompatibleFileType
 import com.qfs.pagan.DrawerChannelMenu.ChannelOptionAdapter
@@ -122,6 +123,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEve
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import com.qfs.pagan.uibill.UIChangeBill
 import java.io.BufferedOutputStream
 import java.io.BufferedReader
 import java.io.DataOutputStream
@@ -133,6 +135,7 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.collections.get
 import kotlin.concurrent.thread
 import kotlin.math.floor
 import kotlin.math.max
@@ -209,7 +212,6 @@ class ActivityEditor : PaganActivity() {
     // flag to indicate that the landing page has been navigated away from for navigation management
     private var _integer_dialog_defaults = HashMap<String, Int>()
     private var _float_dialog_defaults = HashMap<String, Float>()
-    var active_percussion_names = HashMap<Int, HashMap<Int, String>>()
     private var _virtual_input_device = MidiPlayer()
     private lateinit var _midi_interface: MidiController
     private var _soundfont: SoundFont? = null
@@ -414,7 +416,10 @@ class ActivityEditor : PaganActivity() {
                         }
                         val directory = DocumentFile.fromTreeUri(this, tree_uri) ?: return@thread
                         val opus_manager_copy = OpusLayerBase()
-                        opus_manager_copy.project_change_json(this.get_opus_manager().to_json())
+                        this.get_opus_manager().to_json().let {
+                            opus_manager_copy.project_change_json(it)
+                            this.on_project_change_json(it)
+                        }
 
                         var line_count = 0
                         val skip_lines = mutableSetOf<Pair<Int, Int>>()
@@ -529,12 +534,14 @@ class ActivityEditor : PaganActivity() {
         thread {
             if (result.resultCode == RESULT_OK) {
                 result?.data?.data?.also { tree_uri ->
-                    if (this.editor_view_model.export_handle != null) {
-                        return@thread
-                    }
+                    if (this.editor_view_model.export_handle != null) return@thread
                     val directory = DocumentFile.fromTreeUri(this, tree_uri) ?: return@thread
+
                     val opus_manager_copy = OpusLayerBase()
-                    opus_manager_copy.project_change_json(this.get_opus_manager().to_json())
+                    this.get_opus_manager().to_json().let {
+                        opus_manager_copy.project_change_json(it)
+                        this@ActivityEditor.on_project_change_json(it)
+                    }
 
                     var channel_count = 0
                     val skip_channels = mutableSetOf<Int>()
@@ -941,6 +948,7 @@ class ActivityEditor : PaganActivity() {
         val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
         editor_table.clear()
         this.get_opus_manager().project_change_new()
+        this.on_project_change_new()
     }
 
     fun load_project(uri: Uri) {
@@ -1692,9 +1700,9 @@ class ActivityEditor : PaganActivity() {
         }
 
         if (this.get_soundfont() != null) {
-            export_options.add( Triple(2, null, this.getString(R.string.export_option_wav)) )
-            export_options.add( Triple(3, null, this.getString(R.string.export_option_wav_lines)) )
-            export_options.add( Triple(4, null, this.getString(R.string.export_option_wav_channels)) )
+            export_options.add(Triple(2, null, this.getString(R.string.export_option_wav)))
+            export_options.add(Triple(3, null, this.getString(R.string.export_option_wav_lines)))
+            export_options.add(Triple(4, null, this.getString(R.string.export_option_wav_channels)))
         }
 
         return export_options
@@ -1969,7 +1977,7 @@ class ActivityEditor : PaganActivity() {
         this.reinit_playback_device()
         this.connect_feedback_device()
         this.update_channel_instruments()
-        this.active_percussion_names.clear()
+        this.get_opus_manager().ui_facade.clear_percussion_names()
         this.runOnUiThread {
             this.setup_project_config_drawer_export_button()
             this.findViewById<ChannelOptionRecycler?>(R.id.rvActiveChannels)?.notify_soundfont_changed()
@@ -1980,35 +1988,6 @@ class ActivityEditor : PaganActivity() {
                 }
                 else -> {}
             }
-        }
-    }
-
-    fun shift_up_percussion_names(channel: Int) {
-        val keys = this.active_percussion_names.keys.sorted().reversed()
-        for (k in keys) {
-            if (k < channel) continue
-            this.active_percussion_names[k + 1] = this.active_percussion_names.remove(k)!!
-        }
-    }
-
-    fun shift_down_percussion_names(channel: Int) {
-        val keys = this.active_percussion_names.keys.sorted()
-        for (k in keys) {
-            if (k > channel) {
-                this.active_percussion_names[k - 1] = this.active_percussion_names.remove(k)!!
-            } else if (k == channel) {
-                this.active_percussion_names.remove(k)
-            }
-        }
-    }
-
-    fun swap_percussion_channels(channel_a: Int, channel_b: Int) {
-        val a_names = this.active_percussion_names[channel_a]
-        if (this.active_percussion_names[channel_b] != null) {
-            this.active_percussion_names[channel_a] = this.active_percussion_names[channel_b]!!
-        }
-        if (a_names != null) {
-            this.active_percussion_names[channel_b] = a_names
         }
     }
 
@@ -2081,7 +2060,11 @@ class ActivityEditor : PaganActivity() {
         this._soundfont_supported_instrument_names.clear()
 
         this.update_channel_instruments()
-        this.active_percussion_names.clear()
+        this.get_ui_facade().clear_percussion_names()
+    }
+
+    fun get_ui_facade(): UIChangeBill {
+        return this.get_opus_manager().ui_facade
     }
 
     fun get_drum_name(channel: Int, index: Int): String? {
@@ -3228,5 +3211,42 @@ class ActivityEditor : PaganActivity() {
         }
 
         this.update_menu_options()
+    }
+
+    fun on_project_change_json(json_data: JSONHashMap) {
+        if (! this.configuration.use_preferred_soundfont) return
+        val original_soundfont = this.configuration.soundfont
+
+        val sf_path = json_data.get_hashmap("d").get_stringn("sf") ?: return
+        if (sf_path == original_soundfont) return
+
+        this.configuration.soundfont = sf_path
+        // Try opening the assigned soundfont, but if it fails for any reason, go back to the
+        // Currently active one.
+        try {
+            this.set_soundfont()
+        } catch (_: Exception) {
+            this.configuration.soundfont = original_soundfont
+            this.set_soundfont()
+        }
+        this.save_configuration()
+    }
+
+    fun on_project_change_new() {
+        // set the default instrument to the first available in the soundfont (if applicable)
+        val opus_manager = this.get_opus_manager()
+        val ui_facade = this.get_ui_facade()
+        for (c in opus_manager.channels.indices) {
+            if (!opus_manager.is_percussion(c)) continue
+
+            // Need to prematurely update the channel instrument to find the lowest possible instrument
+            this.update_channel_instruments(c)
+            this.populate_active_percussion_names(c, true)
+            val percussion_keys = ui_facade.active_percussion_names[c]?.keys?.sorted() ?: continue
+
+            for (l in 0 until opus_manager.get_channel(c).size) {
+                opus_manager.percussion_set_instrument(c, l, max(0, percussion_keys.first() - 27))
+            }
+        }
     }
 }

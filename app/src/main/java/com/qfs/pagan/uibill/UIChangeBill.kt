@@ -5,8 +5,12 @@ import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
-import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
+import kotlin.collections.get
+import kotlin.collections.remove
+import kotlin.compareTo
+import kotlin.text.clear
+import kotlin.text.set
 
 // IN PROGRESS: converting this into  a UI State representation of the Editor....
 
@@ -39,6 +43,7 @@ class UIChangeBill {
     var active_event: OpusEvent? = null
     var active_cursor: CacheCursor? = null
     var project_exists: Boolean = false
+    var active_percussion_names = HashMap<Int, HashMap<Int, String>>()
 
     fun get_next_entry(): BillableItem? {
         return if (this._tree.bill.isNotEmpty()) {
@@ -211,10 +216,10 @@ class UIChangeBill {
     }
 
     fun queue_row_removal(y: Int, count: Int) {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.int_queue.add(y)
-        working_tree.int_queue.add(count)
-        working_tree.bill.add(BillableItem.RowRemove)
+        for (i in 0 until count) {
+            this.line_data.removeAt(y)
+            this.cell_map.removeAt(y)
+        }
     }
 
     fun queue_add_channel(channel: Int, percussion: Boolean, instrument: Pair<Int, Int>) {
@@ -363,4 +368,36 @@ class UIChangeBill {
         this.active_cursor = cursor
     }
 
+    fun shift_up_percussion_names(channel: Int) {
+        val keys = this.active_percussion_names.keys.sorted().reversed()
+        for (k in keys) {
+            if (k < channel) continue
+            this.active_percussion_names[k + 1] = this.active_percussion_names.remove(k)!!
+        }
+    }
+
+    fun shift_down_percussion_names(channel: Int) {
+        val keys = this.active_percussion_names.keys.sorted()
+        for (k in keys) {
+            if (k > channel) {
+                this.active_percussion_names[k - 1] = this.active_percussion_names.remove(k)!!
+            } else if (k == channel) {
+                this.active_percussion_names.remove(k)
+            }
+        }
+    }
+
+    fun swap_percussion_channels(channel_a: Int, channel_b: Int) {
+        val a_names = this.active_percussion_names[channel_a]
+        if (this.active_percussion_names[channel_b] != null) {
+            this.active_percussion_names[channel_a] = this.active_percussion_names[channel_b]!!
+        }
+        if (a_names != null) {
+            this.active_percussion_names[channel_b] = a_names
+        }
+    }
+
+    fun clear_percussion_names() {
+        this.active_percussion_names.clear()
+    }
 }

@@ -241,14 +241,14 @@ class StandardMidiFileInterface {
                     if (working_event != null) {
                         has_eot = has_eot || (working_event is EndOfClip)
                         clip_event_bytes += to_variable_length_bytes(tick_delay)
-                        clip_event_bytes += working_event.as_bytes().toMutableList()
+                        clip_event_bytes += working_event.as_bytes().toList()
                     }
                 }
 
                 // Automatically handle EndOfClipEvent Here instead of requiring it to be in the MIDIClip object
                 if (!has_eot) {
                     clip_event_bytes.add(0x00)
-                    clip_event_bytes += EndOfClip().as_bytes().toMutableList()
+                    clip_event_bytes += EndOfTrack().as_bytes().toList()
                 }
 
                 // clip length in bytes

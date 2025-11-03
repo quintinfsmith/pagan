@@ -110,7 +110,6 @@ class StandardMidiFileInterface {
     class InvalidChunkType(string: String): Exception("Invalid Chunk Type: $string")
     class MissingMThd : Exception("Missing MThd")
     companion object {
-        val PERCUSSION_CHANNEL = 9
         fun is_compatible(bytes: ByteArray): Boolean {
             return try {
                 val first_four = ByteArray(4) { i -> bytes[i] }
@@ -237,9 +236,8 @@ class StandardMidiFileInterface {
                 for (pair in ticks) {
                     val tick_delay = pair.first
                     val eid = pair.second
-                    val working_event = midi.get_event(eid)
-                    if (working_event != null) {
-                        has_eot = has_eot || (working_event is EndOfClip)
+                    midi.get_event(eid)?.let { working_event ->
+                        has_eot = has_eot || (working_event is EndOfTrack)
                         clip_event_bytes += to_variable_length_bytes(tick_delay)
                         clip_event_bytes += working_event.as_bytes().toList()
                     }
@@ -625,6 +623,7 @@ class Midi {
 
 
     companion object {
+        const val PERCUSSION_CHANNEL = 9
         const val VERSION_1 = 0
         const val VERSION_2_CONTAINER = 1
         const val VERSION_2_CLIP = 2
@@ -634,26 +633,15 @@ class Midi {
         }
 
         fun from_bytes(file_bytes: ByteArray): Midi {
-            if (StandardMidiFileInterface.is_compatible(file_bytes)) {
-                return StandardMidiFileInterface.from_bytes(file_bytes)
-            }
-            if (MidiContainerFileInterface.is_compatible(file_bytes)) {
-                return MidiContainerFileInterface.from_bytes(file_bytes)
-            }
-            if (MidiClipFileInterface.is_compatible(file_bytes)) {
-                return MidiClipFileInterface.from_bytes(file_bytes)
-            }
-
+            if (StandardMidiFileInterface.is_compatible(file_bytes)) return StandardMidiFileInterface.from_bytes(file_bytes)
+            if (MidiContainerFileInterface.is_compatible(file_bytes)) return MidiContainerFileInterface.from_bytes(file_bytes)
+            if (MidiClipFileInterface.is_compatible(file_bytes)) return MidiClipFileInterface.from_bytes(file_bytes)
             throw UnknownMidiFileType()
         }
     }
 
     fun as_bytes(version: Int? = null): ByteArray {
-        val adj_version = if (version == null) {
-            this.detect_version()
-        } else {
-            version
-        }
+        val adj_version = version ?: this.detect_version()
         return when (adj_version) {
             Midi.VERSION_1 -> StandardMidiFileInterface.to_bytes(this)
             Midi.VERSION_2_CONTAINER -> MidiContainerFileInterface.to_bytes(this)
@@ -770,9 +758,7 @@ class Midi {
     }
 
     fun push_event(clip: Int, wait: Int, event: GeneralMIDIEvent): Int {
-        if (clip > 15) {
-            throw ClipOOB(clip)
-        }
+        if (clip > 15) throw ClipOOB(clip)
 
         val new_event_id = this.event_id_gen
         this.event_id_gen += 1
@@ -797,9 +783,7 @@ class Midi {
     }
 
     fun replace_event(event_id: Int, new_midi_event: GeneralMIDIEvent) {
-        if (!this.events.containsKey(event_id)) {
-            throw InvalidEventId(event_id)
-        }
+        if (!this.events.containsKey(event_id)) throw InvalidEventId(event_id)
         this.events[event_id] = new_midi_event
     }
 

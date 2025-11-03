@@ -1459,7 +1459,7 @@ class ActivityEditor : PaganActivity() {
             start_point = 0
         }
 
-        val midi = opus_manager.get_midi(start_point)
+        val midi = opus_manager.get_midi(start_point, include_pointers = true)
 
         this.loading_reticle_hide()
         this.runOnUiThread {

@@ -3570,12 +3570,13 @@ open class OpusLayerBase: Effectable {
         }
     }
 
-    fun get_midi(start_beat: Int = 0, end_beat: Int? = null): Midi {
+    fun get_midi(start_beat: Int = 0, end_beat: Int? = null, include_pointers: Boolean = false): Midi {
         data class StackItem<T>(var tree: ReducibleTree<T>, var divisions: Int, var offset: Int, var size: Int, var position: List<Int>)
         data class PseudoMidiEvent(var channel: Int, var note: Int, var bend: Int, var velocity: Int, var uuid: Int)
         var event_uuid_gen = 0
 
         val midi = Midi()
+        midi.ppqn = 480
 
         midi.insert_event(0, Text("Generated with Pagan Music Sequencer."))
         this.project_notes?.let {
@@ -3661,7 +3662,6 @@ open class OpusLayerBase: Effectable {
         val channels = this.get_all_channels()
         for (c in channels.indices) {
             val pan_controller = channels[c].get_controller<OpusPanEvent>(EffectType.Pan)
-
             apply_active_controller(pan_controller) { event: OpusPanEvent, previous_event: OpusPanEvent?, frames: Int ->
                 when (event.transition) {
                     EffectTransition.Instant -> {
@@ -3675,7 +3675,6 @@ open class OpusLayerBase: Effectable {
                         listOf(
                             Pair(0, BalanceMSB(c, value)),
                             Pair(frames, BalanceMSB(c, return_value)),
-
                         )
                     }
 
@@ -3710,7 +3709,6 @@ open class OpusLayerBase: Effectable {
                         }
                         working_list
                     }
-
                 }
             }
 
@@ -4083,12 +4081,14 @@ open class OpusLayerBase: Effectable {
             )
         }
 
-        for (beat in start_beat until (end_beat ?: this.length)) {
-            midi.insert_event(
-                0,
-                midi.ppqn * (beat - start_beat),
-                SongPositionPointer(beat)
-            )
+        if (include_pointers) {
+            for (beat in start_beat until (end_beat ?: this.length)) {
+                midi.insert_event(
+                    0,
+                    midi.ppqn * (beat - start_beat),
+                    SongPositionPointer(beat)
+                )
+            }
         }
 
         return midi

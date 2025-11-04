@@ -742,6 +742,11 @@ open class OpusLayerBase: Effectable {
      * This may or may not be in the preceding leaf, but will look for the first leaf with an associated event.
      */
     fun get_preceding_event(beat_key: BeatKey, position: List<Int>): InstrumentEvent? {
+        val (adj_beat_key, adj_position) = this.get_preceding_event_position(beat_key, position) ?: return null
+        return this.get_tree(adj_beat_key, adj_position).get_event()
+    }
+
+    fun get_preceding_event_position(beat_key: BeatKey, position: List<Int>): Pair<BeatKey, List<Int>>? {
         // Gets first preceding event. may skip empty leafs
         var working_position = position.toList()
         var working_beat_key = beat_key
@@ -750,7 +755,7 @@ open class OpusLayerBase: Effectable {
             working_beat_key = pair.first
             working_position = pair.second
         }
-        return this.get_tree(working_beat_key, working_position).get_event()
+        return Pair(working_beat_key, working_position)
     }
 
     /**

@@ -2792,9 +2792,14 @@ class OpusLayerInterface : OpusLayerHistory() {
 
         val new_event = when (this.relative_mode) {
             RelativeInputMode.Absolute -> {
+                this.latest_set_octave = octave
                 AbsoluteNoteEvent(
                     when (current_event) {
-                        is AbsoluteNoteEvent -> (octave * radix) + (current_event.note % radix)
+                        is AbsoluteNoteEvent -> {
+                            val offset = current_event.note % radix
+                            this.latest_set_offset = offset
+                            (octave * radix) + offset
+                        }
                         is RelativeNoteEvent -> {
                             this.convert_event_to_absolute(beat_key, position)
                             return this._set_note_octave(beat_key, position, octave)
@@ -2805,14 +2810,16 @@ class OpusLayerInterface : OpusLayerHistory() {
                                 PaganConfiguration.NoteMemory.UserInput -> this.latest_set_offset
                                 else -> null
                             }
-
-                            (octave * radix) + (offset ?: ((this.get_absolute_value(cursor.get_beatkey(), cursor.get_position()) ?: 0) % radix))
+                            this.latest_set_offset = (offset ?: ((this.get_absolute_value(cursor.get_beatkey(), cursor.get_position()) ?: 0) % radix))
+                            (octave * radix) + this.latest_set_offset!!
                         }
                     },
                     duration
                 )
             }
             RelativeInputMode.Positive -> {
+                this.latest_set_offset = null
+                this.latest_set_octave = null
                 RelativeNoteEvent(
                     when (current_event) {
                         is RelativeNoteEvent -> (octave * radix) + (current_event.offset % radix)
@@ -2826,6 +2833,8 @@ class OpusLayerInterface : OpusLayerHistory() {
                 )
             }
             RelativeInputMode.Negative -> {
+                this.latest_set_offset = null
+                this.latest_set_octave = null
                 RelativeNoteEvent(
                     when (current_event) {
                         is RelativeNoteEvent -> 0 - ((octave * radix) + (abs(current_event.offset) % radix))
@@ -2841,7 +2850,6 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
 
         this.set_event(beat_key, position, new_event)
-        this.latest_set_octave = octave
     }
 
     private fun _set_note_offset(beat_key: BeatKey, position: List<Int>, offset: Int) {
@@ -2854,9 +2862,14 @@ class OpusLayerInterface : OpusLayerHistory() {
 
         val new_event = when (this.relative_mode) {
             RelativeInputMode.Absolute -> {
+                this.latest_set_offset = offset
                 AbsoluteNoteEvent(
                     when (current_event) {
-                        is AbsoluteNoteEvent -> ((current_event.note / radix) * radix) + offset
+                        is AbsoluteNoteEvent -> {
+                            val octave = (current_event.note / radix)
+                            this.latest_set_octave = octave
+                            (octave * radix) + offset
+                        }
                         is RelativeNoteEvent -> {
                             this.convert_event_to_absolute(beat_key, position)
                             return this._set_note_offset(beat_key, position, offset)
@@ -2864,17 +2877,20 @@ class OpusLayerInterface : OpusLayerHistory() {
                         else -> {
                             val cursor = this.cursor
                             val octave = when (this.get_activity()?.configuration?.note_memory) {
-                                PaganConfiguration.NoteMemory.UserInput -> this.latest_set_offset
+                                PaganConfiguration.NoteMemory.UserInput -> this.latest_set_octave
                                 else -> null
                             }
 
-                            offset + ((octave ?: ((this.get_absolute_value(cursor.get_beatkey(), cursor.get_position()) ?: 0) / radix)) * radix)
+                            this.latest_set_octave = (octave ?: ((this.get_absolute_value(cursor.get_beatkey(), cursor.get_position()) ?: 0) / radix))
+                            offset + (this.latest_set_octave!! * radix)
                         }
                     },
                     duration
                 )
             }
             RelativeInputMode.Positive -> {
+                this.latest_set_offset = null
+                this.latest_set_octave = null
                 RelativeNoteEvent(
                     when (current_event) {
                         is RelativeNoteEvent -> ((current_event.offset / radix) * radix) + offset
@@ -2888,6 +2904,8 @@ class OpusLayerInterface : OpusLayerHistory() {
                 )
             }
             RelativeInputMode.Negative -> {
+                this.latest_set_offset = null
+                this.latest_set_octave = null
                 RelativeNoteEvent(
                     when (current_event) {
                         is RelativeNoteEvent -> ((current_event.offset / radix) * radix) - offset
@@ -2903,7 +2921,6 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
 
         this.set_event(beat_key, position, new_event)
-        this.latest_set_octave = offset
     }
 
     fun set_note_octave_at_cursor(octave: Int) {

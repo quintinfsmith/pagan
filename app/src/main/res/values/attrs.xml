@@ -17,6 +17,7 @@
 
     <declare-styleable name="states">
         <attr name="state_active" format="boolean"/>
+        <attr name="state_highlighted" format="boolean"/>
         <attr name="state_alternate" format="boolean"/>
         <attr name="state_focused" format="boolean" />
         <attr name="state_focused_secondary" format="boolean" />

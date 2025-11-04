@@ -76,6 +76,9 @@ class OpusLayerInterface : OpusLayerHistory() {
     private var _in_reload = false
     var force_scroll_queued = false
 
+    var latest_set_octave: Int? = null
+    var latest_set_offset: Int? = null
+
     fun attach_activity(activity: ActivityEditor) {
         this._activity = activity
     }
@@ -1212,6 +1215,8 @@ class OpusLayerInterface : OpusLayerHistory() {
 
         this.recache_line_maps()
         this._ui_change_bill.queue_full_refresh(this._in_reload)
+        this.latest_set_octave = null
+        this.latest_set_offset = null
         this.initialized = true
     }
 
@@ -1342,6 +1347,8 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
 
             this._ui_change_bill.queue_refresh_context_menu()
+
+            this.latest_set_offset = null
         }
     }
 
@@ -1398,6 +1405,9 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     override fun clear() {
         super.clear()
+        this.latest_set_offset = null
+        this.latest_set_octave = null
+
         val editor_table = this.get_editor_table()
         editor_table.clear()
     }
@@ -2791,8 +2801,12 @@ class OpusLayerInterface : OpusLayerHistory() {
                         }
                         else -> {
                             val cursor = this.cursor
-                            val previous_value = this.get_absolute_value(cursor.get_beatkey(), cursor.get_position()) ?: 0
-                            (octave * radix) + (previous_value % radix)
+                            val offset = when (this.get_activity()?.configuration?.note_memory) {
+                                PaganConfiguration.NoteMemory.UserInput -> this.latest_set_offset
+                                else -> null
+                            }
+
+                            (octave * radix) + (offset ?: ((this.get_absolute_value(cursor.get_beatkey(), cursor.get_position()) ?: 0) % radix))
                         }
                     },
                     duration
@@ -2827,6 +2841,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
 
         this.set_event(beat_key, position, new_event)
+        this.latest_set_octave = octave
     }
 
     private fun _set_note_offset(beat_key: BeatKey, position: List<Int>, offset: Int) {
@@ -2847,8 +2862,13 @@ class OpusLayerInterface : OpusLayerHistory() {
                             return this._set_note_offset(beat_key, position, offset)
                         }
                         else -> {
-                            val previous_value = this.get_absolute_value(beat_key, position) ?: 0
-                            ((previous_value / radix) * radix) + offset
+                            val cursor = this.cursor
+                            val octave = when (this.get_activity()?.configuration?.note_memory) {
+                                PaganConfiguration.NoteMemory.UserInput -> this.latest_set_offset
+                                else -> null
+                            }
+
+                            offset + ((octave ?: ((this.get_absolute_value(cursor.get_beatkey(), cursor.get_position()) ?: 0) / radix)) * radix)
                         }
                     },
                     duration
@@ -2883,6 +2903,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
 
         this.set_event(beat_key, position, new_event)
+        this.latest_set_octave = offset
     }
 
     fun set_note_octave_at_cursor(octave: Int) {

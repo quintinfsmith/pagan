@@ -162,9 +162,6 @@ class ActivityEditor : PaganActivity() {
         var active_project: Uri? = null
         var active_midi_device: MidiDeviceInfo? = null
 
-
-
-
         fun export_wav(
             opus_manager: OpusLayerBase,
             sample_handle_manager: SampleHandleManager,
@@ -3263,4 +3260,5 @@ class ActivityEditor : PaganActivity() {
 
         this.update_menu_options()
     }
+
 }

@@ -1301,10 +1301,12 @@ class ActionTracker {
 
                 val radix = opus_manager.get_radix()
                 thread {
-                    for (i in 0 until 3) {
-                        activity.play_event(channel, (radix * 2) + Random.nextInt(radix))
-                        Thread.sleep(200)
-                    }
+                    activity.play_event(channel, (radix * 3))
+                    Thread.sleep(200)
+                    activity.play_event(channel, (radix * 3) + (radix / 2))
+                    Thread.sleep(200)
+                    activity.play_event(channel, (radix * 4))
+                    Thread.sleep(200)
                 }
             }
         }

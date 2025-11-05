@@ -21,6 +21,7 @@ import androidx.appcompat.widget.SwitchCompat
 import androidx.core.net.toUri
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.MenuDialogEventHandler
+import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.R
 import com.qfs.pagan.databinding.ActivitySettingsBinding
 import java.io.FileInputStream
@@ -225,6 +226,18 @@ class ActivitySettings : PaganActivity() {
             it.isChecked = this.configuration.use_preferred_soundfont
             it.setOnCheckedChangeListener { _, enabled: Boolean ->
                 this.configuration.use_preferred_soundfont = enabled
+                this.update_result()
+            }
+        }
+
+        this.findViewById<SwitchCompat>(R.id.sNoteMemory).let {
+            it.isChecked = this.configuration.note_memory == PaganConfiguration.NoteMemory.UserInput
+            it.setOnCheckedChangeListener { _, enabled: Boolean ->
+                this.configuration.note_memory = if (enabled) {
+                    PaganConfiguration.NoteMemory.UserInput
+                } else {
+                    PaganConfiguration.NoteMemory.Inline
+                }
                 this.update_result()
             }
         }

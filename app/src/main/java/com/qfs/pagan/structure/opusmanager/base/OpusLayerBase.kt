@@ -324,6 +324,11 @@ open class OpusLayerBase: Effectable {
     internal var _blocked_action_catcher = 0
     internal var project_changing = false
 
+
+    fun get_radix(): Int {
+        return this.tuning_map.size
+    }
+
     //// RO Functions ////
     /**
      * Calculates the number of channels in use.

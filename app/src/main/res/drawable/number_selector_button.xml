@@ -6,4 +6,10 @@
             <corners android:radius="6dp"/>
         </shape>
     </item>
+    <item>
+        <shape android:shape="rectangle">
+            <stroke android:dashGap="4dp" android:dashWidth="8dp" android:width="3dp" android:color="@color/number_select_button_selector_stroke"/>
+            <corners android:radius="4dp"/>
+        </shape>
+    </item>
 </layer-list>

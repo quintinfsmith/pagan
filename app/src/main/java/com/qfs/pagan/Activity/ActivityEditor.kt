@@ -164,9 +164,6 @@ class ActivityEditor : PaganActivity() {
         var active_project: Uri? = null
         var active_midi_device: MidiDeviceInfo? = null
 
-
-
-
         fun export_wav(
             opus_manager: OpusLayerBase,
             sample_handle_manager: SampleHandleManager,
@@ -1466,7 +1463,7 @@ class ActivityEditor : PaganActivity() {
             start_point = 0
         }
 
-        val midi = opus_manager.get_midi(start_point)
+        val midi = opus_manager.get_midi(start_point, include_pointers = true)
 
         this.loading_reticle_hide()
         this.runOnUiThread {
@@ -1836,7 +1833,7 @@ class ActivityEditor : PaganActivity() {
         val opus_manager = this.get_opus_manager()
         val midi_channel = opus_manager.get_midi_channel(channel)
 
-        val radix = opus_manager.tuning_map.size
+        val radix = opus_manager.get_radix()
         val (note, bend) = if (opus_manager.is_percussion(channel)) { // Ignore the event data and use percussion map
             Pair(event_value + 27, 0)
         } else {
@@ -2698,13 +2695,13 @@ class ActivityEditor : PaganActivity() {
         }
 
         val np_offset = view_inflated.findViewById<NumberPicker>(R.id.npOffset)
-        val radix = (this.get_opus_manager().tuning_map.size - 1)
-        np_offset.maxValue = (radix * 2)
+        val max_value = (this.get_opus_manager().get_radix() - 1)
+        np_offset.maxValue = (max_value * 2)
         np_offset.minValue = 0
-        np_offset.value = radix
+        np_offset.value = max_value
         np_offset.wrapSelectorWheel = false
         np_offset.setFormatter { value: Int ->
-            "${value - radix}"
+            "${value - max_value}"
         }
 
         this._popup_active = true
@@ -2716,7 +2713,7 @@ class ActivityEditor : PaganActivity() {
             }
             .setPositiveButton(android.R.string.ok) { dialog, _ ->
                 val opus_manager = this.get_opus_manager()
-                val radix = opus_manager.tuning_map.size
+                val radix = opus_manager.get_radix()
                 val octave = np_octave.value - 7
                 val offset = np_offset.value - (radix - 1)
                 val real_delta = (octave * radix) + offset

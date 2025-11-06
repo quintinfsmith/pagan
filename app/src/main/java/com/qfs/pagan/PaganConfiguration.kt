@@ -13,19 +13,25 @@ import kotlinx.serialization.Serializable
 import java.io.File
 @Serializable
 class PaganConfiguration(
-    soundfont: String? = null,
-    relative_mode: Boolean = false,
-    sample_rate: Int = 32000,
-    move_mode: MoveMode = MoveMode.COPY,
-    clip_same_line_release: Boolean = true,
-    use_preferred_soundfont: Boolean = true,
-    force_orientation: Int = ActivityInfo.SCREEN_ORIENTATION_USER,
-    allow_std_percussion: Boolean = false,
-    project_directory: Uri? = null,
-    soundfont_directory: Uri? = null,
-    night_mode: Int = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM,
-    indent_json: Boolean = false
+    var soundfont: String? = null,
+    var relative_mode: Boolean = false,
+    var sample_rate: Int = 32000,
+    var move_mode: MoveMode = MoveMode.COPY,
+    var clip_same_line_release: Boolean = true,
+    var use_preferred_soundfont: Boolean = true,
+    var force_orientation: Int = ActivityInfo.SCREEN_ORIENTATION_USER,
+    var allow_std_percussion: Boolean = false,
+    var project_directory: Uri? = null,
+    var soundfont_directory: Uri? = null,
+    var night_mode: Int = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM,
+    var indent_json: Boolean = false,
+    var note_memory: NoteMemory = NoteMemory.UserInput
 ) {
+    enum class NoteMemory {
+        UserInput,
+        Inline
+    }
+
     enum class MoveMode {
         MOVE,
         COPY,
@@ -46,7 +52,8 @@ class PaganConfiguration(
                 project_directory = content.get_stringn("project_directory")?.toUri(),
                 soundfont_directory = content.get_stringn("soundfont_directory")?.toUri(),
                 night_mode = content.get_int("night_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM),
-                indent_json = content.get_boolean("indent_json", false)
+                indent_json = content.get_boolean("indent_json", false),
+                note_memory = NoteMemory.valueOf(content.get_string("note_memory", "UserInput"))
             )
         }
 
@@ -176,6 +183,7 @@ class PaganConfiguration(
         output["soundfont_directory"] = this.soundfont_directory?.toString()
         output["night_mode"] = this.night_mode
         output["indent_json"] = this.indent_json
+        output["note_memory"] = this.note_memory.name
         return output
     }
 }

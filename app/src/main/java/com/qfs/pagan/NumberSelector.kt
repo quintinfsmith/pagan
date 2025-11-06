@@ -28,6 +28,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
 
         private var _bkp_text: String = get_number_string(this.value, this._number_selector.radix, 1)
         private var _state_active: Boolean = false
+        private var _state_highlighted: Boolean = false
 
         init {
             this.text = this._bkp_text
@@ -47,7 +48,7 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
         }
 
         override fun onCreateDrawableState(extra_space: Int): IntArray? {
-            val drawable_state = super.onCreateDrawableState(extra_space + 2)
+            val drawable_state = super.onCreateDrawableState(extra_space + 3)
             val new_state = mutableListOf<Int>()
             if (this._alt_style) {
                 new_state.add(R.attr.state_alternate)
@@ -55,6 +56,8 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
 
             if (this._state_active) {
                 new_state.add(R.attr.state_active)
+            } else if (this._state_highlighted) {
+                new_state.add(R.attr.state_highlighted)
             }
 
             LinearLayout.mergeDrawableStates(drawable_state, new_state.toIntArray())
@@ -63,6 +66,11 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
 
         fun set_active(value: Boolean) {
             this._state_active = value
+            this.refreshDrawableState()
+        }
+
+        fun set_highlighted(value: Boolean) {
+            this._state_highlighted = value
             this.refreshDrawableState()
         }
     }
@@ -90,10 +98,22 @@ class NumberSelector(context: Context, attrs: AttributeSet) : LinearLayout(conte
         return this._active_button?.value
     }
 
-    fun set_state(new_state: Int, manual: Boolean = false, suppress_callback: Boolean = false) {
-        if (new_state < this.min || new_state > this.max) {
-            throw IndexOutOfBoundsException()
+    fun unhighlight() {
+        for ((button, value) in this._button_map) {
+            button.set_highlighted(false)
         }
+    }
+
+    fun highlight_value(new_highlight: Int) {
+        if (new_highlight < this.min || new_highlight > this.max) throw IndexOutOfBoundsException()
+
+        for ((button, value) in this._button_map) {
+            button.set_highlighted(value == new_highlight)
+        }
+    }
+
+    fun set_state(new_state: Int, manual: Boolean = false, suppress_callback: Boolean = false) {
+        if (new_state < this.min || new_state > this.max) throw IndexOutOfBoundsException()
 
         for ((button, value) in this._button_map) {
             if (value == new_state) {

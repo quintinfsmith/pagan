@@ -72,6 +72,21 @@ class OpusLayerInterface : OpusLayerHistory() {
     private var _in_reload = false
     var force_scroll_queued = false
 
+    var latest_set_octave: Int? = null
+    var latest_set_offset: Int? = null
+
+    fun attach_activity(activity: ActivityEditor) {
+        this._activity = activity
+    }
+
+    fun get_activity(): ActivityEditor? {
+        return this._activity
+    }
+
+    private fun get_editor_table(): EditorTable {
+        return this._activity?.findViewById(R.id.etEditorTable) ?: throw MissingEditorTableException()
+    }
+
     // UI BILL Interface functions vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     private fun <T> lock_ui_full(callback: () -> T): T? {
         this.ui_facade.lock_full()
@@ -134,6 +149,57 @@ class OpusLayerInterface : OpusLayerHistory() {
         return output
     }
 
+    private fun _clear_facade_blocker_leaf() {
+        this.ui_facade.blocker_leaf = null
+    }
+    private fun _update_facade_blocker_leaf_line_ctl(type: EffectType, beat_key: BeatKey, position: List<Int>) {
+        this.ui_facade.blocker_leaf = listOf<Int>(
+            try {
+                this.get_visible_row_from_ctl_line_line(type, beat_key.channel, beat_key.line_offset)
+            } catch (_: IndexOutOfBoundsException) { // may reference a channel's line before the channel exists
+                this.get_row_count()
+            },
+            beat_key.beat,
+        ) + position
+    }
+    private fun _update_facade_blocker_leaf_channel_ctl(type: EffectType, channel: Int, beat: Int, position: List<Int>) {
+        this.ui_facade.blocker_leaf = listOf<Int>(
+            try {
+                this.get_visible_row_from_ctl_line_channel(type, channel)
+            } catch (_: IndexOutOfBoundsException) { // may reference a channel's line before the channel exists
+                this.get_row_count()
+            },
+            beat,
+        ) + position
+    }
+    private fun _update_facade_blocker_leaf_global_ctl(type: EffectType, beat: Int, position: List<Int>) {
+        this.ui_facade.blocker_leaf = listOf<Int>(
+            try {
+                this.get_visible_row_from_ctl_line_global(type)
+            } catch (_: IndexOutOfBoundsException) { // may reference a channel's line before the channel exists
+                this.get_row_count()
+            },
+            beat,
+        ) + position
+    }
+
+    private fun _update_facade_blocker_leaf(beat_key: BeatKey, position: List<Int>) {
+        this.ui_facade.blocker_leaf = listOf<Int>(
+            try {
+                this.get_visible_row_from_ctl_line(
+                    this.get_actual_line_index(
+                        this.get_instrument_line_index(
+                            beat_key.channel,
+                            beat_key.line_offset
+                        )
+                    )
+                )!!
+            } catch (_: IndexOutOfBoundsException) { // may reference a channel's line before the channel exists
+                this.get_row_count()
+            },
+            beat_key.beat,
+        ) + position
+    }
     /* Notify the editor table to update cells */
     private fun _queue_cell_changes(beat_keys: List<BeatKey>) {
         if (this.ui_facade.is_full_locked()) return
@@ -898,20 +964,6 @@ class OpusLayerInterface : OpusLayerHistory() {
     override fun swap_lines(channel_index_a: Int, line_offset_a: Int, channel_index_b: Int, line_offset_b: Int) {
         this.lock_ui_partial {
             super.swap_lines(channel_index_a, line_offset_a, channel_index_b, line_offset_b)
-
-            val vis_line_a = this.get_visible_row_from_ctl_line(
-                this.get_actual_line_index(
-                    this.get_instrument_line_index(channel_index_a, line_offset_a)
-                )
-            )!!
-
-            val vis_line_b = this.get_visible_row_from_ctl_line(
-                this.get_actual_line_index(
-                    this.get_instrument_line_index(channel_index_b, line_offset_b)
-                )
-            )!!
-
-            // this.get_editor_table().swap_mapped_lines(vis_line_a, vis_line_b)
             this._swap_line_ui_update(channel_index_a, line_offset_a, channel_index_b, line_offset_b)
         }
     }
@@ -947,19 +999,13 @@ class OpusLayerInterface : OpusLayerHistory() {
     private fun _post_new_channel(channel: Int, lines: Int) {
         if (this.ui_facade.is_full_locked()) return
 
-        val channels = this.get_all_channels()
-        val line_list = mutableListOf<OpusLineAbstract<*>>()
-        for (i in 0 until lines) {
-            line_list.add(channels[channel].lines[i])
-        }
         val y = this.get_instrument_line_index(channel, 0)
+        var ctl_row = this.get_visible_row_from_ctl_line(this.get_actual_line_index(y))!!
 
-        var ctl_row = this.get_visible_row_from_ctl_line(
-            this.get_actual_line_index(y)
-        )!!
 
-        for (j in 0 until line_list.size) {
-            val line = line_list[j]
+        val channels = this.get_all_channels()
+        for (j in 0 until lines) {
+            val line = channels[channel].lines[j]
             this._add_line_to_column_width_map(ctl_row++, line, channel, j)
             for ((type, controller) in line.controllers.get_all()) {
                 if (!controller.visible) continue
@@ -1059,13 +1105,12 @@ class OpusLayerInterface : OpusLayerHistory() {
                 super.remove_channel(channel)
                 // this.get_activity()?.shift_down_percussion_names(channel)
                 this.ui_facade.queue_remove_channel(channel)
-                this.ui_facade.queue_row_removal(ctl_row, removed_row_count)
-                this.ui_facade.queue_column_changes(changed_columns, false)
                 this._activity?.update_channel_instruments()
             }
         } else {
             super.remove_channel(channel)
-            this.get_activity()?.shift_down_percussion_names(channel)
+
+            this.ui_facade.shift_down_percussion_names(channel)
             this._activity?.update_channel_instruments()
         }
     }
@@ -1076,7 +1121,9 @@ class OpusLayerInterface : OpusLayerHistory() {
         // this.get_activity()?.update_channel_instruments()
 
         this.recache_line_maps()
-        this.ui_full_refresh()
+        this._ui_change_bill.queue_full_refresh(this._in_reload)
+        this.latest_set_octave = null
+        this.latest_set_offset = null
         this.initialized = true
     }
 
@@ -1209,6 +1256,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
 
             this.ui_facade.queue_refresh_context_menu()
+            this.latest_set_offset = null
         }
     }
 
@@ -1236,6 +1284,11 @@ class OpusLayerInterface : OpusLayerHistory() {
     override fun clear() {
         super.clear()
         this.ui_facade.clear()
+        this.latest_set_offset = null
+        this.latest_set_octave = null
+
+        val editor_table = this.get_editor_table()
+        editor_table.clear()
     }
 
     override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
@@ -1607,46 +1660,36 @@ class OpusLayerInterface : OpusLayerHistory() {
             for (line_offset in 0 until channels[channel].lines.size) {
                 val line = channels[channel].lines[line_offset]
                 line.overlap_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
-                    this._queue_cell_changes(
-                        listOf(BeatKey(channel, line_offset, blocker.first), BeatKey(channel, line_offset, blocked.first))
-                    )
+                    this._update_facade_blocker_leaf(BeatKey(channel, line_offset, blocker.first), blocker.second)
                 }
                 line.overlap_removed_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
-                    this._queue_cell_changes(
-                        listOf(BeatKey(channel, line_offset, blocker.first), BeatKey(channel, line_offset, blocked.first))
-                    )
+                    this._clear_facade_blocker_leaf()
                 }
                 for ((type, controller) in line.controllers.get_all()) {
                     controller.overlap_removed_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
-                        this._queue_line_ctl_cell_change(type, BeatKey(channel, line_offset, blocker.first))
-                        this._queue_line_ctl_cell_change(type, BeatKey(channel, line_offset, blocked.first))
+                        this._update_facade_blocker_leaf_line_ctl(type, BeatKey(channel, line_offset, blocker.first), blocker.second)
                     }
                     controller.overlap_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
-                        this._queue_line_ctl_cell_change(type, BeatKey(channel, line_offset, blocker.first))
-                        this._queue_line_ctl_cell_change(type, BeatKey(channel, line_offset, blocked.first))
+                        this._clear_facade_blocker_leaf()
                     }
                 }
             }
             for ((type, controller) in channels[channel].controllers.get_all()) {
                 controller.overlap_removed_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
-                    this._queue_channel_ctl_cell_change(type, channel, blocker.first)
-                    this._queue_channel_ctl_cell_change(type, channel, blocked.first)
+                    this._update_facade_blocker_leaf_channel_ctl(type, channel, blocker.first, blocker.second)
                 }
                 controller.overlap_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
-                    this._queue_channel_ctl_cell_change(type, channel, blocker.first)
-                    this._queue_channel_ctl_cell_change(type, channel, blocked.first)
+                    this._clear_facade_blocker_leaf()
                 }
             }
         }
 
         for ((type, controller) in this.controllers.get_all()) {
             controller.overlap_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
-                this._queue_global_ctl_cell_change(type, blocker.first)
-                this._queue_global_ctl_cell_change(type, blocked.first)
+                this._update_facade_blocker_leaf_global_ctl(type, blocker.first, blocker.second)
             }
             controller.overlap_removed_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
-                this._queue_global_ctl_cell_change(type, blocker.first)
-                this._queue_global_ctl_cell_change(type, blocked.first)
+                this._clear_facade_blocker_leaf()
             }
         }
     }
@@ -1981,23 +2024,34 @@ class OpusLayerInterface : OpusLayerHistory() {
 
         val new_event = when (this.relative_mode) {
             RelativeInputMode.Absolute -> {
+                this.latest_set_octave = octave
                 AbsoluteNoteEvent(
                     when (current_event) {
-                        is AbsoluteNoteEvent -> (octave * radix) + (current_event.note % radix)
+                        is AbsoluteNoteEvent -> {
+                            val offset = current_event.note % radix
+                            this.latest_set_offset = offset
+                            (octave * radix) + offset
+                        }
                         is RelativeNoteEvent -> {
                             this.convert_event_to_absolute(beat_key, position)
                             return this._set_note_octave(beat_key, position, octave)
                         }
                         else -> {
                             val cursor = this.cursor
-                            val previous_value = this.get_absolute_value(cursor.get_beatkey(), cursor.get_position()) ?: 0
-                            (octave * radix) + (previous_value % radix)
+                            val offset = when (this.get_activity()?.configuration?.note_memory) {
+                                PaganConfiguration.NoteMemory.UserInput -> this.latest_set_offset
+                                else -> null
+                            }
+                            this.latest_set_offset = (offset ?: ((this.get_absolute_value(cursor.get_beatkey(), cursor.get_position()) ?: 0) % radix))
+                            (octave * radix) + this.latest_set_offset!!
                         }
                     },
                     duration
                 )
             }
             RelativeInputMode.Positive -> {
+                this.latest_set_offset = null
+                this.latest_set_octave = null
                 RelativeNoteEvent(
                     when (current_event) {
                         is RelativeNoteEvent -> (octave * radix) + (current_event.offset % radix)
@@ -2011,6 +2065,8 @@ class OpusLayerInterface : OpusLayerHistory() {
                 )
             }
             RelativeInputMode.Negative -> {
+                this.latest_set_offset = null
+                this.latest_set_octave = null
                 RelativeNoteEvent(
                     when (current_event) {
                         is RelativeNoteEvent -> 0 - ((octave * radix) + (abs(current_event.offset) % radix))
@@ -2036,22 +2092,35 @@ class OpusLayerInterface : OpusLayerHistory() {
 
         val new_event = when (this.relative_mode) {
             RelativeInputMode.Absolute -> {
+                this.latest_set_offset = offset
                 AbsoluteNoteEvent(
                     when (current_event) {
-                        is AbsoluteNoteEvent -> ((current_event.note / radix) * radix) + offset
+                        is AbsoluteNoteEvent -> {
+                            val octave = (current_event.note / radix)
+                            this.latest_set_octave = octave
+                            (octave * radix) + offset
+                        }
                         is RelativeNoteEvent -> {
                             this.convert_event_to_absolute(beat_key, position)
                             return this._set_note_offset(beat_key, position, offset)
                         }
                         else -> {
-                            val previous_value = this.get_absolute_value(beat_key, position) ?: 0
-                            ((previous_value / radix) * radix) + offset
+                            val cursor = this.cursor
+                            val octave = when (this.get_activity()?.configuration?.note_memory) {
+                                PaganConfiguration.NoteMemory.UserInput -> this.latest_set_octave
+                                else -> null
+                            }
+
+                            this.latest_set_octave = (octave ?: ((this.get_absolute_value(cursor.get_beatkey(), cursor.get_position()) ?: 0) / radix))
+                            offset + (this.latest_set_octave!! * radix)
                         }
                     },
                     duration
                 )
             }
             RelativeInputMode.Positive -> {
+                this.latest_set_offset = null
+                this.latest_set_octave = null
                 RelativeNoteEvent(
                     when (current_event) {
                         is RelativeNoteEvent -> ((current_event.offset / radix) * radix) + offset
@@ -2065,6 +2134,8 @@ class OpusLayerInterface : OpusLayerHistory() {
                 )
             }
             RelativeInputMode.Negative -> {
+                this.latest_set_offset = null
+                this.latest_set_octave = null
                 RelativeNoteEvent(
                     when (current_event) {
                         is RelativeNoteEvent -> ((current_event.offset / radix) * radix) - offset

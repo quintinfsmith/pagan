@@ -4,6 +4,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import com.qfs.pagan.NumberSelector
+import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.R
 import com.qfs.pagan.RelativeOptionSelector
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
@@ -114,7 +115,8 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
         val current_tree_position = opus_manager.get_actual_position(beat_key, position)
         val current_event_tree = opus_manager.get_tree(current_tree_position.first, current_tree_position.second)
 
-        when (val event = current_event_tree.get_event()) {
+        val event = current_event_tree.get_event()
+        when (event) {
             is TunedInstrumentEvent -> {
                 val value = if (event is RelativeNoteEvent) {
                     if (main.configuration.relative_mode) {
@@ -151,6 +153,35 @@ class ContextMenuLeaf(primary_container: ViewGroup, secondary_container: ViewGro
                 this.ns_octave.unset_active_button()
                 this.ns_offset.unset_active_button()
                 this.button_duration.text = ""
+            }
+        }
+
+        this.ns_offset.unhighlight()
+        this.ns_octave.unhighlight()
+
+        if (event == null && !main.configuration.relative_mode) {
+            val use_previous = this.get_activity().configuration.note_memory != PaganConfiguration.NoteMemory.UserInput || opus_manager.latest_set_octave == null
+
+            if (use_previous) {
+                val previous_event_position = opus_manager.get_preceding_event_position(current_tree_position.first, current_tree_position.second)
+                val absolute_previous = if (previous_event_position != null) {
+                    opus_manager.get_absolute_value(previous_event_position.first, previous_event_position.second)
+                } else {
+                    null
+                }
+
+                if (absolute_previous != null) {
+                    this.ns_octave.highlight_value(absolute_previous / radix)
+                    this.ns_offset.highlight_value(absolute_previous % radix)
+                }
+
+            } else {
+                opus_manager.latest_set_offset?.let {
+                    this.ns_offset.highlight_value(it)
+                }
+                opus_manager.latest_set_octave?.let {
+                    this.ns_octave.highlight_value(it)
+                }
             }
         }
 

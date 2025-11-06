@@ -31,7 +31,6 @@ import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
@@ -39,8 +38,8 @@ import kotlin.concurrent.thread
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
-import kotlin.math.round
 import kotlin.math.roundToInt
+import kotlin.random.Random
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 
@@ -1292,6 +1291,17 @@ class ActionTracker {
                     listOf(channel, instrument.first, instrument.second)
                 )
                 opus_manager.channel_set_instrument(channel, instrument)
+
+
+                val radix = opus_manager.get_radix()
+                thread {
+                    activity.play_event(channel, (radix * 3))
+                    Thread.sleep(200)
+                    activity.play_event(channel, (radix * 3) + (radix / 2))
+                    Thread.sleep(200)
+                    activity.play_event(channel, (radix * 4))
+                    Thread.sleep(200)
+                }
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import com.qfs.apres.Midi
 import com.qfs.apres.event.GeneralMIDIEvent
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
@@ -482,7 +483,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         val is_percussion = when (start_event) {
             is NoteOn -> start_event.channel == Midi.PERCUSSION_CHANNEL
-            is NoteOn79 -> start_event.channel == MIDI.PERCUSSION_CHANNEL
+            is NoteOn79 -> start_event.channel == Midi.PERCUSSION_CHANNEL
             else -> return
         }
 

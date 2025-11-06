@@ -3,9 +3,6 @@ package com.qfs.pagan
 import android.content.pm.ActivityInfo
 import android.net.Uri
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.core.net.toUri
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONParser
@@ -24,8 +21,14 @@ class PaganConfiguration(
     project_directory: Uri? = null,
     soundfont_directory: Uri? = null,
     night_mode: Int = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM,
-    indent_json: Boolean = false
+    indent_json: Boolean = false,
+    note_memory: NoteMemory = NoteMemory.UserInput
 ) {
+    enum class NoteMemory {
+        UserInput,
+        Inline
+    }
+
     enum class MoveMode {
         MOVE,
         COPY,
@@ -46,7 +49,8 @@ class PaganConfiguration(
                 project_directory = content.get_stringn("project_directory")?.toUri(),
                 soundfont_directory = content.get_stringn("soundfont_directory")?.toUri(),
                 night_mode = content.get_int("night_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM),
-                indent_json = content.get_boolean("indent_json", false)
+                indent_json = content.get_boolean("indent_json", false),
+                note_memory = NoteMemory.valueOf(content.get_string("note_memory", "UserInput"))
             )
         }
 
@@ -126,6 +130,14 @@ class PaganConfiguration(
             this.callbacks_indent_json.forEach { if (original != value) { it(value) } }
         }
 
+    var callbacks_note_memory = mutableListOf<(NoteMemory) -> Unit>()
+    var note_memory: NoteMemory = note_memory
+        set(value) {
+            val original = field
+            field = value
+            this.callbacks_note_memory.forEach { if (original != value) { it(value) } }
+        }
+
     var callbacks_night_mode = mutableListOf<(Int) -> Unit>()
     var night_mode: Int = night_mode
         set(value) {
@@ -176,6 +188,7 @@ class PaganConfiguration(
         output["soundfont_directory"] = this.soundfont_directory?.toString()
         output["night_mode"] = this.night_mode
         output["indent_json"] = this.indent_json
+        output["note_memory"] = this.note_memory.name
         return output
     }
 }

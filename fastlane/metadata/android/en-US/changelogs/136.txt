@@ -1,0 +1,4 @@
+- Highlight default octave & offset when inputting notes.
+- Play sound when changing channel instrument
+- Midi channels are now tied to Pagan channels by position.
+- Fixed: Some midi players weren't able to play exported midis. No longer including song position pointers.

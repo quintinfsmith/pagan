@@ -3,9 +3,6 @@ package com.qfs.pagan
 import android.content.pm.ActivityInfo
 import android.net.Uri
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.core.net.toUri
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONParser
@@ -13,19 +10,19 @@ import kotlinx.serialization.Serializable
 import java.io.File
 @Serializable
 class PaganConfiguration(
-    var soundfont: String? = null,
-    var relative_mode: Boolean = false,
-    var sample_rate: Int = 32000,
-    var move_mode: MoveMode = MoveMode.COPY,
-    var clip_same_line_release: Boolean = true,
-    var use_preferred_soundfont: Boolean = true,
-    var force_orientation: Int = ActivityInfo.SCREEN_ORIENTATION_USER,
-    var allow_std_percussion: Boolean = false,
-    var project_directory: Uri? = null,
-    var soundfont_directory: Uri? = null,
-    var night_mode: Int = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM,
-    var indent_json: Boolean = false,
-    var note_memory: NoteMemory = NoteMemory.UserInput
+    soundfont: String? = null,
+    relative_mode: Boolean = false,
+    sample_rate: Int = 32000,
+    move_mode: MoveMode = MoveMode.COPY,
+    clip_same_line_release: Boolean = true,
+    use_preferred_soundfont: Boolean = true,
+    force_orientation: Int = ActivityInfo.SCREEN_ORIENTATION_USER,
+    allow_std_percussion: Boolean = false,
+    project_directory: Uri? = null,
+    soundfont_directory: Uri? = null,
+    night_mode: Int = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM,
+    indent_json: Boolean = false,
+    note_memory: NoteMemory = NoteMemory.UserInput
 ) {
     enum class NoteMemory {
         UserInput,
@@ -131,6 +128,14 @@ class PaganConfiguration(
             val original = field
             field = value
             this.callbacks_indent_json.forEach { if (original != value) { it(value) } }
+        }
+
+    var callbacks_note_memory = mutableListOf<(NoteMemory) -> Unit>()
+    var note_memory: NoteMemory = note_memory
+        set(value) {
+            val original = field
+            field = value
+            this.callbacks_note_memory.forEach { if (original != value) { it(value) } }
         }
 
     var callbacks_night_mode = mutableListOf<(Int) -> Unit>()

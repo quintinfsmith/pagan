@@ -2,15 +2,10 @@ package com.qfs.pagan.uibill
 
 import com.qfs.pagan.EditorTable
 import com.qfs.pagan.structure.Rational
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
-import kotlin.collections.get
-import kotlin.collections.remove
-import kotlin.compareTo
-import kotlin.text.clear
-import kotlin.text.set
 
 // IN PROGRESS: converting this into  a UI State representation of the Editor....
 
@@ -40,10 +35,12 @@ class UIChangeBill {
     val cell_map: MutableList<MutableList<ReducibleTree<out OpusEvent>>> = mutableListOf()
     val channel_data: MutableList<ChannelData> = mutableListOf()
 
+
     var active_event: OpusEvent? = null
     var active_cursor: CacheCursor? = null
     var project_exists: Boolean = false
     var active_percussion_names = HashMap<Int, HashMap<Int, String>>()
+    var blocker_leaf: List<Int>? = null
 
     fun get_next_entry(): BillableItem? {
         return if (this._tree.bill.isNotEmpty()) {
@@ -67,22 +64,13 @@ class UIChangeBill {
 
     fun queue_cell_state_changes(coordinates: List<EditorTable.Coordinate>) {
         for (coordinate in coordinates) {
-            this.queue_cell_change(coordinate)
+            //this.queue_cell_change(coordinate)
+            TODO()
         }
     }
 
-    fun queue_cell_change(coordinate: EditorTable.Coordinate, tree: ReducibleTree<*>? = null) {
-        val working_tree = this.get_working_tree() ?: return
-
-        if (tree == null) {
-            working_tree.bill.add(BillableItem.CellStateChange)
-        } else {
-            working_tree.bill.add(BillableItem.CellChange)
-            working_tree.tree_queue.add(tree)
-        }
-
-        working_tree.int_queue.add(coordinate.y)
-        working_tree.int_queue.add(coordinate.x)
+    fun queue_cell_change(coordinate: EditorTable.Coordinate, tree: ReducibleTree<out OpusEvent>) {
+        this.cell_map[coordinate.y][coordinate.x] = tree
     }
 
     fun queue_column_changes(columns: List<Int>, state_only: Boolean = false) {
@@ -223,10 +211,31 @@ class UIChangeBill {
     }
 
     fun queue_add_channel(channel: Int, percussion: Boolean, instrument: Pair<Int, Int>) {
+        for (ld in this.line_data) {
+            ld.channel?.let {
+                if (it >= channel) {
+                    ld.channel = it + 1
+                }
+            }
+        }
         this.channel_data.add(channel, ChannelData(percussion, instrument))
     }
 
     fun queue_remove_channel(channel: Int) {
+        var i = 0
+        while (i < this.line_data.size) {
+            val ld = this.line_data[i]
+            ld.channel?.let { line_channel ->
+                if (line_channel == channel) {
+                    this.line_data.removeAt(i)
+                    this.cell_map.removeAt(i)
+                    continue
+                } else if (line_channel > channel) {
+                    ld.channel = line_channel - 1
+                }
+            }
+            i++
+        }
         this.channel_data.removeAt(channel)
     }
 

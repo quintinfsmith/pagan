@@ -10,6 +10,7 @@ import android.util.TypedValue
 import android.view.KeyEvent.ACTION_UP
 import android.view.MotionEvent
 import android.view.MotionEvent.ACTION_MOVE
+import android.view.ScaleGestureDetector
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -47,6 +48,8 @@ import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import kotlin.math.abs
 import kotlin.math.floor
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
@@ -98,28 +101,23 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             this.table_line_paint.color = ContextCompat.getColor(this.context, R.color.table_lines)
             this.table_line_paint.strokeWidth = this.context.resources.getDimension(R.dimen.stroke_leaf)
 
-            this.text_paint_line_label_std.textSize = this.resources.getDimension(R.dimen.text_size_line_label)
             this.text_paint_line_label_std.color = ContextCompat.getColor(this.context, R.color.line_label_text)
             this.text_paint_line_label_std.isAntiAlias = true
             this.text_paint_line_label_std.typeface = font
 
-            this.text_paint_line_label_ctl.textSize = this.resources.getDimension(R.dimen.text_size_line_label)
             this.text_paint_line_label_ctl.color = ContextCompat.getColor(this.context, R.color.line_label_text)
             this.text_paint_line_label_ctl.isAntiAlias = true
             this.text_paint_line_label_ctl.typeface = font
 
-            this.text_paint_offset.textSize = this.resources.getDimension(R.dimen.text_size_offset)
             this.text_paint_offset.color = ContextCompat.getColor(this.context, R.color.leaf_text_selector)
             this.text_paint_offset.isFakeBoldText = true
             this.text_paint_offset.isAntiAlias = true
             this.text_paint_offset.typeface = font
 
-            this.text_paint_octave.textSize = this.resources.getDimension(R.dimen.text_size_octave)
             this.text_paint_octave.color = ContextCompat.getColor(this.context, R.color.leaf_text_selector)
             this.text_paint_octave.isAntiAlias = true
             this.text_paint_octave.typeface = font
 
-            this.text_paint_ctl.textSize = this.resources.getDimension(R.dimen.text_size_ctl)
             this.text_paint_ctl.color = ContextCompat.getColor(this.context, R.color.ctl_leaf_text_selector)
             this.text_paint_ctl.isAntiAlias = true
             this.text_paint_ctl.typeface = font
@@ -127,7 +125,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             this.text_paint_column.isFakeBoldText = true
             this.text_paint_column.isAntiAlias = true
             this.text_paint_column.strokeWidth = 3F
-            this.text_paint_column.textSize = this.resources.getDimension(R.dimen.text_size_octave)
             this.text_paint_column.typeface = font
 
             this.tagged_paint_column.style = Paint.Style.STROKE
@@ -137,6 +134,8 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
             this.drag_highlight_paint.color = Color.YELLOW
             this.drag_highlight_paint.strokeWidth = 8f
+
+            this.set_text_scale(1F)
 
             this.setWillNotDraw(false)
 
@@ -158,6 +157,16 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 val (beat, position) = beat_position
                 this.table_ui.on_long_click(row_type, line_info, beat, position)
             }
+        }
+
+        fun set_text_scale(scale: Float) {
+            this.text_paint_column.textSize = scale * this.resources.getDimension(R.dimen.text_size_octave)
+            this.text_paint_line_label_std.textSize = scale * this.resources.getDimension(R.dimen.text_size_line_label)
+            this.text_paint_line_label_ctl.textSize = scale * this.resources.getDimension(R.dimen.text_size_line_label)
+            this.text_paint_offset.textSize = scale * this.resources.getDimension(R.dimen.text_size_offset)
+            this.text_paint_octave.textSize = scale * this.resources.getDimension(R.dimen.text_size_octave)
+            this.text_paint_ctl.textSize = scale* this.resources.getDimension(R.dimen.text_size_ctl)
+
         }
 
         fun get_standard_line_state(channel: Int, line_offset: Int): IntArray {
@@ -597,6 +606,27 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             drawable.draw(canvas)
         }
 
+        override fun onDraw(canvas: Canvas) {
+            super.onDraw(canvas)
+
+        }
+
+        private fun _get_base_width(): Float {
+            return this.resources.getDimension(R.dimen.base_leaf_width) * this.table_ui.scale_factor
+        }
+        private fun _get_line_height(): Float {
+            return this.resources.getDimension(R.dimen.line_height) * this.table_ui.scale_factor
+        }
+        private fun _get_ctl_line_height(): Float {
+            return this.resources.getDimension(R.dimen.ctl_line_height) * this.table_ui.scale_factor
+        }
+        private fun _get_channel_gap_height(): Float {
+            return this.resources.getDimension(R.dimen.channel_gap_size) * this.table_ui.scale_factor
+        }
+        private fun _get_line_label_width(): Float {
+            return this.resources.getDimension(R.dimen.line_label_width)
+        }
+
         // TODO: Refactor this.
         override fun draw(canvas: Canvas) {
             // TODO: deal with draw Allocations. preallocate in different function?
@@ -606,11 +636,12 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             // Don't Redraw while in flux
             if (opus_manager.project_changing) return
 
-            val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
-            val line_height = floor(this.resources.getDimension(R.dimen.line_height))
-            val ctl_line_height = floor(this.resources.getDimension(R.dimen.ctl_line_height))
-            val channel_gap_height = floor(this.resources.getDimension(R.dimen.channel_gap_size))
-            val line_label_width = floor(this.resources.getDimension(R.dimen.line_label_width))
+            val base_width = this._get_base_width()
+            val line_height = floor(this._get_line_height())
+            val top_line_height = floor(this.resources.getDimension(R.dimen.line_height))
+            val ctl_line_height = floor(this._get_ctl_line_height())
+            val channel_gap_height = floor(this._get_channel_gap_height())
+            val line_label_width = floor(this._get_line_label_width())
 
             val first_column = this.editor_table.get_first_visible_column_index()
             val last_column = this.editor_table.get_last_visible_column_index()
@@ -636,7 +667,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
             for (i in first_column .. last_column) {
                 val beat_width = (this.editor_table.get_column_width(i) * floor(base_width))
-                var y_offset = line_height
+                var y_offset = top_line_height
                 for (j in channels.indices) {
                     if (dragging_to.first == j && dragging_to.second == -1) {
                         y_offset += dragging_from_height + channel_gap_height
@@ -716,7 +747,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 this.text_paint_column.color = color_list.getColorForState(state, Color.MAGENTA)
 
                 val column_width = this.editor_table.get_column_width(i) * floor(base_width)
-                this.draw_drawable(canvas, R.drawable.editor_label_column, state, offset, scroll_y, column_width, line_height)
+                this.draw_drawable(canvas, R.drawable.editor_label_column, state, offset, scroll_y, column_width, top_line_height)
 
                 val column_text = "$i"
                 val bounds = Rect()
@@ -735,7 +766,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     } else {
                         offset + ((column_width - bounds.width()) / 2)
                     }
-                    val y = scroll_y + ((line_height - bounds.height()) / 2)
+                    val y = scroll_y + ((top_line_height - bounds.height()) / 2)
 
                     canvas.drawOval(
                         x - this.section_radius_x,
@@ -760,7 +791,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                     } else {
                         offset + ((column_width - bounds.width()) / 2)
                     },
-                    scroll_y + ((line_height + bounds.height()) / 2),
+                    scroll_y + ((top_line_height + bounds.height()) / 2),
                     this.text_paint_column
                 )
                 offset += beat_width
@@ -768,14 +799,14 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
             if (offset < this.width) {
                 ContextCompat.getDrawable(this.context, R.drawable.icon_add_channel)?.let {
-                    it.setBounds((offset).toInt(), (scroll_y).toInt(), (offset + base_width).toInt(), (scroll_y + line_height).toInt())
+                    it.setBounds((offset).toInt(), (scroll_y).toInt(), (offset + this.resources.getDimension(R.dimen.base_leaf_width)).toInt(), (scroll_y + top_line_height).toInt())
                     it.setTint(ContextCompat.getColor(this.context, R.color.table_foreground))
                     it.draw(canvas)
                 }
             }
 
             // ------------------- Draw Line Labels ----------------------------
-            var y_offset = line_height
+            var y_offset = top_line_height
             for (j in channels.indices) {
                 if (dragging_to.first == j && dragging_to.second == -1) {
                     y_offset += dragging_from_height + channel_gap_height
@@ -846,7 +877,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             }
 
             // Draw Corner Button
-            this.draw_drawable(canvas, this.corner_drawable, null, scroll_x, scroll_y, line_label_width, line_height)
+            this.draw_drawable(canvas, this.corner_drawable, null, scroll_x, scroll_y, line_label_width, top_line_height)
 
             // Draw Floating/Dragged Channel/Line
             if (dragging_from != Pair(-1, -1)) {
@@ -970,6 +1001,16 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
 
                 //canvas.drawLine(scroll_x, y_start_offset, (this.width.toFloat() - base_width), y_start_offset, this.table_line_paint)
             }
+
+            //canvas.apply {
+            //    this.save()
+            //    this.scale(
+            //        this@PaintedLayer.table_ui.scale_factor,
+            //        this@PaintedLayer.table_ui.scale_factor
+            //    )
+
+            //    this.restore()
+            //}
         }
 
         private fun draw_line_label_text(canvas: Canvas, channel: Int, line_offset: Int, state: IntArray, x: Float, y: Float, width: Float, height: Float) {
@@ -991,7 +1032,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             this.text_paint_line_label_std.getTextBounds(channel_text, 0, channel_text.length, channel_text_bounds)
             this.text_paint_line_label_std.getTextBounds(line_offset_text, 0, line_offset_text.length, line_offset_text_bounds)
 
-            val padding = this.resources.getDimension(R.dimen.line_label_padding)
+            val padding = this.resources.getDimension(R.dimen.line_label_padding) * this.table_ui.scale_factor
             canvas.drawText(channel_text, padding + x, padding + y + channel_text_bounds.height(), this.text_paint_line_label_std)
             canvas.drawText(line_offset_text, x + width - line_offset_text_bounds.width() - padding, y + height - padding, this.text_paint_line_label_std)
         }
@@ -1011,7 +1052,7 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
                 }
             )!!
 
-            val padding = this.resources.getDimension(R.dimen.line_label_padding)
+            val padding = this.resources.getDimension(R.dimen.line_label_padding) * this.table_ui.scale_factor
             val adj_height = height - (2 * padding)
 
             val ratio = ctl_drawable.intrinsicWidth.toFloat() / ctl_drawable.intrinsicHeight.toFloat()
@@ -1161,6 +1202,22 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
             this.invalidate_queued = true
         }
     }
+
+    var scale_factor = 1F
+    private val scale_gesture_detector = ScaleGestureDetector(
+        this.context,
+        object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+            override fun onScale(detector: ScaleGestureDetector): Boolean {
+                this@TableUI.scale_factor *= detector.scaleFactor
+
+                this@TableUI.scale_factor = max(0.1f, min(this@TableUI.scale_factor, 1f))
+                this@TableUI.painted_layer.set_text_scale(this@TableUI.scale_factor)
+                this@TableUI.editor_table.reset_table_size()
+                this@TableUI.painted_layer.invalidate()
+                return true
+            }
+        }
+    )
 
     companion object {
         fun <T: OpusEvent> calc_position(tree: ReducibleTree<T>, initial_width: Int, target_x: Float): List<Int> {
@@ -1481,6 +1538,8 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
     }
 
     override fun onTouchEvent(motion_event: MotionEvent?): Boolean {
+        if (motion_event != null && this.scale_gesture_detector.onTouchEvent(motion_event)) return true
+
         this.set_touch_position(motion_event, this.scrollX.toFloat(), this.scrollY.toFloat())
         when (motion_event?.action) {
             MotionEvent.ACTION_MOVE -> {
@@ -1577,7 +1636,6 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
         this.global_ctl_button_visible = !this.get_activity().get_opus_manager().all_global_controllers_visible()
     }
 
-
     fun insert_row(y: Int) {
         this.painted_layer.insert_row(y)
     }
@@ -1601,16 +1659,18 @@ class TableUI(var editor_table: EditorTable): ScrollView(editor_table.context) {
     fun notify_cell_changed(y: Int, x: Int, state_only: Boolean) {
         this.painted_layer.notify_cell_changed(y, x, state_only)
     }
+
     fun notify_column_changed(x: Int, state_only: Boolean) {
         this.painted_layer.notify_column_changed(x, state_only)
     }
+
     fun notify_row_change(y: Int, state_only: Boolean) {
         this.painted_layer.notify_row_change(y, state_only)
     }
 
     fun set_size(width: Int, height: Int) {
         this.painted_layer.minimumWidth = width + this.resources.getDimension(R.dimen.base_leaf_width).toInt()
-        this.painted_layer.minimumHeight = height + this.resources.getDimension(R.dimen.line_height).toInt()
+        this.painted_layer.minimumHeight = height + (this.resources.getDimension(R.dimen.line_height) * this.scale_factor).toInt()
     }
 
     fun get_scroll_x_max(): Int {

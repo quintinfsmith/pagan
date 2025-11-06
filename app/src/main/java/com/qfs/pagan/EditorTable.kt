@@ -39,16 +39,14 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     }
 
     fun get_visible_row_from_pixel(y: Float): Int? {
-        val line_height = floor(this.resources.getDimension(R.dimen.line_height))
-        val ctl_line_height = floor(this.resources.getDimension(R.dimen.ctl_line_height))
-        val channel_gap_size = floor(this.resources.getDimension(R.dimen.channel_gap_size))
+        val line_height = floor(this.resources.getDimension(R.dimen.line_height) * this.table_ui.scale_factor)
+        val ctl_line_height = floor(this.resources.getDimension(R.dimen.ctl_line_height) * this.table_ui.scale_factor)
+        val channel_gap_size = floor(this.resources.getDimension(R.dimen.channel_gap_size) * this.table_ui.scale_factor)
         var output = 0
         val opus_manager = this.get_opus_manager()
         val channels = opus_manager.get_all_channels()
 
-        if (y - this.table_ui.scrollY < line_height) {
-            return -1
-        }
+        if (y - this.table_ui.scrollY < line_height) return -1
 
         var check_y = line_height // consider column labels
         for (i in channels.indices) {
@@ -116,10 +114,9 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
         val (pix_width, pix_height) = this._calculate_table_size()
         // Include extra line of height for the top row, and for the bottom global ctl button
         // and line label width for the label column
-        val line_height = this.resources.getDimension(R.dimen.line_height).toInt()
         this.table_ui.set_size(
             pix_width + this.resources.getDimension(R.dimen.line_label_width).toInt(),
-            pix_height + line_height
+            pix_height + this.resources.getDimension(R.dimen.line_height).toInt()
         )
     }
 
@@ -230,7 +227,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     }
 
     private fun _forced_scroll_to_beat(x: Int) {
-        val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
+        val base_width = this.resources.getDimension(R.dimen.base_leaf_width) * this.table_ui.scale_factor
         val pixel_x = this._column_width_maxes.subList(0, x).sum() * base_width.toInt()
         this.table_ui.scroll(pixel_x, null)
     }
@@ -239,7 +236,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
      * Given an offset [x] in pixels, get the
      */
     fun get_column_offset(x: Int): Int {
-        val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
+        val base_width = this.resources.getDimension(R.dimen.base_leaf_width) * this.table_ui.scale_factor
         return (this._column_width_maxes.subList(0, x).sum() * base_width.toInt())
     }
 
@@ -248,7 +245,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
             return null
         }
 
-        val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
+        val base_width = this.resources.getDimension(R.dimen.base_leaf_width) * this.table_ui.scale_factor
         return Rectangle(
             this.get_column_offset(x),
             0,
@@ -267,12 +264,12 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
 
     private fun _scroll_to_x(x: Int, offset: Float = 0F, offset_width: Float = 1F) {
 
-        val line_label_width = this.resources.getDimension(R.dimen.line_label_width).toInt()
+        val line_label_width = (this.resources.getDimension(R.dimen.line_label_width) * this.table_ui.scale_factor).toInt()
         val box_width = this.table_ui.inner_scroll_view.measuredWidth - line_label_width
 
-        val base_width = this.resources.getDimension(R.dimen.base_leaf_width)
+        val base_width = (this.resources.getDimension(R.dimen.base_leaf_width) * this.table_ui.scale_factor)
         val max_width = (this._column_width_maxes[x] * base_width).toInt()
-        val target_width = (this._column_width_maxes[x] * this.resources.getDimension(R.dimen.base_leaf_width) * offset_width).toInt()
+        val target_width = (this._column_width_maxes[x] * this.resources.getDimension(R.dimen.base_leaf_width) * this.table_ui.scale_factor * offset_width).toInt()
         val visible_range = this.get_first_visible_column_index() .. this.get_last_visible_column_index()
         val target_offset = (max_width * offset).toInt()
         val POSITION_ON_SCREEN: Int = 0
@@ -380,9 +377,9 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     }
 
     fun get_row_y_position_and_height(row: Int): Pair<Int, Int> {
-        val channel_gap_size = this.resources.getDimension(R.dimen.channel_gap_size).toInt()
-        val controller_height = this.resources.getDimension(R.dimen.ctl_line_height).toInt()
-        val line_height = this.resources.getDimension(R.dimen.line_height).toInt()
+        val channel_gap_size = (this.resources.getDimension(R.dimen.channel_gap_size) * this.table_ui.scale_factor).toInt()
+        val controller_height = (this.resources.getDimension(R.dimen.ctl_line_height) * this.table_ui.scale_factor).toInt()
+        val line_height = (this.resources.getDimension(R.dimen.line_height) * this.table_ui.scale_factor).toInt()
 
         val opus_manager = this.get_opus_manager()
         val channels = opus_manager.get_all_channels()
@@ -537,7 +534,7 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
             val adj_y = (target_y + row_height) - context_menu_top.toInt()
             this.table_ui.scroll(null, adj_y)
         } else if (target_y < vertical_scroll_view.scrollY) {
-            val line_height = this.resources.getDimension(R.dimen.line_height).toInt()
+            val line_height = (this.resources.getDimension(R.dimen.line_height) * this.table_ui.scale_factor).toInt()
             this.table_ui.scroll(null, target_y - line_height)
         }
     }
@@ -556,18 +553,18 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
     }
 
     fun get_first_visible_column_index(): Int {
-        val line_label_width = this.resources.getDimension(R.dimen.line_label_width).toInt()
+        val line_label_width = (this.resources.getDimension(R.dimen.line_label_width) * this.table_ui.scale_factor).toInt()
         val scroll_container_offset = this.table_ui.inner_scroll_view.scrollX - line_label_width
-        val min_leaf_width = this.resources.getDimension(R.dimen.base_leaf_width).toInt()
+        val min_leaf_width = (this.resources.getDimension(R.dimen.base_leaf_width) * this.table_ui.scale_factor).toInt()
         val reduced_x = scroll_container_offset / min_leaf_width
         val column_position = this.get_column_from_leaf(reduced_x) ?: 0
         return column_position
     }
 
     fun get_last_visible_column_index(): Int {
-        val line_label_width = this.resources.getDimension(R.dimen.line_label_width).toInt()
+        val line_label_width = (this.resources.getDimension(R.dimen.line_label_width) * this.table_ui.scale_factor).toInt()
         val scroll_container_offset = this.table_ui.get_scroll_x_max() - line_label_width
-        val min_leaf_width = this.resources.getDimension(R.dimen.base_leaf_width).toInt()
+        val min_leaf_width = (this.resources.getDimension(R.dimen.base_leaf_width) * this.table_ui.scale_factor).toInt()
         val reduced_x = scroll_container_offset / min_leaf_width
         val column_position = this.get_column_from_leaf(reduced_x) ?: (this._column_width_map.size - 1)
         return column_position
@@ -701,10 +698,10 @@ class EditorTable(context: Context, attrs: AttributeSet): LinearLayout(context, 
 
 
     fun _calculate_table_size(): Pair<Int, Int> {
-        val base_width = this.resources.getDimension(R.dimen.base_leaf_width).toInt()
-        val channel_gap_size = this.resources.getDimension(R.dimen.channel_gap_size).toInt()
-        val controller_height = this.resources.getDimension(R.dimen.ctl_line_height).toInt()
-        val line_height = this.resources.getDimension(R.dimen.line_height).toInt()
+        val base_width = (this.resources.getDimension(R.dimen.base_leaf_width) * this.table_ui.scale_factor).toInt()
+        val channel_gap_size = (this.resources.getDimension(R.dimen.channel_gap_size) * this.table_ui.scale_factor).toInt()
+        val controller_height = (this.resources.getDimension(R.dimen.ctl_line_height) * this.table_ui.scale_factor).toInt()
+        val line_height = (this.resources.getDimension(R.dimen.line_height) * this.table_ui.scale_factor).toInt()
 
         val size = if (this._inv_column_map.keys.isNotEmpty()) {
             this._inv_column_map.keys.max() + 1

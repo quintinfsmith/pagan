@@ -12,6 +12,7 @@ import android.util.TypedValue
 import android.view.KeyEvent.ACTION_UP
 import android.view.MotionEvent
 import android.view.MotionEvent.ACTION_MOVE
+import android.view.ScaleGestureDetector
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -51,6 +52,7 @@ import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
@@ -63,6 +65,22 @@ class EditorTable(context: Context, attrs: AttributeSet): ScrollView(context, at
     private val _column_width_maxes = mutableListOf<Int>()
     val _inv_column_map = HashMap<Int, Int>() // x position by number of leaf-widths:: actual column
     //private val _row_height_map = mutableListOf<Int>()
+
+    var scale_factor = 1F
+    private val scale_gesture_detector = ScaleGestureDetector(
+        this.context,
+        object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+            override fun onScale(detector: ScaleGestureDetector): Boolean {
+                this@EditorTable.scale_factor *= detector.scaleFactor
+
+                this@EditorTable.scale_factor = max(0.1f, min(this@EditorTable.scale_factor, 1f))
+                // this@EditorTable.painted_layer.set_text_scale(this@EditorTable.scale_factor)
+                // this@EditorTable.editor_table.reset_table_size()
+                this@EditorTable.painted_layer.invalidate()
+                return true
+            }
+        }
+    )
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()

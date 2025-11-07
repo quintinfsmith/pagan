@@ -406,16 +406,6 @@ class UIChangeBill {
         }
     }
 
-    fun swap_percussion_channels(channel_a: Int, channel_b: Int) {
-        val a_names = this.active_percussion_names[channel_a]
-        if (this.active_percussion_names[channel_b] != null) {
-            this.active_percussion_names[channel_a] = this.active_percussion_names[channel_b]!!
-        }
-        if (a_names != null) {
-            this.active_percussion_names[channel_b] = a_names
-        }
-    }
-
     fun clear_percussion_names() {
         this.active_percussion_names.clear()
     }

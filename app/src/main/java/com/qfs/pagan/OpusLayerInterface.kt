@@ -1140,6 +1140,9 @@ class OpusLayerInterface : OpusLayerHistory() {
         for ((type, controller) in this.controllers.get_all()) {
             this.ui_facade.queue_new_row(i++, MutableList(this.length) { controller.beats[it].copy() }, null, null, type)
         }
+        for (x in 0 until this.length) {
+            this.ui_facade.queue_add_column(x, this.is_beat_tagged(x))
+        }
     }
 
     override fun project_change_wrapper(callback: () -> Unit)  {

@@ -61,16 +61,10 @@ class OpusLayerInterface : OpusLayerHistory() {
     var initialized = false
     var relative_mode: RelativeInputMode = RelativeInputMode.Absolute
     private var _activity: ActivityEditor? = null
-
-    private var _cache_cursor: OpusManagerCursor = OpusManagerCursor(CursorMode.Unset)
-
     var marked_range: Pair<BeatKey, BeatKey>? = null
 
     val ui_facade = UIChangeBill()
     var temporary_blocker: OpusManagerCursor? = null
-
-    private var _in_reload = false
-    var force_scroll_queued = false
 
     var latest_set_octave: Int? = null
     var latest_set_offset: Int? = null
@@ -1117,11 +1111,10 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     override fun on_project_changed() {
         super.on_project_changed()
-
         // this.get_activity()?.update_channel_instruments()
 
         this.recache_line_maps()
-        this._ui_change_bill.queue_full_refresh(this._in_reload)
+        this.ui_full_refresh()
         this.latest_set_octave = null
         this.latest_set_offset = null
         this.initialized = true
@@ -1129,14 +1122,24 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     fun ui_full_refresh() {
         this.ui_facade.clear()
+        this.ui_facade.set_project_name(this.project_name)
         this.ui_facade.beat_count = this.length
-        for (c in this.channels.indices) {
-            val channel = this.channels[c]
-            for (l in channel.lines.indices) {
-                val line = channel.lines[l]
+        var i = 0
+        for ((c, channel) in this.channels.enumerate()) {
+            this.ui_facade.queue_add_channel(c, this.is_percussion(c), channel.get_instrument())
+            for ((l, line) in channel.lines.enumerate()) {
+                this.ui_facade.queue_new_row(i++, MutableList(this.length) { line.beats[it].copy() }, c, l, null)
+                for ((type, controller) in line.controllers.get_all()) {
+                    this.ui_facade.queue_new_row(i++, MutableList(this.length) { controller.beats[it].copy() }, c, l, type)
+                }
+            }
+            for ((type, controller) in channel.controllers.get_all()) {
+                this.ui_facade.queue_new_row(i++, MutableList(this.length) { controller.beats[it].copy() }, c, null, type)
             }
         }
-        this.ui_facade.queue_full_refresh(this._in_reload)
+        for ((type, controller) in this.controllers.get_all()) {
+            this.ui_facade.queue_new_row(i++, MutableList(this.length) { controller.beats[it].copy() }, null, null, type)
+        }
     }
 
     override fun project_change_wrapper(callback: () -> Unit)  {

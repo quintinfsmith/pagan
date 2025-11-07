@@ -48,6 +48,7 @@ import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.InvalidCursorState
 import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
+import com.qfs.pagan.uibill.UIChangeBill
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.max
@@ -1339,11 +1340,16 @@ class EditorTable(context: Context, attrs: AttributeSet): ScrollView(context, at
             drawable.draw(canvas)
         }
 
+        fun get_facade(): UIChangeBill {
+            return this.table_ui.get_opus_manager().ui_facade
+        }
+
         // TODO: Refactor this.
         override fun draw(canvas: Canvas) {
             // TODO: deal with draw Allocations. preallocate in different function?
             super.draw(canvas)
             val opus_manager = this.table_ui.get_opus_manager()
+            val facade = this.get_facade()
 
             // Don't Redraw while in flux
             if (opus_manager.project_changing) return

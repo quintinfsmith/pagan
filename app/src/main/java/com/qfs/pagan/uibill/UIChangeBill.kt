@@ -6,6 +6,8 @@ import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
+import kotlin.math.max
+import kotlin.math.min
 
 // IN PROGRESS: converting this into  a UI State representation of the Editor....
 
@@ -23,10 +25,13 @@ class UIChangeBill {
         Secondary
     }
 
-    data class LineData(var channel: Int?, var offset: Int?, var ctl_type: EffectType?, var selected: SelectionLevel)
-    data class ColumnData(var is_tagged: Boolean, var selected: SelectionLevel)
+
+    data class LineData(var channel: Int?, var line_offset: Int?, var ctl_type: EffectType?, var assigned_offset: Int? = null)
+    data class ColumnData(var is_tagged: Boolean)
     data class ChannelData(var percussion: Boolean, var instrument: Pair<Int, Int>)
-    class CacheCursor(var type: CursorMode, vararg ints: Int)
+    class CacheCursor(var type: CursorMode, vararg ints: Int) {
+        var ints = ints.toList()
+    }
 
     var project_name: String? = null
     var beat_count: Int = 0
@@ -72,46 +77,16 @@ class UIChangeBill {
         this.active_percussion_names.clear()
     }
 
-    fun queue_cell_state_changes(coordinates: List<EditorTable.Coordinate>) {
-        for (coordinate in coordinates) {
-            //this.queue_cell_change(coordinate)
-            TODO()
-        }
-    }
-
     fun queue_cell_change(coordinate: EditorTable.Coordinate, tree: ReducibleTree<out OpusEvent>) {
         this.cell_map[coordinate.y][coordinate.x] = tree
     }
 
-    fun queue_column_changes(columns: List<Int>, state_only: Boolean = false) {
-        val working_tree = this.get_working_tree() ?: return
-        val bill_item = if (state_only) {
-            BillableItem.ColumnStateChange
-        } else {
-            BillableItem.ColumnChange
-        }
-
-        for (column in columns) {
-            working_tree.bill.add(bill_item)
-            working_tree.int_queue.add(column)
-        }
+    fun queue_column_change(column: Int, is_tagged: Boolean) {
+        this.column_data[column].is_tagged = is_tagged
     }
 
-    fun queue_column_change(column: Int, state_only: Boolean = false) {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.bill.add(
-            if (state_only) {
-                BillableItem.ColumnStateChange
-            } else {
-                BillableItem.ColumnChange
-            }
-        )
-
-        working_tree.int_queue.add(column)
-    }
-
-    fun queue_new_row(y: Int, cells: MutableList<ReducibleTree<out OpusEvent>>, channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
-        this.line_data.add(y, LineData(channel, line_offset, ctl_type, SelectionLevel.Unselected))
+    fun queue_new_row(y: Int, cells: MutableList<ReducibleTree<out OpusEvent>>, new_line_data: LineData) {
+        this.line_data.add(y, new_line_data)
         this.cell_map.add(y, cells)
     }
 
@@ -196,7 +171,7 @@ class UIChangeBill {
     fun queue_line_label_refresh(y: Int, is_percussion: Boolean?, channel: Int?, offset: Int?, control_type: EffectType? = null) {
         this.line_data[y].let { line_data ->
             line_data.channel = channel
-            line_data.offset = offset
+            line_data.line_offset = offset
             line_data.ctl_type = control_type
         }
     }
@@ -408,5 +383,53 @@ class UIChangeBill {
 
     fun clear_percussion_names() {
         this.active_percussion_names.clear()
+    }
+
+
+    fun is_column_selected(cursor: CacheCursor, x: Int): Boolean {
+        return when (cursor.type) {
+            CursorMode.Column -> cursor.ints[0] == x
+            CursorMode.Single -> cursor.ints[1] == x
+            CursorMode.Range -> {
+                (min(cursor.ints[1], cursor.ints[3]) .. max(cursor.ints[1], cursor.ints[3])).contains(x)
+            }
+            CursorMode.Channel,
+            CursorMode.Unset,
+            CursorMode.Line -> false
+        }
+    }
+
+    // TODO: Handle Effects
+    fun is_line_selected(cursor: CacheCursor, y: Int): Boolean {
+        return when (cursor.type) {
+            CursorMode.Line -> {
+                val cursor_line = this.line_data[cursor.ints[0]]
+                val check_line = this.line_data[y]
+                cursor.ints[0] == y ||
+                    check_line.channel == cursor_line.channel && check_line.line_offset ==
+            }
+            CursorMode.Single -> cursor.ints[0] == y
+            CursorMode.Range -> {
+                (min(cursor.ints[0], cursor.ints[2]) .. max(cursor.ints[0], cursor.ints[2])).contains(y)
+            }
+            CursorMode.Channel,
+            CursorMode.Column,
+            CursorMode.Unset -> false
+        }
+    }
+    // TODO: Handle Effects
+    fun is_cell_selected(cursor: CacheCursor, y: Int, x: Int): Boolean {
+        return when (cursor.type) {
+            CursorMode.Line -> cursor.ints[0] == y
+            CursorMode.Column -> cursor.ints[0] == x
+            CursorMode.Channel -> this.line_data[y].channel == cursor.ints[0]
+            CursorMode.Range -> {
+                val xrange = min(cursor.ints[1], cursor.ints[3]) .. max(cursor.ints[1], cursor.ints[3])
+                val yrange = min(cursor.ints[0], cursor.ints[2]) .. max(cursor.ints[0], cursor.ints[2])
+                yrange.contains(y) && xrange.contains(x)
+            }
+            CursorMode.Unset,
+            CursorMode.Single -> false
+        }
     }
 }

@@ -194,30 +194,6 @@ class OpusLayerInterface : OpusLayerHistory() {
             beat_key.beat,
         ) + position
     }
-    /* Notify the editor table to update cells */
-    private fun _queue_cell_changes(beat_keys: List<BeatKey>) {
-        if (this.ui_facade.is_full_locked()) return
-
-        val coord_list = List(beat_keys.size) { i: Int ->
-            EditorTable.Coordinate(
-                try {
-                    this.get_visible_row_from_ctl_line(
-                        this.get_actual_line_index(
-                            this.get_instrument_line_index(
-                                beat_keys[i].channel,
-                                beat_keys[i].line_offset
-                            )
-                        )
-                    )!!
-                } catch (_: IndexOutOfBoundsException) { // may reference a channel's line before the channel exists
-                    this.get_row_count()
-                },
-                beat_keys[i].beat
-            )
-        }
-
-        this.ui_facade.queue_cell_state_changes(coord_list)
-    }
 
     /* Notify the editor table to update a cell */
     private fun _queue_cell_change(beat_key: BeatKey) {
@@ -1000,7 +976,21 @@ class OpusLayerInterface : OpusLayerHistory() {
         val channels = this.get_all_channels()
         for (j in 0 until lines) {
             val line = channels[channel].lines[j]
-            this._add_line_to_column_width_map(ctl_row++, line, channel, j)
+
+            this.ui_facade.queue_new_row(
+                ctl_row++,
+                MutableList(line.beats.size) { line.beats[it].copy() },
+                UIChangeBill.LineData(
+                    channel,
+                    j,
+                    null,
+                    if (this.is_percussion(channel)) {
+                        (line as OpusLinePercussion).instrument
+                    } else {
+                        null
+                    }
+                )
+            )
             for ((type, controller) in line.controllers.get_all()) {
                 if (!controller.visible) continue
                 this._add_controller_to_column_width_map(ctl_row++, controller, channel, j, type)
@@ -1128,17 +1118,38 @@ class OpusLayerInterface : OpusLayerHistory() {
         for ((c, channel) in this.channels.enumerate()) {
             this.ui_facade.queue_add_channel(c, this.is_percussion(c), channel.get_instrument())
             for ((l, line) in channel.lines.enumerate()) {
-                this.ui_facade.queue_new_row(i++, MutableList(this.length) { line.beats[it].copy() }, c, l, null)
+                val instrument = if (this.is_percussion(c)) {
+                    (line as OpusLinePercussion).instrument
+                } else {
+                    null
+                }
+                this.ui_facade.queue_new_row(
+                    i++,
+                    MutableList(this.length) { line.beats[it].copy() },
+                    UIChangeBill.LineData(c, l, null, instrument)
+                )
                 for ((type, controller) in line.controllers.get_all()) {
-                    this.ui_facade.queue_new_row(i++, MutableList(this.length) { controller.beats[it].copy() }, c, l, type)
+                    this.ui_facade.queue_new_row(
+                        i++,
+                        MutableList(this.length) { controller.beats[it].copy() },
+                        UIChangeBill.LineData(c, l, type, null)
+                    )
                 }
             }
             for ((type, controller) in channel.controllers.get_all()) {
-                this.ui_facade.queue_new_row(i++, MutableList(this.length) { controller.beats[it].copy() }, c, null, type)
+                this.ui_facade.queue_new_row(
+                    i++,
+                    MutableList(this.length) { controller.beats[it].copy() },
+                    UIChangeBill.LineData(c, null, type, null)
+                )
             }
         }
         for ((type, controller) in this.controllers.get_all()) {
-            this.ui_facade.queue_new_row(i++, MutableList(this.length) { controller.beats[it].copy() }, null, null, type)
+            this.ui_facade.queue_new_row(
+                i++,
+                MutableList(this.length) { controller.beats[it].copy() },
+                UIChangeBill.LineData(null, null, type, null)
+            )
         }
         for (x in 0 until this.length) {
             this.ui_facade.queue_add_column(x, this.is_beat_tagged(x))
@@ -1912,12 +1923,12 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
-    private fun _add_line_to_column_width_map(y: Int, line: OpusLineAbstract<*>, channel: Int, line_offset: Int) {
-        this.ui_facade.queue_new_row(y, line.beats.toMutableList(), channel, line_offset, null)
-    }
-
     private fun _add_controller_to_column_width_map(y: Int, line: EffectController<*>, channel: Int?, line_offset: Int?, ctl_type: EffectType) {
-        this.ui_facade.queue_new_row(y, line.beats.toMutableList(), channel, line_offset, ctl_type)
+        this.ui_facade.queue_new_row(
+            y,
+            MutableList(line.beats.size) { line.beats[it].copy() },
+            UIChangeBill.LineData(channel, line_offset, ctl_type, null)
+        )
     }
 
     private fun _update_after_new_line(channel: Int, line_offset: Int?) {
@@ -1935,7 +1946,20 @@ class OpusLayerInterface : OpusLayerHistory() {
             working_channel.lines[line_offset]
         }
 
-        this._add_line_to_column_width_map(visible_row, new_line, channel, adj_line_offset)
+        this.ui_facade.queue_new_row(
+            visible_row,
+            MutableList(new_line.beats.size) { new_line.beats[it].copy() },
+            UIChangeBill.LineData(
+                channel,
+                line_offset,
+                null,
+                if (this.is_percussion(channel)) {
+                    (working_channel.lines[adj_line_offset] as OpusLinePercussion).instrument
+                } else {
+                    null
+                }
+            )
+        )
 
         val controllers = working_channel.lines[adj_line_offset].controllers.get_all()
         for (i in controllers.indices) {

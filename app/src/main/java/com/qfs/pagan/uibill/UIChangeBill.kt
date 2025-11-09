@@ -35,7 +35,6 @@ class UIChangeBill {
     val cell_map: MutableList<MutableList<ReducibleTree<out OpusEvent>>> = mutableListOf()
     val channel_data: MutableList<ChannelData> = mutableListOf()
 
-
     var active_event: OpusEvent? = null
     var active_cursor: CacheCursor? = null
     var project_exists: Boolean = false
@@ -59,7 +58,18 @@ class UIChangeBill {
     }
 
     fun clear() {
-        this._tree.clear()
+        this.project_name = null
+        this.beat_count = 0
+        this.active_event = null
+        this.active_cursor = null
+        this.project_exists = false
+        this.blocker_leaf = null
+
+        this.line_data.clear()
+        this.column_data.clear()
+        this.cell_map.clear()
+        this.channel_data.clear()
+        this.active_percussion_names.clear()
     }
 
     fun queue_cell_state_changes(coordinates: List<EditorTable.Coordinate>) {
@@ -393,16 +403,6 @@ class UIChangeBill {
             } else if (k == channel) {
                 this.active_percussion_names.remove(k)
             }
-        }
-    }
-
-    fun swap_percussion_channels(channel_a: Int, channel_b: Int) {
-        val a_names = this.active_percussion_names[channel_a]
-        if (this.active_percussion_names[channel_b] != null) {
-            this.active_percussion_names[channel_a] = this.active_percussion_names[channel_b]!!
-        }
-        if (a_names != null) {
-            this.active_percussion_names[channel_b] = a_names
         }
     }
 

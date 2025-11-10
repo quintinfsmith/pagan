@@ -912,8 +912,6 @@ class OpusLayerInterface : OpusLayerHistory() {
                     )
                 }
 
-                this.ui_facade.queue_row_change(y++)
-
                 for ((type, controller) in line.controllers.get_all()) {
                     if (!controller.visible) continue
                     if (y >= first_swapped_line) {
@@ -938,7 +936,6 @@ class OpusLayerInterface : OpusLayerHistory() {
                     if (y >= first_swapped_line) {
                         this.ui_facade.queue_line_label_refresh(y, is_percussion, c, null, type)
                     }
-                    this.ui_facade.queue_row_change(y++)
                 }
             }
         }
@@ -948,13 +945,18 @@ class OpusLayerInterface : OpusLayerHistory() {
                 if (y >= first_swapped_line) {
                     this.ui_facade.queue_line_label_refresh(y, false, null, null, type)
                 }
-                this.ui_facade.queue_row_change(y++)
             }
         }
     }
 
     override fun swap_lines(channel_index_a: Int, line_offset_a: Int, channel_index_b: Int, line_offset_b: Int) {
         this.lock_ui_partial {
+            val y_a = this.get_instrument_line_index(channel_index_a, line_offset_a)
+            val y_b = this.get_instrument_line_index(channel_index_b, line_offset_b)
+            this.ui_facade.swap_line_cells(y_a, y_b)
+
+
+
             super.swap_lines(channel_index_a, line_offset_a, channel_index_b, line_offset_b)
             this._swap_line_ui_update(channel_index_a, line_offset_a, channel_index_b, line_offset_b)
         }
@@ -2187,4 +2189,5 @@ class OpusLayerInterface : OpusLayerHistory() {
     fun is_initialized(): Boolean {
         return this.initialized
     }
+
 }

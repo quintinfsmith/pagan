@@ -1,11 +1,14 @@
 package com.qfs.pagan.uibill
 
 import com.qfs.pagan.EditorTable
+import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
+import kotlin.math.max
+import kotlin.math.min
 
 // IN PROGRESS: converting this into  a UI State representation of the Editor....
 
@@ -14,7 +17,6 @@ import com.qfs.pagan.structure.rationaltree.ReducibleTree
 */
 class UIChangeBill {
     val ui_lock = UILock()
-    private var _tree: Node = Node()
     private val working_path = mutableListOf<Int>()
 
     enum class SelectionLevel {
@@ -40,22 +42,6 @@ class UIChangeBill {
     var project_exists: Boolean = false
     var active_percussion_names = HashMap<Int, HashMap<Int, String>>()
     var blocker_leaf: List<Int>? = null
-
-    fun get_next_entry(): BillableItem? {
-        return if (this._tree.bill.isNotEmpty()) {
-            this._tree.bill.removeAt(0)
-        } else {
-            null
-        }
-    }
-
-    fun get_next_int(): Int {
-        return this._tree.int_queue.removeAt(0)
-    }
-
-    fun get_next_tree(): ReducibleTree<*> {
-        return this._tree.tree_queue.removeAt(0)
-    }
 
     fun clear() {
         this.project_name = null
@@ -93,20 +79,13 @@ class UIChangeBill {
     }
 
     fun queue_enable_delete_and_copy_buttons() {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.bill.add(BillableItem.ConfigDrawerEnableCopyAndDelete)
         this.project_exists = true
         // activity.findViewById<View>(R.id.btnDeleteProject).isEnabled = true
         // activity.findViewById<View>(R.id.btnCopyProject).isEnabled = true
     }
 
     fun queue_config_drawer_redraw_export_button() {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.bill.add(BillableItem.ConfigDrawerRefreshExportButton)
-    }
-    fun queue_project_name_change() {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.bill.add(BillableItem.ProjectNameChange)
+        TODO()
     }
 
     fun queue_line_label_refresh(y: Int, is_percussion: Boolean?, channel: Int?, offset: Int?, control_type: EffectType? = null) {
@@ -324,5 +303,43 @@ class UIChangeBill {
 
     fun clear_percussion_names() {
         this.active_percussion_names.clear()
+    }
+
+
+    fun swap_line_cells(y_a: Int, y_b: Int) {
+        if (y_a == y_b) return
+
+        val lesser = min(y_a, y_b)
+        val larger = max(y_a, y_b)
+
+        val lesser_line_data = this.line_data[lesser]
+        val larger_line_data = this.line_data[larger]
+        var lesser_line_count = 0
+        var larger_line_count = 0
+        var i = lesser
+        while (this.line_data[i].channel == lesser_line_data.channel && this.line_data[i].offset == lesser_line_data.offset) {
+            i++
+            lesser_line_count++
+        }
+
+        i = larger
+        while (this.line_data[i].channel == larger_line_data.channel && this.line_data[i].offset == larger_line_data.offset) {
+            i++
+            larger_line_count++
+        }
+
+        val larger_lines = Array(larger_line_count) {
+            this.cell_map.removeAt(larger)
+        }
+        val lesser_lines = Array(lesser_line_count) {
+            this.cell_map.removeAt(lesser)
+        }
+
+        for ((i, line) in larger_lines.enumerate()) {
+            this.cell_map.add(lesser + i, line)
+        }
+        for ((i, line) in lesser_lines.enumerate()) {
+            this.cell_map.add(larger + i + (larger_line_count - lesser_line_count), line)
+        }
     }
 }

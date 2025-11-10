@@ -83,91 +83,13 @@ class UIChangeBill {
         this.cell_map[coordinate.y][coordinate.x] = tree
     }
 
-    fun queue_column_changes(columns: List<Int>, state_only: Boolean = false) {
-        val working_tree = this.get_working_tree() ?: return
-        val bill_item = if (state_only) {
-            BillableItem.ColumnStateChange
-        } else {
-            BillableItem.ColumnChange
-        }
-
-        for (column in columns) {
-            working_tree.bill.add(bill_item)
-            working_tree.int_queue.add(column)
-        }
-    }
-
-    fun queue_column_change(column: Int, state_only: Boolean = false) {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.bill.add(
-            if (state_only) {
-                BillableItem.ColumnStateChange
-            } else {
-                BillableItem.ColumnChange
-            }
-        )
-
-        working_tree.int_queue.add(column)
+    fun queue_column_change(column: Int, is_tagged: Boolean) {
+        this.column_data[column].is_tagged = is_tagged
     }
 
     fun queue_new_row(y: Int, cells: MutableList<ReducibleTree<out OpusEvent>>, channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
         this.line_data.add(y, LineData(channel, line_offset, ctl_type, SelectionLevel.Unselected))
         this.cell_map.add(y, cells)
-    }
-
-    fun queue_refresh_context_menu() {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.bill.add(BillableItem.ContextMenuRefresh)
-    }
-
-    fun queue_set_context_menu_line() {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.bill.add(BillableItem.ContextMenuSetLine)
-    }
-
-    fun queue_set_context_menu_leaf() {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.bill.add(BillableItem.ContextMenuSetLeaf)
-    }
-
-    fun queue_set_context_menu_leaf_percussion() {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.bill.add(BillableItem.ContextMenuSetLeafPercussion)
-    }
-
-    fun queue_set_context_menu_line_control_leaf() {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.bill.add(BillableItem.ContextMenuSetControlLeaf)
-    }
-
-    fun queue_set_context_menu_line_control_leaf_b() {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.bill.add(BillableItem.ContextMenuSetControlLeafB)
-    }
-
-    fun queue_set_context_menu_range() {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.bill.add(BillableItem.ContextMenuSetRange)
-    }
-
-    fun queue_set_context_menu_column() {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.bill.add(BillableItem.ContextMenuSetColumn)
-    }
-
-    fun queue_set_context_menu_control_line() {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.bill.add(BillableItem.ContextMenuSetControlLine)
-    }
-
-    fun queue_set_context_menu_channel() {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.bill.add(BillableItem.ContextMenuSetChannel)
-    }
-
-    fun queue_clear_context_menu() {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.bill.add(BillableItem.ContextMenuClear)
     }
 
     fun queue_enable_delete_and_copy_buttons() {
@@ -185,12 +107,6 @@ class UIChangeBill {
     fun queue_project_name_change() {
         val working_tree = this.get_working_tree() ?: return
         working_tree.bill.add(BillableItem.ProjectNameChange)
-    }
-
-    fun queue_column_label_refresh(x: Int) {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.int_queue.add(x)
-        working_tree.bill.add(BillableItem.ColumnLabelRefresh)
     }
 
     fun queue_line_label_refresh(y: Int, is_percussion: Boolean?, channel: Int?, offset: Int?, control_type: EffectType? = null) {

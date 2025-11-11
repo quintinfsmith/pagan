@@ -657,7 +657,6 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.lock_ui_partial {
             super.controller_channel_set_event(type, channel, beat, position, event)
             this._queue_channel_ctl_cell_change(type, channel, beat)
-            this.ui_facade.queue_refresh_context_menu()
             this.ui_facade.set_active_event(event.copy())
         }
     }
@@ -689,7 +688,6 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.lock_ui_partial {
             super.percussion_set_event(beat_key, position)
             this._queue_cell_change(beat_key)
-            this.ui_facade.queue_refresh_context_menu()
         }
     }
 
@@ -890,8 +888,6 @@ class OpusLayerInterface : OpusLayerHistory() {
                     )
                 }
 
-                this.ui_facade.queue_row_change(y++)
-
                 for ((type, controller) in line.controllers.get_all()) {
                     if (!controller.visible) continue
                     if (y >= first_swapped_line) {
@@ -916,7 +912,6 @@ class OpusLayerInterface : OpusLayerHistory() {
                     if (y >= first_swapped_line) {
                         this.ui_facade.queue_line_label_refresh(y, is_percussion, c, null, type)
                     }
-                    this.ui_facade.queue_row_change(y++)
                 }
             }
         }
@@ -926,13 +921,18 @@ class OpusLayerInterface : OpusLayerHistory() {
                 if (y >= first_swapped_line) {
                     this.ui_facade.queue_line_label_refresh(y, false, null, null, type)
                 }
-                this.ui_facade.queue_row_change(y++)
             }
         }
     }
 
     override fun swap_lines(channel_index_a: Int, line_offset_a: Int, channel_index_b: Int, line_offset_b: Int) {
         this.lock_ui_partial {
+            val y_a = this.get_instrument_line_index(channel_index_a, line_offset_a)
+            val y_b = this.get_instrument_line_index(channel_index_b, line_offset_b)
+            this.ui_facade.swap_line_cells(y_a, y_b)
+
+
+
             super.swap_lines(channel_index_a, line_offset_a, channel_index_b, line_offset_b)
             this._swap_line_ui_update(channel_index_a, line_offset_a, channel_index_b, line_offset_b)
         }
@@ -1026,7 +1026,6 @@ class OpusLayerInterface : OpusLayerHistory() {
                 this.ui_facade.queue_remove_column(x)
             }
 
-            this.ui_facade.queue_refresh_context_menu()
         }
     }
 
@@ -1200,21 +1199,18 @@ class OpusLayerInterface : OpusLayerHistory() {
     override fun <T: EffectEvent> controller_global_set_initial_event(type: EffectType, event: T) {
         this.lock_ui_partial {
             super.controller_global_set_initial_event(type, event)
-            this.ui_facade.queue_refresh_context_menu()
         }
     }
 
     override fun <T: EffectEvent> controller_channel_set_initial_event(type: EffectType, channel: Int, event: T) {
         this.lock_ui_partial {
             super.controller_channel_set_initial_event(type, channel, event)
-            this.ui_facade.queue_refresh_context_menu()
         }
     }
 
     override fun <T: EffectEvent> controller_line_set_initial_event(type: EffectType, channel: Int, line_offset: Int, event: T) {
         this.lock_ui_partial {
             super.controller_line_set_initial_event(type, channel, line_offset, event)
-            this.ui_facade.queue_refresh_context_menu()
         }
     }
 
@@ -1272,7 +1268,6 @@ class OpusLayerInterface : OpusLayerHistory() {
                 }
             }
 
-            this.ui_facade.queue_refresh_context_menu()
             this.latest_set_offset = null
         }
     }
@@ -1330,8 +1325,6 @@ class OpusLayerInterface : OpusLayerHistory() {
                 )
 
                 this.ui_facade.set_channel_data(channel, this.is_percussion(channel), instrument)
-
-                this.ui_facade.queue_refresh_context_menu()
             }
         }
     }
@@ -1425,7 +1418,6 @@ class OpusLayerInterface : OpusLayerHistory() {
             super.cursor_clear()
             this._unset_temporary_blocker()
             this._queue_cursor_update(this.cursor)
-            this.ui_facade.queue_clear_context_menu()
         }
     }
 
@@ -1437,7 +1429,6 @@ class OpusLayerInterface : OpusLayerHistory() {
             this.temporary_blocker = null
 
             this._queue_cursor_update(this.cursor)
-            this.ui_facade.queue_set_context_menu_line()
         }
     }
 
@@ -1449,7 +1440,6 @@ class OpusLayerInterface : OpusLayerHistory() {
             this.temporary_blocker = null
 
             this._queue_cursor_update(this.cursor)
-            this.ui_facade.queue_set_context_menu_channel()
         }
     }
 
@@ -1461,7 +1451,6 @@ class OpusLayerInterface : OpusLayerHistory() {
             this.temporary_blocker = null
 
             this._queue_cursor_update(this.cursor)
-            this.ui_facade.queue_set_context_menu_control_line()
         }
     }
 
@@ -1473,7 +1462,6 @@ class OpusLayerInterface : OpusLayerHistory() {
             this.temporary_blocker = null
 
             this._queue_cursor_update(this.cursor)
-            this.ui_facade.queue_set_context_menu_control_line()
         }
     }
 
@@ -1485,7 +1473,6 @@ class OpusLayerInterface : OpusLayerHistory() {
             this.temporary_blocker = null
 
             this._queue_cursor_update(this.cursor)
-            this.ui_facade.queue_set_context_menu_control_line()
         }
     }
 
@@ -1495,15 +1482,14 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
         this.cursor_select_column(beat)
     }
+
     override fun cursor_select_column(beat: Int) {
         if (this._block_cursor_selection()) return
 
         this.lock_ui_partial {
             super.cursor_select_column(beat)
             this.temporary_blocker = null
-
             this._queue_cursor_update(this.cursor)
-            this.ui_facade.queue_set_context_menu_column()
         }
     }
 
@@ -2019,10 +2005,6 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     fun set_relative_mode(mode: RelativeInputMode, update_ui: Boolean = true) {
         this.relative_mode = mode
-        if (!update_ui) return
-        this.lock_ui_partial {
-            this.ui_facade.queue_refresh_context_menu()
-        }
     }
 
     fun set_relative_mode(event: TunedInstrumentEvent) {
@@ -2214,7 +2196,22 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
+    override fun tag_section(beat: Int, title: String?) {
+        this.lock_ui_partial {
+            super.tag_section(beat, title)
+            this.ui_facade.queue_column_change(beat, true)
+        }
+    }
+
+    override fun remove_tagged_section(beat: Int) {
+        this.lock_ui_partial {
+            super.remove_tagged_section(beat)
+            this.ui_facade.queue_column_change(beat, false)
+        }
+    }
+
     fun is_initialized(): Boolean {
         return this.initialized
     }
+
 }

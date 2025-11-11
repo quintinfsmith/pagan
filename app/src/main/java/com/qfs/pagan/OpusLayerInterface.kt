@@ -91,7 +91,6 @@ class OpusLayerInterface : OpusLayerHistory() {
             tmp
         } catch (e: BlockedActionException) {
             this.ui_facade.unlock()
-            this.ui_facade.cancel_most_recent()
             if (!this.ui_facade.is_locked()) {
                 if (this.temporary_blocker != null) {
                     this.cursor_apply(this.temporary_blocker!!)
@@ -102,37 +101,6 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
         } catch (e: Exception) {
             this.ui_facade.unlock()
-            this.ui_facade.cancel_most_recent()
-            throw e
-        }
-
-        if (!this.ui_facade.is_locked()) {
-            //this._apply_bill_changes()
-        }
-
-        return output
-    }
-
-    private fun <T> lock_ui_partial(callback: () -> T): T? {
-        this.ui_facade.lock_partial()
-        val output = try {
-            val tmp = callback()
-            this.ui_facade.unlock()
-            tmp
-        } catch (e: BlockedActionException) {
-            this.ui_facade.unlock()
-            this.ui_facade.cancel_most_recent()
-            if (!this.ui_facade.is_locked()) {
-                if (this.temporary_blocker != null) {
-                    this.cursor_apply(this.temporary_blocker!!)
-                }
-                null
-            } else { // Still Locked
-                throw e
-            }
-        } catch (e: Exception) {
-            this.ui_facade.unlock()
-            this.ui_facade.cancel_most_recent()
             throw e
         }
 
@@ -257,583 +225,419 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     // BASE FUNCTIONS vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     override fun offset_range(amount: Int, first_key: BeatKey, second_key: BeatKey) {
-        this.lock_ui_partial {
-            super.offset_range(amount, first_key, second_key)
-        }
+        super.offset_range(amount, first_key, second_key)
     }
 
     override fun remove_global_controller(type: EffectType) {
-        this.lock_ui_partial {
-            if (this.is_global_ctl_visible(type)) {
-                val abs_line = this.get_visible_row_from_ctl_line_global(type)
-                this._queue_remove_rows(abs_line, 1)
-            }
-            super.remove_global_controller(type)
+        if (this.is_global_ctl_visible(type)) {
+            val abs_line = this.get_visible_row_from_ctl_line_global(type)
+            this._queue_remove_rows(abs_line, 1)
         }
+        super.remove_global_controller(type)
     }
 
     override fun remove_line_controller(type: EffectType, channel_index: Int, line_offset: Int) {
-        this.lock_ui_partial {
-            if (this.is_line_ctl_visible(type, channel_index, line_offset )) {
-                val abs_line = this.get_visible_row_from_ctl_line_line(type, channel_index, line_offset)
-                this._queue_remove_rows(abs_line, 1)
-            }
-            super.remove_line_controller(type, channel_index, line_offset)
+        if (this.is_line_ctl_visible(type, channel_index, line_offset )) {
+            val abs_line = this.get_visible_row_from_ctl_line_line(type, channel_index, line_offset)
+            this._queue_remove_rows(abs_line, 1)
         }
+        super.remove_line_controller(type, channel_index, line_offset)
     }
 
     override fun remove_channel_controller(type: EffectType, channel_index: Int) {
-        this.lock_ui_partial {
-            if (this.is_channel_ctl_visible(type, channel_index)) {
-                val abs_line = this.get_visible_row_from_ctl_line_channel(type, channel_index)
-                this._queue_remove_rows(abs_line, 1)
-            }
-            super.remove_channel_controller(type, channel_index)
+        if (this.is_channel_ctl_visible(type, channel_index)) {
+            val abs_line = this.get_visible_row_from_ctl_line_channel(type, channel_index)
+            this._queue_remove_rows(abs_line, 1)
         }
+        super.remove_channel_controller(type, channel_index)
     }
 
     override fun set_line_controller_visibility(type: EffectType, channel_index: Int, line_offset: Int, visibility: Boolean) {
-        this.lock_ui_partial {
-            if (visibility) {
-                super.set_line_controller_visibility(type, channel_index, line_offset, true)
-                val visible_row = this.get_visible_row_from_ctl_line_line(type, channel_index, line_offset)
-                val working_channel = this.get_channel(channel_index)
-                val controller = working_channel.lines[line_offset].get_controller<EffectEvent>(type)
-                this._add_controller_to_column_width_map(visible_row, controller, channel_index, line_offset, type)
-            } else {
-                val visible_row = this.get_visible_row_from_ctl_line_line(type, channel_index, line_offset)
-                super.set_line_controller_visibility(type, channel_index, line_offset, false)
-                this._queue_remove_rows(visible_row, 1)
-            }
+        if (visibility) {
+            super.set_line_controller_visibility(type, channel_index, line_offset, true)
+            val visible_row = this.get_visible_row_from_ctl_line_line(type, channel_index, line_offset)
+            val working_channel = this.get_channel(channel_index)
+            val controller = working_channel.lines[line_offset].get_controller<EffectEvent>(type)
+            this._add_controller_to_column_width_map(visible_row, controller, channel_index, line_offset, type)
+        } else {
+            val visible_row = this.get_visible_row_from_ctl_line_line(type, channel_index, line_offset)
+            super.set_line_controller_visibility(type, channel_index, line_offset, false)
+            this._queue_remove_rows(visible_row, 1)
         }
     }
+
     override fun set_channel_controller_visibility(type: EffectType, channel_index: Int, visibility: Boolean) {
-        this.lock_ui_partial {
-            if (visibility) {
-                super.set_channel_controller_visibility(type, channel_index, true)
-                val visible_row = this.get_visible_row_from_ctl_line_channel(type, channel_index)
-                val working_channel = this.get_channel(channel_index)
-                val controller = working_channel.get_controller<EffectEvent>(type)
-                this._add_controller_to_column_width_map(visible_row, controller, channel_index, null, type)
-            } else {
-                val visible_row = this.get_visible_row_from_ctl_line_channel(type, channel_index)
-                super.set_channel_controller_visibility(type, channel_index, false)
-                this._queue_remove_rows(visible_row, 1)
-            }
+        if (visibility) {
+            super.set_channel_controller_visibility(type, channel_index, true)
+            val visible_row = this.get_visible_row_from_ctl_line_channel(type, channel_index)
+            val working_channel = this.get_channel(channel_index)
+            val controller = working_channel.get_controller<EffectEvent>(type)
+            this._add_controller_to_column_width_map(visible_row, controller, channel_index, null, type)
+        } else {
+            val visible_row = this.get_visible_row_from_ctl_line_channel(type, channel_index)
+            super.set_channel_controller_visibility(type, channel_index, false)
+            this._queue_remove_rows(visible_row, 1)
         }
     }
 
     override fun set_global_controller_visibility(type: EffectType, visibility: Boolean) {
-        this.lock_ui_partial {
-            if (visibility) {
-                super.set_global_controller_visibility(type, true)
-                val visible_row = this.get_visible_row_from_ctl_line_global(type)
-                val controller = this.get_controller<EffectEvent>(type)
-                this._add_controller_to_column_width_map(visible_row, controller, null, null, type)
-            } else {
-                val visible_row = this.get_visible_row_from_ctl_line_global(type)
-                super.set_global_controller_visibility(type, false)
-                this._queue_remove_rows(visible_row, 1)
-            }
+        if (visibility) {
+            super.set_global_controller_visibility(type, true)
+            val visible_row = this.get_visible_row_from_ctl_line_global(type)
+            val controller = this.get_controller<EffectEvent>(type)
+            this._add_controller_to_column_width_map(visible_row, controller, null, null, type)
+        } else {
+            val visible_row = this.get_visible_row_from_ctl_line_global(type)
+            super.set_global_controller_visibility(type, false)
+            this._queue_remove_rows(visible_row, 1)
         }
     }
 
     override fun set_project_name(new_name: String?) {
-        this.lock_ui_partial {
-            super.set_project_name(new_name)
-            if (!this.ui_facade.is_full_locked()) {
-                this.ui_facade.queue_project_name_change()
-            }
-        }
+        super.set_project_name(new_name)
+        this.ui_facade.set_project_name(new_name)
     }
 
     override fun unset(beat_key: BeatKey, position: List<Int>) {
-        this.lock_ui_partial {
-            super.unset(beat_key, position)
-
-            this._queue_cell_change(beat_key)
-        }
+        super.unset(beat_key, position)
+        this._queue_cell_change(beat_key)
     }
 
     override fun controller_global_unset(type: EffectType, beat: Int, position: List<Int>) {
-        this.lock_ui_partial {
-            super.controller_global_unset(type, beat, position)
-            this._queue_global_ctl_cell_change(type, beat)
-        }
+        super.controller_global_unset(type, beat, position)
+        this._queue_global_ctl_cell_change(type, beat)
     }
 
     override fun controller_channel_unset(type: EffectType, channel: Int, beat: Int, position: List<Int>) {
-        this.lock_ui_partial {
-            super.controller_channel_unset(type, channel, beat, position)
-            this._queue_channel_ctl_cell_change(type, channel, beat)
-        }
+        super.controller_channel_unset(type, channel, beat, position)
+        this._queue_channel_ctl_cell_change(type, channel, beat)
     }
 
     override fun controller_line_unset(type: EffectType, beat_key: BeatKey, position: List<Int>) {
-        this.lock_ui_partial {
-            super.controller_line_unset(type, beat_key, position)
-            this._queue_line_ctl_cell_change(type, beat_key)
-        }
+        super.controller_line_unset(type, beat_key, position)
+        this._queue_line_ctl_cell_change(type, beat_key)
     }
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: ReducibleTree<out InstrumentEvent>) {
-        this.lock_ui_partial {
-            super.replace_tree(beat_key, position, tree)
-            this._queue_cell_change(beat_key)
-        }
+        super.replace_tree(beat_key, position, tree)
+        this._queue_cell_change(beat_key)
     }
 
     override fun _controller_line_copy_range(type: EffectType, beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey, unset_original: Boolean) {
-        this.lock_ui_partial {
-            super._controller_line_copy_range(type, beat_key, first_corner, second_corner, unset_original)
-        }
+        super._controller_line_copy_range(type, beat_key, first_corner, second_corner, unset_original)
     }
 
     override fun _controller_line_to_channel_copy_range(type: EffectType, from_channel: Int, from_line_offset: Int, beat_a: Int, beat_b: Int, target_channel: Int, target_beat: Int, unset_original: Boolean) {
-        this.lock_ui_partial {
-            super._controller_line_to_channel_copy_range(type, from_channel, from_line_offset, beat_a, beat_b, target_channel, target_beat, unset_original)
-        }
+        super._controller_line_to_channel_copy_range(type, from_channel, from_line_offset, beat_a, beat_b, target_channel, target_beat, unset_original)
     }
 
     override fun _controller_line_to_global_copy_range(type: EffectType, from_channel: Int, from_line_offset: Int, beat_a: Int, beat_b: Int, target_beat: Int, unset_original: Boolean) {
-        this.lock_ui_partial {
-            super._controller_line_to_global_copy_range(type, from_channel, from_line_offset, beat_a, beat_b, target_beat, unset_original)
-        }
+        super._controller_line_to_global_copy_range(type, from_channel, from_line_offset, beat_a, beat_b, target_beat, unset_original)
     }
 
     override fun _controller_channel_copy_range(type: EffectType, target_channel: Int, target_beat: Int, original_channel: Int, point_a: Int, point_b: Int, unset_original: Boolean) {
-        this.lock_ui_partial {
-            super._controller_channel_copy_range(type, target_channel, target_beat, original_channel, point_a, point_b, unset_original)
-        }
+        super._controller_channel_copy_range(type, target_channel, target_beat, original_channel, point_a, point_b, unset_original)
     }
 
     override fun _controller_channel_to_line_copy_range(type: EffectType, channel_from: Int, beat_a: Int, beat_b: Int, target_key: BeatKey, unset_original: Boolean) {
-        this.lock_ui_partial {
-            super._controller_channel_to_line_copy_range(type, channel_from, beat_a, beat_b, target_key, unset_original)
-        }
+        super._controller_channel_to_line_copy_range(type, channel_from, beat_a, beat_b, target_key, unset_original)
     }
 
     override fun _controller_channel_to_global_copy_range(type: EffectType, target_beat: Int, original_channel: Int, point_a: Int, point_b: Int, unset_original: Boolean) {
-        this.lock_ui_partial {
-            super._controller_channel_to_global_copy_range(type, target_beat, original_channel, point_a, point_b, unset_original)
-        }
+        super._controller_channel_to_global_copy_range(type, target_beat, original_channel, point_a, point_b, unset_original)
     }
 
     override fun _controller_global_copy_range(type: EffectType, target: Int, point_a: Int, point_b: Int, unset_original: Boolean) {
-        this.lock_ui_partial {
-            super._controller_global_copy_range(type, target, point_a, point_b, unset_original)
-        }
+        super._controller_global_copy_range(type, target, point_a, point_b, unset_original)
     }
 
     override fun _controller_global_to_line_copy_range(type: EffectType, beat_a: Int, beat_b: Int, target_key: BeatKey, unset_original: Boolean) {
-        this.lock_ui_partial {
-            super._controller_global_to_line_copy_range(type, beat_a, beat_b, target_key, unset_original)
-        }
+        super._controller_global_to_line_copy_range(type, beat_a, beat_b, target_key, unset_original)
     }
 
     override fun _controller_global_to_channel_copy_range(type: EffectType, target_channel: Int, target_beat: Int, point_a: Int, point_b: Int, unset_original: Boolean) {
-        this.lock_ui_partial {
-            super._controller_global_to_channel_copy_range(type, target_channel, target_beat, point_a, point_b, unset_original)
-        }
+        super._controller_global_to_channel_copy_range(type, target_channel, target_beat, point_a, point_b, unset_original)
     }
 
     override fun controller_channel_overwrite_range_horizontally(type: EffectType, target_channel: Int, from_channel: Int, first_beat: Int, second_beat: Int, repeat: Int?) {
-        this.lock_ui_partial {
-            super.controller_channel_overwrite_range_horizontally(type, target_channel, from_channel, first_beat, second_beat, repeat)
-        }
+        super.controller_channel_overwrite_range_horizontally(type, target_channel, from_channel, first_beat, second_beat, repeat)
     }
 
     override fun controller_channel_to_global_overwrite_range_horizontally(type: EffectType, channel: Int, first_beat: Int, second_beat: Int, repeat: Int?) {
-        this.lock_ui_partial {
-            super.controller_channel_to_global_overwrite_range_horizontally(type, channel, first_beat, second_beat, repeat)
-        }
+        super.controller_channel_to_global_overwrite_range_horizontally(type, channel, first_beat, second_beat, repeat)
     }
 
     override fun controller_channel_to_line_overwrite_range_horizontally(type: EffectType, target_channel: Int, target_line_offset: Int, from_channel: Int, first_beat: Int, second_beat: Int, repeat: Int?) {
-        this.lock_ui_partial {
-            super.controller_channel_to_line_overwrite_range_horizontally(type, target_channel, target_line_offset, from_channel, first_beat, second_beat, repeat)
-        }
+        super.controller_channel_to_line_overwrite_range_horizontally(type, target_channel, target_line_offset, from_channel, first_beat, second_beat, repeat)
     }
 
     override fun overwrite_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey, repeat: Int?) {
-        this.lock_ui_partial {
-            super.overwrite_beat_range_horizontally(channel, line_offset, first_key, second_key, repeat)
-        }
+        super.overwrite_beat_range_horizontally(channel, line_offset, first_key, second_key, repeat)
     }
 
     override fun controller_global_to_channel_overwrite_range_horizontally(type: EffectType, channel: Int, first_beat: Int, second_beat: Int, repeat: Int?) {
-        this.lock_ui_partial {
-            super.controller_global_to_channel_overwrite_range_horizontally(type, channel, first_beat, second_beat, repeat)
-        }
+        super.controller_global_to_channel_overwrite_range_horizontally(type, channel, first_beat, second_beat, repeat)
     }
 
     override fun controller_line_to_channel_overwrite_range_horizontally(type: EffectType, channel: Int, first_key: BeatKey, second_key: BeatKey, repeat: Int?) {
-        this.lock_ui_partial {
-            super.controller_line_to_channel_overwrite_range_horizontally(type, channel, first_key, second_key, repeat)
-        }
+        super.controller_line_to_channel_overwrite_range_horizontally(type, channel, first_key, second_key, repeat)
     }
 
     override fun controller_global_to_line_overwrite_range_horizontally(type: EffectType, target_channel: Int, target_line_offset: Int, first_beat: Int, second_beat: Int, repeat: Int?) {
-        this.lock_ui_partial {
-            super.controller_global_to_line_overwrite_range_horizontally(type, target_channel, target_line_offset, first_beat, second_beat, repeat)
-        }
+        super.controller_global_to_line_overwrite_range_horizontally(type, target_channel, target_line_offset, first_beat, second_beat, repeat)
     }
 
     override fun controller_global_overwrite_range_horizontally(type: EffectType, first_beat: Int, second_beat: Int, repeat: Int?) {
-        this.lock_ui_partial {
-            super.controller_global_overwrite_range_horizontally(type, first_beat, second_beat, repeat)
-        }
+        super.controller_global_overwrite_range_horizontally(type, first_beat, second_beat, repeat)
     }
 
     override fun controller_line_to_global_overwrite_range_horizontally(type: EffectType, channel: Int, line_offset: Int, first_beat: Int, second_beat: Int, repeat: Int?) {
-        this.lock_ui_partial {
-            super.controller_line_to_global_overwrite_range_horizontally(type, channel, line_offset, first_beat, second_beat, repeat)
-        }
+        super.controller_line_to_global_overwrite_range_horizontally(type, channel, line_offset, first_beat, second_beat, repeat)
     }
 
     override fun controller_line_overwrite_range_horizontally(type: EffectType, channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey, repeat: Int?) {
-        this.lock_ui_partial {
-            super.controller_line_overwrite_range_horizontally(type, channel, line_offset, first_key, second_key, repeat)
-        }
+        super.controller_line_overwrite_range_horizontally(type, channel, line_offset, first_key, second_key, repeat)
     }
 
     override fun controller_global_overwrite_line(type: EffectType, beat: Int, repeat: Int?) {
-        this.lock_ui_partial {
-            super.controller_global_overwrite_line(type, beat, repeat)
-        }
+        super.controller_global_overwrite_line(type, beat, repeat)
     }
 
     override fun overwrite_line(channel: Int, line_offset: Int, beat_key: BeatKey, repeat: Int?) {
-        this.lock_ui_partial {
-            super.overwrite_line(channel, line_offset, beat_key, repeat)
-        }
+        super.overwrite_line(channel, line_offset, beat_key, repeat)
     }
 
     override fun overwrite_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
-        this.lock_ui_partial {
-            super.overwrite_beat_range(beat_key, first_corner, second_corner)
-        }
+        super.overwrite_beat_range(beat_key, first_corner, second_corner)
     }
 
     override fun controller_line_overwrite_line(type: EffectType, channel: Int, line_offset: Int, beat_key: BeatKey, repeat: Int?) {
-        this.lock_ui_partial {
-            super.controller_line_overwrite_line(type, channel, line_offset, beat_key, repeat)
-        }
+        super.controller_line_overwrite_line(type, channel, line_offset, beat_key, repeat)
     }
 
     override fun controller_channel_overwrite_line(type: EffectType, target_channel: Int, original_channel: Int, original_beat: Int, repeat: Int?) {
-        this.lock_ui_partial {
-            super.controller_channel_overwrite_line(type, target_channel, original_channel, original_beat, repeat)
-        }
+        super.controller_channel_overwrite_line(type, target_channel, original_channel, original_beat, repeat)
     }
 
     override fun controller_line_to_global_overwrite_line(type: EffectType, beat_key: BeatKey, repeat: Int?) {
-        this.lock_ui_partial {
-            super.controller_line_to_global_overwrite_line(type, beat_key, repeat)
-        }
+        super.controller_line_to_global_overwrite_line(type, beat_key, repeat)
     }
 
     override fun controller_channel_to_line_overwrite_line(type: EffectType, target_channel: Int, target_line_offset: Int, original_channel: Int, original_beat: Int, repeat: Int?) {
-        this.lock_ui_partial {
-            super.controller_channel_to_line_overwrite_line(type, target_channel, target_line_offset, original_channel, original_beat, repeat)
-        }
+        super.controller_channel_to_line_overwrite_line(type, target_channel, target_line_offset, original_channel, original_beat, repeat)
     }
 
     override fun controller_channel_to_global_overwrite_line(type: EffectType, channel: Int, beat: Int, repeat: Int?) {
-        this.lock_ui_partial {
-            super.controller_channel_to_global_overwrite_line(type, channel, beat, repeat)
-        }
+        super.controller_channel_to_global_overwrite_line(type, channel, beat, repeat)
     }
 
     override fun controller_global_to_channel_overwrite_line(type: EffectType, target_channel: Int, beat: Int, repeat: Int?) {
-        this.lock_ui_partial {
-            super.controller_global_to_channel_overwrite_line(type, target_channel, beat, repeat)
-        }
+        super.controller_global_to_channel_overwrite_line(type, target_channel, beat, repeat)
     }
 
     override fun controller_global_to_line_overwrite_line(type: EffectType, from_beat: Int, target_channel: Int, target_line_offset: Int, repeat: Int?) {
-        this.lock_ui_partial {
-            super.controller_global_to_line_overwrite_line(type, from_beat, target_channel, target_line_offset, repeat)
-        }
+        super.controller_global_to_line_overwrite_line(type, from_beat, target_channel, target_line_offset, repeat)
     }
 
     override fun controller_line_to_channel_overwrite_line(type: EffectType, target_channel: Int, original_key: BeatKey, repeat: Int?) {
-        this.lock_ui_partial {
-            super.controller_line_to_channel_overwrite_line(type, target_channel, original_key, repeat)
-        }
+        super.controller_line_to_channel_overwrite_line(type, target_channel, original_key, repeat)
     }
 
 
     override fun move_leaf(beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
-        this.lock_ui_partial {
-            super.move_leaf(beatkey_from, position_from, beatkey_to, position_to)
-        }
+        super.move_leaf(beatkey_from, position_from, beatkey_to, position_to)
     }
 
     override fun controller_line_to_global_move_leaf(type: EffectType, beatkey_from: BeatKey, position_from: List<Int>, target_beat: Int, target_position: List<Int>) {
-        this.lock_ui_partial {
-            super.controller_line_to_global_move_leaf(type, beatkey_from, position_from, target_beat, target_position)
-        }
+        super.controller_line_to_global_move_leaf(type, beatkey_from, position_from, target_beat, target_position)
     }
 
     override fun controller_line_to_channel_move_leaf(type: EffectType, beatkey_from: BeatKey, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {
-        this.lock_ui_partial {
-            super.controller_line_to_channel_move_leaf(type, beatkey_from, position_from, channel_to, beat_to, position_to)
-        }
+        super.controller_line_to_channel_move_leaf(type, beatkey_from, position_from, channel_to, beat_to, position_to)
     }
 
     override fun controller_line_move_leaf(type: EffectType, beatkey_from: BeatKey, position_from: List<Int>, beat_key_to: BeatKey, position_to: List<Int>) {
-        this.lock_ui_partial {
-            super.controller_line_move_leaf(type, beatkey_from, position_from, beat_key_to, position_to)
-        }
+        super.controller_line_move_leaf(type, beatkey_from, position_from, beat_key_to, position_to)
     }
 
     override fun controller_channel_move_leaf(type: EffectType, channel_from: Int, beat_from: Int, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {
-        this.lock_ui_partial {
-            super.controller_channel_move_leaf(type, channel_from, beat_from, position_from, channel_to, beat_to, position_to)
-        }
+        super.controller_channel_move_leaf(type, channel_from, beat_from, position_from, channel_to, beat_to, position_to)
     }
 
     override fun controller_channel_to_line_move_leaf(type: EffectType, channel_from: Int, beat_from: Int, position_from: List<Int>, beat_key_to: BeatKey, position_to: List<Int>) {
-        this.lock_ui_partial {
-            super.controller_channel_to_line_move_leaf(type, channel_from, beat_from, position_from, beat_key_to, position_to)
-        }
+        super.controller_channel_to_line_move_leaf(type, channel_from, beat_from, position_from, beat_key_to, position_to)
     }
 
     override fun controller_channel_to_global_move_leaf(type: EffectType, channel_from: Int, beat_from: Int, position_from: List<Int>, target_beat: Int, target_position: List<Int>) {
-        this.lock_ui_partial {
-            super.controller_channel_to_global_move_leaf(type, channel_from, beat_from, position_from, target_beat, target_position)
-        }
+        super.controller_channel_to_global_move_leaf(type, channel_from, beat_from, position_from, target_beat, target_position)
     }
 
     override fun controller_global_move_leaf(type: EffectType, beat_from: Int, position_from: List<Int>, beat_to: Int, position_to: List<Int>) {
-        this.lock_ui_partial {
-            super.controller_global_move_leaf(type, beat_from, position_from, beat_to, position_to)
-        }
+        super.controller_global_move_leaf(type, beat_from, position_from, beat_to, position_to)
     }
 
     override fun controller_global_to_channel_move_leaf(type: EffectType, beat_from: Int, position_from: List<Int>, channel_to: Int, beat_to: Int, position_to: List<Int>) {
-        this.lock_ui_partial {
-            super.controller_global_to_channel_move_leaf(type, beat_from, position_from, channel_to, beat_to, position_to)
-        }
+        super.controller_global_to_channel_move_leaf(type, beat_from, position_from, channel_to, beat_to, position_to)
     }
 
     override fun controller_global_to_line_move_leaf(type: EffectType, beat: Int, position: List<Int>, target_key: BeatKey, target_position: List<Int>) {
-        this.lock_ui_partial {
-            super.controller_global_to_line_move_leaf(type, beat, position, target_key, target_position)
-        }
+        super.controller_global_to_line_move_leaf(type, beat, position, target_key, target_position)
     }
 
     override fun <T: EffectEvent> controller_global_replace_tree(type: EffectType, beat: Int, position: List<Int>?, tree: ReducibleTree<T>) {
-        this.lock_ui_partial {
-            super.controller_global_replace_tree(type, beat, position, tree)
-            this._queue_global_ctl_cell_change(type, beat)
-        }
+        super.controller_global_replace_tree(type, beat, position, tree)
+        this._queue_global_ctl_cell_change(type, beat)
     }
 
     override fun <T: EffectEvent> controller_channel_replace_tree(type: EffectType, channel: Int, beat: Int, position: List<Int>?, tree: ReducibleTree<T>) {
-        this.lock_ui_partial {
-            super.controller_channel_replace_tree(type, channel, beat, position, tree)
-            this._queue_channel_ctl_cell_change(type, channel, beat)
-        }
+        super.controller_channel_replace_tree(type, channel, beat, position, tree)
+        this._queue_channel_ctl_cell_change(type, channel, beat)
     }
 
     override fun <T: EffectEvent> controller_line_replace_tree(type: EffectType, beat_key: BeatKey, position: List<Int>?, tree: ReducibleTree<T>) {
-        this.lock_ui_partial {
-            super.controller_line_replace_tree(type, beat_key, position, tree)
-            this._queue_line_ctl_cell_change(type, beat_key)
-        }
+        super.controller_line_replace_tree(type, beat_key, position, tree)
+        this._queue_line_ctl_cell_change(type, beat_key)
     }
 
     override fun <T: EffectEvent> controller_global_set_event(type: EffectType, beat: Int, position: List<Int>, event: T) {
-        this.lock_ui_partial {
-            super.controller_global_set_event(type, beat, position, event)
-            this._queue_global_ctl_cell_change(type, beat)
-            this.ui_facade.set_active_event(event.copy())
-        }
+        super.controller_global_set_event(type, beat, position, event)
+        this._queue_global_ctl_cell_change(type, beat)
+        this.ui_facade.set_active_event(event.copy())
     }
 
     override fun <T: EffectEvent> controller_channel_set_event(type: EffectType, channel: Int, beat: Int, position: List<Int>, event: T) {
-        this.lock_ui_partial {
-            super.controller_channel_set_event(type, channel, beat, position, event)
-            this._queue_channel_ctl_cell_change(type, channel, beat)
-            this.ui_facade.set_active_event(event.copy())
-        }
+        super.controller_channel_set_event(type, channel, beat, position, event)
+        this._queue_channel_ctl_cell_change(type, channel, beat)
+        this.ui_facade.set_active_event(event.copy())
     }
 
     override fun <T: EffectEvent> controller_line_set_event(type: EffectType, beat_key: BeatKey, position: List<Int>, event: T) {
-        this.lock_ui_partial {
-            super.controller_line_set_event(type, beat_key, position, event)
-            this._queue_line_ctl_cell_change(type, beat_key)
-            this.ui_facade.set_active_event(event.copy())
-        }
+        super.controller_line_set_event(type, beat_key, position, event)
+        this._queue_line_ctl_cell_change(type, beat_key)
+        this.ui_facade.set_active_event(event.copy())
     }
 
     override fun <T: InstrumentEvent> set_event(beat_key: BeatKey, position: List<Int>, event: T) {
-        this.lock_ui_partial {
-            super.set_event(beat_key, position, event)
+        super.set_event(beat_key, position, event)
 
-            if (event is TunedInstrumentEvent) {
-                this.set_relative_mode(event)
-            }
+        if (event is TunedInstrumentEvent) {
+            this.set_relative_mode(event)
+        }
 
-            if (!this.ui_facade.is_full_locked()) {
-                this._queue_cell_change(beat_key)
-                this.ui_facade.set_active_event(event.copy())
-            }
+        if (!this.ui_facade.is_full_locked()) {
+            this._queue_cell_change(beat_key)
+            this.ui_facade.set_active_event(event.copy())
         }
     }
 
     override fun percussion_set_event(beat_key: BeatKey, position: List<Int>) {
-        this.lock_ui_partial {
-            super.percussion_set_event(beat_key, position)
-            this._queue_cell_change(beat_key)
-        }
+        super.percussion_set_event(beat_key, position)
+        this._queue_cell_change(beat_key)
     }
 
     override fun percussion_set_instrument(channel: Int, line_offset: Int, instrument: Int) {
-        this.lock_ui_partial {
-            super.percussion_set_instrument(channel, line_offset, instrument)
-            // Need to call get_drum name to repopulate instrument list if needed
-            // this.get_activity()?.get_drum_name(channel, instrument)
+        super.percussion_set_instrument(channel, line_offset, instrument)
+        // Need to call get_drum name to repopulate instrument list if needed
+        // this.get_activity()?.get_drum_name(channel, instrument)
 
-            this.ui_facade.queue_refresh_choose_percussion_button(channel, line_offset)
-            this.ui_facade.queue_line_label_refresh(
-                y = this.get_visible_row_from_ctl_line(
-                    this.get_actual_line_index(
-                        this.get_instrument_line_index(channel, line_offset)
-                    )
-                )!!,
-                is_percussion = true,
-                channel = channel,
-                offset = instrument,
-            )
-        }
+        this.ui_facade.queue_refresh_choose_percussion_button(channel, line_offset)
+        this.ui_facade.update_line(
+            this.get_visible_row_from_ctl_line(
+                this.get_actual_line_index(
+                    this.get_instrument_line_index(channel, line_offset)
+                )
+            )!!,
+            UIChangeBill.LineData(channel, line_offset, null, instrument)
+        )
     }
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
-        this.lock_ui_partial {
-            super.split_tree(beat_key, position, splits, move_event_to_end)
-            this._queue_cell_change(beat_key)
-        }
+        super.split_tree(beat_key, position, splits, move_event_to_end)
+        this._queue_cell_change(beat_key)
     }
 
     override fun controller_global_split_tree(type: EffectType, beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
-        this.lock_ui_partial {
-            super.controller_global_split_tree(type, beat, position, splits, move_event_to_end)
-            this._queue_global_ctl_cell_change(type, beat)
-        }
+        super.controller_global_split_tree(type, beat, position, splits, move_event_to_end)
+        this._queue_global_ctl_cell_change(type, beat)
     }
 
     override fun controller_channel_split_tree(type: EffectType, channel: Int, beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
-        this.lock_ui_partial {
-            super.controller_channel_split_tree(type, channel, beat, position, splits, move_event_to_end)
-            this._queue_channel_ctl_cell_change(type, channel, beat)
-        }
+        super.controller_channel_split_tree(type, channel, beat, position, splits, move_event_to_end)
+        this._queue_channel_ctl_cell_change(type, channel, beat)
     }
 
     override fun controller_line_split_tree(type: EffectType, beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
-        this.lock_ui_partial {
-            super.controller_line_split_tree(type, beat_key, position, splits, move_event_to_end)
-            this._queue_line_ctl_cell_change(type, beat_key)
-        }
+        super.controller_line_split_tree(type, beat_key, position, splits, move_event_to_end)
+        this._queue_line_ctl_cell_change(type, beat_key)
     }
 
     override fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
-        this.lock_ui_partial {
-            super.remove_one_of_two(beat_key, position)
-            this._queue_cell_change(beat_key)
-        }
+        super.remove_one_of_two(beat_key, position)
+        this._queue_cell_change(beat_key)
     }
 
     override fun remove_standard(beat_key: BeatKey, position: List<Int>) {
-        this.lock_ui_partial {
-            super.remove_standard(beat_key, position)
-            this._queue_cell_change(beat_key)
-        }
+        super.remove_standard(beat_key, position)
+        this._queue_cell_change(beat_key)
     }
 
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
-        this.lock_ui_partial {
-            super.insert_after(beat_key, position)
-            this._queue_cell_change(beat_key)
-        }
+        super.insert_after(beat_key, position)
+        this._queue_cell_change(beat_key)
     }
 
     override fun controller_global_insert_after(type: EffectType, beat: Int, position: List<Int>) {
-        this.lock_ui_partial {
-            super.controller_global_insert_after(type, beat, position)
-            this._queue_global_ctl_cell_change(type, beat)
-        }
+        super.controller_global_insert_after(type, beat, position)
+        this._queue_global_ctl_cell_change(type, beat)
     }
 
     override fun controller_channel_insert_after(type: EffectType, channel: Int, beat: Int, position: List<Int>) {
-        this.lock_ui_partial {
-            super.controller_channel_insert_after(type, channel, beat, position)
-            this._queue_channel_ctl_cell_change(type, channel, beat)
-        }
+        super.controller_channel_insert_after(type, channel, beat, position)
+        this._queue_channel_ctl_cell_change(type, channel, beat)
     }
 
     override fun controller_line_insert_after(type: EffectType, beat_key: BeatKey, position: List<Int>) {
-        this.lock_ui_partial {
-            super.controller_line_insert_after(type, beat_key, position)
-            this._queue_line_ctl_cell_change(type, beat_key)
-        }
+        super.controller_line_insert_after(type, beat_key, position)
+        this._queue_line_ctl_cell_change(type, beat_key)
     }
 
     override fun remove_repeat(beat_key: BeatKey, position: List<Int>, count: Int) {
-        this.lock_ui_partial {
-            super.remove_repeat(beat_key, position, count)
-        }
+        super.remove_repeat(beat_key, position, count)
     }
 
     override fun insert(beat_key: BeatKey, position: List<Int>) {
-        this.lock_ui_partial {
-            super.insert(beat_key, position)
-            this._queue_cell_change(beat_key)
-        }
+        super.insert(beat_key, position)
+        this._queue_cell_change(beat_key)
     }
 
     override fun controller_global_insert(type: EffectType, beat: Int, position: List<Int>) {
-        this.lock_ui_partial {
-            super.controller_global_insert(type, beat, position)
-            this._queue_global_ctl_cell_change(type, beat)
-        }
+        super.controller_global_insert(type, beat, position)
+        this._queue_global_ctl_cell_change(type, beat)
     }
 
     override fun controller_channel_insert(type: EffectType, channel: Int, beat: Int, position: List<Int>) {
-        this.lock_ui_partial {
-            super.controller_channel_insert(type, channel, beat, position)
-            this._queue_channel_ctl_cell_change(type, channel, beat)
-        }
+        super.controller_channel_insert(type, channel, beat, position)
+        this._queue_channel_ctl_cell_change(type, channel, beat)
     }
 
     override fun controller_line_insert(type: EffectType, beat_key: BeatKey, position: List<Int>) {
-        this.lock_ui_partial {
-            super.controller_line_insert(type, beat_key, position)
-            this._queue_line_ctl_cell_change(type, beat_key)
-        }
+        super.controller_line_insert(type, beat_key, position)
+        this._queue_line_ctl_cell_change(type, beat_key)
     }
 
     override fun controller_global_remove_standard(type: EffectType, beat: Int, position: List<Int>) {
-        this.lock_ui_partial {
-            super.controller_global_remove_standard(type, beat, position)
-            this._queue_global_ctl_cell_change(type, beat)
-        }
+        super.controller_global_remove_standard(type, beat, position)
+        this._queue_global_ctl_cell_change(type, beat)
     }
 
     override fun controller_channel_remove_standard(type: EffectType, channel: Int, beat: Int, position: List<Int>) {
-        this.lock_ui_partial {
-            super.controller_channel_remove_standard(type, channel, beat, position)
-            this._queue_channel_ctl_cell_change(type, channel, beat)
-        }
+        super.controller_channel_remove_standard(type, channel, beat, position)
+        this._queue_channel_ctl_cell_change(type, channel, beat)
     }
 
     override fun controller_line_remove_standard(type: EffectType, beat_key: BeatKey, position: List<Int>) {
-        this.lock_ui_partial {
-            super.controller_line_remove_standard(type, beat_key, position)
-            this._queue_line_ctl_cell_change(type, beat_key)
-        }
+        super.controller_line_remove_standard(type, beat_key, position)
+        this._queue_line_ctl_cell_change(type, beat_key)
     }
 
     private fun get_minimum_percussion_instrument(channel: Int): Int {
@@ -841,25 +645,21 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     override fun new_line(channel: Int, line_offset: Int?) {
-        this.lock_ui_partial {
-            super.new_line(channel, line_offset)
+        super.new_line(channel, line_offset)
 
-            // set the default instrument to the first available in the soundfont (if applicable)
-            if (this.is_percussion(channel)) {
-                (this.get_channel(channel) as OpusPercussionChannel).let {
-                    it.lines[line_offset ?: (it.size - 1)].instrument = this.get_minimum_percussion_instrument(channel) - 27
-                }
+        // set the default instrument to the first available in the soundfont (if applicable)
+        if (this.is_percussion(channel)) {
+            (this.get_channel(channel) as OpusPercussionChannel).let {
+                it.lines[line_offset ?: (it.size - 1)].instrument = this.get_minimum_percussion_instrument(channel) - 27
             }
-
-            this._update_after_new_line(channel, line_offset)
         }
+
+        this._update_after_new_line(channel, line_offset)
     }
 
     override fun insert_line(channel: Int, line_offset: Int, line: OpusLineAbstract<*>) {
-        this.lock_ui_partial {
-            super.insert_line(channel, line_offset, line)
-            this._update_after_new_line(channel, line_offset)
-        }
+        super.insert_line(channel, line_offset, line)
+        this._update_after_new_line(channel, line_offset)
     }
 
     private fun _swap_line_ui_update(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
@@ -872,97 +672,77 @@ class OpusLayerInterface : OpusLayerHistory() {
         for (c in 0 until this.channels.size) {
             val channel = this.channels[c]
             val is_percussion = this.is_percussion(c)
-            for (l in 0 until channel.lines.size) {
-                val line = channel.lines[l]
+            for ((l, line) in channel.lines.enumerate()) {
+                val instrument = if (is_percussion) {
+                    (line as OpusLinePercussion).instrument
+                } else {
+                    null
+                }
 
                 if (y >= first_swapped_line) {
-                    this.ui_facade.queue_line_label_refresh(
-                        y,
-                        is_percussion,
-                        channel = c,
-                        offset = if (is_percussion) {
-                            (line as OpusLinePercussion).instrument
-                        } else {
-                            l
-                        }
-                    )
+                    this.ui_facade.update_line(y, UIChangeBill.LineData(c, l, null, instrument))
                 }
+                y++
 
                 for ((type, controller) in line.controllers.get_all()) {
                     if (!controller.visible) continue
-                    if (y >= first_swapped_line) {
-                        this.ui_facade.queue_line_label_refresh(
-                            y,
-                            is_percussion,
-                            channel = c,
-                            offset = if (is_percussion) {
-                                (line as OpusLinePercussion).instrument
-                            } else {
-                                l
-                            },
-                            control_type = type
-                        )
+                    if (y > first_swapped_line) {
+                        this.ui_facade.update_line(y, UIChangeBill.LineData(c, l, type, instrument))
                     }
-                    this.ui_facade.queue_row_change(y++)
+                    y++
                 }
             }
 
             for ((type, controller) in channel.controllers.get_all()) {
-                if (controller.visible) {
-                    if (y >= first_swapped_line) {
-                        this.ui_facade.queue_line_label_refresh(y, is_percussion, c, null, type)
-                    }
+                if (!controller.visible) continue
+                if (y > first_swapped_line) {
+                    this.ui_facade.update_line(y, UIChangeBill.LineData(c, null, type, null))
                 }
+                y++
             }
         }
 
         for ((type, controller) in this.controllers.get_all()) {
-            if (controller.visible) {
-                if (y >= first_swapped_line) {
-                    this.ui_facade.queue_line_label_refresh(y, false, null, null, type)
-                }
+            if (!controller.visible) continue
+            if (y > first_swapped_line) {
+                this.ui_facade.update_line(y, UIChangeBill.LineData(null, null, type, null))
             }
+            y++
         }
     }
 
     override fun swap_lines(channel_index_a: Int, line_offset_a: Int, channel_index_b: Int, line_offset_b: Int) {
-        this.lock_ui_partial {
-            val y_a = this.get_instrument_line_index(channel_index_a, line_offset_a)
-            val y_b = this.get_instrument_line_index(channel_index_b, line_offset_b)
-            this.ui_facade.swap_line_cells(y_a, y_b)
+        val y_a = this.get_instrument_line_index(channel_index_a, line_offset_a)
+        val y_b = this.get_instrument_line_index(channel_index_b, line_offset_b)
+        this.ui_facade.swap_line_cells(y_a, y_b)
 
-
-
-            super.swap_lines(channel_index_a, line_offset_a, channel_index_b, line_offset_b)
-            this._swap_line_ui_update(channel_index_a, line_offset_a, channel_index_b, line_offset_b)
-        }
+        super.swap_lines(channel_index_a, line_offset_a, channel_index_b, line_offset_b)
+        this._swap_line_ui_update(channel_index_a, line_offset_a, channel_index_b, line_offset_b)
     }
 
     override fun remove_line(channel: Int, line_offset: Int): OpusLineAbstract<*> {
-        return this.lock_ui_partial {
-            val abs_line = this.get_visible_row_from_ctl_line(
-                this.get_actual_line_index(
-                    this.get_instrument_line_index(channel, line_offset)
-                )
-            )!!
+        val abs_line = this.get_visible_row_from_ctl_line(
+            this.get_actual_line_index(
+                this.get_instrument_line_index(channel, line_offset)
+            )
+        )!!
 
-            val output = super.remove_line(channel, line_offset)
+        val output = super.remove_line(channel, line_offset)
 
-            var row_count = 1
-            for ((_, controller) in output.controllers.get_all()) {
-                if (controller.visible) {
-                    row_count += 1
-                }
+        var row_count = 1
+        for ((_, controller) in output.controllers.get_all()) {
+            if (controller.visible) {
+                row_count += 1
             }
+        }
 
-            this._queue_remove_rows(abs_line, row_count)
+        this._queue_remove_rows(abs_line, row_count)
 
-            output
-        }!! // Only null in blocked action, which can't happend in a remove_line()
+        return output
     }
 
     private fun _queue_remove_rows(y: Int, count: Int) {
-        this.ui_facade.queue_row_removal(y, count)
+        this.ui_facade.remove_row(y, count)
     }
 
     /* Used to update the ui after new_channel and set_channel_visibility(n, true) */
@@ -1002,44 +782,36 @@ class OpusLayerInterface : OpusLayerHistory() {
             if (! controller.visible) continue
             this._add_controller_to_column_width_map(ctl_row++, controller, channel, null, type)
         }
-    }
-    override fun new_channel(channel: Int?, lines: Int, uuid: Int?, is_percussion: Boolean) {
-        this.lock_ui_partial {
-            val notify_index = channel ?: this.channels.size
-            super.new_channel(channel, lines, uuid, is_percussion)
-            this.ui_facade.queue_add_channel(notify_index, is_percussion, this.channels[notify_index].get_instrument())
-            this._post_new_channel(notify_index, lines)
 
-            this.ui_facade.shift_up_percussion_names(notify_index)
-            this._activity?.update_channel_instruments()
-        }
+        this.ui_facade.shift_up_percussion_names(channel)
+    }
+
+    override fun new_channel(channel: Int?, lines: Int, uuid: Int?, is_percussion: Boolean) {
+        val notify_index = channel ?: this.channels.size
+        super.new_channel(channel, lines, uuid, is_percussion)
+        this.ui_facade.add_channel(notify_index, is_percussion, this.channels[notify_index].get_instrument())
+        this._post_new_channel(notify_index, lines)
+
+        this._activity?.update_channel_instruments()
     }
 
     override fun remove_beat(beat_index: Int, count: Int) {
-        this.lock_ui_partial {
-            val original_beat_count = this.length
-            super.remove_beat(beat_index, count)
+        val original_beat_count = this.length
+        super.remove_beat(beat_index, count)
 
-            val x = min(beat_index + count - 1, original_beat_count - 1) - (count - 1)
-            for (i in 0 until count) {
-                // this.get_editor_table().remove_mapped_column(x)
-                this.ui_facade.queue_remove_column(x)
-            }
-
+        val x = min(beat_index + count - 1, original_beat_count - 1) - (count - 1)
+        for (i in 0 until count) {
+            this.ui_facade.remove_column(x)
         }
     }
 
     override fun insert_beats(beat_index: Int, count: Int) {
-        this.lock_ui_partial {
-            super.insert_beats(beat_index, count)
-        }
+        super.insert_beats(beat_index, count)
     }
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<ReducibleTree<OpusEvent>>?) {
-        this.lock_ui_partial {
-            super.insert_beat(beat_index, beats_in_column)
-            this.ui_facade.queue_add_column(beat_index, this.is_beat_tagged(beat_index))
-        }
+        super.insert_beat(beat_index, beats_in_column)
+        this.ui_facade.add_column(beat_index, this.is_beat_tagged(beat_index))
     }
 
     fun all_global_controllers_visible(): Boolean {
@@ -1083,13 +855,11 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     override fun remove_channel(channel: Int) {
         if (!this.ui_facade.is_full_locked()) {
-            this.lock_ui_partial {
-                //val (ctl_row, removed_row_count, changed_columns) = this._pre_remove_channel(channel)
-                super.remove_channel(channel)
-                // this.get_activity()?.shift_down_percussion_names(channel)
-                this.ui_facade.queue_remove_channel(channel)
-                this._activity?.update_channel_instruments()
-            }
+            //val (ctl_row, removed_row_count, changed_columns) = this._pre_remove_channel(channel)
+            super.remove_channel(channel)
+            // this.get_activity()?.shift_down_percussion_names(channel)
+            this.ui_facade.remove_channel(channel)
+            this._activity?.update_channel_instruments()
         } else {
             super.remove_channel(channel)
 
@@ -1115,7 +885,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.ui_facade.beat_count = this.length
         var i = 0
         for ((c, channel) in this.channels.enumerate()) {
-            this.ui_facade.queue_add_channel(c, this.is_percussion(c), channel.get_instrument())
+            this.ui_facade.add_channel(c, this.is_percussion(c), channel.get_instrument())
             for ((l, line) in channel.lines.enumerate()) {
                 val instrument = if (this.is_percussion(c)) {
                     (line as OpusLinePercussion).instrument
@@ -1151,7 +921,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             )
         }
         for (x in 0 until this.length) {
-            this.ui_facade.queue_add_column(x, this.is_beat_tagged(x))
+            this.ui_facade.add_column(x, this.is_beat_tagged(x))
         }
     }
 
@@ -1197,21 +967,15 @@ class OpusLayerInterface : OpusLayerHistory() {
 
 
     override fun <T: EffectEvent> controller_global_set_initial_event(type: EffectType, event: T) {
-        this.lock_ui_partial {
-            super.controller_global_set_initial_event(type, event)
-        }
+        super.controller_global_set_initial_event(type, event)
     }
 
     override fun <T: EffectEvent> controller_channel_set_initial_event(type: EffectType, channel: Int, event: T) {
-        this.lock_ui_partial {
-            super.controller_channel_set_initial_event(type, channel, event)
-        }
+        super.controller_channel_set_initial_event(type, channel, event)
     }
 
     override fun <T: EffectEvent> controller_line_set_initial_event(type: EffectType, channel: Int, line_offset: Int, event: T) {
-        this.lock_ui_partial {
-            super.controller_line_set_initial_event(type, channel, line_offset, event)
-        }
+        super.controller_line_set_initial_event(type, channel, line_offset, event)
     }
 
     //override fun toggle_channel_controller_visibility(type: ControlEventType, channel_index: Int) {
@@ -1227,49 +991,45 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     override fun set_transpose(new_transpose: Pair<Int, Int>) {
-        this.lock_ui_partial {
-            super.set_transpose(new_transpose)
-            this.ui_facade.queue_config_drawer_redraw_export_button()
-        }
+        super.set_transpose(new_transpose)
+        this.ui_facade.queue_config_drawer_redraw_export_button()
     }
 
     override fun set_tuning_map(new_map: Array<Pair<Int, Int>>, mod_events: Boolean) {
-        this.lock_ui_partial {
-            val was_tuning_standard = this.is_tuning_standard()
-            val original_map = this.tuning_map
+        val was_tuning_standard = this.is_tuning_standard()
+        val original_map = this.tuning_map
 
-            super.set_tuning_map(new_map, mod_events)
+        super.set_tuning_map(new_map, mod_events)
 
-            val is_tuning_standard = this.is_tuning_standard()
-           //  if (was_tuning_standard != is_tuning_standard) {
-           //      this.run_on_ui_thread {
-           //          this.get_activity()?.let { activity ->
-           //              if (!is_tuning_standard) {
-           //                  activity.set_active_midi_device(null)
-           //              }
-           //              activity.update_menu_options()
-           //          }
-           //      }
-           //  }
+        val is_tuning_standard = this.is_tuning_standard()
+       //  if (was_tuning_standard != is_tuning_standard) {
+       //      this.run_on_ui_thread {
+       //          this.get_activity()?.let { activity ->
+       //              if (!is_tuning_standard) {
+       //                  activity.set_active_midi_device(null)
+       //              }
+       //              activity.update_menu_options()
+       //          }
+       //      }
+       //  }
 
-            this.ui_facade.queue_config_drawer_redraw_export_button()
+        this.ui_facade.queue_config_drawer_redraw_export_button()
 
-            if (new_map.size != original_map.size && mod_events) {
-                for (i in 0 until this.channels.size) {
-                    for (j in 0 until this.channels[i].lines.size) {
-                        for (k in 0 until this.length) {
-                            val beat_key = BeatKey(i, j, k)
-                            val tree = this.get_tree(beat_key)
-                            if (tree.is_eventless()) continue
-                            this._queue_cell_change(beat_key)
-                        }
+        if (new_map.size != original_map.size && mod_events) {
+            for (i in 0 until this.channels.size) {
+                for (j in 0 until this.channels[i].lines.size) {
+                    for (k in 0 until this.length) {
+                        val beat_key = BeatKey(i, j, k)
+                        val tree = this.get_tree(beat_key)
+                        if (tree.is_eventless()) continue
+                        this._queue_cell_change(beat_key)
                     }
-
                 }
-            }
 
-            this.latest_set_offset = null
+            }
         }
+
+        this.latest_set_offset = null
     }
 
     override fun to_json(): JSONHashMap {
@@ -1286,11 +1046,9 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     override fun move_channel(channel_index: Int, new_channel_index: Int) {
-        this.lock_ui_partial {
-            super.move_channel(channel_index, new_channel_index)
-            this.ui_facade.move_channel(channel_index, new_channel_index)
-            this._activity?.update_channel_instruments()
-        }
+        super.move_channel(channel_index, new_channel_index)
+        this.ui_facade.move_channel(channel_index, new_channel_index)
+        this._activity?.update_channel_instruments()
     }
 
     override fun clear() {
@@ -1304,29 +1062,25 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
-        this.lock_ui_partial {
-            super.set_duration(beat_key, position, duration)
+        super.set_duration(beat_key, position, duration)
 
-            // Needs to be set to trigger potentially queued cell changes from on_overlap()
-            this._queue_cell_change(beat_key)
-        }
+        // Needs to be set to trigger potentially queued cell changes from on_overlap()
+        this._queue_cell_change(beat_key)
     }
 
     override fun channel_set_instrument(channel: Int, instrument: Pair<Int, Int>) {
-        this.lock_ui_partial {
-            super.channel_set_instrument(channel, instrument)
-            if (!this.ui_facade.is_full_locked()) {
-                // Updating channel instruments doesn't strictly need to be gated behind the full lock,
-                // BUT this way these don't get called multiple times every setup
-                val activity = this.get_activity()
-                activity?.update_channel_instrument(
-                    this.get_midi_channel(channel),
-                    instrument
-                )
+        super.channel_set_instrument(channel, instrument)
+        if (this.ui_facade.is_full_locked()) return
 
-                this.ui_facade.set_channel_data(channel, this.is_percussion(channel), instrument)
-            }
-        }
+        // Updating channel instruments doesn't strictly need to be gated behind the full lock,
+        // BUT this way these don't get called multiple times every setup
+        val activity = this.get_activity()
+        activity?.update_channel_instrument(
+            this.get_midi_channel(channel),
+            instrument
+        )
+
+        this.ui_facade.set_channel_data(channel, this.is_percussion(channel), instrument)
     }
 
    // override fun toggle_global_control_visibility(type: ControlEventType) {
@@ -1372,10 +1126,8 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     // HISTORY FUNCTIONS vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     override fun apply_undo(repeat: Int) {
-        this.lock_ui_partial {
-            super.apply_undo(repeat)
-            this.recache_line_maps()
-        }
+        super.apply_undo(repeat)
+        this.recache_line_maps()
     }
 
     // HISTORY FUNCTIONS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1384,29 +1136,13 @@ class OpusLayerInterface : OpusLayerHistory() {
     override fun cursor_apply(cursor: OpusManagerCursor, force: Boolean) {
         if (!force && this._block_cursor_selection()) return
 
-        this.lock_ui_partial {
-            super.cursor_apply(cursor, force)
+        super.cursor_apply(cursor, force)
+        this._queue_cursor_update(this.cursor)
 
-            this._queue_cursor_update(this.cursor)
-
-            when (cursor.mode) {
-                CursorMode.Single -> {
-                    if (cursor.ctl_level == null && !this.is_percussion(cursor.channel)) {
-                        /*
-                            Need to set relative mode here since cursor_apply is called after history is applied
-                            and set_relative_mode isn't called in replace_tree
-                        */
-                        val event = this.get_tree().get_event()
-                        if (event is TunedInstrumentEvent) {
-                            this.set_relative_mode(event)
-                        }
-                    }
-                }
-                CursorMode.Line,
-                CursorMode.Column,
-                CursorMode.Range,
-                CursorMode.Unset,
-                CursorMode.Channel -> { }
+        if (cursor.mode == CursorMode.Single && cursor.ctl_level == null && !this.is_percussion(cursor.channel)) {
+            val event = this.get_tree().get_event()
+            if (event is TunedInstrumentEvent) {
+                this.set_relative_mode(event)
             }
         }
     }
@@ -1414,66 +1150,52 @@ class OpusLayerInterface : OpusLayerHistory() {
     override fun cursor_clear() {
         if (this._block_cursor_selection()) return
 
-        this.lock_ui_partial {
-            super.cursor_clear()
-            this._unset_temporary_blocker()
-            this._queue_cursor_update(this.cursor)
-        }
+        super.cursor_clear()
+        this._unset_temporary_blocker()
+        this._queue_cursor_update(this.cursor)
     }
 
     override fun cursor_select_line(channel: Int, line_offset: Int) {
         if (this._block_cursor_selection()) return
 
-        this.lock_ui_partial {
-            super.cursor_select_line(channel, line_offset)
-            this.temporary_blocker = null
-
-            this._queue_cursor_update(this.cursor)
-        }
+        super.cursor_select_line(channel, line_offset)
+        this.temporary_blocker = null
+        this._queue_cursor_update(this.cursor)
     }
 
     override fun cursor_select_channel(channel: Int) {
         if (this._block_cursor_selection()) return
 
-        this.lock_ui_partial {
-            super.cursor_select_channel(channel)
-            this.temporary_blocker = null
-
-            this._queue_cursor_update(this.cursor)
-        }
+        super.cursor_select_channel(channel)
+        this.temporary_blocker = null
+        this._queue_cursor_update(this.cursor)
     }
 
     override fun cursor_select_channel_ctl_line(ctl_type: EffectType, channel: Int) {
         if (this._block_cursor_selection()) return
 
-        this.lock_ui_partial {
-            super.cursor_select_channel_ctl_line(ctl_type, channel)
-            this.temporary_blocker = null
+        super.cursor_select_channel_ctl_line(ctl_type, channel)
+        this.temporary_blocker = null
 
-            this._queue_cursor_update(this.cursor)
-        }
+        this._queue_cursor_update(this.cursor)
     }
 
     override fun cursor_select_line_ctl_line(ctl_type: EffectType, channel: Int, line_offset: Int) {
         if (this._block_cursor_selection()) return
 
-        this.lock_ui_partial {
-            super.cursor_select_line_ctl_line(ctl_type, channel, line_offset)
-            this.temporary_blocker = null
+        super.cursor_select_line_ctl_line(ctl_type, channel, line_offset)
+        this.temporary_blocker = null
 
-            this._queue_cursor_update(this.cursor)
-        }
+        this._queue_cursor_update(this.cursor)
     }
 
     override fun cursor_select_global_ctl_line(ctl_type: EffectType) {
         if (this._block_cursor_selection()) return
 
-        this.lock_ui_partial {
-            super.cursor_select_global_ctl_line(ctl_type)
-            this.temporary_blocker = null
+        super.cursor_select_global_ctl_line(ctl_type)
+        this.temporary_blocker = null
 
-            this._queue_cursor_update(this.cursor)
-        }
+        this._queue_cursor_update(this.cursor)
     }
 
     fun force_cursor_select_column(beat: Int) {
@@ -1486,173 +1208,145 @@ class OpusLayerInterface : OpusLayerHistory() {
     override fun cursor_select_column(beat: Int) {
         if (this._block_cursor_selection()) return
 
-        this.lock_ui_partial {
-            super.cursor_select_column(beat)
-            this.temporary_blocker = null
-            this._queue_cursor_update(this.cursor)
-        }
+        super.cursor_select_column(beat)
+        this.temporary_blocker = null
+        this._queue_cursor_update(this.cursor)
     }
 
     override fun cursor_select(beat_key: BeatKey, position: List<Int>) {
         if (this._block_cursor_selection()) return
 
-        this.lock_ui_partial {
-            this._unset_temporary_blocker()
-            super.cursor_select(beat_key, position)
+        this._unset_temporary_blocker()
+        super.cursor_select(beat_key, position)
 
-            val current_tree = this.get_tree()
-            if (!this.is_percussion(beat_key.channel) && current_tree.has_event()) {
-                this.set_relative_mode(current_tree.get_event()!! as TunedInstrumentEvent)
-            }
-
-            this._queue_cursor_update(this.cursor)
+        val current_tree = this.get_tree()
+        if (!this.is_percussion(beat_key.channel) && current_tree.has_event()) {
+            this.set_relative_mode(current_tree.get_event()!! as TunedInstrumentEvent)
         }
+
+        this._queue_cursor_update(this.cursor)
     }
 
     override fun cursor_select_ctl_at_line(ctl_type: EffectType, beat_key: BeatKey, position: List<Int>) {
         if (this._block_cursor_selection()) return
 
-        this.lock_ui_partial {
-            this._unset_temporary_blocker()
-            super.cursor_select_ctl_at_line(ctl_type, beat_key, position)
+        this._unset_temporary_blocker()
+        super.cursor_select_ctl_at_line(ctl_type, beat_key, position)
 
-            this._queue_cursor_update(this.cursor)
-        }
+        this._queue_cursor_update(this.cursor)
     }
 
     override fun cursor_select_ctl_at_channel(ctl_type: EffectType, channel: Int, beat: Int, position: List<Int>) {
         if (this._block_cursor_selection()) return
 
-        this.lock_ui_partial {
-            this._unset_temporary_blocker()
-            super.cursor_select_ctl_at_channel(ctl_type, channel, beat, position)
-            this._queue_cursor_update(this.cursor)
-        }
+        this._unset_temporary_blocker()
+        super.cursor_select_ctl_at_channel(ctl_type, channel, beat, position)
+        this._queue_cursor_update(this.cursor)
     }
 
     override fun cursor_select_ctl_at_global(ctl_type: EffectType, beat: Int, position: List<Int>) {
         if (this._block_cursor_selection()) return
 
-        this.lock_ui_partial {
-            this._unset_temporary_blocker()
-            super.cursor_select_ctl_at_global(ctl_type, beat, position)
+        this._unset_temporary_blocker()
+        super.cursor_select_ctl_at_global(ctl_type, beat, position)
 
-            this._queue_cursor_update(this.cursor)
-        }
+        this._queue_cursor_update(this.cursor)
     }
 
     override fun cursor_select_global_ctl_range(type: EffectType, first: Int, second: Int) {
         if (this._block_cursor_selection()) return
 
-        this.lock_ui_partial {
-            this._unset_temporary_blocker()
-            super.cursor_select_global_ctl_range(type, first, second)
+        this._unset_temporary_blocker()
+        super.cursor_select_global_ctl_range(type, first, second)
 
-            this._queue_cursor_update(this.cursor)
-        }
+        this._queue_cursor_update(this.cursor)
     }
 
     override fun cursor_select_channel_ctl_range(type: EffectType, channel: Int, first: Int, second: Int) {
         if (this._block_cursor_selection()) return
 
-        this.lock_ui_partial {
-            this._unset_temporary_blocker()
-            super.cursor_select_channel_ctl_range(type, channel, first, second)
-            this._queue_cursor_update(this.cursor)
-        }
+        this._unset_temporary_blocker()
+        super.cursor_select_channel_ctl_range(type, channel, first, second)
+        this._queue_cursor_update(this.cursor)
     }
 
     override fun cursor_select_line_ctl_range(type: EffectType, beat_key_a: BeatKey, beat_key_b: BeatKey) {
         if (this._block_cursor_selection()) return
 
-        this.lock_ui_partial {
-            this._unset_temporary_blocker()
-            super.cursor_select_line_ctl_range(type, beat_key_a, beat_key_b)
+        this._unset_temporary_blocker()
+        super.cursor_select_line_ctl_range(type, beat_key_a, beat_key_b)
 
-            this._queue_cursor_update(this.cursor)
-        }
+        this._queue_cursor_update(this.cursor)
     }
 
     override fun cursor_select_range(beat_key_a: BeatKey, beat_key_b: BeatKey) {
         if (this._block_cursor_selection()) return
 
-        this.lock_ui_partial {
-            this._unset_temporary_blocker()
-            super.cursor_select_range(beat_key_a, beat_key_b)
-            this._queue_cursor_update(this.cursor)
-        }
+        this._unset_temporary_blocker()
+        super.cursor_select_range(beat_key_a, beat_key_b)
+        this._queue_cursor_update(this.cursor)
     }
 
     // CURSOR FUNCTIONS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     //------------------------------------------------------------------------
     private fun _set_temporary_blocker(beat_key: BeatKey, position: List<Int>) {
         //this.get_activity()?.vibrate()
-        this.lock_ui_partial {
-            this.temporary_blocker = OpusManagerCursor(
-                mode = CursorMode.Single,
-                channel = beat_key.channel,
-                line_offset = beat_key.line_offset,
-                beat = beat_key.beat,
-                position = position
-            )
-        }
+        this.temporary_blocker = OpusManagerCursor(
+            mode = CursorMode.Single,
+            channel = beat_key.channel,
+            line_offset = beat_key.line_offset,
+            beat = beat_key.beat,
+            position = position
+        )
     }
 
     private fun _set_temporary_blocker_line_ctl(type: EffectType, beat_key: BeatKey, position: List<Int>) {
         //this.get_activity()?.vibrate()
-        this.lock_ui_partial {
-            this.temporary_blocker = OpusManagerCursor(
-                mode = CursorMode.Single,
-                ctl_type = type,
-                ctl_level = CtlLineLevel.Line,
-                channel = beat_key.channel,
-                line_offset = beat_key.line_offset,
-                beat = beat_key.beat,
-                position = position
-            )
-        }
+        this.temporary_blocker = OpusManagerCursor(
+            mode = CursorMode.Single,
+            ctl_type = type,
+            ctl_level = CtlLineLevel.Line,
+            channel = beat_key.channel,
+            line_offset = beat_key.line_offset,
+            beat = beat_key.beat,
+            position = position
+        )
     }
 
     private fun _set_temporary_blocker_channel_ctl(type: EffectType, channel: Int, beat: Int, position: List<Int>) {
         // this.get_activity()?.vibrate()
-        this.lock_ui_partial {
-            this.temporary_blocker = OpusManagerCursor(
-                mode = CursorMode.Single,
-                ctl_type = type,
-                ctl_level = CtlLineLevel.Channel,
-                channel = channel,
-                beat = beat,
-                position = position
-            )
-        }
+        this.temporary_blocker = OpusManagerCursor(
+            mode = CursorMode.Single,
+            ctl_type = type,
+            ctl_level = CtlLineLevel.Channel,
+            channel = channel,
+            beat = beat,
+            position = position
+        )
     }
 
     private fun _set_temporary_blocker_global_ctl(type: EffectType, beat: Int, position: List<Int>) {
          // this.get_activity()?.vibrate()
-        this.lock_ui_partial {
-            this.temporary_blocker = OpusManagerCursor(
-                mode = CursorMode.Single,
-                ctl_type = type,
-                ctl_level = CtlLineLevel.Global,
-                beat = beat,
-                position = position
-            )
-        }
+        this.temporary_blocker = OpusManagerCursor(
+            mode = CursorMode.Single,
+            ctl_type = type,
+            ctl_level = CtlLineLevel.Global,
+            beat = beat,
+            position = position
+        )
     }
 
     private fun _unset_temporary_blocker() {
-        this.lock_ui_partial {
-            val blocker = this.temporary_blocker
-            if (blocker != null) {
-                when (blocker.ctl_level) {
-                    CtlLineLevel.Line -> this._queue_line_ctl_cell_change(blocker.ctl_type!!, blocker.get_beatkey())
-                    CtlLineLevel.Channel -> this._queue_channel_ctl_cell_change(blocker.ctl_type!!, blocker.channel, blocker.beat)
-                    CtlLineLevel.Global -> this._queue_global_ctl_cell_change(blocker.ctl_type!!, blocker.beat)
-                    null -> this._queue_cell_change(blocker.get_beatkey())
-                }
+        val blocker = this.temporary_blocker
+        if (blocker != null) {
+            when (blocker.ctl_level) {
+                CtlLineLevel.Line -> this._queue_line_ctl_cell_change(blocker.ctl_type!!, blocker.get_beatkey())
+                CtlLineLevel.Channel -> this._queue_channel_ctl_cell_change(blocker.ctl_type!!, blocker.channel, blocker.beat)
+                CtlLineLevel.Global -> this._queue_global_ctl_cell_change(blocker.ctl_type!!, blocker.beat)
+                null -> this._queue_cell_change(blocker.get_beatkey())
             }
-            this.temporary_blocker = null
         }
+        this.temporary_blocker = null
     }
 
 
@@ -2191,23 +1885,17 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     override fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
-        this.lock_ui_partial {
-            super.move_beat_range(beat_key, first_corner, second_corner)
-        }
+        super.move_beat_range(beat_key, first_corner, second_corner)
     }
 
     override fun tag_section(beat: Int, title: String?) {
-        this.lock_ui_partial {
-            super.tag_section(beat, title)
-            this.ui_facade.queue_column_change(beat, true)
-        }
+        super.tag_section(beat, title)
+        this.ui_facade.queue_column_change(beat, true)
     }
 
     override fun remove_tagged_section(beat: Int) {
-        this.lock_ui_partial {
-            super.remove_tagged_section(beat)
-            this.ui_facade.queue_column_change(beat, false)
-        }
+        super.remove_tagged_section(beat)
+        this.ui_facade.queue_column_change(beat, false)
     }
 
     fun is_initialized(): Boolean {

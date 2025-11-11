@@ -25,7 +25,6 @@ class UIChangeBill {
         Secondary
     }
 
-
     data class LineData(var channel: Int?, var line_offset: Int?, var ctl_type: EffectType?, var assigned_offset: Int? = null)
     data class ColumnData(var is_tagged: Boolean)
     data class ChannelData(var percussion: Boolean, var instrument: Pair<Int, Int>)
@@ -84,34 +83,21 @@ class UIChangeBill {
         TODO()
     }
 
-    fun queue_line_label_refresh(y: Int, is_percussion: Boolean?, channel: Int?, offset: Int?, control_type: EffectType? = null) {
-        this.line_data[y].let { line_data ->
-            line_data.channel = channel
-            line_data.line_offset = offset
-            line_data.ctl_type = control_type
-        }
+    fun update_line(y: Int, line_data: LineData) {
+        this.line_data[y] = line_data
     }
 
     fun queue_row_change(y: Int, state_only: Boolean = false) {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.int_queue.add(y)
-        working_tree.bill.add(
-            if (state_only) {
-                BillableItem.RowStateChange
-            } else {
-                BillableItem.RowChange
-            }
-        )
     }
 
-    fun queue_row_removal(y: Int, count: Int) {
+    fun remove_row(y: Int, count: Int) {
         for (i in 0 until count) {
             this.line_data.removeAt(y)
             this.cell_map.removeAt(y)
         }
     }
 
-    fun queue_add_channel(channel: Int, percussion: Boolean, instrument: Pair<Int, Int>) {
+    fun add_channel(channel: Int, percussion: Boolean, instrument: Pair<Int, Int>) {
         for (ld in this.line_data) {
             ld.channel?.let {
                 if (it >= channel) {
@@ -122,7 +108,7 @@ class UIChangeBill {
         this.channel_data.add(channel, ChannelData(percussion, instrument))
     }
 
-    fun queue_remove_channel(channel: Int) {
+    fun remove_channel(channel: Int) {
         var i = 0
         while (i < this.line_data.size) {
             val ld = this.line_data[i]
@@ -140,67 +126,36 @@ class UIChangeBill {
         this.channel_data.removeAt(channel)
     }
 
-    fun queue_add_column(column: Int, is_tagged: Boolean) {
-        this.column_data.add(column, ColumnData(is_tagged, SelectionLevel.Unselected))
+    fun add_column(column: Int, is_tagged: Boolean) {
+        this.column_data.add(column, ColumnData(is_tagged))
     }
 
-    fun queue_remove_column(column: Int) {
+    fun remove_column(column: Int) {
         this.column_data.removeAt(column)
     }
 
     fun queue_refresh_choose_percussion_button(channel: Int, line_offset: Int) {
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.int_queue.add(channel)
-        working_tree.int_queue.add(line_offset)
-        working_tree.bill.add(BillableItem.PercussionButtonRefresh)
+        TODO()
     }
 
     fun queue_full_refresh(restore_position: Boolean = false) {
-        val working_tree = this.get_working_tree(true) ?: return
-        working_tree.bill.add(BillableItem.FullRefresh)
+        TODO()
     }
 
     fun queue_force_scroll(y: Int, x: Int, offset: Rational, offset_width: Rational, force: Boolean) {
-        // editor_table.scroll_to_position(y = y, x = beat, offset = offset, offset_width = offset_width, force = force)
-        val working_tree = this.get_working_tree() ?: return
-        working_tree.int_queue.add(y)
-        working_tree.int_queue.add(x)
-        working_tree.int_queue.add(offset.numerator)
-        working_tree.int_queue.add(offset.denominator)
-        working_tree.int_queue.add(offset_width.numerator)
-        working_tree.int_queue.add(offset_width.denominator)
-        working_tree.int_queue.add(if (force) 1 else 0)
-        working_tree.bill.add(BillableItem.ForceScroll)
-    }
-
-    fun get_working_tree(force: Boolean = false): Node? {
-        // Force is used ONLY to apply FullRefresh
-        return if (this.is_full_locked() && ! force) {
-            null
-        } else {
-            this._tree.get(this.working_path)
-        }
+        TODO()
     }
 
     fun lock_full() {
         this.ui_lock.lock_full()
-        val working_tree = this._tree.get(this.working_path)
-        this.working_path.add(working_tree.sub_nodes.size)
-        working_tree.new_node()
     }
 
     fun lock_partial() {
         this.ui_lock.lock_partial()
-        val working_tree = this._tree.get(this.working_path)
-        this.working_path.add(working_tree.sub_nodes.size)
-        working_tree.new_node()
     }
 
     fun unlock() {
         this.ui_lock.unlock()
-        if (this.working_path.isNotEmpty()) {
-            this.working_path.removeAt(this.working_path.size - 1)
-        }
     }
 
     fun get_level(): Int {
@@ -213,10 +168,6 @@ class UIChangeBill {
 
     fun is_full_locked(): Boolean {
         return this.ui_lock.is_full_locked()
-    }
-
-    fun cancel_most_recent() {
-        this._tree.remove_last()
     }
 
     fun move_channel(channel_index: Int, new_channel_index: Int) {
@@ -322,7 +273,7 @@ class UIChangeBill {
                 val cursor_line = this.line_data[cursor.ints[0]]
                 val check_line = this.line_data[y]
                 cursor.ints[0] == y ||
-                    check_line.channel == cursor_line.channel && check_line.line_offset ==
+                    (check_line.channel == cursor_line.channel && check_line.line_offset == cursor_line.line_offset)
             }
             CursorMode.Single -> cursor.ints[0] == y
             CursorMode.Range -> {
@@ -333,6 +284,7 @@ class UIChangeBill {
             CursorMode.Unset -> false
         }
     }
+
     // TODO: Handle Effects
     fun is_cell_selected(cursor: CacheCursor, y: Int, x: Int): Boolean {
         return when (cursor.type) {
@@ -359,14 +311,15 @@ class UIChangeBill {
         val larger_line_data = this.line_data[larger]
         var lesser_line_count = 0
         var larger_line_count = 0
+
         var i = lesser
-        while (this.line_data[i].channel == lesser_line_data.channel && this.line_data[i].offset == lesser_line_data.offset) {
+        while (this.line_data[i].channel == lesser_line_data.channel && this.line_data[i].line_offset == lesser_line_data.line_offset) {
             i++
             lesser_line_count++
         }
 
         i = larger
-        while (this.line_data[i].channel == larger_line_data.channel && this.line_data[i].offset == larger_line_data.offset) {
+        while (this.line_data[i].channel == larger_line_data.channel && this.line_data[i].line_offset == larger_line_data.line_offset) {
             i++
             larger_line_count++
         }

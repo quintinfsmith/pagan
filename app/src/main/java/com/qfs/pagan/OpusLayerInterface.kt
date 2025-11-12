@@ -69,7 +69,6 @@ class OpusLayerInterface : OpusLayerHistory() {
     var latest_set_octave: Int? = null
     var latest_set_offset: Int? = null
 
-    var soundfont: Soundfont? = null
 
     fun attach_activity(activity: ActivityEditor) {
         this._activity = activity
@@ -1904,8 +1903,4 @@ class OpusLayerInterface : OpusLayerHistory() {
         return this.initialized
     }
 
-
-    fun set_soundfont(soundfont: SoundFont) {
-        this.soundfont = soundfont
-    }
 }

@@ -259,7 +259,7 @@
     <string name="dialog_delay_attenuation">Echo Attenuation %</string>
     <string name="settings_note_memory">Default to latest input</string>
 
-    <string-array name="midi_instruments">
+    <string-array name="general_midi_presets">
         <item>Grand Acoustic Piano</item>
         <item>Bright Acoustic Piano</item>
         <item>Electric Grand Piano</item>

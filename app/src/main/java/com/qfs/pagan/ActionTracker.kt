@@ -39,7 +39,6 @@ import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.roundToInt
-import kotlin.random.Random
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 
@@ -1217,7 +1216,7 @@ class ActionTracker {
 
     fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>? = null) {
         val activity = this.get_activity()
-        val supported_instrument_names = activity.get_supported_instrument_names()
+        val supported_instrument_names = activity.get_supported_preset_names()
         val sorted_keys = supported_instrument_names.keys.toList().sortedBy {
             it.first + (it.second * 128)
         }

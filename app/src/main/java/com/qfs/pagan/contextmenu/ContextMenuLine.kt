@@ -97,7 +97,7 @@ class ContextMenuLine(primary_container: ViewGroup, secondary_container: ViewGro
                 this.context.getString(
                     R.string.label_choose_percussion,
                     instrument,
-                    main.get_drum_name(cursor.channel, instrument) ?: this.context.getString(R.string.drum_not_found)
+                    main.get_instrument_name(cursor.channel, instrument) ?: this.context.getString(R.string.drum_not_found)
                 )
             }
             (this.spacer.layoutParams as LinearLayout.LayoutParams).weight = 1f

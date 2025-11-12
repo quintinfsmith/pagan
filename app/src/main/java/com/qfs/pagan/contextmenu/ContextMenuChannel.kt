@@ -53,8 +53,8 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
         val instrument = opus_manager.get_channel_instrument(this.active_channel!!)
         val midi_program = channel.midi_program
 
-        val defaults = main.resources.getStringArray(R.array.midi_instruments)
-        val supported_instruments = main.get_supported_instrument_names()
+        val defaults = main.resources.getStringArray(R.array.general_midi_presets)
+        val supported_instruments = main.get_supported_preset_names()
         val label = supported_instruments[instrument] ?: if (opus_manager.is_percussion(this.active_channel!!)) {
             "$midi_program"
         } else {

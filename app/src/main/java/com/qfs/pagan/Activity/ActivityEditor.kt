@@ -84,7 +84,6 @@ import com.qfs.pagan.CompatibleFileType
 import com.qfs.pagan.DrawerChannelMenu.ChannelOptionAdapter
 import com.qfs.pagan.DrawerChannelMenu.ChannelOptionRecycler
 import com.qfs.pagan.EditorTable
-import com.qfs.pagan.FeedbackDevice
 import com.qfs.pagan.HexEditText
 import com.qfs.pagan.MidiFeedbackDispatcher
 import com.qfs.pagan.OpusLayerInterface
@@ -136,11 +135,10 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import kotlin.collections.get
+import kotlin.collections.set
 import kotlin.concurrent.thread
 import kotlin.math.floor
 import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.roundToInt
 
 class ActivityEditor : PaganActivity() {
@@ -165,6 +163,7 @@ class ActivityEditor : PaganActivity() {
         var active_project: Uri? = null
         var active_midi_device: MidiDeviceInfo? = null
         var audio_interface = AudioInterface()
+        var available_preset_names: HashMap<Pair<Int, Int>, String>? = null
 
         fun export_wav(
             opus_manager: OpusLayerBase,
@@ -206,7 +205,24 @@ class ActivityEditor : PaganActivity() {
         }
 
         fun unset_soundfont() {
+            this.opus_manager.ui_facade.clear_instrument_names()
             this.audio_interface.unset_soundfont()
+            this.available_preset_names = null
+        }
+
+        fun populate_active_percussion_names(channel_index: Int) {
+            val midi_channel = this.opus_manager.get_midi_channel(channel_index)
+            val instrument_options = this.audio_interface.get_instrument_options(midi_channel)
+            this.opus_manager.ui_facade.set_instrument_names(channel_index, instrument_options)
+        }
+
+        fun set_soundfont(soundfont: SoundFont) {
+            this.opus_manager.ui_facade.clear_instrument_names()
+            this.audio_interface.set_soundfont(soundfont)
+            this.available_preset_names = HashMap()
+            for ((name, program, bank) in soundfont.get_available_presets()) {
+                this.available_preset_names?[Pair(bank, program)] = name
+            }
         }
     }
 
@@ -1668,49 +1684,10 @@ class ActivityEditor : PaganActivity() {
         }
     }
 
-    private fun get_drum_options(channel_index: Int): List<Pair<String, Int>> {
-        if (this._sample_handle_manager == null || this.editor_view_model.active_midi_device != null) {
-            return this._get_default_drum_options()
-        }
-
-        val opus_manager = this.get_opus_manager()
-        val midi_channel = opus_manager.get_midi_channel(channel_index)
-
-        val preset = try {
-            this._sample_handle_manager!!.get_preset(midi_channel) ?: return this._get_default_drum_options()
-        } catch (_: SoundFont.InvalidPresetIndex) {
-            return this._get_default_drum_options()
-        }
-
-        val available_drum_keys = mutableSetOf<Pair<String, Int>>()
-        for ((_, preset_instrument) in preset.instruments) {
-            if (preset_instrument.instrument == null) continue
-
-            val instrument_range = preset_instrument.key_range ?: Pair(0, 127)
-
-            for (sample_directive in preset_instrument.instrument!!.sample_directives.values) {
-                val key_range = sample_directive.key_range ?: Pair(0, 127)
-                val usable_range = max(key_range.first, instrument_range.first)..min(key_range.second, instrument_range.second)
-
-                var name = sample_directive.sample!!.first().name
-                if (name.contains("(")) {
-                    name = name.substring(0, name.indexOf("("))
-                }
-
-                for (key in usable_range) {
-                    val use_name = if (usable_range.first != usable_range.last) {
-                        "$name - ${(key - usable_range.first) + 1}"
-                    } else {
-                        name
-                    }
-                    available_drum_keys.add(Pair(use_name, key))
-                }
-            }
-        }
-
-        return available_drum_keys.sortedBy {
-            it.second
-        }
+    fun get_drum_options(channel_index: Int): List<Pair<String, Int>>? {
+        if (this.editor_view_model.active_midi_device != null) return null
+        val midi_channel = this.get_opus_manager().get_midi_channel(channel_index)
+        return this.editor_view_model.audio_interface.get_instrument_options(midi_channel)
     }
 
     fun update_channel_instrument(midi_channel: Int, instrument: Pair<Int, Int>) {
@@ -1815,12 +1792,17 @@ class ActivityEditor : PaganActivity() {
         this.active_project = null
     }
 
-    fun get_supported_instrument_names(): HashMap<Pair<Int, Int>, String> {
-        if (this._soundfont_supported_instrument_names.isEmpty()) {
-            this.populate_supported_soundfont_instrument_names()
-        }
+    fun get_supported_preset_names(): HashMap<Pair<Int, Int>, String> {
+        return this.editor_view_model.available_preset_names ?: this.get_general_midi_preset_names()
+    }
 
-        return this._soundfont_supported_instrument_names
+    fun get_general_midi_preset_names(): HashMap<Pair<Int, Int>, String> {
+        val output = HashMap<Pair<Int, Int>, String>()
+        var program = 0
+        for (name in this.resources.getStringArray(R.array.general_midi_presets)) {
+            output[Pair(0, program++)] = name
+        }
+        return output
     }
 
     fun set_soundfont() {
@@ -1846,7 +1828,7 @@ class ActivityEditor : PaganActivity() {
         }
 
         try {
-            this.editor_view_model.audio_interface.set_soundfont(SoundFont(this, soundfont_file.uri))
+            this.editor_view_model.set_soundfont(SoundFont(this, soundfont_file.uri))
         } catch (_: Riff.InvalidRiff) {
             // Possible if user puts the sf2 in their files manually
             this.feedback_msg(this.getString(R.string.invalid_soundfont))
@@ -1858,12 +1840,10 @@ class ActivityEditor : PaganActivity() {
             return
         }
 
-        this.populate_supported_soundfont_instrument_names()
 
         this.reinit_playback_device()
         this.connect_feedback_device()
         this.update_channel_instruments()
-        this.get_opus_manager().ui_facade.clear_percussion_names()
         this.runOnUiThread {
             this.setup_project_config_drawer_export_button()
             this.findViewById<ChannelOptionRecycler?>(R.id.rvActiveChannels)?.notify_soundfont_changed()
@@ -1936,32 +1916,10 @@ class ActivityEditor : PaganActivity() {
         this._midi_playback_device = null
 
         this.update_channel_instruments()
-        this.get_ui_facade().clear_percussion_names()
     }
 
     fun get_ui_facade(): UIChangeBill {
         return this.get_opus_manager().ui_facade
-    }
-
-    fun get_drum_name(channel: Int, index: Int): String? {
-        this.populate_active_percussion_names(channel, false)
-        return if (! this.active_percussion_names.containsKey(channel)) {
-            null
-        } else {
-            this.active_percussion_names[channel]!![index + 27]
-        }
-    }
-
-    fun populate_active_percussion_names(channel_index: Int, force: Boolean = true) {
-        if (force || !this.active_percussion_names.containsKey(channel_index)) {
-            this.active_percussion_names[channel_index] = HashMap()
-            val drums = this.get_drum_options(channel_index)
-            for ((name, note) in drums) {
-                if (note >= 27) {
-                    this.active_percussion_names[channel_index]!![note] = name
-                }
-            }
-        }
     }
 
     fun dialog_color_picker(initial_color: Int, callback: (Int?) -> Unit) {
@@ -3093,7 +3051,7 @@ class ActivityEditor : PaganActivity() {
             // Need to prematurely update the channel instrument to find the lowest possible instrument
             this.update_channel_instruments(c)
             this.populate_active_percussion_names(c, true)
-            val percussion_keys = ui_facade.active_percussion_names[c]?.keys?.sorted() ?: continue
+            val percussion_keys = ui_facade.instrument_names[c]?.keys?.sorted() ?: continue
 
             for (l in 0 until opus_manager.get_channel(c).size) {
                 opus_manager.percussion_set_instrument(c, l, max(0, percussion_keys.first() - 27))

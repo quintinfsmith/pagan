@@ -1,11 +1,16 @@
 package com.qfs.pagan
 
 import com.qfs.apres.event2.NoteOn79
+import com.qfs.apres.soundfont2.Preset
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WaveGenerator
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.iterator
 import kotlin.collections.set
-import kotlin.rem
+import kotlin.math.max
+import kotlin.math.min
 
 class AudioInterface {
     var sample_rate: Int = 44100
@@ -13,35 +18,37 @@ class AudioInterface {
     var playback_sample_handle_manager: SampleHandleManager? = null
     var playback_device: PlaybackDevice? = null
     var soundfont_supported_instrument_names = HashMap<Pair<Int, Int>, String>()
-    var feedback_revolver = FeedbackDeviceRevolver(4)
+    var feedback_revolver = FeedbackRevolver(4)
 
-    class FeedbackDeviceRevolver(var size: Int = 4) {
+    class FeedbackRevolver(var size: Int = 4) {
         var sample_handle_manager: SampleHandleManager? = null
         private var current_index: Int = 0
-        private val devices = Array<FeedbackDevice?>(this.size) { null }
+        private var device: FeedbackDevice? = null
 
         fun set_handle_manager(sample_handle_manager: SampleHandleManager) {
             this.clear()
             this.sample_handle_manager = sample_handle_manager
+            this.device = FeedbackDevice(sample_handle_manager)
         }
 
-        fun play(event: NoteOn79, duration: Int = 250) {
-            if (this.devices[this.current_index] == null) {
-                this.devices[this.current_index] = FeedbackDevice(this.sample_handle_manager!!)
-            }
-
-            this.devices[this.current_index++]!!.new_event(event, duration)
-            this.current_index %= this.devices.size
+        fun play(channel: Int, note: Int, bend: Int, velocity: Int, duration: Int = 250) {
+            val event = NoteOn79(
+                index = this.current_index++,
+                channel = channel,
+                note = note,
+                bend = bend,
+                velocity = velocity
+            )
+            this.device?.new_event(event, duration)
+            this.current_index %= this.size
         }
 
         fun clear() {
             this.sample_handle_manager?.destroy()
             this.sample_handle_manager = null
-            this.devices.forEachIndexed { i: Int, device: FeedbackDevice? ->
-                device?.kill()
-                device?.destroy()
-                this.devices[i] = null
-            }
+            this.device?.destroy()
+            this.device = null
+            this.current_index = 0
         }
     }
 
@@ -82,20 +89,6 @@ class AudioInterface {
         this.connect_feedback_device()
     }
 
-    fun populate_supported_soundfont_instrument_names() {
-        // populate a cache of available soundfont names so se don't have to open up the soundfont data
-        // every time
-        this.soundfont_supported_instrument_names.clear()
-        this.soundfont?.let { soundfont ->
-            for ((name, program, bank) in soundfont.get_available_presets()) {
-                this.soundfont_supported_instrument_names[Pair(bank, program)] = name
-            }
-        }
-        //     var program = 0
-        //     for (name in this.resources.getStringArray(R.array.midi_instruments)) {
-        //         this.soundfont_supported_instrument_names[Pair(0, program++)] = name
-        //     }
-    }
 
 
     fun unset_soundfont() {
@@ -138,14 +131,45 @@ class AudioInterface {
     }
 
     fun play_feedback(channel: Int, note: Int, bend: Int, velocity: Int) {
-        val event = NoteOn79(
-            index = 0,
-            channel = channel,
-            note = note,
-            bend = bend,
-            velocity = velocity
-        )
-        this.feedback_revolver.play(event, 250)
+        this.feedback_revolver.play(channel, note, bend, velocity, 250)
+    }
+
+    fun get_preset(channel: Int): Preset? {
+        return this.playback_sample_handle_manager?.get_preset(channel)
+    }
+
+    fun get_instrument_options(midi_channel: Int): List<Pair<String, Int>>? {
+        if (this.soundfont == null) return null
+        val preset = this.get_preset(midi_channel) ?: return null
+
+        val available_drum_keys = mutableSetOf<Pair<String, Int>>()
+        for ((_, preset_instrument) in preset.instruments) {
+            if (preset_instrument.instrument == null) continue
+            val instrument_range = preset_instrument.key_range ?: Pair(0, 127)
+
+            for (sample_directive in preset_instrument.instrument!!.sample_directives.values) {
+                val key_range = sample_directive.key_range ?: Pair(0, 127)
+                val usable_range = max(key_range.first, instrument_range.first)..min(key_range.second, instrument_range.second)
+
+                var name = sample_directive.sample!!.first().name
+                if (name.contains("(")) {
+                    name = name.substring(0, name.indexOf("("))
+                }
+
+                for (key in usable_range) {
+                    val use_name = if (usable_range.first != usable_range.last) {
+                        "$name - ${(key - usable_range.first) + 1}"
+                    } else {
+                        name
+                    }
+                    available_drum_keys.add(Pair(use_name, key))
+                }
+            }
+        }
+
+        return available_drum_keys.sortedBy {
+            it.second
+        }
     }
 
 }

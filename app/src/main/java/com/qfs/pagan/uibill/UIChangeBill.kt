@@ -42,7 +42,7 @@ class UIChangeBill {
     var active_event: OpusEvent? = null
     var active_cursor: CacheCursor? = null
     var project_exists: Boolean = false
-    var active_percussion_names = HashMap<Int, HashMap<Int, String>>()
+    var instrument_names = HashMap<Int, HashMap<Int, String>?>()
     var blocker_leaf: List<Int>? = null
 
     fun clear() {
@@ -57,7 +57,7 @@ class UIChangeBill {
         this.column_data.clear()
         this.cell_map.clear()
         this.channel_data.clear()
-        this.active_percussion_names.clear()
+        this.instrument_names.clear()
     }
 
     fun update_cell(coordinate: EditorTable.Coordinate, tree: ReducibleTree<out OpusEvent>) {
@@ -221,26 +221,22 @@ class UIChangeBill {
     }
 
     fun shift_up_percussion_names(channel: Int) {
-        val keys = this.active_percussion_names.keys.sorted().reversed()
+        val keys = this.instrument_names.keys.sorted().reversed()
         for (k in keys) {
             if (k < channel) continue
-            this.active_percussion_names[k + 1] = this.active_percussion_names.remove(k)!!
+            this.instrument_names[k + 1] = this.instrument_names.remove(k)!!
         }
     }
 
     fun shift_down_percussion_names(channel: Int) {
-        val keys = this.active_percussion_names.keys.sorted()
+        val keys = this.instrument_names.keys.sorted()
         for (k in keys) {
             if (k > channel) {
-                this.active_percussion_names[k - 1] = this.active_percussion_names.remove(k)!!
+                this.instrument_names[k - 1] = this.instrument_names.remove(k)!!
             } else if (k == channel) {
-                this.active_percussion_names.remove(k)
+                this.instrument_names.remove(k)
             }
         }
-    }
-
-    fun clear_percussion_names() {
-        this.active_percussion_names.clear()
     }
 
     fun is_column_selected(cursor: CacheCursor, x: Int): Boolean {
@@ -328,4 +324,20 @@ class UIChangeBill {
             this.cell_map.add(larger + i + (larger_line_count - lesser_line_count), line)
         }
     }
+
+    fun clear_instrument_names() {
+        this.instrument_names.clear()
+    }
+    fun set_instrument_names(channel: Int, names: List<Pair<String, Int>>?) {
+        this.instrument_names[channel] = if (names == null) {
+            null
+        } else {
+            val hashmap = HashMap<Int, String>()
+            for ((name, index) in names) {
+                hashmap[index] = name
+            }
+            hashmap
+        }
+    }
+
 }

@@ -31,6 +31,7 @@ class PlaybackDevice(var activity: ActivityEditor, sample_handle_manager: Sample
                     this@PlaybackDevice._buffering_cancelled
                 }
             }
+
             if (!cancelled) {
                 this.activity.loading_reticle_show()
                 this.activity.force_title_text(this.activity.getString(R.string.title_msg_buffering))

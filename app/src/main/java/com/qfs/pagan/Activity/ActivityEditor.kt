@@ -72,7 +72,6 @@ import com.qfs.apres.VirtualMidiOutputDevice
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SongPositionPointer
-import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfont2.Riff
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
@@ -80,6 +79,7 @@ import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.apres.soundfontplayer.WaveGenerator
 import com.qfs.json.JSONHashMap
 import com.qfs.pagan.ActionTracker
+import com.qfs.pagan.AudioInterface
 import com.qfs.pagan.CompatibleFileType
 import com.qfs.pagan.DrawerChannelMenu.ChannelOptionAdapter
 import com.qfs.pagan.DrawerChannelMenu.ChannelOptionRecycler
@@ -111,6 +111,7 @@ import com.qfs.pagan.controlwidgets.ControlWidgetTempo
 import com.qfs.pagan.controlwidgets.ControlWidgetVelocity
 import com.qfs.pagan.controlwidgets.ControlWidgetVolume
 import com.qfs.pagan.databinding.ActivityEditorBinding
+import com.qfs.pagan.enumerate
 import com.qfs.pagan.numberinput.RangedFloatInput
 import com.qfs.pagan.numberinput.RangedIntegerInput
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
@@ -163,6 +164,7 @@ class ActivityEditor : PaganActivity() {
         var opus_manager = OpusLayerInterface()
         var active_project: Uri? = null
         var active_midi_device: MidiDeviceInfo? = null
+        var audio_interface = AudioInterface()
 
         fun export_wav(
             opus_manager: OpusLayerBase,
@@ -202,6 +204,10 @@ class ActivityEditor : PaganActivity() {
         fun is_exporting(): Boolean {
             return this.export_handle != null
         }
+
+        fun unset_soundfont() {
+            this.audio_interface.unset_soundfont()
+        }
     }
 
     val editor_view_model: MainViewModel by this.viewModels()
@@ -211,10 +217,8 @@ class ActivityEditor : PaganActivity() {
     private var _float_dialog_defaults = HashMap<String, Float>()
     private var _virtual_input_device = MidiPlayer()
     private lateinit var _midi_interface: MidiController
-    private var _soundfont: SoundFont? = null
-    internal var _soundfont_supported_instrument_names = HashMap<Pair<Int, Int>, String>()
-    private var _sample_handle_manager: SampleHandleManager? = null
-    private var _feedback_sample_manager: SampleHandleManager? = null
+    //private var _sample_handle_manager: SampleHandleManager? = null
+    // private var _feedback_sample_manager: SampleHandleManager? = null
     private var _midi_playback_device: PlaybackDevice? = null
     private var _midi_feedback_dispatcher = MidiFeedbackDispatcher()
 
@@ -223,10 +227,6 @@ class ActivityEditor : PaganActivity() {
     var playback_state_soundfont: PlaybackState = PlaybackState.NotReady
     var playback_state_midi: PlaybackState = PlaybackState.NotReady
     private var _forced_title_text: String? = null
-    private val _temporary_feedback_devices = Array<FeedbackDevice?>(4) {
-        null
-    }
-    private var _current_feedback_device: Int = 0
     private var _blocker_scroll_y: Float? = null
     private var broadcast_receiver = PaganBroadcastReceiver()
     private var receiver_intent_filter = IntentFilter("com.qfs.pagan.CANCEL_EXPORT_WAV")
@@ -273,12 +273,9 @@ class ActivityEditor : PaganActivity() {
         }
 
         override fun on_complete() {
-            if (this.working_y < this.total_count - 1) {
-                return
-            }
+            if (this.working_y < this.total_count - 1) return
 
-            val builder = this.activity.get_notification()
-            if (builder != null) {
+            this.activity.get_notification()?.let { builder ->
                 // NON functional ATM, Open file from notification
                 val go_to_file_intent = Intent()
                 go_to_file_intent.action = Intent.ACTION_VIEW
@@ -399,18 +396,14 @@ class ActivityEditor : PaganActivity() {
 
     private var _result_launcher_export_multi_line_wav =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (this._soundfont == null) {
-                // Throw Error. Currently unreachable by ui
-                return@registerForActivityResult
-            }
+            // Throw Error. Currently unreachable by ui
+            if (this.get_soundfont() == null) return@registerForActivityResult
 
             this.getNotificationPermission()
             thread {
                 if (result.resultCode == RESULT_OK) {
                     result?.data?.data?.also { tree_uri ->
-                        if (this.editor_view_model.export_handle != null) {
-                            return@thread
-                        }
+                        if (this.editor_view_model.export_handle != null) return@thread
                         val directory = DocumentFile.fromTreeUri(this, tree_uri) ?: return@thread
                         val opus_manager_copy = OpusLayerBase()
                         this.get_opus_manager().to_json().let {
@@ -452,9 +445,7 @@ class ActivityEditor : PaganActivity() {
                         outer@ for (c in opus_manager_copy.get_all_channels().indices) {
                             val channel = opus_manager_copy.get_channel(c)
                             for (l in channel.lines.indices) {
-                                if (skip_lines.contains(Pair(c, l))) {
-                                    continue
-                                }
+                                if (skip_lines.contains(Pair(c, l))) continue
 
                                 val file = directory.createFile("audio/wav",
                                     this.getString(R.string.export_wav_lines_filename, c, l)
@@ -468,8 +459,7 @@ class ActivityEditor : PaganActivity() {
                                 }
 
                                 tmp_file.deleteOnExit()
-                                val exporter_sample_handle_manager =
-                                    SampleHandleManager(this._soundfont!!, 44100, 22050)
+                                val exporter_sample_handle_manager = SampleHandleManager(this.get_soundfont()!!, 44100, 22050)
 
                                 for (c_b in opus_manager_copy.get_all_channels().indices) {
                                     val channel_copy = opus_manager_copy.get_channel(c_b)
@@ -511,9 +501,7 @@ class ActivityEditor : PaganActivity() {
                                 parcel_file_descriptor.close()
                                 tmp_file.delete()
 
-                                if (export_event_handler.cancelled) {
-                                    break@outer
-                                }
+                                if (export_event_handler.cancelled) break@outer
                             }
                         }
                     }
@@ -522,10 +510,8 @@ class ActivityEditor : PaganActivity() {
         }
 
     private var _result_launcher_export_multi_channel_wav = this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (this._soundfont == null) {
-            // Throw Error. Currently unreachable by ui
-            return@registerForActivityResult
-        }
+        // Throw Error. Currently unreachable by ui
+        if (this.get_soundfont() == null) return@registerForActivityResult
 
         this.getNotificationPermission()
         thread {
@@ -543,41 +529,38 @@ class ActivityEditor : PaganActivity() {
                     var channel_count = 0
                     val skip_channels = mutableSetOf<Int>()
 
-                    opus_manager_copy.get_all_channels()
-                        .forEachIndexed channel_loop@{ i: Int, channel: OpusChannelAbstract<*, *> ->
-                            if (channel.muted) {
-                                skip_channels.add(i)
-                                return@channel_loop
+                    opus_manager_copy.get_all_channels().forEachIndexed channel_loop@{ i: Int, channel: OpusChannelAbstract<*, *> ->
+                        if (channel.muted) {
+                            skip_channels.add(i)
+                            return@channel_loop
+                        }
+
+                        var skip = true
+                        line_loop@ for (line in channel.lines) {
+                            if (line.muted || !skip) {
+                                break
                             }
 
-                            var skip = true
-                            line_loop@ for (line in channel.lines) {
-                                if (line.muted || !skip) {
-                                    break
+                            for (beat in line.beats) {
+                                if (!beat.is_eventless()) {
+                                    skip = false
+                                    continue@line_loop
                                 }
-
-                                for (beat in line.beats) {
-                                    if (!beat.is_eventless()) {
-                                        skip = false
-                                        continue@line_loop
-                                    }
-                                }
-                            }
-
-                            if (skip) {
-                                skip_channels.add(i)
-                            } else {
-                                channel_count += 1
                             }
                         }
+
+                        if (skip) {
+                            skip_channels.add(i)
+                        } else {
+                            channel_count += 1
+                        }
+                    }
 
                     val export_event_handler = MultiExporterEventHandler(this, channel_count)
 
                     var y = 0
                     outer@ for (c in opus_manager_copy.get_all_channels().indices) {
-                        if (skip_channels.contains(c)) {
-                            continue
-                        }
+                        if (skip_channels.contains(c)) continue
 
                         val file = directory.createFile(
                             "audio/wav",
@@ -592,8 +575,7 @@ class ActivityEditor : PaganActivity() {
                         }
 
                         tmp_file.deleteOnExit()
-                        val exporter_sample_handle_manager =
-                            SampleHandleManager(this._soundfont!!, 44100, 22050)
+                        val exporter_sample_handle_manager = SampleHandleManager(this.get_soundfont()!!, 44100, 22050)
 
                         for (c_b in opus_manager_copy.get_all_channels().indices) {
                             val channel_copy = opus_manager_copy.get_channel(c_b)
@@ -639,10 +621,8 @@ class ActivityEditor : PaganActivity() {
 
     private var _result_launcher_export_wav =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (this._soundfont == null) {
-                // Throw Error. Currently unreachable by ui
-                return@registerForActivityResult
-            }
+            // Throw Error. Currently unreachable by ui
+            if (this.get_soundfont() == null) return@registerForActivityResult
 
             this.getNotificationPermission()
             thread {
@@ -660,7 +640,7 @@ class ActivityEditor : PaganActivity() {
 
                         tmp_file.deleteOnExit()
                         val exporter_sample_handle_manager = SampleHandleManager(
-                            this._soundfont!!,
+                            this.get_soundfont()!!,
                             this.resources.getInteger(R.integer.EXPORTED_SAMPLE_RATE),
                             this.resources.getInteger(R.integer.EXPORTED_CHUNK_SIZE)
                         )
@@ -1088,33 +1068,7 @@ class ActivityEditor : PaganActivity() {
                 if (!sf_file.exists()) return@let
 
                 try {
-                    this._soundfont = SoundFont(this, uri)
-                    this.populate_supported_soundfont_instrument_names()
-                    this._sample_handle_manager = SampleHandleManager(
-                        this._soundfont!!,
-                        this.configuration.sample_rate,
-                        this.configuration.sample_rate, // Use Large buffer
-                        ignore_lfo = true
-                    )
-
-                    this._midi_playback_device = PlaybackDevice(
-                        this,
-                        this._sample_handle_manager!!,
-                        WaveGenerator.StereoMode.Stereo
-                    )
-
-                    val buffer_size = this.configuration.sample_rate / 4
-                    this._feedback_sample_manager = SampleHandleManager(
-                        this._soundfont!!,
-                        this.configuration.sample_rate,
-                        buffer_size - 2 + (if (buffer_size % 2 == 0) {
-                            2
-                        } else {
-                            1
-                        })
-                        //sample_limit = this.configuration.playback_sample_limit,
-                        //ignore_envelopes_and_lfo = true
-                    )
+                    this.editor_view_model.audio_interface.set_soundfont(SoundFont(this, uri))
                 } catch (_: Riff.InvalidRiff) {
                     this.configuration.soundfont = null
                     // Invalid soundfont somehow set
@@ -1590,7 +1544,7 @@ class ActivityEditor : PaganActivity() {
         val show_midi_devices = (this._midi_interface.output_devices_connected() && this.get_opus_manager().is_tuning_standard())
 
         options_menu.findItem(R.id.itmLoadProject).isVisible = this.has_projects_saved()
-        options_menu.findItem(R.id.itmPlay).isVisible = (this._soundfont != null) || (this.editor_view_model.active_midi_device != null)
+        options_menu.findItem(R.id.itmPlay).isVisible = (this.get_soundfont() != null) || (this.editor_view_model.active_midi_device != null)
         options_menu.findItem(R.id.itmMidiDeviceInfo).isVisible = show_midi_devices
         options_menu.findItem(R.id.itmDebug).isVisible = this.is_debug_on()
     }
@@ -1763,28 +1717,7 @@ class ActivityEditor : PaganActivity() {
         val (midi_bank, midi_program) = instrument
         this._midi_interface.broadcast_event(BankSelect(midi_channel, midi_bank))
         this._midi_interface.broadcast_event(ProgramChange(midi_channel, midi_program))
-        if (this._feedback_sample_manager != null) {
-            this._feedback_sample_manager!!.select_bank(
-                midi_channel,
-                midi_bank,
-            )
-            this._feedback_sample_manager!!.change_program(
-                midi_channel,
-                midi_program,
-            )
-        }
-
-        // Don't need to update anything but percussion in the sample_handle_manager
-        if (this._sample_handle_manager != null) {
-            this._sample_handle_manager!!.select_bank(
-                midi_channel,
-                midi_bank
-            )
-            this._sample_handle_manager!!.change_program(
-                midi_channel,
-                midi_program
-            )
-        }
+        this.editor_view_model.audio_interface.update_channel_instrument(midi_channel, midi_bank, midi_program)
     }
 
     // Update peripheral device instruments, ie feedback device and midi devices
@@ -1792,27 +1725,12 @@ class ActivityEditor : PaganActivity() {
     fun update_channel_instruments(index: Int? = null) {
         val opus_manager = this.get_opus_manager()
         if (index == null) {
-            this._feedback_sample_manager?.let { handle_manager: SampleHandleManager ->
-                for (i in opus_manager.channels.indices) {
-                    val channel = opus_manager.channels[i]
-                    val midi_channel = opus_manager.get_midi_channel(i)
-                    val (midi_bank, midi_program) = channel.get_instrument()
-                    this._midi_interface.broadcast_event(BankSelect(midi_channel, midi_bank))
-                    this._midi_interface.broadcast_event(ProgramChange(midi_channel, midi_program))
-
-                    handle_manager.select_bank(midi_channel, midi_bank)
-                    handle_manager.change_program(midi_channel, midi_program)
-                }
-            }
-
-            this._sample_handle_manager?.let { handle_manager: SampleHandleManager ->
-                // Don't need to update anything but percussion here
-                for ((i, channel) in opus_manager.get_percussion_channels()) {
-                    val midi_channel = opus_manager.get_midi_channel(i)
-                    val (midi_bank, midi_program) = channel.get_instrument()
-                    handle_manager.select_bank(midi_channel, midi_bank)
-                    handle_manager.change_program(midi_channel, midi_program)
-                }
+            for ((i, channel) in opus_manager.channels.enumerate()) {
+                val midi_channel = opus_manager.get_midi_channel(i)
+                val (midi_bank, midi_program) = channel.get_instrument()
+                this._midi_interface.broadcast_event(BankSelect(midi_channel, midi_bank))
+                this._midi_interface.broadcast_event(ProgramChange(midi_channel, midi_program))
+                this.editor_view_model.audio_interface.update_channel_instrument(midi_channel, midi_bank, midi_program)
             }
         } else {
             val opus_channel = opus_manager.get_channel(index)
@@ -1851,21 +1769,9 @@ class ActivityEditor : PaganActivity() {
 
         if (note > 127) return
 
-        this._feedback_sample_manager?.let { handle_manager : SampleHandleManager ->
-            if (this._temporary_feedback_devices[this._current_feedback_device] == null) {
-                this._temporary_feedback_devices[this._current_feedback_device] = FeedbackDevice(this._feedback_sample_manager!!)
-            }
-            val event = NoteOn79(
-                index = 0,
-                channel = midi_channel,
-                note = note,
-                bend = bend,
-                velocity = (velocity * 127F).toInt() shl 8,
-            )
-
-            this._temporary_feedback_devices[this._current_feedback_device]!!.new_event(event, 250)
-            this._current_feedback_device = (this._current_feedback_device + 1) % this._temporary_feedback_devices.size
-        } ?: {
+        if (this.editor_view_model.audio_interface.has_soundfont()) {
+            this.editor_view_model.audio_interface.play_feedback(midi_channel, note, bend, (velocity * 127F).toInt() shl 8)
+        } else {
             try {
                 this._midi_feedback_dispatcher.play_note(
                     midi_channel,
@@ -1877,7 +1783,7 @@ class ActivityEditor : PaganActivity() {
             } catch (_: VirtualMidiInputDevice.DisconnectedException) {
                 // Feedback shouldn't be necessary here. But i'm sure that'll come back to bite me
             }
-        }()
+        }
     }
 
     fun import_project(uri: Uri) {
@@ -1907,23 +1813,6 @@ class ActivityEditor : PaganActivity() {
         )
         opus_manager.clear_history()
         this.active_project = null
-    }
-
-    fun populate_supported_soundfont_instrument_names() {
-        // populate a cache of available soundfont names so se don't have to open up the soundfont data
-        // every time
-        this._soundfont_supported_instrument_names.clear()
-        val soundfont = this._soundfont
-        if (soundfont != null) {
-            for ((name, program, bank) in soundfont.get_available_presets()) {
-                this._soundfont_supported_instrument_names[Pair(bank, program)] = name
-            }
-        } else {
-            var program = 0
-            for (name in this.resources.getStringArray(R.array.midi_instruments)) {
-                this._soundfont_supported_instrument_names[Pair(0, program++)] = name
-            }
-        }
     }
 
     fun get_supported_instrument_names(): HashMap<Pair<Int, Int>, String> {
@@ -1957,7 +1846,7 @@ class ActivityEditor : PaganActivity() {
         }
 
         try {
-            this._soundfont = SoundFont(this, soundfont_file.uri)
+            this.editor_view_model.audio_interface.set_soundfont(SoundFont(this, soundfont_file.uri))
         } catch (_: Riff.InvalidRiff) {
             // Possible if user puts the sf2 in their files manually
             this.feedback_msg(this.getString(R.string.invalid_soundfont))
@@ -2037,24 +1926,14 @@ class ActivityEditor : PaganActivity() {
             }
         }
     }
-
     fun get_soundfont(): SoundFont? {
-        return this._soundfont
+        return this.editor_view_model.audio_interface.soundfont
     }
 
     fun disable_soundfont() {
         if (!this.update_playback_state_soundfont(PlaybackState.NotReady)) return
-
-        if (this._feedback_sample_manager != null) {
-            this.disconnect_feedback_device()
-        }
-        this._sample_handle_manager?.destroy()
-
-        this._soundfont?.destroy()
-        this._soundfont = null
-        this._sample_handle_manager = null
+        this.editor_view_model.unset_soundfont()
         this._midi_playback_device = null
-        this._soundfont_supported_instrument_names.clear()
 
         this.update_channel_instruments()
         this.get_ui_facade().clear_percussion_names()
@@ -2482,13 +2361,7 @@ class ActivityEditor : PaganActivity() {
              * TODO: Put the ignore envelope/lfo option somewhere better.
              * I don't think it should be in apres if theres a reasonable way to avoid it
              */
-            this._sample_handle_manager?.destroy()
-            this._sample_handle_manager = SampleHandleManager(
-                this._soundfont!!,
-                this.configuration.sample_rate,
-                this.configuration.sample_rate,
-                ignore_lfo = true
-            )
+            this.editor_view_model.audio_interface.reset()
 
             this._midi_playback_device = PlaybackDevice(
                 this,
@@ -2543,31 +2416,12 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun disconnect_feedback_device() {
-        this._temporary_feedback_devices.forEachIndexed { i: Int, device: FeedbackDevice? ->
-            device?.kill()
-            device?.destroy()
-            this._temporary_feedback_devices[i] = null
-        }
-        this._feedback_sample_manager?.destroy()
-        this._feedback_sample_manager = null
+        this.editor_view_model.audio_interface.disconnect_feedback_device()
     }
 
     fun connect_feedback_device() {
-        if (this._soundfont == null) return
-
-        this.disconnect_feedback_device()
-
-        val buffer_size = this.configuration.sample_rate / 2
-        this._feedback_sample_manager = SampleHandleManager(
-            this._soundfont!!,
-            this.configuration.sample_rate,
-            buffer_size - 2 + (if (buffer_size % 2 == 0) {
-                2
-            } else {
-                1
-            })
-        )
-        this._current_feedback_device = 0
+        if (this.get_soundfont() == null) return
+        this.editor_view_model.audio_interface.connect_feedback_device()
     }
 
     fun get_notification(): NotificationCompat.Builder? {

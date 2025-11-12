@@ -60,23 +60,21 @@ class UIChangeBill {
         this.active_percussion_names.clear()
     }
 
-    fun queue_cell_change(coordinate: EditorTable.Coordinate, tree: ReducibleTree<out OpusEvent>) {
+    fun update_cell(coordinate: EditorTable.Coordinate, tree: ReducibleTree<out OpusEvent>) {
         this.cell_map[coordinate.y][coordinate.x] = tree
     }
 
-    fun queue_column_change(column: Int, is_tagged: Boolean) {
+    fun update_column(column: Int, is_tagged: Boolean) {
         this.column_data[column].is_tagged = is_tagged
     }
 
-    fun queue_new_row(y: Int, cells: MutableList<ReducibleTree<out OpusEvent>>, new_line_data: LineData) {
+    fun add_row(y: Int, cells: MutableList<ReducibleTree<out OpusEvent>>, new_line_data: LineData) {
         this.line_data.add(y, new_line_data)
         this.cell_map.add(y, cells)
     }
 
-    fun queue_enable_delete_and_copy_buttons() {
-        this.project_exists = true
-        // activity.findViewById<View>(R.id.btnDeleteProject).isEnabled = true
-        // activity.findViewById<View>(R.id.btnCopyProject).isEnabled = true
+    fun set_project_exists(value: Boolean) {
+        this.project_exists = value
     }
 
     fun queue_config_drawer_redraw_export_button() {
@@ -85,9 +83,6 @@ class UIChangeBill {
 
     fun update_line(y: Int, line_data: LineData) {
         this.line_data[y] = line_data
-    }
-
-    fun queue_row_change(y: Int, state_only: Boolean = false) {
     }
 
     fun remove_row(y: Int, count: Int) {
@@ -135,10 +130,6 @@ class UIChangeBill {
     }
 
     fun queue_refresh_choose_percussion_button(channel: Int, line_offset: Int) {
-        TODO()
-    }
-
-    fun queue_full_refresh(restore_position: Boolean = false) {
         TODO()
     }
 
@@ -251,7 +242,6 @@ class UIChangeBill {
     fun clear_percussion_names() {
         this.active_percussion_names.clear()
     }
-
 
     fun is_column_selected(cursor: CacheCursor, x: Int): Boolean {
         return when (cursor.type) {

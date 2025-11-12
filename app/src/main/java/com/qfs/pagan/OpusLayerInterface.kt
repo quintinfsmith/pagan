@@ -69,6 +69,8 @@ class OpusLayerInterface : OpusLayerHistory() {
     var latest_set_octave: Int? = null
     var latest_set_offset: Int? = null
 
+    var soundfont: Soundfont? = null
+
     fun attach_activity(activity: ActivityEditor) {
         this._activity = activity
     }
@@ -167,7 +169,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     private fun _queue_cell_change(beat_key: BeatKey) {
         if (this.project_changing || this.ui_facade.is_full_locked()) return
 
-        this.ui_facade.queue_cell_change(
+        this.ui_facade.update_cell(
             EditorTable.Coordinate(
                 y = this.get_visible_row_from_ctl_line(
                     this.get_actual_line_index(
@@ -187,7 +189,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         val controller = this.get_controller<EffectEvent>(type)
         if (!controller.visible || this.ui_facade.is_full_locked()) return
 
-        this.ui_facade.queue_cell_change(
+        this.ui_facade.update_cell(
             EditorTable.Coordinate(
                 y = this.get_visible_row_from_ctl_line_global(type),
                 x = beat
@@ -200,7 +202,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         val controller = this.get_all_channels()[channel].get_controller<EffectEvent>(type)
         if (!controller.visible || this.ui_facade.is_full_locked()) return
 
-        this.ui_facade.queue_cell_change(
+        this.ui_facade.update_cell(
             EditorTable.Coordinate(
                 y = this.get_visible_row_from_ctl_line_channel(type, channel),
                 x = beat
@@ -213,7 +215,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         val controller = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].get_controller<EffectEvent>(type)
         if (!controller.visible || this.ui_facade.is_full_locked()) return
 
-        this.ui_facade.queue_cell_change(
+        this.ui_facade.update_cell(
             EditorTable.Coordinate(
                 y = this.get_visible_row_from_ctl_line_line(type, beat_key.channel, beat_key.line_offset),
                 x = beat_key.beat
@@ -757,7 +759,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         for (j in 0 until lines) {
             val line = channels[channel].lines[j]
 
-            this.ui_facade.queue_new_row(
+            this.ui_facade.add_row(
                 ctl_row++,
                 MutableList(line.beats.size) { line.beats[it].copy() },
                 UIChangeBill.LineData(
@@ -892,13 +894,13 @@ class OpusLayerInterface : OpusLayerHistory() {
                 } else {
                     null
                 }
-                this.ui_facade.queue_new_row(
+                this.ui_facade.add_row(
                     i++,
                     MutableList(this.length) { line.beats[it].copy() },
                     UIChangeBill.LineData(c, l, null, instrument)
                 )
                 for ((type, controller) in line.controllers.get_all()) {
-                    this.ui_facade.queue_new_row(
+                    this.ui_facade.add_row(
                         i++,
                         MutableList(this.length) { controller.beats[it].copy() },
                         UIChangeBill.LineData(c, l, type, null)
@@ -906,7 +908,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 }
             }
             for ((type, controller) in channel.controllers.get_all()) {
-                this.ui_facade.queue_new_row(
+                this.ui_facade.add_row(
                     i++,
                     MutableList(this.length) { controller.beats[it].copy() },
                     UIChangeBill.LineData(c, null, type, null)
@@ -914,7 +916,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             }
         }
         for ((type, controller) in this.controllers.get_all()) {
-            this.ui_facade.queue_new_row(
+            this.ui_facade.add_row(
                 i++,
                 MutableList(this.length) { controller.beats[it].copy() },
                 UIChangeBill.LineData(null, null, type, null)
@@ -1604,7 +1606,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     private fun _add_controller_to_column_width_map(y: Int, line: EffectController<*>, channel: Int?, line_offset: Int?, ctl_type: EffectType) {
-        this.ui_facade.queue_new_row(
+        this.ui_facade.add_row(
             y,
             MutableList(line.beats.size) { line.beats[it].copy() },
             UIChangeBill.LineData(channel, line_offset, ctl_type, null)
@@ -1626,7 +1628,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             working_channel.lines[line_offset]
         }
 
-        this.ui_facade.queue_new_row(
+        this.ui_facade.add_row(
             visible_row,
             MutableList(new_line.beats.size) { new_line.beats[it].copy() },
             UIChangeBill.LineData(
@@ -1890,16 +1892,20 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     override fun tag_section(beat: Int, title: String?) {
         super.tag_section(beat, title)
-        this.ui_facade.queue_column_change(beat, true)
+        this.ui_facade.update_column(beat, true)
     }
 
     override fun remove_tagged_section(beat: Int) {
         super.remove_tagged_section(beat)
-        this.ui_facade.queue_column_change(beat, false)
+        this.ui_facade.update_column(beat, false)
     }
 
     fun is_initialized(): Boolean {
         return this.initialized
     }
 
+
+    fun set_soundfont(soundfont: SoundFont) {
+        this.soundfont = soundfont
+    }
 }

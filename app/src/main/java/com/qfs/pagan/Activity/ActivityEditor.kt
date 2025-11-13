@@ -161,9 +161,13 @@ class ActivityEditor : PaganActivity() {
         var action_interface = ActionTracker()
         var opus_manager = OpusLayerInterface()
         var active_project: Uri? = null
-        var active_midi_device: MidiDeviceInfo? = null
         var audio_interface = AudioInterface()
         var available_preset_names: HashMap<Pair<Int, Int>, String>? = null
+
+        var active_midi_device: MidiDeviceInfo? = null
+        var playback_device: PlaybackDevice? = null
+        var playback_state_soundfont: PlaybackState = PlaybackState.NotReady
+        var playback_state_midi: PlaybackState = PlaybackState.NotReady
 
         fun export_wav(
             opus_manager: OpusLayerBase,
@@ -208,6 +212,7 @@ class ActivityEditor : PaganActivity() {
             this.opus_manager.ui_facade.clear_instrument_names()
             this.audio_interface.unset_soundfont()
             this.available_preset_names = null
+            this.destroy_playback_device()
         }
 
         fun populate_active_percussion_names(channel_index: Int) {
@@ -223,6 +228,25 @@ class ActivityEditor : PaganActivity() {
             for ((name, program, bank) in soundfont.get_available_presets()) {
                 this.available_preset_names?[Pair(bank, program)] = name
             }
+
+            this.create_playback_device()
+        }
+
+        fun set_sample_rate(new_rate: Int) {
+            this.audio_interface.set_sample_rate(new_rate)
+            this.create_playback_device()
+        }
+
+        fun create_playback_device() {
+            this.playback_device = PlaybackDevice(
+                this.opus_manager,
+                this.audio_interface.playback_sample_handle_manager!!,
+                WaveGenerator.StereoMode.Stereo
+            )
+        }
+        fun destroy_playback_device() {
+            this.playback_device?.kill()
+            this.playback_device = null
         }
     }
 
@@ -240,8 +264,6 @@ class ActivityEditor : PaganActivity() {
 
     private lateinit var _binding: ActivityEditorBinding
     private var _options_menu: Menu? = null
-    var playback_state_soundfont: PlaybackState = PlaybackState.NotReady
-    var playback_state_midi: PlaybackState = PlaybackState.NotReady
     private var _forced_title_text: String? = null
     private var _blocker_scroll_y: Float? = null
     private var broadcast_receiver = PaganBroadcastReceiver()
@@ -1085,6 +1107,7 @@ class ActivityEditor : PaganActivity() {
 
                 try {
                     this.editor_view_model.audio_interface.set_soundfont(SoundFont(this, uri))
+                    this.editor_view_model.playback_device?.attach_activity(this)
                 } catch (_: Riff.InvalidRiff) {
                     this.configuration.soundfont = null
                     // Invalid soundfont somehow set
@@ -1914,8 +1937,6 @@ class ActivityEditor : PaganActivity() {
         if (!this.update_playback_state_soundfont(PlaybackState.NotReady)) return
         this.editor_view_model.unset_soundfont()
         this._midi_playback_device = null
-
-        this.update_channel_instruments()
     }
 
     fun get_ui_facade(): UIChangeBill {
@@ -2312,7 +2333,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun reinit_playback_device() {
-        this._midi_playback_device?.kill()
+        this.editor_view_model.destroy_playback_device()
 
         if (this.get_soundfont() != null) {
             /*
@@ -2320,14 +2341,8 @@ class ActivityEditor : PaganActivity() {
              * I don't think it should be in apres if theres a reasonable way to avoid it
              */
             this.editor_view_model.audio_interface.reset()
-
-            this._midi_playback_device = PlaybackDevice(
-                this,
-                this._sample_handle_manager!!,
-                WaveGenerator.StereoMode.Stereo
-            )
-        } else {
-            this._midi_playback_device = null
+            this.editor_view_model.create_playback_device()
+            this.editor_view_model.playback_device?.attach_activity(this)
         }
     }
 
@@ -2484,8 +2499,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     override fun onDestroy() {
-        this._sample_handle_manager?.destroy()
-        this._feedback_sample_manager?.destroy()
+        this.editor_view_model.detach_activity(this)
         super.onDestroy()
     }
 

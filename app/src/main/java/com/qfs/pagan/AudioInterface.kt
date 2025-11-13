@@ -4,11 +4,6 @@ import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfont2.Preset
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
-import com.qfs.apres.soundfontplayer.WaveGenerator
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.iterator
-import kotlin.collections.set
 import kotlin.math.max
 import kotlin.math.min
 
@@ -16,7 +11,6 @@ class AudioInterface {
     var sample_rate: Int = 44100
     var soundfont: SoundFont? = null
     var playback_sample_handle_manager: SampleHandleManager? = null
-    var playback_device: PlaybackDevice? = null
     var soundfont_supported_instrument_names = HashMap<Pair<Int, Int>, String>()
     var feedback_revolver = FeedbackRevolver(4)
 
@@ -53,10 +47,9 @@ class AudioInterface {
     }
 
     fun set_sample_rate(new_rate: Int) {
-        val original_rate = this.sample_rate
+        if (this.sample_rate == new_rate) return
         this.sample_rate = new_rate
-        if (original_rate == new_rate || this.soundfont == null) return
-        this.set_soundfont(this.soundfont!!)
+        this.soundfont?.let { this.set_soundfont(it) }
     }
 
     fun has_soundfont(): Boolean {
@@ -64,9 +57,7 @@ class AudioInterface {
     }
 
     fun reset() {
-        this.soundfont?.let {
-            this.set_soundfont(it)
-        }
+        this.soundfont?.let { this.set_soundfont(it) }
     }
 
     fun set_soundfont(soundfont: SoundFont) {
@@ -78,12 +69,6 @@ class AudioInterface {
             this.sample_rate,
             this.sample_rate, // Use Large buffer
             ignore_lfo = true
-        )
-
-        this.playback_device = PlaybackDevice(
-            this,
-            this.playback_sample_handle_manager!!,
-            WaveGenerator.StereoMode.Stereo
         )
 
         this.connect_feedback_device()
@@ -171,5 +156,6 @@ class AudioInterface {
             it.second
         }
     }
+
 
 }

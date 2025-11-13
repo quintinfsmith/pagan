@@ -627,6 +627,7 @@ open class PaganActivity: AppCompatActivity() {
         }
         this.on_reticle_hide()
     }
+
     open fun on_reticle_show() { }
     open fun on_reticle_hide() { }
 

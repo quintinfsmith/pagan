@@ -108,9 +108,6 @@ class PlaybackDevice(val opus_manager: OpusManager, sample_handle_manager: Sampl
         this._first_beat_passed = false
         val sample_frame_map = this.sample_frame_map as PlaybackFrameMap
 
-        // TODO: This shouldn't depend on if the activity is *currently* attached
-        sample_frame_map.clip_same_line_release = this.activity?.configuration?.clip_same_line_release ?: false
-
         sample_frame_map.is_looping = play_in_loop
         sample_frame_map.parse_opus()
         val start_frame = sample_frame_map.get_marked_frame(start_beat)!!
@@ -125,5 +122,9 @@ class PlaybackDevice(val opus_manager: OpusManager, sample_handle_manager: Sampl
         }
 
         this.play(start_frame)
+    }
+
+    fun set_clip_same_line_release(value: Boolean) {
+        (this.sample_frame_map as PlaybackFrameMap).clip_same_line_release = value
     }
 }

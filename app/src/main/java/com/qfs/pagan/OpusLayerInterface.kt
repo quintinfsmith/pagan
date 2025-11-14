@@ -1861,27 +1861,16 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     fun set_note_octave_at_cursor(octave: Int) {
-        if (this.cursor.mode != CursorMode.Single) {
-            throw IncorrectCursorMode(this.cursor.mode, CursorMode.Single)
-        }
+        if (this.cursor.mode != CursorMode.Single) throw IncorrectCursorMode(this.cursor.mode, CursorMode.Single)
 
-        val current_tree_position = this.get_actual_position(
-            this.cursor.get_beatkey(),
-            this.cursor.get_position()
-        )
+        val current_tree_position = this.get_actual_position(this.cursor.get_beatkey(), this.cursor.get_position())
         this._set_note_octave(current_tree_position.first, current_tree_position.second, octave)
     }
 
     fun set_note_offset_at_cursor(offset: Int) {
-        if (this.cursor.mode != CursorMode.Single) {
-            throw IncorrectCursorMode(this.cursor.mode, CursorMode.Single)
-        }
+        if (this.cursor.mode != CursorMode.Single) throw IncorrectCursorMode(this.cursor.mode, CursorMode.Single)
 
-        val current_tree_position = this.get_actual_position(
-            this.cursor.get_beatkey(),
-            this.cursor.get_position()
-        )
-
+        val current_tree_position = this.get_actual_position(this.cursor.get_beatkey(), this.cursor.get_position())
         this._set_note_offset(current_tree_position.first, current_tree_position.second, offset)
     }
 

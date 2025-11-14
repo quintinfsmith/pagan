@@ -61,7 +61,6 @@ import androidx.core.view.isNotEmpty
 import androidx.core.view.isVisible
 import androidx.documentfile.provider.DocumentFile
 import androidx.drawerlayout.widget.DrawerLayout
-import androidx.lifecycle.ViewModel
 import com.google.android.material.button.MaterialButton
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
@@ -76,10 +75,8 @@ import com.qfs.apres.soundfont2.Riff
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
-import com.qfs.apres.soundfontplayer.WaveGenerator
 import com.qfs.json.JSONHashMap
 import com.qfs.pagan.ActionTracker
-import com.qfs.pagan.AudioInterface
 import com.qfs.pagan.CompatibleFileType
 import com.qfs.pagan.DrawerChannelMenu.ChannelOptionAdapter
 import com.qfs.pagan.DrawerChannelMenu.ChannelOptionRecycler
@@ -90,7 +87,6 @@ import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.PaganBroadcastReceiver
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.PlaybackDevice
-import com.qfs.pagan.PlaybackFrameMap
 import com.qfs.pagan.R
 import com.qfs.pagan.TuningMapRecycler
 import com.qfs.pagan.TuningMapRecyclerAdapter
@@ -124,6 +120,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocity
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.uibill.UIChangeBill
+import com.qfs.pagan.viewmodel.ViewModelEditor
 import java.io.BufferedOutputStream
 import java.io.BufferedReader
 import java.io.DataOutputStream
@@ -156,101 +153,7 @@ class ActivityEditor : PaganActivity() {
         Stopping
     }
 
-    class MainViewModel: ViewModel() {
-        var export_handle: WavConverter? = null
-        var action_interface = ActionTracker()
-        var opus_manager = OpusLayerInterface()
-        var active_project: Uri? = null
-        var audio_interface = AudioInterface()
-        var available_preset_names: HashMap<Pair<Int, Int>, String>? = null
-
-        var active_midi_device: MidiDeviceInfo? = null
-        var playback_device: PlaybackDevice? = null
-        var playback_state_soundfont: PlaybackState = PlaybackState.NotReady
-        var playback_state_midi: PlaybackState = PlaybackState.NotReady
-
-        fun export_wav(
-            opus_manager: OpusLayerBase,
-            sample_handle_manager: SampleHandleManager,
-            target_output_stream: DataOutputStream,
-            tmp_file: File, configuration: PaganConfiguration? = null,
-            handler: WavConverter.ExporterEventHandler,
-            ignore_global_effects: Boolean = false,
-            ignore_channel_effects: Boolean = false,
-            ignore_line_effects: Boolean = false,
-        ) {
-            val frame_map = PlaybackFrameMap(opus_manager, sample_handle_manager)
-            frame_map.clip_same_line_release = configuration?.clip_same_line_release != false
-            frame_map.parse_opus(
-                ignore_global_effects,
-                ignore_channel_effects,
-                ignore_line_effects
-            )
-
-            val start_frame = frame_map.get_marked_frames()[0]
-
-            // Prebuild the first buffer's worth of sample handles, the rest happen in the get_new_handles()
-            for (i in start_frame .. start_frame + sample_handle_manager.buffer_size) {
-                frame_map.check_frame(i)
-            }
-
-            this.export_handle = WavConverter(sample_handle_manager)
-            this.export_handle?.export_wav(frame_map, target_output_stream, tmp_file, handler)
-            this.export_handle = null
-        }
-
-        fun cancel_export() {
-            val handle = this.export_handle ?: return
-            handle.cancel_flagged = true
-        }
-
-        fun is_exporting(): Boolean {
-            return this.export_handle != null
-        }
-
-        fun unset_soundfont() {
-            this.opus_manager.ui_facade.clear_instrument_names()
-            this.audio_interface.unset_soundfont()
-            this.available_preset_names = null
-            this.destroy_playback_device()
-        }
-
-        fun populate_active_percussion_names(channel_index: Int) {
-            val midi_channel = this.opus_manager.get_midi_channel(channel_index)
-            val instrument_options = this.audio_interface.get_instrument_options(midi_channel)
-            this.opus_manager.ui_facade.set_instrument_names(channel_index, instrument_options)
-        }
-
-        fun set_soundfont(soundfont: SoundFont) {
-            this.opus_manager.ui_facade.clear_instrument_names()
-            this.audio_interface.set_soundfont(soundfont)
-            this.available_preset_names = HashMap()
-            for ((name, program, bank) in soundfont.get_available_presets()) {
-                this.available_preset_names?[Pair(bank, program)] = name
-            }
-
-            this.create_playback_device()
-        }
-
-        fun set_sample_rate(new_rate: Int) {
-            this.audio_interface.set_sample_rate(new_rate)
-            this.create_playback_device()
-        }
-
-        fun create_playback_device() {
-            this.playback_device = PlaybackDevice(
-                this.opus_manager,
-                this.audio_interface.playback_sample_handle_manager!!,
-                WaveGenerator.StereoMode.Stereo
-            )
-        }
-        fun destroy_playback_device() {
-            this.playback_device?.kill()
-            this.playback_device = null
-        }
-    }
-
-    val editor_view_model: MainViewModel by this.viewModels()
+    val editor_view_model: ViewModelEditor by this.viewModels()
     private var _initial_load = true // Used to prevent save dialog from popping up on first load/new/import
     // flag to indicate that the landing page has been navigated away from for navigation management
     private var _integer_dialog_defaults = HashMap<String, Int>()
@@ -287,15 +190,13 @@ class ActivityEditor : PaganActivity() {
         var working_y = 0
         var file_uri: Uri? = null
         var cancelled = false
-        val timeout_millis= 5000L
+        val timeout_millis = 5000L
         val MAX_PROGRESS = 100
 
         val notification_manager = NotificationManagerCompat.from(this.activity)
 
         override fun on_start() {
-            if (this.working_y != 0) {
-                return
-            }
+            if (this.working_y != 0) return
 
             this.activity.runOnUiThread {
                 this.activity.findViewById<MaterialButton>(R.id.btnExportProject)?.visibility = View.INVISIBLE
@@ -600,10 +501,7 @@ class ActivityEditor : PaganActivity() {
                     outer@ for (c in opus_manager_copy.get_all_channels().indices) {
                         if (skip_channels.contains(c)) continue
 
-                        val file = directory.createFile(
-                            "audio/wav",
-                            this.getString(R.string.export_wav_channels_filename, c)
-                        ) ?: continue
+                        val file = directory.createFile("audio/wav", this.getString(R.string.export_wav_channels_filename, c)) ?: continue
                         val file_uri = file.uri
 
                         /* TMP file is necessary since we can't easily predict the exact frame count. */
@@ -666,9 +564,7 @@ class ActivityEditor : PaganActivity() {
             thread {
                 if (result.resultCode == RESULT_OK) {
                     result?.data?.data?.also { uri ->
-                        if (this.editor_view_model.export_handle != null) {
-                            return@thread
-                        }
+                        if (this.editor_view_model.export_handle != null) return@thread
 
                         /* TMP file is necessary since we can't easily predict the exact frame count. */
                         val tmp_file = File("${this.filesDir}/.tmp_wav_data")
@@ -683,9 +579,7 @@ class ActivityEditor : PaganActivity() {
                             this.resources.getInteger(R.integer.EXPORTED_CHUNK_SIZE)
                         )
 
-                        val parcel_file_descriptor =
-                            this.applicationContext.contentResolver.openFileDescriptor(uri, "w")
-                                ?: return@thread
+                        val parcel_file_descriptor = this.applicationContext.contentResolver.openFileDescriptor(uri, "w") ?: return@thread
                         val output_stream = FileOutputStream(parcel_file_descriptor.fileDescriptor)
                         val buffered_output_stream = BufferedOutputStream(output_stream)
                         val data_output_buffer = DataOutputStream(buffered_output_stream)
@@ -916,7 +810,7 @@ class ActivityEditor : PaganActivity() {
     fun recheck_active_midi_device() {
         this.editor_view_model.active_midi_device?.let {
             if (this.is_connected_to_physical_device()) {
-                this.playback_state_midi = PlaybackState.Ready
+                this.editor_view_model.playback_state_midi = PlaybackState.Ready
                 this._midi_interface.open_output_device(it)
             }  else {
                 this.set_active_midi_device(null)
@@ -925,8 +819,8 @@ class ActivityEditor : PaganActivity() {
 
         // Second check here if midi device wasn't found
         if (this.editor_view_model.active_midi_device == null) {
-            if (this._midi_playback_device != null) {
-                this.playback_state_soundfont = PlaybackState.Ready
+            if (this.editor_view_model.playback_device != null) {
+                this.editor_view_model.playback_state_soundfont = PlaybackState.Ready
             }
             this.soundfont_file_check()
         }
@@ -1245,8 +1139,8 @@ class ActivityEditor : PaganActivity() {
             R.id.itmImportMidi -> {
                 this.result_launcher_import.launch(
                     Intent().apply {
-                        this.setAction(Intent.ACTION_GET_CONTENT)
-                        this.setType("*/*") // Allow all, for some reason the emulators don't recognize midi files
+                        this.action = Intent.ACTION_GET_CONTENT
+                        this.type = "*/*" // Allow all, for some reason the emulators don't recognize midi files
                     }
                 )
             }
@@ -1278,7 +1172,7 @@ class ActivityEditor : PaganActivity() {
 
     fun handle_play_press(long_press: Boolean) {
         if (this.editor_view_model.active_midi_device == null) {
-            when (this.playback_state_soundfont) {
+            when (this.editor_view_model.playback_state_soundfont) {
                 PlaybackState.Ready -> {
                     this.playback_start(long_press)
                 }
@@ -1291,7 +1185,7 @@ class ActivityEditor : PaganActivity() {
                 else -> {}
             }
         } else {
-            when (this.playback_state_midi) {
+            when (this.editor_view_model.playback_state_midi) {
                 PlaybackState.Ready -> {
                     this.playback_start_midi_output(long_press)
                 }
@@ -1396,16 +1290,14 @@ class ActivityEditor : PaganActivity() {
     private fun _disable_blocker_view() {
         // Assume playback states have been updated BEFORE calling this function
         // Need to check both since they both use the same blocker, though it should never be an issue
-        if (this.playback_state_midi == PlaybackState.Playing || this.playback_state_soundfont == PlaybackState.Playing) {
-            return
-        }
+        if (this.editor_view_model.in_playback()) return
         this.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         val blocker_view = this.findViewById<LinearLayout>(R.id.llClearOverlay) ?: return
         blocker_view.visibility = View.GONE
     }
 
     private fun playback_start(loop_playback: Boolean = false) {
-        if (!this.update_playback_state_soundfont(PlaybackState.Queued)) {
+        if (!this.editor_view_model.update_playback_state_soundfont(PlaybackState.Queued)) {
             this.feedback_msg(this.getString(R.string.playback_failed))
             return
         }
@@ -1431,12 +1323,13 @@ class ActivityEditor : PaganActivity() {
             //    opus_manager.sample_handle_manager?.change_program(channel.midi_channel, program)
             //}
 
-            this._midi_playback_device?.play_opus(start_point, loop_playback)
+            this.editor_view_model.playback_device?.set_clip_same_line_release(this.configuration.clip_same_line_release)
+            this.editor_view_model.playback_device?.play_opus(start_point, loop_playback)
         }
     }
 
     private fun playback_start_midi_output(loop_playback: Boolean = false) {
-        if (!this.update_playback_state_midi(PlaybackState.Queued)) {
+        if (!this.editor_view_model.update_playback_state_midi(PlaybackState.Queued)) {
             this.feedback_msg(this.getString(R.string.playback_failed))
             return
         }
@@ -1464,7 +1357,7 @@ class ActivityEditor : PaganActivity() {
             this.set_playback_button(if (loop_playback) R.drawable.icon_pause_loop else R.drawable.icon_pause)
         }
 
-        if (!this.update_playback_state_midi(PlaybackState.Playing)) {
+        if (!this.editor_view_model.update_playback_state_midi(PlaybackState.Playing)) {
             this.restore_midi_playback_state()
             return
         }
@@ -1486,15 +1379,15 @@ class ActivityEditor : PaganActivity() {
     }
 
     internal fun playback_stop() {
-        if (this.update_playback_state_soundfont(PlaybackState.Stopping)) {
+        if (this.editor_view_model.update_playback_state_soundfont(PlaybackState.Stopping)) {
             this.loading_reticle_hide()
             this.clear_forced_title()
-            this._midi_playback_device?.kill()
+            this.editor_view_model.playback_device?.kill()
         }
     }
 
     internal fun playback_stop_midi_output() {
-        if (this.update_playback_state_midi(PlaybackState.Stopping)) {
+        if (this.editor_view_model.update_playback_state_midi(PlaybackState.Stopping)) {
             this.loading_reticle_hide()
             this.clear_forced_title()
             this._virtual_input_device.stop()
@@ -1503,7 +1396,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun restore_playback_state() {
-        if (this.update_playback_state_soundfont(PlaybackState.Ready)) {
+        if (this.editor_view_model.update_playback_state_soundfont(PlaybackState.Ready)) {
             this.runOnUiThread {
                 this.set_playback_button(R.drawable.icon_play)
                 this._disable_blocker_view()
@@ -1512,7 +1405,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun restore_midi_playback_state() {
-        if (this.update_playback_state_midi(PlaybackState.Ready)) {
+        if (this.editor_view_model.update_playback_state_midi(PlaybackState.Ready)) {
             this.runOnUiThread {
                 this.set_playback_button(R.drawable.icon_play)
                 this._disable_blocker_view()
@@ -1836,7 +1729,7 @@ class ActivityEditor : PaganActivity() {
         }
 
         // Failed to change playback_state
-        if (!this.update_playback_state_soundfont(PlaybackState.Ready)) return
+        if (!this.editor_view_model.update_playback_state_soundfont(PlaybackState.Ready)) return
 
         val soundfont_directory = this.get_soundfont_directory()
         var soundfont_file = soundfont_directory
@@ -1880,63 +1773,13 @@ class ActivityEditor : PaganActivity() {
         }
     }
 
-    fun update_playback_state_soundfont(next_state: PlaybackState): Boolean {
-        this.playback_state_soundfont = this._update_playback_state(this.playback_state_soundfont, next_state) ?: return false
-        return true
-    }
-
-    fun update_playback_state_midi(next_state: PlaybackState): Boolean {
-        this.playback_state_midi = this._update_playback_state(this.playback_state_midi, next_state) ?: return false
-        return true
-    }
-
-    private fun _update_playback_state(input_state: PlaybackState, next_state: PlaybackState): PlaybackState? {
-        return when (input_state) {
-            PlaybackState.NotReady -> {
-                when (next_state) {
-                    PlaybackState.NotReady,
-                    PlaybackState.Ready -> next_state
-                    else -> null
-                }
-            }
-            PlaybackState.Ready -> {
-                when (next_state) {
-                    PlaybackState.NotReady,
-                    PlaybackState.Ready,
-                    PlaybackState.Queued -> next_state
-                    else -> null
-                }
-            }
-            PlaybackState.Playing -> {
-                when (next_state) {
-                    PlaybackState.Ready,
-                    PlaybackState.Stopping -> next_state
-                    else -> null
-                }
-            }
-            PlaybackState.Queued -> {
-                when (next_state) {
-                    PlaybackState.Ready,
-                    PlaybackState.Playing -> next_state
-                    else -> null
-                }
-            }
-            PlaybackState.Stopping -> {
-                when (next_state) {
-                    PlaybackState.Ready -> next_state
-                    else -> null
-                }
-            }
-        }
-    }
     fun get_soundfont(): SoundFont? {
         return this.editor_view_model.audio_interface.soundfont
     }
 
     fun disable_soundfont() {
-        if (!this.update_playback_state_soundfont(PlaybackState.NotReady)) return
+        if (!this.editor_view_model.update_playback_state_soundfont(PlaybackState.NotReady)) return
         this.editor_view_model.unset_soundfont()
-        this._midi_playback_device = null
     }
 
     fun get_ui_facade(): UIChangeBill {
@@ -2056,7 +1899,6 @@ class ActivityEditor : PaganActivity() {
                 lockout = false
             }
         })
-
 
         flColorDisplay.setBackgroundColor(Color.rgb(rniRed.get_value() ?: 0, rniGreen.get_value() ?: 0, rniBlue.get_value() ?: 0))
         AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
@@ -2347,7 +2189,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun in_playback(): Boolean {
-        return PlaybackState.Playing in listOf(this.playback_state_soundfont, this.playback_state_midi)
+        return PlaybackState.Playing in listOf(this.editor_view_model.playback_state_soundfont, this.editor_view_model.playback_state_midi)
     }
 
     fun has_notification_permission(): Boolean {
@@ -2499,7 +2341,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     override fun onDestroy() {
-        this.editor_view_model.detach_activity(this)
+        this.editor_view_model.playback_device?.detach_activity()
         super.onDestroy()
     }
 
@@ -2930,10 +2772,6 @@ class ActivityEditor : PaganActivity() {
             }
         }
 
-        if (original.allow_std_percussion != this.configuration.allow_std_percussion) {
-            this.populate_supported_soundfont_instrument_names()
-        }
-
         if (original.relative_mode != this.configuration.relative_mode) {
             if (this.active_context_menu is ContextMenuLeaf) {
                 this.active_context_menu!!.refresh()
@@ -2999,7 +2837,7 @@ class ActivityEditor : PaganActivity() {
         val current_device_info = this.editor_view_model.active_midi_device
         if (device_info == current_device_info) return
 
-        when (this.playback_state_soundfont) {
+        when (this.editor_view_model.playback_state_soundfont) {
             PlaybackState.Playing,
             PlaybackState.Queued -> {
                 this.playback_stop()
@@ -3007,7 +2845,7 @@ class ActivityEditor : PaganActivity() {
             else -> { /* pass */ }
         }
 
-        when (this.playback_state_midi) {
+        when (this.editor_view_model.playback_state_midi) {
             PlaybackState.Playing,
             PlaybackState.Queued -> {
                 this.playback_stop_midi_output()
@@ -3024,10 +2862,9 @@ class ActivityEditor : PaganActivity() {
 
         if (device_info != null) {
             this._midi_interface.open_output_device(device_info)
-            this.playback_state_midi = PlaybackState.Ready
+            this.editor_view_model.playback_state_midi = PlaybackState.Ready
             this.disable_soundfont()
             // These 2 otherwise get handled in set_soundfont()
-            this.populate_supported_soundfont_instrument_names()
             this.findViewById<ChannelOptionRecycler?>(R.id.rvActiveChannels)?.notify_soundfont_changed()
         } else {
             this.set_soundfont()
@@ -3064,7 +2901,6 @@ class ActivityEditor : PaganActivity() {
 
             // Need to prematurely update the channel instrument to find the lowest possible instrument
             this.update_channel_instruments(c)
-            this.populate_active_percussion_names(c, true)
             val percussion_keys = ui_facade.instrument_names[c]?.keys?.sorted() ?: continue
 
             for (l in 0 until opus_manager.get_channel(c).size) {

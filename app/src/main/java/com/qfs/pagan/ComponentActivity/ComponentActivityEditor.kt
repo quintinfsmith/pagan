@@ -7,7 +7,6 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -19,8 +18,15 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.fromHtml
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
@@ -35,20 +41,30 @@ import com.qfs.pagan.composable.cxtmenu.ContextMenuRangeSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuSinglePrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuSingleSecondary
 import com.qfs.pagan.enumerate
+import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
+import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
+import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
+import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.uibill.UIFacade
 import com.qfs.pagan.viewmodel.ViewModelEditor
-import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class ComponentActivityEditor: PaganComponentActivity() {
     val model_editor: ViewModelEditor by this.viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
-        this.model_editor.dispatcher.project_change_new()
+        this.model_editor.opus_manager.project_change_new()
         super.onCreate(savedInstanceState)
     }
+
     @Composable
     fun ContextMenuPrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {
         val cursor = ui_facade.active_cursor.value
@@ -105,15 +121,57 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     fun <T: OpusEvent> LeafView(ui_facade: UIFacade, y: Int, x: Int, path: List<Int>, event: T?, modifier: Modifier = Modifier) {
         val cursor = ui_facade.active_cursor.value
-        val cell_selected = cursor != null && ui_facade.is_leaf_selected(cursor, y, x, path)
+        val leaf_selected = cursor != null && ui_facade.is_leaf_selected(cursor, y, x, path)
+        val background_color = if (leaf_selected) {
+            when (event) {
+                is InstrumentEvent -> colorResource(R.color.leaf_selected)
+                is EffectEvent -> colorResource(R.color.ctl_leaf_selected)
+                else -> colorResource(R.color.leaf_empty_selected)
+            }
+        } else {
+            when (event) {
+                is InstrumentEvent -> colorResource(R.color.leaf_main)
+                is EffectEvent -> colorResource(R.color.ctl_leaf)
+                else -> Color.Transparent
+            }
+        }
 
         Box(
             modifier = modifier
                 .clip(RoundedCornerShape(8.dp))
+                .dropShadow(
+                    shape = RoundedCornerShape(8.dp),
+                    shadow = Shadow(
+                        radius = 4.dp,
+                        spread = 6.dp,
+                        color = Color(0x40000000),
+                        offset = DpOffset(x = 4.dp, 4.dp)
+                    )
+                )
                 .padding(1.dp)
-                .background(color = if (cell_selected) Color.Blue else Color.Black)
+                .background(color = background_color)
                 .fillMaxSize()
-        ) {}
+        ) {
+            when (event) {
+                is AbsoluteNoteEvent -> {
+                    val octave = event.note / ui_facade.radix.value
+                    val offset = event.note % ui_facade.radix.value
+                    Text(
+                        AnnotatedString.fromHtml("<sub>$octave</sub>$offset")
+                    )
+                }
+                is RelativeNoteEvent -> {}
+                is PercussionEvent -> Text(stringResource(R.string.percussion_label))
+                is OpusVolumeEvent -> {
+                    Text("${event.value}")
+                }
+                is OpusPanEvent -> {}
+                is DelayEvent -> {}
+                is OpusTempoEvent -> {}
+                is OpusVelocityEvent -> {}
+                null -> {}
+            }
+        }
     }
 
     @Composable
@@ -125,7 +183,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             composable_traverse(cell, listOf()) { tree, path, event ->
                 if (tree.is_leaf()) {
                     this@ComponentActivityEditor.LeafView(
-                        ui_facade, y, x, path, event,
+                        ui_facade,y, x, path, event,
                         Modifier
                             .combinedClickable(
                                 onClick = {

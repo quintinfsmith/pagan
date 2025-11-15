@@ -869,6 +869,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     fun ui_full_refresh() {
         this.ui_facade.clear()
         this.ui_facade.set_project_name(this.project_name)
+        this.ui_facade.set_radix(this.get_radix())
         var i = 0
         for ((c, channel) in this.channels.enumerate()) {
             this.ui_facade.add_channel(c, this.is_percussion(c), channel.get_instrument())
@@ -1015,6 +1016,7 @@ class OpusLayerInterface : OpusLayerHistory() {
        //      }
        //  }
 
+        this.ui_facade.set_radix(this.get_radix())
         this.ui_facade.queue_config_drawer_redraw_export_button()
 
         if (new_map.size != original_map.size && mod_events) {

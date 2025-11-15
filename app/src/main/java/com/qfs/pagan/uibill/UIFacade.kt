@@ -41,6 +41,7 @@ class UIFacade {
     val column_data: MutableList<ColumnData> = mutableListOf()
     val cell_map = mutableListOf<MutableList<MutableState<ReducibleTree<out OpusEvent>>>>()
     val channel_data: MutableList<ChannelData> = mutableListOf()
+    var radix: MutableState<Int> = mutableIntStateOf(12)
 
     var active_event: MutableState<OpusEvent?> = mutableStateOf(null)
     var active_cursor: MutableState<CacheCursor?> = mutableStateOf(null)
@@ -54,6 +55,7 @@ class UIFacade {
         this.beat_count.value = 0
         this.active_event.value = null
         this.active_cursor.value = null
+        this.radix.value = 12
         this.project_exists = false
         this.blocker_leaf = null
 
@@ -364,6 +366,7 @@ class UIFacade {
         if (this.ui_lock.is_locked()) return
         this.instrument_names.clear()
     }
+
     fun set_instrument_names(channel: Int, names: List<Pair<String, Int>>?) {
         if (this.ui_lock.is_locked()) return
         this.instrument_names[channel] = if (names == null) {
@@ -375,5 +378,9 @@ class UIFacade {
             }
             hashmap
         }
+    }
+
+    fun set_radix(radix: Int) {
+        this.radix.value = radix
     }
 }

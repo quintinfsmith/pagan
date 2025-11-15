@@ -64,6 +64,8 @@ dependencies {
     implementation 'androidx.compose.material3:material3:1.4.0'
     implementation 'androidx.databinding:databinding-runtime:8.13.0'
     implementation 'androidx.compose.runtime:runtime:1.9.3'
+    implementation 'androidx.compose.runtime:runtime:1.9.4'
+    implementation 'androidx.graphics:graphics-shapes:1.1.0'
     testImplementation 'junit:junit:4.13.2'
 
     testImplementation "io.mockk:mockk:1.14.5"

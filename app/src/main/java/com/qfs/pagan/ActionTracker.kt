@@ -1373,12 +1373,12 @@ class ActionTracker {
         val default_instrument = opus_manager.get_percussion_instrument(cursor.channel, cursor.line_offset)
 
         val options = mutableListOf<Triple<Int, Int?, String>>()
-        val sorted_keys = main.active_percussion_names[cursor.channel]!!.keys.toMutableList()
-        sorted_keys.sort()
-        for (note in sorted_keys) {
-            val name = main.active_percussion_names[cursor.channel]!![note]
-            options.add(Triple(note - 27, null, "${note - 27}: $name"))
-        }
+        //val sorted_keys = main.active_percussion_names[cursor.channel]!!.keys.toMutableList()
+        //sorted_keys.sort()
+        //for (note in sorted_keys) {
+        //    val name = main.active_percussion_names[cursor.channel]!![note]
+        //    options.add(Triple(note - 27, null, "${note - 27}: $name"))
+        //}
 
         this.dialog_popup_menu(main.getString(R.string.dropdown_choose_percussion), options, default_instrument, stub_output = value) { _: Int, value: Int ->
             this.track(TrackedAction.SetPercussionInstrument, listOf(value))

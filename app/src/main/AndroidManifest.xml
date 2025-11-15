@@ -30,7 +30,7 @@
 
         </activity>
 
-        <activity android:name=".Activity.ActivityEditor"
+        <activity android:name=".ComponentActivity.ComponentActivityEditor"
             android:exported="true"
             android:appCategory="audio"
             android:label="@string/app_name_brief"

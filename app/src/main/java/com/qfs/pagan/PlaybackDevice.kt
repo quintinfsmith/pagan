@@ -71,7 +71,7 @@ class PlaybackDevice(val opus_manager: OpusManager, sample_handle_manager: Sampl
     }
 
     override fun on_start() {
-        this.activity?.update_playback_state_soundfont(ActivityEditor.PlaybackState.Playing)
+        //this.activity?.update_playback_state_soundfont(ActivityEditor.PlaybackState.Playing)
     }
 
     override fun on_mark(i: Int) {

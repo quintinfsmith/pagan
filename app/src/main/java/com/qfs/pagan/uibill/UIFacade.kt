@@ -1,5 +1,8 @@
 package com.qfs.pagan.uibill
 
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import com.qfs.pagan.EditorTable
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.Rational
@@ -15,7 +18,7 @@ import kotlin.math.min
 /**
 * A queue of UI update commands to be executed once it is safe to do so.
 */
-class UIChangeBill {
+class UIFacade {
     val ui_lock = UILock()
     private val working_path = mutableListOf<Int>()
 
@@ -33,23 +36,24 @@ class UIChangeBill {
     }
 
     var project_name: String? = null
-    var beat_count: Int = 0
+    var beat_count: MutableState<Int> = mutableIntStateOf(0)
     val line_data: MutableList<LineData> = mutableListOf()
     val column_data: MutableList<ColumnData> = mutableListOf()
-    val cell_map: MutableList<MutableList<ReducibleTree<out OpusEvent>>> = mutableListOf()
+    val cell_map = mutableListOf<MutableList<MutableState<ReducibleTree<out OpusEvent>>>>()
     val channel_data: MutableList<ChannelData> = mutableListOf()
 
-    var active_event: OpusEvent? = null
-    var active_cursor: CacheCursor? = null
+    var active_event: MutableState<OpusEvent?> = mutableStateOf(null)
+    var active_cursor: MutableState<CacheCursor?> = mutableStateOf(null)
     var project_exists: Boolean = false
     var instrument_names = HashMap<Int, HashMap<Int, String>?>()
     var blocker_leaf: List<Int>? = null
 
     fun clear() {
+        if (this.ui_lock.is_locked()) return
         this.project_name = null
-        this.beat_count = 0
-        this.active_event = null
-        this.active_cursor = null
+        this.beat_count.value = 0
+        this.active_event.value = null
+        this.active_cursor.value = null
         this.project_exists = false
         this.blocker_leaf = null
 
@@ -60,32 +64,46 @@ class UIChangeBill {
         this.instrument_names.clear()
     }
 
+    /** Only used in full refresh **/
+    fun empty_cells() {
+        for (line in this.cell_map) {
+            line.clear()
+        }
+    }
+
     fun update_cell(coordinate: EditorTable.Coordinate, tree: ReducibleTree<out OpusEvent>) {
-        this.cell_map[coordinate.y][coordinate.x] = tree
+        if (this.ui_lock.is_locked()) return
+        this.cell_map[coordinate.y][coordinate.x].value = tree
     }
 
     fun update_column(column: Int, is_tagged: Boolean) {
+        if (this.ui_lock.is_locked()) return
         this.column_data[column].is_tagged = is_tagged
     }
 
-    fun add_row(y: Int, cells: MutableList<ReducibleTree<out OpusEvent>>, new_line_data: LineData) {
+    fun add_row(y: Int, cells: MutableList<MutableState<ReducibleTree<out OpusEvent>>>, new_line_data: LineData) {
+        if (this.ui_lock.is_locked()) return
         this.line_data.add(y, new_line_data)
         this.cell_map.add(y, cells)
     }
 
     fun set_project_exists(value: Boolean) {
+        if (this.ui_lock.is_locked()) return
         this.project_exists = value
     }
 
     fun queue_config_drawer_redraw_export_button() {
+        if (this.ui_lock.is_locked()) return
         TODO()
     }
 
     fun update_line(y: Int, line_data: LineData) {
+        if (this.ui_lock.is_locked()) return
         this.line_data[y] = line_data
     }
 
     fun remove_row(y: Int, count: Int) {
+        if (this.ui_lock.is_locked()) return
         for (i in 0 until count) {
             this.line_data.removeAt(y)
             this.cell_map.removeAt(y)
@@ -93,6 +111,7 @@ class UIChangeBill {
     }
 
     fun add_channel(channel: Int, percussion: Boolean, instrument: Pair<Int, Int>) {
+        if (this.ui_lock.is_locked()) return
         for (ld in this.line_data) {
             ld.channel?.let {
                 if (it >= channel) {
@@ -104,6 +123,7 @@ class UIChangeBill {
     }
 
     fun remove_channel(channel: Int) {
+        if (this.ui_lock.is_locked()) return
         var i = 0
         while (i < this.line_data.size) {
             val ld = this.line_data[i]
@@ -121,47 +141,48 @@ class UIChangeBill {
         this.channel_data.removeAt(channel)
     }
 
-    fun add_column(column: Int, is_tagged: Boolean) {
+    fun add_column(column: Int, is_tagged: Boolean, new_cells: List<MutableState<ReducibleTree<out OpusEvent>>>) {
+        if (this.ui_lock.is_locked()) return
         this.column_data.add(column, ColumnData(is_tagged))
+        for ((y, line) in this.cell_map.enumerate()) {
+            line.add(column, new_cells[y])
+        }
+        this.beat_count.value += 1
     }
 
     fun remove_column(column: Int) {
+        if (this.ui_lock.is_locked()) return
         this.column_data.removeAt(column)
+        for (line in this.cell_map) {
+            line.removeAt(column)
+        }
+        this.beat_count.value -= 1
     }
 
     fun queue_refresh_choose_percussion_button(channel: Int, line_offset: Int) {
+        if (this.ui_lock.is_locked()) return
         TODO()
     }
 
     fun queue_force_scroll(y: Int, x: Int, offset: Rational, offset_width: Rational, force: Boolean) {
+        if (this.ui_lock.is_locked()) return
         TODO()
     }
 
-    fun lock_full() {
-        this.ui_lock.lock_full()
-    }
-
-    fun lock_partial() {
-        this.ui_lock.lock_partial()
+    fun lock() {
+        this.ui_lock.lock()
     }
 
     fun unlock() {
         this.ui_lock.unlock()
     }
 
-    fun get_level(): Int {
-        return this.ui_lock.get_level()
-    }
-
     fun is_locked(): Boolean {
         return this.ui_lock.is_locked()
     }
 
-    fun is_full_locked(): Boolean {
-        return this.ui_lock.is_full_locked()
-    }
-
     fun move_channel(channel_index: Int, new_channel_index: Int) {
+        if (this.ui_lock.is_locked()) return
         var from_index = -1
         var to_index = -1
 
@@ -205,22 +226,27 @@ class UIChangeBill {
     }
 
     fun set_channel_data(channel_index: Int, percussion: Boolean, instrument: Pair<Int, Int>) {
+        if (this.ui_lock.is_locked()) return
         this.channel_data[channel_index] = ChannelData(percussion, instrument)
     }
 
     fun set_project_name(name: String? = null) {
+        if (this.ui_lock.is_locked()) return
         this.project_name = name
     }
 
     fun <T: OpusEvent> set_active_event(event: T) {
-        this.active_event = event
+        if (this.ui_lock.is_locked()) return
+        this.active_event.value = event
     }
 
     fun set_cursor(cursor: CacheCursor) {
-        this.active_cursor = cursor
+        if (this.ui_lock.is_locked()) return
+        this.active_cursor.value = cursor
     }
 
     fun shift_up_percussion_names(channel: Int) {
+        if (this.ui_lock.is_locked()) return
         val keys = this.instrument_names.keys.sorted().reversed()
         for (k in keys) {
             if (k < channel) continue
@@ -229,6 +255,7 @@ class UIChangeBill {
     }
 
     fun shift_down_percussion_names(channel: Int) {
+        if (this.ui_lock.is_locked()) return
         val keys = this.instrument_names.keys.sorted()
         for (k in keys) {
             if (k > channel) {
@@ -287,7 +314,15 @@ class UIChangeBill {
         }
     }
 
+    fun is_leaf_selected(cursor: CacheCursor, y: Int, x: Int, path: List<Int>): Boolean {
+        if (cursor.type != CursorMode.Single) return false
+
+        return cursor.ints[0] == y && cursor.ints[1] == x && path == cursor.ints.subList(2, cursor.ints.size)
+
+    }
+
     fun swap_line_cells(y_a: Int, y_b: Int) {
+        if (this.ui_lock.is_locked()) return
         if (y_a == y_b) return
 
         val lesser = min(y_a, y_b)
@@ -326,9 +361,11 @@ class UIChangeBill {
     }
 
     fun clear_instrument_names() {
+        if (this.ui_lock.is_locked()) return
         this.instrument_names.clear()
     }
     fun set_instrument_names(channel: Int, names: List<Pair<String, Int>>?) {
+        if (this.ui_lock.is_locked()) return
         this.instrument_names[channel] = if (names == null) {
             null
         } else {
@@ -339,5 +376,4 @@ class UIChangeBill {
             hashmap
         }
     }
-
 }

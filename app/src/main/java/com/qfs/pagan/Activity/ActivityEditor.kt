@@ -119,7 +119,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEve
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
-import com.qfs.pagan.uibill.UIChangeBill
+import com.qfs.pagan.uibill.UIFacade
 import com.qfs.pagan.viewmodel.ViewModelEditor
 import java.io.BufferedOutputStream
 import java.io.BufferedReader
@@ -1782,7 +1782,7 @@ class ActivityEditor : PaganActivity() {
         this.editor_view_model.unset_soundfont()
     }
 
-    fun get_ui_facade(): UIChangeBill {
+    fun get_ui_facade(): UIFacade {
         return this.get_opus_manager().ui_facade
     }
 

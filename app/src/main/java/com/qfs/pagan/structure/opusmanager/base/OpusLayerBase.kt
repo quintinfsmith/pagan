@@ -1493,9 +1493,7 @@ open class OpusLayerBase: Effectable {
      * populate the new beat with [beats_in_column]
      */
     open fun insert_beat(beat_index: Int, beats_in_column: List<ReducibleTree<OpusEvent>>? = null) {
-        if (beat_index > this.length) {
-            throw IndexOutOfBoundsException()
-        }
+        if (beat_index > this.length) throw IndexOutOfBoundsException()
 
         this.length += 1
         for (channel in this.channels) {

@@ -49,7 +49,7 @@ import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.InvalidCursorState
 import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
-import com.qfs.pagan.uibill.UIChangeBill
+import com.qfs.pagan.uibill.UIFacade
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.max
@@ -1358,7 +1358,7 @@ class EditorTable(context: Context, attrs: AttributeSet): ScrollView(context, at
             drawable.draw(canvas)
         }
 
-        fun get_facade(): UIChangeBill {
+        fun get_facade(): UIFacade {
             return this.table_ui.get_opus_manager().ui_facade
         }
 

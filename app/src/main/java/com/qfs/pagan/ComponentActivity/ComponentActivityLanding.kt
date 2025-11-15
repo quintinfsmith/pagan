@@ -104,7 +104,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
             modifier = modifier.fillMaxWidth(),
             content = { Text(stringResource(R.string.btn_landing_new)) },
             onClick = {
-                this@ComponentActivityLanding.startActivity(Intent(this@ComponentActivityLanding, ActivityEditor::class.java))
+                this@ComponentActivityLanding.startActivity(Intent(this@ComponentActivityLanding, ComponentActivityEditor::class.java))
             }
         )
     }

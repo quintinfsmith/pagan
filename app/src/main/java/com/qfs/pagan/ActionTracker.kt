@@ -832,6 +832,27 @@ class ActionTracker {
         this.get_opus_manager().cursor_select_column(beat)
     }
 
+    fun cursor_select_range_next(beat_key: BeatKey) {
+        // TODO: Track
+        val opus_manager = this.get_activity().get_opus_manager()
+        opus_manager.cursor_select_range_next(beat_key)
+    }
+    fun cursor_select_line_ctl_range_next(type: EffectType, beat_key: BeatKey) {
+        // TODO: Track
+        val opus_manager = this.get_activity().get_opus_manager()
+        opus_manager.cursor_select_line_ctl_range_next(type, beat_key)
+    }
+    fun cursor_select_channel_ctl_range_next(type: EffectType, channel: Int, beat: Int) {
+        // TODO: Track
+        val opus_manager = this.get_activity().get_opus_manager()
+        opus_manager.cursor_select_channel_ctl_range_next(type, channel, beat)
+    }
+    fun cursor_select_global_ctl_range_next(type: EffectType, beat: Int) {
+        // TODO: Track
+        val opus_manager = this.get_activity().get_opus_manager()
+        opus_manager.cursor_select_global_ctl_range_next(type, beat)
+    }
+
     fun cursor_select_range(first_key: BeatKey, second_key: BeatKey) {
         this.track(
             TrackedAction.CursorSelectRange,

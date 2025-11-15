@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
+import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelPrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelSecondary
@@ -45,31 +46,31 @@ import com.qfs.pagan.OpusLayerInterface as OpusManager
 class ComponentActivityEditor: PaganComponentActivity() {
     val model_editor: ViewModelEditor by this.viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
-        this.model_editor.opus_manager.project_change_new()
+        this.model_editor.dispatcher.project_change_new()
         super.onCreate(savedInstanceState)
     }
     @Composable
-    fun ContextMenuPrimary(ui_facade: UIFacade, opus_manager: OpusManager) {
+    fun ContextMenuPrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {
         val cursor = ui_facade.active_cursor.value
         when (cursor?.type) {
-            CursorMode.Line -> ContextMenuLinePrimary(ui_facade, opus_manager)
-            CursorMode.Column -> ContextMenuColumnPrimary(ui_facade, opus_manager)
-            CursorMode.Single -> ContextMenuSinglePrimary(ui_facade, opus_manager)
-            CursorMode.Range -> ContextMenuRangePrimary(ui_facade, opus_manager)
-            CursorMode.Channel -> ContextMenuChannelPrimary(ui_facade, opus_manager)
+            CursorMode.Line -> ContextMenuLinePrimary(ui_facade, dispatcher)
+            CursorMode.Column -> ContextMenuColumnPrimary(ui_facade, dispatcher)
+            CursorMode.Single -> ContextMenuSinglePrimary(ui_facade, dispatcher)
+            CursorMode.Range -> ContextMenuRangePrimary(ui_facade, dispatcher)
+            CursorMode.Channel -> ContextMenuChannelPrimary(ui_facade, dispatcher)
             CursorMode.Unset,
             null -> Text("TODO")
         }
     }
     @Composable
-    fun ContextMenuSecondary(ui_facade: UIFacade, opus_manager: OpusManager) {
+    fun ContextMenuSecondary(ui_facade: UIFacade, dispatcher: ActionTracker) {
         val cursor = ui_facade.active_cursor.value
         when (cursor?.type) {
-            CursorMode.Line -> ContextMenuLineSecondary(ui_facade, opus_manager)
-            CursorMode.Column -> ContextMenuColumnSecondary(ui_facade, opus_manager)
-            CursorMode.Single -> ContextMenuSingleSecondary(ui_facade, opus_manager)
-            CursorMode.Range -> ContextMenuRangeSecondary(ui_facade, opus_manager)
-            CursorMode.Channel -> ContextMenuChannelSecondary(ui_facade, opus_manager)
+            CursorMode.Line -> ContextMenuLineSecondary(ui_facade, dispatcher)
+            CursorMode.Column -> ContextMenuColumnSecondary(ui_facade, dispatcher)
+            CursorMode.Single -> ContextMenuSingleSecondary(ui_facade, dispatcher)
+            CursorMode.Range -> ContextMenuRangeSecondary(ui_facade, dispatcher)
+            CursorMode.Channel -> ContextMenuChannelSecondary(ui_facade, dispatcher)
             CursorMode.Unset,
             null -> Text("TODO")
         }
@@ -117,7 +118,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     fun CellView(ui_facade: UIFacade, y: Int, x: Int, modifier: Modifier = Modifier) {
-        val opus_manager = this.model_editor.opus_manager
+        val dispatcher = this.model_editor.action_interface
         val cell = ui_facade.cell_map[y][x].value
         val line_info = ui_facade.line_data[y]
         Row(modifier.fillMaxSize()) {
@@ -129,24 +130,24 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             .combinedClickable(
                                 onClick = {
                                     if (line_info.ctl_type == null) {
-                                        opus_manager.cursor_select(BeatKey(line_info.channel!!, line_info.line_offset!!, x), path)
+                                        dispatcher.cursor_select(BeatKey(line_info.channel!!, line_info.line_offset!!, x), path)
                                     } else if (line_info.line_offset != null) {
-                                        opus_manager.cursor_select_ctl_at_line(line_info.ctl_type!!, BeatKey(line_info.channel!!, line_info.line_offset!!, x), path)
+                                        dispatcher.cursor_select_ctl_at_line(line_info.ctl_type!!, BeatKey(line_info.channel!!, line_info.line_offset!!, x), path)
                                     } else if (line_info.channel != null) {
-                                        opus_manager.cursor_select_ctl_at_channel(line_info.ctl_type!!, line_info.channel!!, x, path)
+                                        dispatcher.cursor_select_ctl_at_channel(line_info.ctl_type!!, line_info.channel!!, x, path)
                                     } else {
-                                        opus_manager.cursor_select_ctl_at_global(line_info.ctl_type!!, x, path)
+                                        dispatcher.cursor_select_ctl_at_global(line_info.ctl_type!!, x, path)
                                     }
                                 },
                                 onLongClick = {
                                     if (line_info.ctl_type == null) {
-                                        opus_manager.cursor_select_range_next(BeatKey(line_info.channel!!, line_info.line_offset!!, x))
+                                        dispatcher.cursor_select_range_next(BeatKey(line_info.channel!!, line_info.line_offset!!, x))
                                     } else if (line_info.line_offset != null) {
-                                        opus_manager.cursor_select_line_ctl_range_next(line_info.ctl_type!!, BeatKey(line_info.channel!!, line_info.line_offset!!, x))
+                                        dispatcher.cursor_select_line_ctl_range_next(line_info.ctl_type!!, BeatKey(line_info.channel!!, line_info.line_offset!!, x))
                                     } else if (line_info.channel != null) {
-                                        opus_manager.cursor_select_channel_ctl_range_next(line_info.ctl_type!!, line_info.channel!!, x)
+                                        dispatcher.cursor_select_channel_ctl_range_next(line_info.ctl_type!!, line_info.channel!!, x)
                                     } else {
-                                        opus_manager.cursor_select_global_ctl_range_next(line_info.ctl_type!!, x)
+                                        dispatcher.cursor_select_global_ctl_range_next(line_info.ctl_type!!, x)
                                     }
                                 }
                             )
@@ -191,8 +192,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
             if (ui_facade.active_cursor.value?.type != CursorMode.Unset) {
                 Box(Modifier) {
                     Column {
-                        Row { ContextMenuPrimary(ui_facade, view_model.opus_manager) }
-                        Row { ContextMenuSecondary(ui_facade, view_model.opus_manager) }
+                        Row { ContextMenuPrimary(ui_facade, view_model.action_interface) }
+                        Row { ContextMenuSecondary(ui_facade, view_model.action_interface) }
                     }
                 }
             }

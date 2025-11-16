@@ -2,6 +2,7 @@ package com.qfs.pagan
 
 import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.core.net.toUri
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
@@ -12,6 +13,7 @@ import com.qfs.json.JSONList
 import com.qfs.json.JSONObject
 import com.qfs.json.JSONString
 import com.qfs.pagan.Activity.ActivityEditor
+import com.qfs.pagan.ComponentActivity.ComponentActivityEditor
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.contextmenu.ContextMenuControlLeaf
 import com.qfs.pagan.contextmenu.ContextMenuRange
@@ -375,17 +377,29 @@ class ActionTracker {
         }
     }
 
-    var activity: ActivityEditor? = null
+    var activity: ComponentActivityEditor? = null
+    var opus_manager: OpusManager? = null
+
     private var ignore_flagged: Boolean = false
     private val action_queue = mutableListOf<Pair<TrackedAction, List<Int?>?>>()
     var lock: Boolean = false
 
-    fun attach_activity(activity: ActivityEditor) {
-        this.activity = activity
-        this.DEBUG_ON = activity.is_debug_on()
+    fun attach_opus_manager(opus_manager: OpusManager) {
+        this.opus_manager = opus_manager
+    }
+    fun detach_opus_manager() {
+        this.opus_manager = null
+    }
+    fun detach_activity() {
+        this.activity = null
     }
 
-    fun get_activity(): ActivityEditor {
+    fun attach_activity(activity: ComponentActivityEditor) {
+        this.activity = activity
+        //this.DEBUG_ON = activity.is_debug_on()
+    }
+
+    fun get_activity(): ComponentActivityEditor {
         return this.activity ?: throw NoActivityException()
     }
 
@@ -437,9 +451,7 @@ class ActionTracker {
             TrackedAction.MoveSelectionToBeat,
             beat_key.to_list()
         )
-        val activity = this.get_activity()
-        val opus_manager = activity.get_opus_manager()
-        opus_manager.move_to_beat(beat_key)
+        this.opus_manager?.move_to_beat(beat_key)
     }
 
     fun copy_selection_to_beat(beat_key: BeatKey) {
@@ -447,9 +459,7 @@ class ActionTracker {
             TrackedAction.CopySelectionToBeat,
             beat_key.to_list()
         )
-        val activity = this.get_activity()
-        val opus_manager = activity.get_opus_manager()
-        opus_manager.copy_to_beat(beat_key)
+        this.opus_manager?.copy_to_beat(beat_key)
     }
 
     fun merge_selection_into_beat(beat_key: BeatKey) {
@@ -457,9 +467,7 @@ class ActionTracker {
             TrackedAction.MergeSelectionIntoBeat,
             beat_key.to_list()
         )
-        val activity = this.get_activity()
-        val opus_manager = activity.get_opus_manager()
-        opus_manager.merge_into_beat(beat_key)
+        this.opus_manager?.merge_into_beat(beat_key)
     }
 
     fun save() {
@@ -493,11 +501,17 @@ class ActionTracker {
                 to_line
             )
         } catch (_: IncompatibleChannelException) {
-            val activity = this.get_activity()
-            activity.feedback_msg(activity.getString(R.string.std_percussion_swap))
+            this.activity?.let {
+                Toast.makeText(it, it.getString(R.string.std_percussion_swap), Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
+    fun cursor_clear() {
+        // TODO Track
+        //this.track(TrackedAction.CursorClear)
+        this.opus_manager?.cursor_clear()
+    }
 
     fun cursor_select(beat_key: BeatKey, position: List<Int>) {
         this.track(
@@ -505,9 +519,7 @@ class ActionTracker {
             beat_key.to_list() + position
         )
 
-        val activity = this.get_activity()
-        val opus_manager = activity.get_opus_manager()
-        opus_manager.cursor_select(beat_key, position)
+        this.opus_manager?.cursor_select(beat_key, position) ?: return
 
         val tree = opus_manager.get_tree()
         thread {
@@ -834,23 +846,19 @@ class ActionTracker {
 
     fun cursor_select_range_next(beat_key: BeatKey) {
         // TODO: Track
-        val opus_manager = this.get_activity().get_opus_manager()
-        opus_manager.cursor_select_range_next(beat_key)
+        this.opus_manager?.cursor_select_range_next(beat_key)
     }
     fun cursor_select_line_ctl_range_next(type: EffectType, beat_key: BeatKey) {
         // TODO: Track
-        val opus_manager = this.get_activity().get_opus_manager()
-        opus_manager.cursor_select_line_ctl_range_next(type, beat_key)
+        this.opus_manager?.cursor_select_line_ctl_range_next(type, beat_key)
     }
     fun cursor_select_channel_ctl_range_next(type: EffectType, channel: Int, beat: Int) {
         // TODO: Track
-        val opus_manager = this.get_activity().get_opus_manager()
-        opus_manager.cursor_select_channel_ctl_range_next(type, channel, beat)
+        this.opus_manager?.cursor_select_channel_ctl_range_next(type, channel, beat)
     }
     fun cursor_select_global_ctl_range_next(type: EffectType, beat: Int) {
         // TODO: Track
-        val opus_manager = this.get_activity().get_opus_manager()
-        opus_manager.cursor_select_global_ctl_range_next(type, beat)
+        this.opus_manager?.cursor_select_global_ctl_range_next(type, beat)
     }
 
     fun cursor_select_range(first_key: BeatKey, second_key: BeatKey) {
@@ -866,9 +874,7 @@ class ActionTracker {
             )
         )
 
-        val activity = this.get_activity()
-        val opus_manager = activity.get_opus_manager()
-        opus_manager.cursor_select_range(first_key, second_key)
+        this.opus_manager?.cursor_select_range(first_key, second_key)
     }
 
     fun cursor_select_line_ctl_range(type: EffectType, first_key: BeatKey, second_key: BeatKey) {
@@ -885,26 +891,18 @@ class ActionTracker {
             )
         )
 
-        val activity = this.get_activity()
-        val opus_manager = activity.get_opus_manager()
-        opus_manager.cursor_select_line_ctl_range(type, first_key, second_key)
+        this.opus_manager?.cursor_select_line_ctl_range(type, first_key, second_key)
     }
 
     fun cursor_select_channel_ctl_range(type: EffectType, channel: Int, first_beat: Int, second_beat: Int) {
         this.track(TrackedAction.CursorSelectChannelCtlRange, ActionTracker.enum_to_ints(type) + listOf(first_beat, second_beat))
-
-        val activity = this.get_activity()
-        val opus_manager = activity.get_opus_manager()
-        opus_manager.cursor_select_channel_ctl_range(type, channel, first_beat, second_beat)
+        this.opus_manager?.cursor_select_channel_ctl_range(type, channel, first_beat, second_beat)
     }
 
 
     fun cursor_select_global_ctl_range(type: EffectType, first_beat: Int, second_beat: Int) {
         this.track(TrackedAction.CursorSelectGlobalCtlRange, ActionTracker.enum_to_ints(type) + listOf(first_beat, second_beat))
-
-        val activity = this.get_activity()
-        val opus_manager = activity.get_opus_manager()
-        opus_manager.cursor_select_global_ctl_range(type, first_beat, second_beat)
+        this.opus_manager?.cursor_select_global_ctl_range(type, first_beat, second_beat)
     }
 
     fun open_settings() {
@@ -2360,8 +2358,7 @@ class ActionTracker {
                 listOf(channel_from, line_offset_from, channel_to, adj_to_index)
             )
         } catch (e: IncompatibleChannelException) {
-            val activity = this.get_activity()
-            activity.feedback_msg(activity.getString(R.string.std_percussion_swap))
+            this.toast(R.string.std_percussion_swap)
         }
     }
 
@@ -2410,4 +2407,5 @@ class ActionTracker {
     fun clear() {
         this.action_queue.clear()
     }
+
 }

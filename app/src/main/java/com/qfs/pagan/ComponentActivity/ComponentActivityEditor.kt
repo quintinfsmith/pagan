@@ -1,6 +1,11 @@
 package com.qfs.pagan.ComponentActivity
 
+import android.content.Intent
 import android.os.Bundle
+import android.provider.DocumentsContract
+import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -28,6 +33,9 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import androidx.core.view.GravityCompat
+import androidx.documentfile.provider.DocumentFile
+import androidx.drawerlayout.widget.DrawerLayout
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelPrimary
@@ -60,9 +68,64 @@ import com.qfs.pagan.viewmodel.ViewModelEditor
 
 class ComponentActivityEditor: PaganComponentActivity() {
     val model_editor: ViewModelEditor by this.viewModels()
+    private val _result_launcher_set_project_directory_and_save =
+        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            val result_data = result.data ?: return@registerForActivityResult
+            val tree_uri = result_data.data ?: return@registerForActivityResult
+
+            val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            this.contentResolver.takePersistableUriPermission(tree_uri, new_flags)
+
+            this.view_model.configuration.project_directory = tree_uri
+            this.view_model.save_configuration()
+
+            // No need to update the active_project here. using this intent launcher implies the active_project will be changed in the ucheck
+            this.model_editor.project_manager?.change_project_path(tree_uri, this.model_editor.active_project)
+
+            this._project_save()
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        val action_interface = this.model_editor.action_interface
         this.model_editor.opus_manager.project_change_new()
+        action_interface.attach_activity(this)
+        action_interface.attach_opus_manager(this.model_editor.opus_manager)
         super.onCreate(savedInstanceState)
+
+        this.onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val that = this@ComponentActivityEditor
+                val opus_manager = that.model_editor.opus_manager
+                val ui_facade = opus_manager.ui_facade
+                if (ui_facade.active_cursor.value != null) {
+                    action_interface.cursor_clear()
+                } else {
+                    TODO()
+                }
+
+                // val drawer_layout = that.findViewById<DrawerLayout>(R.id.drawer_layout)
+
+                // if (drawer_layout.isDrawerOpen(GravityCompat.START)) {
+                //     //TODO()
+                //     that.drawer_close()
+                // } else if (opus_manager.cursor.mode != CursorMode.Unset) {
+                //     opus_manager.cursor_clear()
+                // } else {
+                //     that.dialog_save_project {
+                //         that.save_to_backup()
+                //         that.finish()
+                //     }
+                // }
+            }
+        })
+
+    }
+
+    override fun onDestroy() {
+        this.model_editor.action_interface.detach_opus_manager()
+        this.model_editor.action_interface.detach_activity()
+        super.onDestroy()
     }
 
     @Composable
@@ -282,4 +345,33 @@ class ComponentActivityEditor: PaganComponentActivity() {
     override fun LayoutSmallLandscape() {
         TODO("Not yet implemented")
     }
+
+
+    private fun _project_save() {
+        this.model_editor.save_project(this.view_model.configuration.indent_json)
+        this.toast(R.string.feedback_project_saved)
+    }
+
+    fun project_save() {
+        val configuration = this.view_model.configuration
+        if (configuration.project_directory == null || DocumentFile.fromTreeUri(this, configuration.project_directory!!)?.exists() != true) {
+            this._result_launcher_set_project_directory_and_save.launch(
+                Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also { intent ->
+                    intent.putExtra(Intent.EXTRA_TITLE, "Pagan Projects")
+                    intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+
+                    configuration.project_directory?.let {
+                        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, it)
+                    }
+                }
+            )
+        } else {
+            this._project_save()
+        }
+    }
+
+    fun toast(id: Int, length: Int = Toast.LENGTH_SHORT) {
+        Toast.makeText(this, id, length).show()
+    }
+
 }

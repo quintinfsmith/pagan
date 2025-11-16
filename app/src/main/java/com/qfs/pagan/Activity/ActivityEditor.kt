@@ -316,22 +316,6 @@ class ActivityEditor : PaganActivity() {
             }
         }
 
-    private val _result_launcher_set_project_directory =
-        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
-                result?.data?.also { result_data ->
-                    result_data.data?.also { tree_uri  ->
-                        val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                        this.contentResolver.takePersistableUriPermission(tree_uri, new_flags)
-                        this.configuration.project_directory = tree_uri
-                        this.save_configuration()
-                        // No need to update the active_project here. using this intent launcher implies the active_project will be changed in the ucheck
-                        this.get_project_manager().change_project_path(tree_uri, this.active_project)
-                        this._project_save()
-                    }
-                }
-            }
-        }
 
     private var _result_launcher_export_multi_line_wav =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -990,7 +974,7 @@ class ActivityEditor : PaganActivity() {
             true
         }
 
-        this.editor_view_model.action_interface.attach_activity(this)
+       // this.editor_view_model.action_interface.attach_activity(this)
         // this.editor_view_model.opus_manager.attach_activity(this)
 
         //////////////////////////////////////////
@@ -1043,25 +1027,6 @@ class ActivityEditor : PaganActivity() {
                 }
             }
         )
-
-        this.onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                val that = this@ActivityEditor
-                val opus_manager = that.get_opus_manager()
-                val drawer_layout = that.findViewById<DrawerLayout>(R.id.drawer_layout)
-
-                if (drawer_layout.isDrawerOpen(GravityCompat.START)) {
-                    that.drawer_close()
-                } else if (opus_manager.cursor.mode != CursorMode.Unset) {
-                    opus_manager.cursor_clear()
-                } else {
-                    that.dialog_save_project {
-                        that.save_to_backup()
-                        that.finish()
-                    }
-                }
-            }
-        })
 
         if (savedInstanceState != null) {
             // if the activity is forgotten, the opus_manager is be uninitialized
@@ -1227,19 +1192,6 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun project_save() {
-        if (this.configuration.project_directory == null || DocumentFile.fromTreeUri(this, this.configuration.project_directory!!)?.exists() != true) {
-            this._result_launcher_set_project_directory.launch(
-                Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also { intent ->
-                    intent.putExtra(Intent.EXTRA_TITLE, "Pagan Projects")
-                    intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                    this.configuration.project_directory?.let {
-                        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, it)
-                    }
-                }
-            )
-        } else {
-            this._project_save()
-        }
     }
 
     fun project_move_to_copy() {

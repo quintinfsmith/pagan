@@ -2,6 +2,9 @@ package com.qfs.pagan.viewmodel
 
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
@@ -15,13 +18,13 @@ import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.PlaybackDevice
 import com.qfs.pagan.PlaybackFrameMap
+import com.qfs.pagan.projectmanager.ProjectManager
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import java.io.DataOutputStream
 import java.io.File
 
 class ViewModelEditor: ViewModel() {
     companion object {
-
         fun get_next_playback_state(input_state: PlaybackState, next_state: PlaybackState): PlaybackState? {
             return when (input_state) {
                 PlaybackState.NotReady -> {
@@ -69,11 +72,13 @@ class ViewModelEditor: ViewModel() {
     var active_project: Uri? = null
     var audio_interface = AudioInterface()
     var available_preset_names: HashMap<Pair<Int, Int>, String>? = null
+    var project_manager: ProjectManager? = null
 
     var active_midi_device: MidiDeviceInfo? = null
     var playback_device: PlaybackDevice? = null
     var playback_state_soundfont: ActivityEditor.PlaybackState = ActivityEditor.PlaybackState.NotReady
     var playback_state_midi: ActivityEditor.PlaybackState = ActivityEditor.PlaybackState.NotReady
+    var active_dialog: MutableState<@Composable (() -> Unit)?> =  mutableStateOf(null)
 
     fun export_wav(
         opus_manager: OpusLayerBase,
@@ -166,5 +171,10 @@ class ViewModelEditor: ViewModel() {
     fun update_playback_state_midi(next_state: PlaybackState): Boolean {
         this.playback_state_midi = ViewModelEditor.get_next_playback_state(this.playback_state_midi, next_state) ?: return false
         return true
+    }
+
+    fun save_project(indent: Boolean = false) {
+        this.active_project = this.project_manager?.save(this.opus_manager, this.active_project, indent)
+        this.opus_manager.ui_facade.set_project_exists(true)
     }
 }

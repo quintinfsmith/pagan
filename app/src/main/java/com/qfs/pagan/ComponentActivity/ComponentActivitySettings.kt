@@ -69,23 +69,21 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
     internal var result_launcher_set_project_directory =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
-                result.data?.also { result_data ->
-                    result_data.data?.also { uri  ->
-                        val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                        this.contentResolver.takePersistableUriPermission(uri, new_flags)
-                        this.view_model.configuration.project_directory = uri
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            val result_data = result.data ?: return@registerForActivityResult
+            val uri = result_data.data ?: return@registerForActivityResult
 
-                        // TODO
-                        // this.get_project_manager().change_project_path(uri, this.intent.data)?.let {
-                        //     this.result_intent.putExtra(EXTRA_ACTIVE_PROJECT, it.toString())
-                        // }
+            val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            this.contentResolver.takePersistableUriPermission(uri, new_flags)
+            this.view_model.configuration.project_directory = uri
 
-                        // this.update_result()
-                        // this.on_project_directory_set(uri)
-                    }
-                }
-            }
+            TODO("Update active project")
+            // this.get_project_manager().change_project_path(uri, this.intent.data)?.let {
+            //     this.result_intent.putExtra(EXTRA_ACTIVE_PROJECT, it.toString())
+            // }
+
+            // this.update_result()
+            // this.on_project_directory_set(uri)
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {

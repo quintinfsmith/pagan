@@ -45,7 +45,7 @@ class UIFacade {
 
     var active_event: MutableState<OpusEvent?> = mutableStateOf(null)
     var active_cursor: MutableState<CacheCursor?> = mutableStateOf(null)
-    var project_exists: Boolean = false
+    var project_exists: MutableState<Boolean> = mutableStateOf(false)
     var instrument_names = HashMap<Int, HashMap<Int, String>?>()
     var blocker_leaf: List<Int>? = null
 
@@ -56,7 +56,7 @@ class UIFacade {
         this.active_event.value = null
         this.active_cursor.value = null
         this.radix.value = 12
-        this.project_exists = false
+        this.project_exists.value = false
         this.blocker_leaf = null
 
         this.line_data.clear()
@@ -91,7 +91,7 @@ class UIFacade {
 
     fun set_project_exists(value: Boolean) {
         if (this.ui_lock.is_locked()) return
-        this.project_exists = value
+        this.project_exists.value = value
     }
 
     fun queue_config_drawer_redraw_export_button() {

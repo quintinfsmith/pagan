@@ -3,6 +3,15 @@ package com.qfs.pagan
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.TextField
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
@@ -15,6 +24,7 @@ import com.qfs.json.JSONString
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.ComponentActivity.ComponentActivityEditor
 import com.qfs.pagan.OpusLayerInterface
+import com.qfs.pagan.composable.cxtmenu.IntegerInput
 import com.qfs.pagan.contextmenu.ContextMenuControlLeaf
 import com.qfs.pagan.contextmenu.ContextMenuRange
 import com.qfs.pagan.controlwidgets.ControlWidgetDelay
@@ -521,22 +531,23 @@ class ActionTracker {
 
         this.opus_manager?.cursor_select(beat_key, position) ?: return
 
-        val tree = opus_manager.get_tree()
-        thread {
-            if (tree.has_event()) {
-                val note = if (opus_manager.is_percussion(beat_key.channel)) {
-                    opus_manager.get_percussion_instrument(beat_key.channel, beat_key.line_offset)
-                } else {
-                    opus_manager.get_absolute_value(beat_key, position) ?: return@thread
-                }
-                if (note >= 0) {
-                    this.get_activity().play_event(
-                        beat_key.channel,
-                        note
-                    )
-                }
-            }
-        }
+        // TODO()
+        // val tree = opus_manager.get_tree()
+        // thread {
+        //     if (tree.has_event()) {
+        //         val note = if (opus_manager.is_percussion(beat_key.channel)) {
+        //             opus_manager.get_percussion_instrument(beat_key.channel, beat_key.line_offset)
+        //         } else {
+        //             opus_manager.get_absolute_value(beat_key, position) ?: return@thread
+        //         }
+        //         if (note >= 0) {
+        //             this.get_activity().play_event(
+        //                 beat_key.channel,
+        //                 note
+        //             )
+        //         }
+        //     }
+        // }
     }
 
     fun move_line_ctl_to_beat(beat_key: BeatKey) {
@@ -1641,6 +1652,20 @@ class ActionTracker {
         if (stub_output != null) {
             callback(stub_output)
         } else {
+            this.activity?.model_editor?.active_dialog?.value = @Composable {
+                Dialog(onDismissRequest = { }) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Column() {
+                            IntegerInput(min_value, max_value, default, callback)
+                        }
+                    }
+                }
+            }
             val activity = this.get_activity()
             activity.dialog_number_input(title, min_value, max_value, default, callback)
         }

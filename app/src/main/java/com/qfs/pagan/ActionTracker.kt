@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableIntStateOf
@@ -1183,12 +1184,10 @@ class ActionTracker {
     }
 
     fun insert_leaf(repeat: Int? = null) {
-        val activity = this.get_activity()
         val opus_manager = this.get_opus_manager()
 
         this.dialog_number_input(R.string.dlg_insert, 1, 29, stub_output = repeat) { count: Int ->
             this.track(TrackedAction.InsertLeaf, listOf(count))
-            println("BUH? $count")
 
             val position = opus_manager.cursor.get_position().toMutableList()
             val cursor = opus_manager.cursor
@@ -1629,10 +1628,10 @@ class ActionTracker {
         if (stub_output != null) {
             callback(stub_output)
         } else {
-            this.activity?.view_model?.dialog_queue?.value?.new_dialog { dialog_queue, dialog_key ->
+            this.activity?.view_model?.create_dialog { close ->
                 @Composable {
                     val value: MutableState<Int> = remember { mutableIntStateOf(default ?: min_value) }
-                    Column(Modifier.padding(dimensionResource(R.dimen.dialog_padding))) {
+                    Column {
                         Row {
                             SText(title_string_id)
                         }
@@ -1643,23 +1642,23 @@ class ActionTracker {
                                 maximum = max_value,
                                 modifier = Modifier.fillMaxWidth()
                             ) { new_value ->
-                                dialog_queue.remove(dialog_key)
+                                close()
                                 callback(new_value)
                             }
                         }
 
                         Row {
-                            Button(
+                            TextButton(
                                 modifier = Modifier.fillMaxWidth().weight(1F),
-                                onClick = { dialog_queue.remove(dialog_key) },
+                                onClick = { close() },
                                 content = { SText(android.R.string.cancel) }
                             )
 
                             Button(
                                 modifier = Modifier.fillMaxWidth().weight(1F),
                                 onClick = {
+                                    close()
                                     callback(value.value)
-                                    dialog_queue.remove(dialog_key)
                                 },
                                 content = { SText(android.R.string.ok) }
                             )

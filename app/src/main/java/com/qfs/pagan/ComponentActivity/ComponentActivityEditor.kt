@@ -427,7 +427,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             return
         }
 
-        this.view_model.dialog_queue.value.new_dialog { dialog_queue, dialog_key ->
+        this.view_model.create_dialog { close ->
             @Composable {
                 Column {
                     SText(R.string.dialog_save_warning_title)
@@ -435,7 +435,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         Button(
                             modifier = Modifier.fillMaxWidth().weight(1F),
                             onClick = {
-                                dialog_queue.remove(dialog_key)
+                                close()
                                 callback(false)
                             },
                             content = { SText(android.R.string.no) }
@@ -444,7 +444,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             modifier = Modifier.fillMaxWidth().weight(1F),
                             onClick = {
                                 this@ComponentActivityEditor.project_save()
-                                dialog_queue.remove(dialog_key)
+                                close()
                                 callback(true)
                             },
                             content = { SText(android.R.string.ok) }

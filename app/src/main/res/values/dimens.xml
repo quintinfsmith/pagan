@@ -113,5 +113,5 @@
     <dimen name="number_selector_button_height">41dp</dimen>
     <dimen name="character_width">16dp</dimen>
 
-    <dimen name="dialog_padding">8dp</dimen>
+    <dimen name="dialog_padding">16dp</dimen>
 </resources>

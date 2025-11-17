@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.currentRecomposeScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -18,8 +19,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.qfs.pagan.DialogChain
+import com.qfs.pagan.R
 import com.qfs.pagan.ViewModelPagan
 import com.qfs.pagan.composable.ScaffoldWithTopBar
 
@@ -70,14 +74,18 @@ abstract class PaganComponentActivity: ComponentActivity() {
                         .fillMaxHeight()
                         .padding(it)
                 ) {
-                    for (entry in view_model.dialog_queue.value.dialogs) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.BottomCenter
-                        ) {
-                            Dialog(onDismissRequest = {}) {
-                                Card {
-                                    entry.dialog()
+                    var current_dialog = view_model.dialog_queue.value
+                    val dialogs = mutableListOf<DialogChain>()
+                    while (current_dialog != null) {
+                        dialogs.add(current_dialog)
+                        current_dialog = current_dialog.parent
+                    }
+
+                    for (dialog in dialogs.reversed()) {
+                        Dialog(onDismissRequest = { view_model.dialog_queue.value = dialog.parent }) {
+                            Card {
+                                Box(modifier = Modifier.padding(dimensionResource(R.dimen.dialog_padding))) {
+                                    dialog.dialog()
                                 }
                             }
                         }

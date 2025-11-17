@@ -112,7 +112,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
             modifier = modifier.fillMaxWidth(),
             content = { Text(stringResource(R.string.btn_landing_load)) },
             onClick = {
-                this.view_model.dialog_queue.value.new_dialog { dialog_queue, dialog_key ->
+                this.view_model.create_dialog { close ->
                     @Composable {
                         Text("Boop")
                     }

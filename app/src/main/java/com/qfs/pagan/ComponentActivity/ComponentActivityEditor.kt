@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -37,7 +36,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.qfs.pagan.ActionTracker
@@ -92,7 +90,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             this.view_model.save_configuration()
 
             // No need to update the active_project here. using this intent launcher implies the active_project will be changed in the ucheck
-            this.model_editor.project_manager?.change_project_path(tree_uri, this.model_editor.active_project.value)
+            this.view_model.project_manager?.change_project_path(tree_uri, this.model_editor.active_project.value)
 
             this._project_save()
         }
@@ -329,20 +327,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
     override fun LayoutMediumPortrait() {
         val view_model = this.model_editor
         val ui_facade = this.model_editor.opus_manager.ui_facade
-
-        for (entry in this.view_model.dialog_queue.value.dialogs) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.BottomCenter
-            ) {
-                Dialog(onDismissRequest = {}) {
-                    Card {
-                        entry.dialog()
-                    }
-                }
-            }
-        }
-
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.BottomCenter
@@ -388,8 +372,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
 
     private fun _project_save() {
-        this.model_editor.save_project(this.view_model.configuration.indent_json)
-        this.toast(R.string.feedback_project_saved)
+        this.view_model.project_manager?.let {
+            it.save(
+                this.model_editor.opus_manager,
+                this.model_editor.active_project.value,
+                this.view_model.configuration.indent_json
+            )
+            this.model_editor.opus_manager.ui_facade.set_project_exists(true)
+            this.toast(R.string.feedback_project_saved)
+        }
+
     }
 
     fun project_save() {

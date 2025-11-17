@@ -17,7 +17,6 @@ import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.PlaybackDevice
 import com.qfs.pagan.PlaybackFrameMap
-import com.qfs.pagan.projectmanager.ProjectManager
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import java.io.DataOutputStream
 import java.io.File
@@ -71,7 +70,6 @@ class ViewModelEditor: ViewModel() {
     var active_project: MutableState<Uri?> = mutableStateOf(null)
     var audio_interface = AudioInterface()
     var available_preset_names: HashMap<Pair<Int, Int>, String>? = null
-    var project_manager: ProjectManager? = null
 
     var active_midi_device: MidiDeviceInfo? = null
     var playback_device: PlaybackDevice? = null
@@ -171,8 +169,4 @@ class ViewModelEditor: ViewModel() {
         return true
     }
 
-    fun save_project(indent: Boolean = false) {
-        this.active_project.value = this.project_manager?.save(this.opus_manager, this.active_project.value, indent)
-        this.opus_manager.ui_facade.set_project_exists(true)
-    }
 }

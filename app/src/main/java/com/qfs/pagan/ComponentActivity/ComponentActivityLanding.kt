@@ -5,7 +5,6 @@ import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.runtime.Composable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,15 +17,13 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.qfs.pagan.Activity.ActivityAbout
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.SoundFontWarning
@@ -111,21 +108,14 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
     @Composable
     fun ButtonLoad(modifier: Modifier = Modifier) {
-        var show_load_dialog = remember { mutableStateOf(false) }
-        dialog(show_load_dialog)
-
         Button(
             modifier = modifier.fillMaxWidth(),
             content = { Text(stringResource(R.string.btn_landing_load)) },
             onClick = {
-                show_load_dialog.value = true
-                this.dialog_load_project { uri : Uri ->
-                    this.loading_reticle_show()
-                    this.startActivity(
-                        Intent(this, ActivityEditor::class.java).apply {
-                            this.data = uri
-                        }
-                    )
+                this.view_model.dialog_queue.value.new_dialog { dialog_queue, dialog_key ->
+                    @Composable {
+                        Text("Boop")
+                    }
                 }
             }
         )

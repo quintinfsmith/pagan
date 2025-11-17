@@ -4,21 +4,24 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Card
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import com.qfs.pagan.ViewModelPagan
 import com.qfs.pagan.composable.ScaffoldWithTopBar
-import androidx.lifecycle.ViewModel
-import kotlin.getValue
 
 abstract class PaganComponentActivity: ComponentActivity() {
     companion object {
@@ -67,7 +70,19 @@ abstract class PaganComponentActivity: ComponentActivity() {
                         .fillMaxHeight()
                         .padding(it)
                 ) {
-                    println("---------- $maxWidth, $maxHeight --------------")
+                    for (entry in view_model.dialog_queue.value.dialogs) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.BottomCenter
+                        ) {
+                            Dialog(onDismissRequest = {}) {
+                                Card {
+                                    entry.dialog()
+                                }
+                            }
+                        }
+                    }
+
                     if (this.maxWidth >= this.maxHeight) {
                         if (this.maxWidth >= SIZE_XL.first && this.maxHeight >= SIZE_XL.second) {
                             println("LANDSCAPE XL")

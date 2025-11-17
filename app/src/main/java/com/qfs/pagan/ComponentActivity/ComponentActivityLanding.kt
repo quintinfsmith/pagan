@@ -119,14 +119,14 @@ class ComponentActivityLanding: PaganComponentActivity() {
             content = { Text(stringResource(R.string.btn_landing_load)) },
             onClick = {
                 show_load_dialog.value = true
-                // this.dialog_load_project { uri : Uri ->
-                //     this.loading_reticle_show()
-                //     this.startActivity(
-                //         Intent(this, ActivityEditor::class.java).apply {
-                //             this.data = uri
-                //         }
-                //     )
-                // }
+                this.dialog_load_project { uri : Uri ->
+                    this.loading_reticle_show()
+                    this.startActivity(
+                        Intent(this, ActivityEditor::class.java).apply {
+                            this.data = uri
+                        }
+                    )
+                }
             }
         )
     }

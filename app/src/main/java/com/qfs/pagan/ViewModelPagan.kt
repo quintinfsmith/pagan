@@ -1,9 +1,12 @@
 package com.qfs.pagan
 
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import kotlin.properties.Delegates.observable
 
 class ViewModelPagan: ViewModel() {
+    var dialog_queue = mutableStateOf(DialogQueue())
+
     var _title_callbacks = mutableListOf<(String?) -> Unit>()
     var title: String? by observable(null) { _, _, new_value ->
         this._title_callbacks.forEach { it(new_value) }

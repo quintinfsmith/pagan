@@ -2,7 +2,6 @@ package com.qfs.pagan.viewmodel
 
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -78,7 +77,6 @@ class ViewModelEditor: ViewModel() {
     var playback_device: PlaybackDevice? = null
     var playback_state_soundfont: ActivityEditor.PlaybackState = ActivityEditor.PlaybackState.NotReady
     var playback_state_midi: ActivityEditor.PlaybackState = ActivityEditor.PlaybackState.NotReady
-    var active_dialog: MutableState<@Composable (() -> Unit)?> =  mutableStateOf(null)
 
     fun export_wav(
         opus_manager: OpusLayerBase,

@@ -3,28 +3,17 @@ package com.qfs.pagan
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
@@ -34,18 +23,10 @@ import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONObject
 import com.qfs.json.JSONString
-import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.ComponentActivity.ComponentActivityEditor
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.cxtmenu.IntegerInput
-import com.qfs.pagan.contextmenu.ContextMenuControlLeaf
-import com.qfs.pagan.contextmenu.ContextMenuRange
-import com.qfs.pagan.controlwidgets.ControlWidgetDelay
-import com.qfs.pagan.controlwidgets.ControlWidgetPan
-import com.qfs.pagan.controlwidgets.ControlWidgetTempo
-import com.qfs.pagan.controlwidgets.ControlWidgetVelocity
-import com.qfs.pagan.controlwidgets.ControlWidgetVolume
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
@@ -57,14 +38,9 @@ import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
-import kotlin.concurrent.thread
 import kotlin.math.abs
 import kotlin.math.ceil
-import kotlin.math.max
-import kotlin.math.roundToInt
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 
@@ -1081,10 +1057,7 @@ class ActionTracker {
         val cursor = opus_manager.cursor
 
         for ((ctl_type, icon_id) in OpusLayerInterface.line_controller_domain) {
-            if (opus_manager.is_line_ctl_visible(ctl_type, cursor.channel, cursor.line_offset)) {
-                continue
-            }
-
+            if (opus_manager.is_line_ctl_visible(ctl_type, cursor.channel, cursor.line_offset)) continue
             options.add(Triple(ctl_type, icon_id, ctl_type.name))
         }
 
@@ -1100,10 +1073,7 @@ class ActionTracker {
         val options = mutableListOf<Triple<EffectType, Int?, String>>( )
 
         for ((ctl_type, icon_id) in OpusLayerInterface.channel_controller_domain) {
-            if (opus_manager.is_channel_ctl_visible(ctl_type, cursor.channel)) {
-                continue
-            }
-
+            if (opus_manager.is_channel_ctl_visible(ctl_type, cursor.channel)) continue
             options.add(Triple(ctl_type, icon_id, ctl_type.name))
         }
 
@@ -1119,7 +1089,6 @@ class ActionTracker {
 
         for ((ctl_type, icon_id) in OpusLayerInterface.global_controller_domain) {
             if (opus_manager.is_global_ctl_visible(ctl_type)) continue
-
             options.add(Triple(ctl_type, icon_id, ctl_type.name))
         }
 
@@ -1660,40 +1629,41 @@ class ActionTracker {
         if (stub_output != null) {
             callback(stub_output)
         } else {
-            val active_dialog = this.activity?.model_editor?.active_dialog
-            active_dialog?.value = @Composable {
-                val value: MutableState<Int> = remember { mutableIntStateOf(default ?: min_value) }
-                Column(Modifier.padding(dimensionResource(R.dimen.dialog_padding))) {
-                    Row {
-                        SText(title_string_id)
-                    }
-                    Row {
-                        IntegerInput(
-                            value = value,
-                            minimum = min_value,
-                            maximum = max_value,
-                            modifier = Modifier.fillMaxWidth()
-                        ) { new_value ->
-                            active_dialog.value = null
-                            callback(new_value)
+            this.activity?.view_model?.dialog_queue?.value?.new_dialog { dialog_queue, dialog_key ->
+                @Composable {
+                    val value: MutableState<Int> = remember { mutableIntStateOf(default ?: min_value) }
+                    Column(Modifier.padding(dimensionResource(R.dimen.dialog_padding))) {
+                        Row {
+                            SText(title_string_id)
                         }
-                    }
+                        Row {
+                            IntegerInput(
+                                value = value,
+                                minimum = min_value,
+                                maximum = max_value,
+                                modifier = Modifier.fillMaxWidth()
+                            ) { new_value ->
+                                dialog_queue.remove(dialog_key)
+                                callback(new_value)
+                            }
+                        }
 
-                    Row {
-                        Button(
-                            modifier = Modifier.fillMaxWidth().weight(1F),
-                            onClick = { active_dialog.value = null },
-                            content = { SText(android.R.string.cancel) }
-                        )
+                        Row {
+                            Button(
+                                modifier = Modifier.fillMaxWidth().weight(1F),
+                                onClick = { dialog_queue.remove(dialog_key) },
+                                content = { SText(android.R.string.cancel) }
+                            )
 
-                        Button(
-                            modifier = Modifier.fillMaxWidth().weight(1F),
-                            onClick = {
-                                callback(value.value)
-                                active_dialog.value = null
-                            },
-                            content = { SText(android.R.string.ok) }
-                        )
+                            Button(
+                                modifier = Modifier.fillMaxWidth().weight(1F),
+                                onClick = {
+                                    callback(value.value)
+                                    dialog_queue.remove(dialog_key)
+                                },
+                                content = { SText(android.R.string.ok) }
+                            )
+                        }
                     }
                 }
             }

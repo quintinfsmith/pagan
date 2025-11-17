@@ -1,6 +1,5 @@
 package com.qfs.pagan.ComponentActivity
 
-import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -20,14 +19,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,7 +44,6 @@ import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.Activity.ActivityAbout
 import com.qfs.pagan.Activity.ActivitySettings
 import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
-import com.qfs.pagan.EditorTable
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelPrimary
@@ -61,7 +56,6 @@ import com.qfs.pagan.composable.cxtmenu.ContextMenuRangePrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuRangeSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuSinglePrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuSingleSecondary
-import com.qfs.pagan.composable.cxtmenu.IntegerInput
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
@@ -82,7 +76,6 @@ import com.qfs.pagan.uibill.UIFacade
 import com.qfs.pagan.viewmodel.ViewModelEditor
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import kotlin.math.max
 
 class ComponentActivityEditor: PaganComponentActivity() {
     val model_editor: ViewModelEditor by this.viewModels()
@@ -337,12 +330,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val view_model = this.model_editor
         val ui_facade = this.model_editor.opus_manager.ui_facade
 
-        this.model_editor.active_dialog.value?.let {
+        for (entry in this.view_model.dialog_queue.value.dialogs) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.BottomCenter
             ) {
-                Dialog(onDismissRequest = {}) { Card() { it() } }
+                Dialog(onDismissRequest = {}) {
+                    Card {
+                        entry.dialog()
+                    }
+                }
             }
         }
 
@@ -438,31 +435,28 @@ class ComponentActivityEditor: PaganComponentActivity() {
             return
         }
 
-        val active_dialog = this.model_editor.active_dialog
-        active_dialog.value = @Composable {
-            Dialog(onDismissRequest = { active_dialog.value = null }) {
-                Card(modifier = Modifier.fillMaxSize()) {
-                    Column {
-                        SText(R.string.dialog_save_warning_title)
-                        Row() {
-                            Button(
-                                modifier = Modifier.fillMaxWidth().weight(1F),
-                                onClick = {
-                                    active_dialog.value = null
-                                    callback(false)
-                                },
-                                content = { SText(android.R.string.no) }
-                            )
-                            Button(
-                                modifier = Modifier.fillMaxWidth().weight(1F),
-                                onClick = {
-                                    this@ComponentActivityEditor.project_save()
-                                    active_dialog.value = null
-                                    callback(true)
-                                },
-                                content = { SText(android.R.string.ok) }
-                            )
-                        }
+        this.view_model.dialog_queue.value.new_dialog { dialog_queue, dialog_key ->
+            @Composable {
+                Column {
+                    SText(R.string.dialog_save_warning_title)
+                    Row() {
+                        Button(
+                            modifier = Modifier.fillMaxWidth().weight(1F),
+                            onClick = {
+                                dialog_queue.remove(dialog_key)
+                                callback(false)
+                            },
+                            content = { SText(android.R.string.no) }
+                        )
+                        Button(
+                            modifier = Modifier.fillMaxWidth().weight(1F),
+                            onClick = {
+                                this@ComponentActivityEditor.project_save()
+                                dialog_queue.remove(dialog_key)
+                                callback(true)
+                            },
+                            content = { SText(android.R.string.ok) }
+                        )
                     }
                 }
             }

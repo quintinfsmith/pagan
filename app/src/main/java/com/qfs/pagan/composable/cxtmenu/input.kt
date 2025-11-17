@@ -7,15 +7,13 @@ import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.text.input.KeyboardType
 
 @Composable
-fun IntegerInput(minimum: Int = 0, maximum: Int? = null, default: Int? = null, callback: (Int) -> Unit) {
-    val working_value = remember { mutableIntStateOf(default ?: minimum) }
+fun IntegerInput(value: MutableState<Int>, minimum: Int = 0, maximum: Int? = null, callback: (Int) -> Unit) {
     OutlinedTextField(
-        state = rememberTextFieldState(initialText = "${working_value.intValue}"),
+        state = rememberTextFieldState(initialText = "${value.value}"),
         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
         label = { Text("Label") },
         inputTransformation = object : InputTransformation {
@@ -23,10 +21,11 @@ fun IntegerInput(minimum: Int = 0, maximum: Int? = null, default: Int? = null, c
                 var invalid = false
                 val int_value = try {
                     this.toString().toInt()
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     invalid = true
                     0
                 }
+
                 if (invalid || minimum > int_value || (maximum != null && maximum < int_value)) {
                     this.revertAllChanges()
                 }

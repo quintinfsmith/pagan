@@ -5,12 +5,20 @@ import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
 import androidx.core.view.GravityCompat
@@ -24,6 +32,7 @@ import com.qfs.json.JSONString
 import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.ComponentActivity.ComponentActivityEditor
 import com.qfs.pagan.OpusLayerInterface
+import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.cxtmenu.IntegerInput
 import com.qfs.pagan.contextmenu.ContextMenuControlLeaf
 import com.qfs.pagan.contextmenu.ContextMenuRange
@@ -1025,9 +1034,7 @@ class ActionTracker {
         val main = this.get_activity()
 
         val context_menu = main.active_context_menu
-        if (context_menu !is ContextMenuWithController<*>) {
-            return
-        }
+        if (context_menu !is ContextMenuWithController<*>) return
 
         val widget: ControlWidgetVolume = context_menu.get_widget() as ControlWidgetVolume
 
@@ -1652,22 +1659,36 @@ class ActionTracker {
         if (stub_output != null) {
             callback(stub_output)
         } else {
-            this.activity?.model_editor?.active_dialog?.value = @Composable {
-                Dialog(onDismissRequest = { }) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Column() {
-                            IntegerInput(min_value, max_value, default, callback)
+            val active_dialog = this.activity?.model_editor?.active_dialog
+            active_dialog?.value = @Composable {
+                Dialog(onDismissRequest = { active_dialog.value = null }) {
+                    Card(modifier = Modifier.fillMaxSize()) {
+                        Column {
+                            val value = remember { mutableStateOf(default ?: min_value) }
+                            IntegerInput(value, min_value, max_value) {
+                                active_dialog.value = null
+                                callback(it)
+                            }
+                            Row() {
+                                Button(
+                                    modifier = Modifier.fillMaxWidth().weight(1F),
+                                    onClick = { active_dialog.value = null },
+                                    content = { SText(android.R.string.cancel) }
+                                )
+
+                                Button(
+                                    modifier = Modifier.fillMaxWidth().weight(1F),
+                                    onClick = {
+                                        callback(value.value)
+                                        active_dialog.value = null
+                                    },
+                                    content = { SText(android.R.string.ok) }
+                                )
+                            }
                         }
                     }
                 }
             }
-            val activity = this.get_activity()
-            activity.dialog_number_input(title, min_value, max_value, default, callback)
         }
     }
 

@@ -69,7 +69,7 @@ class ViewModelEditor: ViewModel() {
     var export_handle: WavConverter? = null
     var action_interface = ActionTracker()
     var opus_manager = OpusLayerInterface()
-    var active_project: Uri? = null
+    var active_project: MutableState<Uri?> = mutableStateOf(null)
     var audio_interface = AudioInterface()
     var available_preset_names: HashMap<Pair<Int, Int>, String>? = null
     var project_manager: ProjectManager? = null
@@ -174,7 +174,7 @@ class ViewModelEditor: ViewModel() {
     }
 
     fun save_project(indent: Boolean = false) {
-        this.active_project = this.project_manager?.save(this.opus_manager, this.active_project, indent)
+        this.active_project.value = this.project_manager?.save(this.opus_manager, this.active_project.value, indent)
         this.opus_manager.ui_facade.set_project_exists(true)
     }
 }

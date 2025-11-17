@@ -181,9 +181,9 @@ class ActivityEditor : PaganActivity() {
     var active_context_menu: ContextMenuView? = null
 
     var active_project: Uri?
-        get() = this.editor_view_model.active_project
+        get() = this.editor_view_model.active_project.value
         set(value) {
-            this.editor_view_model.active_project = value
+            this.editor_view_model.active_project.value = value
         }
 
     class MultiExporterEventHandler(var activity: ActivityEditor, var total_count: Int): WavConverter.ExporterEventHandler {

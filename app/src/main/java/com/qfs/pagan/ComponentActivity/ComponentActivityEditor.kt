@@ -33,10 +33,12 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
-import androidx.core.view.GravityCompat
+import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import androidx.drawerlayout.widget.DrawerLayout
 import com.qfs.pagan.ActionTracker
+import com.qfs.pagan.Activity.ActivityAbout
+import com.qfs.pagan.Activity.ActivitySettings
+import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelPrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelSecondary
@@ -81,10 +83,28 @@ class ComponentActivityEditor: PaganComponentActivity() {
             this.view_model.save_configuration()
 
             // No need to update the active_project here. using this intent launcher implies the active_project will be changed in the ucheck
-            this.model_editor.project_manager?.change_project_path(tree_uri, this.model_editor.active_project)
+            this.model_editor.project_manager?.change_project_path(tree_uri, this.model_editor.active_project.value)
 
             this._project_save()
         }
+
+    internal var result_launcher_settings =
+        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            val uri = result.data?.getStringExtra(EXTRA_ACTIVE_PROJECT)?.toUri() ?: return@registerForActivityResult
+            this.model_editor.active_project.value = uri
+        }
+
+    //internal var result_launcher_import =
+    //    this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    //        if (result.resultCode == RESULT_OK) {
+    //            result?.data?.data?.also { uri ->
+    //                this.handle_uri(uri)
+    //            }
+    //        }
+    //    }
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val action_interface = this.model_editor.action_interface
@@ -105,7 +125,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
 
                 // val drawer_layout = that.findViewById<DrawerLayout>(R.id.drawer_layout)
-
                 // if (drawer_layout.isDrawerOpen(GravityCompat.START)) {
                 //     //TODO()
                 //     that.drawer_close()
@@ -225,9 +244,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
                 is RelativeNoteEvent -> {}
                 is PercussionEvent -> Text(stringResource(R.string.percussion_label))
-                is OpusVolumeEvent -> {
-                    Text("${event.value}")
-                }
+                is OpusVolumeEvent -> Text("${event.value}")
                 is OpusPanEvent -> {}
                 is DelayEvent -> {}
                 is OpusTempoEvent -> {}
@@ -374,4 +391,17 @@ class ComponentActivityEditor: PaganComponentActivity() {
         Toast.makeText(this, id, length).show()
     }
 
+    fun open_settings() {
+        this.result_launcher_settings.launch(
+            Intent(this, ActivitySettings::class.java).apply {
+                this@ComponentActivityEditor.model_editor.active_project.value?.let {
+                    this.putExtra(EXTRA_ACTIVE_PROJECT, it.toString())
+                }
+            }
+        )
+    }
+
+    fun open_about() {
+        this.startActivity(Intent(this, ActivityAbout::class.java))
+    }
 }

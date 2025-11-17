@@ -1,6 +1,8 @@
 package com.qfs.pagan.ComponentActivity
 
+import android.app.AlertDialog
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.provider.DocumentsContract
 import android.widget.Toast
@@ -13,13 +15,19 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,13 +41,16 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.Activity.ActivityAbout
 import com.qfs.pagan.Activity.ActivitySettings
 import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
+import com.qfs.pagan.EditorTable
 import com.qfs.pagan.R
+import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelPrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuColumnPrimary
@@ -50,11 +61,13 @@ import com.qfs.pagan.composable.cxtmenu.ContextMenuRangePrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuRangeSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuSinglePrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuSingleSecondary
+import com.qfs.pagan.composable.cxtmenu.IntegerInput
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
+import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
@@ -67,6 +80,9 @@ import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.uibill.UIFacade
 import com.qfs.pagan.viewmodel.ViewModelEditor
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import kotlin.math.max
 
 class ComponentActivityEditor: PaganComponentActivity() {
     val model_editor: ViewModelEditor by this.viewModels()
@@ -319,7 +335,17 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     override fun LayoutMediumPortrait() {
         val view_model = this.model_editor
-        val ui_facade = model_editor.opus_manager.ui_facade
+        val ui_facade = this.model_editor.opus_manager.ui_facade
+
+        this.model_editor.active_dialog.value?.let {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                Dialog(onDismissRequest = {}) { Card() { it() } }
+            }
+        }
+
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.BottomCenter
@@ -403,5 +429,95 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     fun open_about() {
         this.startActivity(Intent(this, ActivityAbout::class.java))
+    }
+
+
+    fun dialog_save_project(callback: (Boolean) -> Unit) {
+        if (!this.needs_save()) {
+            callback(false)
+            return
+        }
+
+        val active_dialog = this.model_editor.active_dialog
+        active_dialog.value = @Composable {
+            Dialog(onDismissRequest = { active_dialog.value = null }) {
+                Card(modifier = Modifier.fillMaxSize()) {
+                    Column {
+                        SText(R.string.dialog_save_warning_title)
+                        Row() {
+                            Button(
+                                modifier = Modifier.fillMaxWidth().weight(1F),
+                                onClick = {
+                                    active_dialog.value = null
+                                    callback(false)
+                                },
+                                content = { SText(android.R.string.no) }
+                            )
+                            Button(
+                                modifier = Modifier.fillMaxWidth().weight(1F),
+                                onClick = {
+                                    this@ComponentActivityEditor.project_save()
+                                    active_dialog.value = null
+                                    callback(true)
+                                },
+                                content = { SText(android.R.string.ok) }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun needs_save(): Boolean {
+        val opus_manager = this.model_editor.opus_manager
+
+        val active_project = this.model_editor.active_project.value ?: return !opus_manager.history_cache.is_empty()
+        if (DocumentFile.fromSingleUri(this, active_project)?.exists() != true) return true
+
+        val input_stream = this.contentResolver.openInputStream(active_project)
+        val reader = BufferedReader(InputStreamReader(input_stream))
+        val content: ByteArray = reader.readText().toByteArray(Charsets.UTF_8)
+
+        val other = OpusLayerBase()
+        other.load(content)
+
+        reader.close()
+        input_stream?.close()
+
+        return (opus_manager as OpusLayerBase) != other
+    }
+
+    fun load_project(uri: Uri) {
+        val input_stream = this.contentResolver.openInputStream(uri)
+        val reader = BufferedReader(InputStreamReader(input_stream))
+        val content = reader.readText().toByteArray(Charsets.UTF_8)
+
+        reader.close()
+        input_stream?.close()
+
+        this.model_editor.opus_manager.load(content) {
+            this.model_editor.active_project.value = uri
+        }
+    }
+
+    fun setup_new() {
+        this.model_editor.opus_manager.project_change_new()
+
+        // TODO:: Not sure this should be here
+        // val opus_manager = this.model_editor.opus_manager
+        // set the default instrument to the first available in the soundfont (if applicable)
+        // val ui_facade = opus_manager.ui_facade
+        // for (c in opus_manager.channels.indices) {
+        //     if (!opus_manager.is_percussion(c)) continue
+
+        //     // Need to prematurely update the channel instrument to find the lowest possible instrument
+        //     this.update_channel_instruments(c)
+        //     val percussion_keys = ui_facade.instrument_names[c]?.keys?.sorted() ?: continue
+
+        //     for (l in 0 until opus_manager.get_channel(c).size) {
+        //         opus_manager.percussion_set_instrument(c, l, max(0, percussion_keys.first() - 27))
+        //     }
+        // }
     }
 }

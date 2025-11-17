@@ -8,17 +8,22 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
 import androidx.core.view.GravityCompat
@@ -503,10 +508,10 @@ class ActionTracker {
     }
 
     fun project_copy() {
-        this.track(TrackedAction.CopyProject)
-        val activity = this.get_activity()
-        activity.project_move_to_copy()
-        this.ignore().drawer_close()
+        // this.track(TrackedAction.CopyProject)
+        // val activity = this.get_activity()
+        // activity.project_move_to_copy()
+        // this.ignore().drawer_close()
     }
 
     fun swap_lines(from_channel: Int, from_line: Int, to_channel: Int, to_line: Int) {
@@ -643,7 +648,7 @@ class ActionTracker {
         val use_repeat = if (repeat == -1) { default_count } else { repeat }
 
         if (first_key != second_key) {
-            this.dialog_number_input(context.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
+            this.dialog_number_input(R.string.repeat_selection, 1, 999, default_count, use_repeat) { repeat: Int ->
                 this.track(TrackedAction.RepeatSelectionStd, listOf(channel, line_offset, repeat))
                 try {
                     opus_manager.overwrite_beat_range_horizontally(
@@ -660,7 +665,7 @@ class ActionTracker {
                 }
             }
         } else if (opus_manager.is_percussion(first_key.channel) == opus_manager.is_percussion(channel)) {
-            this.dialog_number_input(context.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
+            this.dialog_number_input(R.string.repeat_selection, 1, 999, default_count, use_repeat) { repeat: Int ->
                 this.track(TrackedAction.RepeatSelectionStd, listOf(channel, line_offset, repeat))
                 try {
                     opus_manager.overwrite_line(channel, line_offset, first_key, repeat)
@@ -711,7 +716,7 @@ class ActionTracker {
 
         when (cursor.ctl_level) {
             CtlLineLevel.Line -> {
-                this.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
+                this.dialog_number_input(R.string.repeat_selection, 1, 999, default_count, use_repeat) { repeat: Int ->
                     this.track(TrackedAction.RepeatSelectionCtlLine, ActionTracker.enum_to_ints(type) + listOf(channel, line_offset, repeat))
                     if (first != second) {
                         opus_manager.controller_line_overwrite_range_horizontally(type, channel, line_offset, first, second, repeat)
@@ -722,7 +727,7 @@ class ActionTracker {
             }
 
             CtlLineLevel.Channel -> {
-                this.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
+                this.dialog_number_input(R.string.repeat_selection, 1, 999, default_count, use_repeat) { repeat: Int ->
                     this.track(TrackedAction.RepeatSelectionCtlLine, ActionTracker.enum_to_ints(type) + listOf(channel, line_offset, repeat))
                     if (first != second) {
                         opus_manager.controller_channel_to_line_overwrite_range_horizontally(type, channel, line_offset, first.channel, first.beat, second.beat, repeat)
@@ -733,7 +738,7 @@ class ActionTracker {
             }
 
             CtlLineLevel.Global -> {
-                this.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
+                this.dialog_number_input(R.string.repeat_selection, 1, 999, default_count, use_repeat) { repeat: Int ->
                     this.track(TrackedAction.RepeatSelectionCtlLine, ActionTracker.enum_to_ints(type) + listOf(channel, line_offset, repeat))
                     if (first != second) {
                         opus_manager.controller_global_to_line_overwrite_range_horizontally(type, channel, line_offset, first.beat, second.beat, repeat)
@@ -773,7 +778,7 @@ class ActionTracker {
         val use_repeat = if (repeat == -1) { default_count } else { repeat }
         when (cursor.ctl_level) {
             CtlLineLevel.Line -> {
-                this.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
+                this.dialog_number_input(R.string.repeat_selection, 1, 999, default_count, use_repeat) { repeat: Int ->
                     this.track(TrackedAction.RepeatSelectionCtlChannel, ActionTracker.enum_to_ints(type) + listOf(channel, repeat))
                     if (first != second) {
                         opus_manager.controller_line_to_channel_overwrite_range_horizontally(type, channel, first, second, repeat)
@@ -783,7 +788,7 @@ class ActionTracker {
                 }
             }
             CtlLineLevel.Channel -> {
-                this.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
+                this.dialog_number_input(R.string.repeat_selection, 1, 999, default_count, use_repeat) { repeat: Int ->
                     this.track(TrackedAction.RepeatSelectionCtlChannel, ActionTracker.enum_to_ints(type) + listOf(channel, repeat))
                     if (first != second) {
                         opus_manager.controller_channel_overwrite_range_horizontally(type, channel, first.channel, first.beat, second.beat, repeat)
@@ -793,7 +798,7 @@ class ActionTracker {
                 }
             }
             CtlLineLevel.Global -> {
-                this.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
+                this.dialog_number_input(R.string.repeat_selection, 1, 999, default_count, use_repeat) { repeat: Int ->
                     this.track(TrackedAction.RepeatSelectionCtlChannel, ActionTracker.enum_to_ints(type) + listOf(channel, repeat))
                     if (first != second) {
                         opus_manager.controller_global_to_channel_overwrite_range_horizontally(type, first.channel, first.beat, second.beat, repeat)
@@ -825,7 +830,7 @@ class ActionTracker {
         // a value of negative 1 means use default value, where a null would show the dialog
         val use_repeat = if (repeat == -1) { default_count } else { repeat }
 
-        this.dialog_number_input(activity.getString(R.string.repeat_selection), 1, 999, default_count, use_repeat) { repeat: Int ->
+        this.dialog_number_input(R.string.repeat_selection, 1, 999, default_count, use_repeat) { repeat: Int ->
             this.track(TrackedAction.RepeatSelectionCtlGlobal, ActionTracker.enum_to_ints(type) + listOf(repeat))
             when (cursor.ctl_level) {
                 CtlLineLevel.Line -> {
@@ -950,122 +955,124 @@ class ActionTracker {
 
 
     fun <K: EffectEvent> set_ctl_duration(duration: Int? = null) {
-        val main = this.get_activity()
-        val context_menu = main.active_context_menu as ContextMenuControlLeaf<K>
-        val event = context_menu.get_control_event<K>().copy() as K
-        val event_duration = event.duration
+        TODO()
+        // val main = this.get_activity()
+        // val context_menu = main.active_context_menu as ContextMenuControlLeaf<K>
+        // val event = context_menu.get_control_event<K>().copy() as K
+        // val event_duration = event.duration
 
-        this.dialog_number_input(main.getString(R.string.dlg_duration), 1, 99, event_duration, duration) { value: Int ->
-            this.track(TrackedAction.SetDurationCtl, listOf(value))
-            event.duration = max(1, value)
-            context_menu._widget_callback(event)
-        }
+        // this.dialog_number_input(main.getString(R.string.dlg_duration), 1, 99, event_duration, duration) { value: Int ->
+        //     this.track(TrackedAction.SetDurationCtl, listOf(value))
+        //     event.duration = max(1, value)
+        //     context_menu._widget_callback(event)
+        // }
     }
 
     fun set_ctl_transition(transition: EffectTransition? = null) {
-        val main = this.get_activity()
-        val context_menu = main.active_context_menu as ContextMenuControlLeaf<EffectEvent>
-        val event = context_menu.get_control_event<EffectEvent>().copy()
+        TODO()
+        // val main = this.get_activity()
+        // val context_menu = main.active_context_menu as ContextMenuControlLeaf<EffectEvent>
+        // val event = context_menu.get_control_event<EffectEvent>().copy()
 
 
-        val filter = when (event.event_type) {
-            EffectType.Tempo -> listOf(EffectTransition.Instant, EffectTransition.RInstant)
-            else -> listOf(
-                EffectTransition.Instant,
-                EffectTransition.Linear,
-                EffectTransition.RInstant,
-                EffectTransition.RLinear
-            )
-        }
+        // val filter = when (event.event_type) {
+        //     EffectType.Tempo -> listOf(EffectTransition.Instant, EffectTransition.RInstant)
+        //     else -> listOf(
+        //         EffectTransition.Instant,
+        //         EffectTransition.Linear,
+        //         EffectTransition.RInstant,
+        //         EffectTransition.RLinear
+        //     )
+        // }
 
-        val options = listOf(
-            Triple(
-                EffectTransition.Instant,
-                main.get_effect_transition_icon(EffectTransition.Instant),
-                main.getString(R.string.effect_transition_instant)
-            ),
-            Triple(
-                EffectTransition.Linear,
-                main.get_effect_transition_icon(EffectTransition.Linear),
-                main.getString(R.string.effect_transition_linear)
-            ),
-            Triple(
-                EffectTransition.RInstant,
-                main.get_effect_transition_icon(EffectTransition.RInstant),
-                main.getString(R.string.effect_transition_rinstant)
-            ),
-            Triple(
-                EffectTransition.RLinear,
-                main.get_effect_transition_icon(EffectTransition.RLinear),
-                main.getString(R.string.effect_transition_rlinear)
-            )
-        ).filter { filter.contains(it.first) }
+        // val options = listOf(
+        //     Triple(
+        //         EffectTransition.Instant,
+        //         main.get_effect_transition_icon(EffectTransition.Instant),
+        //         main.getString(R.string.effect_transition_instant)
+        //     ),
+        //     Triple(
+        //         EffectTransition.Linear,
+        //         main.get_effect_transition_icon(EffectTransition.Linear),
+        //         main.getString(R.string.effect_transition_linear)
+        //     ),
+        //     Triple(
+        //         EffectTransition.RInstant,
+        //         main.get_effect_transition_icon(EffectTransition.RInstant),
+        //         main.getString(R.string.effect_transition_rinstant)
+        //     ),
+        //     Triple(
+        //         EffectTransition.RLinear,
+        //         main.get_effect_transition_icon(EffectTransition.RLinear),
+        //         main.getString(R.string.effect_transition_rlinear)
+        //     )
+        // ).filter { filter.contains(it.first) }
 
-        this.dialog_popup_menu(main.getString(R.string.dialog_transition), options, default = event.transition, transition) { i: Int, transition: EffectTransition ->
-            this.track(TrackedAction.SetTransitionAtCursor, ActionTracker.string_to_ints(transition.name))
-            event.transition = transition
-            context_menu.widget.set_event(event)
-        }
+        // this.dialog_popup_menu(main.getString(R.string.dialog_transition), options, default = event.transition, transition) { i: Int, transition: EffectTransition ->
+        //     this.track(TrackedAction.SetTransitionAtCursor, ActionTracker.string_to_ints(transition.name))
+        //     event.transition = transition
+        //     context_menu.widget.set_event(event)
+        // }
     }
 
     fun set_velocity(velocity: Int? = null) {
-        val main = this.get_activity()
+       //  val main = this.get_activity()
 
-        val context_menu = main.active_context_menu
-        if (context_menu !is ContextMenuWithController<*>) {
-            return
-        }
+       //  val context_menu = main.active_context_menu
+       //  if (context_menu !is ContextMenuWithController<*>) {
+       //      return
+       //  }
 
-        val widget: ControlWidgetVelocity = context_menu.get_widget() as ControlWidgetVelocity
+       //  val widget: ControlWidgetVelocity = context_menu.get_widget() as ControlWidgetVelocity
 
-        val dlg_default = (widget.get_event().value * 100F).toInt()
-        val dlg_title = main.getString(R.string.dlg_set_velocity)
-        this.dialog_number_input(dlg_title, widget.min, widget.max, dlg_default, velocity) { new_value: Int ->
-            this.track(TrackedAction.SetVelocityAtCursor, listOf(new_value))
-            val new_event = OpusVelocityEvent(
-                new_value.toFloat() / 100F,
-                widget.get_event().duration,
-                widget.get_event().transition,
-            )
-            widget.set_event(new_event)
-        }
+       //  val dlg_default = (widget.get_event().value * 100F).toInt()
+       //  val dlg_title = main.getString(R.string.dlg_set_velocity)
+       //  this.dialog_number_input(dlg_title, widget.min, widget.max, dlg_default, velocity) { new_value: Int ->
+       //      this.track(TrackedAction.SetVelocityAtCursor, listOf(new_value))
+       //      val new_event = OpusVelocityEvent(
+       //          new_value.toFloat() / 100F,
+       //          widget.get_event().duration,
+       //          widget.get_event().transition,
+       //      )
+       //      widget.set_event(new_event)
+       //  }
     }
     fun set_volume(volume: Int? = null) {
-        val main = this.get_activity()
+        // val main = this.get_activity()
 
-        val context_menu = main.active_context_menu
-        if (context_menu !is ContextMenuWithController<*>) return
+        // val context_menu = main.active_context_menu
+        // if (context_menu !is ContextMenuWithController<*>) return
 
-        val widget: ControlWidgetVolume = context_menu.get_widget() as ControlWidgetVolume
+        // val widget: ControlWidgetVolume = context_menu.get_widget() as ControlWidgetVolume
 
-        val dlg_default = (widget.get_event().value * 100F).toInt()
-        val dlg_title = main.getString(R.string.dlg_set_volume)
-        this.dialog_number_input(dlg_title, widget.min, widget.max, dlg_default, volume) { new_value: Int ->
-            this.track(TrackedAction.SetVolumeAtCursor, listOf(new_value))
-            val new_event = OpusVolumeEvent(
-                new_value.toFloat() / 100F,
-                widget.get_event().duration,
-                widget.get_event().transition
-            )
-            widget.set_event(new_event)
-        }
+        // val dlg_default = (widget.get_event().value * 100F).toInt()
+        // val dlg_title = main.getString(R.string.dlg_set_volume)
+        // this.dialog_number_input(dlg_title, widget.min, widget.max, dlg_default, volume) { new_value: Int ->
+        //     this.track(TrackedAction.SetVolumeAtCursor, listOf(new_value))
+        //     val new_event = OpusVolumeEvent(
+        //         new_value.toFloat() / 100F,
+        //         widget.get_event().duration,
+        //         widget.get_event().transition
+        //     )
+        //     widget.set_event(new_event)
+        // }
     }
 
     fun set_duration(duration: Int? = null) {
-        val main = this.get_activity()
-        val opus_manager = main.get_opus_manager()
-        val cursor = opus_manager.cursor
-        val (beat_key, position) = opus_manager.get_actual_position(
-            cursor.get_beatkey(),
-            cursor.get_position()
-        )
+        // val main = this.get_activity()
+        // val opus_manager = main.get_opus_manager()
+        // val cursor = opus_manager.cursor
+        // val (beat_key, position) = opus_manager.get_actual_position(
+        //     cursor.get_beatkey(),
+        //     cursor.get_position()
+        // )
 
-        val event_duration = opus_manager.get_tree(beat_key, position).get_event()?.duration ?: return
+        // val event_duration = opus_manager.get_tree(beat_key, position).get_event()?.duration ?: return
 
-        this.dialog_number_input(main.getString(R.string.dlg_duration), 1, 99, event_duration, duration) { value: Int ->
-            this.track(TrackedAction.SetDuration, listOf(value))
-            opus_manager.set_duration(beat_key, position, max(1, value))
-        }
+        // this.dialog_number_input(main.getString(R.string.dlg_duration), 1, 99, event_duration, duration) { value: Int ->
+        //     this.track(TrackedAction.SetDuration, listOf(value))
+        //     opus_manager.set_duration(beat_key, position, max(1, value))
+        // }
     }
 
     fun show_hidden_line_controller(forced_value: EffectType? = null) {
@@ -1124,7 +1131,7 @@ class ActionTracker {
 
 
     fun split(split: Int? = null) {
-        this.dialog_number_input(this.get_activity().getString(R.string.dlg_split), 2, 32, stub_output = split) { splits: Int ->
+        this.dialog_number_input(R.string.dlg_split, 2, 32, stub_output = split) { splits: Int ->
             this.track(TrackedAction.SplitLeaf, listOf(splits))
 
             val opus_manager = this.get_opus_manager()
@@ -1139,37 +1146,37 @@ class ActionTracker {
     }
 
     fun set_offset(new_offset: Int) {
-        this.track(TrackedAction.SetOffset, listOf(new_offset))
+        //this.track(TrackedAction.SetOffset, listOf(new_offset))
 
-        val opus_manager = this.get_opus_manager()
-        opus_manager.set_note_offset_at_cursor(new_offset)
+        //val opus_manager = this.get_opus_manager()
+        //opus_manager.set_note_offset_at_cursor(new_offset)
 
-        val beat_key = opus_manager.cursor.get_beatkey()
-        val position = opus_manager.cursor.get_position()
-        val event_note = opus_manager.get_absolute_value(beat_key, position) ?: return
-        this.get_activity().play_event(beat_key.channel, event_note)
+        //val beat_key = opus_manager.cursor.get_beatkey()
+        //val position = opus_manager.cursor.get_position()
+        //val event_note = opus_manager.get_absolute_value(beat_key, position) ?: return
+        //this.get_activity().play_event(beat_key.channel, event_note)
     }
 
     fun set_octave(new_octave: Int) {
-        this.track(TrackedAction.SetOctave, listOf(new_octave))
+        // this.track(TrackedAction.SetOctave, listOf(new_octave))
 
-        val opus_manager = this.get_opus_manager()
-        opus_manager.set_note_octave_at_cursor(new_octave)
+        // val opus_manager = this.get_opus_manager()
+        // opus_manager.set_note_octave_at_cursor(new_octave)
 
-        val beat_key = opus_manager.cursor.get_beatkey()
-        val position = opus_manager.cursor.get_position()
-        val event_note = opus_manager.get_absolute_value(beat_key, position) ?: return
-        this.get_activity().play_event(beat_key.channel, event_note)
+        // val beat_key = opus_manager.cursor.get_beatkey()
+        // val position = opus_manager.cursor.get_position()
+        // val event_note = opus_manager.get_absolute_value(beat_key, position) ?: return
+        // this.get_activity().play_event(beat_key.channel, event_note)
     }
 
     fun adjust_selection(amount: Int? = null) {
-        val opus_manager = this.get_opus_manager()
-        if (amount == null) {
-            this.activity?.dialog_popup_selection_offset()
-        } else {
-            this.track(TrackedAction.AdjustSelection, listOf(amount))
-            opus_manager.offset_selection(amount)
-        }
+        // val opus_manager = this.get_opus_manager()
+        // if (amount == null) {
+        //     this.activity?.dialog_popup_selection_offset()
+        // } else {
+        //     this.track(TrackedAction.AdjustSelection, listOf(amount))
+        //     opus_manager.offset_selection(amount)
+        // }
     }
 
     fun unset() {
@@ -1179,30 +1186,30 @@ class ActionTracker {
     }
 
     fun unset_root() {
-        this.track(TrackedAction.UnsetRoot)
-        val opus_manager = this.get_activity().get_opus_manager()
-        val cursor = opus_manager.cursor
-        when (cursor.ctl_level) {
-            CtlLineLevel.Global -> {
-                opus_manager.cursor_select_ctl_at_global(cursor.ctl_type!!, cursor.beat, listOf())
-            }
-            CtlLineLevel.Channel -> {
-                opus_manager.cursor_select_ctl_at_channel(cursor.ctl_type!!, cursor.channel, cursor.beat, listOf())
-            }
-            CtlLineLevel.Line -> {
-                val beat_key = cursor.get_beatkey()
-                opus_manager.cursor_select_ctl_at_line(cursor.ctl_type!!, beat_key, listOf())
-            }
-            null -> {
-                val beat_key = cursor.get_beatkey()
-                opus_manager.unset(beat_key, listOf())
-            }
-        }
+        // this.track(TrackedAction.UnsetRoot)
+        // val opus_manager = this.get_activity().get_opus_manager()
+        // val cursor = opus_manager.cursor
+        // when (cursor.ctl_level) {
+        //     CtlLineLevel.Global -> {
+        //         opus_manager.cursor_select_ctl_at_global(cursor.ctl_type!!, cursor.beat, listOf())
+        //     }
+        //     CtlLineLevel.Channel -> {
+        //         opus_manager.cursor_select_ctl_at_channel(cursor.ctl_type!!, cursor.channel, cursor.beat, listOf())
+        //     }
+        //     CtlLineLevel.Line -> {
+        //         val beat_key = cursor.get_beatkey()
+        //         opus_manager.cursor_select_ctl_at_line(cursor.ctl_type!!, beat_key, listOf())
+        //     }
+        //     null -> {
+        //         val beat_key = cursor.get_beatkey()
+        //         opus_manager.unset(beat_key, listOf())
+        //     }
+        // }
     }
 
     fun remove_at_cursor() {
         this.track(TrackedAction.RemoveLeaf)
-        val opus_manager = this.get_activity().get_opus_manager()
+        val opus_manager = this.get_opus_manager()
         opus_manager.remove_at_cursor(1)
     }
 
@@ -1210,8 +1217,9 @@ class ActionTracker {
         val activity = this.get_activity()
         val opus_manager = this.get_opus_manager()
 
-        this.dialog_number_input(activity.getString(R.string.dlg_insert), 1, 29, stub_output = repeat) { count: Int ->
+        this.dialog_number_input(R.string.dlg_insert, 1, 29, stub_output = repeat) { count: Int ->
             this.track(TrackedAction.InsertLeaf, listOf(count))
+            println("BUH? $count")
 
             val position = opus_manager.cursor.get_position().toMutableList()
             val cursor = opus_manager.cursor
@@ -1234,112 +1242,112 @@ class ActionTracker {
     }
 
     fun toggle_percussion() {
-        this.track(TrackedAction.TogglePercussion)
+        // this.track(TrackedAction.TogglePercussion)
 
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        val beat_key = cursor.get_beatkey()
-        val position = cursor.get_position()
-        val current_tree_position = opus_manager.get_actual_position(beat_key, position)
+        // val opus_manager = this.get_opus_manager()
+        // val cursor = opus_manager.cursor
+        // val beat_key = cursor.get_beatkey()
+        // val position = cursor.get_position()
+        // val current_tree_position = opus_manager.get_actual_position(beat_key, position)
 
-        if (opus_manager.get_tree(current_tree_position.first, current_tree_position.second).has_event()) {
-            opus_manager.unset()
-        } else {
-            opus_manager.set_percussion_event_at_cursor()
-            val event_note = opus_manager.get_percussion_instrument(beat_key.channel, beat_key.line_offset)
-            this.get_activity().play_event(beat_key.channel, event_note)
-        }
+        // if (opus_manager.get_tree(current_tree_position.first, current_tree_position.second).has_event()) {
+        //     opus_manager.unset()
+        // } else {
+        //     opus_manager.set_percussion_event_at_cursor()
+        //     val event_note = opus_manager.get_percussion_instrument(beat_key.channel, beat_key.line_offset)
+        //     this.get_activity().play_event(beat_key.channel, event_note)
+        // }
     }
 
     fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>? = null) {
-        val activity = this.get_activity()
-        val supported_instrument_names = activity.get_supported_preset_names()
-        val sorted_keys = supported_instrument_names.keys.toList().sortedBy {
-            it.first + (it.second * 128)
-        }
+        // val activity = this.get_activity()
+        // val supported_instrument_names = activity.get_supported_preset_names()
+        // val sorted_keys = supported_instrument_names.keys.toList().sortedBy {
+        //     it.first + (it.second * 128)
+        // }
 
-        val opus_manager = this.get_opus_manager()
-        val is_percussion = opus_manager.is_percussion(channel)
-        val default_position = opus_manager.get_channel_instrument(channel)
+        // val opus_manager = this.get_opus_manager()
+        // val is_percussion = opus_manager.is_percussion(channel)
+        // val default_position = opus_manager.get_channel_instrument(channel)
 
-        val options = mutableListOf<Triple<Pair<Int, Int>, Int?, String>>()
-        val current_instrument_supported = sorted_keys.contains(default_position)
+        // val options = mutableListOf<Triple<Pair<Int, Int>, Int?, String>>()
+        // val current_instrument_supported = sorted_keys.contains(default_position)
 
-        fun padded_hex(i: Int): String {
-            var s = Integer.toHexString(i)
-            while (s.length < 2) {
-                s = "0$s"
-            }
-            return s.uppercase()
-        }
+        // fun padded_hex(i: Int): String {
+        //     var s = Integer.toHexString(i)
+        //     while (s.length < 2) {
+        //         s = "0$s"
+        //     }
+        //     return s.uppercase()
+        // }
 
-        for (key in sorted_keys) {
-            val name = supported_instrument_names[key]
-            if (is_percussion) {
-                if (key.first == 128) {
-                    options.add(Triple(key, null, "${padded_hex(key.second)}] $name"))
-                }
-            } else if (key.first != 128) {
-                val pairstring = if (key.first == 0) {
-                    padded_hex(key.second)
-                } else {
-                    "${padded_hex(key.second)}.${padded_hex(key.first)}"
-                }
-                options.add(Triple(key, null, "$pairstring) $name"))
-            } else if (activity.configuration.allow_std_percussion) {
-                options.add(Triple(key, null, "${padded_hex(key.second)}] $name"))
-            }
-        }
+        // for (key in sorted_keys) {
+        //     val name = supported_instrument_names[key]
+        //     if (is_percussion) {
+        //         if (key.first == 128) {
+        //             options.add(Triple(key, null, "${padded_hex(key.second)}] $name"))
+        //         }
+        //     } else if (key.first != 128) {
+        //         val pairstring = if (key.first == 0) {
+        //             padded_hex(key.second)
+        //         } else {
+        //             "${padded_hex(key.second)}.${padded_hex(key.first)}"
+        //         }
+        //         options.add(Triple(key, null, "$pairstring) $name"))
+        //     } else if (activity.configuration.allow_std_percussion) {
+        //         options.add(Triple(key, null, "${padded_hex(key.second)}] $name"))
+        //     }
+        // }
 
-        // Separated KIts and tuned instruments. Kits are always bank 128, but the other instruments are defined by program with variants using the bank
-        options.sortBy { (key, _) ->
-            if (key.first == 128) {
-                (key.first * 128) + key.second
-            } else {
-                (key.second * 128) + key.first
-            }
-        }
+        // // Separated KIts and tuned instruments. Kits are always bank 128, but the other instruments are defined by program with variants using the bank
+        // options.sortBy { (key, _) ->
+        //     if (key.first == 128) {
+        //         (key.first * 128) + key.second
+        //     } else {
+        //         (key.second * 128) + key.first
+        //     }
+        // }
 
-        if (is_percussion) {
-            val use_menu_dialog = options.isNotEmpty() && (!current_instrument_supported || options.size > 1)
+        // if (is_percussion) {
+        //     val use_menu_dialog = options.isNotEmpty() && (!current_instrument_supported || options.size > 1)
 
-            if (use_menu_dialog) {
-                this.dialog_popup_menu(activity.getString(R.string.dropdown_choose_instrument), options, default = default_position, stub_output = instrument) { _: Int, instrument: Pair<Int, Int> ->
-                    this.track(
-                        TrackedAction.SetChannelInstrument,
-                        listOf(channel, instrument.first, instrument.second)
-                    )
-                    opus_manager.channel_set_instrument(channel, instrument)
-                }
-            } else {
-                this.dialog_number_input(activity.getString(R.string.dropdown_choose_instrument), 0, 127, default_position.second, stub_output = instrument?.second) { program: Int ->
-                    this.track(
-                        TrackedAction.SetChannelInstrument,
-                        listOf(channel, instrument?.first ?: 1, program)
-                    )
-                    opus_manager.channel_set_instrument(channel, Pair(instrument?.first ?: 1, program))
-                }
-            }
-        } else if (options.size > 1 || !current_instrument_supported) {
-            this.dialog_popup_menu(activity.getString(R.string.dropdown_choose_instrument), options, default = default_position, stub_output = instrument) { _: Int, instrument: Pair<Int, Int> ->
-                this.track(
-                    TrackedAction.SetChannelInstrument,
-                    listOf(channel, instrument.first, instrument.second)
-                )
-                opus_manager.channel_set_instrument(channel, instrument)
+        //     if (use_menu_dialog) {
+        //         this.dialog_popup_menu(activity.getString(R.string.dropdown_choose_instrument), options, default = default_position, stub_output = instrument) { _: Int, instrument: Pair<Int, Int> ->
+        //             this.track(
+        //                 TrackedAction.SetChannelInstrument,
+        //                 listOf(channel, instrument.first, instrument.second)
+        //             )
+        //             opus_manager.channel_set_instrument(channel, instrument)
+        //         }
+        //     } else {
+        //         this.dialog_number_input(activity.getString(R.string.dropdown_choose_instrument), 0, 127, default_position.second, stub_output = instrument?.second) { program: Int ->
+        //             this.track(
+        //                 TrackedAction.SetChannelInstrument,
+        //                 listOf(channel, instrument?.first ?: 1, program)
+        //             )
+        //             opus_manager.channel_set_instrument(channel, Pair(instrument?.first ?: 1, program))
+        //         }
+        //     }
+        // } else if (options.size > 1 || !current_instrument_supported) {
+        //     this.dialog_popup_menu(activity.getString(R.string.dropdown_choose_instrument), options, default = default_position, stub_output = instrument) { _: Int, instrument: Pair<Int, Int> ->
+        //         this.track(
+        //             TrackedAction.SetChannelInstrument,
+        //             listOf(channel, instrument.first, instrument.second)
+        //         )
+        //         opus_manager.channel_set_instrument(channel, instrument)
 
 
-                val radix = opus_manager.get_radix()
-                thread {
-                    activity.play_event(channel, (radix * 3))
-                    Thread.sleep(200)
-                    activity.play_event(channel, (radix * 3) + (radix / 2))
-                    Thread.sleep(200)
-                    activity.play_event(channel, (radix * 4))
-                    Thread.sleep(200)
-                }
-            }
-        }
+        //         val radix = opus_manager.get_radix()
+        //         thread {
+        //             activity.play_event(channel, (radix * 3))
+        //             Thread.sleep(200)
+        //             activity.play_event(channel, (radix * 3) + (radix / 2))
+        //             Thread.sleep(200)
+        //             activity.play_event(channel, (radix * 4))
+        //             Thread.sleep(200)
+        //         }
+        //     }
+        // }
     }
 
     fun insert_percussion_channel(index: Int? = null) {
@@ -1384,100 +1392,93 @@ class ActionTracker {
 
 
     fun insert_line(count: Int? = null) {
-        val main = this.get_activity()
-        val opus_manager = main.get_opus_manager()
-        this.dialog_number_input(main.getString(R.string.dlg_insert_lines), 1, 9, stub_output = count) { count: Int ->
-            this.track(TrackedAction.InsertLine, listOf(count))
-            opus_manager.insert_line_at_cursor(count)
-        }
+        // val main = this.get_activity()
+        // val opus_manager = main.get_opus_manager()
+        // this.dialog_number_input(main.getString(R.string.dlg_insert_lines), 1, 9, stub_output = count) { count: Int ->
+        //     this.track(TrackedAction.InsertLine, listOf(count))
+        //     opus_manager.insert_line_at_cursor(count)
+        // }
     }
 
     fun remove_line(count: Int? = null) {
-        val main = this.get_activity()
-        val opus_manager = main.get_opus_manager()
-        val lines = opus_manager.get_all_channels()[opus_manager.cursor.channel].size
-        val max_lines = Integer.min(lines - 1, lines - opus_manager.cursor.line_offset)
-        this.dialog_number_input(main.getString(R.string.dlg_remove_lines), 1, max_lines, stub_output = count) { count: Int ->
-            this.track(TrackedAction.RemoveLine, listOf(count))
-            opus_manager.remove_line_at_cursor(count)
-        }
+        // val main = this.get_activity()
+        // val opus_manager = main.get_opus_manager()
+        // val lines = opus_manager.get_all_channels()[opus_manager.cursor.channel].size
+        // val max_lines = Integer.min(lines - 1, lines - opus_manager.cursor.line_offset)
+        // this.dialog_number_input(main.getString(R.string.dlg_remove_lines), 1, max_lines, stub_output = count) { count: Int ->
+        //     this.track(TrackedAction.RemoveLine, listOf(count))
+        //     opus_manager.remove_line_at_cursor(count)
+        // }
     }
 
     fun set_percussion_instrument(value: Int? = null) {
-        val main = this.get_activity()
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        val default_instrument = opus_manager.get_percussion_instrument(cursor.channel, cursor.line_offset)
+        // val main = this.get_activity()
+        // val opus_manager = this.get_opus_manager()
+        // val cursor = opus_manager.cursor
+        // val default_instrument = opus_manager.get_percussion_instrument(cursor.channel, cursor.line_offset)
 
-        val options = mutableListOf<Triple<Int, Int?, String>>()
-        //val sorted_keys = main.active_percussion_names[cursor.channel]!!.keys.toMutableList()
-        //sorted_keys.sort()
-        //for (note in sorted_keys) {
-        //    val name = main.active_percussion_names[cursor.channel]!![note]
-        //    options.add(Triple(note - 27, null, "${note - 27}: $name"))
-        //}
-
-        this.dialog_popup_menu(main.getString(R.string.dropdown_choose_percussion), options, default_instrument, stub_output = value) { _: Int, value: Int ->
-            this.track(TrackedAction.SetPercussionInstrument, listOf(value))
-            opus_manager.set_percussion_instrument(value)
-            main.play_event(cursor.channel, value)
-        }
+        // val options = mutableListOf<Triple<Int, Int?, String>>()
+        // this.dialog_popup_menu(main.getString(R.string.dropdown_choose_percussion), options, default_instrument, stub_output = value) { _: Int, value: Int ->
+        //     this.track(TrackedAction.SetPercussionInstrument, listOf(value))
+        //     opus_manager.set_percussion_instrument(value)
+        //     main.play_event(cursor.channel, value)
+        // }
     }
 
     fun set_pan_at_cursor(value: Int) {
-        val main = this.get_activity()
+        // val main = this.get_activity()
 
-        this.track(TrackedAction.SetPanAtCursor, listOf(value))
-        val context_menu = main.active_context_menu
-        if (context_menu !is ContextMenuWithController<*>) {
-            return
-        }
+        // this.track(TrackedAction.SetPanAtCursor, listOf(value))
+        // val context_menu = main.active_context_menu
+        // if (context_menu !is ContextMenuWithController<*>) {
+        //     return
+        // }
 
-        val widget = context_menu.get_widget() as ControlWidgetPan
-        val new_event = widget.get_event().copy()
-        new_event.value = (value.toFloat() / widget.max.toFloat()) * -1F
-        widget.set_event(new_event)
+        // val widget = context_menu.get_widget() as ControlWidgetPan
+        // val new_event = widget.get_event().copy()
+        // new_event.value = (value.toFloat() / widget.max.toFloat()) * -1F
+        // widget.set_event(new_event)
     }
 
     fun set_tempo_at_cursor(input_value: Float) {
-        val main = this.get_activity()
+        // val main = this.get_activity()
 
-        val context_menu = main.active_context_menu
-        if (context_menu !is ContextMenuWithController<*>) {
-            return
-        }
-        val widget = context_menu.get_widget() as ControlWidgetTempo
-        val rounded_value = (input_value * 1000F).roundToInt().toFloat() / 1000F
-        this.track(TrackedAction.SetTempoAtCursor, listOf(input_value.toBits()))
+        // val context_menu = main.active_context_menu
+        // if (context_menu !is ContextMenuWithController<*>) {
+        //     return
+        // }
+        // val widget = context_menu.get_widget() as ControlWidgetTempo
+        // val rounded_value = (input_value * 1000F).roundToInt().toFloat() / 1000F
+        // this.track(TrackedAction.SetTempoAtCursor, listOf(input_value.toBits()))
 
-        val new_event = widget.get_event().copy()
-        new_event.value = rounded_value
+        // val new_event = widget.get_event().copy()
+        // new_event.value = rounded_value
 
-        widget.set_event(new_event)
+        // widget.set_event(new_event)
     }
 
     fun set_delay_at_cursor(numerator: Int, denominator: Int, fade: Float, repeat: Int) {
-        val main = this.get_activity()
+        // val main = this.get_activity()
 
-        this.track(TrackedAction.SetDelayAtCursor, listOf(numerator, denominator, fade.toBits(), repeat))
-        val context_menu = main.active_context_menu
-        if (context_menu !is ContextMenuWithController<*>) {
-            return
-        }
+        // this.track(TrackedAction.SetDelayAtCursor, listOf(numerator, denominator, fade.toBits(), repeat))
+        // val context_menu = main.active_context_menu
+        // if (context_menu !is ContextMenuWithController<*>) {
+        //     return
+        // }
 
-        val widget = context_menu.get_widget() as ControlWidgetDelay
-        val new_event = widget.get_event().copy()
-        new_event.numerator = numerator
-        new_event.denominator = denominator
-        new_event.fade = fade
-        new_event.echo = repeat
+        // val widget = context_menu.get_widget() as ControlWidgetDelay
+        // val new_event = widget.get_event().copy()
+        // new_event.numerator = numerator
+        // new_event.denominator = denominator
+        // new_event.fade = fade
+        // new_event.echo = repeat
 
-        widget.set_event(new_event)
+        // widget.set_event(new_event)
     }
 
     fun insert_beat(beat: Int, repeat: Int? = null) {
         val opus_manager = this.get_opus_manager()
-        this.dialog_number_input(this.get_activity().getString(R.string.dlg_insert_beats), 1, 4096, stub_output = repeat) { count: Int ->
+        this.dialog_number_input(R.string.dlg_insert_beats, 1, 4096, stub_output = repeat) { count: Int ->
             this.track(TrackedAction.InsertBeatAt, listOf(beat, count))
             opus_manager.insert_beats(beat, count)
         }
@@ -1485,7 +1486,7 @@ class ActionTracker {
 
     fun remove_beat(repeat: Int? = null) {
         val opus_manager = this.get_opus_manager()
-        this.dialog_number_input(this.get_activity().getString(R.string.dlg_remove_beats), 1, opus_manager.length - 1, stub_output = repeat) { count: Int ->
+        this.dialog_number_input(R.string.dlg_remove_beats, 1, opus_manager.length - 1, stub_output = repeat) { count: Int ->
             this.track(TrackedAction.RemoveBeat, listOf(count))
             opus_manager.remove_beat_at_cursor(count)
         }
@@ -1493,7 +1494,7 @@ class ActionTracker {
 
     fun insert_beat_after_cursor(repeat: Int? = null) {
         val opus_manager = this.get_opus_manager()
-        this.dialog_number_input(this.get_activity().getString(R.string.dlg_insert_beats), 1, 4096, stub_output = repeat) { count: Int ->
+        this.dialog_number_input(R.string.dlg_insert_beats, 1, 4096, stub_output = repeat) { count: Int ->
             this.track(TrackedAction.InsertBeat, listOf(count))
             opus_manager.insert_beat_after_cursor(count)
         }
@@ -1501,7 +1502,7 @@ class ActionTracker {
 
     fun remove_beat_at_cursor(repeat: Int? = null) {
         val opus_manager = this.get_opus_manager()
-        this.dialog_number_input(this.get_activity().getString(R.string.dlg_remove_beats), 1, opus_manager.length - 1, stub_output = repeat) { count: Int ->
+        this.dialog_number_input(R.string.dlg_remove_beats, 1, opus_manager.length - 1, stub_output = repeat) { count: Int ->
             this.track(TrackedAction.RemoveBeat, listOf(count))
             opus_manager.remove_beat_at_cursor(count)
         }
@@ -1647,7 +1648,7 @@ class ActionTracker {
         if (skip) {
             callback()
         } else {
-            this.get_activity().dialog_confirm(title, callback)
+            // this.get_activity().dialog_confirm(title, callback)
         }
     }
 
@@ -1655,37 +1656,44 @@ class ActionTracker {
      *  wrapper around MainActivity::dialog_number_input
      *  will subvert the popup on replay
      */
-    private fun dialog_number_input(title: String, min_value: Int, max_value: Int, default: Int? = null, stub_output: Int? = null, callback: (value: Int) -> Unit) {
+    private fun dialog_number_input(title_string_id: Int, min_value: Int, max_value: Int, default: Int? = null, stub_output: Int? = null, callback: (value: Int) -> Unit) {
         if (stub_output != null) {
             callback(stub_output)
         } else {
             val active_dialog = this.activity?.model_editor?.active_dialog
             active_dialog?.value = @Composable {
-                Dialog(onDismissRequest = { active_dialog.value = null }) {
-                    Card(modifier = Modifier.fillMaxSize()) {
-                        Column {
-                            val value = remember { mutableStateOf(default ?: min_value) }
-                            IntegerInput(value, min_value, max_value) {
-                                active_dialog.value = null
-                                callback(it)
-                            }
-                            Row() {
-                                Button(
-                                    modifier = Modifier.fillMaxWidth().weight(1F),
-                                    onClick = { active_dialog.value = null },
-                                    content = { SText(android.R.string.cancel) }
-                                )
-
-                                Button(
-                                    modifier = Modifier.fillMaxWidth().weight(1F),
-                                    onClick = {
-                                        callback(value.value)
-                                        active_dialog.value = null
-                                    },
-                                    content = { SText(android.R.string.ok) }
-                                )
-                            }
+                val value: MutableState<Int> = remember { mutableIntStateOf(default ?: min_value) }
+                Column(Modifier.padding(dimensionResource(R.dimen.dialog_padding))) {
+                    Row {
+                        SText(title_string_id)
+                    }
+                    Row {
+                        IntegerInput(
+                            value = value,
+                            minimum = min_value,
+                            maximum = max_value,
+                            modifier = Modifier.fillMaxWidth()
+                        ) { new_value ->
+                            active_dialog.value = null
+                            callback(new_value)
                         }
+                    }
+
+                    Row {
+                        Button(
+                            modifier = Modifier.fillMaxWidth().weight(1F),
+                            onClick = { active_dialog.value = null },
+                            content = { SText(android.R.string.cancel) }
+                        )
+
+                        Button(
+                            modifier = Modifier.fillMaxWidth().weight(1F),
+                            onClick = {
+                                callback(value.value)
+                                active_dialog.value = null
+                            },
+                            content = { SText(android.R.string.ok) }
+                        )
                     }
                 }
             }
@@ -1697,12 +1705,12 @@ class ActionTracker {
      *  will subvert the popup on replay
      */
     private fun dialog_float_input(title: String, min_value: Float, max_value: Float, default: Float? = null, stub_output: Float? = null, callback: (value: Float) -> Unit) {
-        if (stub_output != null) {
-            callback(stub_output)
-        } else {
-            val activity = this.get_activity()
-            activity.dialog_float_input(title, min_value, max_value, default, callback)
-        }
+        // if (stub_output != null) {
+        //     callback(stub_output)
+        // } else {
+        //     val activity = this.get_activity()
+        //     activity.dialog_float_input(title, min_value, max_value, default, callback)
+        // }
     }
 
     private fun dialog_save_project(stub_output: Boolean? = null, callback: (Boolean) -> Unit) {
@@ -1721,30 +1729,30 @@ class ActionTracker {
      * will subvert popup on replay
      */
     private fun <T> dialog_popup_menu(title: String, options: List<Triple<T, Int?, String>>, default: T? = null, stub_output: T? = null, callback: (index: Int, value: T) -> Unit) {
-        if (stub_output != null) {
-            callback(-1, stub_output)
-        } else {
-            val activity = this.get_activity()
-            activity.dialog_popup_menu(title, options, default, callback)
-        }
+        // if (stub_output != null) {
+        //     callback(-1, stub_output)
+        // } else {
+        //     val activity = this.get_activity()
+        //     activity.dialog_popup_menu(title, options, default, callback)
+        // }
     }
 
     private fun dialog_text_popup(title: String, default: String? = null, stub_output: String? = null, callback: (String) -> Unit) {
-        val activity = this.get_activity()
-        if (stub_output != null) {
-            callback(stub_output)
-        } else {
-            activity.dialog_text_popup(title, default, callback)
-        }
+        // val activity = this.get_activity()
+        // if (stub_output != null) {
+        //     callback(stub_output)
+        // } else {
+        //     activity.dialog_text_popup(title, default, callback)
+        // }
     }
 
     private fun dialog_name_and_notes_popup(default: Pair<String, String>? = null, stub_output: Pair<String, String>? = null, callback: (String, String) -> Unit) {
-        val activity = this.get_activity()
-        if (stub_output != null) {
-            callback(stub_output.first, stub_output.second)
-        } else {
-            activity.dialog_name_and_notes_popup(default, callback)
-        }
+        // val activity = this.get_activity()
+        // if (stub_output != null) {
+        //     callback(stub_output.first, stub_output.second)
+        // } else {
+        //     activity.dialog_name_and_notes_popup(default, callback)
+        // }
     }
 
     fun ignore(): ActionTracker {
@@ -1763,7 +1771,7 @@ class ActionTracker {
     }
 
     fun get_opus_manager(): OpusManager {
-        return this.get_activity().get_opus_manager()
+        return this.get_activity().model_editor.opus_manager
     }
 
     fun playback() {
@@ -2219,42 +2227,40 @@ class ActionTracker {
     }
 
     fun set_copy_mode(mode: PaganConfiguration.MoveMode) {
-        val main = this.get_activity()
-        val opus_manager = this.get_opus_manager()
+        // val main = this.get_activity()
+        // val opus_manager = this.get_opus_manager()
 
-        main.configuration.move_mode = mode
-        main.save_configuration()
+        // main.configuration.move_mode = mode
+        // main.save_configuration()
 
-        val context_menu = main.active_context_menu
-        if (context_menu !is ContextMenuRange) {
-            return
-        }
+        // val context_menu = main.active_context_menu
+        // if (context_menu !is ContextMenuRange) return
 
-        this.track(TrackedAction.SetCopyMode, ActionTracker.string_to_ints(mode.name))
+        // this.track(TrackedAction.SetCopyMode, ActionTracker.string_to_ints(mode.name))
 
-        context_menu.label.text = when (mode) {
-            PaganConfiguration.MoveMode.MOVE -> {
-                if (opus_manager.cursor.mode == CursorMode.Range) {
-                    main.resources.getString(R.string.label_move_range)
-                } else {
-                    main.resources.getString(R.string.label_move_beat)
-                }
-            }
-            PaganConfiguration.MoveMode.COPY -> {
-                if (opus_manager.cursor.mode == CursorMode.Range) {
-                    main.resources.getString(R.string.label_copy_range)
-                } else {
-                    main.resources.getString(R.string.label_copy_beat)
-                }
-            }
-            PaganConfiguration.MoveMode.MERGE -> {
-                if (opus_manager.cursor.mode == CursorMode.Range) {
-                    main.resources.getString(R.string.label_merge_range)
-                } else {
-                    main.resources.getString(R.string.label_merge_beat)
-                }
-            }
-        }
+        // context_menu.label.text = when (mode) {
+        //     PaganConfiguration.MoveMode.MOVE -> {
+        //         if (opus_manager.cursor.mode == CursorMode.Range) {
+        //             main.resources.getString(R.string.label_move_range)
+        //         } else {
+        //             main.resources.getString(R.string.label_move_beat)
+        //         }
+        //     }
+        //     PaganConfiguration.MoveMode.COPY -> {
+        //         if (opus_manager.cursor.mode == CursorMode.Range) {
+        //             main.resources.getString(R.string.label_copy_range)
+        //         } else {
+        //             main.resources.getString(R.string.label_copy_beat)
+        //         }
+        //     }
+        //     PaganConfiguration.MoveMode.MERGE -> {
+        //         if (opus_manager.cursor.mode == CursorMode.Range) {
+        //             main.resources.getString(R.string.label_merge_range)
+        //         } else {
+        //             main.resources.getString(R.string.label_merge_beat)
+        //         }
+        //     }
+        // }
     }
 
     fun remove_controller() {
@@ -2379,33 +2385,33 @@ class ActionTracker {
     }
 
     fun set_tuning_table_and_transpose(tuning_map: Array<Pair<Int, Int>>? = null, transpose: Pair<Int, Int>? = null) {
-        if (tuning_map == null || transpose == null) {
-            this.get_activity().dialog_tuning_table()
-        } else {
-            val opus_manager = this.get_opus_manager()
-            this._track_tuning_map_and_transpose(tuning_map, transpose)
-            opus_manager.set_tuning_map_and_transpose(tuning_map, transpose)
-        }
+        // if (tuning_map == null || transpose == null) {
+        //     this.get_activity().dialog_tuning_table()
+        // } else {
+        //     val opus_manager = this.get_opus_manager()
+        //     this._track_tuning_map_and_transpose(tuning_map, transpose)
+        //     opus_manager.set_tuning_map_and_transpose(tuning_map, transpose)
+        // }
     }
 
     fun move_line(channel_from: Int, line_offset_from: Int, channel_to: Int, line_offset_to: Int, before: Boolean = true) {
-        try {
-            val adj_to_index = line_offset_to + if (before) 0 else 1
-            if (adj_to_index == line_offset_from && channel_from == channel_to) return
+       // try {
+       //     val adj_to_index = line_offset_to + if (before) 0 else 1
+       //     if (adj_to_index == line_offset_from && channel_from == channel_to) return
 
-            this.get_opus_manager().move_line(
-                channel_from,
-                line_offset_from,
-                channel_to,
-                adj_to_index
-            )
-            this.track(
-                TrackedAction.MoveLine,
-                listOf(channel_from, line_offset_from, channel_to, adj_to_index)
-            )
-        } catch (e: IncompatibleChannelException) {
-            this.toast(R.string.std_percussion_swap)
-        }
+       //     this.get_opus_manager().move_line(
+       //         channel_from,
+       //         line_offset_from,
+       //         channel_to,
+       //         adj_to_index
+       //     )
+       //     this.track(
+       //         TrackedAction.MoveLine,
+       //         listOf(channel_from, line_offset_from, channel_to, adj_to_index)
+       //     )
+       // } catch (e: IncompatibleChannelException) {
+       //     this.toast(R.string.std_percussion_swap)
+       // }
     }
 
 

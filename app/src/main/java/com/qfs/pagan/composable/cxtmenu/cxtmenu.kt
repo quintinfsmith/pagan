@@ -46,21 +46,16 @@ fun ContextMenuSinglePrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {
                     )
                 }
             )
-            Button(
-                onClick = { dispatcher.insert_leaf(1) },
+            Icon(
+                painter = painterResource(R.drawable.icon_insert),
+                contentDescription = stringResource(R.string.btn_insert),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1F)
-                    .combinedClickable(
-                        onClick = {},
-                        onLongClick = { dispatcher.insert_leaf() }
-                    ),
-                content = {
-                    Icon(
-                        painter = painterResource(R.drawable.icon_insert),
-                        contentDescription = stringResource(R.string.btn_insert)
-                    )
-                }
+                .weight(1F)
+                .combinedClickable(
+                    onClick = { dispatcher.insert_leaf(1) },
+                    onLongClick = { dispatcher.insert_leaf() }
+                ),
             )
             Button(
                 onClick = { dispatcher.remove_at_cursor() },

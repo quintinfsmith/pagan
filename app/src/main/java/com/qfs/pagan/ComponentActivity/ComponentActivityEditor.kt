@@ -6,11 +6,11 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.DocumentsContract
 import android.provider.OpenableColumns
-import android.view.View
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
@@ -26,9 +26,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,6 +40,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.fromHtml
@@ -51,7 +55,6 @@ import com.qfs.pagan.Activity.ActivityAbout
 import com.qfs.pagan.Activity.ActivitySettings
 import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
 import com.qfs.pagan.CompatibleFileType
-import com.qfs.pagan.EditorTable
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelPrimary
@@ -72,6 +75,7 @@ import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
@@ -82,12 +86,12 @@ import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.uibill.UIFacade
 import com.qfs.pagan.viewmodel.ViewModelEditor
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import java.io.BufferedReader
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.InputStreamReader
-import kotlin.concurrent.thread
-import kotlin.text.lastIndexOf
 
 class ComponentActivityEditor: PaganComponentActivity() {
     val model_editor: ViewModelEditor by this.viewModels()
@@ -320,25 +324,144 @@ class ComponentActivityEditor: PaganComponentActivity() {
             Array(ui_facade.cell_map.size) { j -> ui_facade.cell_map[j][i].value.weighted_size }.max()
         }
 
-        Column(
-            modifier = Modifier
-                .verticalScroll(rememberScrollState())
-                .horizontalScroll(rememberScrollState())
-        ) {
-            for ((y, line) in ui_facade.cell_map.enumerate()) {
-                val use_height = if (ui_facade.line_data[y].ctl_type != null) {
-                    ctl_line_height
-                } else {
-                    line_height
+        val scope = rememberCoroutineScope()
+        val scroll_state_v = rememberScrollState()
+        val scroll_state_h = rememberScrollState()
+
+        Column {
+            Row {
+                Column {
+                    ShortcutView(scope, scroll_state_h)
                 }
-                Row(Modifier.height(use_height)) {
-                    for (x in 0 until length.value) {
-                        Column(Modifier.width(leaf_width * column_widths[x])) {
-                            CellView(ui_facade, y, x)
+                Column(
+                    Modifier
+                        .horizontalScroll(scroll_state_h)
+                ) {
+                    for ((x, width) in column_widths.enumerate()) {
+                        Box(
+                            Modifier
+                                .width(leaf_width * width)
+                                .height(line_height)
+                        ) {
+                            BeatLabelView(x, ui_facade)
                         }
                     }
                 }
             }
+            Row {
+                Column(Modifier.verticalScroll(scroll_state_v)) {
+                    for (y in ui_facade.line_data.indices) {
+                        val use_height = if (ui_facade.line_data[y].ctl_type != null) {
+                            ctl_line_height
+                        } else {
+                            line_height
+                        }
+                        Row(
+                            Modifier
+                                .height(use_height)
+                                .width(dimensionResource(R.dimen.line_label_width))
+                        ) {
+                            LineLabelView(modifier = Modifier.fillMaxSize(), y, ui_facade)
+                        }
+                    }
+                }
+                Column(
+                    modifier = Modifier
+                        .verticalScroll(scroll_state_v)
+                        .horizontalScroll(scroll_state_h)
+                ) {
+                    for ((y, line) in ui_facade.cell_map.enumerate()) {
+                        val use_height = if (ui_facade.line_data[y].ctl_type != null) {
+                            ctl_line_height
+                        } else {
+                            line_height
+                        }
+
+                        Row(Modifier.height(use_height)) {
+                            for (x in 0 until length.value) {
+                                Column(Modifier.width(leaf_width * column_widths[x])) {
+                                    CellView(ui_facade, y, x)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun ShortcutView(scope: CoroutineScope, scroll_state: ScrollState) {
+        Icon(
+            modifier = Modifier
+                .combinedClickable(
+                    onClick = { TODO() },
+                    onLongClick = {
+                        scope.launch { scroll_state.animateScrollTo(0) }
+                    }
+                )
+                .width(dimensionResource(R.dimen.line_label_width))
+                .height(dimensionResource(R.dimen.line_height)),
+            painter = painterResource(R.drawable.icon_shortcut),
+            contentDescription = stringResource(R.string.jump_to_section)
+        )
+    }
+
+    @Composable
+    fun LineLabelView(modifier: Modifier = Modifier, y: Int, ui_facade: UIFacade) {
+        val line_info = ui_facade.line_data[y]
+        when (line_info.ctl_type) {
+            EffectType.Tempo -> {
+                Icon(
+                    modifier = modifier,
+                    painter = painterResource(R.drawable.icon_tempo),
+                    contentDescription = stringResource(R.string.ctl_desc_tempo)
+                )
+            }
+            EffectType.Velocity -> {
+                Icon(
+                    modifier = modifier,
+                    painter = painterResource(R.drawable.icon_velocity),
+                    contentDescription = stringResource(R.string.ctl_desc_velocity)
+                )
+            }
+            EffectType.Volume -> {
+                Icon(
+                    modifier = modifier,
+                    painter = painterResource(R.drawable.icon_volume),
+                    contentDescription = stringResource(R.string.ctl_desc_volume)
+                )
+            }
+            EffectType.Delay -> {
+                Icon(
+                    modifier = modifier,
+                    painter = painterResource(R.drawable.icon_echo),
+                    contentDescription = stringResource(R.string.ctl_desc_delay)
+                )
+            }
+            EffectType.Pan -> {
+                Icon(
+                    modifier = modifier,
+                    painter = painterResource(R.drawable.icon_pan),
+                    contentDescription = stringResource(R.string.ctl_desc_pan)
+                )
+            }
+            EffectType.LowPass -> TODO()
+            EffectType.Reverb -> TODO()
+            null -> {
+                if (line_info.assigned_offset != null) {
+                    Text("!${line_info.channel}|${line_info.assigned_offset!!}")
+                } else {
+                    Text("${line_info.channel}|${line_info.line_offset}")
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun BeatLabelView(x: Int, ui_facade: UIFacade) {
+        TextButton(modifier =Modifier.fillMaxSize(), onClick = {}) {
+            Text("$x")
         }
     }
 
@@ -390,7 +513,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 is OpusVolumeEvent -> Text("${event.value}")
                 is OpusPanEvent -> {}
                 is DelayEvent -> {}
-                is OpusTempoEvent -> {}
+                is OpusTempoEvent -> Text("${event.value} BPM")
                 is OpusVelocityEvent -> {}
                 null -> {}
             }
@@ -568,7 +691,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     SText(R.string.dialog_save_warning_title)
                     Row {
                         Button(
-                            modifier = Modifier.fillMaxWidth().weight(1F),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1F),
                             onClick = {
                                 close()
                                 callback(false)
@@ -576,7 +701,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             content = { SText(android.R.string.no) }
                         )
                         Button(
-                            modifier = Modifier.fillMaxWidth().weight(1F),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1F),
                             onClick = {
                                 this@ComponentActivityEditor.project_save()
                                 close()

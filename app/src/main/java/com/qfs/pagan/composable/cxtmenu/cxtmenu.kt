@@ -1,5 +1,6 @@
 package com.qfs.pagan.composable.cxtmenu
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -7,12 +8,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
+import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
+import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.uibill.UIFacade
 
 @Composable
@@ -28,6 +34,17 @@ fun ContextMenuColumnSecondary(ui_facade: UIFacade, dispatcher: ActionTracker) {
 @Composable
 fun ContextMenuSinglePrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {
     val active_event = ui_facade.active_event.value
+    val (offset, octave) = when (active_event) {
+        is AbsoluteNoteEvent -> {
+            Pair(active_event.note / ui_facade.radix.value, active_event.note % ui_facade.radix.value)
+        }
+        is RelativeNoteEvent -> {
+            Pair(active_event.offset / ui_facade.radix.value, active_event.offset % ui_facade.radix.value)
+        }
+        else -> {
+            throw Exception("Invalid Event Type") // TODO: Specify
+        }
+    }
     Column() {
         Row() {
             Button(
@@ -101,23 +118,25 @@ fun ContextMenuSinglePrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {
         Row() {
             for (i in 0 until 8) {
                 Button(
-                    onClick = { dispatcher.set_octave(i) },
                     modifier = Modifier
                         .fillMaxWidth()
+                        .background(color = if (octave == i) Color.Green else colorResource(R.color.ns_default))
                         .weight(1F),
-                    content = { Text("$i") }
+                    onClick = { dispatcher.set_octave(i) },
+                    content = { Text("$i", maxLines = 1) }
                 )
             }
         }
         // Offset Selector
         Row() {
             for (i in 0 until ui_facade.radix.value) {
-                Button(
+                TextButton(
                     onClick = { dispatcher.set_offset(i) },
                     modifier = Modifier
                         .fillMaxWidth()
+                        .background(color = if (offset == i) Color.Green else Color.Transparent)
                         .weight(1F),
-                    content = { Text("$i") }
+                    content = { Text("$i", maxLines = 1) }
                 )
             }
         }

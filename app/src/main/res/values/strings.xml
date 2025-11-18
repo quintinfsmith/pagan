@@ -259,6 +259,11 @@
     <string name="bpm">BPM</string>
     <string name="dialog_delay_attenuation">Echo Attenuation %</string>
     <string name="settings_note_memory">Default to latest input</string>
+    <string name="ctl_desc_tempo">Tempo</string>
+    <string name="ctl_desc_delay">Delay</string>
+    <string name="ctl_desc_volume">Volume</string>
+    <string name="ctl_desc_velocity">Velocity</string>
+    <string name="ctl_desc_pan">Pan</string>
 
     <string-array name="general_midi_presets">
         <item>Grand Acoustic Piano</item>

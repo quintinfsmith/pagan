@@ -374,7 +374,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 )
                 .padding(1.dp)
                 .background(color = background_color)
-                .fillMaxSize()
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
             when (event) {
                 is AbsoluteNoteEvent -> {
@@ -385,7 +386,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     )
                 }
                 is RelativeNoteEvent -> {}
-                is PercussionEvent -> Text(stringResource(R.string.percussion_label))
+                is PercussionEvent -> SText(R.string.percussion_label)
                 is OpusVolumeEvent -> Text("${event.value}")
                 is OpusPanEvent -> {}
                 is DelayEvent -> {}

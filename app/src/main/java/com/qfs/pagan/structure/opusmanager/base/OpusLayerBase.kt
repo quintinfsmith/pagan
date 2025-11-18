@@ -4498,9 +4498,7 @@ open class OpusLayerBase: Effectable {
                     val original_size = beat_tree.size
                     beat_tree.reduce()
                     beat_tree.traverse { working_tree: ReducibleTree<out InstrumentEvent>, event: InstrumentEvent? ->
-                        if (event == null) {
-                            return@traverse
-                        }
+                        if (event == null) return@traverse
 
                         var tmp_tree = beat_tree
                         var denominator = 1

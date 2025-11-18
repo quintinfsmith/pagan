@@ -142,13 +142,18 @@ class ReducibleTree<T> {
         val factor: Double = new_size.toDouble() / this._real_size.toDouble()
         this.child_sizes_flat.clear()
         this.child_sizes_weighted.clear()
+        val new_divisions = HashMap<Int, ReducibleTree<T>>()
         for (current_index in this.divisions.keys) {
             val new_index = (current_index * factor).toInt()
             this.divisions[current_index]?.let { value ->
-                this.divisions[new_index] = value
+                new_divisions[new_index] = value
                 this.child_sizes_flat[new_index] = value.flat_size
                 this.child_sizes_weighted[new_index] = value.weighted_size
             }
+        }
+        this.divisions.clear()
+        for ((key, value) in new_divisions) {
+            this.divisions[key] = value
         }
 
         this.set_real_size(new_size)
@@ -207,7 +212,7 @@ class ReducibleTree<T> {
 
                 // Get the most reduces version of each index
                 val minimum_divs = mutableSetOf<Int>()
-                for ((index, _) in working_indices) {
+                for ((index, event_tree) in working_indices) {
                     if (index == 0) continue
 
                     val most_reduced: Int = current_size / greatest_common_denominator(
@@ -235,12 +240,11 @@ class ReducibleTree<T> {
                 } else {
                     val (_, event_tree) = working_indices.removeAt(0)
                     if (event_tree.has_event()) {
-                        working_node.set_event(event_tree.get_event()!!)
+                        working_node.set_event(event_tree.get_event())
                     }
                 }
             }
         }
-
         place_holder.clear_singles()
 
         if (place_holder.has_event()) {
@@ -260,7 +264,7 @@ class ReducibleTree<T> {
     fun copy(copy_func: ((event: T) -> T)? = null): ReducibleTree<T> {
         val copied = ReducibleTree<T>()
         for (key in this.divisions.keys) {
-            this.divisions[key]?.let { subdivision ->
+            this[key].let { subdivision ->
                 val subcopy: ReducibleTree<T> = subdivision.copy(copy_func)
                 subcopy.parent = copied
                 copied[key] = subcopy
@@ -397,13 +401,13 @@ class ReducibleTree<T> {
             child.clear_singles()
         }
 
-        if (this.size == 1 && this.divisions.size == 1) {
+        if (this._real_size == 1 && this.divisions.size == 1) {
             val child = this.divisions.remove(0)!!
             if (!child.has_event()) {
+                this.set_size(child.size)
                 for ((i, grandchild) in child.divisions) {
                     this[i] = grandchild
                 }
-                this.set_size(child.size)
             } else {
                 this.set_event(child.get_event())
             }

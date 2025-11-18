@@ -1,15 +1,19 @@
 package com.qfs.pagan.ComponentActivity
 
 import android.content.Intent
+import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
 import android.provider.DocumentsContract
+import android.provider.OpenableColumns
+import android.view.View
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,7 +22,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,10 +44,14 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import com.qfs.apres.InvalidMIDIFile
+import com.qfs.apres.Midi
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.Activity.ActivityAbout
 import com.qfs.pagan.Activity.ActivitySettings
 import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
+import com.qfs.pagan.CompatibleFileType
+import com.qfs.pagan.EditorTable
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelPrimary
@@ -73,7 +83,11 @@ import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.uibill.UIFacade
 import com.qfs.pagan.viewmodel.ViewModelEditor
 import java.io.BufferedReader
+import java.io.FileInputStream
+import java.io.FileNotFoundException
 import java.io.InputStreamReader
+import kotlin.concurrent.thread
+import kotlin.text.lastIndexOf
 
 class ComponentActivityEditor: PaganComponentActivity() {
     val model_editor: ViewModelEditor by this.viewModels()
@@ -146,6 +160,122 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
         })
 
+        if (savedInstanceState != null) {
+            // if the activity is forgotten, the opus_manager is be uninitialized
+            if (this.model_editor.opus_manager.is_initialized()) {
+                //this.refresh(
+                //    savedInstanceState.getInt("x"),
+                //    savedInstanceState.getInt("y")
+                //)
+            } else {
+                // this.load_from_bkp()
+            }
+        } else if (this.intent.getBooleanExtra("load_backup", false)) {
+            // this.load_from_bkp()
+        } else if (this.intent.data == null) {
+            this.setup_new()
+        } else if (this.view_model.project_manager?.contains(this.intent.data!!) == true) {
+            this.load_project(this.intent.data!!)
+        } else {
+            this.handle_uri(this.intent.data!!)
+        }
+    }
+
+    fun get_file_type(uri: Uri): CompatibleFileType {
+        return this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
+            val test_bytes = ByteArray(4)
+            FileInputStream(it.fileDescriptor).read(test_bytes)
+            if (test_bytes.contentEquals("MThd".toByteArray())) {
+                CompatibleFileType.Midi1
+            } else {
+                CompatibleFileType.Pagan
+            }
+        } ?: throw FileNotFoundException(uri.toString())
+    }
+
+    fun import_project(uri: Uri) {
+        this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
+            val bytes = FileInputStream(it.fileDescriptor).readBytes()
+            this.model_editor.opus_manager.load(bytes)
+            this.model_editor.active_project.value = null
+        }
+    }
+
+    fun import_midi(uri: Uri) {
+        val bytes = this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
+            FileInputStream(it.fileDescriptor).readBytes()
+        } ?: throw InvalidMIDIFile(uri.toString())
+
+        val midi = try {
+            Midi.Companion.from_bytes(bytes)
+        } catch (_: Exception) {
+            throw InvalidMIDIFile(uri.toString())
+        }
+
+        val opus_manager = this.model_editor.opus_manager
+        opus_manager.project_change_midi(midi)
+        val filename = this.parse_file_name(uri)
+        opus_manager.set_project_name(filename?.substring(0, filename.lastIndexOf(".")) ?: this.getString( R.string.default_imported_midi_title))
+        opus_manager.clear_history()
+        this.model_editor.active_project.value = null
+    }
+
+    fun parse_file_name(uri: Uri): String? {
+        var result: String? = null
+        if (uri.scheme == "content") {
+            val cursor: Cursor? = this.contentResolver.query(uri, null, null, null, null)
+            if (cursor != null) {
+                if (cursor.moveToFirst()) {
+                    val ci = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (ci >= 0) {
+                        result = cursor.getString(ci)
+                    }
+                }
+                cursor.close()
+            }
+        }
+
+        if (result == null && uri.path is String) {
+            result = uri.path!!
+            result = result.substring(result.lastIndexOf("/") + 1)
+        }
+
+        return result
+    }
+
+    private fun handle_uri(uri: Uri) {
+        val type: CompatibleFileType? = try {
+            this.get_file_type(uri)
+        } catch (_: Exception) {
+            null
+        }
+
+        val inner_callback: ((Uri) -> Unit) = when (type) {
+            CompatibleFileType.Midi1 -> { uri -> this.import_midi(uri) }
+            CompatibleFileType.Pagan -> { uri -> this.import_project(uri) }
+            else -> { _ -> throw FileNotFoundException(uri.toString()) }
+        }
+
+        this.dialog_save_project {
+            val fallback_msg = try {
+                inner_callback(uri)
+                null
+            } catch (_: Exception) {
+                when (type) {
+                    CompatibleFileType.Midi1 -> this.getString(R.string.feedback_midi_fail)
+                    CompatibleFileType.Pagan -> this.getString(R.string.feedback_import_fail)
+                    null -> this.getString(R.string.feedback_file_not_found)
+                }
+            }
+
+            if (fallback_msg != null) {
+                TODO()
+                // if (!this.get_opus_manager().is_initialized()) {
+                //     this.setup_new()
+                // }
+                // this.feedback_msg(fallback_msg)
+            }
+        }
     }
 
     override fun onDestroy() {
@@ -189,7 +319,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val column_widths = Array(ui_facade.beat_count.value) { i ->
             Array(ui_facade.cell_map.size) { j -> ui_facade.cell_map[j][i].value.weighted_size }.max()
         }
-        Column() {
+
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .horizontalScroll(rememberScrollState())
+        ) {
             for ((y, line) in ui_facade.cell_map.enumerate()) {
                 val use_height = if (ui_facade.line_data[y].ctl_type != null) {
                     ctl_line_height
@@ -420,7 +555,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.startActivity(Intent(this, ActivityAbout::class.java))
     }
 
-
     fun dialog_save_project(callback: (Boolean) -> Unit) {
         if (!this.needs_save()) {
             callback(false)
@@ -431,7 +565,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             @Composable {
                 Column {
                     SText(R.string.dialog_save_warning_title)
-                    Row() {
+                    Row {
                         Button(
                             modifier = Modifier.fillMaxWidth().weight(1F),
                             onClick = {

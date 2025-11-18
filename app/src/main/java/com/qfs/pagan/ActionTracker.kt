@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -27,7 +28,7 @@ import com.qfs.json.JSONString
 import com.qfs.pagan.ComponentActivity.ComponentActivityEditor
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.composable.SText
-import com.qfs.pagan.composable.cxtmenu.IntegerInput
+import com.qfs.pagan.composable.IntegerInput
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
@@ -1572,7 +1573,6 @@ class ActionTracker {
                     }
                 }
             }
-
             else -> null
         }
 
@@ -1616,7 +1616,31 @@ class ActionTracker {
         if (skip) {
             callback()
         } else {
-            // this.get_activity().dialog_confirm(title, callback)
+            this.activity?.view_model?.create_dialog { close ->
+                @Composable {
+                    Column {
+                        Row {
+                            Text(title)
+                        }
+                        Row {
+                            TextButton(
+                                modifier = Modifier.fillMaxWidth().weight(1F),
+                                onClick = { close() },
+                                content = { SText(android.R.string.cancel) }
+                            )
+
+                            Button(
+                                modifier = Modifier.fillMaxWidth().weight(1F),
+                                onClick = {
+                                    close()
+                                    callback()
+                                },
+                                content = { SText(android.R.string.ok) }
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 

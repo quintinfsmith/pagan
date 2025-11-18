@@ -881,14 +881,23 @@ class OpusLayerInterface : OpusLayerHistory() {
                 }
                 this.ui_facade.add_row(
                     i++,
-                    MutableList(this.length) { mutableStateOf(line.beats[it].copy()) },
+                    MutableList(this.length) {
+                        if (c == 0 && l == 0 && it == 1) {
+                            line.beats[it].traverse { tree, event ->
+                                println("---- $event (${tree.get_path()}")
+                            }
+                        }
+                        mutableStateOf(this.get_tree_copy(BeatKey(c, l, it)))
+                    },
                     UIFacade.LineData(c, l, null, instrument)
                 )
                 for ((type, controller) in line.controllers.get_all()) {
                     if (!controller.visible) continue
                     this.ui_facade.add_row(
                         i++,
-                        MutableList(this.length) { mutableStateOf(controller.beats[it].copy()) },
+                        MutableList(this.length) {
+                            mutableStateOf(controller.beats[it].copy())
+                        },
                         UIFacade.LineData(c, l, type, null)
                     )
                 }

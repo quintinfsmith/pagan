@@ -109,6 +109,7 @@ import com.qfs.pagan.databinding.ActivityEditorBinding
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.numberinput.RangedFloatInput
 import com.qfs.pagan.numberinput.RangedIntegerInput
+import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
@@ -1653,9 +1654,7 @@ class ActivityEditor : PaganActivity() {
         val opus_manager = this.get_opus_manager()
         opus_manager.project_change_midi(midi)
         val filename = this.parse_file_name(uri)
-        opus_manager.set_project_name(filename?.substring(0, filename.lastIndexOf(".")) ?: this.getString(
-            R.string.default_imported_midi_title)
-        )
+        opus_manager.set_project_name(filename?.substring(0, filename.lastIndexOf(".")) ?: this.getString(R.string.default_imported_midi_title))
         opus_manager.clear_history()
         this.active_project = null
     }

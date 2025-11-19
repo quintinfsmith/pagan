@@ -337,13 +337,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     Modifier
                         .horizontalScroll(scroll_state_h)
                 ) {
-                    for ((x, width) in column_widths.enumerate()) {
-                        Box(
-                            Modifier
-                                .width(leaf_width * width)
-                                .height(line_height)
-                        ) {
-                            BeatLabelView(x, ui_facade)
+                    Row {
+                        for ((x, width) in column_widths.enumerate()) {
+                            Box(
+                                Modifier
+                                    .width(leaf_width * width)
+                                    .height(line_height)
+                            ) {
+                                BeatLabelView(x, ui_facade)
+                            }
                         }
                     }
                 }
@@ -479,43 +481,49 @@ class ComponentActivityEditor: PaganComponentActivity() {
             when (event) {
                 is InstrumentEvent -> colorResource(R.color.leaf_main)
                 is EffectEvent -> colorResource(R.color.ctl_leaf)
-                else -> Color.Transparent
+                else -> Color(0x10000000)
             }
         }
 
         Box(
-            modifier = modifier
-                .clip(RoundedCornerShape(8.dp))
-                .dropShadow(
-                    shape = RoundedCornerShape(8.dp),
-                    shadow = Shadow(
-                        radius = 4.dp,
-                        spread = 6.dp,
-                        color = Color(0x40000000),
-                        offset = DpOffset(x = 4.dp, 4.dp)
-                    )
-                )
+            modifier
                 .padding(1.dp)
-                .background(color = background_color)
-                .fillMaxSize(),
-            contentAlignment = Alignment.Center
+                .fillMaxSize()
         ) {
-            when (event) {
-                is AbsoluteNoteEvent -> {
-                    val octave = event.note / ui_facade.radix.value
-                    val offset = event.note % ui_facade.radix.value
-                    Text(
-                        AnnotatedString.fromHtml("<sub>$octave</sub>$offset")
-                    )
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    // .dropShadow(
+                    //     shape = RoundedCornerShape(8.dp),
+                    //     shadow = Shadow(
+                    //         radius = 4.dp,
+                    //         spread = 2.dp,
+                    //         color = Color(0x10000000),
+                    //         offset = DpOffset(x = 4.dp, 4.dp)
+                    //     )
+                    // )
+                    .background(color = background_color)
+                    .fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                when (event) {
+                    is AbsoluteNoteEvent -> {
+                        val octave = event.note / ui_facade.radix.value
+                        val offset = event.note % ui_facade.radix.value
+                        Text(
+                            AnnotatedString.fromHtml("<sub>$octave</sub>$offset")
+                        )
+                    }
+
+                    is RelativeNoteEvent -> {}
+                    is PercussionEvent -> SText(R.string.percussion_label)
+                    is OpusVolumeEvent -> Text("${event.value}")
+                    is OpusPanEvent -> {}
+                    is DelayEvent -> {}
+                    is OpusTempoEvent -> Text("${event.value} BPM")
+                    is OpusVelocityEvent -> {}
+                    null -> {}
                 }
-                is RelativeNoteEvent -> {}
-                is PercussionEvent -> SText(R.string.percussion_label)
-                is OpusVolumeEvent -> Text("${event.value}")
-                is OpusPanEvent -> {}
-                is DelayEvent -> {}
-                is OpusTempoEvent -> Text("${event.value} BPM")
-                is OpusVelocityEvent -> {}
-                null -> {}
             }
         }
     }

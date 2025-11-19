@@ -41,6 +41,7 @@ fun ContextMenuSinglePrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {
         is RelativeNoteEvent -> {
             Pair(active_event.offset / ui_facade.radix.value, active_event.offset % ui_facade.radix.value)
         }
+        null -> return
         else -> {
             throw Exception("Invalid Event Type") // TODO: Specify
         }

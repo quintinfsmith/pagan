@@ -28,23 +28,19 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.fromHtml
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
@@ -316,7 +312,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun MainTable(ui_facade: UIFacade, length: MutableState<Int>) {
+    fun MainTable(ui_facade: UIFacade, dispatcher: ActionTracker, length: MutableState<Int>) {
         val line_height = dimensionResource(R.dimen.line_height)
         val ctl_line_height = dimensionResource(R.dimen.ctl_line_height)
         val leaf_width = dimensionResource(R.dimen.base_leaf_width)
@@ -344,7 +340,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     .width(leaf_width * width)
                                     .height(line_height)
                             ) {
-                                BeatLabelView(x, ui_facade)
+                                BeatLabelView(x, ui_facade, dispatcher)
                             }
                         }
                     }
@@ -363,7 +359,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 .height(use_height)
                                 .width(dimensionResource(R.dimen.line_label_width))
                         ) {
-                            LineLabelView(modifier = Modifier.fillMaxSize(), y, ui_facade)
+                            LineLabelView(modifier = Modifier.fillMaxSize(), y, ui_facade, dispatcher)
                         }
                     }
                 }
@@ -382,7 +378,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         Row(Modifier.height(use_height)) {
                             for (x in 0 until length.value) {
                                 Column(Modifier.width(leaf_width * column_widths[x])) {
-                                    CellView(ui_facade, y, x)
+                                    CellView(ui_facade, dispatcher, y, x)
                                 }
                             }
                         }
@@ -410,71 +406,73 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun LineLabelView(modifier: Modifier = Modifier, y: Int, ui_facade: UIFacade) {
+    fun LineLabelView(modifier: Modifier = Modifier, y: Int, ui_facade: UIFacade, dispatcher: ActionTracker) {
         val line_info = ui_facade.line_data[y]
         when (line_info.ctl_type) {
-            EffectType.Tempo -> {
-                Icon(
-                    modifier = modifier,
-                    painter = painterResource(R.drawable.icon_tempo),
-                    contentDescription = stringResource(R.string.ctl_desc_tempo)
-                )
-            }
-            EffectType.Velocity -> {
-                Icon(
-                    modifier = modifier,
-                    painter = painterResource(R.drawable.icon_velocity),
-                    contentDescription = stringResource(R.string.ctl_desc_velocity)
-                )
-            }
-            EffectType.Volume -> {
-                Icon(
-                    modifier = modifier,
-                    painter = painterResource(R.drawable.icon_volume),
-                    contentDescription = stringResource(R.string.ctl_desc_volume)
-                )
-            }
-            EffectType.Delay -> {
-                Icon(
-                    modifier = modifier,
-                    painter = painterResource(R.drawable.icon_echo),
-                    contentDescription = stringResource(R.string.ctl_desc_delay)
-                )
-            }
-            EffectType.Pan -> {
-                Icon(
-                    modifier = modifier,
-                    painter = painterResource(R.drawable.icon_pan),
-                    contentDescription = stringResource(R.string.ctl_desc_pan)
-                )
-            }
-            EffectType.LowPass -> TODO()
-            EffectType.Reverb -> TODO()
             null -> {
-                if (line_info.assigned_offset != null) {
-                    Text("!${line_info.channel}|${line_info.assigned_offset!!}")
+                val label = if (line_info.assigned_offset != null) {
+                    "!${line_info.channel}|${line_info.assigned_offset!!}"
                 } else {
-                    Text("${line_info.channel}|${line_info.line_offset}")
+                    "${line_info.channel}|${line_info.line_offset}"
                 }
+                Text(label, modifier = modifier.combinedClickable(
+                    onClick = {
+                        dispatcher.cursor_select_line_std(line_info.channel!!, line_info.line_offset!!)
+                    }
+                ))
+            }
+            else -> {
+                val (drawable_id, description_id) = when (line_info.ctl_type) {
+                    EffectType.Tempo -> Pair(R.drawable.icon_tempo, R.string.ctl_desc_tempo)
+                    EffectType.Velocity -> Pair(R.drawable.icon_velocity, R.string.ctl_desc_velocity)
+                    EffectType.Volume -> Pair(R.drawable.icon_volume, R.string.ctl_desc_volume)
+                    EffectType.Delay -> Pair(R.drawable.icon_echo, R.string.ctl_desc_delay)
+                    EffectType.Pan -> Pair(R.drawable.icon_pan, R.string.ctl_desc_pan)
+                    EffectType.LowPass -> TODO()
+                    EffectType.Reverb -> TODO()
+                    null -> throw Exception("Something terrible has happened...")
+                }
+                Icon(
+                    modifier = modifier.combinedClickable(
+                        onClick = {
+                            if (line_info.line_offset != null) {
+                                dispatcher.cursor_select_line_ctl_line(line_info.ctl_type!!, line_info.channel!!, line_info.line_offset!!)
+                            } else if (line_info.channel != null) {
+                                dispatcher.cursor_select_channel_ctl_line(line_info.ctl_type!!, line_info.channel!!)
+                            } else {
+                                dispatcher.cursor_select_global_ctl_line(line_info.ctl_type!!)
+                            }
+                        }
+                    ),
+                    painter = painterResource(drawable_id),
+                    contentDescription = stringResource(description_id)
+                )
             }
         }
     }
 
     @Composable
-    fun BeatLabelView(x: Int, ui_facade: UIFacade) {
-        TextButton(modifier =Modifier.fillMaxSize(), onClick = {}) {
+    fun BeatLabelView(x: Int, ui_facade: UIFacade, dispatcher: ActionTracker) {
+        Button(modifier = Modifier.fillMaxSize(), onClick = { dispatcher.cursor_select_column(x) }) {
             Text("$x")
         }
     }
 
     @Composable
-    fun <T: OpusEvent> LeafView(ui_facade: UIFacade, y: Int, x: Int, path: List<Int>, event: T?, modifier: Modifier = Modifier) {
+    fun <T: OpusEvent> LeafView(ui_facade: UIFacade, dispatcher: ActionTracker, y: Int, x: Int, path: List<Int>, event: T?, modifier: Modifier = Modifier) {
         val cursor = ui_facade.active_cursor.value
+        val cell_selected = cursor != null && ui_facade.is_cell_selected(cursor, y, x)
         val leaf_selected = cursor != null && ui_facade.is_leaf_selected(cursor, y, x, path)
         val background_color = if (leaf_selected) {
             when (event) {
                 is InstrumentEvent -> colorResource(R.color.leaf_selected)
                 is EffectEvent -> colorResource(R.color.ctl_leaf_selected)
+                else -> colorResource(R.color.leaf_empty_selected)
+            }
+        } else if (cell_selected) {
+            when (event) {
+                is InstrumentEvent -> colorResource(R.color.leaf_secondary)
+                is EffectEvent -> colorResource(R.color.ctl_leaf_secondary)
                 else -> colorResource(R.color.leaf_empty_selected)
             }
         } else {
@@ -529,15 +527,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun CellView(ui_facade: UIFacade, y: Int, x: Int, modifier: Modifier = Modifier) {
-        val dispatcher = this.model_editor.action_interface
+    fun CellView(ui_facade: UIFacade, dispatcher: ActionTracker, y: Int, x: Int, modifier: Modifier = Modifier) {
         val cell = ui_facade.cell_map[y][x].value
         val line_info = ui_facade.line_data[y]
         Row(modifier.fillMaxSize()) {
             composable_traverse(cell, listOf()) { tree, path, event ->
                 if (tree.is_leaf()) {
                     this@ComponentActivityEditor.LeafView(
-                        ui_facade,y, x, path, event,
+                        ui_facade, dispatcher, y, x, path, event,
                         Modifier
                             .combinedClickable(
                                 onClick = {
@@ -599,7 +596,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             contentAlignment = Alignment.BottomCenter
         ) {
             Box(Modifier.fillMaxSize()) {
-                MainTable(ui_facade, ui_facade.beat_count)
+                MainTable(ui_facade, view_model.action_interface,  ui_facade.beat_count)
             }
             if (ui_facade.active_cursor.value?.type != CursorMode.Unset) {
                 Box(Modifier) {
@@ -648,7 +645,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
             this.model_editor.opus_manager.ui_facade.set_project_exists(true)
             this.toast(R.string.feedback_project_saved)
         }
-
     }
 
     fun project_save() {

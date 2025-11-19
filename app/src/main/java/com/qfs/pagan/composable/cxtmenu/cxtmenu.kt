@@ -22,9 +22,62 @@ import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.uibill.UIFacade
 
 @Composable
-fun ContextMenuLinePrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {}
+fun ContextMenuLinePrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {
+    val cursor = ui_facade.active_cursor.value ?: return
+    val active_line = ui_facade.line_data[cursor.ints[0]]
+
+    Row {
+        Button(
+            onClick = { dispatcher.show_hidden_line_controller() },
+            content = {
+                Icon(
+                    painter = painterResource(R.drawable.icon_ctl),
+                    contentDescription = stringResource(R.string.cd_show_effect_controls)
+                )
+            }
+        )
+        active_line.assigned_offset?.let {
+            Button(
+                onClick = { dispatcher.set_percussion_instrument() },
+                content = {
+                    Text(ui_facade.instrument_names[active_line.channel]?.get(it) ?: "???")
+                }
+            )
+        }
+        Button(
+            onClick = { dispatcher.remove_line() },
+            content = {
+                Icon(
+                    painter = painterResource(R.drawable.icon_remove_line),
+                    contentDescription = stringResource(R.string.cd_remove_line)
+                )
+            }
+        )
+        Button(
+            onClick = { dispatcher.insert_line() },
+            content = {
+                Icon(
+                    painter = painterResource(R.drawable.icon_insert_line),
+                    contentDescription = stringResource(R.string.cd_insert_line)
+                )
+            }
+        )
+    }
+}
 @Composable
-fun ContextMenuLineSecondary(ui_facade: UIFacade, dispatcher: ActionTracker) {}
+fun ContextMenuLineSecondary(ui_facade: UIFacade, dispatcher: ActionTracker) {
+    Row {
+        Button(
+            onClick = { dispatcher.line_mute() },
+            content = {
+                Icon(
+                    painter = painterResource(R.drawable.icon_mute),
+                    contentDescription = stringResource(R.string.cd_line_mute)
+                )
+            }
+        )
+    }
+}
 
 @Composable
 fun ContextMenuColumnPrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {}
@@ -46,8 +99,9 @@ fun ContextMenuSinglePrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {
             throw Exception("Invalid Event Type") // TODO: Specify
         }
     }
-    Column() {
-        Row() {
+
+    Column {
+        Row {
             Button(
                 onClick = { dispatcher.split(2) },
                 modifier = Modifier
@@ -69,11 +123,11 @@ fun ContextMenuSinglePrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {
                 contentDescription = stringResource(R.string.btn_insert),
                 modifier = Modifier
                     .fillMaxWidth()
-                .weight(1F)
-                .combinedClickable(
-                    onClick = { dispatcher.insert_leaf(1) },
-                    onLongClick = { dispatcher.insert_leaf() }
-                ),
+                    .weight(1F)
+                    .combinedClickable(
+                        onClick = { dispatcher.insert_leaf(1) },
+                        onLongClick = { dispatcher.insert_leaf() }
+                    )
             )
             Button(
                 onClick = { dispatcher.remove_at_cursor() },
@@ -96,7 +150,7 @@ fun ContextMenuSinglePrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {
                         onClick = {},
                         onLongClick = { dispatcher.set_duration(1) }
                     ),
-                content = { Text("x${active_event?.duration ?: 1}") }
+                content = { Text("x${active_event.duration}") }
             )
             Button(
                 onClick = { dispatcher.unset() },
@@ -116,7 +170,7 @@ fun ContextMenuSinglePrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {
             )
         }
         // Octave Selector
-        Row() {
+        Row {
             for (i in 0 until 8) {
                 Button(
                     modifier = Modifier
@@ -128,6 +182,7 @@ fun ContextMenuSinglePrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {
                 )
             }
         }
+
         // Offset Selector
         Row() {
             for (i in 0 until ui_facade.radix.value) {

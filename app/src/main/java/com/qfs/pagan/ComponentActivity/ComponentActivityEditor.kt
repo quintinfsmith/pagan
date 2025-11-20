@@ -327,7 +327,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         Column {
             Row {
                 Column {
-                    ShortcutView(scope, scroll_state_h)
+                    ShortcutView(dispatcher, scope, scroll_state_h)
                 }
                 Column(
                     Modifier
@@ -389,12 +389,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun ShortcutView(scope: CoroutineScope, scroll_state: ScrollState) {
+    fun ShortcutView(dispatcher: ActionTracker, scope: CoroutineScope, scroll_state: ScrollState) {
         Icon(
             modifier = Modifier
                 .combinedClickable(
                     onClick = { TODO() },
                     onLongClick = {
+                        dispatcher.cursor_select_column(0)
                         scope.launch { scroll_state.animateScrollTo(0) }
                     }
                 )

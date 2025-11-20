@@ -537,7 +537,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                     this.get_instrument_line_index(channel, line_offset)
                 )
             )!!,
-            UIFacade.LineData(channel, line_offset, null, instrument)
+            UIFacade.LineData(channel, line_offset, null, instrument, this.channels[channel].lines[line_offset].muted)
         )
     }
 
@@ -670,14 +670,14 @@ class OpusLayerInterface : OpusLayerHistory() {
                 }
 
                 if (y >= first_swapped_line) {
-                    this.ui_facade.update_line(y, UIFacade.LineData(c, l, null, instrument))
+                    this.ui_facade.update_line(y, UIFacade.LineData(c, l, null, instrument, line.muted))
                 }
                 y++
 
                 for ((type, controller) in line.controllers.get_all()) {
                     if (!controller.visible) continue
                     if (y > first_swapped_line) {
-                        this.ui_facade.update_line(y, UIFacade.LineData(c, l, type, instrument))
+                        this.ui_facade.update_line(y, UIFacade.LineData(c, l, type, instrument, line.muted))
                     }
                     y++
                 }
@@ -686,7 +686,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             for ((type, controller) in channel.controllers.get_all()) {
                 if (!controller.visible) continue
                 if (y > first_swapped_line) {
-                    this.ui_facade.update_line(y, UIFacade.LineData(c, null, type, null))
+                    this.ui_facade.update_line(y, UIFacade.LineData(c, null, type, null, channel.muted))
                 }
                 y++
             }
@@ -695,7 +695,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         for ((type, controller) in this.controllers.get_all()) {
             if (!controller.visible) continue
             if (y > first_swapped_line) {
-                this.ui_facade.update_line(y, UIFacade.LineData(null, null, type, null))
+                this.ui_facade.update_line(y, UIFacade.LineData(null, null, type, null, false))
             }
             y++
         }
@@ -758,7 +758,8 @@ class OpusLayerInterface : OpusLayerHistory() {
                         (line as OpusLinePercussion).instrument
                     } else {
                         null
-                    }
+                    },
+                    line.muted
                 )
             )
             for ((type, controller) in line.controllers.get_all()) {
@@ -889,7 +890,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                         }
                         mutableStateOf(this.get_tree_copy(BeatKey(c, l, it)))
                     },
-                    UIFacade.LineData(c, l, null, instrument)
+                    UIFacade.LineData(c, l, null, instrument, line.muted)
                 )
                 for ((type, controller) in line.controllers.get_all()) {
                     if (!controller.visible) continue
@@ -898,7 +899,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                         MutableList(this.length) {
                             mutableStateOf(controller.beats[it].copy())
                         },
-                        UIFacade.LineData(c, l, type, null)
+                        UIFacade.LineData(c, l, type, null, line.muted)
                     )
                 }
             }
@@ -907,7 +908,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 this.ui_facade.add_row(
                     i++,
                     MutableList(this.length) { mutableStateOf(controller.beats[it].copy()) },
-                    UIFacade.LineData(c, null, type, null)
+                    UIFacade.LineData(c, null, type, null, channel.muted)
                 )
             }
         }
@@ -916,7 +917,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             this.ui_facade.add_row(
                 i++,
                 MutableList(this.length) { mutableStateOf(controller.beats[it].copy()) },
-                UIFacade.LineData(null, null, type, null)
+                UIFacade.LineData(null, null, type, null, false)
             )
         }
         this.ui_facade.empty_cells()
@@ -1645,11 +1646,13 @@ class OpusLayerInterface : OpusLayerHistory() {
         }
     }
 
-    private fun _add_controller_to_column_width_map(y: Int, line: EffectController<*>, channel: Int?, line_offset: Int?, ctl_type: EffectType) {
+    private fun _add_controller_to_column_width_map(y: Int, controller_line: EffectController<*>, channel_index: Int?, line_offset: Int?, ctl_type: EffectType) {
+        val channel = this.channels[channel_index ?: (this.channels.size - 1)]
+        val line = channel.lines[line_offset ?: (channel.lines.size - 1)]
         this.ui_facade.add_row(
             y,
-            MutableList(line.beats.size) { mutableStateOf(line.beats[it].copy()) },
-            UIFacade.LineData(channel, line_offset, ctl_type, null)
+            MutableList(controller_line.beats.size) { mutableStateOf(controller_line.beats[it].copy()) },
+            UIFacade.LineData(channel_index, line_offset, ctl_type, null, line.muted)
         )
     }
 
@@ -1679,7 +1682,8 @@ class OpusLayerInterface : OpusLayerHistory() {
                     (working_channel.lines[adj_line_offset] as OpusLinePercussion).instrument
                 } else {
                     null
-                }
+                },
+                this.channels[channel].lines[adj_line_offset].muted
             )
         )
 

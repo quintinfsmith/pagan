@@ -28,7 +28,7 @@ class UIFacade {
         Secondary
     }
 
-    data class LineData(var channel: Int?, var line_offset: Int?, var ctl_type: EffectType?, var assigned_offset: Int? = null)
+    data class LineData(var channel: Int?, var line_offset: Int?, var ctl_type: EffectType?, var assigned_offset: Int? = null, var is_mute: Boolean)
     data class ColumnData(var is_tagged: Boolean)
     data class ChannelData(var percussion: Boolean, var instrument: Pair<Int, Int>)
     class CacheCursor(var type: CursorMode, vararg ints: Int) {
@@ -38,7 +38,7 @@ class UIFacade {
     var project_name: String? = null
     var beat_count: MutableState<Int> = mutableIntStateOf(0)
     val line_data: MutableList<LineData> = mutableListOf()
-    val column_data: MutableList<ColumnData> = mutableListOf()
+    val column_data: MutableList<MutableState<ColumnData>> = mutableListOf()
     val cell_map = mutableListOf<MutableList<MutableState<ReducibleTree<out OpusEvent>>>>()
     val channel_data: MutableList<ChannelData> = mutableListOf()
     var radix: MutableState<Int> = mutableIntStateOf(12)
@@ -46,7 +46,7 @@ class UIFacade {
     var active_event: MutableState<OpusEvent?> = mutableStateOf(null)
     var active_cursor: MutableState<CacheCursor?> = mutableStateOf(null)
     var project_exists: MutableState<Boolean> = mutableStateOf(false)
-    var instrument_names = HashMap<Int, HashMap<Int, String>?>()
+    var instrument_names = HashMap<Int, HashMap<Int, String>?>() // NOTE: "instrument". Not "preset".
     var blocker_leaf: List<Int>? = null
 
     fun clear() {

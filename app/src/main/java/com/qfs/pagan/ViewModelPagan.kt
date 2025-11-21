@@ -11,11 +11,6 @@ class ViewModelPagan: ViewModel() {
     var dialog_queue: MutableState<DialogChain?> = mutableStateOf(null)
     var project_manager: ProjectManager? = null
 
-    var _title_callbacks = mutableListOf<(String?) -> Unit>()
-    var title: String? by observable(null) { _, _, new_value ->
-        this._title_callbacks.forEach { it(new_value) }
-    }
-
     var configuration = PaganConfiguration()
     var configuration_path: String? = null
 

@@ -35,7 +35,7 @@ class UIFacade {
         var ints = ints.toList()
     }
 
-    var project_name: String? = null
+    var project_name: MutableState<String?> = mutableStateOf(null)
     var beat_count: MutableState<Int> = mutableIntStateOf(0)
     val line_data: MutableList<LineData> = mutableListOf()
     val column_data: MutableList<MutableState<ColumnData>> = mutableListOf()
@@ -51,7 +51,7 @@ class UIFacade {
 
     fun clear() {
         if (this.ui_lock.is_locked()) return
-        this.project_name = null
+        this.project_name.value = null
         this.beat_count.value = 0
         this.active_event.value = null
         this.active_cursor.value = null
@@ -234,7 +234,7 @@ class UIFacade {
 
     fun set_project_name(name: String? = null) {
         if (this.ui_lock.is_locked()) return
-        this.project_name = name
+        this.project_name.value = name
     }
 
     fun <T: OpusEvent> set_active_event(event: T? = null) {

@@ -3,6 +3,7 @@ package com.qfs.pagan.ComponentActivity
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
 
 class TestActivity: PaganComponentActivity() {
@@ -12,6 +13,9 @@ class TestActivity: PaganComponentActivity() {
     }
 
     var test_model = TestModel()
+
+    @Composable
+    override fun TopBar(modifier: Modifier) {}
 
     @Composable
     fun Layout() {

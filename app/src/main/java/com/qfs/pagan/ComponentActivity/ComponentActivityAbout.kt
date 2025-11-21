@@ -2,6 +2,7 @@ package com.qfs.pagan.ComponentActivity
 
 import android.content.Intent
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,11 +14,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -26,6 +30,26 @@ import com.qfs.pagan.R
 import com.qfs.pagan.find_activity
 
 class ComponentActivityAbout: PaganComponentActivity() {
+    @Composable
+    override fun TopBar(modifier: Modifier) {
+        Row {
+            Icon(
+                painter = painterResource(R.drawable.baseline_arrow_back_24),
+                contentDescription = stringResource(R.string.go_back),
+                modifier = Modifier
+                    .width(dimensionResource(R.dimen.icon_button_width)) // TODO: Dedicated size?
+                    .combinedClickable(
+                        onClick = { this@ComponentActivityAbout.finish() }
+                    )
+            )
+            Text(
+                modifier = Modifier.weight(1F),
+                textAlign = TextAlign.Center,
+                text = stringResource(R.string.app_name)
+            )
+        }
+    }
+
     @Composable
     fun FillRow(content: @Composable (RowScope.() -> Unit)) {
         Row(
@@ -147,11 +171,14 @@ class ComponentActivityAbout: PaganComponentActivity() {
     @Composable
     override fun LayoutLargePortrait() {
         FillRow {
-            Column(Modifier.fillMaxWidth().weight(1F)) { }
+            Column(Modifier
+                .fillMaxWidth()
+                .weight(1F)) { }
             Column(
                 Modifier
                     .verticalScroll(rememberScrollState())
-                    .width(SIZE_L.second).weight(1F)
+                    .width(SIZE_L.second)
+                    .weight(1F)
                     .fillMaxHeight(),
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -160,7 +187,9 @@ class ComponentActivityAbout: PaganComponentActivity() {
                 FillRow { HorizontalDivider(thickness = 1.dp) }
                 FillRow { SectionLicense() }
             }
-            Column(Modifier.fillMaxWidth().weight(1F)) { }
+            Column(Modifier
+                .fillMaxWidth()
+                .weight(1F)) { }
         }
     }
 
@@ -188,11 +217,14 @@ class ComponentActivityAbout: PaganComponentActivity() {
     @Composable
     override fun LayoutLargeLandscape() {
         FillRow {
-            Column(Modifier.fillMaxWidth().weight(1F)) { }
+            Column(Modifier
+                .fillMaxWidth()
+                .weight(1F)) { }
             Column(
                 Modifier
                     .verticalScroll(rememberScrollState())
-                    .width(SIZE_L.first).weight(1F)
+                    .width(SIZE_L.first)
+                    .weight(1F)
                     .fillMaxHeight(),
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -201,7 +233,9 @@ class ComponentActivityAbout: PaganComponentActivity() {
                 FillRow { HorizontalDivider(thickness = 1.dp) }
                 FillRow { SectionLicense() }
             }
-            Column(Modifier.fillMaxWidth().weight(1F)) { }
+            Column(Modifier
+                .fillMaxWidth()
+                .weight(1F)) { }
         }
     }
 

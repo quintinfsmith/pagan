@@ -31,6 +31,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -45,6 +46,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.fromHtml
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
@@ -290,6 +292,60 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
+    override fun TopBar(modifier: Modifier) {
+        val ui_facade = this.model_editor.opus_manager.ui_facade
+        val dispatcher = this.model_editor.action_interface
+        Row {
+            Icon(
+                painter = painterResource(R.drawable.icon_hamburger_32),
+                contentDescription = stringResource(R.string.song_configuration),
+                modifier = Modifier
+                    .padding(0.dp)
+            )
+            Text(
+                modifier = Modifier
+                    .align(alignment = Alignment.CenterVertically)
+                    .fillMaxWidth()
+                    .weight(1F)
+                    .combinedClickable(
+                        onClick = { dispatcher.set_project_name_and_notes() }
+                    ),
+                textAlign = TextAlign.Center,
+                text = ui_facade.project_name.value ?: stringResource(R.string.untitled_opus)
+            )
+            Icon(
+                painter = painterResource(R.drawable.icon_undo),
+                contentDescription = stringResource(R.string.menu_item_undo),
+                modifier = Modifier
+                    .padding(0.dp)
+                    .combinedClickable(
+                        onClick = { dispatcher.apply_undo() }
+                    )
+            )
+            Icon(
+                painter = painterResource(R.drawable.icon_play), // TODO: Play state
+                contentDescription = stringResource(R.string.menu_item_playpause),
+                modifier = Modifier
+                    .background(Color.Red)
+                    .padding(0.dp)
+                    .combinedClickable(
+                        onClick = { dispatcher.playback() }
+                    )
+            )
+            Icon(
+                painter = painterResource(R.drawable.icon_hamburger_32), // TODO: 3-dot icon
+                contentDescription = stringResource(R.string.menu_item_playpause),
+                modifier = Modifier
+                    .padding(0.dp)
+                    .combinedClickable(
+                        onClick = { /* TODO: drop down */ },
+                    )
+            )
+        }
+    }
+
+
+    @Composable
     fun ContextMenuPrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {
         val cursor = ui_facade.active_cursor.value
         when (cursor?.type) {
@@ -472,13 +528,17 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             Column(
                                 verticalArrangement = Arrangement.Top,
                                 horizontalAlignment = Alignment.Start,
-                                modifier = Modifier.fillMaxSize().weight(1F),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .weight(1F),
                                 content = { Text(label_a) }
                             )
                             Column(
                                 verticalArrangement = Arrangement.Bottom,
                                 horizontalAlignment = Alignment.End,
-                                modifier = Modifier.fillMaxSize().weight(1F),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .weight(1F),
                                 content = { Text(label_b) }
                             )
                         }
@@ -648,11 +708,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         val octave = abs(event.offset) / ui_facade.radix.value
                         val offset = abs(event.offset) % ui_facade.radix.value
                         Row {
-                            Column(modifier = Modifier.fillMaxSize().weight(1F)) {
+                            Column(modifier = Modifier
+                                .fillMaxSize()
+                                .weight(1F)) {
                                 Text( if (event.offset > 0) "+" else "-" )
                                 Text("$octave")
                             }
-                            Column(modifier = Modifier.fillMaxSize().weight(1F)) {
+                            Column(modifier = Modifier
+                                .fillMaxSize()
+                                .weight(1F)) {
                                 Text("$offset")
                             }
                         }
@@ -695,15 +759,30 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         }
                                     } else if (line_info.line_offset != null) {
                                         if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type == line_info.ctl_type) {
-                                            dispatcher.move_line_ctl_to_beat(BeatKey(line_info.channel!!, line_info.line_offset!!, x))
+                                            dispatcher.move_line_ctl_to_beat(
+                                                BeatKey(
+                                                    line_info.channel!!,
+                                                    line_info.line_offset!!,
+                                                    x
+                                                )
+                                            )
                                         } else {
-                                            dispatcher.cursor_select_ctl_at_line(line_info.ctl_type!!, BeatKey(line_info.channel!!, line_info.line_offset!!, x), path)
+                                            dispatcher.cursor_select_ctl_at_line(
+                                                line_info.ctl_type!!,
+                                                BeatKey(line_info.channel!!, line_info.line_offset!!, x),
+                                                path
+                                            )
                                         }
                                     } else if (line_info.channel != null) {
                                         if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type == line_info.ctl_type) {
                                             dispatcher.move_channel_ctl_to_beat(line_info.channel!!, x)
                                         } else {
-                                            dispatcher.cursor_select_ctl_at_channel(line_info.ctl_type!!, line_info.channel!!, x, path)
+                                            dispatcher.cursor_select_ctl_at_channel(
+                                                line_info.ctl_type!!,
+                                                line_info.channel!!,
+                                                x,
+                                                path
+                                            )
                                         }
                                     } else {
                                         if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type == line_info.ctl_type) {
@@ -715,11 +794,24 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 },
                                 onLongClick = {
                                     if (line_info.ctl_type == null) {
-                                        dispatcher.cursor_select_range_next(BeatKey(line_info.channel!!, line_info.line_offset!!, x))
+                                        dispatcher.cursor_select_range_next(
+                                            BeatKey(
+                                                line_info.channel!!,
+                                                line_info.line_offset!!,
+                                                x
+                                            )
+                                        )
                                     } else if (line_info.line_offset != null) {
-                                        dispatcher.cursor_select_line_ctl_range_next(line_info.ctl_type!!, BeatKey(line_info.channel!!, line_info.line_offset!!, x))
+                                        dispatcher.cursor_select_line_ctl_range_next(
+                                            line_info.ctl_type!!,
+                                            BeatKey(line_info.channel!!, line_info.line_offset!!, x)
+                                        )
                                     } else if (line_info.channel != null) {
-                                        dispatcher.cursor_select_channel_ctl_range_next(line_info.ctl_type!!, line_info.channel!!, x)
+                                        dispatcher.cursor_select_channel_ctl_range_next(
+                                            line_info.ctl_type!!,
+                                            line_info.channel!!,
+                                            x
+                                        )
                                     } else {
                                         dispatcher.cursor_select_global_ctl_range_next(line_info.ctl_type!!, x)
                                     }

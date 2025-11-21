@@ -11,16 +11,24 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.currentRecomposeScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -66,6 +74,8 @@ abstract class PaganComponentActivity: ComponentActivity() {
     abstract fun LayoutMediumLandscape()
     @Composable
     abstract fun LayoutSmallLandscape()
+    @Composable
+    abstract fun TopBar(modifier: Modifier = Modifier)
 
     val view_model: ViewModelPagan by this.viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -77,18 +87,14 @@ abstract class PaganComponentActivity: ComponentActivity() {
         }
 
         this.setContent {
-            var title by remember { mutableStateOf(view_model.title ?: "") }
-            view_model._title_callbacks.add { title = it ?: "" }
-
             // Allow night mode mutability
             val night_mode = remember { mutableIntStateOf(view_model.configuration.night_mode) }
             view_model.configuration.callbacks_night_mode.add { night_mode.intValue = it }
-            ScaffoldWithTopBar(title, night_mode) {
-                BoxWithConstraints(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .padding(it)
-                ) {
+            ScaffoldWithTopBar(
+                top_app_bar = { this.TopBar() },
+                night_mode
+            ) {
+                BoxWithConstraints(modifier = Modifier.padding(it)) {
                     var current_dialog = view_model.dialog_queue.value
                     val dialogs = mutableListOf<DialogChain>()
                     while (current_dialog != null) {

@@ -30,7 +30,7 @@ class UIFacade {
 
     data class LineData(var channel: Int?, var line_offset: Int?, var ctl_type: EffectType?, var assigned_offset: Int? = null, var is_mute: Boolean)
     data class ColumnData(var is_tagged: Boolean)
-    data class ChannelData(var percussion: Boolean, var instrument: Pair<Int, Int>)
+    data class ChannelData(var percussion: Boolean, var instrument: Pair<Int, Int>, var is_mute: Boolean)
     class CacheCursor(var type: CursorMode, vararg ints: Int) {
         var ints = ints.toList()
     }
@@ -112,7 +112,7 @@ class UIFacade {
         }
     }
 
-    fun add_channel(channel: Int, percussion: Boolean, instrument: Pair<Int, Int>) {
+    fun add_channel(channel: Int, percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean) {
         if (this.ui_lock.is_locked()) return
         for (ld in this.line_data) {
             ld.channel?.let {
@@ -121,7 +121,7 @@ class UIFacade {
                 }
             }
         }
-        this.channel_data.add(channel, ChannelData(percussion, instrument))
+        this.channel_data.add(channel, ChannelData(percussion, instrument, is_mute))
     }
 
     fun remove_channel(channel: Int) {
@@ -227,9 +227,9 @@ class UIFacade {
         }
     }
 
-    fun set_channel_data(channel_index: Int, percussion: Boolean, instrument: Pair<Int, Int>) {
+    fun set_channel_data(channel_index: Int, percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean) {
         if (this.ui_lock.is_locked()) return
-        this.channel_data[channel_index] = ChannelData(percussion, instrument)
+        this.channel_data[channel_index] = ChannelData(percussion, instrument, is_mute)
     }
 
     fun set_project_name(name: String? = null) {
@@ -382,5 +382,13 @@ class UIFacade {
 
     fun set_radix(radix: Int) {
         this.radix.value = radix
+    }
+
+    fun mute_channel(channel: Int, mute: Boolean) {
+        this.channel_data[channel].is_mute = mute
+    }
+
+    fun mute_line(line: Int, mute: Boolean) {
+        this.line_data[line].is_mute = mute
     }
 }

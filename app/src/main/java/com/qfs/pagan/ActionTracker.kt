@@ -25,8 +25,8 @@ import com.qfs.json.JSONObject
 import com.qfs.json.JSONString
 import com.qfs.pagan.ComponentActivity.ComponentActivityEditor
 import com.qfs.pagan.OpusLayerInterface
-import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.IntegerInput
+import com.qfs.pagan.composable.SText
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
@@ -52,6 +52,7 @@ import com.qfs.pagan.OpusLayerInterface as OpusManager
 class ActionTracker {
     var DEBUG_ON = false
     class NoActivityException: Exception()
+    class OpusManagerDetached: Exception()
     enum class TrackedAction {
         ApplyUndo,
         NewProject,
@@ -1088,20 +1089,19 @@ class ActionTracker {
     }
 
     fun set_duration(duration: Int? = null) {
-        // val main = this.get_activity()
-        // val opus_manager = main.get_opus_manager()
-        // val cursor = opus_manager.cursor
-        // val (beat_key, position) = opus_manager.get_actual_position(
-        //     cursor.get_beatkey(),
-        //     cursor.get_position()
-        // )
+        val opus_manager = this.opus_manager ?: throw OpusManagerDetached()
+        val cursor = opus_manager.cursor
+        val (beat_key, position) = opus_manager.get_actual_position(
+            cursor.get_beatkey(),
+            cursor.get_position()
+        )
 
-        // val event_duration = opus_manager.get_tree(beat_key, position).get_event()?.duration ?: return
+        val event_duration = opus_manager.get_tree(beat_key, position).get_event()?.duration ?: return
 
-        // this.dialog_number_input(main.getString(R.string.dlg_duration), 1, 99, event_duration, duration) { value: Int ->
-        //     this.track(TrackedAction.SetDuration, listOf(value))
-        //     opus_manager.set_duration(beat_key, position, max(1, value))
-        // }
+        this.dialog_number_input(R.string.dlg_duration, 1, 99, event_duration, duration) { value: Int ->
+            this.track(TrackedAction.SetDuration, listOf(value))
+            opus_manager.set_duration(beat_key, position, max(1, value))
+        }
     }
 
     fun show_hidden_line_controller(forced_value: EffectType? = null) {
@@ -1168,11 +1168,12 @@ class ActionTracker {
     }
 
     fun set_offset(new_offset: Int) {
-        //this.track(TrackedAction.SetOffset, listOf(new_offset))
+        this.track(TrackedAction.SetOffset, listOf(new_offset))
 
-        //val opus_manager = this.get_opus_manager()
-        //opus_manager.set_note_offset_at_cursor(new_offset)
+        val opus_manager = this.get_opus_manager()
+        opus_manager.set_note_offset_at_cursor(new_offset)
 
+        // TODO:
         //val beat_key = opus_manager.cursor.get_beatkey()
         //val position = opus_manager.cursor.get_position()
         //val event_note = opus_manager.get_absolute_value(beat_key, position) ?: return
@@ -1180,11 +1181,12 @@ class ActionTracker {
     }
 
     fun set_octave(new_octave: Int) {
-        // this.track(TrackedAction.SetOctave, listOf(new_octave))
+        this.track(TrackedAction.SetOctave, listOf(new_octave))
 
-        // val opus_manager = this.get_opus_manager()
-        // opus_manager.set_note_octave_at_cursor(new_octave)
+        val opus_manager = this.get_opus_manager()
+        opus_manager.set_note_octave_at_cursor(new_octave)
 
+        // TODO:
         // val beat_key = opus_manager.cursor.get_beatkey()
         // val position = opus_manager.cursor.get_position()
         // val event_note = opus_manager.get_absolute_value(beat_key, position) ?: return
@@ -1208,25 +1210,25 @@ class ActionTracker {
     }
 
     fun unset_root() {
-        // this.track(TrackedAction.UnsetRoot)
-        // val opus_manager = this.get_activity().get_opus_manager()
-        // val cursor = opus_manager.cursor
-        // when (cursor.ctl_level) {
-        //     CtlLineLevel.Global -> {
-        //         opus_manager.cursor_select_ctl_at_global(cursor.ctl_type!!, cursor.beat, listOf())
-        //     }
-        //     CtlLineLevel.Channel -> {
-        //         opus_manager.cursor_select_ctl_at_channel(cursor.ctl_type!!, cursor.channel, cursor.beat, listOf())
-        //     }
-        //     CtlLineLevel.Line -> {
-        //         val beat_key = cursor.get_beatkey()
-        //         opus_manager.cursor_select_ctl_at_line(cursor.ctl_type!!, beat_key, listOf())
-        //     }
-        //     null -> {
-        //         val beat_key = cursor.get_beatkey()
-        //         opus_manager.unset(beat_key, listOf())
-        //     }
-        // }
+        this.track(TrackedAction.UnsetRoot)
+        val opus_manager = this.opus_manager ?: return
+        val cursor = opus_manager.cursor
+        when (cursor.ctl_level) {
+            CtlLineLevel.Global -> {
+                opus_manager.cursor_select_ctl_at_global(cursor.ctl_type!!, cursor.beat, listOf())
+            }
+            CtlLineLevel.Channel -> {
+                opus_manager.cursor_select_ctl_at_channel(cursor.ctl_type!!, cursor.channel, cursor.beat, listOf())
+            }
+            CtlLineLevel.Line -> {
+                val beat_key = cursor.get_beatkey()
+                opus_manager.cursor_select_ctl_at_line(cursor.ctl_type!!, beat_key, listOf())
+            }
+            null -> {
+                val beat_key = cursor.get_beatkey()
+                opus_manager.unset(beat_key, listOf())
+            }
+        }
     }
 
     fun remove_at_cursor() {
@@ -1262,21 +1264,22 @@ class ActionTracker {
     }
 
     fun toggle_percussion() {
-        // this.track(TrackedAction.TogglePercussion)
+        this.track(TrackedAction.TogglePercussion)
 
-        // val opus_manager = this.get_opus_manager()
-        // val cursor = opus_manager.cursor
-        // val beat_key = cursor.get_beatkey()
-        // val position = cursor.get_position()
-        // val current_tree_position = opus_manager.get_actual_position(beat_key, position)
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        val beat_key = cursor.get_beatkey()
+        val position = cursor.get_position()
+        val current_tree_position = opus_manager.get_actual_position(beat_key, position)
 
-        // if (opus_manager.get_tree(current_tree_position.first, current_tree_position.second).has_event()) {
-        //     opus_manager.unset()
-        // } else {
-        //     opus_manager.set_percussion_event_at_cursor()
-        //     val event_note = opus_manager.get_percussion_instrument(beat_key.channel, beat_key.line_offset)
-        //     this.get_activity().play_event(beat_key.channel, event_note)
-        // }
+        if (opus_manager.get_tree(current_tree_position.first, current_tree_position.second).has_event()) {
+            opus_manager.unset()
+        } else {
+            opus_manager.set_percussion_event_at_cursor()
+            // TODO:
+        //  val event_note = opus_manager.get_percussion_instrument(beat_key.channel, beat_key.line_offset)
+        //   this.get_activity().play_event(beat_key.channel, event_note)
+        }
     }
 
     fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>? = null) {

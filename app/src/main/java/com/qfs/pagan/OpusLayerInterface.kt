@@ -776,7 +776,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?, is_percussion: Boolean) {
         val notify_index = channel ?: this.channels.size
         super.new_channel(channel, lines, uuid, is_percussion)
-        this.ui_facade.add_channel(notify_index, is_percussion, this.channels[notify_index].get_instrument())
+        this.ui_facade.add_channel(notify_index, is_percussion, this.channels[notify_index].get_instrument(), this.channels[notify_index].muted)
         this._post_new_channel(notify_index, lines)
 
         this._activity?.update_channel_instruments()
@@ -869,7 +869,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.ui_facade.set_radix(this.get_radix())
         var i = 0
         for ((c, channel) in this.channels.enumerate()) {
-            this.ui_facade.add_channel(c, this.is_percussion(c), channel.get_instrument())
+            this.ui_facade.add_channel(c, this.is_percussion(c), channel.get_instrument(), channel.muted)
             for ((l, line) in channel.lines.enumerate()) {
                 val instrument = if (this.is_percussion(c)) {
                     (line as OpusLinePercussion).instrument
@@ -1087,7 +1087,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             instrument
         )
 
-        this.ui_facade.set_channel_data(channel, this.is_percussion(channel), instrument)
+        this.ui_facade.set_channel_data(channel, this.is_percussion(channel), instrument, this.channels[channel].muted)
     }
 
    // override fun toggle_global_control_visibility(type: ControlEventType) {
@@ -1953,6 +1953,36 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     fun is_initialized(): Boolean {
         return this.initialized
+    }
+
+    override fun mute_channel(channel: Int) {
+        super.mute_channel(channel)
+        this.ui_facade.mute_channel(channel, true)
+    }
+
+    override fun unmute_channel(channel: Int) {
+        super.unmute_channel(channel)
+        this.ui_facade.mute_channel(channel, false)
+    }
+
+    override fun mute_line(channel: Int, line_offset: Int) {
+        super.mute_line(channel, line_offset)
+        val y = this.get_visible_row_from_ctl_line(
+            this.get_actual_line_index(
+                this.get_instrument_line_index(channel, line_offset)
+            )
+        ) ?: return // TODO: Throw Exception
+        this.ui_facade.mute_line(y, true)
+    }
+
+    override fun unmute_line(channel: Int, line_offset: Int) {
+        super.unmute_line(channel, line_offset)
+        val y = this.get_visible_row_from_ctl_line(
+            this.get_actual_line_index(
+                this.get_instrument_line_index(channel, line_offset)
+            )
+        ) ?: return // TODO: Throw Exception
+        this.ui_facade.mute_line(y, false)
     }
 
 }

@@ -31,7 +31,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -351,7 +350,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
         when (cursor?.type) {
             CursorMode.Line -> ContextMenuLinePrimary(ui_facade, dispatcher)
             CursorMode.Column -> ContextMenuColumnPrimary(ui_facade, dispatcher)
-            CursorMode.Single -> ContextMenuSinglePrimary(ui_facade, dispatcher)
+            CursorMode.Single -> {
+                val show_relative_input = this@ComponentActivityEditor.view_model.configuration.relative_mode
+                ContextMenuSinglePrimary(ui_facade, dispatcher, show_relative_input)
+            }
             CursorMode.Range -> ContextMenuRangePrimary(ui_facade, dispatcher)
             CursorMode.Channel -> ContextMenuChannelPrimary(ui_facade, dispatcher)
             CursorMode.Unset,

@@ -80,7 +80,7 @@ class UIFacade {
 
     fun update_column(column: Int, is_tagged: Boolean) {
         if (this.ui_lock.is_locked()) return
-        this.column_data[column].is_tagged = is_tagged
+        this.column_data[column].value.is_tagged = is_tagged
     }
 
     fun add_row(y: Int, cells: MutableList<MutableState<ReducibleTree<out OpusEvent>>>, new_line_data: LineData) {
@@ -145,7 +145,7 @@ class UIFacade {
 
     fun add_column(column: Int, is_tagged: Boolean, new_cells: List<MutableState<ReducibleTree<out OpusEvent>>>) {
         if (this.ui_lock.is_locked()) return
-        this.column_data.add(column, ColumnData(is_tagged))
+        this.column_data.add(column, mutableStateOf(ColumnData(is_tagged)))
         for ((y, line) in this.cell_map.enumerate()) {
             line.add(column, new_cells[y])
         }
@@ -237,7 +237,7 @@ class UIFacade {
         this.project_name = name
     }
 
-    fun <T: OpusEvent> set_active_event(event: T) {
+    fun <T: OpusEvent> set_active_event(event: T? = null) {
         if (this.ui_lock.is_locked()) return
         this.active_event.value = event
     }

@@ -21,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
+import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.uibill.UIFacade
 
@@ -188,6 +189,7 @@ fun ContextMenuColumnSecondary(ui_facade: UIFacade, dispatcher: ActionTracker) {
 @Composable
 fun ContextMenuSinglePrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {
     val active_event = ui_facade.active_event.value
+    println("------- $active_event")
     val (offset, octave) = when (active_event) {
         is AbsoluteNoteEvent -> {
             Pair(active_event.note / ui_facade.radix.value, active_event.note % ui_facade.radix.value)
@@ -195,21 +197,24 @@ fun ContextMenuSinglePrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {
         is RelativeNoteEvent -> {
             Pair(active_event.offset / ui_facade.radix.value, active_event.offset % ui_facade.radix.value)
         }
+        is PercussionEvent -> {
+            Pair(0, 0)
+        }
         null -> return
         else -> {
             throw Exception("Invalid Event Type") // TODO: Specify
         }
     }
 
-    Column {
+    Column(Modifier.background(Color.Red)) {
         Row {
             Button(
-                onClick = { dispatcher.split(2) },
+                onClick = {},
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1F)
                     .combinedClickable(
-                        onClick = {},
+                        onClick = { dispatcher.split(2) },
                         onLongClick = { dispatcher.split() }
                     ),
                 content = {

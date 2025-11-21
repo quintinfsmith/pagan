@@ -12,10 +12,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,6 +29,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -88,6 +92,7 @@ import java.io.BufferedReader
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.InputStreamReader
+import kotlin.math.abs
 
 class ComponentActivityEditor: PaganComponentActivity() {
     val model_editor: ViewModelEditor by this.viewModels()
@@ -321,6 +326,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
         val scope = rememberCoroutineScope()
+
         val scroll_state_v = rememberScrollState()
         val scroll_state_h = rememberScrollState()
 
@@ -329,10 +335,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 Column {
                     ShortcutView(dispatcher, scope, scroll_state_h)
                 }
-                Column(
-                    Modifier
-                        .horizontalScroll(scroll_state_h)
-                ) {
+                Column(Modifier.horizontalScroll(scroll_state_h)) {
                     Row {
                         for ((x, width) in column_widths.enumerate()) {
                             Box(
@@ -348,7 +351,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
             Row {
                 Column(Modifier.verticalScroll(scroll_state_v)) {
+                    var working_channel: Int? = 0
                     for (y in ui_facade.line_data.indices) {
+                        if (ui_facade.line_data[y].channel != working_channel) {
+                            Row(Modifier.height(dimensionResource(R.dimen.channel_gap_size))) { }
+                        }
+                        working_channel = ui_facade.line_data[y].channel
                         val use_height = if (ui_facade.line_data[y].ctl_type != null) {
                             ctl_line_height
                         } else {
@@ -368,7 +376,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         .verticalScroll(scroll_state_v)
                         .horizontalScroll(scroll_state_h)
                 ) {
+                    var working_channel: Int? = 0
                     for ((y, line) in ui_facade.cell_map.enumerate()) {
+                        if (ui_facade.line_data[y].channel != working_channel) {
+                            Row(Modifier.height(dimensionResource(R.dimen.channel_gap_size))) { }
+                        }
+                        working_channel = ui_facade.line_data[y].channel
                         val use_height = if (ui_facade.line_data[y].ctl_type != null) {
                             ctl_line_height
                         } else {
@@ -390,40 +403,89 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     fun ShortcutView(dispatcher: ActionTracker, scope: CoroutineScope, scroll_state: ScrollState) {
-        Icon(
-            modifier = Modifier
-                .combinedClickable(
-                    onClick = { TODO() },
-                    onLongClick = {
-                        dispatcher.cursor_select_column(0)
-                        scope.launch { scroll_state.animateScrollTo(0) }
-                    }
-                )
-                .width(dimensionResource(R.dimen.line_label_width))
-                .height(dimensionResource(R.dimen.line_height)),
-            painter = painterResource(R.drawable.icon_shortcut),
-            contentDescription = stringResource(R.string.jump_to_section)
-        )
+        Box(
+            Modifier.padding(1.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Button(
+                onClick = {},
+                shape = RoundedCornerShape(4.dp),
+                contentPadding = PaddingValues(2.dp),
+                modifier = Modifier
+                    .width(dimensionResource(R.dimen.line_label_width) - (2.dp))
+                    .height(dimensionResource(R.dimen.line_height) - 2.dp),
+                content = {
+                    Icon(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .combinedClickable(
+                                onClick = { TODO() },
+                                onLongClick = {
+                                    dispatcher.cursor_select_column(0)
+                                    scope.launch { scroll_state.animateScrollTo(0) }
+                                }
+                            ),
+                        painter = painterResource(R.drawable.icon_shortcut),
+                        contentDescription = stringResource(R.string.jump_to_section)
+                    )
+                }
+            )
+        }
     }
 
     @Composable
     fun LineLabelView(modifier: Modifier = Modifier, y: Int, ui_facade: UIFacade, dispatcher: ActionTracker) {
         val line_info = ui_facade.line_data[y]
-        when (line_info.ctl_type) {
-            null -> {
-                val label = if (line_info.assigned_offset != null) {
-                    "!${line_info.channel}|${line_info.assigned_offset!!}"
+        val cursor = ui_facade.active_cursor.value
+        val (background_color, content_color) = if (cursor != null && ui_facade.is_line_selected(cursor, y)) {
+            Pair(R.color.label_selected, R.color.label_selected_text)
+        } else {
+            Pair(R.color.line_label, R.color.line_label_text)
+        }
+
+        val ctl_type = line_info.ctl_type
+        Box(Modifier.padding(1.dp)) {
+            if (ctl_type == null) {
+                val (label_a, label_b) = if (line_info.assigned_offset != null) {
+                    Pair("!${line_info.channel}", "${line_info.assigned_offset}")
                 } else {
-                    "${line_info.channel}|${line_info.line_offset}"
+                    Pair("${line_info.channel}", "${line_info.line_offset}")
                 }
-                Text(label, modifier = modifier.combinedClickable(
-                    onClick = {
-                        dispatcher.cursor_select_line_std(line_info.channel!!, line_info.line_offset!!)
+                Button(
+                    onClick = {},
+                    modifier = Modifier
+                        .combinedClickable(
+                            onClick = {
+                                dispatcher.cursor_select_line_std(line_info.channel!!, line_info.line_offset!!)
+                            }
+                        ),
+                    contentPadding = PaddingValues(2.dp),
+                    shape = RoundedCornerShape(4.dp),
+                    colors = ButtonColors(
+                        containerColor = colorResource(background_color),
+                        contentColor = colorResource(content_color),
+                        disabledContentColor = Color.Magenta,
+                        disabledContainerColor = Color.Magenta
+                    ),
+                    content = {
+                        Row {
+                            Column(
+                                verticalArrangement = Arrangement.Top,
+                                horizontalAlignment = Alignment.Start,
+                                modifier = Modifier.fillMaxSize().weight(1F),
+                                content = { Text(label_a) }
+                            )
+                            Column(
+                                verticalArrangement = Arrangement.Bottom,
+                                horizontalAlignment = Alignment.End,
+                                modifier = Modifier.fillMaxSize().weight(1F),
+                                content = { Text(label_b) }
+                            )
+                        }
                     }
-                ))
-            }
-            else -> {
-                val (drawable_id, description_id) = when (line_info.ctl_type) {
+                )
+            } else {
+                val (drawable_id, description_id) = when (ctl_type) {
                     EffectType.Tempo -> Pair(R.drawable.icon_tempo, R.string.ctl_desc_tempo)
                     EffectType.Velocity -> Pair(R.drawable.icon_velocity, R.string.ctl_desc_velocity)
                     EffectType.Volume -> Pair(R.drawable.icon_volume, R.string.ctl_desc_volume)
@@ -431,22 +493,38 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     EffectType.Pan -> Pair(R.drawable.icon_pan, R.string.ctl_desc_pan)
                     EffectType.LowPass -> TODO()
                     EffectType.Reverb -> TODO()
-                    null -> throw Exception("Something terrible has happened...")
                 }
-                Icon(
-                    modifier = modifier.combinedClickable(
-                        onClick = {
-                            if (line_info.line_offset != null) {
-                                dispatcher.cursor_select_line_ctl_line(line_info.ctl_type!!, line_info.channel!!, line_info.line_offset!!)
-                            } else if (line_info.channel != null) {
-                                dispatcher.cursor_select_channel_ctl_line(line_info.ctl_type!!, line_info.channel!!)
-                            } else {
-                                dispatcher.cursor_select_global_ctl_line(line_info.ctl_type!!)
-                            }
-                        }
+                Button(
+                    onClick = {},
+                    shape = RoundedCornerShape(4.dp),
+                    contentPadding = PaddingValues(2.dp),
+                    colors = ButtonColors(
+                        containerColor = colorResource(background_color),
+                        contentColor = colorResource(content_color),
+                        disabledContentColor = Color.Magenta,
+                        disabledContainerColor = Color.Magenta
                     ),
-                    painter = painterResource(drawable_id),
-                    contentDescription = stringResource(description_id)
+                    content = {
+                        Icon(
+                            modifier = modifier.combinedClickable(
+                                onClick = {
+                                    if (line_info.line_offset != null) {
+                                        dispatcher.cursor_select_line_ctl_line(
+                                            ctl_type,
+                                            line_info.channel!!,
+                                            line_info.line_offset!!
+                                        )
+                                    } else if (line_info.channel != null) {
+                                        dispatcher.cursor_select_channel_ctl_line(ctl_type, line_info.channel!!)
+                                    } else {
+                                        dispatcher.cursor_select_global_ctl_line(ctl_type)
+                                    }
+                                }
+                            ),
+                            painter = painterResource(drawable_id),
+                            contentDescription = stringResource(description_id)
+                        )
+                    }
                 )
             }
         }
@@ -454,17 +532,63 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     fun BeatLabelView(x: Int, ui_facade: UIFacade, dispatcher: ActionTracker) {
-        Button(modifier = Modifier.fillMaxSize(), onClick = { dispatcher.cursor_select_column(x) }) {
-            Text("$x")
+        val column_info = ui_facade.column_data[x].value
+        val modifier = Modifier
+
+        if (!column_info.is_tagged) {
+            modifier.border(width = 1.dp, color = Color.Red)
+        }
+        val cursor = ui_facade.active_cursor.value
+        val (background_color, content_color) = if (cursor != null && ui_facade.is_column_selected(cursor, x)) {
+            Pair(
+                R.color.label_selected,
+                R.color.label_selected_text
+            )
+        } else {
+            Pair(
+                R.color.line_label,
+                R.color.line_label_text
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .padding(1.dp)
+                .fillMaxSize()
+        ) {
+            Button(
+                shape = RoundedCornerShape(4.dp),
+                colors = ButtonColors(
+                    containerColor = colorResource(background_color),
+                    contentColor = colorResource(content_color),
+                    disabledContentColor = Color.Magenta,
+                    disabledContainerColor = Color.Magenta
+                ),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(0.dp),
+                onClick = { dispatcher.cursor_select_column(x) },
+                content = {
+                    Text(
+                        text = "$x",
+                        modifier = modifier
+                            .padding(0.dp)
+                    )
+                }
+            )
         }
     }
 
     @Composable
     fun <T: OpusEvent> LeafView(ui_facade: UIFacade, dispatcher: ActionTracker, y: Int, x: Int, path: List<Int>, event: T?, modifier: Modifier = Modifier) {
         val cursor = ui_facade.active_cursor.value
+        val line_data = ui_facade.line_data[y]
         val cell_selected = cursor != null && ui_facade.is_cell_selected(cursor, y, x)
         val leaf_selected = cursor != null && ui_facade.is_leaf_selected(cursor, y, x, path)
-        val background_color = if (leaf_selected) {
+        val corner_radius = when (event) {
+            is InstrumentEvent -> 12.dp
+            else -> 4.dp
+        }
+        val leaf_color = if (leaf_selected) {
             when (event) {
                 is InstrumentEvent -> colorResource(R.color.leaf_selected)
                 is EffectEvent -> colorResource(R.color.ctl_leaf_selected)
@@ -483,15 +607,21 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 else -> Color(0x10000000)
             }
         }
+        val background_color = if (line_data.ctl_type != null) {
+            colorResource(R.color.ctl_line)
+        } else {
+            colorResource(R.color.table_background)
+        }
 
         Box(
             modifier
-                .padding(1.dp)
                 .fillMaxSize()
+                .background(color = background_color)
         ) {
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
+                    .padding(1.dp)
+                    .clip(RoundedCornerShape(corner_radius))
                     // .dropShadow(
                     //     shape = RoundedCornerShape(8.dp),
                     //     shadow = Shadow(
@@ -501,7 +631,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     //         offset = DpOffset(x = 4.dp, 4.dp)
                     //     )
                     // )
-                    .background(color = background_color)
+                    .background(color = leaf_color)
                     .fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
@@ -514,7 +644,19 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         )
                     }
 
-                    is RelativeNoteEvent -> {}
+                    is RelativeNoteEvent -> {
+                        val octave = abs(event.offset) / ui_facade.radix.value
+                        val offset = abs(event.offset) % ui_facade.radix.value
+                        Row {
+                            Column(modifier = Modifier.fillMaxSize().weight(1F)) {
+                                Text( if (event.offset > 0) "+" else "-" )
+                                Text("$octave")
+                            }
+                            Column(modifier = Modifier.fillMaxSize().weight(1F)) {
+                                Text("$offset")
+                            }
+                        }
+                    }
                     is PercussionEvent -> SText(R.string.percussion_label)
                     is OpusVolumeEvent -> Text("${event.value}")
                     is OpusPanEvent -> {}
@@ -539,14 +681,36 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         Modifier
                             .combinedClickable(
                                 onClick = {
+                                    val cursor = ui_facade.active_cursor.value
+                                    val selecting_range = ui_facade.active_cursor.value?.type == CursorMode.Range
                                     if (line_info.ctl_type == null) {
-                                        dispatcher.cursor_select(BeatKey(line_info.channel!!, line_info.line_offset!!, x), path)
+                                        if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type == null) {
+                                            dispatcher.move_selection_to_beat(
+                                                BeatKey(line_info.channel!!, line_info.line_offset!!, x)
+                                            )
+                                        } else {
+                                            dispatcher.cursor_select(
+                                                BeatKey(line_info.channel!!, line_info.line_offset!!, x), path
+                                            )
+                                        }
                                     } else if (line_info.line_offset != null) {
-                                        dispatcher.cursor_select_ctl_at_line(line_info.ctl_type!!, BeatKey(line_info.channel!!, line_info.line_offset!!, x), path)
+                                        if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type == line_info.ctl_type) {
+                                            dispatcher.move_line_ctl_to_beat(BeatKey(line_info.channel!!, line_info.line_offset!!, x))
+                                        } else {
+                                            dispatcher.cursor_select_ctl_at_line(line_info.ctl_type!!, BeatKey(line_info.channel!!, line_info.line_offset!!, x), path)
+                                        }
                                     } else if (line_info.channel != null) {
-                                        dispatcher.cursor_select_ctl_at_channel(line_info.ctl_type!!, line_info.channel!!, x, path)
+                                        if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type == line_info.ctl_type) {
+                                            dispatcher.move_channel_ctl_to_beat(line_info.channel!!, x)
+                                        } else {
+                                            dispatcher.cursor_select_ctl_at_channel(line_info.ctl_type!!, line_info.channel!!, x, path)
+                                        }
                                     } else {
-                                        dispatcher.cursor_select_ctl_at_global(line_info.ctl_type!!, x, path)
+                                        if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type == line_info.ctl_type) {
+                                            dispatcher.move_global_ctl_to_beat(x)
+                                        } else {
+                                            dispatcher.cursor_select_ctl_at_global(line_info.ctl_type!!, x, path)
+                                        }
                                     }
                                 },
                                 onLongClick = {

@@ -6,7 +6,6 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -15,7 +14,6 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
 import androidx.core.net.toUri
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
@@ -448,7 +446,7 @@ class ActionTracker {
         //}
     }
 
-    fun move_selection_to_beat(beat_key: BeatKey) {
+    fun _move_selection_to_beat(beat_key: BeatKey) {
         this.track(
             TrackedAction.MoveSelectionToBeat,
             beat_key.to_list()
@@ -456,7 +454,7 @@ class ActionTracker {
         this.opus_manager?.move_to_beat(beat_key)
     }
 
-    fun copy_selection_to_beat(beat_key: BeatKey) {
+    fun _copy_selection_to_beat(beat_key: BeatKey) {
         this.track(
             TrackedAction.CopySelectionToBeat,
             beat_key.to_list()
@@ -464,7 +462,24 @@ class ActionTracker {
         this.opus_manager?.copy_to_beat(beat_key)
     }
 
-    fun merge_selection_into_beat(beat_key: BeatKey) {
+    fun move_selection_to_beat(beat_key: BeatKey) {
+        when (this.activity?.view_model?.configuration?.move_mode)  {
+            PaganConfiguration.MoveMode.MOVE -> {
+                this._move_selection_to_beat(beat_key)
+            }
+            PaganConfiguration.MoveMode.COPY -> {
+                this._copy_selection_to_beat(beat_key)
+            }
+            PaganConfiguration.MoveMode.MERGE -> {
+                this._merge_selection_into_beat(beat_key)
+            }
+            null -> {
+                this._copy_selection_to_beat(beat_key)
+            }
+        }
+    }
+
+    fun _merge_selection_into_beat(beat_key: BeatKey) {
         this.track(
             TrackedAction.MergeSelectionIntoBeat,
             beat_key.to_list()
@@ -543,6 +558,18 @@ class ActionTracker {
     }
 
     fun move_line_ctl_to_beat(beat_key: BeatKey) {
+        when (this.activity?.view_model?.configuration?.move_mode)  {
+            PaganConfiguration.MoveMode.MOVE -> {
+                this._move_line_ctl_to_beat(beat_key)
+            }
+            PaganConfiguration.MoveMode.MERGE -> TODO()
+            null,
+            PaganConfiguration.MoveMode.COPY -> {
+                this._copy_line_ctl_to_beat(beat_key)
+            }
+        }
+    }
+    fun _move_line_ctl_to_beat(beat_key: BeatKey) {
         this.track(
             TrackedAction.MoveLineCtlToBeat,
             beat_key.to_list()
@@ -550,7 +577,7 @@ class ActionTracker {
         this.get_opus_manager().move_line_ctl_to_beat(beat_key)
     }
 
-    fun copy_line_ctl_to_beat(beat_key: BeatKey) {
+    fun _copy_line_ctl_to_beat(beat_key: BeatKey) {
         this.track(
             TrackedAction.CopyLineCtlToBeat,
             beat_key.to_list()
@@ -559,6 +586,18 @@ class ActionTracker {
     }
 
     fun move_channel_ctl_to_beat(channel: Int, beat: Int) {
+        when (this.activity?.view_model?.configuration?.move_mode)  {
+            PaganConfiguration.MoveMode.MOVE -> {
+                this._move_channel_ctl_to_beat(channel, beat)
+            }
+            PaganConfiguration.MoveMode.MERGE -> TODO()
+            null,
+            PaganConfiguration.MoveMode.COPY -> {
+                this._copy_channel_ctl_to_beat(channel, beat)
+            }
+        }
+    }
+    fun _move_channel_ctl_to_beat(channel: Int, beat: Int) {
         this.track(
             TrackedAction.MoveChannelCtlToBeat,
             listOf(channel, beat)
@@ -566,7 +605,7 @@ class ActionTracker {
         this.get_opus_manager().move_channel_ctl_to_beat(channel, beat)
     }
 
-    fun copy_channel_ctl_to_beat(channel: Int, beat: Int) {
+    fun _copy_channel_ctl_to_beat(channel: Int, beat: Int) {
         this.track(
             TrackedAction.CopyChannelCtlToBeat,
             listOf(channel, beat)
@@ -575,6 +614,18 @@ class ActionTracker {
     }
 
     fun move_global_ctl_to_beat(beat: Int) {
+        when (this.activity?.view_model?.configuration?.move_mode)  {
+            PaganConfiguration.MoveMode.MOVE -> {
+                this._move_global_ctl_to_beat(beat)
+            }
+            PaganConfiguration.MoveMode.MERGE -> TODO()
+            null,
+            PaganConfiguration.MoveMode.COPY -> {
+                this._copy_global_ctl_to_beat(beat)
+            }
+        }
+    }
+    fun _move_global_ctl_to_beat(beat: Int) {
         this.track(
             TrackedAction.MoveGlobalCtlToBeat,
             listOf(beat)
@@ -582,7 +633,7 @@ class ActionTracker {
         this.get_opus_manager().move_global_ctl_to_beat(beat)
     }
 
-    fun copy_global_ctl_to_beat(beat: Int) {
+    fun _copy_global_ctl_to_beat(beat: Int) {
         this.track(
             TrackedAction.CopyGlobalCtlToBeat,
             listOf(beat)
@@ -1938,7 +1989,7 @@ class ActionTracker {
                 )
             }
             TrackedAction.MoveLineCtlToBeat -> {
-                this.move_line_ctl_to_beat(
+                this._move_line_ctl_to_beat(
                     BeatKey(
                         integers[0]!!,
                         integers[1]!!,
@@ -1947,16 +1998,16 @@ class ActionTracker {
                 )
             }
             TrackedAction.MoveChannelCtlToBeat -> {
-                this.move_channel_ctl_to_beat(
+                this._move_channel_ctl_to_beat(
                     integers[0]!!,
                     integers[1]!!
                 )
             }
             TrackedAction.MoveGlobalCtlToBeat -> {
-                this.move_global_ctl_to_beat(integers[0]!!)
+                this._move_global_ctl_to_beat(integers[0]!!)
             }
             TrackedAction.MoveSelectionToBeat -> {
-                this.move_selection_to_beat(
+                this._move_selection_to_beat(
                     BeatKey(
                         integers[0]!!,
                         integers[1]!!,
@@ -1965,7 +2016,7 @@ class ActionTracker {
                 )
             }
             TrackedAction.CopyLineCtlToBeat -> {
-                this.copy_line_ctl_to_beat(
+                this._copy_line_ctl_to_beat(
                     BeatKey(
                         integers[0]!!,
                         integers[1]!!,
@@ -1974,16 +2025,16 @@ class ActionTracker {
                 )
             }
             TrackedAction.CopyChannelCtlToBeat -> {
-                this.copy_channel_ctl_to_beat(
+                this._copy_channel_ctl_to_beat(
                     integers[0]!!,
                     integers[1]!!
                 )
             }
             TrackedAction.CopyGlobalCtlToBeat -> {
-                this.copy_global_ctl_to_beat(integers[0]!!)
+                this._copy_global_ctl_to_beat(integers[0]!!)
             }
             TrackedAction.CopySelectionToBeat -> {
-                this.copy_selection_to_beat(
+                this._copy_selection_to_beat(
                     BeatKey(
                         integers[0]!!,
                         integers[1]!!,
@@ -2097,7 +2148,7 @@ class ActionTracker {
                 this.drawer_close()
             }
             TrackedAction.MergeSelectionIntoBeat -> {
-                this.merge_selection_into_beat(
+                this._merge_selection_into_beat(
                     BeatKey(
                         integers[0]!!,
                         integers[1]!!,

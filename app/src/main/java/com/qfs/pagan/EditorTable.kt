@@ -2576,13 +2576,13 @@ class EditorTable(context: Context, attrs: AttributeSet): ScrollView(context, at
             try {
                 when (context.configuration.move_mode) {
                     PaganConfiguration.MoveMode.COPY -> {
-                        tracker.copy_selection_to_beat(beat_key)
+                        tracker._copy_selection_to_beat(beat_key)
                     }
                     PaganConfiguration.MoveMode.MOVE -> {
-                        tracker.move_selection_to_beat(beat_key)
+                        tracker._move_selection_to_beat(beat_key)
                     }
                     PaganConfiguration.MoveMode.MERGE -> {
-                        tracker.merge_selection_into_beat(beat_key)
+                        tracker._merge_selection_into_beat(beat_key)
                     }
                 }
 
@@ -2627,8 +2627,8 @@ class EditorTable(context: Context, attrs: AttributeSet): ScrollView(context, at
         if (cursor.is_selecting_range() && cursor.ctl_type == type) {
             try {
                 when (activity.configuration.move_mode) {
-                    PaganConfiguration.MoveMode.COPY -> tracker.copy_line_ctl_to_beat(beat_key)
-                    PaganConfiguration.MoveMode.MOVE -> tracker.move_line_ctl_to_beat(beat_key)
+                    PaganConfiguration.MoveMode.COPY -> tracker._copy_line_ctl_to_beat(beat_key)
+                    PaganConfiguration.MoveMode.MOVE -> tracker._move_line_ctl_to_beat(beat_key)
                     PaganConfiguration.MoveMode.MERGE -> { /* Unreachable */ }
                 }
             } catch (e: Exception) {
@@ -2655,8 +2655,8 @@ class EditorTable(context: Context, attrs: AttributeSet): ScrollView(context, at
         if (cursor.is_selecting_range() && cursor.ctl_type == type) {
             try {
                 when (activity.configuration.move_mode) {
-                    PaganConfiguration.MoveMode.COPY -> tracker.copy_channel_ctl_to_beat(channel, beat)
-                    PaganConfiguration.MoveMode.MOVE -> tracker.move_channel_ctl_to_beat(channel, beat)
+                    PaganConfiguration.MoveMode.COPY -> tracker._copy_channel_ctl_to_beat(channel, beat)
+                    PaganConfiguration.MoveMode.MOVE -> tracker._move_channel_ctl_to_beat(channel, beat)
                     PaganConfiguration.MoveMode.MERGE -> { /* Unreachable */ }
                 }
             } catch (e: Exception) {
@@ -2681,8 +2681,8 @@ class EditorTable(context: Context, attrs: AttributeSet): ScrollView(context, at
         if (cursor.is_selecting_range() && cursor.ctl_type == type) {
             try {
                 when (this.get_activity().configuration.move_mode) {
-                    PaganConfiguration.MoveMode.COPY -> tracker.copy_global_ctl_to_beat(beat)
-                    PaganConfiguration.MoveMode.MOVE -> tracker.move_global_ctl_to_beat(beat)
+                    PaganConfiguration.MoveMode.COPY -> tracker._copy_global_ctl_to_beat(beat)
+                    PaganConfiguration.MoveMode.MOVE -> tracker._move_global_ctl_to_beat(beat)
                     PaganConfiguration.MoveMode.MERGE -> { /* Unreachable */ }
                 }
             } catch (e: Exception) {

@@ -285,7 +285,9 @@ class ComponentActivityLanding: PaganComponentActivity() {
     @Composable
     override fun LayoutXLargePortrait() {
         Row(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .padding(8.dp)
+                .fillMaxSize(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceAround,
         ) {
@@ -302,7 +304,9 @@ class ComponentActivityLanding: PaganComponentActivity() {
     @Composable
     override fun LayoutLargePortrait() {
         Row(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .padding(8.dp)
+                .fillMaxSize(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceAround,
         ) {
@@ -321,7 +325,10 @@ class ComponentActivityLanding: PaganComponentActivity() {
     @Composable
     override fun LayoutMediumPortrait() {
         Row(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .padding(8.dp)
+                .fillMaxSize(),
+
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceAround,
         ) {

@@ -41,6 +41,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import kotlin.math.abs
 import kotlin.math.ceil
+import kotlin.math.max
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 
@@ -67,6 +68,7 @@ class ActionTracker {
         CursorSelectLeafCtlChannel,
         CursorSelectLeafCtlGlobal,
         CursorSelectLine,
+        CursorSelectChannel,
         CursorSelectLineCtlLine,
         CursorSelectChannelCtlLine,
         CursorSelectGlobalCtlLine,
@@ -190,6 +192,9 @@ class ActionTracker {
                     }
                     TrackedAction.SetTempoAtCursor -> {
                         listOf(entry.get_float(1).toBits())
+                    }
+                    TrackedAction.CursorSelectChannel -> {
+                        listOf(entry.get_int(1))
                     }
                     TrackedAction.UntagColumn -> {
                         listOf(entry.get_int(1))
@@ -708,18 +713,15 @@ class ActionTracker {
             opus_manager.cursor_select_line(channel, line_offset)
         }
     }
+    fun cursor_select_channel(channel: Int) {
+        this.track(TrackedAction.CursorSelectChannel, listOf(channel))
+
+        this.opus_manager?.cursor_select_channel(channel)
+    }
 
     fun cursor_select_line_std(channel: Int, line_offset: Int) {
         this.track(TrackedAction.CursorSelectLine, listOf(channel, line_offset))
-
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-
-        if (cursor.mode == CursorMode.Line && cursor.channel == channel && cursor.line_offset == line_offset && cursor.ctl_level == null) {
-            opus_manager.cursor_select_channel(channel)
-        } else {
-            opus_manager.cursor_select_line(channel, line_offset)
-        }
+        this.opus_manager?.cursor_select_line(channel, line_offset)
     }
 
     fun cursor_select_line_ctl_line(type: EffectType, channel: Int, line_offset: Int) {
@@ -1205,8 +1207,7 @@ class ActionTracker {
 
     fun unset() {
         this.track(TrackedAction.Unset)
-        val opus_manager = this.get_opus_manager()
-        opus_manager.unset()
+        this.opus_manager?.unset()
     }
 
     fun unset_root() {
@@ -1941,6 +1942,9 @@ class ActionTracker {
                     integers[0]!!,
                     integers[1]!!
                 )
+            }
+            TrackedAction.CursorSelectChannel -> {
+                this.cursor_select_channel(integers[0]!!)
             }
             TrackedAction.CursorSelectLineCtlLine -> {
                 val offset = integers[0]!!

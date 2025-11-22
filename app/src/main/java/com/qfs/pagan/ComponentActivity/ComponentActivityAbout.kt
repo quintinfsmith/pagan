@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -172,6 +173,7 @@ class ComponentActivityAbout: PaganComponentActivity() {
     override fun LayoutLargePortrait() {
         FillRow {
             Column(Modifier
+                .padding(8.dp)
                 .fillMaxWidth()
                 .weight(1F)) { }
             Column(
@@ -198,6 +200,7 @@ class ComponentActivityAbout: PaganComponentActivity() {
         Column(
             Modifier
                 .verticalScroll(rememberScrollState())
+                .padding(8.dp)
                 .fillMaxHeight(),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -218,6 +221,7 @@ class ComponentActivityAbout: PaganComponentActivity() {
     override fun LayoutLargeLandscape() {
         FillRow {
             Column(Modifier
+                .padding(8.dp)
                 .fillMaxWidth()
                 .weight(1F)) { }
             Column(

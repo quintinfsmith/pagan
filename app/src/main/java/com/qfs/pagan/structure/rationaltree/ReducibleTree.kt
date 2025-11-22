@@ -484,6 +484,7 @@ class ReducibleTree<T> {
         this.child_sizes_weighted.clear()
         this.child_sizes_flat.clear()
         this.set_real_size(0)
+        this.event = null
     }
 
     fun split(split_func: (event: T) -> Int): List<ReducibleTree<T>> {

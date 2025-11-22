@@ -2,9 +2,15 @@ package com.qfs.pagan.composable.cxtmenu
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -14,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -39,7 +46,7 @@ fun ContextMenuSinglePrimary(ui_facade: UIFacade, dispatcher: ActionTracker, sho
         else -> throw Exception("Invalid Event Type") // TODO: Specify
     }
 
-    Column(Modifier.Companion.background(Color.Companion.Red)) {
+    Column() {
         Row {
             if (show_relative_input) {
                 Column {
@@ -49,15 +56,20 @@ fun ContextMenuSinglePrimary(ui_facade: UIFacade, dispatcher: ActionTracker, sho
                 }
             }
             Column {
-                Row {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(dimensionResource(R.dimen.icon_button_height)),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
                     Button(
-                        onClick = {},
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.Companion
-                            .fillMaxWidth()
-                            .weight(1F)
+                        onClick = { dispatcher.split(2) },
+                        contentPadding = PaddingValues(10.dp),
+                        modifier = Modifier
+                            .padding(3.dp)
+                            .width(dimensionResource(R.dimen.icon_button_width))
                             .combinedClickable(
-                                onClick = { dispatcher.split(2) },
+                                onClick = {},
                                 onLongClick = { dispatcher.split() }
                             ),
                         content = {
@@ -68,13 +80,13 @@ fun ContextMenuSinglePrimary(ui_facade: UIFacade, dispatcher: ActionTracker, sho
                         }
                     )
                     Button(
-                        onClick = {},
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.Companion
-                            .fillMaxWidth()
-                            .weight(1F)
+                        onClick = { dispatcher.insert_leaf(1) },
+                        contentPadding = PaddingValues(10.dp),
+                        modifier = Modifier
+                            .padding(3.dp)
+                            .width(dimensionResource(R.dimen.icon_button_width))
                             .combinedClickable(
-                                onClick = { dispatcher.insert_leaf(1) },
+                                onClick = {},
                                 onLongClick = { dispatcher.insert_leaf() }
                             ),
                         content = {
@@ -86,10 +98,10 @@ fun ContextMenuSinglePrimary(ui_facade: UIFacade, dispatcher: ActionTracker, sho
                     )
                     Button(
                         onClick = { dispatcher.remove_at_cursor() },
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.Companion
-                            .fillMaxWidth()
-                            .weight(1F),
+                        contentPadding = PaddingValues(10.dp),
+                        modifier = Modifier
+                            .padding(3.dp)
+                            .width(dimensionResource(R.dimen.icon_button_width)),
                         content = {
                             Icon(
                                 painter = painterResource(R.drawable.icon_remove),
@@ -99,28 +111,29 @@ fun ContextMenuSinglePrimary(ui_facade: UIFacade, dispatcher: ActionTracker, sho
                     )
                     Button(
                         onClick = { dispatcher.set_duration() },
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.Companion
-                            .fillMaxWidth()
-                            .weight(1F)
+                        contentPadding = PaddingValues(10.dp),
+                        modifier = Modifier
+                            .padding(3.dp)
+                            .fillMaxHeight()
+                            .width(dimensionResource(R.dimen.icon_button_width))
                             .combinedClickable(
                                 onClick = {},
                                 onLongClick = { dispatcher.set_duration(1) }
                             ),
-                        content = { Text("x${active_event?.duration}") }
+                        content = { Text("x${active_event?.duration ?: 1}") }
                     )
                     Button(
                         onClick = {
                             if (active_line.assigned_offset != null) {
                                 dispatcher.toggle_percussion()
-                            } else if (active_event == null) {
+                            } else if (active_event != null) {
                                 dispatcher.unset()
                             }
                         },
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.Companion
-                            .fillMaxWidth()
-                            .weight(1F)
+                        contentPadding = PaddingValues(10.dp),
+                        modifier = Modifier
+                            .padding(3.dp)
+                            .width(dimensionResource(R.dimen.icon_button_width))
                             .combinedClickable(
                                 onClick = {},
                                 onLongClick = { dispatcher.unset_root() }
@@ -145,17 +158,20 @@ fun ContextMenuSinglePrimary(ui_facade: UIFacade, dispatcher: ActionTracker, sho
                 }
             }
         }
-        // Octave Selector
-        Row {
-            for (i in 0 until 8) {
-                Button(
-                    modifier = Modifier.Companion
-                        .fillMaxWidth()
-                        .background(color = if (octave == i) Color.Companion.Green else colorResource(R.color.ns_default))
-                        .weight(1F),
-                    onClick = { dispatcher.set_octave(i) },
-                    content = { Text("$i", maxLines = 1) }
-                )
+
+        if (ui_facade.line_data[cursor.ints[0]].assigned_offset == null) {
+            // Octave Selector
+            Row {
+                for (i in 0 until 8) {
+                    Button(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(color = if (octave == i) Color.Companion.Green else colorResource(R.color.ns_default))
+                            .weight(1F),
+                        onClick = { dispatcher.set_octave(i) },
+                        content = { Text("$i", maxLines = 1) }
+                    )
+                }
             }
         }
     }
@@ -163,21 +179,23 @@ fun ContextMenuSinglePrimary(ui_facade: UIFacade, dispatcher: ActionTracker, sho
 
 @Composable
 fun ContextMenuSingleSecondary(ui_facade: UIFacade, dispatcher: ActionTracker) {
+    val cursor = ui_facade.active_cursor.value ?: return
     val active_event = ui_facade.active_event.value
     val offset = when (active_event) {
         is AbsoluteNoteEvent -> active_event.note % ui_facade.radix.value
         is RelativeNoteEvent -> active_event.offset % ui_facade.radix.value
         is PercussionEvent -> 0
-        null -> return
+        null -> 0
         else -> throw Exception("Invalid Event Type") // TODO: Specify
     }
+    if (ui_facade.line_data[cursor.ints[0]].assigned_offset != null) return
 
     // Offset Selector
     Row {
         for (i in 0 until ui_facade.radix.value) {
-            TextButton(
+            Button(
                 onClick = { dispatcher.set_offset(i) },
-                modifier = Modifier.Companion
+                modifier = Modifier
                     .fillMaxWidth()
                     .background(color = if (offset == i) Color.Companion.Green else Color.Companion.Transparent)
                     .weight(1F),

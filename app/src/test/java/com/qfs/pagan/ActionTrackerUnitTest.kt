@@ -85,6 +85,7 @@ class ActionTrackerUnitTest {
                 ActionTracker.TrackedAction.RemoveLeaf,
                 ActionTracker.TrackedAction.SetPercussionInstrument,
                 ActionTracker.TrackedAction.SetRelativeMode,
+                ActionTracker.TrackedAction.CursorSelectChannel,
                 ActionTracker.TrackedAction.CursorSelectColumn -> {
                     Pair(enum, listOf(5))
                 }
@@ -165,7 +166,6 @@ class ActionTrackerUnitTest {
 
 
                 ActionTracker.TrackedAction.InsertChannel,
-                ActionTracker.TrackedAction.SwapChannels,
                 ActionTracker.TrackedAction.MuteLine,
                 ActionTracker.TrackedAction.UnMuteLine,
                 ActionTracker.TrackedAction.CursorSelectLine -> {
@@ -290,6 +290,7 @@ class ActionTrackerUnitTest {
                     ActionTracker.TrackedAction.RemoveLeaf,
                     ActionTracker.TrackedAction.SetPercussionInstrument,
                     ActionTracker.TrackedAction.SetRelativeMode,
+                    ActionTracker.TrackedAction.CursorSelectChannel,
                     ActionTracker.TrackedAction.CursorSelectColumn -> {
                         JSONList(json_name, JSONInteger(5))
                     }

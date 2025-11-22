@@ -229,8 +229,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun parse_file_name(uri: Uri): String? {
         var result: String? = null
         if (uri.scheme == "content") {
-            val cursor: Cursor? = this.contentResolver.query(uri, null, null, null, null)
-            if (cursor != null) {
+            this.contentResolver.query(uri, null, null, null, null)?.let { cursor ->
                 if (cursor.moveToFirst()) {
                     val ci = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
                     if (ci >= 0) {
@@ -294,7 +293,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
     override fun TopBar(modifier: Modifier) {
         val ui_facade = this.model_editor.opus_manager.ui_facade
         val dispatcher = this.model_editor.action_interface
-        Row {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Icon(
                 painter = painterResource(R.drawable.icon_hamburger_32),
                 contentDescription = stringResource(R.string.song_configuration),
@@ -420,6 +421,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         } else {
                             line_height
                         }
+
                         Row(
                             Modifier
                                 .height(use_height)
@@ -495,7 +497,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun LineLabelView(modifier: Modifier = Modifier, y: Int, ui_facade: UIFacade, dispatcher: ActionTracker) {
         val line_info = ui_facade.line_data[y]
         val cursor = ui_facade.active_cursor.value
-        val (background_color, content_color) = if (cursor != null && ui_facade.is_line_selected(cursor, y)) {
+        val is_line_selected = cursor != null && ui_facade.is_line_selected(cursor, y)
+        val (background_color, content_color) = if (is_line_selected) {
             Pair(R.color.label_selected, R.color.label_selected_text)
         } else {
             Pair(R.color.line_label, R.color.line_label_text)
@@ -510,12 +513,17 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     Pair("${line_info.channel}", "${line_info.line_offset}")
                 }
                 Button(
-                    onClick = {},
+                    onClick = {
+                        if (is_line_selected && cursor.type == CursorMode.Line) {
+                            dispatcher.cursor_select_channel(line_info.channel!!)
+                        } else {
+                            dispatcher.cursor_select_line_std(line_info.channel!!, line_info.line_offset!!)
+                        }
+                    },
                     modifier = Modifier
                         .combinedClickable(
-                            onClick = {
-                                dispatcher.cursor_select_line_std(line_info.channel!!, line_info.line_offset!!)
-                            }
+                            onClick = {},
+                            onLongClick = {}
                         ),
                     contentPadding = PaddingValues(2.dp),
                     shape = RoundedCornerShape(4.dp),
@@ -819,6 +827,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     }
                                 }
                             )
+                            .width(dimensionResource(R.dimen.base_leaf_width))
                             .weight(tree.weighted_size.toFloat())
                     )
                 }

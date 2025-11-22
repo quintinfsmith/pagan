@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -166,8 +167,21 @@ fun ContextMenuSinglePrimary(ui_facade: UIFacade, dispatcher: ActionTracker, sho
                     Button(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(color = if (octave == i) Color.Companion.Green else colorResource(R.color.ns_default))
                             .weight(1F),
+                        colors = ButtonColors(
+                            containerColor = if (octave != i) {
+                                colorResource(R.color.ns_default)
+                            } else {
+                                colorResource(R.color.number_selector_highlight)
+                            },
+                            contentColor = if (octave != i) {
+                                colorResource(R.color.ns_default_text)
+                            } else {
+                                colorResource(R.color.ns_selected_text)
+                            },
+                            disabledContentColor = Color.Transparent,
+                            disabledContainerColor = Color.Transparent
+                        ),
                         onClick = { dispatcher.set_octave(i) },
                         content = { Text("$i", maxLines = 1) }
                     )
@@ -195,9 +209,22 @@ fun ContextMenuSingleSecondary(ui_facade: UIFacade, dispatcher: ActionTracker) {
         for (i in 0 until ui_facade.radix.value) {
             Button(
                 onClick = { dispatcher.set_offset(i) },
+                colors = ButtonColors(
+                    containerColor = if (offset != i) {
+                        colorResource(R.color.ns_alt)
+                    } else {
+                        colorResource(R.color.number_selector_highlight)
+                    },
+                    contentColor = if (offset != i) {
+                        colorResource(R.color.ns_default_text)
+                    } else {
+                        colorResource(R.color.ns_selected_text)
+                    },
+                    disabledContentColor = Color.Transparent,
+                    disabledContainerColor = Color.Transparent
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(color = if (offset == i) Color.Companion.Green else Color.Companion.Transparent)
                     .weight(1F),
                 content = { Text("$i", maxLines = 1) }
             )

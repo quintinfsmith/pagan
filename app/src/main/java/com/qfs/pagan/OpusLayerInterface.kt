@@ -1170,8 +1170,13 @@ class OpusLayerInterface : OpusLayerHistory() {
         super.cursor_select_line(channel, line_offset)
         this.temporary_blocker = null
         this._queue_cursor_update(this.cursor)
-
-        this.ui_facade.set_active_event(null)
+        this.ui_facade.set_active_event(
+            this.get_line_controller_initial_event(
+                OpusVolumeEvent,
+                channel,
+                line_offset
+            ).copy()
+        )
     }
 
     override fun cursor_select_channel(channel: Int) {
@@ -1190,7 +1195,9 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.temporary_blocker = null
 
         this._queue_cursor_update(this.cursor)
-        this.ui_facade.set_active_event(null)
+        this.ui_facade.set_active_event(
+            this.get_channel_controller_initial_event(ctl_type, channel).copy()
+        )
     }
 
     override fun cursor_select_line_ctl_line(ctl_type: EffectType, channel: Int, line_offset: Int) {
@@ -1200,7 +1207,13 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.temporary_blocker = null
 
         this._queue_cursor_update(this.cursor)
-        this.ui_facade.set_active_event(null)
+        this.ui_facade.set_active_event(
+            this.get_line_controller_initial_event(
+                ctl_type,
+                channel,
+                line_offset
+            ).copy()
+        )
     }
 
     override fun cursor_select_global_ctl_line(ctl_type: EffectType) {
@@ -1210,7 +1223,9 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.temporary_blocker = null
 
         this._queue_cursor_update(this.cursor)
-        this.ui_facade.set_active_event(null)
+        this.ui_facade.set_active_event(
+            this.get_global_controller_initial_event(ctl_type).copy()
+        )
     }
 
     fun force_cursor_select_column(beat: Int) {

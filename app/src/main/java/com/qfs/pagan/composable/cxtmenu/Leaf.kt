@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.SText
+import com.qfs.pagan.composable.button.NumberSelectorButton
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
@@ -63,67 +64,29 @@ fun ContextMenuSinglePrimary(ui_facade: UIFacade, dispatcher: ActionTracker, sho
                         .height(dimensionResource(R.dimen.icon_button_height)),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Button(
+                    IconCMenuButton(
                         onClick = { dispatcher.split(2) },
-                        contentPadding = PaddingValues(10.dp),
-                        modifier = Modifier
-                            .padding(3.dp)
-                            .width(dimensionResource(R.dimen.icon_button_width))
-                            .combinedClickable(
-                                onClick = {},
-                                onLongClick = { dispatcher.split() }
-                            ),
-                        content = {
-                            Icon(
-                                painter = painterResource(R.drawable.icon_split),
-                                contentDescription = stringResource(R.string.btn_split)
-                            )
-                        }
+                        onLongClick = { dispatcher.split() },
+                        icon = R.drawable.icon_split,
+                        description = R.string.btn_split
                     )
-                    Button(
+                    IconCMenuButton(
                         onClick = { dispatcher.insert_leaf(1) },
-                        contentPadding = PaddingValues(10.dp),
-                        modifier = Modifier
-                            .padding(3.dp)
-                            .width(dimensionResource(R.dimen.icon_button_width))
-                            .combinedClickable(
-                                onClick = {},
-                                onLongClick = { dispatcher.insert_leaf() }
-                            ),
-                        content = {
-                            Icon(
-                                painter = painterResource(R.drawable.icon_insert),
-                                contentDescription = stringResource(R.string.btn_insert),
-                            )
-                        }
+                        onLongClick = { dispatcher.insert_leaf() },
+                        icon = R.drawable.icon_insert,
+                        description = R.string.btn_insert
                     )
-                    Button(
+                    IconCMenuButton(
                         onClick = { dispatcher.remove_at_cursor() },
-                        contentPadding = PaddingValues(10.dp),
-                        modifier = Modifier
-                            .padding(3.dp)
-                            .width(dimensionResource(R.dimen.icon_button_width)),
-                        content = {
-                            Icon(
-                                painter = painterResource(R.drawable.icon_remove),
-                                contentDescription = stringResource(R.string.btn_remove)
-                            )
-                        }
+                        icon = R.drawable.icon_remove,
+                        description = R.string.btn_remove
                     )
-                    Button(
+                    TextCMenuButton(
                         onClick = { dispatcher.set_duration() },
-                        contentPadding = PaddingValues(10.dp),
-                        modifier = Modifier
-                            .padding(3.dp)
-                            .fillMaxHeight()
-                            .width(dimensionResource(R.dimen.icon_button_width))
-                            .combinedClickable(
-                                onClick = {},
-                                onLongClick = { dispatcher.set_duration(1) }
-                            ),
-                        content = { Text("x${active_event?.duration ?: 1}") }
+                        onLongClick = { dispatcher.set_duration(1) },
+                        text = "x${active_event?.duration ?: 1}"
                     )
-                    Button(
+                    IconCMenuButton(
                         onClick = {
                             if (active_line.assigned_offset != null) {
                                 dispatcher.toggle_percussion()
@@ -131,29 +94,17 @@ fun ContextMenuSinglePrimary(ui_facade: UIFacade, dispatcher: ActionTracker, sho
                                 dispatcher.unset()
                             }
                         },
-                        contentPadding = PaddingValues(10.dp),
-                        modifier = Modifier
-                            .padding(3.dp)
-                            .width(dimensionResource(R.dimen.icon_button_width))
-                            .combinedClickable(
-                                onClick = {},
-                                onLongClick = { dispatcher.unset_root() }
-                            ),
-                        content = {
-                            if (active_line.assigned_offset != null) {
-                                Icon(
-                                    painter = painterResource(
-                                        if (active_event != null) R.drawable.icon_unset
-                                        else R.drawable.icon_set_percussion
-                                    ),
-                                    contentDescription = stringResource(R.string.set_percussion_event)
-                                )
-                            } else {
-                                Icon(
-                                    painter = painterResource(R.drawable.icon_unset),
-                                    contentDescription = stringResource(R.string.btn_unset)
-                                )
-                            }
+                        onLongClick = { dispatcher.unset_root() },
+                        icon = if (active_line.assigned_offset != null) {
+                            if (active_event != null) R.drawable.icon_unset
+                            else R.drawable.icon_set_percussion
+                        } else {
+                            R.drawable.icon_unset
+                        }
+                        description = if (active_line.assigned_offset != null) {
+                            R.string.set_percussion_event
+                        } else {
+                            R.string.btn_unset
                         }
                     )
                 }
@@ -164,26 +115,14 @@ fun ContextMenuSinglePrimary(ui_facade: UIFacade, dispatcher: ActionTracker, sho
             // Octave Selector
             Row {
                 for (i in 0 until 8) {
-                    Button(
+                    NumberSelectorButton(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1F),
-                        colors = ButtonColors(
-                            containerColor = if (octave != i) {
-                                colorResource(R.color.ns_default)
-                            } else {
-                                colorResource(R.color.number_selector_highlight)
-                            },
-                            contentColor = if (octave != i) {
-                                colorResource(R.color.ns_default_text)
-                            } else {
-                                colorResource(R.color.ns_selected_text)
-                            },
-                            disabledContentColor = Color.Transparent,
-                            disabledContainerColor = Color.Transparent
-                        ),
-                        onClick = { dispatcher.set_octave(i) },
-                        content = { Text("$i", maxLines = 1) }
+                        selected = octave == i,
+                        highlighted = false, // TODO
+                        alternate = false,
+                        callback = { dispatcher.set_octave(i) }
                     )
                 }
             }
@@ -207,26 +146,14 @@ fun ContextMenuSingleSecondary(ui_facade: UIFacade, dispatcher: ActionTracker) {
     // Offset Selector
     Row {
         for (i in 0 until ui_facade.radix.value) {
-            Button(
-                onClick = { dispatcher.set_offset(i) },
-                colors = ButtonColors(
-                    containerColor = if (offset != i) {
-                        colorResource(R.color.ns_alt)
-                    } else {
-                        colorResource(R.color.number_selector_highlight)
-                    },
-                    contentColor = if (offset != i) {
-                        colorResource(R.color.ns_default_text)
-                    } else {
-                        colorResource(R.color.ns_selected_text)
-                    },
-                    disabledContentColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent
-                ),
+            NumberSelectorButton(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1F),
-                content = { Text("$i", maxLines = 1) }
+                selected = octave == i,
+                highlighted = false, // TODO
+                alternate = true,
+                callback = { dispatcher.set_offset(i) }
             )
         }
     }

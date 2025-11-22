@@ -29,19 +29,10 @@ fun ContextMenuLinePrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {
     val active_line = ui_facade.line_data[cursor.ints[0]]
 
     Row(Modifier.height(dimensionResource(R.dimen.icon_button_height))) {
-        Button(
-            contentPadding = PaddingValues(10.dp),
-            modifier = Modifier
-                .padding(2.dp)
-                .width(dimensionResource(R.dimen.icon_button_width)),
+        IconCMenuButton(
             onClick = { dispatcher.show_hidden_line_controller() },
-            content = {
-                Icon(
-                    modifier = Modifier.fillMaxSize(),
-                    painter = painterResource(R.drawable.icon_ctl),
-                    contentDescription = stringResource(R.string.cd_show_effect_controls)
-                )
-            }
+            icon = R.drawable.icon_ctl,
+            description = string.cd_show_effect_controls
         )
 
         active_line.assigned_offset?.let {
@@ -58,45 +49,26 @@ fun ContextMenuLinePrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {
             )
         } ?: Spacer(Modifier.weight(1F))
 
-        Button(
-            contentPadding = PaddingValues(10.dp),
-            modifier = Modifier
-                .padding(3.dp)
-                .width(dimensionResource(R.dimen.icon_button_width)),
+        IconCMenuButton(
             onClick = { dispatcher.remove_line() },
-            content = {
-                Icon(
-                    modifier = Modifier.fillMaxSize(),
-                    painter = painterResource(R.drawable.icon_remove_line),
-                    contentDescription = stringResource(R.string.cd_remove_line)
-                )
-            }
+            icon = R.drawable.icon_remove_line,
+            description = R.string.cd_remove_line
         )
-
-        Button(
-            contentPadding = PaddingValues(10.dp),
-            modifier = Modifier
-                .padding(3.dp)
-                .width(dimensionResource(R.dimen.icon_button_width)),
+        IconCMenuButton(
             onClick = { dispatcher.insert_line() },
-            content = {
-                Icon(
-                    modifier = Modifier.fillMaxSize(),
-                    painter = painterResource(R.drawable.icon_insert_line),
-                    contentDescription = stringResource(R.string.cd_insert_line)
-                )
-            }
+            icon = R.drawable.icon_insert_line,
+            description = R.string.cd_insert_line
         )
     }
 }
 
 @Composable
-fun ContextMenuLineSecondary(ui_facade: UIFacade, dispatcher: ActionTracker) {
+fun ContextMenuLineSecondary(ui_facade: UIFacade, dispatcher: ActionTracker, volume_event: OpusVolumeEvent) {
     val cursor = ui_facade.active_cursor.value ?: return
     val y = cursor.ints[0]
     val line = ui_facade.line_data[y]
     Row {
-        Button(
+        IconCMenuButton(
             onClick = {
                 if (line.is_mute) {
                     dispatcher.line_unmute()
@@ -104,16 +76,9 @@ fun ContextMenuLineSecondary(ui_facade: UIFacade, dispatcher: ActionTracker) {
                     dispatcher.line_mute()
                 }
             },
-            content = {
-                Icon(
-                    painter = if (line.is_mute) {
-                        painterResource(R.drawable.icon_unmute)
-                    } else {
-                        painterResource(R.drawable.icon_mute)
-                    },
-                    contentDescription = stringResource(R.string.cd_line_mute)
-                )
-            }
+            icon = if (line.is_mute) R.drawable.icon_unmute
+                else R.drawable.icon_mute,
+            description = R.string.cd_line_mute
         )
         Text("TODO: Volume Widget")
     }

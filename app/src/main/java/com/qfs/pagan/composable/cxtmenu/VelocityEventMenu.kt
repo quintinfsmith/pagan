@@ -10,12 +10,12 @@ import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.button.TextCMenuButton
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.uibill.UIFacade
 
 @Composable
-fun VolumeEventMenu (ui_facade: UIFacade, dispatcher: ActionTracker, event: OpusVolumeEvent) {
+fun VelocityEventMenu (ui_facade: UIFacade, dispatcher: ActionTracker, event: OpusVelocityEvent) {
     val cursor = ui_facade.active_cursor.value ?: return
     val is_initial = cursor.type == CursorMode.Line
 

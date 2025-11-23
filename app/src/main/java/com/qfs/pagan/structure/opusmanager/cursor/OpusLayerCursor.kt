@@ -827,36 +827,42 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     fun set_event_at_cursor(event: EffectEvent) {
         val cursor = this.cursor
-        when (cursor.ctl_level) {
-            null -> throw InvalidCursorState()
-            CtlLineLevel.Global -> {
-                val (actual_beat, actual_position) = this.controller_global_get_actual_position<EffectEvent>(cursor.ctl_type!!, cursor.beat, cursor.get_position())
-                this.controller_global_set_event(
-                    cursor.ctl_type!!,
-                    actual_beat,
-                    actual_position,
-                    event
-                )
+        when (cursor.mode) {
+            CursorMode.Line -> this.set_initial_event(event)
+            CursorMode.Single -> {
+                when (cursor.ctl_level) {
+                    null -> throw InvalidCursorState()
+                    CtlLineLevel.Global -> {
+                        val (actual_beat, actual_position) = this.controller_global_get_actual_position<EffectEvent>(cursor.ctl_type!!, cursor.beat, cursor.get_position())
+                        this.controller_global_set_event(
+                            cursor.ctl_type!!,
+                            actual_beat,
+                            actual_position,
+                            event
+                        )
+                    }
+                    CtlLineLevel.Channel -> {
+                        val (actual_beat, actual_position) = this.controller_channel_get_actual_position<EffectEvent>(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.get_position())
+                        this.controller_channel_set_event(
+                            cursor.ctl_type!!,
+                            cursor.channel,
+                            actual_beat,
+                            actual_position,
+                            event
+                        )
+                    }
+                    CtlLineLevel.Line -> {
+                        val (actual_beat_key, actual_position) = this.controller_line_get_actual_position<EffectEvent>(cursor.ctl_type!!, cursor.get_beatkey(), cursor.get_position())
+                        this.controller_line_set_event(
+                            cursor.ctl_type!!,
+                            actual_beat_key,
+                            actual_position,
+                            event
+                        )
+                    }
+                }
             }
-            CtlLineLevel.Channel -> {
-                val (actual_beat, actual_position) = this.controller_channel_get_actual_position<EffectEvent>(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.get_position())
-                this.controller_channel_set_event(
-                    cursor.ctl_type!!,
-                    cursor.channel,
-                    actual_beat,
-                    actual_position,
-                    event
-                )
-            }
-            CtlLineLevel.Line -> {
-                val (actual_beat_key, actual_position) = this.controller_line_get_actual_position<EffectEvent>(cursor.ctl_type!!, cursor.get_beatkey(), cursor.get_position())
-                this.controller_line_set_event(
-                    cursor.ctl_type!!,
-                    actual_beat_key,
-                    actual_position,
-                    event
-                )
-            }
+            else -> throw InvalidCursorState()
         }
     }
     fun set_event_at_cursor(event: InstrumentEvent) {
@@ -2368,7 +2374,7 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     fun <T: EffectEvent> set_initial_event(event: T) {
         when (this.cursor.ctl_level) {
-            null -> return
+            null,
             CtlLineLevel.Line -> this.controller_line_set_initial_event(this.cursor.ctl_type!!, this.cursor.channel, this.cursor.line_offset, event)
             CtlLineLevel.Channel -> this.controller_channel_set_initial_event(this.cursor.ctl_type!!, this.cursor.channel, event)
             CtlLineLevel.Global -> this.controller_global_set_initial_event(this.cursor.ctl_type!!, event)

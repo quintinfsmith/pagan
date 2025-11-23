@@ -112,7 +112,6 @@ class ActionTracker {
         RemoveChannel,
         MoveChannel,
         SetTransitionAtCursor,
-        SetVolumeAtCursor,
         SetVelocityAtCursor,
         SetTempoAtCursor,
         SetPanAtCursor,
@@ -986,6 +985,11 @@ class ActionTracker {
         activity.load_project(uri)
     }
 
+    fun <T: EffectEvent> set_effect_at_cursor(event: T) {
+        // TODO: Track
+        val opus_manager = this.get_opus_manager()
+        opus_manager.set_event_at_cursor(event)
+    }
 
     fun <K: EffectEvent> set_ctl_duration(duration: Int? = null) {
         TODO()
@@ -2126,9 +2130,6 @@ class ActionTracker {
             }
             TrackedAction.SetTransitionAtCursor -> {
                 this.set_ctl_transition(EffectTransition.valueOf(string_from_ints(integers)))
-            }
-            TrackedAction.SetVolumeAtCursor -> {
-                this.set_volume(integers[0])
             }
             TrackedAction.SetVelocityAtCursor -> {
                 this.set_velocity(integers[0])

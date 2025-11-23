@@ -38,6 +38,7 @@ import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -1069,7 +1070,39 @@ class ActionTracker {
        //      widget.set_event(new_event)
        //  }
     }
-    fun set_volume(volume: Int? = null) {
+    fun set_volume_at_cursor(volume: Float? = null) {
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        when (cursor.mode) {
+            CursorMode.Line -> {
+                val new_event = OpusVolumeEvent(volume ?: 100F)
+                when (cursor.ctl_level) {
+                    null,
+                    CtlLineLevel.Line -> {
+                        opus_manager.controller_line_set_initial_event(
+                            EffectType.Volume,
+                            cursor.channel,
+                            cursor.line_offset,
+                            new_event
+                        )
+                    }
+                    CtlLineLevel.Channel -> {
+                        opus_manager.controller_channel_set_initial_event(
+                            EffectType.Volume,
+                            cursor.channel,
+                            new_event
+                        )
+                    }
+                    CtlLineLevel.Global -> TODO()
+                }
+            }
+
+            CursorMode.Single -> {
+
+            }
+
+            else -> throw Exception()
+        }
         // val main = this.get_activity()
 
         // val context_menu = main.active_context_menu
@@ -2278,40 +2311,13 @@ class ActionTracker {
     }
 
     fun set_copy_mode(mode: PaganConfiguration.MoveMode) {
-        // val main = this.get_activity()
-        // val opus_manager = this.get_opus_manager()
+        this.activity?.let { activity ->
+            this.track(TrackedAction.SetCopyMode, ActionTracker.string_to_ints(mode.name))
+            activity.model_editor.move_mode.value = mode
+            activity.view_model.configuration.move_mode = mode
+            activity.view_model.save_configuration()
+        }
 
-        // main.configuration.move_mode = mode
-        // main.save_configuration()
-
-        // val context_menu = main.active_context_menu
-        // if (context_menu !is ContextMenuRange) return
-
-        // this.track(TrackedAction.SetCopyMode, ActionTracker.string_to_ints(mode.name))
-
-        // context_menu.label.text = when (mode) {
-        //     PaganConfiguration.MoveMode.MOVE -> {
-        //         if (opus_manager.cursor.mode == CursorMode.Range) {
-        //             main.resources.getString(R.string.label_move_range)
-        //         } else {
-        //             main.resources.getString(R.string.label_move_beat)
-        //         }
-        //     }
-        //     PaganConfiguration.MoveMode.COPY -> {
-        //         if (opus_manager.cursor.mode == CursorMode.Range) {
-        //             main.resources.getString(R.string.label_copy_range)
-        //         } else {
-        //             main.resources.getString(R.string.label_copy_beat)
-        //         }
-        //     }
-        //     PaganConfiguration.MoveMode.MERGE -> {
-        //         if (opus_manager.cursor.mode == CursorMode.Range) {
-        //             main.resources.getString(R.string.label_merge_range)
-        //         } else {
-        //             main.resources.getString(R.string.label_merge_beat)
-        //         }
-        //     }
-        // }
     }
 
     fun remove_controller() {

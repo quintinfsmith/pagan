@@ -21,6 +21,7 @@ import com.qfs.pagan.structure.opusmanager.base.TunedInstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.IncorrectCursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
@@ -1172,10 +1173,11 @@ class OpusLayerInterface : OpusLayerHistory() {
         this._queue_cursor_update(this.cursor)
         this.ui_facade.set_active_event(
             this.get_line_controller_initial_event(
-                OpusVolumeEvent,
+                EffectType.Volume,
                 channel,
-                line_offset
-            ).copy()
+                line_offset,
+                copy = true
+            )
         )
     }
 
@@ -1196,7 +1198,7 @@ class OpusLayerInterface : OpusLayerHistory() {
 
         this._queue_cursor_update(this.cursor)
         this.ui_facade.set_active_event(
-            this.get_channel_controller_initial_event(ctl_type, channel).copy()
+            this.get_channel_controller_initial_event(ctl_type, channel, copy = true)
         )
     }
 
@@ -1211,8 +1213,9 @@ class OpusLayerInterface : OpusLayerHistory() {
             this.get_line_controller_initial_event(
                 ctl_type,
                 channel,
-                line_offset
-            ).copy()
+                line_offset,
+                copy = true
+            )
         )
     }
 
@@ -1224,7 +1227,7 @@ class OpusLayerInterface : OpusLayerHistory() {
 
         this._queue_cursor_update(this.cursor)
         this.ui_facade.set_active_event(
-            this.get_global_controller_initial_event(ctl_type).copy()
+            this.get_global_controller_initial_event(ctl_type, copy = true)
         )
     }
 

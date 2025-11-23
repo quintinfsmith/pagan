@@ -267,6 +267,9 @@
     <string name="go_back">Go Back</string>
     <string name="song_configuration">Song Configuration</string>
     <string name="set_percussion_event">Toggle Event</string>
+    <string name="move_mode_move">Move</string>
+    <string name="move_mode_copy">Copy</string>
+    <string name="move_mode_merge">Merge</string>
 
     <string-array name="general_midi_presets">
         <item>Grand Acoustic Piano</item>

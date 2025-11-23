@@ -4,6 +4,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import com.qfs.pagan.EditorTable
+import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent

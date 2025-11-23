@@ -366,11 +366,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val cursor = ui_facade.active_cursor.value
         when (cursor?.type) {
             CursorMode.Line -> {
-                ContextMenuLineSecondary(ui_facade, dispatcher, ui_facade.active_event.value)
+                ContextMenuLineSecondary(ui_facade, dispatcher, ui_facade.active_event.value as OpusVolumeEvent)
             }
             CursorMode.Column -> ContextMenuColumnSecondary(ui_facade, dispatcher)
             CursorMode.Single -> ContextMenuSingleSecondary(ui_facade, dispatcher)
-            CursorMode.Range -> ContextMenuRangeSecondary(ui_facade, dispatcher)
+            CursorMode.Range -> {
+                ContextMenuRangeSecondary(ui_facade, dispatcher, this@ComponentActivityEditor.model_editor.move_mode.value)
+            }
             CursorMode.Channel -> ContextMenuChannelSecondary(ui_facade, dispatcher)
             CursorMode.Unset,
             null -> Text("TODO")

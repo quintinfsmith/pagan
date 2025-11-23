@@ -1051,22 +1051,37 @@ open class OpusLayerBase: Effectable {
     /**
      * Get the initial [type] controller event of the line at [channel], [line_offset]
      */
-    fun <T : EffectEvent> get_line_controller_initial_event(type: EffectType, channel: Int, line_offset: Int): T {
-        return this.get_line_controller<T>(type, channel, line_offset).initial_event
+    fun <T : EffectEvent> get_line_controller_initial_event(type: EffectType, channel: Int, line_offset: Int, copy: Boolean = false): T {
+        val output = this.get_line_controller<T>(type, channel, line_offset).initial_event
+        return if (copy) {
+            output.copy() as T
+        } else {
+            output
+        }
     }
 
     /**
      * Get the initial [type] controller event of the channel at [channel]
      */
-    fun <T : EffectEvent> get_channel_controller_initial_event(type: EffectType, channel: Int): T {
-        return this.get_channel_controller<T>(type, channel).initial_event
+    fun <T : EffectEvent> get_channel_controller_initial_event(type: EffectType, channel: Int, copy: Boolean = false): T {
+        val output = this.get_channel_controller<T>(type, channel).initial_event
+        return if (copy) {
+            output.copy() as T
+        } else {
+            output
+        }
     }
 
     /**
      * Get the initial [type] controller event of the project
      */
-    fun <T : EffectEvent> get_global_controller_initial_event(type: EffectType): T {
-        return this.get_global_controller<T>(type).initial_event
+    fun <T : EffectEvent> get_global_controller_initial_event(type: EffectType, copy: Boolean = false): T {
+        val output = this.get_global_controller<T>(type).initial_event
+        return if (copy) {
+            output.copy() as T
+        } else {
+            output
+        }
     }
 
     /**

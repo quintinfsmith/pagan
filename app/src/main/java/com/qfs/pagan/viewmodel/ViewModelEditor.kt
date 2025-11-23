@@ -75,6 +75,7 @@ class ViewModelEditor: ViewModel() {
     var playback_device: PlaybackDevice? = null
     var playback_state_soundfont: ActivityEditor.PlaybackState = ActivityEditor.PlaybackState.NotReady
     var playback_state_midi: ActivityEditor.PlaybackState = ActivityEditor.PlaybackState.NotReady
+    var move_mode: MutableState<PaganConfiguration.MoveMode> = mutableStateOf(PaganConfiguration.MoveMode.COPY)
 
     fun export_wav(
         opus_manager: OpusLayerBase,
@@ -169,4 +170,7 @@ class ViewModelEditor: ViewModel() {
         return true
     }
 
+    fun set_move_mode(move_mode: PaganConfiguration.MoveMode) {
+        this.move_mode.value = move_mode
+    }
 }

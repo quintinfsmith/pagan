@@ -1,21 +1,26 @@
 package com.qfs.pagan.composable.button
 
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
 
 @Composable
 fun NumberSelectorButton(modifier: Modifier = Modifier, index: Int, alternate: Boolean, selected: Boolean, highlighted: Boolean, callback: () -> Unit) {
     Button(
-        modifier = Modifier
-            .fillMaxWidth()
-            .weight(1F),
+        modifier = modifier,
         onClick = callback,
         shape = RoundedCornerShape(12.dp),
+        contentPadding = PaddingValues(0.dp),
         colors = ButtonColors(
             containerColor = if (selected) {
                 colorResource(R.color.number_selector_highlight)
@@ -34,8 +39,6 @@ fun NumberSelectorButton(modifier: Modifier = Modifier, index: Int, alternate: B
             disabledContentColor = Color.Transparent,
             disabledContainerColor = Color.Transparent
         ),
-        content = {
-            Text("$index", maxLines = 1)
-        }
+        content = { Text("$index", maxLines = 1) }
     )
 }

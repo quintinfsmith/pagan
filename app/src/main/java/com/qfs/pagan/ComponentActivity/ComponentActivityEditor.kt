@@ -425,7 +425,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             Row {
                 Column(Modifier.verticalScroll(scroll_state_v)) {
                     var working_channel: Int? = 0
-                    for (y in ui_facade.line_data.indices) {
+                    for (y in 0 until ui_facade.line_count.value) {
                         if (ui_facade.line_data[y].channel != working_channel) {
                             Row(Modifier.height(dimensionResource(R.dimen.channel_gap_size))) { }
                         }
@@ -451,7 +451,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         .horizontalScroll(scroll_state_h)
                 ) {
                     var working_channel: Int? = 0
-                    for ((y, line) in ui_facade.cell_map.enumerate()) {
+                    for (y in 0 until ui_facade.line_count.value) {
                         if (ui_facade.line_data[y].channel != working_channel) {
                             Row(Modifier.height(dimensionResource(R.dimen.channel_gap_size))) { }
                         }

@@ -38,6 +38,7 @@ class UIFacade {
 
     var project_name: MutableState<String?> = mutableStateOf(null)
     var beat_count: MutableState<Int> = mutableIntStateOf(0)
+    var line_count: MutableState<Int> = mutableIntStateOf(0)
     val line_data: MutableList<LineData> = mutableListOf()
     val column_data: MutableList<MutableState<ColumnData>> = mutableListOf()
     val cell_map = mutableListOf<MutableList<MutableState<ReducibleTree<out OpusEvent>>>>()
@@ -57,6 +58,7 @@ class UIFacade {
         this.active_event.value = null
         this.active_cursor.value = null
         this.radix.value = 12
+        this.line_count.value = 0
         this.project_exists.value = false
         this.blocker_leaf = null
 
@@ -88,6 +90,7 @@ class UIFacade {
         if (this.ui_lock.is_locked()) return
         this.line_data.add(y, new_line_data)
         this.cell_map.add(y, cells)
+        this.line_count.value += 1
     }
 
     fun set_project_exists(value: Boolean) {
@@ -111,6 +114,7 @@ class UIFacade {
             this.line_data.removeAt(y)
             this.cell_map.removeAt(y)
         }
+        this.line_count.value -= 1
     }
 
     fun add_channel(channel: Int, percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean) {
@@ -134,6 +138,7 @@ class UIFacade {
                 if (line_channel == channel) {
                     this.line_data.removeAt(i)
                     this.cell_map.removeAt(i)
+                    this.line_count.value -= 1
                     continue
                 } else if (line_channel > channel) {
                     ld.channel = line_channel - 1

@@ -8,6 +8,7 @@ import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
@@ -110,69 +111,84 @@ fun IntegerInput(value: MutableState<Int>, minimum: Int? = null, maximum: Int? =
 }
 
 @Composable
-fun FloatInput(value: MutableState<Float>, minimum: Float? = null, maximum: Float? = null, modifier: Modifier = Modifier, precision: Int? = null, callback: (Float) -> Unit) {
+fun FloatInput(value: MutableState<Float>, minimum: Float? = null, maximum: Float? = null, modifier: Modifier = Modifier, precision: Int? = null, outlined: Boolean = true, callback: (Float) -> Unit) {
     val state = rememberTextFieldState("${value.value}")
-    OutlinedTextField(
-        state = state,
-        textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End),
-        modifier = modifier.onFocusChanged { focus_state ->
-            if (focus_state.hasFocus) {
-                state.edit {
-                    this.selection = TextRange(0, this.length)
-                }
-            }
-        },
-        keyboardOptions = KeyboardOptions.Companion.Default.copy(keyboardType = KeyboardType.Companion.Number),
-        inputTransformation = object : InputTransformation {
-            override fun TextFieldBuffer.transformInput() {
-                var working_string = this.toString()
-                val enter_pressed = this.length > 0 && this.charAt(this.length - 1) == '\n'
-
-                if (enter_pressed) {
-                    working_string = working_string.substring(0, this.length - 1)
-                }
-
-                if (working_string.last() == '.') {
-                    working_string = working_string.substring(0, this.length - 1)
-                }
-
-                if (working_string == "-" && minimum != null && minimum < 0F) {
-                    return
-                }
-
-                if (enter_pressed && working_string.isNotEmpty()) {
-                    callback(value.value)
-                    this.revertAllChanges()
-                    return
-                }
-
-                var float_value = try {
-                    if (working_string.isEmpty()) {
-                        0F
-                    } else {
-                        this.toString().toFloat()
-                    }
-                } catch (_: Exception) {
-                    this.revertAllChanges()
-                    return
-                }
-
-                precision?.let {
-                    val p = 10F.pow(it)
-                    float_value = (float_value * p).roundToInt().toFloat() / p
-                }
-
-                minimum?.let {
-                    float_value = max(it, float_value)
-                }
-                maximum?.let {
-                    float_value = min(it, float_value)
-                }
-
-
-
-                value.value = float_value
+    val textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End),
+    val modifier = modifier.onFocusChanged { focus_state ->
+        if (focus_state.hasFocus) {
+            state.edit {
+                this.selection = TextRange(0, this.length)
             }
         }
-    )
+    }
+    val keyboardOptions = KeyboardOptions.Companion.Default.copy(keyboardType = KeyboardType.Companion.Number)
+    val inputTransformation = object : InputTransformation {
+        override fun TextFieldBuffer.transformInput() {
+            var working_string = this.toString()
+            val enter_pressed = this.length > 0 && this.charAt(this.length - 1) == '\n'
+
+            if (enter_pressed) {
+                working_string = working_string.substring(0, this.length - 1)
+            }
+
+            if (working_string.last() == '.') {
+                working_string = working_string.substring(0, this.length - 1)
+            }
+
+            if (working_string == "-" && minimum != null && minimum < 0F) {
+                return
+            }
+
+            if (enter_pressed && working_string.isNotEmpty()) {
+                callback(value.value)
+                this.revertAllChanges()
+                return
+            }
+
+            var float_value = try {
+                if (working_string.isEmpty()) {
+                    0F
+                } else {
+                    this.toString().toFloat()
+                }
+            } catch (_: Exception) {
+                this.revertAllChanges()
+                return
+            }
+
+            precision?.let {
+                val p = 10F.pow(it)
+                float_value = (float_value * p).roundToInt().toFloat() / p
+            }
+
+            minimum?.let {
+                float_value = max(it, float_value)
+            }
+            maximum?.let {
+                float_value = min(it, float_value)
+            }
+
+
+
+            value.value = float_value
+        }
+    }
+
+    if (outlined) {
+        OutlinedTextField(
+            state = state,
+            textStyle = textStyle,
+            modifier = modifier,
+            keyboardOptions = keyboardOptions,
+            inputTransformation = inputTransformation
+        )
+    } else {
+        TextField(
+            state = state,
+            textStyle = textStyle,
+            modifier = modifier,
+            keyboardOptions = keyboardOptions,
+            inputTransformation = inputTransformation
+        )
+    }
 }

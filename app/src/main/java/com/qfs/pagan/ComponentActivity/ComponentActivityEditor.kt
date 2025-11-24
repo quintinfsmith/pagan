@@ -1,7 +1,6 @@
 package com.qfs.pagan.ComponentActivity
 
 import android.content.Intent
-import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
 import android.provider.DocumentsContract
@@ -21,6 +20,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -32,7 +32,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -901,7 +901,74 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 .background(color = Color.Red)
                 .fillMaxSize()
         ) {
-            Text("DRAWER")
+            Column() {
+                Row {
+                    Button(
+                        onClick = { TODO() },
+                        content = { SText(R.string.label_tuning) }
+                    )
+                    Spacer(modifier = Modifier.weight(1F))
+                    IconButton(
+                        onClick = { TODO() },
+                        content = {
+                            Icon(
+                                painter = painterResource(R.drawable.icon_add_channel_kit),
+                                contentDescription = stringResource(R.string.btn_cfg_add_kit_channel)
+                            )
+                        }
+                    )
+                    IconButton(
+                        onClick = { TODO() },
+                        content = {
+                            Icon(
+                                painter = painterResource(R.drawable.icon_add_channel),
+                                contentDescription = stringResource(R.string.btn_cfg_add_channel)
+                            )
+                        }
+                    )
+                }
+                Row(modifier = Modifier.weight(1F)) {
+
+                }
+                Row {
+                    IconButton(
+                        onClick = {},
+                        content = {
+                            Icon(
+                                painter = painterResource(R.drawable.icon_save),
+                                contentDescription = stringResource(R.string.btn_cfg_save)
+                            )
+                        }
+                    )
+                    IconButton(
+                        onClick = { TODO() },
+                        content = {
+                            Icon(
+                                painter = painterResource(R.drawable.icon_ic_baseline_content_copy_24),
+                                contentDescription = stringResource(R.string.btn_cfg_copy)
+                            )
+                        }
+                    )
+                    IconButton(
+                        onClick = { TODO() },
+                        content = {
+                            Icon(
+                                painter = painterResource(R.drawable.icon_trash),
+                                contentDescription = stringResource(R.string.btn_cfg_delete)
+                            )
+                        }
+                    )
+                    IconButton(
+                        onClick = { TODO() },
+                        content = {
+                            Icon(
+                                painter = painterResource(R.drawable.icon_export),
+                                contentDescription = stringResource(R.string.btn_cfg_export)
+                            )
+                        }
+                    )
+                }
+            }
         }
     }
 

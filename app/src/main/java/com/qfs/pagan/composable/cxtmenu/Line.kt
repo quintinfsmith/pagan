@@ -74,21 +74,6 @@ fun ContextMenuLineSecondary(ui_facade: UIFacade, dispatcher: ActionTracker, ini
     } else {
         ContextMenuLineCtlSecondary(ui_facade, dispatcher, initial_event)
     }
-    Row(modifier = Modifier.height(dimensionResource(R.dimen.contextmenu_secondary_button_height))) {
-        IconCMenuButton(
-            onClick = {
-                if (line.is_mute) {
-                    dispatcher.line_unmute()
-                } else {
-                    dispatcher.line_mute()
-                }
-            },
-            icon = if (line.is_mute) R.drawable.icon_unmute
-                else R.drawable.icon_mute,
-            description = R.string.cd_line_mute
-        )
-        Text("TODO: Volume Widget")
-    }
 }
 
 @Composable
@@ -124,7 +109,7 @@ fun ContextMenuLineStdSecondary(ui_facade: UIFacade, dispatcher: ActionTracker, 
             else R.drawable.icon_mute,
             description = R.string.cd_line_mute
         )
-        Text("TODO: Volume Widget")
     }
+    VolumeEventMenu(ui_facade, dispatcher, volume_event)
 }
 

@@ -416,9 +416,10 @@ class ReducibleTree<T> {
 
     fun replace_with(new_node: ReducibleTree<T>) {
         val index = this.get_index() ?: return
+        // TODO: detach() then insert is probably slower than necessary
         this.parent?.let {
             this.detach()
-            it[index] = new_node
+            it.insert(index, new_node)
         }
     }
 

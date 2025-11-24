@@ -887,15 +887,14 @@ open class OpusLayerCursor: OpusLayerBase() {
             this.cursor.get_position()
         )
     }
-    open fun remove_at_cursor(count: Int) {
+    open fun remove_at_cursor(count: Int = 1) {
         val cursor = this.cursor
         when (cursor.ctl_level) {
             null -> {
                 val beat_key = cursor.get_beatkey()
-                val position = cursor.get_position().toMutableList()
+                val position = cursor.get_position()
 
                 val (real_count, _) = this._calculate_new_position_after_remove(this.get_tree_copy(beat_key), position, count)
-
                 this.remove_repeat(beat_key, position, real_count)
             }
 
@@ -2375,7 +2374,7 @@ open class OpusLayerCursor: OpusLayerBase() {
     fun <T: EffectEvent> set_initial_event(event: T) {
         when (this.cursor.ctl_level) {
             null,
-            CtlLineLevel.Line -> this.controller_line_set_initial_event(this.cursor.ctl_type!!, this.cursor.channel, this.cursor.line_offset, event)
+            CtlLineLevel.Line -> this.controller_line_set_initial_event(this.cursor.ctl_type ?: EffectType.Volume, this.cursor.channel, this.cursor.line_offset, event)
             CtlLineLevel.Channel -> this.controller_channel_set_initial_event(this.cursor.ctl_type!!, this.cursor.channel, event)
             CtlLineLevel.Global -> this.controller_global_set_initial_event(this.cursor.ctl_type!!, event)
         }

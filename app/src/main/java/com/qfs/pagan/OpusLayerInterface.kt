@@ -160,6 +160,7 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     /* Notify the editor table to update a cell */
     private fun _queue_cell_change(beat_key: BeatKey) {
+        val tree = this.get_tree_copy(beat_key)
         this.ui_facade.update_cell(
             EditorTable.Coordinate(
                 y = this.get_visible_row_from_ctl_line(
@@ -172,7 +173,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 )!!,
                 x = beat_key.beat
             ),
-            this.get_tree_copy(beat_key)
+            tree
         )
     }
 
@@ -558,15 +559,19 @@ class OpusLayerInterface : OpusLayerHistory() {
         this._queue_line_ctl_cell_change(type, beat_key)
     }
 
-    override fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
-        super.remove_one_of_two(beat_key, position)
+    override fun remove(beat_key: BeatKey, position: List<Int>) {
+        super.remove(beat_key, position)
         this._queue_cell_change(beat_key)
     }
+    // override fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
+    //     super.remove_one_of_two(beat_key, position)
+    //     this._queue_cell_change(beat_key)
+    // }
 
-    override fun remove_standard(beat_key: BeatKey, position: List<Int>) {
-        super.remove_standard(beat_key, position)
-        this._queue_cell_change(beat_key)
-    }
+    // override fun remove_standard(beat_key: BeatKey, position: List<Int>) {
+    //     super.remove_standard(beat_key, position)
+    //     this._queue_cell_change(beat_key)
+    // }
 
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
         super.insert_after(beat_key, position)
@@ -586,10 +591,6 @@ class OpusLayerInterface : OpusLayerHistory() {
     override fun controller_line_insert_after(type: EffectType, beat_key: BeatKey, position: List<Int>) {
         super.controller_line_insert_after(type, beat_key, position)
         this._queue_line_ctl_cell_change(type, beat_key)
-    }
-
-    override fun remove_repeat(beat_key: BeatKey, position: List<Int>, count: Int) {
-        super.remove_repeat(beat_key, position, count)
     }
 
     override fun insert(beat_key: BeatKey, position: List<Int>) {
@@ -879,14 +880,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 }
                 this.ui_facade.add_row(
                     i++,
-                    MutableList(this.length) {
-                        if (c == 0 && l == 0 && it == 1) {
-                            line.beats[it].traverse { tree, event ->
-                                println("---- $event (${tree.get_path()}")
-                            }
-                        }
-                        mutableStateOf(this.get_tree_copy(BeatKey(c, l, it)))
-                    },
+                    MutableList(this.length) { mutableStateOf(this.get_tree_copy(BeatKey(c, l, it))) },
                     UIFacade.LineData(c, l, null, instrument, line.muted)
                 )
                 for ((type, controller) in line.controllers.get_all()) {

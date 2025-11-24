@@ -67,7 +67,6 @@ fun ContextMenuChannelSecondary(ui_facade: UIFacade, dispatcher: ActionTracker) 
     val channel_index = cursor.ints[0]
     val active_channel = ui_facade.channel_data[channel_index]
 
-
     Row(modifier = Modifier.height(dimensionResource(R.dimen.contextmenu_secondary_button_height))) {
         IconCMenuButton(
             modifier = Modifier.fillMaxHeight(),

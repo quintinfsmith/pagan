@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -752,11 +753,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val cell = ui_facade.cell_map[y][x].value
         val line_info = ui_facade.line_data[y]
         Row(modifier.fillMaxSize()) {
-            composable_traverse(cell, listOf()) { tree, path, event ->
+            composable_traverse(cell, listOf()) { tree, path, event, weight ->
                 if (tree.is_leaf()) {
                     this@ComponentActivityEditor.LeafView(
                         ui_facade, dispatcher, y, x, path, event,
                         Modifier
+                            .width(dimensionResource(R.dimen.base_leaf_width))
+                            .weight(weight)
                             .combinedClickable(
                                 onClick = {
                                     val cursor = ui_facade.active_cursor.value
@@ -831,8 +834,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     }
                                 }
                             )
-                            .width(dimensionResource(R.dimen.base_leaf_width))
-                            .weight(tree.weighted_size.toFloat())
                     )
                 }
             }
@@ -840,13 +841,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun <T> composable_traverse(tree: ReducibleTree<T>, path: List<Int>, callback: @Composable (ReducibleTree<T>, List<Int>, T?) -> Unit) {
+    fun <T> composable_traverse(tree: ReducibleTree<T>, path: List<Int>, weight: Float = 1F, callback: @Composable (ReducibleTree<T>, List<Int>, T?, Float) -> Unit) {
         if (! tree.is_leaf()) {
+            val new_weight = weight / tree.size.toFloat()
             for ((i, child) in tree.divisions) {
-                this.composable_traverse(child, path + listOf(i), callback)
+                this.composable_traverse(child, path + listOf(i), new_weight, callback)
             }
         }
-        callback(tree, path, tree.event)
+        callback(tree, path, tree.event, weight)
     }
 
     @Composable
@@ -871,10 +873,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 MainTable(ui_facade, view_model.action_interface,  ui_facade.beat_count)
             }
             if (ui_facade.active_cursor.value?.type != CursorMode.Unset) {
-                Box(Modifier) {
-                    Column {
-                        Row { ContextMenuPrimary(ui_facade, view_model.action_interface) }
-                        Row { ContextMenuSecondary(ui_facade, view_model.action_interface) }
+                AnimatedVisibility(ui_facade.active_cursor.value != null) {
+                    Box(Modifier) {
+                        Column {
+                            Row { ContextMenuPrimary(ui_facade, view_model.action_interface) }
+                            Row { ContextMenuSecondary(ui_facade, view_model.action_interface) }
+                        }
                     }
                 }
             }

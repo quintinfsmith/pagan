@@ -384,7 +384,7 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
         val (target_offset, _) = this.get_leaf_offset_and_width(next_beat, next_position)
 
         val (direct_offset, direct_width) = this.get_leaf_offset_and_width(beat, position)
-        val stack = mutableListOf<Triple<Rational, Int, ReducibleTree<T>>>(Triple(direct_offset, direct_width, new_tree))
+        val stack = mutableListOf(Triple(direct_offset, direct_width, new_tree))
         while (stack.isNotEmpty()) {
             val (working_offset, working_width, working_tree) = stack.removeAt(0)
             if (working_tree.has_event()) {

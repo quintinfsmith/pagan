@@ -110,9 +110,10 @@ class ContextMenuControlLeaf<T: EffectEvent>(val widget: ControlWidget<T>, prima
     fun click_button_unset() {
         this.get_activity().get_action_interface().unset()
     }
+
     fun click_button_remove() {
         val opus_manager = this.get_opus_manager()
-        opus_manager.remove_at_cursor(1)
+        opus_manager.remove_at_cursor()
     }
 
     fun long_click_button_remove(): Boolean {

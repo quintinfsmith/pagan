@@ -19,48 +19,48 @@ class ControlWidgetVolume(level: CtlLineLevel, is_initial_event: Boolean, contex
     private var _lockout_ui: Boolean = false
 
     override fun on_inflated() {
-        this._slider = this.inner.findViewById(R.id.volume_slider)
-        this._button = this.inner.findViewById(R.id.volume_button)
-        this._transition_button = this.inner.findViewById(R.id.volume_transition_button)
-        //this._button.set_icon(R.drawable.volume_widget)
-        this._button.minEms = 2
+        // this._slider = this.inner.findViewById(R.id.volume_slider)
+        // this._button = this.inner.findViewById(R.id.volume_button)
+        // this._transition_button = this.inner.findViewById(R.id.volume_transition_button)
+        // //this._button.set_icon(R.drawable.volume_widget)
+        // this._button.minEms = 2
 
-        if (this.is_initial_event) {
-            this._transition_button.visibility = GONE
-        } else {
-            this._transition_button.setOnClickListener {
-                val main = (this.context as ActivityEditor)
-                main.get_action_interface().set_ctl_transition()
-            }
-        }
+        // if (this.is_initial_event) {
+        //     this._transition_button.visibility = GONE
+        // } else {
+        //     this._transition_button.setOnClickListener {
+        //         val main = (this.context as ActivityEditor)
+        //         main.get_action_interface().set_ctl_transition()
+        //     }
+        // }
 
-        this._slider.max = this.max
-        this._slider.min = this.min
+        // this._slider.max = this.max
+        // this._slider.min = this.min
 
-        var context = this.context
-        while (context !is ActivityEditor) {
-            context = (context as ContextThemeWrapper).baseContext
-        }
-        this._button.setOnClickListener {
-            (context as ActivityEditor).get_action_interface().set_volume()
-        }
+        // var context = this.context
+        // while (context !is ActivityEditor) {
+        //     context = (context as ContextThemeWrapper).baseContext
+        // }
+        // this._button.setOnClickListener {
+        //     (context as ActivityEditor).get_action_interface().set_volume()
+        // }
 
-        this._slider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) {
-                val that = this@ControlWidgetVolume
-                if (that._lockout_ui) {
-                    return
-                }
-                that._lockout_ui = true
-                that.set_text(p1)
-                that._lockout_ui = false
-            }
+        // this._slider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+        //     override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) {
+        //         val that = this@ControlWidgetVolume
+        //         if (that._lockout_ui) {
+        //             return
+        //         }
+        //         that._lockout_ui = true
+        //         that.set_text(p1)
+        //         that._lockout_ui = false
+        //     }
 
-            override fun onStartTrackingTouch(p0: SeekBar?) {}
-            override fun onStopTrackingTouch(seekbar: SeekBar) {
-                context.get_action_interface().set_volume(seekbar.progress)
-            }
-        })
+        //     override fun onStartTrackingTouch(p0: SeekBar?) {}
+        //     override fun onStopTrackingTouch(seekbar: SeekBar) {
+        //         context.get_action_interface().set_volume(seekbar.progress)
+        //     }
+        // })
     }
 
     init {

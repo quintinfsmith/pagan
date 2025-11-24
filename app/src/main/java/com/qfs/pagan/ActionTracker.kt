@@ -1272,7 +1272,7 @@ class ActionTracker {
     fun remove_at_cursor() {
         this.track(TrackedAction.RemoveLeaf)
         val opus_manager = this.get_opus_manager()
-        opus_manager.remove_at_cursor(1)
+        opus_manager.remove_at_cursor()
     }
 
     fun insert_leaf(repeat: Int? = null) {

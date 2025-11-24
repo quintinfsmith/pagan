@@ -2547,7 +2547,6 @@ open class OpusLayerBase: Effectable {
 
         val tree = this.get_tree(beat_key, position)
         val parent_tree = tree.parent!!
-
         when (parent_tree.size) {
             // 1 Shouldn't be able to happen and this isn't the place to check for that failure
             1 -> throw TrivialBranchException(beat_key, position)

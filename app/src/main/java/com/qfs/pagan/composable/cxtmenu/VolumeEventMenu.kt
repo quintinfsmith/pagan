@@ -6,10 +6,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.qfs.pagan.ActionTracker
-import com.qfs.pagan.R
-import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.button.TextCMenuButton
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.uibill.UIFacade
@@ -28,6 +25,7 @@ fun VolumeEventMenu (ui_facade: UIFacade, dispatcher: ActionTracker, event: Opus
 
         Slider(
             value = event.value,
+            steps = 128,
             onValueChange = {
                 event.value = it
                 dispatcher.set_effect_at_cursor(event)
@@ -36,16 +34,7 @@ fun VolumeEventMenu (ui_facade: UIFacade, dispatcher: ActionTracker, event: Opus
         )
 
         if (!is_initial) {
-            IconCMenuButton(
-                onClick = { dispatcher.set_ctl_transition() },
-                icon = when (event.transition) {
-                    EffectTransition.Instant -> R.drawable.icon_transition_immediate
-                    EffectTransition.Linear -> R.drawable.icon_transition_linear
-                    EffectTransition.RInstant -> R.drawable.icon_transition_rimmediate
-                    EffectTransition.RLinear -> R.drawable.icon_transition_rlinear
-                },
-                description = R.string.cd_show_effect_controls
-            )
+            EffectTransitionButton(event.transition, dispatcher)
         }
     }
 }

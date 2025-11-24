@@ -113,7 +113,7 @@ fun IntegerInput(value: MutableState<Int>, minimum: Int? = null, maximum: Int? =
 @Composable
 fun FloatInput(value: MutableState<Float>, minimum: Float? = null, maximum: Float? = null, modifier: Modifier = Modifier, precision: Int? = null, outlined: Boolean = true, callback: (Float) -> Unit) {
     val state = rememberTextFieldState("${value.value}")
-    val textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End),
+    val textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End)
     val modifier = modifier.onFocusChanged { focus_state ->
         if (focus_state.hasFocus) {
             state.edit {

@@ -8,7 +8,6 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 
 @Composable
 fun EffectTransitionButton(transition: EffectTransition, dispatcher: ActionTracker) {
-
     IconCMenuButton(
         onClick = { dispatcher.set_ctl_transition() },
         icon = when (transition) {

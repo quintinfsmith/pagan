@@ -27,6 +27,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.pow
+import kotlin.math.roundToInt
 
 @Composable
 fun SText(
@@ -108,7 +110,7 @@ fun IntegerInput(value: MutableState<Int>, minimum: Int? = null, maximum: Int? =
 }
 
 @Composable
-fun FloatInput(value: MutableState<Float>, minimum: Float? = null, maximum: Float? = null, modifier: Modifier = Modifier, callback: (Float) -> Unit) {
+fun FloatInput(value: MutableState<Float>, minimum: Float? = null, maximum: Float? = null, modifier: Modifier = Modifier, precision: Int? = null, callback: (Float) -> Unit) {
     val state = rememberTextFieldState("${value.value}")
     OutlinedTextField(
         state = state,
@@ -155,12 +157,19 @@ fun FloatInput(value: MutableState<Float>, minimum: Float? = null, maximum: Floa
                     return
                 }
 
+                precision?.let {
+                    val p = 10F.pow(it)
+                    float_value = (float_value * p).roundToInt().toFloat() / p
+                }
+
                 minimum?.let {
                     float_value = max(it, float_value)
                 }
                 maximum?.let {
                     float_value = min(it, float_value)
                 }
+
+
 
                 value.value = float_value
             }

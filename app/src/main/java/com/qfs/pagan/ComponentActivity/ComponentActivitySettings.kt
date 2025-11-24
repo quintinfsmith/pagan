@@ -98,6 +98,9 @@ class ComponentActivitySettings: PaganComponentActivity() {
     }
 
     @Composable
+    override fun Drawer(modifier: Modifier) { }
+
+    @Composable
     override fun TopBar(modifier: Modifier) {
         Row {
             Icon(

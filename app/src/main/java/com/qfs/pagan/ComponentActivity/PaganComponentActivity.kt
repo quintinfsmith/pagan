@@ -1,11 +1,9 @@
 package com.qfs.pagan.ComponentActivity
 
-import android.app.AlertDialog
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,42 +11,32 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.DrawerState
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.currentRecomposeScope
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorProducer
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.recyclerview.widget.RecyclerView
 import com.qfs.pagan.DialogChain
 import com.qfs.pagan.MenuDialogEventHandler
-import com.qfs.pagan.PopupMenuRecyclerAdapter
 import com.qfs.pagan.R
 import com.qfs.pagan.ViewModelPagan
 import com.qfs.pagan.composable.SText
@@ -81,8 +69,18 @@ abstract class PaganComponentActivity: ComponentActivity() {
     abstract fun LayoutSmallLandscape()
     @Composable
     abstract fun TopBar(modifier: Modifier = Modifier)
+    @Composable
+    abstract fun Drawer(modifier: Modifier = Modifier)
+
+    suspend fun open_drawer() {
+        this.drawer_state.open()
+    }
+    suspend fun close_drawer() {
+        this.drawer_state.close()
+    }
 
     val view_model: ViewModelPagan by this.viewModels()
+    lateinit var drawer_state: DrawerState
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val view_model = this.view_model
@@ -95,68 +93,76 @@ abstract class PaganComponentActivity: ComponentActivity() {
             // Allow night mode mutability
             val night_mode = remember { mutableIntStateOf(view_model.configuration.night_mode) }
             view_model.configuration.callbacks_night_mode.add { night_mode.intValue = it }
-            ScaffoldWithTopBar(
-                top_app_bar = { this.TopBar() },
-                night_mode
+            this.drawer_state = rememberDrawerState(DrawerValue.Closed)
+            ModalNavigationDrawer(
+                modifier = Modifier.safeContentPadding(),
+                drawerState = this.drawer_state,
+                gesturesEnabled = true,
+                drawerContent = { this.Drawer() }
             ) {
-                BoxWithConstraints(modifier = Modifier.padding(it)) {
-                    Box(modifier = Modifier
-                        .padding(32.dp)
-                        .fillMaxSize()) {
-                        Icon(
-                            painter = painterResource(R.drawable.rowanleaf_no_padding),
-                            tint = colorResource(R.color.main_background_etching),
-                            contentDescription = "",
-                            modifier = Modifier
-                                .fillMaxSize()
-                        )
-                    }
+                ScaffoldWithTopBar(
+                    top_app_bar = { this.TopBar() },
+                    night_mode
+                ) {
+                    BoxWithConstraints(modifier = Modifier.padding(it)) {
+                        Box(modifier = Modifier
+                            .padding(32.dp)
+                            .fillMaxSize()) {
+                            Icon(
+                                painter = painterResource(R.drawable.rowanleaf_no_padding),
+                                tint = colorResource(R.color.main_background_etching),
+                                contentDescription = "",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                            )
+                        }
 
 
-                    var current_dialog = view_model.dialog_queue.value
-                    val dialogs = mutableListOf<DialogChain>()
-                    while (current_dialog != null) {
-                        dialogs.add(current_dialog)
-                        current_dialog = current_dialog.parent
-                    }
+                        var current_dialog = view_model.dialog_queue.value
+                        val dialogs = mutableListOf<DialogChain>()
+                        while (current_dialog != null) {
+                            dialogs.add(current_dialog)
+                            current_dialog = current_dialog.parent
+                        }
 
-                    for (dialog in dialogs.reversed()) {
-                        Dialog(onDismissRequest = { view_model.dialog_queue.value = dialog.parent }) {
-                            Card {
-                                Box(modifier = Modifier.padding(dimensionResource(R.dimen.dialog_padding))) {
-                                    dialog.dialog()
+                        for (dialog in dialogs.reversed()) {
+                            Dialog(onDismissRequest = { view_model.dialog_queue.value = dialog.parent }) {
+                                Card {
+                                    Box(modifier = Modifier.padding(dimensionResource(R.dimen.dialog_padding))) {
+                                        dialog.dialog()
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    if (this.maxWidth >= this.maxHeight) {
-                        if (this.maxWidth >= SIZE_XL.first && this.maxHeight >= SIZE_XL.second) {
-                            println("LANDSCAPE XL")
-                            LayoutXLargeLandscape()
-                        } else if (this.maxWidth >= SIZE_L.first && this.maxHeight >= SIZE_L.second) {
-                            println("LANDSCAPE L")
-                            LayoutLargeLandscape()
-                        } else if (this.maxWidth >= SIZE_M.first && this.maxHeight >= SIZE_M.second) {
-                            println("LANDSCAPE M")
-                            LayoutMediumLandscape()
+                        if (this.maxWidth >= this.maxHeight) {
+                            if (this.maxWidth >= SIZE_XL.first && this.maxHeight >= SIZE_XL.second) {
+                                println("LANDSCAPE XL")
+                                LayoutXLargeLandscape()
+                            } else if (this.maxWidth >= SIZE_L.first && this.maxHeight >= SIZE_L.second) {
+                                println("LANDSCAPE L")
+                                LayoutLargeLandscape()
+                            } else if (this.maxWidth >= SIZE_M.first && this.maxHeight >= SIZE_M.second) {
+                                println("LANDSCAPE M")
+                                LayoutMediumLandscape()
+                            } else {
+                                println("LANDSCAPE S")
+                                LayoutSmallLandscape()
+                            }
                         } else {
-                            println("LANDSCAPE S")
-                            LayoutSmallLandscape()
-                        }
-                    } else {
-                        if (this.maxWidth >= SIZE_XL.second && this.maxHeight >= SIZE_XL.first) {
-                            println("PORTRAIT XL")
-                            LayoutXLargePortrait()
-                        } else if (this.maxWidth >= SIZE_L.second && this.maxHeight >= SIZE_L.first) {
-                            println("PORTRAIT L")
-                            LayoutLargePortrait()
-                        } else if (this.maxWidth >= SIZE_M.second && this.maxHeight >= SIZE_M.first) {
-                            println("PORTRAIT M")
-                            LayoutMediumPortrait()
-                        } else {
-                            println("PORTRAIT S")
-                            LayoutSmallPortrait()
+                            if (this.maxWidth >= SIZE_XL.second && this.maxHeight >= SIZE_XL.first) {
+                                println("PORTRAIT XL")
+                                LayoutXLargePortrait()
+                            } else if (this.maxWidth >= SIZE_L.second && this.maxHeight >= SIZE_L.first) {
+                                println("PORTRAIT L")
+                                LayoutLargePortrait()
+                            } else if (this.maxWidth >= SIZE_M.second && this.maxHeight >= SIZE_M.first) {
+                                println("PORTRAIT M")
+                                LayoutMediumPortrait()
+                            } else {
+                                println("PORTRAIT S")
+                                LayoutSmallPortrait()
+                            }
                         }
                     }
                 }

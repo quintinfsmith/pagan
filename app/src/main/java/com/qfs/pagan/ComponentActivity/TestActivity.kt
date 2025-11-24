@@ -18,6 +18,10 @@ class TestActivity: PaganComponentActivity() {
     override fun TopBar(modifier: Modifier) {}
 
     @Composable
+    override fun Drawer(modifier: Modifier) {
+    }
+
+    @Composable
     fun Layout() {
         Button(onClick = {
             test_model.t.text = "Toast"

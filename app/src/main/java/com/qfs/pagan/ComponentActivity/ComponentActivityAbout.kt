@@ -52,6 +52,9 @@ class ComponentActivityAbout: PaganComponentActivity() {
     }
 
     @Composable
+    override fun Drawer(modifier: Modifier) { }
+
+    @Composable
     fun FillRow(content: @Composable (RowScope.() -> Unit)) {
         Row(
             Modifier.fillMaxWidth(),

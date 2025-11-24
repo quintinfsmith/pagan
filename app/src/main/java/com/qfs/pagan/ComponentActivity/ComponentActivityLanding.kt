@@ -302,6 +302,9 @@ class ComponentActivityLanding: PaganComponentActivity() {
     }
 
     @Composable
+    override fun Drawer(modifier: Modifier) { }
+
+    @Composable
     override fun LayoutLargePortrait() {
         Row(
             modifier = Modifier

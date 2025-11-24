@@ -1,11 +1,12 @@
 package com.qfs.pagan
 
+import androidx.compose.material3.DrawerState
+import androidx.compose.material3.DrawerValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.qfs.pagan.projectmanager.ProjectManager
-import kotlin.properties.Delegates.observable
 
 class ViewModelPagan: ViewModel() {
     var dialog_queue: MutableState<DialogChain?> = mutableStateOf(null)

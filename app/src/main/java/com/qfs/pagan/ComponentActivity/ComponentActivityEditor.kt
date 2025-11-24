@@ -32,6 +32,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -294,6 +295,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     override fun TopBar(modifier: Modifier) {
         val ui_facade = this.model_editor.opus_manager.ui_facade
         val dispatcher = this.model_editor.action_interface
+        val scope = rememberCoroutineScope()
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -301,6 +303,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 painter = painterResource(R.drawable.icon_hamburger_32),
                 contentDescription = stringResource(R.string.song_configuration),
                 modifier = Modifier
+                    .combinedClickable(
+                        onClick = {
+                            scope.launch {
+                                this@ComponentActivityEditor.open_drawer()
+                            }
+                        }
+                    )
                     .padding(0.dp)
             )
             Text(
@@ -882,6 +891,17 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    @Composable
+    override fun Drawer(modifier: Modifier) {
+        Box(
+            modifier = Modifier
+                .background(color = Color.Red)
+                .fillMaxSize()
+        ) {
+            Text("DRAWER")
         }
     }
 

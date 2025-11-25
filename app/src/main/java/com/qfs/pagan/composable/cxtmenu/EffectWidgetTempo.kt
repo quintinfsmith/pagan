@@ -14,10 +14,10 @@ import com.qfs.pagan.composable.FloatInput
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
-import com.qfs.pagan.uibill.UIFacade
+import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun TempoEventMenu (ui_facade: UIFacade, dispatcher: ActionTracker, event: OpusTempoEvent) {
+fun TempoEventMenu (ui_facade: ViewModelEditorState, dispatcher: ActionTracker, event: OpusTempoEvent) {
     val cursor = ui_facade.active_cursor.value ?: return
     val is_initial = cursor.type == CursorMode.Line
     val working_value = remember { mutableFloatStateOf(event.value) }

@@ -21,62 +21,17 @@ import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import java.io.DataOutputStream
 import java.io.File
 
-class ViewModelEditor: ViewModel() {
-    companion object {
-        fun get_next_playback_state(input_state: PlaybackState, next_state: PlaybackState): PlaybackState? {
-            return when (input_state) {
-                PlaybackState.NotReady -> {
-                    when (next_state) {
-                        PlaybackState.NotReady,
-                        PlaybackState.Ready -> next_state
-                        else -> null
-                    }
-                }
-                PlaybackState.Ready -> {
-                    when (next_state) {
-                        PlaybackState.NotReady,
-                        PlaybackState.Ready,
-                        PlaybackState.Queued -> next_state
-                        else -> null
-                    }
-                }
-                PlaybackState.Playing -> {
-                    when (next_state) {
-                        PlaybackState.Ready,
-                        PlaybackState.Stopping -> next_state
-                        else -> null
-                    }
-                }
-                PlaybackState.Queued -> {
-                    when (next_state) {
-                        PlaybackState.Ready,
-                        PlaybackState.Playing -> next_state
-                        else -> null
-                    }
-                }
-                PlaybackState.Stopping -> {
-                    when (next_state) {
-                        PlaybackState.Ready -> next_state
-                        else -> null
-                    }
-                }
-            }
-        }
-    }
-
-    var export_handle: WavConverter? = null
+class ViewModelEditorController: ViewModel() {
     var action_interface = ActionTracker()
     var opus_manager = OpusLayerInterface()
-    var active_project: MutableState<Uri?> = mutableStateOf(null)
-    var audio_interface = AudioInterface()
-    var available_preset_names: HashMap<Pair<Int, Int>, String>? = null
-
     var active_midi_device: MidiDeviceInfo? = null
+    var audio_interface = AudioInterface()
     var playback_device: PlaybackDevice? = null
     var playback_state_soundfont: ActivityEditor.PlaybackState = ActivityEditor.PlaybackState.NotReady
     var playback_state_midi: ActivityEditor.PlaybackState = ActivityEditor.PlaybackState.NotReady
     var move_mode: MutableState<PaganConfiguration.MoveMode> = mutableStateOf(PaganConfiguration.MoveMode.COPY)
-
+    var export_handle: WavConverter? = null
+    var active_project: MutableState<Uri?> = mutableStateOf(null)
 
     fun export_wav(
         opus_manager: OpusLayerBase,
@@ -118,31 +73,17 @@ class ViewModelEditor: ViewModel() {
     }
 
     fun unset_soundfont() {
-        this.opus_manager.ui_facade.clear_instrument_names()
         this.audio_interface.unset_soundfont()
-        this.available_preset_names = null
         this.destroy_playback_device()
     }
 
-    fun populate_active_percussion_names(channel_index: Int) {
-        val midi_channel = this.opus_manager.get_midi_channel(channel_index)
-        val instrument_options = this.audio_interface.get_instrument_options(midi_channel)
-        this.opus_manager.ui_facade.set_instrument_names(channel_index, instrument_options)
+
+    fun get_soundfont(): SoundFont? {
+        return this.audio_interface.soundfont
     }
 
     fun set_soundfont(soundfont: SoundFont) {
-        this.opus_manager.ui_facade.clear_instrument_names()
         this.audio_interface.set_soundfont(soundfont)
-        this.available_preset_names = HashMap()
-        for ((name, program, bank) in soundfont.get_available_presets()) {
-            this.available_preset_names?.set(Pair(bank, program), name)
-        }
-
-        this.create_playback_device()
-    }
-
-    fun set_sample_rate(new_rate: Int) {
-        this.audio_interface.set_sample_rate(new_rate)
         this.create_playback_device()
     }
 
@@ -153,21 +94,23 @@ class ViewModelEditor: ViewModel() {
             WaveGenerator.StereoMode.Stereo
         )
     }
+
     fun destroy_playback_device() {
         this.playback_device?.kill()
         this.playback_device = null
     }
+
     fun in_playback(): Boolean {
         return this.playback_state_midi == ActivityEditor.PlaybackState.Playing || this.playback_state_soundfont == ActivityEditor.PlaybackState.Playing
     }
 
     fun update_playback_state_soundfont(next_state: PlaybackState): Boolean {
-        this.playback_state_soundfont = ViewModelEditor.get_next_playback_state(this.playback_state_soundfont, next_state) ?: return false
+        this.playback_state_soundfont = ViewModelEditorState.get_next_playback_state(this.playback_state_soundfont, next_state) ?: return false
         return true
     }
 
     fun update_playback_state_midi(next_state: PlaybackState): Boolean {
-        this.playback_state_midi = ViewModelEditor.get_next_playback_state(this.playback_state_midi, next_state) ?: return false
+        this.playback_state_midi = ViewModelEditorState.get_next_playback_state(this.playback_state_midi, next_state) ?: return false
         return true
     }
 

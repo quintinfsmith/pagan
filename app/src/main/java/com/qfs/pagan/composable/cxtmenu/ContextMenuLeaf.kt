@@ -21,10 +21,10 @@ import com.qfs.pagan.composable.button.TextCMenuButton
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
-import com.qfs.pagan.uibill.UIFacade
+import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun ContextMenuStructureControls(ui_facade: UIFacade, dispatcher: ActionTracker) {
+fun ContextMenuStructureControls(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
     val active_event = ui_facade.active_event.value
     val cursor = ui_facade.active_cursor.value ?: return
     val active_line = ui_facade.line_data[cursor.ints[0]]
@@ -83,7 +83,7 @@ fun ContextMenuStructureControls(ui_facade: UIFacade, dispatcher: ActionTracker)
 }
 
 @Composable
-fun ContextMenuSinglePrimary(ui_facade: UIFacade, dispatcher: ActionTracker, show_relative_input: Boolean) {
+fun ContextMenuSinglePrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, show_relative_input: Boolean) {
     val active_event = ui_facade.active_event.value
     val cursor = ui_facade.active_cursor.value ?: return
     val active_line = ui_facade.line_data[cursor.ints[0]]
@@ -132,7 +132,7 @@ fun ContextMenuSinglePrimary(ui_facade: UIFacade, dispatcher: ActionTracker, sho
 }
 
 @Composable
-fun ContextMenuSingleSecondary(ui_facade: UIFacade, dispatcher: ActionTracker) {
+fun ContextMenuSingleSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
     val cursor = ui_facade.active_cursor.value ?: return
     val active_event = ui_facade.active_event.value
     val offset = when (active_event) {

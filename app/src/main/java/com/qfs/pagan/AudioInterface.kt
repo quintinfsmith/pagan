@@ -13,6 +13,7 @@ class AudioInterface {
     var playback_sample_handle_manager: SampleHandleManager? = null
     var soundfont_supported_instrument_names = HashMap<Pair<Int, Int>, String>()
     var feedback_revolver = FeedbackRevolver(4)
+    var minimum_instrument_index_cache = HashMap<Int, Int>() // Midichannel: index
 
     class FeedbackRevolver(var size: Int = 4) {
         var sample_handle_manager: SampleHandleManager? = null
@@ -82,6 +83,7 @@ class AudioInterface {
         this.playback_sample_handle_manager?.destroy()
         this.playback_sample_handle_manager = null
         this.feedback_revolver.clear()
+        this.minimum_instrument_index_cache.clear()
     }
 
     fun update_channel_instrument(channel: Int, bank: Int, program: Int) {
@@ -155,6 +157,21 @@ class AudioInterface {
         return available_drum_keys.sortedBy {
             it.second
         }
+    }
+
+    fun get_minimum_instrument_index(midi_channel: Int): Int {
+        if (this.soundfont == null) return 0
+        // TODO: Store by instrument pair rather than midi_channel
+        if (!this.minimum_instrument_index_cache.contains(midi_channel)) {
+            val options = this.get_instrument_options(midi_channel)
+            var m = 999
+            for ((_, key) in options ?: listOf(Pair("a", 0))) {
+                m = min(key, m)
+            }
+            this.minimum_instrument_index_cache[midi_channel] = m
+        }
+
+        return this.minimum_instrument_index_cache[midi_channel] ?: 0
     }
 
 

@@ -19,7 +19,6 @@ import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import android.provider.DocumentsContract
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.DisplayMetrics
@@ -41,7 +40,6 @@ import android.widget.ProgressBar
 import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.TextView
-import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
@@ -55,7 +53,6 @@ import androidx.core.graphics.blue
 import androidx.core.graphics.green
 import androidx.core.graphics.red
 import androidx.core.net.toUri
-import androidx.core.view.GravityCompat
 import androidx.core.view.isEmpty
 import androidx.core.view.isNotEmpty
 import androidx.core.view.isVisible
@@ -109,7 +106,6 @@ import com.qfs.pagan.databinding.ActivityEditorBinding
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.numberinput.RangedFloatInput
 import com.qfs.pagan.numberinput.RangedIntegerInput
-import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
@@ -120,8 +116,8 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEve
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
-import com.qfs.pagan.uibill.UIFacade
-import com.qfs.pagan.viewmodel.ViewModelEditor
+import com.qfs.pagan.viewmodel.ViewModelEditorController
+import com.qfs.pagan.viewmodel.ViewModelEditorState
 import java.io.BufferedOutputStream
 import java.io.BufferedReader
 import java.io.DataOutputStream
@@ -133,7 +129,6 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import kotlin.collections.set
 import kotlin.concurrent.thread
 import kotlin.math.floor
 import kotlin.math.max
@@ -154,7 +149,9 @@ class ActivityEditor : PaganActivity() {
         Stopping
     }
 
-    val editor_view_model: ViewModelEditor by this.viewModels()
+    val editor_view_model: ViewModelEditorController by this.viewModels()
+    val view_model_ui_state: ViewModelEditorState by this.viewModels()
+
     private var _initial_load = true // Used to prevent save dialog from popping up on first load/new/import
     // flag to indicate that the landing page has been navigated away from for navigation management
     private var _integer_dialog_defaults = HashMap<String, Int>()
@@ -1660,7 +1657,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun get_supported_preset_names(): HashMap<Pair<Int, Int>, String> {
-        return this.editor_view_model.available_preset_names ?: this.get_general_midi_preset_names()
+        return this.view_model_ui_state.available_preset_names ?: this.get_general_midi_preset_names()
     }
 
     fun get_general_midi_preset_names(): HashMap<Pair<Int, Int>, String> {
@@ -1707,6 +1704,9 @@ class ActivityEditor : PaganActivity() {
             return
         }
 
+        this.editor_view_model.get_soundfont()?.let {
+            this.view_model_ui_state.populate_preset_names(it)
+        }
 
         this.reinit_playback_device()
         this.connect_feedback_device()
@@ -1731,10 +1731,12 @@ class ActivityEditor : PaganActivity() {
     fun disable_soundfont() {
         if (!this.editor_view_model.update_playback_state_soundfont(PlaybackState.NotReady)) return
         this.editor_view_model.unset_soundfont()
+        this.view_model_ui_state.clear_preset_names()
+        this.view_model_ui_state.clear_instrument_names()
     }
 
-    fun get_ui_facade(): UIFacade {
-        return this.get_opus_manager().ui_facade
+    fun get_ui_facade(): ViewModelEditorState {
+        return this.view_model_ui_state
     }
 
     fun dialog_color_picker(initial_color: Int, callback: (Int?) -> Unit) {
@@ -2849,13 +2851,13 @@ class ActivityEditor : PaganActivity() {
         val ui_facade = this.get_ui_facade()
         for (c in opus_manager.channels.indices) {
             if (!opus_manager.is_percussion(c)) continue
+            val midi_channel = opus_manager.get_midi_channel(c)
 
             // Need to prematurely update the channel instrument to find the lowest possible instrument
             this.update_channel_instruments(c)
-            val percussion_keys = ui_facade.instrument_names[c]?.keys?.sorted() ?: continue
-
+            val i = this.editor_view_model.audio_interface.get_minimum_instrument_index(midi_channel)
             for (l in 0 until opus_manager.get_channel(c).size) {
-                opus_manager.percussion_set_instrument(c, l, max(0, percussion_keys.first() - 27))
+                opus_manager.percussion_set_instrument(c, l, max(0, i - 27))
             }
         }
     }

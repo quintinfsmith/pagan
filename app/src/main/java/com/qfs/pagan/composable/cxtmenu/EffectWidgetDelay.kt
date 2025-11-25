@@ -10,10 +10,10 @@ import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.composable.IntegerInput
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
-import com.qfs.pagan.uibill.UIFacade
+import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun DelayEventMenu (ui_facade: UIFacade, dispatcher: ActionTracker, event: DelayEvent) {
+fun DelayEventMenu (ui_facade: ViewModelEditorState, dispatcher: ActionTracker, event: DelayEvent) {
     val cursor = ui_facade.active_cursor.value ?: return
     val is_initial = cursor.type == CursorMode.Line
     val echo = remember { mutableIntStateOf(event.echo) }

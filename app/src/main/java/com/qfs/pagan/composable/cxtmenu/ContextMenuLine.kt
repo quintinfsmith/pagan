@@ -22,11 +22,11 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEv
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
-import com.qfs.pagan.uibill.UIFacade
+import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.collections.get
 
 @Composable
-fun ContextMenuLinePrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {
+fun ContextMenuLinePrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
     val cursor = ui_facade.active_cursor.value ?: return
     val active_line = ui_facade.line_data[cursor.ints[0]]
 
@@ -65,7 +65,7 @@ fun ContextMenuLinePrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {
 }
 
 @Composable
-fun ContextMenuLineSecondary(ui_facade: UIFacade, dispatcher: ActionTracker, initial_event: EffectEvent) {
+fun ContextMenuLineSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, initial_event: EffectEvent) {
     val cursor = ui_facade.active_cursor.value ?: return
     val y = cursor.ints[0]
     val line = ui_facade.line_data[y]
@@ -77,7 +77,7 @@ fun ContextMenuLineSecondary(ui_facade: UIFacade, dispatcher: ActionTracker, ini
 }
 
 @Composable
-fun ContextMenuLineCtlSecondary(ui_facade: UIFacade, dispatcher: ActionTracker, initial_event: EffectEvent) {
+fun ContextMenuLineCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, initial_event: EffectEvent) {
     Row(modifier = Modifier.height(dimensionResource(R.dimen.contextmenu_secondary_button_height))) {
         when (initial_event) {
             is OpusVolumeEvent -> VolumeEventMenu(ui_facade, dispatcher, initial_event)
@@ -92,7 +92,7 @@ fun ContextMenuLineCtlSecondary(ui_facade: UIFacade, dispatcher: ActionTracker, 
 }
 
 @Composable
-fun ContextMenuLineStdSecondary(ui_facade: UIFacade, dispatcher: ActionTracker, volume_event: OpusVolumeEvent) {
+fun ContextMenuLineStdSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, volume_event: OpusVolumeEvent) {
     val cursor = ui_facade.active_cursor.value ?: return
     val y = cursor.ints[0]
     val line = ui_facade.line_data[y]

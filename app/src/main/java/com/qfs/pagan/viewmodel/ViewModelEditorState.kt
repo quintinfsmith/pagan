@@ -1,10 +1,12 @@
-package com.qfs.pagan.uibill
+package com.qfs.pagan.viewmodel
 
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.ViewModel
+import com.qfs.apres.soundfont2.SoundFont
+import com.qfs.pagan.Activity.ActivityEditor.PlaybackState
 import com.qfs.pagan.EditorTable
-import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
@@ -14,12 +16,53 @@ import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import kotlin.math.max
 import kotlin.math.min
 
-// IN PROGRESS: converting this into  a UI State representation of the Editor....
+class ViewModelEditorState: ViewModel() {
+    companion object {
+        fun get_next_playback_state(input_state: PlaybackState, next_state: PlaybackState): PlaybackState? {
+            return when (input_state) {
+                PlaybackState.NotReady -> {
+                    when (next_state) {
+                        PlaybackState.NotReady,
+                        PlaybackState.Ready -> next_state
+                        else -> null
+                    }
+                }
+                PlaybackState.Ready -> {
+                    when (next_state) {
+                        PlaybackState.NotReady,
+                        PlaybackState.Ready,
+                        PlaybackState.Queued -> next_state
+                        else -> null
+                    }
+                }
+                PlaybackState.Playing -> {
+                    when (next_state) {
+                        PlaybackState.Ready,
+                        PlaybackState.Stopping -> next_state
+                        else -> null
+                    }
+                }
+                PlaybackState.Queued -> {
+                    when (next_state) {
+                        PlaybackState.Ready,
+                        PlaybackState.Playing -> next_state
+                        else -> null
+                    }
+                }
+                PlaybackState.Stopping -> {
+                    when (next_state) {
+                        PlaybackState.Ready -> next_state
+                        else -> null
+                    }
+                }
+            }
+        }
+    }
 
-/**
-* A queue of UI update commands to be executed once it is safe to do so.
-*/
-class UIFacade {
+    var available_preset_names: HashMap<Pair<Int, Int>, String>? = null
+
+    ///////////////////////////////////////////////////////
+
     val ui_lock = UILock()
     private val working_path = mutableListOf<Int>()
 
@@ -294,7 +337,7 @@ class UIFacade {
                 val cursor_line = this.line_data[cursor.ints[0]]
                 val check_line = this.line_data[y]
                 cursor.ints[0] == y ||
-                    (check_line.channel == cursor_line.channel && check_line.line_offset == cursor_line.line_offset)
+                        (check_line.channel == cursor_line.channel && check_line.line_offset == cursor_line.line_offset)
             }
             CursorMode.Single -> cursor.ints[0] == y
             CursorMode.Range -> {
@@ -368,6 +411,33 @@ class UIFacade {
         }
     }
 
+    fun set_radix(radix: Int) {
+        if (this.ui_lock.is_locked()) return
+        this.radix.value = radix
+    }
+
+    fun mute_channel(channel: Int, mute: Boolean) {
+        if (this.ui_lock.is_locked()) return
+        this.channel_data[channel].is_mute = mute
+    }
+
+    fun mute_line(line: Int, mute: Boolean) {
+        if (this.ui_lock.is_locked()) return
+        this.line_data[line].is_mute = mute
+    }
+
+    fun populate_preset_names(soundfont: SoundFont) {
+        if (this.ui_lock.is_locked()) return
+        this.available_preset_names = HashMap()
+        for ((name, program, bank) in soundfont.get_available_presets()) {
+            this.available_preset_names?.set(Pair(bank, program), name)
+        }
+    }
+    fun clear_preset_names() {
+        if (this.ui_lock.is_locked()) return
+        this.available_preset_names = null
+    }
+
     fun clear_instrument_names() {
         if (this.ui_lock.is_locked()) return
         this.instrument_names.clear()
@@ -384,17 +454,5 @@ class UIFacade {
             }
             hashmap
         }
-    }
-
-    fun set_radix(radix: Int) {
-        this.radix.value = radix
-    }
-
-    fun mute_channel(channel: Int, mute: Boolean) {
-        this.channel_data[channel].is_mute = mute
-    }
-
-    fun mute_line(line: Int, mute: Boolean) {
-        this.line_data[line].is_mute = mute
     }
 }

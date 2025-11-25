@@ -1856,7 +1856,7 @@ class ActionTracker {
     }
 
     fun get_opus_manager(): OpusManager {
-        return this.get_activity().model_editor.opus_manager
+        return this.get_activity().controller_model.opus_manager
     }
 
     fun playback() {
@@ -2314,7 +2314,7 @@ class ActionTracker {
     fun set_copy_mode(mode: PaganConfiguration.MoveMode) {
         this.activity?.let { activity ->
             this.track(TrackedAction.SetCopyMode, ActionTracker.string_to_ints(mode.name))
-            activity.model_editor.move_mode.value = mode
+            activity.controller_model.move_mode.value = mode
             activity.view_model.configuration.move_mode = mode
             activity.view_model.save_configuration()
         }

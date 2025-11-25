@@ -14,13 +14,13 @@ import androidx.compose.ui.res.dimensionResource
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.composable.button.IconCMenuButton
-import com.qfs.pagan.uibill.UIFacade
+import com.qfs.pagan.viewmodel.ViewModelEditorState
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 
 @Composable
-fun ContextMenuRangePrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {
+fun ContextMenuRangePrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
     Column {
         Row(Modifier.height(dimensionResource(R.dimen.icon_button_height))) {
             Spacer(modifier = Modifier.fillMaxWidth().weight(1F))
@@ -38,7 +38,7 @@ fun ContextMenuRangePrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {
     }
 }
 @Composable
-fun ContextMenuRangeSecondary(ui_facade: UIFacade, dispatcher: ActionTracker, move_mode: PaganConfiguration.MoveMode) {
+fun ContextMenuRangeSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, move_mode: PaganConfiguration.MoveMode) {
     Column {
         Row(modifier = Modifier.height(dimensionResource(R.dimen.contextmenu_secondary_button_height))) {
             val cursor_mode = ui_facade.active_cursor.value?.type

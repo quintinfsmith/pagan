@@ -9,10 +9,10 @@ import androidx.compose.ui.res.dimensionResource
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.IconCMenuButton
-import com.qfs.pagan.uibill.UIFacade
+import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun ContextMenuColumnPrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {
+fun ContextMenuColumnPrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
     val cursor = ui_facade.active_cursor.value ?: return
     val beat = cursor.ints[0]
     val column_data = ui_facade.column_data[beat].value
@@ -48,5 +48,5 @@ fun ContextMenuColumnPrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {
 }
 
 @Composable
-fun ContextMenuColumnSecondary(ui_facade: UIFacade, dispatcher: ActionTracker) {}
+fun ContextMenuColumnSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {}
 

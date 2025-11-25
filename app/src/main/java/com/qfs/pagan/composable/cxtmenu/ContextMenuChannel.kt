@@ -15,10 +15,10 @@ import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.IconCMenuButton
-import com.qfs.pagan.uibill.UIFacade
+import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun ContextMenuChannelPrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {
+fun ContextMenuChannelPrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
     val cursor = ui_facade.active_cursor.value ?: return
     val channel_index = cursor.ints[0]
 
@@ -57,7 +57,7 @@ fun ContextMenuChannelPrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {
 }
 
 @Composable
-fun ContextMenuChannelSecondary(ui_facade: UIFacade, dispatcher: ActionTracker) {
+fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
     val cursor = ui_facade.active_cursor.value ?: return
     val channel_index = cursor.ints[0]
     val active_channel = ui_facade.channel_data[channel_index]

@@ -21,13 +21,12 @@ import com.qfs.pagan.structure.opusmanager.base.TunedInstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.IncorrectCursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import com.qfs.pagan.structure.opusmanager.history.OpusLayerHistory
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
-import com.qfs.pagan.uibill.UIFacade
+import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -66,7 +65,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     private var _activity: ActivityEditor? = null
     var marked_range: Pair<BeatKey, BeatKey>? = null
 
-    val ui_facade = UIFacade()
+    val ui_facade = ViewModelEditorState()
     var temporary_blocker: OpusManagerCursor? = null
 
     var latest_set_octave: Int? = null
@@ -535,7 +534,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                     this.get_instrument_line_index(channel, line_offset)
                 )
             )!!,
-            UIFacade.LineData(channel, line_offset, null, instrument, this.channels[channel].lines[line_offset].muted)
+            ViewModelEditorState.LineData(channel, line_offset, null, instrument, this.channels[channel].lines[line_offset].muted)
         )
     }
 
@@ -668,14 +667,14 @@ class OpusLayerInterface : OpusLayerHistory() {
                 }
 
                 if (y >= first_swapped_line) {
-                    this.ui_facade.update_line(y, UIFacade.LineData(c, l, null, instrument, line.muted))
+                    this.ui_facade.update_line(y, ViewModelEditorState.LineData(c, l, null, instrument, line.muted))
                 }
                 y++
 
                 for ((type, controller) in line.controllers.get_all()) {
                     if (!controller.visible) continue
                     if (y > first_swapped_line) {
-                        this.ui_facade.update_line(y, UIFacade.LineData(c, l, type, instrument, line.muted))
+                        this.ui_facade.update_line(y, ViewModelEditorState.LineData(c, l, type, instrument, line.muted))
                     }
                     y++
                 }
@@ -684,7 +683,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             for ((type, controller) in channel.controllers.get_all()) {
                 if (!controller.visible) continue
                 if (y > first_swapped_line) {
-                    this.ui_facade.update_line(y, UIFacade.LineData(c, null, type, null, channel.muted))
+                    this.ui_facade.update_line(y, ViewModelEditorState.LineData(c, null, type, null, channel.muted))
                 }
                 y++
             }
@@ -693,7 +692,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         for ((type, controller) in this.controllers.get_all()) {
             if (!controller.visible) continue
             if (y > first_swapped_line) {
-                this.ui_facade.update_line(y, UIFacade.LineData(null, null, type, null, false))
+                this.ui_facade.update_line(y, ViewModelEditorState.LineData(null, null, type, null, false))
             }
             y++
         }
@@ -748,7 +747,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             this.ui_facade.add_row(
                 ctl_row++,
                 MutableList(line.beats.size) { mutableStateOf(line.beats[it].copy()) },
-                UIFacade.LineData(
+                ViewModelEditorState.LineData(
                     channel,
                     j,
                     null,
@@ -881,7 +880,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 this.ui_facade.add_row(
                     i++,
                     MutableList(this.length) { mutableStateOf(this.get_tree_copy(BeatKey(c, l, it))) },
-                    UIFacade.LineData(c, l, null, instrument, line.muted)
+                    ViewModelEditorState.LineData(c, l, null, instrument, line.muted)
                 )
                 for ((type, controller) in line.controllers.get_all()) {
                     if (!controller.visible) continue
@@ -890,7 +889,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                         MutableList(this.length) {
                             mutableStateOf(controller.beats[it].copy())
                         },
-                        UIFacade.LineData(c, l, type, null, line.muted)
+                        ViewModelEditorState.LineData(c, l, type, null, line.muted)
                     )
                 }
             }
@@ -899,7 +898,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 this.ui_facade.add_row(
                     i++,
                     MutableList(this.length) { mutableStateOf(controller.beats[it].copy()) },
-                    UIFacade.LineData(c, null, type, null, channel.muted)
+                    ViewModelEditorState.LineData(c, null, type, null, channel.muted)
                 )
             }
         }
@@ -908,7 +907,7 @@ class OpusLayerInterface : OpusLayerHistory() {
             this.ui_facade.add_row(
                 i++,
                 MutableList(this.length) { mutableStateOf(controller.beats[it].copy()) },
-                UIFacade.LineData(null, null, type, null, false)
+                ViewModelEditorState.LineData(null, null, type, null, false)
             )
         }
         this.ui_facade.empty_cells()
@@ -1562,7 +1561,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                     null
                 } ?: return
 
-                this.ui_facade.set_cursor(UIFacade.CacheCursor(cursor.mode, y, cursor.beat, *(cursor.get_position().toIntArray())))
+                this.ui_facade.set_cursor(ViewModelEditorState.CacheCursor(cursor.mode, y, cursor.beat, *(cursor.get_position().toIntArray())))
             }
 
             CursorMode.Range -> {
@@ -1613,7 +1612,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                     return
                 }
 
-                this.ui_facade.set_cursor(UIFacade.CacheCursor(cursor.mode, top_left.first, top_left.second, bottom_right.first, bottom_right.second))
+                this.ui_facade.set_cursor(ViewModelEditorState.CacheCursor(cursor.mode, top_left.first, top_left.second, bottom_right.first, bottom_right.second))
             }
 
             CursorMode.Line -> {
@@ -1632,11 +1631,11 @@ class OpusLayerInterface : OpusLayerHistory() {
                     null
                 } ?: return
 
-                this.ui_facade.set_cursor(UIFacade.CacheCursor(cursor.mode, y))
+                this.ui_facade.set_cursor(ViewModelEditorState.CacheCursor(cursor.mode, y))
             }
 
             CursorMode.Column -> {
-                this.ui_facade.set_cursor(UIFacade.CacheCursor(cursor.mode, cursor.beat))
+                this.ui_facade.set_cursor(ViewModelEditorState.CacheCursor(cursor.mode, cursor.beat))
             }
             CursorMode.Channel -> {
                 val y = when (cursor.ctl_level) {
@@ -1669,7 +1668,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                     line_count++
                 }
 
-                this.ui_facade.set_cursor(UIFacade.CacheCursor(cursor.mode, y, line_count))
+                this.ui_facade.set_cursor(ViewModelEditorState.CacheCursor(cursor.mode, y, line_count))
             }
             CursorMode.Unset -> { }
         }
@@ -1681,7 +1680,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.ui_facade.add_row(
             y,
             MutableList(controller_line.beats.size) { mutableStateOf(controller_line.beats[it].copy()) },
-            UIFacade.LineData(channel_index, line_offset, ctl_type, null, line.muted)
+            ViewModelEditorState.LineData(channel_index, line_offset, ctl_type, null, line.muted)
         )
     }
 
@@ -1703,7 +1702,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         this.ui_facade.add_row(
             visible_row,
             MutableList(new_line.beats.size) { mutableStateOf(new_line.beats[it].copy()) },
-            UIFacade.LineData(
+            ViewModelEditorState.LineData(
                 channel,
                 line_offset,
                 null,

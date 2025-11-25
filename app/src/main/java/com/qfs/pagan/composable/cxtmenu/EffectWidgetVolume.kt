@@ -9,10 +9,10 @@ import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.composable.button.TextCMenuButton
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
-import com.qfs.pagan.uibill.UIFacade
+import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun VolumeEventMenu (ui_facade: UIFacade, dispatcher: ActionTracker, event: OpusVolumeEvent) {
+fun VolumeEventMenu (ui_facade: ViewModelEditorState, dispatcher: ActionTracker, event: OpusVolumeEvent) {
     val cursor = ui_facade.active_cursor.value ?: return
     val is_initial = cursor.type == CursorMode.Line
 

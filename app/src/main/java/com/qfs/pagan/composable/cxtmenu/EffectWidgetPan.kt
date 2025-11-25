@@ -12,10 +12,10 @@ import androidx.compose.ui.Modifier
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
-import com.qfs.pagan.uibill.UIFacade
+import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun PanEventMenu (ui_facade: UIFacade, dispatcher: ActionTracker, event: OpusPanEvent) {
+fun PanEventMenu (ui_facade: ViewModelEditorState, dispatcher: ActionTracker, event: OpusPanEvent) {
     val cursor = ui_facade.active_cursor.value ?: return
     val is_initial = cursor.type == CursorMode.Line
     val default_colors = SliderDefaults.colors()

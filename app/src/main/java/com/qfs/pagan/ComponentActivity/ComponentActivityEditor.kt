@@ -87,8 +87,8 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocity
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
-import com.qfs.pagan.uibill.UIFacade
-import com.qfs.pagan.viewmodel.ViewModelEditor
+import com.qfs.pagan.viewmodel.ViewModelEditorController
+import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.BufferedReader
@@ -98,7 +98,8 @@ import java.io.InputStreamReader
 import kotlin.math.abs
 
 class ComponentActivityEditor: PaganComponentActivity() {
-    val model_editor: ViewModelEditor by this.viewModels()
+    val controller_model: ViewModelEditorController by this.viewModels()
+    val state_model: ViewModelEditorState by this.viewModels()
     private val _result_launcher_set_project_directory_and_save =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode != RESULT_OK) return@registerForActivityResult
@@ -112,7 +113,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             this.view_model.save_configuration()
 
             // No need to update the active_project here. using this intent launcher implies the active_project will be changed in the ucheck
-            this.view_model.project_manager?.change_project_path(tree_uri, this.model_editor.active_project.value)
+            this.view_model.project_manager?.change_project_path(tree_uri, this.controller_model.active_project.value)
 
             this._project_save()
         }
@@ -121,7 +122,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode != RESULT_OK) return@registerForActivityResult
             val uri = result.data?.getStringExtra(EXTRA_ACTIVE_PROJECT)?.toUri() ?: return@registerForActivityResult
-            this.model_editor.active_project.value = uri
+            this.controller_model.active_project.value = uri
         }
 
     //internal var result_launcher_import =
@@ -136,16 +137,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val action_interface = this.model_editor.action_interface
-        this.model_editor.opus_manager.project_change_new()
+        val action_interface = this.controller_model.action_interface
+        this.controller_model.opus_manager.project_change_new()
         action_interface.attach_activity(this)
-        action_interface.attach_opus_manager(this.model_editor.opus_manager)
+        action_interface.attach_opus_manager(this.controller_model.opus_manager)
         super.onCreate(savedInstanceState)
 
         this.onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val that = this@ComponentActivityEditor
-                val opus_manager = that.model_editor.opus_manager
+                val opus_manager = that.controller_model.opus_manager
                 val ui_facade = opus_manager.ui_facade
                 if (ui_facade.active_cursor.value != null) {
                     action_interface.cursor_clear()
@@ -170,7 +171,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         if (savedInstanceState != null) {
             // if the activity is forgotten, the opus_manager is be uninitialized
-            if (this.model_editor.opus_manager.is_initialized()) {
+            if (this.controller_model.opus_manager.is_initialized()) {
                 //this.refresh(
                 //    savedInstanceState.getInt("x"),
                 //    savedInstanceState.getInt("y")
@@ -204,8 +205,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun import_project(uri: Uri) {
         this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
             val bytes = FileInputStream(it.fileDescriptor).readBytes()
-            this.model_editor.opus_manager.load(bytes)
-            this.model_editor.active_project.value = null
+            this.controller_model.opus_manager.load(bytes)
+            this.controller_model.active_project.value = null
         }
     }
 
@@ -220,12 +221,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
             throw InvalidMIDIFile(uri.toString())
         }
 
-        val opus_manager = this.model_editor.opus_manager
+        val opus_manager = this.controller_model.opus_manager
         opus_manager.project_change_midi(midi)
         val filename = this.parse_file_name(uri)
         opus_manager.set_project_name(filename?.substring(0, filename.lastIndexOf(".")) ?: this.getString( R.string.default_imported_midi_title))
         opus_manager.clear_history()
-        this.model_editor.active_project.value = null
+        this.controller_model.active_project.value = null
     }
 
     fun parse_file_name(uri: Uri): String? {
@@ -286,15 +287,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     override fun onDestroy() {
-        this.model_editor.action_interface.detach_opus_manager()
-        this.model_editor.action_interface.detach_activity()
+        this.controller_model.action_interface.detach_opus_manager()
+        this.controller_model.action_interface.detach_activity()
         super.onDestroy()
     }
 
     @Composable
     override fun TopBar(modifier: Modifier) {
-        val ui_facade = this.model_editor.opus_manager.ui_facade
-        val dispatcher = this.model_editor.action_interface
+        val ui_facade = this.controller_model.opus_manager.ui_facade
+        val dispatcher = this.controller_model.action_interface
         val scope = rememberCoroutineScope()
         Row(
             verticalAlignment = Alignment.CenterVertically
@@ -356,7 +357,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
 
     @Composable
-    fun ContextMenuPrimary(ui_facade: UIFacade, dispatcher: ActionTracker) {
+    fun ContextMenuPrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
         val cursor = ui_facade.active_cursor.value
         when (cursor?.type) {
             CursorMode.Line -> ContextMenuLinePrimary(ui_facade, dispatcher)
@@ -372,7 +373,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
     @Composable
-    fun ContextMenuSecondary(ui_facade: UIFacade, dispatcher: ActionTracker) {
+    fun ContextMenuSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
         val cursor = ui_facade.active_cursor.value
         when (cursor?.type) {
             CursorMode.Line -> {
@@ -381,7 +382,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             CursorMode.Column -> ContextMenuColumnSecondary(ui_facade, dispatcher)
             CursorMode.Single -> ContextMenuSingleSecondary(ui_facade, dispatcher)
             CursorMode.Range -> {
-                ContextMenuRangeSecondary(ui_facade, dispatcher, this@ComponentActivityEditor.model_editor.move_mode.value)
+                ContextMenuRangeSecondary(ui_facade, dispatcher, this@ComponentActivityEditor.controller_model.move_mode.value)
             }
             CursorMode.Channel -> ContextMenuChannelSecondary(ui_facade, dispatcher)
             CursorMode.Unset,
@@ -390,7 +391,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun MainTable(ui_facade: UIFacade, dispatcher: ActionTracker, length: MutableState<Int>) {
+    fun MainTable(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, length: MutableState<Int>) {
         val line_height = dimensionResource(R.dimen.line_height)
         val ctl_line_height = dimensionResource(R.dimen.ctl_line_height)
         val leaf_width = dimensionResource(R.dimen.base_leaf_width)
@@ -508,7 +509,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun LineLabelView(modifier: Modifier = Modifier, y: Int, ui_facade: UIFacade, dispatcher: ActionTracker) {
+    fun LineLabelView(modifier: Modifier = Modifier, y: Int, ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
         val line_info = ui_facade.line_data[y]
         val cursor = ui_facade.active_cursor.value
         val is_line_selected = cursor != null && ui_facade.is_line_selected(cursor, y)
@@ -615,7 +616,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun BeatLabelView(x: Int, ui_facade: UIFacade, dispatcher: ActionTracker) {
+    fun BeatLabelView(x: Int, ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
         val column_info = ui_facade.column_data[x].value
         val modifier = Modifier
 
@@ -663,7 +664,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun <T: OpusEvent> LeafView(ui_facade: UIFacade, dispatcher: ActionTracker, y: Int, x: Int, path: List<Int>, event: T?, modifier: Modifier = Modifier) {
+    fun <T: OpusEvent> LeafView(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, y: Int, x: Int, path: List<Int>, event: T?, modifier: Modifier = Modifier) {
         val cursor = ui_facade.active_cursor.value
         val line_data = ui_facade.line_data[y]
         val cell_selected = cursor != null && ui_facade.is_cell_selected(cursor, y, x)
@@ -758,7 +759,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun CellView(ui_facade: UIFacade, dispatcher: ActionTracker, y: Int, x: Int, modifier: Modifier = Modifier) {
+    fun CellView(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, y: Int, x: Int, modifier: Modifier = Modifier) {
         val cell = ui_facade.cell_map[y][x].value
         val line_info = ui_facade.line_data[y]
         Row(modifier.fillMaxSize()) {
@@ -872,8 +873,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     override fun LayoutMediumPortrait() {
-        val view_model = this.model_editor
-        val ui_facade = this.model_editor.opus_manager.ui_facade
+        val view_model = this.controller_model
+        val ui_facade = this.controller_model.opus_manager.ui_facade
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.BottomCenter
@@ -1001,11 +1002,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
     private fun _project_save() {
         this.view_model.project_manager?.let {
             it.save(
-                this.model_editor.opus_manager,
-                this.model_editor.active_project.value,
+                this.controller_model.opus_manager,
+                this.controller_model.active_project.value,
                 this.view_model.configuration.indent_json
             )
-            this.model_editor.opus_manager.ui_facade.set_project_exists(true)
+            this.controller_model.opus_manager.ui_facade.set_project_exists(true)
             this.toast(R.string.feedback_project_saved)
         }
     }
@@ -1035,7 +1036,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun open_settings() {
         this.result_launcher_settings.launch(
             Intent(this, ActivitySettings::class.java).apply {
-                this@ComponentActivityEditor.model_editor.active_project.value?.let {
+                this@ComponentActivityEditor.controller_model.active_project.value?.let {
                     this.putExtra(EXTRA_ACTIVE_PROJECT, it.toString())
                 }
             }
@@ -1085,9 +1086,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     private fun needs_save(): Boolean {
-        val opus_manager = this.model_editor.opus_manager
+        val opus_manager = this.controller_model.opus_manager
 
-        val active_project = this.model_editor.active_project.value ?: return !opus_manager.history_cache.is_empty()
+        val active_project = this.controller_model.active_project.value ?: return !opus_manager.history_cache.is_empty()
         if (DocumentFile.fromSingleUri(this, active_project)?.exists() != true) return true
 
         val input_stream = this.contentResolver.openInputStream(active_project)
@@ -1111,13 +1112,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
         reader.close()
         input_stream?.close()
 
-        this.model_editor.opus_manager.load(content) {
-            this.model_editor.active_project.value = uri
+        this.controller_model.opus_manager.load(content) {
+            this.controller_model.active_project.value = uri
         }
     }
 
     fun setup_new() {
-        this.model_editor.opus_manager.project_change_new()
+        this.controller_model.opus_manager.project_change_new()
 
         // TODO:: Not sure this should be here
         // val opus_manager = this.model_editor.opus_manager

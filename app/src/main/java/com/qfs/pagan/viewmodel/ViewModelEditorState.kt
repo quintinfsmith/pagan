@@ -63,7 +63,6 @@ class ViewModelEditorState: ViewModel() {
 
     ///////////////////////////////////////////////////////
 
-    val ui_lock = UILock()
     private val working_path = mutableListOf<Int>()
 
     enum class SelectionLevel {

@@ -26,6 +26,7 @@ import com.qfs.pagan.structure.opusmanager.cursor.IncorrectCursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import com.qfs.pagan.structure.opusmanager.history.OpusLayerHistory
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
+import com.qfs.pagan.uibill.UILock
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.abs
 import kotlin.math.max
@@ -56,6 +57,8 @@ class OpusLayerInterface : OpusLayerHistory() {
         )
     }
 
+    val ui_lock = UILock()
+
     // Refactored properties  //////////////////////
     var minimum_percussions = HashMap<Int, Int>()
     /////////////////////////////////////////////
@@ -81,15 +84,15 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     // UI BILL Interface functions vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     private fun <T> lock_ui(callback: () -> T): T? {
-        this.ui_facade.lock()
+        this.ui_lock.lock()
 
         val output = try {
             val tmp = callback()
-            this.ui_facade.unlock()
+            this.ui_lock.unlock()
             tmp
         } catch (e: BlockedActionException) {
-            this.ui_facade.unlock()
-            if (!this.ui_facade.is_locked()) {
+            this.ui_lock.unlock()
+            if (!this.ui_lock.is_locked()) {
                 if (this.temporary_blocker != null) {
                     this.cursor_apply(this.temporary_blocker!!)
                 }
@@ -98,7 +101,7 @@ class OpusLayerInterface : OpusLayerHistory() {
                 throw e
             }
         } catch (e: Exception) {
-            this.ui_facade.unlock()
+            this.ui_lock.unlock()
             throw e
         }
 
@@ -106,9 +109,11 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     private fun _clear_facade_blocker_leaf() {
+        if (this.ui_lock.is_locked()) return
         this.ui_facade.blocker_leaf = null
     }
     private fun _update_facade_blocker_leaf_line_ctl(type: EffectType, beat_key: BeatKey, position: List<Int>) {
+        if (this.ui_lock.is_locked()) return
         this.ui_facade.blocker_leaf = listOf<Int>(
             try {
                 this.get_visible_row_from_ctl_line_line(type, beat_key.channel, beat_key.line_offset)
@@ -119,6 +124,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         ) + position
     }
     private fun _update_facade_blocker_leaf_channel_ctl(type: EffectType, channel: Int, beat: Int, position: List<Int>) {
+        if (this.ui_lock.is_locked()) return
         this.ui_facade.blocker_leaf = listOf<Int>(
             try {
                 this.get_visible_row_from_ctl_line_channel(type, channel)
@@ -129,6 +135,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         ) + position
     }
     private fun _update_facade_blocker_leaf_global_ctl(type: EffectType, beat: Int, position: List<Int>) {
+        if (this.ui_lock.is_locked()) return
         this.ui_facade.blocker_leaf = listOf<Int>(
             try {
                 this.get_visible_row_from_ctl_line_global(type)
@@ -140,6 +147,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     private fun _update_facade_blocker_leaf(beat_key: BeatKey, position: List<Int>) {
+        if (this.ui_lock.is_locked()) return
         this.ui_facade.blocker_leaf = listOf<Int>(
             try {
                 this.get_visible_row_from_ctl_line(
@@ -159,6 +167,7 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     /* Notify the editor table to update a cell */
     private fun _queue_cell_change(beat_key: BeatKey) {
+        if (this.ui_lock.is_locked()) return
         val tree = this.get_tree_copy(beat_key)
         this.ui_facade.update_cell(
             EditorTable.Coordinate(
@@ -177,6 +186,8 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     private fun _queue_global_ctl_cell_change(type: EffectType, beat: Int) {
+        if (this.ui_lock.is_locked()) return
+
         val controller = this.get_controller<EffectEvent>(type)
         if (!controller.visible) return
 
@@ -190,6 +201,8 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     private fun _queue_channel_ctl_cell_change(type: EffectType, channel: Int, beat: Int) {
+        if (this.ui_lock.is_locked()) return
+
         val controller = this.get_all_channels()[channel].get_controller<EffectEvent>(type)
         if (!controller.visible) return
 
@@ -203,6 +216,8 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     private fun _queue_line_ctl_cell_change(type: EffectType, beat_key: BeatKey) {
+        if (this.ui_lock.is_locked()) return
+
         val controller = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].get_controller<EffectEvent>(type)
         if (!controller.visible) return
 
@@ -224,7 +239,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     override fun remove_global_controller(type: EffectType) {
         if (this.is_global_ctl_visible(type)) {
             val abs_line = this.get_visible_row_from_ctl_line_global(type)
-            this._queue_remove_rows(abs_line, 1)
+            this.ui_facade.remove_row(abs_line, 1)
         }
         super.remove_global_controller(type)
     }
@@ -232,7 +247,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     override fun remove_line_controller(type: EffectType, channel_index: Int, line_offset: Int) {
         if (this.is_line_ctl_visible(type, channel_index, line_offset )) {
             val abs_line = this.get_visible_row_from_ctl_line_line(type, channel_index, line_offset)
-            this._queue_remove_rows(abs_line, 1)
+            this.ui_facade.remove_row(abs_line, 1)
         }
         super.remove_line_controller(type, channel_index, line_offset)
     }
@@ -240,7 +255,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     override fun remove_channel_controller(type: EffectType, channel_index: Int) {
         if (this.is_channel_ctl_visible(type, channel_index)) {
             val abs_line = this.get_visible_row_from_ctl_line_channel(type, channel_index)
-            this._queue_remove_rows(abs_line, 1)
+            this.ui_facade.remove_row(abs_line, 1)
         }
         super.remove_channel_controller(type, channel_index)
     }
@@ -255,7 +270,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         } else {
             val visible_row = this.get_visible_row_from_ctl_line_line(type, channel_index, line_offset)
             super.set_line_controller_visibility(type, channel_index, line_offset, false)
-            this._queue_remove_rows(visible_row, 1)
+            this.ui_facade.remove_row(visible_row, 1)
         }
     }
 
@@ -269,7 +284,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         } else {
             val visible_row = this.get_visible_row_from_ctl_line_channel(type, channel_index)
             super.set_channel_controller_visibility(type, channel_index, false)
-            this._queue_remove_rows(visible_row, 1)
+            this.ui_facade.remove_row(visible_row, 1)
         }
     }
 
@@ -282,7 +297,7 @@ class OpusLayerInterface : OpusLayerHistory() {
         } else {
             val visible_row = this.get_visible_row_from_ctl_line_global(type)
             super.set_global_controller_visibility(type, false)
-            this._queue_remove_rows(visible_row, 1)
+            this.ui_facade.remove_row(visible_row, 1)
         }
     }
 
@@ -699,12 +714,17 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     override fun swap_lines(channel_index_a: Int, line_offset_a: Int, channel_index_b: Int, line_offset_b: Int) {
-        val y_a = this.get_instrument_line_index(channel_index_a, line_offset_a)
-        val y_b = this.get_instrument_line_index(channel_index_b, line_offset_b)
-        this.ui_facade.swap_line_cells(y_a, y_b)
+        if (!this.ui_lock.is_locked()) {
+            val y_a = this.get_instrument_line_index(channel_index_a, line_offset_a)
+            val y_b = this.get_instrument_line_index(channel_index_b, line_offset_b)
+            this.ui_facade.swap_line_cells(y_a, y_b)
+        }
 
         super.swap_lines(channel_index_a, line_offset_a, channel_index_b, line_offset_b)
-        this._swap_line_ui_update(channel_index_a, line_offset_a, channel_index_b, line_offset_b)
+
+        if (!this.ui_lock.is_locked()) {
+            this._swap_line_ui_update(channel_index_a, line_offset_a, channel_index_b, line_offset_b)
+        }
     }
 
     override fun remove_line(channel: Int, line_offset: Int): OpusLineAbstract<*> {
@@ -716,25 +736,24 @@ class OpusLayerInterface : OpusLayerHistory() {
 
         val output = super.remove_line(channel, line_offset)
 
-        var row_count = 1
-        for ((_, controller) in output.controllers.get_all()) {
-            if (controller.visible) {
-                row_count += 1
+        if (!this.ui_lock.is_locked()) {
+            var row_count = 1
+            for ((_, controller) in output.controllers.get_all()) {
+                if (controller.visible) {
+                    row_count += 1
+                }
             }
-        }
 
-        this._queue_remove_rows(abs_line, row_count)
+            this.ui_facade.remove_row(abs_line, row_count)
+        }
 
         return output
     }
 
-    private fun _queue_remove_rows(y: Int, count: Int) {
-        this.ui_facade.remove_row(y, count)
-    }
 
     /* Used to update the ui after new_channel and set_channel_visibility(n, true) */
     private fun _post_new_channel(channel: Int, lines: Int) {
-        //if (this.ui_facade.is_locked()) return
+        if (this.ui_lock.is_locked()) return
 
         val y = this.get_instrument_line_index(channel, 0)
         var ctl_row = this.get_visible_row_from_ctl_line(this.get_actual_line_index(y))!!
@@ -777,8 +796,11 @@ class OpusLayerInterface : OpusLayerHistory() {
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?, is_percussion: Boolean) {
         val notify_index = channel ?: this.channels.size
         super.new_channel(channel, lines, uuid, is_percussion)
-        this.ui_facade.add_channel(notify_index, is_percussion, this.channels[notify_index].get_instrument(), this.channels[notify_index].muted)
-        this._post_new_channel(notify_index, lines)
+
+        if (!this.ui_lock.is_locked()) {
+            this.ui_facade.add_channel(notify_index, is_percussion, this.channels[notify_index].get_instrument(), this.channels[notify_index].muted)
+            this._post_new_channel(notify_index, lines)
+        }
 
         this._activity?.update_channel_instruments()
     }
@@ -787,9 +809,11 @@ class OpusLayerInterface : OpusLayerHistory() {
         val original_beat_count = this.length
         super.remove_beat(beat_index, count)
 
-        val x = min(beat_index + count - 1, original_beat_count - 1) - (count - 1)
-        for (i in 0 until count) {
-            this.ui_facade.remove_column(x)
+        if (!this.ui_lock.is_locked()) {
+            val x = min(beat_index + count - 1, original_beat_count - 1) - (count - 1)
+            for (i in 0 until count) {
+                this.ui_facade.remove_column(x)
+            }
         }
     }
 
@@ -917,6 +941,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     private fun ui_add_column(beat_index: Int) {
+        if (this.ui_lock.is_locked()) return
         val new_cells = mutableListOf<MutableState<ReducibleTree<out OpusEvent>>>()
         for ((c, channel) in this.channels.enumerate()) {
             for ((l, line) in channel.lines.enumerate()) {
@@ -995,7 +1020,10 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     override fun set_transpose(new_transpose: Pair<Int, Int>) {
         super.set_transpose(new_transpose)
-        this.ui_facade.queue_config_drawer_redraw_export_button()
+
+        if (!this.ui_lock.is_locked()) {
+            this.ui_facade.queue_config_drawer_redraw_export_button()
+        }
     }
 
     override fun set_tuning_map(new_map: Array<Pair<Int, Int>>, mod_events: Boolean) {
@@ -1016,20 +1044,22 @@ class OpusLayerInterface : OpusLayerHistory() {
        //      }
        //  }
 
-        this.ui_facade.set_radix(this.get_radix())
-        this.ui_facade.queue_config_drawer_redraw_export_button()
+        if (!this.ui_lock.is_locked()) {
+            this.ui_facade.set_radix(this.get_radix())
+            this.ui_facade.queue_config_drawer_redraw_export_button()
 
-        if (new_map.size != original_map.size && mod_events) {
-            for (i in 0 until this.channels.size) {
-                for (j in 0 until this.channels[i].lines.size) {
-                    for (k in 0 until this.length) {
-                        val beat_key = BeatKey(i, j, k)
-                        val tree = this.get_tree(beat_key)
-                        if (tree.is_eventless()) continue
-                        this._queue_cell_change(beat_key)
+            if (new_map.size != original_map.size && mod_events) {
+                for (i in 0 until this.channels.size) {
+                    for (j in 0 until this.channels[i].lines.size) {
+                        for (k in 0 until this.length) {
+                            val beat_key = BeatKey(i, j, k)
+                            val tree = this.get_tree(beat_key)
+                            if (tree.is_eventless()) continue
+                            this._queue_cell_change(beat_key)
+                        }
                     }
-                }
 
+                }
             }
         }
 
@@ -1051,7 +1081,9 @@ class OpusLayerInterface : OpusLayerHistory() {
 
     override fun move_channel(channel_index: Int, new_channel_index: Int) {
         super.move_channel(channel_index, new_channel_index)
-        this.ui_facade.move_channel(channel_index, new_channel_index)
+        if (!this.ui_lock.is_locked()) {
+            this.ui_facade.move_channel(channel_index, new_channel_index)
+        }
         this._activity?.update_channel_instruments()
     }
 
@@ -1065,14 +1097,16 @@ class OpusLayerInterface : OpusLayerHistory() {
     override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
         super.set_duration(beat_key, position, duration)
 
-        // Needs to be set to trigger potentially queued cell changes from on_overlap()
-        this._queue_cell_change(beat_key)
+        if (!this.ui_lock.is_locked()) {
+            // Needs to be set to trigger potentially queued cell changes from on_overlap()
+            this._queue_cell_change(beat_key)
+        }
     }
 
     override fun channel_set_instrument(channel: Int, instrument: Pair<Int, Int>) {
         super.channel_set_instrument(channel, instrument)
 
-        if (this.ui_facade.is_locked()) return
+        if (this.ui_lock.is_locked()) return
 
         // Updating channel instruments doesn't strictly need to be gated behind the full lock,
         // BUT this way these don't get called multiple times every setup
@@ -1685,7 +1719,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     private fun _update_after_new_line(channel: Int, line_offset: Int?) {
-        if (this.ui_facade.is_locked()) return
+        if (this.ui_lock.is_locked()) return
 
         val working_channel = this.get_channel(channel)
         val adj_line_offset = line_offset ?: (working_channel.lines.size - 1)
@@ -1724,7 +1758,7 @@ class OpusLayerInterface : OpusLayerHistory() {
     }
 
     private fun _new_column_in_column_width_map(index: Int) {
-        if (this.ui_facade.is_locked()) return
+        if (this.ui_lock.is_locked()) return
 
         val column = mutableListOf<Int>()
         for (channel in this.get_visible_channels()) {

@@ -31,6 +31,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -60,6 +61,7 @@ import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
 import com.qfs.pagan.CompatibleFileType
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.SText
+import com.qfs.pagan.composable.button.ConfigDrawerButton
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelPrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuColumnPrimary
@@ -896,76 +898,49 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     override fun Drawer(modifier: Modifier) {
-        Box(
-            modifier = Modifier
-                .background(color = Color.Red)
-                .fillMaxSize()
-        ) {
-            Column() {
+        Card {
+            Column {
                 Row {
                     Button(
                         onClick = { TODO() },
                         content = { SText(R.string.label_tuning) }
                     )
                     Spacer(modifier = Modifier.weight(1F))
-                    IconButton(
-                        onClick = { TODO() },
-                        content = {
-                            Icon(
-                                painter = painterResource(R.drawable.icon_add_channel_kit),
-                                contentDescription = stringResource(R.string.btn_cfg_add_kit_channel)
-                            )
-                        }
+                    ConfigDrawerButton(
+                        icon = R.drawable.icon_add_channel_kit,
+                        description = R.string.btn_cfg_add_kit_channel,
+                        onClick = { TODO() }
                     )
-                    IconButton(
-                        onClick = { TODO() },
-                        content = {
-                            Icon(
-                                painter = painterResource(R.drawable.icon_add_channel),
-                                contentDescription = stringResource(R.string.btn_cfg_add_channel)
-                            )
-                        }
+                    ConfigDrawerButton(
+                        icon = R.drawable.icon_add_channel,
+                        description = R.string.btn_cfg_add_channel,
+                        onClick = { TODO() }
                     )
+
                 }
                 Row(modifier = Modifier.weight(1F)) {
 
                 }
                 Row {
-                    IconButton(
-                        onClick = {},
-                        content = {
-                            Icon(
-                                painter = painterResource(R.drawable.icon_save),
-                                contentDescription = stringResource(R.string.btn_cfg_save)
-                            )
-                        }
+                    ConfigDrawerButton(
+                        icon = R.drawable.icon_save,
+                        description = R.string.btn_cfg_save,
+                        onClick = { TODO() }
                     )
-                    IconButton(
-                        onClick = { TODO() },
-                        content = {
-                            Icon(
-                                painter = painterResource(R.drawable.icon_ic_baseline_content_copy_24),
-                                contentDescription = stringResource(R.string.btn_cfg_copy)
-                            )
-                        }
+                    ConfigDrawerButton(
+                        icon = R.drawable.icon_ic_baseline_content_copy_24,
+                        description = R.string.btn_cfg_copy,
+                        onClick = { TODO() }
                     )
-                    IconButton(
-                        onClick = { TODO() },
-                        content = {
-                            Icon(
-                                painter = painterResource(R.drawable.icon_trash),
-                                contentDescription = stringResource(R.string.btn_cfg_delete)
-                            )
-                        }
+                    ConfigDrawerButton(
+                        icon = R.drawable.icon_trash,
+                        description = R.string.btn_cfg_delete,
+                        onClick = { TODO() }
                     )
-                    IconButton(
-                        onClick = { TODO() },
-                        content = {
-                            Icon(
-                                painter = painterResource(R.drawable.icon_export),
-                                contentDescription = stringResource(R.string.btn_cfg_export)
-                            )
-                        }
+                    ConfigDrawerButton(
+                        icon = R.drawable.icon_export,
+                        description = R.string.btn_cfg_export,
+                        onClick = { TODO() }
                     )
                 }
             }

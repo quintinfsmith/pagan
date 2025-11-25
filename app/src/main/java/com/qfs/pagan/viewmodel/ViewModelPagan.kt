@@ -1,11 +1,11 @@
-package com.qfs.pagan
+package com.qfs.pagan.viewmodel
 
-import androidx.compose.material3.DrawerState
-import androidx.compose.material3.DrawerValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import com.qfs.pagan.DialogChain
+import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.projectmanager.ProjectManager
 
 class ViewModelPagan: ViewModel() {

@@ -38,7 +38,7 @@ import androidx.compose.ui.window.Dialog
 import com.qfs.pagan.DialogChain
 import com.qfs.pagan.MenuDialogEventHandler
 import com.qfs.pagan.R
-import com.qfs.pagan.ViewModelPagan
+import com.qfs.pagan.viewmodel.ViewModelPagan
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.ScaffoldWithTopBar
 import com.qfs.pagan.enumerate

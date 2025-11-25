@@ -94,7 +94,6 @@ class ViewModelEditorState: ViewModel() {
     var blocker_leaf: List<Int>? = null
 
     fun clear() {
-        if (this.ui_lock.is_locked()) return
         this.project_name.value = null
         this.beat_count.value = 0
         this.active_event.value = null
@@ -119,39 +118,32 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun update_cell(coordinate: EditorTable.Coordinate, tree: ReducibleTree<out OpusEvent>) {
-        if (this.ui_lock.is_locked()) return
         this.cell_map[coordinate.y][coordinate.x].value = tree
     }
 
     fun update_column(column: Int, is_tagged: Boolean) {
-        if (this.ui_lock.is_locked()) return
         this.column_data[column].value.is_tagged = is_tagged
     }
 
     fun add_row(y: Int, cells: MutableList<MutableState<ReducibleTree<out OpusEvent>>>, new_line_data: LineData) {
-        if (this.ui_lock.is_locked()) return
         this.line_data.add(y, new_line_data)
         this.cell_map.add(y, cells)
         this.line_count.value += 1
     }
 
     fun set_project_exists(value: Boolean) {
-        if (this.ui_lock.is_locked()) return
         this.project_exists.value = value
     }
 
     fun queue_config_drawer_redraw_export_button() {
-        if (this.ui_lock.is_locked()) return
         TODO()
     }
 
     fun update_line(y: Int, line_data: LineData) {
-        if (this.ui_lock.is_locked()) return
         this.line_data[y] = line_data
     }
 
     fun remove_row(y: Int, count: Int) {
-        if (this.ui_lock.is_locked()) return
         for (i in 0 until count) {
             this.line_data.removeAt(y)
             this.cell_map.removeAt(y)
@@ -160,7 +152,6 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun add_channel(channel: Int, percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean) {
-        if (this.ui_lock.is_locked()) return
         for (ld in this.line_data) {
             ld.channel?.let {
                 if (it >= channel) {
@@ -172,7 +163,6 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun remove_channel(channel: Int) {
-        if (this.ui_lock.is_locked()) return
         var i = 0
         while (i < this.line_data.size) {
             val ld = this.line_data[i]
@@ -192,7 +182,6 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun add_column(column: Int, is_tagged: Boolean, new_cells: List<MutableState<ReducibleTree<out OpusEvent>>>) {
-        if (this.ui_lock.is_locked()) return
         this.column_data.add(column, mutableStateOf(ColumnData(is_tagged)))
         for ((y, line) in this.cell_map.enumerate()) {
             line.add(column, new_cells[y])
@@ -201,7 +190,6 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun remove_column(column: Int) {
-        if (this.ui_lock.is_locked()) return
         this.column_data.removeAt(column)
         for (line in this.cell_map) {
             line.removeAt(column)
@@ -210,29 +198,14 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun queue_refresh_choose_percussion_button(channel: Int, line_offset: Int) {
-        if (this.ui_lock.is_locked()) return
         TODO()
     }
 
     fun queue_force_scroll(y: Int, x: Int, offset: Rational, offset_width: Rational, force: Boolean) {
-        if (this.ui_lock.is_locked()) return
         TODO()
     }
 
-    fun lock() {
-        this.ui_lock.lock()
-    }
-
-    fun unlock() {
-        this.ui_lock.unlock()
-    }
-
-    fun is_locked(): Boolean {
-        return this.ui_lock.is_locked()
-    }
-
     fun move_channel(channel_index: Int, new_channel_index: Int) {
-        if (this.ui_lock.is_locked()) return
         var from_index = -1
         var to_index = -1
 
@@ -276,27 +249,22 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun set_channel_data(channel_index: Int, percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean) {
-        if (this.ui_lock.is_locked()) return
         this.channel_data[channel_index] = ChannelData(percussion, instrument, is_mute)
     }
 
     fun set_project_name(name: String? = null) {
-        if (this.ui_lock.is_locked()) return
         this.project_name.value = name
     }
 
     fun <T: OpusEvent> set_active_event(event: T? = null) {
-        if (this.ui_lock.is_locked()) return
         this.active_event.value = event
     }
 
     fun set_cursor(cursor: CacheCursor) {
-        if (this.ui_lock.is_locked()) return
         this.active_cursor.value = cursor
     }
 
     fun shift_up_percussion_names(channel: Int) {
-        if (this.ui_lock.is_locked()) return
         val keys = this.instrument_names.keys.sorted().reversed()
         for (k in keys) {
             if (k < channel) continue
@@ -305,7 +273,6 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun shift_down_percussion_names(channel: Int) {
-        if (this.ui_lock.is_locked()) return
         val keys = this.instrument_names.keys.sorted()
         for (k in keys) {
             if (k > channel) {
@@ -372,7 +339,6 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun swap_line_cells(y_a: Int, y_b: Int) {
-        if (this.ui_lock.is_locked()) return
         if (y_a == y_b) return
 
         val lesser = min(y_a, y_b)
@@ -411,39 +377,32 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun set_radix(radix: Int) {
-        if (this.ui_lock.is_locked()) return
         this.radix.value = radix
     }
 
     fun mute_channel(channel: Int, mute: Boolean) {
-        if (this.ui_lock.is_locked()) return
         this.channel_data[channel].is_mute = mute
     }
 
     fun mute_line(line: Int, mute: Boolean) {
-        if (this.ui_lock.is_locked()) return
         this.line_data[line].is_mute = mute
     }
 
     fun populate_preset_names(soundfont: SoundFont) {
-        if (this.ui_lock.is_locked()) return
         this.available_preset_names = HashMap()
         for ((name, program, bank) in soundfont.get_available_presets()) {
             this.available_preset_names?.set(Pair(bank, program), name)
         }
     }
     fun clear_preset_names() {
-        if (this.ui_lock.is_locked()) return
         this.available_preset_names = null
     }
 
     fun clear_instrument_names() {
-        if (this.ui_lock.is_locked()) return
         this.instrument_names.clear()
     }
 
     fun set_instrument_names(channel: Int, names: List<Pair<String, Int>>?) {
-        if (this.ui_lock.is_locked()) return
         this.instrument_names[channel] = if (names == null) {
             null
         } else {

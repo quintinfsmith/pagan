@@ -33,7 +33,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -149,7 +148,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             override fun handleOnBackPressed() {
                 val that = this@ComponentActivityEditor
                 val opus_manager = that.controller_model.opus_manager
-                val ui_facade = opus_manager.ui_facade
+                val ui_facade = opus_manager.vm_state
                 if (ui_facade.active_cursor.value != null) {
                     action_interface.cursor_clear()
                 } else {
@@ -296,7 +295,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     override fun TopBar(modifier: Modifier) {
-        val ui_facade = this.controller_model.opus_manager.ui_facade
+        val ui_facade = this.controller_model.opus_manager.vm_state
         val dispatcher = this.controller_model.action_interface
         val scope = rememberCoroutineScope()
         Row(
@@ -876,7 +875,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     override fun LayoutMediumPortrait() {
         val view_model = this.controller_model
-        val ui_facade = this.controller_model.opus_manager.ui_facade
+        val ui_facade = this.controller_model.opus_manager.vm_state
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.BottomCenter
@@ -981,7 +980,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 this.controller_model.active_project.value,
                 this.view_model.configuration.indent_json
             )
-            this.controller_model.opus_manager.ui_facade.set_project_exists(true)
+            this.controller_model.opus_manager.vm_state.set_project_exists(true)
             this.toast(R.string.feedback_project_saved)
         }
     }

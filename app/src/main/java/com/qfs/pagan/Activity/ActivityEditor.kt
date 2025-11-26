@@ -1345,15 +1345,6 @@ class ActivityEditor : PaganActivity() {
         }
     }
 
-    fun restore_playback_state() {
-        if (this.editor_view_model.update_playback_state_soundfont(PlaybackState.Ready)) {
-            this.runOnUiThread {
-                this.set_playback_button(R.drawable.icon_play)
-                this._disable_blocker_view()
-            }
-        }
-    }
-
     fun restore_midi_playback_state() {
         if (this.editor_view_model.update_playback_state_midi(PlaybackState.Ready)) {
             this.runOnUiThread {

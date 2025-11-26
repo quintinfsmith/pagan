@@ -21,9 +21,9 @@ import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import java.io.DataOutputStream
 import java.io.File
 
-class ViewModelEditorController: ViewModel() {
+class ViewModelEditorController(vm_state: ViewModelEditorState): ViewModel() {
     var action_interface = ActionTracker()
-    var opus_manager = OpusLayerInterface()
+    var opus_manager = OpusLayerInterface(vm_state, this)
     var active_midi_device: MidiDeviceInfo? = null
     var audio_interface = AudioInterface()
     var playback_device: PlaybackDevice? = null

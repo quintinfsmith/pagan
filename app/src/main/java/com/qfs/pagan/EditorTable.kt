@@ -1359,7 +1359,7 @@ class EditorTable(context: Context, attrs: AttributeSet): ScrollView(context, at
         }
 
         fun get_facade(): ViewModelEditorState {
-            return this.table_ui.get_opus_manager().ui_facade
+            return this.table_ui.get_opus_manager().vm_state
         }
 
         // TODO: Refactor this.

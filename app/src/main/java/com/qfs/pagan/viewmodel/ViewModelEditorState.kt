@@ -92,6 +92,10 @@ class ViewModelEditorState: ViewModel() {
     var project_exists: MutableState<Boolean> = mutableStateOf(false)
     var instrument_names = HashMap<Int, HashMap<Int, String>?>() // NOTE: "instrument". Not "preset".
     var blocker_leaf: List<Int>? = null
+    val playback_state_soundfont: MutableState<PlaybackState> = mutableStateOf(PlaybackState.NotReady)
+    val playback_state_midi: MutableState<PlaybackState> = mutableStateOf(PlaybackState.NotReady)
+
+    val is_buffering: MutableState<Boolean> = mutableStateOf(false)
 
     fun clear() {
         this.project_name.value = null
@@ -412,5 +416,9 @@ class ViewModelEditorState: ViewModel() {
             }
             hashmap
         }
+    }
+
+    fun set_is_buffering(value: Boolean) {
+        this.is_buffering.value = value
     }
 }

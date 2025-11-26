@@ -85,6 +85,7 @@ class ViewModelEditorController(vm_state: ViewModelEditorState): ViewModel() {
     fun set_soundfont(soundfont: SoundFont) {
         this.audio_interface.set_soundfont(soundfont)
         this.create_playback_device()
+        for ()
     }
 
     fun create_playback_device() {

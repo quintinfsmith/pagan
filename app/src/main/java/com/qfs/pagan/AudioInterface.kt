@@ -13,7 +13,7 @@ class AudioInterface {
     var playback_sample_handle_manager: SampleHandleManager? = null
     var soundfont_supported_instrument_names = HashMap<Pair<Int, Int>, String>()
     var feedback_revolver = FeedbackRevolver(4)
-    var minimum_instrument_index_cache = HashMap<Int, Int>() // Midichannel: index
+    var minimum_instrument_index_cache = HashMap<Pair<Int, Int>, Int>() // <Program, Bank>: index
 
     class FeedbackRevolver(var size: Int = 4) {
         var sample_handle_manager: SampleHandleManager? = null
@@ -159,20 +159,27 @@ class AudioInterface {
         }
     }
 
-    fun get_minimum_instrument_index(midi_channel: Int): Int {
-        if (this.soundfont == null) return 0
-        // TODO: Store by instrument pair rather than midi_channel
-        if (!this.minimum_instrument_index_cache.contains(midi_channel)) {
-            val options = this.get_instrument_options(midi_channel)
-            var m = 999
-            for ((_, key) in options ?: listOf(Pair("a", 0))) {
-                m = min(key, m)
+    fun get_minimum_instrument_index(instrument: Pair<Int, Int>): Int {
+        val preset = this.playback_sample_handle_manager?.get_preset(instrument) ?: return 0
+
+        if (!this.minimum_instrument_index_cache.contains(instrument)) {
+            var min_key = 999
+            for ((_, preset_instrument) in preset.instruments) {
+                if (preset_instrument.instrument == null) continue
+                val instrument_range = preset_instrument.key_range ?: Pair(0, 127)
+
+                for (sample_directive in preset_instrument.instrument!!.sample_directives.values) {
+                    val key_range = sample_directive.key_range ?: Pair(0, 127)
+                    val usable_range = max(key_range.first, instrument_range.first)..min(key_range.second, instrument_range.second)
+                    for (key in usable_range) {
+                        min_key = min(key, min_key)
+                    }
+                }
+                this.minimum_instrument_index_cache[instrument] = min_key
             }
-            this.minimum_instrument_index_cache[midi_channel] = m
         }
 
-        return this.minimum_instrument_index_cache[midi_channel] ?: 0
+        return this.minimum_instrument_index_cache[instrument] ?: 0
     }
-
 
 }

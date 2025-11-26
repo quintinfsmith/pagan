@@ -140,9 +140,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val action_interface = this.controller_model.action_interface
         this.controller_model.opus_manager.project_change_new()
+
+
         action_interface.attach_activity(this)
         action_interface.attach_opus_manager(this.controller_model.opus_manager)
         super.onCreate(savedInstanceState)
+        action_interface.new_project()
 
         this.onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -288,8 +291,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     override fun onDestroy() {
-        this.controller_model.action_interface.detach_opus_manager()
-        this.controller_model.action_interface.detach_activity()
         super.onDestroy()
     }
 
@@ -1091,23 +1092,4 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
-    fun setup_new() {
-        this.controller_model.opus_manager.project_change_new()
-
-        // TODO:: Not sure this should be here
-        // val opus_manager = this.model_editor.opus_manager
-        // set the default instrument to the first available in the soundfont (if applicable)
-        // val ui_facade = opus_manager.ui_facade
-        // for (c in opus_manager.channels.indices) {
-        //     if (!opus_manager.is_percussion(c)) continue
-
-        //     // Need to prematurely update the channel instrument to find the lowest possible instrument
-        //     this.update_channel_instruments(c)
-        //     val percussion_keys = ui_facade.instrument_names[c]?.keys?.sorted() ?: continue
-
-        //     for (l in 0 until opus_manager.get_channel(c).size) {
-        //         opus_manager.percussion_set_instrument(c, l, max(0, percussion_keys.first() - 27))
-        //     }
-        // }
-    }
 }

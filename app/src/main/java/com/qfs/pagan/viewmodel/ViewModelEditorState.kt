@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.Activity.ActivityEditor.PlaybackState
 import com.qfs.pagan.EditorTable
+import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
@@ -94,6 +95,7 @@ class ViewModelEditorState: ViewModel() {
     var blocker_leaf: List<Int>? = null
     val playback_state_soundfont: MutableState<PlaybackState> = mutableStateOf(PlaybackState.NotReady)
     val playback_state_midi: MutableState<PlaybackState> = mutableStateOf(PlaybackState.NotReady)
+    val relative_input_mode: MutableState<RelativeInputMode> = mutableStateOf(RelativeInputMode.Absolute)
 
     val is_buffering: MutableState<Boolean> = mutableStateOf(false)
 
@@ -420,5 +422,9 @@ class ViewModelEditorState: ViewModel() {
 
     fun set_is_buffering(value: Boolean) {
         this.is_buffering.value = value
+    }
+
+    fun set_relative_mode(value: RelativeInputMode) {
+        this.relative_input_mode.value = value
     }
 }

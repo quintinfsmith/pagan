@@ -938,6 +938,7 @@ class OpusLayerInterface(val vm_state: ViewModelEditorState, val vm_controller: 
         for (x in 0 until this.length) {
             this.ui_add_column(x)
         }
+        this.vm_state.set_relative_mode(this.relative_mode)
     }
 
     private fun ui_add_column(beat_index: Int) {
@@ -1822,8 +1823,9 @@ class OpusLayerInterface(val vm_state: ViewModelEditorState, val vm_controller: 
         }
     }
 
-    fun set_relative_mode(mode: RelativeInputMode, update_ui: Boolean = true) {
+    fun set_relative_mode(mode: RelativeInputMode) {
         this.relative_mode = mode
+        this.vm_state.set_relative_mode(this.relative_mode)
     }
 
     fun set_relative_mode(event: TunedInstrumentEvent) {
@@ -1843,6 +1845,7 @@ class OpusLayerInterface(val vm_state: ViewModelEditorState, val vm_controller: 
         } else {
             this.relative_mode = RelativeInputMode.Absolute
         }
+        this.vm_state.set_relative_mode(this.relative_mode)
     }
 
     // Note: set_note_octave/offset functions need to be in interface layer since they require access to 'relative_mode' property

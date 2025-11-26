@@ -2840,13 +2840,12 @@ class ActivityEditor : PaganActivity() {
         // set the default instrument to the first available in the soundfont (if applicable)
         val opus_manager = this.get_opus_manager()
         val ui_facade = this.get_ui_facade()
-        for (c in opus_manager.channels.indices) {
+        for ((c, channel) in opus_manager.channels.enumerate()) {
             if (!opus_manager.is_percussion(c)) continue
-            val midi_channel = opus_manager.get_midi_channel(c)
 
             // Need to prematurely update the channel instrument to find the lowest possible instrument
             this.update_channel_instruments(c)
-            val i = this.editor_view_model.audio_interface.get_minimum_instrument_index(midi_channel)
+            val i = this.editor_view_model.audio_interface.get_minimum_instrument_index(channel.get_instrument())
             for (l in 0 until opus_manager.get_channel(c).size) {
                 opus_manager.percussion_set_instrument(c, l, max(0, i - 27))
             }

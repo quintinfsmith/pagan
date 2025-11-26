@@ -192,3 +192,37 @@ fun FloatInput(value: MutableState<Float>, minimum: Float? = null, maximum: Floa
         )
     }
 }
+
+@Composable
+fun TextInput(modifier: Modifier = Modifier, input: MutableState<String>, callback: (String) -> Unit) {
+    val state = rememberTextFieldState(input.value)
+    OutlinedTextField(
+        state = state,
+        textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End),
+        modifier = modifier.onFocusChanged { focus_state ->
+            if (focus_state.hasFocus) {
+                state.edit {
+                    this.selection = TextRange(0, this.length)
+                }
+            }
+        },
+        keyboardOptions = KeyboardOptions.Companion.Default.copy(keyboardType = KeyboardType.Companion.Text),
+        inputTransformation = object : InputTransformation {
+            override fun TextFieldBuffer.transformInput() {
+                var working_string = this.toString()
+                val enter_pressed = this.length > 0 && this.charAt(this.length - 1) == '\n'
+                if (enter_pressed) {
+                    working_string = working_string.substring(0, this.length - 1)
+                }
+
+                if (enter_pressed && working_string.isNotEmpty()) {
+                    callback(working_string)
+                    this.revertAllChanges()
+                    return
+                }
+
+                input.value = working_string
+            }
+        }
+    )
+}

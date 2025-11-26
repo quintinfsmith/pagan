@@ -12,21 +12,20 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.core.net.toUri
-import androidx.core.view.GravityCompat
-import androidx.drawerlayout.widget.DrawerLayout
 import com.qfs.json.JSONBoolean
 import com.qfs.json.JSONFloat
 import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONObject
 import com.qfs.json.JSONString
-import com.qfs.pagan.ComponentActivity.ComponentActivityEditor
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.composable.IntegerInput
 import com.qfs.pagan.composable.SText
+import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
@@ -40,6 +39,8 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import com.qfs.pagan.viewmodel.ViewModelEditorController
+import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
@@ -51,7 +52,7 @@ import com.qfs.pagan.OpusLayerInterface as OpusManager
  * This class is meant for recording and playing back UI tests and eventually debugging so
  * not every action directed through here at the moment.
  */
-class ActionTracker {
+class ActionTracker(var vm_controller: ViewModelEditorController, var vm_top: ViewModelPagan) {
     var DEBUG_ON = false
     class NoActivityException: Exception()
     class OpusManagerDetached: Exception()
@@ -129,7 +130,6 @@ class ActionTracker {
         SetTuningTable,
         ImportSong,
         SetRelativeMode,
-        SwapLines,
         MuteChannel,
         UnMuteChannel,
         MuteLine,
@@ -383,48 +383,10 @@ class ActionTracker {
         }
     }
 
-    var activity: ComponentActivityEditor? = null
-    var opus_manager: OpusManager? = null
 
     private var ignore_flagged: Boolean = false
     private val action_queue = mutableListOf<Pair<TrackedAction, List<Int?>?>>()
     var lock: Boolean = false
-
-    fun attach_opus_manager(opus_manager: OpusManager) {
-        this.opus_manager = opus_manager
-    }
-    fun detach_opus_manager() {
-        this.opus_manager = null
-    }
-    fun detach_activity() {
-        this.activity = null
-    }
-
-    fun attach_activity(activity: ComponentActivityEditor) {
-        this.activity = activity
-        //this.DEBUG_ON = activity.is_debug_on()
-    }
-
-    fun get_activity(): ComponentActivityEditor {
-        return this.activity ?: throw NoActivityException()
-    }
-
-
-    // Track is called in the callback functions of onDrawerOpen and onDrawerClosed
-    fun drawer_close() {
-        val drawer_layout = this.get_activity().findViewById<DrawerLayout>(R.id.drawer_layout)
-        if (drawer_layout.isDrawerOpen(GravityCompat.START)) {
-            drawer_layout.closeDrawers()
-        }
-    }
-
-    // Track is called in the callback functions of onDrawerOpen and onDrawerClosed
-    fun drawer_open() {
-        val drawer_layout = this.get_activity().findViewById<DrawerLayout>(R.id.drawer_layout)
-        if (!drawer_layout.isDrawerOpen(GravityCompat.START)) {
-            drawer_layout.openDrawer(GravityCompat.START)
-        }
-    }
 
     fun apply_undo() {
         this.track(TrackedAction.ApplyUndo)
@@ -457,7 +419,7 @@ class ActionTracker {
             TrackedAction.MoveSelectionToBeat,
             beat_key.to_list()
         )
-        this.opus_manager?.move_to_beat(beat_key)
+        this.vm_controller.opus_manager?.move_to_beat(beat_key)
     }
 
     fun _copy_selection_to_beat(beat_key: BeatKey) {
@@ -465,11 +427,11 @@ class ActionTracker {
             TrackedAction.CopySelectionToBeat,
             beat_key.to_list()
         )
-        this.opus_manager?.copy_to_beat(beat_key)
+        this.vm_controller.opus_manager.copy_to_beat(beat_key)
     }
 
     fun move_selection_to_beat(beat_key: BeatKey) {
-        when (this.activity?.view_model?.configuration?.move_mode)  {
+        when (this.vm_controller.move_mode.value)  {
             PaganConfiguration.MoveMode.MOVE -> {
                 this._move_selection_to_beat(beat_key)
             }
@@ -479,9 +441,6 @@ class ActionTracker {
             PaganConfiguration.MoveMode.MERGE -> {
                 this._merge_selection_into_beat(beat_key)
             }
-            null -> {
-                this._copy_selection_to_beat(beat_key)
-            }
         }
     }
 
@@ -490,12 +449,15 @@ class ActionTracker {
             TrackedAction.MergeSelectionIntoBeat,
             beat_key.to_list()
         )
-        this.opus_manager?.merge_into_beat(beat_key)
+        this.vm_controller.opus_manager.merge_into_beat(beat_key)
     }
 
     fun save() {
         this.track(TrackedAction.SaveProject)
-        this.get_activity().project_save()
+        this.vm_top.project_manager?.let {
+            val uri = it.save(this.vm_controller.opus_manager, this.vm_controller.active_project.value)
+            this.vm_controller.active_project.value = uri
+        }
     }
 
     fun delete() {
@@ -513,27 +475,10 @@ class ActionTracker {
         // this.ignore().drawer_close()
     }
 
-    fun swap_lines(from_channel: Int, from_line: Int, to_channel: Int, to_line: Int) {
-        this.track(TrackedAction.SwapLines, listOf(from_channel, from_line, to_channel, to_line))
-        val opus_manager = this.get_opus_manager()
-        try {
-            opus_manager.swap_lines(
-                from_channel,
-                from_line,
-                to_channel,
-                to_line
-            )
-        } catch (_: IncompatibleChannelException) {
-            this.activity?.let {
-                Toast.makeText(it, it.getString(R.string.std_percussion_swap), Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
     fun cursor_clear() {
         // TODO Track
         //this.track(TrackedAction.CursorClear)
-        this.opus_manager?.cursor_clear()
+        this.vm_controller.opus_manager.cursor_clear()
     }
 
     fun cursor_select(beat_key: BeatKey, position: List<Int>) {
@@ -542,7 +487,7 @@ class ActionTracker {
             beat_key.to_list() + position
         )
 
-        this.opus_manager?.cursor_select(beat_key, position) ?: return
+        this.vm_controller.opus_manager.cursor_select(beat_key, position) ?: return
 
         // TODO()
         // val tree = opus_manager.get_tree()
@@ -564,12 +509,11 @@ class ActionTracker {
     }
 
     fun move_line_ctl_to_beat(beat_key: BeatKey) {
-        when (this.activity?.view_model?.configuration?.move_mode)  {
+        when (this.vm_controller.move_mode.value)  {
             PaganConfiguration.MoveMode.MOVE -> {
                 this._move_line_ctl_to_beat(beat_key)
             }
             PaganConfiguration.MoveMode.MERGE -> TODO()
-            null,
             PaganConfiguration.MoveMode.COPY -> {
                 this._copy_line_ctl_to_beat(beat_key)
             }
@@ -592,7 +536,7 @@ class ActionTracker {
     }
 
     fun move_channel_ctl_to_beat(channel: Int, beat: Int) {
-        when (this.activity?.view_model?.configuration?.move_mode)  {
+        when (this.vm_controller.move_mode.value)  {
             PaganConfiguration.MoveMode.MOVE -> {
                 this._move_channel_ctl_to_beat(channel, beat)
             }
@@ -620,12 +564,11 @@ class ActionTracker {
     }
 
     fun move_global_ctl_to_beat(beat: Int) {
-        when (this.activity?.view_model?.configuration?.move_mode)  {
+        when (this.vm_controller.move_mode.value)  {
             PaganConfiguration.MoveMode.MOVE -> {
                 this._move_global_ctl_to_beat(beat)
             }
             PaganConfiguration.MoveMode.MERGE -> TODO()
-            null,
             PaganConfiguration.MoveMode.COPY -> {
                 this._copy_global_ctl_to_beat(beat)
             }
@@ -671,10 +614,8 @@ class ActionTracker {
     }
 
     fun repeat_selection_std(channel: Int, line_offset: Int, repeat: Int? = null) {
-
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        val context = this.get_activity()
 
         val (first_key, second_key) = cursor.get_ordered_range()!!
         val default_count = ceil((opus_manager.length.toFloat() - first_key.beat) / (second_key.beat - first_key.beat + 1).toFloat()).toInt()
@@ -716,12 +657,12 @@ class ActionTracker {
     fun cursor_select_channel(channel: Int) {
         this.track(TrackedAction.CursorSelectChannel, listOf(channel))
 
-        this.opus_manager?.cursor_select_channel(channel)
+        this.vm_controller.opus_manager.cursor_select_channel(channel)
     }
 
     fun cursor_select_line_std(channel: Int, line_offset: Int) {
         this.track(TrackedAction.CursorSelectLine, listOf(channel, line_offset))
-        this.opus_manager?.cursor_select_line(channel, line_offset)
+        this.vm_controller.opus_manager.cursor_select_line(channel, line_offset)
     }
 
     fun cursor_select_line_ctl_line(type: EffectType, channel: Int, line_offset: Int) {
@@ -737,8 +678,6 @@ class ActionTracker {
     }
 
     fun repeat_selection_ctl_line(type: EffectType, channel: Int, line_offset: Int, repeat: Int? = null) {
-
-        val activity = this.get_activity()
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
 
@@ -800,8 +739,6 @@ class ActionTracker {
     }
 
     fun repeat_selection_ctl_channel(type: EffectType, channel: Int, repeat: Int? = null) {
-
-        val activity = this.get_activity()
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
 
@@ -855,7 +792,6 @@ class ActionTracker {
     fun repeat_selection_ctl_global(type: EffectType, repeat: Int? = null) {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        val activity = this.get_activity()
 
         val (first_key, second_key) = cursor.get_ordered_range()!!
         val default_count = ceil((opus_manager.length.toFloat() - first_key.beat) / (second_key.beat - first_key.beat + 1).toFloat()).toInt()
@@ -903,19 +839,19 @@ class ActionTracker {
 
     fun cursor_select_range_next(beat_key: BeatKey) {
         // TODO: Track
-        this.opus_manager?.cursor_select_range_next(beat_key)
+        this.vm_controller.opus_manager.cursor_select_range_next(beat_key)
     }
     fun cursor_select_line_ctl_range_next(type: EffectType, beat_key: BeatKey) {
         // TODO: Track
-        this.opus_manager?.cursor_select_line_ctl_range_next(type, beat_key)
+        this.vm_controller.opus_manager.cursor_select_line_ctl_range_next(type, beat_key)
     }
     fun cursor_select_channel_ctl_range_next(type: EffectType, channel: Int, beat: Int) {
         // TODO: Track
-        this.opus_manager?.cursor_select_channel_ctl_range_next(type, channel, beat)
+        this.vm_controller.opus_manager.cursor_select_channel_ctl_range_next(type, channel, beat)
     }
     fun cursor_select_global_ctl_range_next(type: EffectType, beat: Int) {
         // TODO: Track
-        this.opus_manager?.cursor_select_global_ctl_range_next(type, beat)
+        this.vm_controller.opus_manager.cursor_select_global_ctl_range_next(type, beat)
     }
 
     fun cursor_select_range(first_key: BeatKey, second_key: BeatKey) {
@@ -931,7 +867,7 @@ class ActionTracker {
             )
         )
 
-        this.opus_manager?.cursor_select_range(first_key, second_key)
+        this.vm_controller.opus_manager.cursor_select_range(first_key, second_key)
     }
 
     fun cursor_select_line_ctl_range(type: EffectType, first_key: BeatKey, second_key: BeatKey) {
@@ -948,40 +884,48 @@ class ActionTracker {
             )
         )
 
-        this.opus_manager?.cursor_select_line_ctl_range(type, first_key, second_key)
+        this.vm_controller.opus_manager.cursor_select_line_ctl_range(type, first_key, second_key)
     }
 
     fun cursor_select_channel_ctl_range(type: EffectType, channel: Int, first_beat: Int, second_beat: Int) {
         this.track(TrackedAction.CursorSelectChannelCtlRange, ActionTracker.enum_to_ints(type) + listOf(first_beat, second_beat))
-        this.opus_manager?.cursor_select_channel_ctl_range(type, channel, first_beat, second_beat)
+        this.vm_controller.opus_manager.cursor_select_channel_ctl_range(type, channel, first_beat, second_beat)
     }
 
 
     fun cursor_select_global_ctl_range(type: EffectType, first_beat: Int, second_beat: Int) {
         this.track(TrackedAction.CursorSelectGlobalCtlRange, ActionTracker.enum_to_ints(type) + listOf(first_beat, second_beat))
-        this.opus_manager?.cursor_select_global_ctl_range(type, first_beat, second_beat)
+        this.vm_controller.opus_manager.cursor_select_global_ctl_range(type, first_beat, second_beat)
     }
 
     fun open_settings() {
         this.track(TrackedAction.OpenSettings)
-        this.get_activity().open_settings()
+        TODO()
     }
 
     fun open_about() {
         this.track(TrackedAction.OpenAbout)
-        this.get_activity().open_about()
+        TODO()
     }
 
 
     fun new_project() {
         this.track(TrackedAction.NewProject)
-        val activity = this.get_activity()
-        activity.setup_new()
+        val opus_manager = this.get_opus_manager()
+        opus_manager.project_change_new()
+
+        for ((c, channel) in opus_manager.channels.enumerate()) {
+            if (!opus_manager.is_percussion(c)) continue
+            val i = this.vm_controller.audio_interface.get_minimum_instrument_index(channel.get_instrument())
+            for (l in 0 until opus_manager.get_channel(c).size) {
+                opus_manager.percussion_set_instrument(c, l, max(0, i - 27))
+            }
+        }
+        opus_manager.clear_history()
     }
 
     fun load_project(uri: Uri) {
         this.track(TrackedAction.LoadProject, ActionTracker.string_to_ints(uri.toString()))
-        val activity = this.get_activity()
         activity.load_project(uri)
     }
 
@@ -1128,7 +1072,7 @@ class ActionTracker {
     }
 
     fun set_duration(duration: Int? = null) {
-        val opus_manager = this.opus_manager ?: throw OpusManagerDetached()
+        val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         val (beat_key, position) = opus_manager.get_actual_position(
             cursor.get_beatkey(),
@@ -1153,7 +1097,7 @@ class ActionTracker {
             options.add(Triple(ctl_type, icon_id, ctl_type.name))
         }
 
-        this.dialog_popup_menu(this.get_activity().getString(R.string.show_line_controls), options, stub_output = forced_value) { index: Int, ctl_type: EffectType ->
+        this.dialog_popup_menu(R.string.show_line_controls, options, stub_output = forced_value) { index: Int, ctl_type: EffectType ->
             this.track(TrackedAction.ShowLineController, ActionTracker.string_to_ints(ctl_type.name))
             opus_manager.toggle_line_controller_visibility(ctl_type, cursor.channel, cursor.line_offset)
         }
@@ -1169,7 +1113,7 @@ class ActionTracker {
             options.add(Triple(ctl_type, icon_id, ctl_type.name))
         }
 
-        this.dialog_popup_menu(this.get_activity().getString(R.string.show_channel_controls), options, stub_output = forced_value) { index: Int, ctl_type: EffectType ->
+        this.dialog_popup_menu(R.string.show_channel_controls, options, stub_output = forced_value) { index: Int, ctl_type: EffectType ->
             this.track(TrackedAction.ShowChannelController, ActionTracker.string_to_ints(ctl_type.name))
             opus_manager.toggle_channel_controller_visibility(ctl_type, cursor.channel)
         }
@@ -1184,7 +1128,7 @@ class ActionTracker {
             options.add(Triple(ctl_type, icon_id, ctl_type.name))
         }
 
-        this.dialog_popup_menu(this.get_activity().getString(R.string.show_global_controls), options, stub_output = forced_value) { index: Int, ctl_type: EffectType ->
+        this.dialog_popup_menu(R.string.show_global_controls, options, stub_output = forced_value) { index: Int, ctl_type: EffectType ->
             this.track(TrackedAction.ShowGlobalController, ActionTracker.string_to_ints(ctl_type.name))
             opus_manager.toggle_global_controller_visibility(ctl_type)
         }
@@ -1244,12 +1188,12 @@ class ActionTracker {
 
     fun unset() {
         this.track(TrackedAction.Unset)
-        this.opus_manager?.unset()
+        this.vm_controller.opus_manager.unset()
     }
 
     fun unset_root() {
         this.track(TrackedAction.UnsetRoot)
-        val opus_manager = this.opus_manager ?: return
+        val opus_manager = this.vm_controller.opus_manager
         val cursor = opus_manager.cursor
         when (cursor.ctl_level) {
             CtlLineLevel.Global -> {
@@ -1572,113 +1516,13 @@ class ActionTracker {
     fun set_relative_mode(mode: RelativeInputMode) {
         this.track(TrackedAction.SetRelativeMode, listOf(mode.ordinal))
 
-        val activity = this.get_activity()
         val opus_manager = this.get_opus_manager()
-
-        val current_tree_position = opus_manager.get_actual_position(
-            opus_manager.cursor.get_beatkey(),
-            opus_manager.cursor.get_position()
-        )
-        val current_tree = opus_manager.get_tree(
-            current_tree_position.first,
-            current_tree_position.second
-        )
-
-        val event = current_tree.get_event()
-        if (event == null) {
-            opus_manager.set_relative_mode(mode, false)
-            return
+        opus_manager.set_relative_mode(mode)
+        when (mode) {
+            RelativeInputMode.Absolute -> opus_manager.convert_event_to_absolute()
+            RelativeInputMode.Positive -> opus_manager.convert_event_to_relative()
+            RelativeInputMode.Negative -> opus_manager.convert_event_to_relative()
         }
-        val radix = opus_manager.tuning_map.size
-
-        val new_value = when (event) {
-            is RelativeNoteEvent -> {
-                when (mode) {
-                    /* Abs */
-                    RelativeInputMode.Absolute -> {
-                        try {
-                            opus_manager.convert_event_to_absolute()
-                            //val current_tree = opus_manager.get_tree()
-                            val new_event = current_tree.get_event()!!
-                            (new_event as AbsoluteNoteEvent).note
-                        } catch (_: NoteOutOfRange) {
-                            opus_manager.set_event_at_cursor(
-                                AbsoluteNoteEvent(0, event.duration)
-                            )
-                            0
-                        }
-                    }
-                    /* + */
-                    RelativeInputMode.Positive -> {
-                        if (event.offset < 0) {
-                            val new_event = RelativeNoteEvent(0 - event.offset, event.duration)
-                            opus_manager.set_event_at_cursor(new_event)
-                        }
-                        abs(event.offset)
-                    }
-                    /* - */
-                    RelativeInputMode.Negative -> {
-                        if (event.offset > 0) {
-                            val new_event = RelativeNoteEvent(0 - event.offset, event.duration)
-                            opus_manager.set_event_at_cursor(new_event)
-                        }
-                        abs(event.offset)
-                    }
-                }
-            }
-            is AbsoluteNoteEvent -> {
-                when (mode) {
-                    /* Abs */
-                    RelativeInputMode.Absolute -> {
-                        event.note
-                    }
-                    /* + */
-                    RelativeInputMode.Positive -> {
-                        val cursor = opus_manager.cursor
-                        val value = opus_manager.get_relative_value(cursor.get_beatkey(), cursor.get_position())
-                        if (value >= 0) {
-                            opus_manager.convert_event_to_relative()
-
-                            //val current_tree = opus_manager.get_tree()
-                            val new_event = current_tree.get_event()!!
-                            abs((new_event as RelativeNoteEvent).offset)
-                        } else {
-                            opus_manager.relative_mode = RelativeInputMode.Positive
-                            null
-                        }
-
-                    }
-                    /* - */
-                    RelativeInputMode.Negative -> {
-                        val cursor = opus_manager.cursor
-                        val value = opus_manager.get_relative_value(cursor.get_beatkey(), cursor.get_position())
-                        if (value <= 0) {
-                            opus_manager.convert_event_to_relative()
-
-                            //val current_tree = opus_manager.get_tree()
-                            val new_event = current_tree.get_event()!!
-                            abs((new_event as RelativeNoteEvent).offset)
-                        } else {
-                            opus_manager.relative_mode = RelativeInputMode.Negative
-                            null
-                        }
-                    }
-                }
-            }
-            else -> null
-        }
-
-        val nsOctave: NumberSelector = activity.findViewById(R.id.nsOctave)
-        val nsOffset: NumberSelector = activity.findViewById(R.id.nsOffset)
-        if (new_value == null) {
-            nsOctave.unset_active_button()
-            nsOffset.unset_active_button()
-        } else {
-            nsOctave.set_state(new_value / radix, manual = true, suppress_callback = true)
-            nsOffset.set_state(new_value % radix, manual = true, suppress_callback = true)
-        }
-
-        opus_manager.relative_mode = mode
     }
 
     fun set_project_name_and_notes(project_name_and_notes: Pair<String, String>? = null) {
@@ -1708,7 +1552,7 @@ class ActionTracker {
         if (skip) {
             callback()
         } else {
-            this.activity?.view_model?.create_dialog { close ->
+            this.vm_top.create_dialog { close ->
                 @Composable {
                     Column {
                         Row {
@@ -1744,7 +1588,7 @@ class ActionTracker {
         if (stub_output != null) {
             callback(stub_output)
         } else {
-            this.activity?.view_model?.create_dialog { close ->
+            this.vm_top.create_dialog { close ->
                 @Composable {
                     val value: MutableState<Int> = remember { mutableIntStateOf(default ?: min_value) }
                     Column {
@@ -1800,20 +1644,50 @@ class ActionTracker {
 
     private fun dialog_save_project(stub_output: Boolean? = null, callback: (Boolean) -> Unit) {
         if (stub_output == null) {
-            this.get_activity().dialog_save_project(callback)
+            this.vm_top.create_dialog { close ->
+                @Composable {
+                    Column {
+                        Row {
+                            SText(R.string.dialog_save_warning_title)
+                        }
+                        Row {
+                            TextButton(
+                                modifier = Modifier.weight(1F),
+                                onClick = {},
+                                content = { SText(android.R.string.cancel) }
+                            )
+                            Button(
+                                modifier = Modifier.weight(1F),
+                                onClick = { callback(false) },
+                                content = { SText(android.R.string.no) }
+                            )
+                            Button(
+                                modifier = Modifier.weight(1F),
+                                onClick = {
+                                    this@ActionTracker.save()
+                                    callback(true)
+                                },
+                                content = { SText(android.R.string.ok) }
+                            )
+                        }
+                    }
+                }
+            }
         } else {
             if (stub_output) {
-                this.get_activity().project_save()
+                this.save()
             }
             callback(stub_output)
         }
     }
 
+
     /**
      * wrapper around MainActivity::dialog_popup_menu
      * will subvert popup on replay
      */
-    private fun <T> dialog_popup_menu(title: String, options: List<Triple<T, Int?, String>>, default: T? = null, stub_output: T? = null, callback: (index: Int, value: T) -> Unit) {
+    private fun <T> dialog_popup_menu(title: Int, options: List<Triple<T, Int?, String>>, default: T? = null, stub_output: T? = null, callback: (index: Int, value: T) -> Unit) {
+
         // if (stub_output != null) {
         //     callback(-1, stub_output)
         // } else {
@@ -1822,13 +1696,36 @@ class ActionTracker {
         // }
     }
 
-    private fun dialog_text_popup(title: String, default: String? = null, stub_output: String? = null, callback: (String) -> Unit) {
-        // val activity = this.get_activity()
-        // if (stub_output != null) {
-        //     callback(stub_output)
-        // } else {
-        //     activity.dialog_text_popup(title, default, callback)
-        // }
+    private fun dialog_text_popup(title: Int, default: String? = null, stub_output: String? = null, callback: (String) -> Unit) {
+        if (stub_output != null) return callback(stub_output)
+
+        this.vm_top.create_dialog { close ->
+            @Composable {
+                val value = remember { mutableStateOf(default ?: "") }
+                Row {
+                    SText(title)
+                }
+                Row {
+                    TextInput(
+                        modifier = Modifier,
+                        input = value,
+                        callback = callback
+                    )
+                }
+                Row {
+                    TextButton(
+                        modifier = Modifier.weight(1F),
+                        onClick = {},
+                        content = { SText(android.R.string.cancel) }
+                    )
+                    Button(
+                        modifier = Modifier.weight(1F),
+                        onClick = { callback(value.value) },
+                        content = { SText(android.R.string.ok) }
+                    )
+                }
+            }
+        }
     }
 
     private fun dialog_name_and_notes_popup(default: Pair<String, String>? = null, stub_output: Pair<String, String>? = null, callback: (String, String) -> Unit) {
@@ -1856,7 +1753,7 @@ class ActionTracker {
     }
 
     fun get_opus_manager(): OpusManager {
-        return this.get_activity().controller_model.opus_manager
+        return this.vm_controller.opus_manager
     }
 
     fun playback() {
@@ -2183,10 +2080,10 @@ class ActionTracker {
                 }
             }
             TrackedAction.DrawerOpen -> {
-                this.drawer_open()
+                TODO()
             }
             TrackedAction.DrawerClose -> {
-                this.drawer_close()
+                TODO()
             }
             TrackedAction.MergeSelectionIntoBeat -> {
                 this._merge_selection_into_beat(
@@ -2273,10 +2170,6 @@ class ActionTracker {
                 this.set_relative_mode(RelativeInputMode.entries[integers[0]!!])
             }
 
-            TrackedAction.SwapLines -> {
-                this.swap_lines(integers[0]!!, integers[1]!!, integers[2]!!, integers[3]!!)
-            }
-
             TrackedAction.MuteChannel -> {
                 this.channel_mute(integers[0]!!)
             }
@@ -2312,13 +2205,9 @@ class ActionTracker {
     }
 
     fun set_copy_mode(mode: PaganConfiguration.MoveMode) {
-        this.activity?.let { activity ->
-            this.track(TrackedAction.SetCopyMode, ActionTracker.string_to_ints(mode.name))
-            activity.controller_model.move_mode.value = mode
-            activity.view_model.configuration.move_mode = mode
-            activity.view_model.save_configuration()
-        }
-
+        this.vm_controller.move_mode.value = mode
+        this.vm_top.configuration.move_mode = mode
+        this.vm_top.save_configuration()
     }
 
     fun remove_controller() {
@@ -2410,7 +2299,7 @@ class ActionTracker {
             return
         }
 
-        this.dialog_text_popup(this.get_activity().getString(R.string.dialog_mark_section), opus_manager.marked_sections[use_beat], description) { result: String ->
+        this.dialog_text_popup(R.string.dialog_mark_section, opus_manager.marked_sections[use_beat], description) { result: String ->
             val integers = mutableListOf(use_beat)
             for (byte in result.toByteArray()) {
                 integers.add(byte.toInt())

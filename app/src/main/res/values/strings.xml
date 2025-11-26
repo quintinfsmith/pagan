@@ -185,7 +185,7 @@
     <string name="rb_mm_copy">Copy</string>
     <string name="rb_mm_move">Move</string>
     <string name="rb_mm_merge">Merge</string>
-    <string name="label_settings_use_preferred_sf">Rememeber soundfont when loading project</string>
+    <string name="label_settings_use_preferred_sf">Remember soundfont when loading project</string>
     <string name="cd_channel_mute">Mute and unmute this channel</string>
     <string name="cd_line_mute">Mute and unmute this line</string>
     <string name="settings_screen_orientation">Screen Orientation</string>

@@ -5,7 +5,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import com.qfs.pagan.Activity.PaganActivity
 import com.qfs.pagan.DialogChain
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.projectmanager.ProjectManager
@@ -55,6 +54,10 @@ class ViewModelPagan: ViewModel() {
                 }
             }
         )
+    }
+
+    fun <T> create_sortable_menu_dialog(title: Int, selected_sort_option: Int, sort_options: List<Pair<Int, () -> List<Triple<T, Int?, String?>>>>, callback: (T) -> Unit) {
+        TODO()
     }
 
     internal fun save_configuration() {

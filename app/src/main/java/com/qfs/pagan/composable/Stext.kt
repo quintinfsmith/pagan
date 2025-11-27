@@ -1,19 +1,31 @@
 package com.qfs.pagan.composable
 
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.TextFieldBuffer
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextRange
@@ -26,6 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
+import com.qfs.pagan.R
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -225,4 +238,42 @@ fun TextInput(modifier: Modifier = Modifier, input: MutableState<String>, callba
             }
         }
     )
+}
+
+@Composable
+fun <T, R: Comparable<R>> SortableMenu(default_menu: List<Triple<T, Int?, String>>, sort_options: List<Pair<Int, (Triple<T, Int?, String>) -> R>>, selected_sort: Int, default_value: T? = null, callback: (T) -> Unit) {
+    val active_sort_option = remember { mutableStateOf(selected_sort) }
+    Column {
+        Row(horizontalArrangement = Arrangement.SpaceBetween) {
+            SText(R.string.sorting_by)
+            Button(
+                modifier = Modifier.weight(1F),
+                onClick = { TODO() },
+                content = { SText(sort_options[active_sort_option.value].first) }
+            )
+        }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+        ) {
+            for ((uri, icon, label) in default_menu.sortedBy(sort_options[active_sort_option.value].second)) {
+                Row(
+                    modifier = Modifier
+                        .combinedClickable(
+                            onClick = { callback(uri) }
+                        )
+                ) {
+                    icon?.let {
+                        Icon(
+                            painter = painterResource(it),
+                            contentDescription = label
+                        )
+                    }
+                    Text(text = label)
+                }
+            }
+        }
+
+    }
 }

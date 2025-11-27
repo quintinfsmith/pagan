@@ -1,6 +1,5 @@
 package com.qfs.pagan.ComponentActivity
 
-import com.qfs.pagan.R
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.database.Cursor
@@ -52,10 +51,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.documentfile.provider.DocumentFile
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
+import com.qfs.pagan.R
 import com.qfs.pagan.composable.SText
+import com.qfs.pagan.composable.SortableMenu
 import com.qfs.pagan.find_activity
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -310,71 +310,49 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     }
 
                     val sort_options = listOf(
-                        Pair(R.string.sort_option_abc) { original: List<Triple<Uri, Int?, String>> ->
-                            original.sortedBy { item: Triple<Uri, Int?, String> -> item.third.lowercase() }
-                        }
+                        Pair(R.string.sort_option_abc) { item: Triple<Uri, Int?, String> -> item.third.lowercase() }
                     )
 
                     view_model.create_dialog { close ->
                         @Composable {
-                            Row {
-
-                            }
-                            Row {
-                                Column(modifier = Modifier
-                                    .fillMaxWidth()
-                                    .verticalScroll(rememberScrollState())
-                                ) {
-                                   // val dialog = this.dialog_popup_sortable_menu(this.getString(R.string.dialog_select_soundfont), soundfonts, null, sort_options, 0, object: MenuDialogEventHandler<Uri>() {
-                                   //     override fun on_submit(index: Int, value: Uri) {
-                                   //         this@ActivitySettings.configuration.soundfont = this@ActivitySettings.coerce_relative_soundfont_path(value)
-                                   //         this@ActivitySettings.set_soundfont_button_text()
-                                   //         this@ActivitySettings.update_result()
-                                   //     }
-                                   // })
-
-                                   // dialog?.findViewById<ViewGroup>(R.id.menu_wrapper)?.let { menu_wrapper ->
-                                   //     val pre_menu: View = LayoutInflater.from(this)
-                                   //         .inflate(
-                                   //             R.layout.soundfont_pre_menu,
-                                   //             menu_wrapper,
-                                   //             false
-                                   //         )
-
-                                   //     menu_wrapper.addView(pre_menu, 0)
-                                   //     menu_wrapper.findViewById<Button>(R.id.sf_menu_mute).setOnClickListener {
-                                   //         this.configuration.soundfont = null
-                                   //         this.update_result()
-                                   //         this.set_soundfont_button_text()
-                                   //         menu_wrapper.findViewById<Button>(R.id.sf_menu_mute).text
-                                   //         dialog.dismiss()
-                                   //     }
-
-                                   //     menu_wrapper.findViewById<Button>(R.id.sf_menu_import).setOnClickListener {
-                                   //         this.import_soundfont()
-                                   //         dialog.dismiss()
-                                   //     }
-                                   // }
-                                    for (uri in file_list) {
-                                        val relative_path_segments = uri.pathSegments.last().split("/")
-                                        soundfonts.add(Triple(uri, null, relative_path_segments.last()))
-                                        Row(modifier = Modifier.combinedClickable(
-                                            onClick = {
-                                                this@ComponentActivitySettings.view_model.set_soundfont_uri(uri)
-                                                this@ComponentActivitySettings.view_model.save_configuration()
-                                            }
-                                        )) {
-                                            Text(text = relative_path_segments.last())
+                            Column {
+                                Row {
+                                    SText(R.string.dialog_select_soundfont)
+                                }
+                                Row {
+                                    Button(
+                                        content = { SText(R.string.no_soundfont) },
+                                        modifier = Modifier
+                                            .weight(1F),
+                                        onClick = {
+                                            view_model.configuration.soundfont = null
+                                            view_model.save_configuration()
+                                            close()
                                         }
+                                    )
+                                    Button(
+                                        content = { SText(R.string.option_import_soundfont) },
+                                        modifier = Modifier.weight(1F),
+                                        onClick = {
+                                            close()
+                                            this@ComponentActivitySettings.import_soundfont()
+                                        }
+                                    )
+                                }
+                                Row {
+                                    SortableMenu(soundfonts, sort_options, 0, null) { uri ->
+                                        view_model.set_soundfont_uri(uri)
+                                        view_model.save_configuration()
+                                        close()
                                     }
                                 }
-                            }
-                            Row {
-                                TextButton(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    onClick = { close() },
-                                    content = { SText(android.R.string.cancel) }
-                                )
+                                Row {
+                                    TextButton(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        onClick = { close() },
+                                        content = { SText(android.R.string.cancel) }
+                                    )
+                                }
                             }
                         }
                     }

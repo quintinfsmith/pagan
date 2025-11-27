@@ -203,10 +203,6 @@ class ViewModelEditorState: ViewModel() {
         this.beat_count.value -= 1
     }
 
-    fun queue_refresh_choose_percussion_button(channel: Int, line_offset: Int) {
-        TODO()
-    }
-
     fun queue_force_scroll(y: Int, x: Int, offset: Rational, offset_width: Rational, force: Boolean) {
         TODO()
     }

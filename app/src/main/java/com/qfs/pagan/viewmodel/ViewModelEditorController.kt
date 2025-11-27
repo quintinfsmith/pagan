@@ -17,13 +17,14 @@ import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.PlaybackDevice
 import com.qfs.pagan.PlaybackFrameMap
+import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import java.io.DataOutputStream
 import java.io.File
 
-class ViewModelEditorController(vm_state: ViewModelEditorState): ViewModel() {
-    var action_interface = ActionTracker()
-    var opus_manager = OpusLayerInterface(vm_state, this)
+class ViewModelEditorController(): ViewModel() {
+    var action_interface = ActionTracker(this)
+    var opus_manager = OpusLayerInterface(this)
     var active_midi_device: MidiDeviceInfo? = null
     var audio_interface = AudioInterface()
     var playback_device: PlaybackDevice? = null
@@ -85,7 +86,6 @@ class ViewModelEditorController(vm_state: ViewModelEditorState): ViewModel() {
     fun set_soundfont(soundfont: SoundFont) {
         this.audio_interface.set_soundfont(soundfont)
         this.create_playback_device()
-        for ()
     }
 
     fun create_playback_device() {
@@ -94,6 +94,7 @@ class ViewModelEditorController(vm_state: ViewModelEditorState): ViewModel() {
             this.audio_interface.playback_sample_handle_manager!!,
             WaveGenerator.StereoMode.Stereo
         )
+        this.update_soundfont_instruments()
     }
 
     fun destroy_playback_device() {
@@ -117,5 +118,17 @@ class ViewModelEditorController(vm_state: ViewModelEditorState): ViewModel() {
 
     fun set_move_mode(move_mode: PaganConfiguration.MoveMode) {
         this.move_mode.value = move_mode
+    }
+
+    fun attach_state_model(model: ViewModelEditorState) {
+        this.opus_manager.attach_state_model(model)
+    }
+
+    fun update_soundfont_instruments() {
+        for ((i, channel) in this.opus_manager.channels.enumerate()) {
+            val midi_channel = this.opus_manager.get_midi_channel(i)
+            val (midi_bank, midi_program) = channel.get_instrument()
+            this.audio_interface.update_channel_instrument(midi_channel, midi_bank, midi_program)
+        }
     }
 }

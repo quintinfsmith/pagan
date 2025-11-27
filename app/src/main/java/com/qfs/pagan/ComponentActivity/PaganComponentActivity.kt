@@ -1,6 +1,11 @@
 package com.qfs.pagan.ComponentActivity
 
+import android.net.Uri
 import android.os.Bundle
+import android.provider.DocumentsContract
+import android.provider.DocumentsContract.Document.COLUMN_DOCUMENT_ID
+import android.provider.DocumentsContract.Document.COLUMN_MIME_TYPE
+import android.provider.DocumentsContract.Document.MIME_TYPE_DIR
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -10,12 +15,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -35,6 +38,8 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.core.net.toUri
+import androidx.documentfile.provider.DocumentFile
 import com.qfs.pagan.DialogChain
 import com.qfs.pagan.MenuDialogEventHandler
 import com.qfs.pagan.R
@@ -49,6 +54,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
         val SIZE_L = Pair(640.dp, 480.dp)
         val SIZE_M = Pair(470.dp, 320.dp)
         val SIZE_S = Pair(426.dp, 320.dp)
+
     }
 
     @Composable
@@ -81,13 +87,17 @@ abstract class PaganComponentActivity: ComponentActivity() {
 
     val view_model: ViewModelPagan by this.viewModels()
     lateinit var drawer_state: DrawerState
+
+    init {
+        System.loadLibrary("pagan")
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val view_model = this.view_model
-
-        view_model.configuration.callbacks_force_orientation.add {
-            this.requestedOrientation = it
-        }
+        // TODO: Figure out why this.applicationContext.cacheDir is being cleared on boot
+        view_model.load_config("${this.applicationContext.filesDir}/pagan.cfg")
+        this.on_config_load()
 
         this.setContent {
             // Allow night mode mutability
@@ -167,6 +177,12 @@ abstract class PaganComponentActivity: ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    open fun on_config_load() {
+        this.view_model.configuration.callbacks_force_orientation.add {
+            this.requestedOrientation = it
         }
     }
 
@@ -267,4 +283,52 @@ abstract class PaganComponentActivity: ComponentActivity() {
 
         // return dialog
     }
+
+    fun get_existing_soundfonts(): List<Uri> {
+        return this.get_existing_uris(this.view_model.configuration.soundfont_directory)
+    }
+
+    internal fun get_existing_uris(top_uri: Uri?): List<Uri> {
+        if (top_uri == null) return listOf()
+
+        val document_id = DocumentsContract.getTreeDocumentId(top_uri)
+        val uri_tree = DocumentsContract.buildChildDocumentsUriUsingTree(top_uri, document_id)
+
+        val existing_uris = mutableListOf<Uri>()
+        val stack = mutableListOf<Uri>(uri_tree)
+        while (stack.isNotEmpty()) {
+            val working_uri = stack.removeAt(0)
+            this.contentResolver.query(working_uri, arrayOf(COLUMN_MIME_TYPE, COLUMN_DOCUMENT_ID), null, null, null)?.let { cursor ->
+                while (cursor.moveToNext()) {
+                    val mime_index = cursor.getColumnIndex(COLUMN_MIME_TYPE)
+                    val id_index = cursor.getColumnIndex(COLUMN_DOCUMENT_ID)
+                    if (cursor.getString(mime_index) != MIME_TYPE_DIR) {
+                        val uri = DocumentsContract.buildDocumentUri(working_uri.authority, cursor.getString(id_index))
+                        val new_uri = "${top_uri.scheme}://${top_uri.authority}${top_uri.encodedPath}${uri.encodedPath}".toUri()
+                        existing_uris.add(new_uri)
+                    } else {
+                        val uri = DocumentsContract.buildChildDocumentsUri(top_uri.authority, cursor.getString(id_index))
+                        val new_uri = "${top_uri.scheme}://${top_uri.authority}${top_uri.encodedPath}${uri.encodedPath}".toUri()
+                        stack.add(new_uri)
+                    }
+                }
+                cursor.close()
+            }
+        }
+        return existing_uris
+    }
+
+    fun get_soundfont_directory(): DocumentFile {
+        return if (this.view_model.configuration.soundfont_directory != null) {
+            DocumentFile.fromTreeUri(this,this.view_model.configuration.soundfont_directory!!)!!
+        } else {
+            val soundfont_dir = this.applicationContext.getDir("SoundFonts", MODE_PRIVATE)
+            if (!soundfont_dir.exists()) {
+                soundfont_dir.mkdirs()
+            }
+
+            DocumentFile.fromFile(soundfont_dir)
+        }
+    }
+
 }

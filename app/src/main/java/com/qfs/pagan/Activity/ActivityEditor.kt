@@ -976,20 +976,20 @@ class ActivityEditor : PaganActivity() {
         // this.editor_view_model.opus_manager.attach_activity(this)
 
         //////////////////////////////////////////
-        if (this.editor_view_model.active_midi_device == null) {
-            this.get_soundfont_uri()?.let { uri ->
-                val sf_file = DocumentFile.fromSingleUri(this, uri) ?: return@let
-                if (!sf_file.exists()) return@let
+        /// if (this.editor_view_model.active_midi_device == null) {
+        ///     this.get_soundfont_uri()?.let { uri ->
+        ///         val sf_file = DocumentFile.fromSingleUri(this, uri) ?: return@let
+        ///         if (!sf_file.exists()) return@let
 
-                try {
-                    this.editor_view_model.audio_interface.set_soundfont(SoundFont(this, uri))
-                    this.editor_view_model.playback_device?.attach_activity(this)
-                } catch (_: Riff.InvalidRiff) {
-                    this.configuration.soundfont = null
-                    // Invalid soundfont somehow set
-                }
-            }
-        }
+        ///         try {
+        ///             this.editor_view_model.audio_interface.set_soundfont(SoundFont(this, uri))
+        ///             this.editor_view_model.playback_device?.attach_activity(this)
+        ///         } catch (_: Riff.InvalidRiff) {
+        ///             this.configuration.soundfont = null
+        ///             // Invalid soundfont somehow set
+        ///         }
+        ///     }
+        /// }
 
         // this.update_channel_instruments(this.get_opus_manager().channels.size)
         ///////////////////////////////////////////
@@ -1356,11 +1356,9 @@ class ActivityEditor : PaganActivity() {
 
     // Ui Wrappers ////////////////////////////////////////////
     private fun drawer_close() {
-        this.get_action_interface().drawer_close()
     }
 
     private fun drawer_open() {
-        this.get_action_interface().drawer_open()
     }
 
     fun drawer_lock() {
@@ -2128,7 +2126,6 @@ class ActivityEditor : PaganActivity() {
              */
             this.editor_view_model.audio_interface.reset()
             this.editor_view_model.create_playback_device()
-            this.editor_view_model.playback_device?.attach_activity(this)
         }
     }
 
@@ -2285,7 +2282,6 @@ class ActivityEditor : PaganActivity() {
     }
 
     override fun onDestroy() {
-        this.editor_view_model.playback_device?.detach_activity()
         super.onDestroy()
     }
 

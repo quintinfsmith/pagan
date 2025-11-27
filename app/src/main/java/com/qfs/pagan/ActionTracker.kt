@@ -16,6 +16,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.core.net.toUri
+import androidx.lifecycle.ViewModel
+import com.qfs.apres.VirtualMidiInputDevice
 import com.qfs.json.JSONBoolean
 import com.qfs.json.JSONFloat
 import com.qfs.json.JSONInteger
@@ -40,9 +42,11 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.viewmodel.ViewModelEditorController
+import com.qfs.pagan.viewmodel.ViewModelEditorState
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlin.math.abs
 import kotlin.math.ceil
+import kotlin.math.floor
 import kotlin.math.max
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
@@ -52,7 +56,7 @@ import com.qfs.pagan.OpusLayerInterface as OpusManager
  * This class is meant for recording and playing back UI tests and eventually debugging so
  * not every action directed through here at the moment.
  */
-class ActionTracker(var vm_controller: ViewModelEditorController, var vm_top: ViewModelPagan) {
+class ActionTracker(var vm_controller: ViewModelEditorController) {
     var DEBUG_ON = false
     class NoActivityException: Exception()
     class OpusManagerDetached: Exception()
@@ -387,6 +391,11 @@ class ActionTracker(var vm_controller: ViewModelEditorController, var vm_top: Vi
     private var ignore_flagged: Boolean = false
     private val action_queue = mutableListOf<Pair<TrackedAction, List<Int?>?>>()
     var lock: Boolean = false
+    lateinit var vm_top: ViewModelPagan
+
+    fun attach_top_model(model: ViewModelPagan) {
+        this.vm_top = model
+    }
 
     fun apply_undo() {
         this.track(TrackedAction.ApplyUndo)
@@ -487,25 +496,23 @@ class ActionTracker(var vm_controller: ViewModelEditorController, var vm_top: Vi
             beat_key.to_list() + position
         )
 
-        this.vm_controller.opus_manager.cursor_select(beat_key, position) ?: return
+        val opus_manager = this.vm_controller.opus_manager
+        opus_manager.cursor_select(beat_key, position)
 
-        // TODO()
-        // val tree = opus_manager.get_tree()
-        // thread {
-        //     if (tree.has_event()) {
-        //         val note = if (opus_manager.is_percussion(beat_key.channel)) {
-        //             opus_manager.get_percussion_instrument(beat_key.channel, beat_key.line_offset)
-        //         } else {
-        //             opus_manager.get_absolute_value(beat_key, position) ?: return@thread
-        //         }
-        //         if (note >= 0) {
-        //             this.get_activity().play_event(
-        //                 beat_key.channel,
-        //                 note
-        //             )
-        //         }
-        //     }
-        // }
+        val tree = opus_manager.get_tree()
+        if (tree.has_event()) {
+            val note = if (opus_manager.is_percussion(beat_key.channel)) {
+                opus_manager.get_percussion_instrument(beat_key.channel, beat_key.line_offset)
+            } else {
+                opus_manager.get_absolute_value(beat_key, position) ?: return
+            }
+            if (note >= 0) {
+                this.play_event(
+                    beat_key.channel,
+                    note
+                )
+            }
+        }
     }
 
     fun move_line_ctl_to_beat(beat_key: BeatKey) {
@@ -921,12 +928,14 @@ class ActionTracker(var vm_controller: ViewModelEditorController, var vm_top: Vi
                 opus_manager.percussion_set_instrument(c, l, max(0, i - 27))
             }
         }
+        this.vm_controller.update_soundfont_instruments()
         opus_manager.clear_history()
     }
 
     fun load_project(uri: Uri) {
         this.track(TrackedAction.LoadProject, ActionTracker.string_to_ints(uri.toString()))
-        activity.load_project(uri)
+        TODO()
+        //activity.load_project(uri)
     }
 
     fun <T: EffectEvent> set_effect_at_cursor(event: T) {
@@ -1156,11 +1165,10 @@ class ActionTracker(var vm_controller: ViewModelEditorController, var vm_top: Vi
         val opus_manager = this.get_opus_manager()
         opus_manager.set_note_offset_at_cursor(new_offset)
 
-        // TODO:
-        //val beat_key = opus_manager.cursor.get_beatkey()
-        //val position = opus_manager.cursor.get_position()
-        //val event_note = opus_manager.get_absolute_value(beat_key, position) ?: return
-        //this.get_activity().play_event(beat_key.channel, event_note)
+        val beat_key = opus_manager.cursor.get_beatkey()
+        val position = opus_manager.cursor.get_position()
+        val event_note = opus_manager.get_absolute_value(beat_key, position) ?: return
+        this.play_event(beat_key.channel, event_note)
     }
 
     fun set_octave(new_octave: Int) {
@@ -1169,11 +1177,53 @@ class ActionTracker(var vm_controller: ViewModelEditorController, var vm_top: Vi
         val opus_manager = this.get_opus_manager()
         opus_manager.set_note_octave_at_cursor(new_octave)
 
-        // TODO:
-        // val beat_key = opus_manager.cursor.get_beatkey()
-        // val position = opus_manager.cursor.get_position()
-        // val event_note = opus_manager.get_absolute_value(beat_key, position) ?: return
-        // this.get_activity().play_event(beat_key.channel, event_note)
+        val beat_key = opus_manager.cursor.get_beatkey()
+        val position = opus_manager.cursor.get_position()
+        val event_note = opus_manager.get_absolute_value(beat_key, position) ?: return
+        this.play_event(beat_key.channel, event_note)
+    }
+
+    private fun play_event(channel: Int, event_value: Int, velocity: Float = .5F) {
+        if (event_value < 0) return // No sound to play
+
+        val opus_manager = this.get_opus_manager()
+        val midi_channel = opus_manager.get_midi_channel(channel)
+
+        val radix = opus_manager.get_radix()
+        val (note, bend) = if (opus_manager.is_percussion(channel)) { // Ignore the event data and use percussion map
+            Pair(event_value + 27, 0)
+        } else {
+            val octave = event_value / radix
+            val offset = opus_manager.tuning_map[event_value % radix]
+
+            val transpose_offset = 12.0 * opus_manager.transpose.first.toDouble() / opus_manager.transpose.second.toDouble()
+            val std_offset = 12.0 * offset.first.toDouble() / offset.second.toDouble()
+
+            val bend = (((std_offset - floor(std_offset)) + (transpose_offset - floor(transpose_offset))) * 512.0).toInt()
+            val new_note = (octave * 12) + std_offset.toInt() + transpose_offset.toInt() + 21
+
+            Pair(new_note, bend)
+        }
+
+        if (note > 127) return
+
+        val audio_interface = this.vm_controller.audio_interface
+        if (audio_interface.has_soundfont()) {
+            audio_interface.play_feedback(midi_channel, note, bend, (velocity * 127F).toInt() shl 8)
+        } else {
+            TODO()
+            // try {
+            //     // this._midi_feedback_dispatcher.play_note(
+            //     //     midi_channel,
+            //     //     note,
+            //     //     bend,
+            //     //     (velocity * 127F).toInt(),
+            //     //     !opus_manager.is_tuning_standard()
+            //     // )
+            // } catch (_: VirtualMidiInputDevice.DisconnectedException) {
+            //     // Feedback shouldn't be necessary here. But i'm sure that'll come back to bite me
+            // }
+        }
     }
 
     fun adjust_selection(amount: Int? = null) {
@@ -2237,10 +2287,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController, var vm_top: Vi
             }
 
             CtlLineLevel.Channel -> {
-                opus_manager.toggle_channel_controller_visibility(
-                    cursor.ctl_type!!,
-                    cursor.channel
-                )
+                opus_manager.toggle_channel_controller_visibility(cursor.ctl_type!!, cursor.channel)
             }
 
             CtlLineLevel.Global -> {

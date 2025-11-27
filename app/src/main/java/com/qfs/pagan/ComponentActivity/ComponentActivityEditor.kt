@@ -53,11 +53,17 @@ import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
+import com.qfs.apres.event.BankSelect
+import com.qfs.apres.event.ProgramChange
+import com.qfs.apres.soundfont2.Riff
+import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.Activity.ActivityAbout
+import com.qfs.pagan.Activity.ActivityEditor.PlaybackState
 import com.qfs.pagan.Activity.ActivitySettings
 import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
 import com.qfs.pagan.CompatibleFileType
+import com.qfs.pagan.DrawerChannelMenu.ChannelOptionRecycler
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.button.ConfigDrawerButton
@@ -97,6 +103,7 @@ import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.InputStreamReader
 import kotlin.math.abs
+import kotlin.text.split
 
 class ComponentActivityEditor: PaganComponentActivity() {
     val controller_model: ViewModelEditorController by this.viewModels()
@@ -126,6 +133,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
             this.controller_model.active_project.value = uri
         }
 
+    init {
+    }
     //internal var result_launcher_import =
     //    this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
     //        if (result.resultCode == RESULT_OK) {
@@ -135,16 +144,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
     //        }
     //    }
 
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
-        val action_interface = this.controller_model.action_interface
-        this.controller_model.opus_manager.project_change_new()
-
-
-        action_interface.attach_activity(this)
-        action_interface.attach_opus_manager(this.controller_model.opus_manager)
         super.onCreate(savedInstanceState)
+
+        val action_interface = this.controller_model.action_interface
+        this.controller_model.attach_state_model(this.state_model)
+        action_interface.attach_top_model(this.view_model)
+
         action_interface.new_project()
 
         this.onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -186,13 +192,57 @@ class ComponentActivityEditor: PaganComponentActivity() {
         } else if (this.intent.getBooleanExtra("load_backup", false)) {
             // this.load_from_bkp()
         } else if (this.intent.data == null) {
-            this.setup_new()
+           // this.setup_new()
         } else if (this.view_model.project_manager?.contains(this.intent.data!!) == true) {
             this.load_project(this.intent.data!!)
         } else {
             this.handle_uri(this.intent.data!!)
         }
     }
+
+    override fun on_config_load() {
+        super.on_config_load()
+        this.set_soundfont()
+    }
+
+    fun set_soundfont() {
+        val file_path = this.view_model.configuration.soundfont
+        if (file_path == null) {
+            this.controller_model.unset_soundfont()
+            return
+        }
+
+        // Failed to change playback_state
+        if (!this.controller_model.update_playback_state_soundfont(PlaybackState.Ready)) return
+
+        val soundfont_directory = this.get_soundfont_directory()
+        var soundfont_file = soundfont_directory
+        for (segment in file_path.split("/")) {
+            soundfont_file = soundfont_file.findFile(segment) ?: throw FileNotFoundException()
+        }
+
+        if (!soundfont_file.exists()) {
+            // Possible if user puts the sf2 in their files manually
+            //this.feedback_msg(this.getString(R.string.soundfont_not_found))
+            throw FileNotFoundException()
+        }
+
+        try {
+            this.controller_model.set_soundfont(SoundFont(this, soundfont_file.uri))
+        } catch (_: Riff.InvalidRiff) {
+            // Possible if user puts the sf2 in their files manually
+            //this.feedback_msg(this.getString(R.string.invalid_soundfont))
+            return
+        } catch (_: SoundFont.InvalidSoundFont) {
+            // Possible if user puts the sf2 in their files manually
+            // Possible if user puts the sf2 in their files manually
+            //this.feedback_msg("Invalid Soundfont")
+            return
+        }
+
+        // TODO: Update percussion minimums
+    }
+
 
     fun get_file_type(uri: Uri): CompatibleFileType {
         return this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {

@@ -3,8 +3,11 @@ package com.qfs.pagan.ComponentActivity
 import com.qfs.pagan.R
 import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.database.Cursor
+import android.net.Uri
 import android.os.Bundle
 import android.provider.DocumentsContract
+import android.provider.OpenableColumns
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
@@ -32,6 +35,7 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -48,7 +52,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.documentfile.provider.DocumentFile
+import com.qfs.apres.soundfont2.SoundFont
+import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
+import com.qfs.pagan.composable.SText
 import com.qfs.pagan.find_activity
+import java.io.FileInputStream
+import java.io.FileNotFoundException
 
 class ComponentActivitySettings: PaganComponentActivity() {
     internal var _set_soundfont_directory_intent_launcher =
@@ -58,17 +68,70 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     result_data.data?.also { uri  ->
                         val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
                         this.contentResolver.takePersistableUriPermission(uri, new_flags)
-                        TODO()
-                        //fun set_soundfont_directory(uri: Uri) {
-                        //    this.configuration.soundfont_directory = uri
-                        //    this.save_configuration()
-                        //    this.ucheck_move_soundfonts()
-                        //}
-
-                        //   this.set_soundfont_directory(uri)
-                     //   this.on_soundfont_directory_set(uri)
-                    }//
+                        this.view_model.configuration.soundfont_directory = uri
+                        this.view_model.save_configuration()
+                    }
                 }
+            }
+        }
+    var result_launcher_import_soundfont =
+        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            val uri = result.data?.data ?: return@registerForActivityResult
+            val path = uri.path ?: throw FileNotFoundException()
+
+            // Check if this selected file is within the soundfont_directory ////
+            // We can directory is set here.
+            val configuration = this.view_model.configuration
+            val parent_segments = configuration.soundfont_directory!!.pathSegments!!.last()!!.split("/")
+            val child_segments = uri.pathSegments!!.last()!!.split("/")
+            val is_within_soundfont_directory = parent_segments.size < child_segments.size && parent_segments == child_segments.subList(0, parent_segments.size)
+            //-----------------------------------------------------
+            if (is_within_soundfont_directory) {
+                configuration.soundfont = child_segments.subList(parent_segments.size, child_segments.size).joinToString("/")
+               // this.set_soundfont_button_text()
+                this.update_result()
+            } else {
+                val soundfont_dir = this@ComponentActivitySettings.get_soundfont_directory()
+                val file_name = this.parse_file_name(uri)!!
+
+                soundfont_dir.createFile("*/*", file_name)?.let { new_file ->
+                    this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
+                        try {
+                            val output_stream = this.contentResolver.openOutputStream(new_file.uri, "wt")
+                            val input_stream = FileInputStream(it.fileDescriptor)
+
+                            val buffer = ByteArray(4096)
+                            while (true) {
+                                val read_size = input_stream.read(buffer)
+                                if (read_size == -1) {
+                                    break
+                                }
+                                output_stream?.write(buffer, 0, read_size)
+                            }
+
+                            input_stream.close()
+                            output_stream?.flush()
+                            output_stream?.close()
+
+                        } catch (e: FileNotFoundException) {
+                            // TODO:  Feedback? Only breaks on devices without properly implementation (realme RE549c)
+                        }
+                    }
+
+                    try {
+                        SoundFont(this, new_file.uri)
+                        this.view_model.configuration.soundfont = this.view_model.coerce_relative_soundfont_path(new_file.uri)
+                        this.view_model.save_configuration()
+                    } catch (e: Exception) {
+                        //this.feedback_msg(this.getString(R.string.feedback_invalid_sf2_file))
+                        new_file.delete()
+                       // this.loading_reticle_hide()
+                       // return@thread
+                    }
+                }
+
+                this.update_result()
             }
         }
 
@@ -81,20 +144,52 @@ class ComponentActivitySettings: PaganComponentActivity() {
             val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
             this.contentResolver.takePersistableUriPermission(uri, new_flags)
             this.view_model.configuration.project_directory = uri
+            this.view_model.save_configuration()
 
-            TODO("Update active project")
-            // this.get_project_manager().change_project_path(uri, this.intent.data)?.let {
-            //     this.result_intent.putExtra(EXTRA_ACTIVE_PROJECT, it.toString())
-            // }
+            this.view_model.project_manager?.change_project_path(uri, this.intent.data)?.let {
+                this.result_intent.putExtra(EXTRA_ACTIVE_PROJECT, it.toString())
+            }
 
-            // this.update_result()
-            // this.on_project_directory_set(uri)
+            this.update_result()
         }
 
+    var result_intent = Intent()
+    private fun update_result() {
+        // RESULT_OK lets the other activities know they need to reload the configuration
+        this.setResult(RESULT_OK, this.result_intent)
+    }
+
+    fun parse_file_name(uri: Uri): String? {
+        var result: String? = null
+        if (uri.scheme == "content") {
+            val cursor: Cursor? = this.contentResolver.query(uri, null, null, null, null)
+            if (cursor != null) {
+                if (cursor.moveToFirst()) {
+                    val ci = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (ci >= 0) {
+                        result = cursor.getString(ci)
+                    }
+                }
+                cursor.close()
+            }
+        }
+
+        if (result == null && uri.path is String) {
+            result = uri.path!!
+            result = result.substring(result.lastIndexOf("/") + 1)
+        }
+
+        return result
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        this.view_model.configuration_path = "${this.applicationContext.cacheDir}/pagan.cfg"
         super.onCreate(savedInstanceState)
-        //ScaffoldWithTopBar(stringResource(R.string.settings_fragment_label))
+    }
+
+    override fun on_config_load() {
+        super.on_config_load()
+
+
     }
 
     @Composable
@@ -197,15 +292,95 @@ class ComponentActivitySettings: PaganComponentActivity() {
         val context = LocalContext.current.find_activity()
         val view_model = (context as ComponentActivitySettings).view_model
         val no_soundfont_text = stringResource(R.string.no_soundfont)
-        val soundfont_button_label by remember { mutableStateOf<String>(view_model.configuration.soundfont ?: no_soundfont_text) }
 
         Column {
             Text(stringResource(R.string.label_settings_sf))
             Button(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = {}
+                onClick = {
+                    val file_list = this@ComponentActivitySettings.get_existing_soundfonts()
+                    if (file_list.isEmpty()) {
+                        this@ComponentActivitySettings.import_soundfont()
+                        return@Button
+                    }
+                    val soundfonts = mutableListOf<Triple<Uri, Int?, String>>()
+                    for (uri in file_list) {
+                        val relative_path_segments = uri.pathSegments.last().split("/")
+                        soundfonts.add(Triple(uri, null, relative_path_segments.last()))
+                    }
+
+                    val sort_options = listOf(
+                        Pair(R.string.sort_option_abc) { original: List<Triple<Uri, Int?, String>> ->
+                            original.sortedBy { item: Triple<Uri, Int?, String> -> item.third.lowercase() }
+                        }
+                    )
+
+                    view_model.create_dialog { close ->
+                        @Composable {
+                            Row {
+
+                            }
+                            Row {
+                                Column(modifier = Modifier
+                                    .fillMaxWidth()
+                                    .verticalScroll(rememberScrollState())
+                                ) {
+                                   // val dialog = this.dialog_popup_sortable_menu(this.getString(R.string.dialog_select_soundfont), soundfonts, null, sort_options, 0, object: MenuDialogEventHandler<Uri>() {
+                                   //     override fun on_submit(index: Int, value: Uri) {
+                                   //         this@ActivitySettings.configuration.soundfont = this@ActivitySettings.coerce_relative_soundfont_path(value)
+                                   //         this@ActivitySettings.set_soundfont_button_text()
+                                   //         this@ActivitySettings.update_result()
+                                   //     }
+                                   // })
+
+                                   // dialog?.findViewById<ViewGroup>(R.id.menu_wrapper)?.let { menu_wrapper ->
+                                   //     val pre_menu: View = LayoutInflater.from(this)
+                                   //         .inflate(
+                                   //             R.layout.soundfont_pre_menu,
+                                   //             menu_wrapper,
+                                   //             false
+                                   //         )
+
+                                   //     menu_wrapper.addView(pre_menu, 0)
+                                   //     menu_wrapper.findViewById<Button>(R.id.sf_menu_mute).setOnClickListener {
+                                   //         this.configuration.soundfont = null
+                                   //         this.update_result()
+                                   //         this.set_soundfont_button_text()
+                                   //         menu_wrapper.findViewById<Button>(R.id.sf_menu_mute).text
+                                   //         dialog.dismiss()
+                                   //     }
+
+                                   //     menu_wrapper.findViewById<Button>(R.id.sf_menu_import).setOnClickListener {
+                                   //         this.import_soundfont()
+                                   //         dialog.dismiss()
+                                   //     }
+                                   // }
+                                    for (uri in file_list) {
+                                        val relative_path_segments = uri.pathSegments.last().split("/")
+                                        soundfonts.add(Triple(uri, null, relative_path_segments.last()))
+                                        Row(modifier = Modifier.combinedClickable(
+                                            onClick = {
+                                                this@ComponentActivitySettings.view_model.set_soundfont_uri(uri)
+                                                this@ComponentActivitySettings.view_model.save_configuration()
+                                            }
+                                        )) {
+                                            Text(text = relative_path_segments.last())
+                                        }
+                                    }
+                                }
+                            }
+                            Row {
+                                TextButton(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    onClick = { close() },
+                                    content = { SText(android.R.string.cancel) }
+                                )
+                            }
+                        }
+                    }
+                }
             ) {
-                Text(soundfont_button_label)
+                Text(view_model.soundfont_name.value ?: no_soundfont_text)
             }
 
             Text(stringResource(R.string.label_settings_soundfont_directory))
@@ -315,7 +490,10 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     thumb = {
                         Box(
                             Modifier
-                                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(corner = CornerSize(12.dp)))
+                                .background(
+                                    MaterialTheme.colorScheme.primary,
+                                    RoundedCornerShape(corner = CornerSize(12.dp))
+                                )
                                 .size(24.dp)
                         )
                     },
@@ -326,7 +504,9 @@ class ComponentActivitySettings: PaganComponentActivity() {
                         slider_option_index = (it * (options_playback.size - 1).toFloat()).toInt()
                         view_model.configuration.sample_rate = options_playback[slider_option_index]
                     },
-                    modifier = Modifier.fillMaxWidth().weight(2F)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(2F)
                 )
             }
             Row(
@@ -409,6 +589,19 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     )
                 }
             }
+        }
+    }
+
+    fun import_soundfont(uri: Uri? = null) {
+        if (this.view_model.configuration.soundfont_directory == null) {
+            //this.initial_dialog_select_soundfont_directory()
+        } else if (uri == null) {
+            val intent = Intent()
+                .setType("*/*")
+                .setAction(Intent.ACTION_GET_CONTENT)
+            this.result_launcher_import_soundfont.launch(intent)
+        } else {
+            TODO("would only be used for debug atm anyway.")
         }
     }
 }

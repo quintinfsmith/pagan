@@ -128,27 +128,25 @@ class ActivitySettings : PaganActivity() {
 
     internal var result_launcher_set_soundfont_directory_and_import =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
-                result.data?.also { result_data ->
-                    result_data.data?.also { uri  ->
-                        val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                        this.contentResolver.takePersistableUriPermission(uri, new_flags)
-                        this.set_soundfont_directory(uri)
-                        this.set_soundfont_directory_button_text()
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            val result_data = result.data ?: return@registerForActivityResult
+            val uri = result_data.data ?: return@registerForActivityResult
 
-                        if (!this.is_soundfont_available()) {
-                            this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.VISIBLE
-                            this.result_launcher_import_soundfont.launch(
-                                Intent()
-                                    .setType("*/*")
-                                    .setAction(Intent.ACTION_GET_CONTENT)
-                            )
-                        } else {
-                            this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
-                            this.dialog_select_soundfont()
-                        }
-                    }
-                }
+            val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            this.contentResolver.takePersistableUriPermission(uri, new_flags)
+            this.set_soundfont_directory(uri)
+            this.set_soundfont_directory_button_text()
+
+            if (!this.is_soundfont_available()) {
+                this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.VISIBLE
+                this.result_launcher_import_soundfont.launch(
+                    Intent()
+                        .setType("*/*")
+                        .setAction(Intent.ACTION_GET_CONTENT)
+                )
+            } else {
+                this.findViewById<LinearLayout>(R.id.llSFWarning).visibility = View.GONE
+                this.dialog_select_soundfont()
             }
         }
 

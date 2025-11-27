@@ -18,12 +18,14 @@ class AudioInterface {
     class FeedbackRevolver(var size: Int = 4) {
         var sample_handle_manager: SampleHandleManager? = null
         private var current_index: Int = 0
-        private var device: FeedbackDevice? = null
+        private var devices =  Array<FeedbackDevice?>(this.size) { null }
 
         fun set_handle_manager(sample_handle_manager: SampleHandleManager) {
             this.clear()
             this.sample_handle_manager = sample_handle_manager
-            this.device = FeedbackDevice(sample_handle_manager)
+            for (i in 0 until this.size) {
+                this.devices[i] = FeedbackDevice(sample_handle_manager)
+            }
         }
 
         fun play(channel: Int, note: Int, bend: Int, velocity: Int, duration: Int = 250) {
@@ -34,15 +36,18 @@ class AudioInterface {
                 bend = bend,
                 velocity = velocity
             )
-            this.device?.new_event(event, duration)
-            this.current_index %= this.size
+
+            this.devices[this.current_index]?.new_event(event, duration)
+            this.current_index = (this.current_index + 1) % this.size
         }
 
         fun clear() {
             this.sample_handle_manager?.destroy()
             this.sample_handle_manager = null
-            this.device?.destroy()
-            this.device = null
+            for (i in 0 until this.size) {
+                this.devices[i]?.destroy()
+                this.devices[i] = null
+            }
             this.current_index = 0
         }
     }

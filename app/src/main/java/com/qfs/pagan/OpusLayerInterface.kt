@@ -33,7 +33,7 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
-class OpusLayerInterface(val vm_state: ViewModelEditorState, val vm_controller: ViewModelEditorController) : OpusLayerHistory() {
+class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLayerHistory() {
     class HidingNonEmptyPercussionException: Exception()
     class HidingLastChannelException: Exception()
     class MissingEditorTableException: Exception()
@@ -73,15 +73,12 @@ class OpusLayerInterface(val vm_state: ViewModelEditorState, val vm_controller: 
 
     var latest_set_octave: Int? = null
     var latest_set_offset: Int? = null
+    lateinit var vm_state: ViewModelEditorState
+    var note_memory = PaganConfiguration.NoteMemory.UserInput
 
-    fun attach_activity(activity: ActivityEditor) {
-        this._activity = activity
+    fun attach_state_model(model: ViewModelEditorState) {
+        this.vm_state = model
     }
-
-    fun get_activity(): ActivityEditor? {
-        return this._activity
-    }
-
     // UI BILL Interface functions vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     private fun <T> lock_ui(callback: () -> T): T? {
         this.ui_lock.lock()
@@ -542,7 +539,7 @@ class OpusLayerInterface(val vm_state: ViewModelEditorState, val vm_controller: 
         // Need to call get_drum name to repopulate instrument list if needed
         // this.get_activity()?.get_drum_name(channel, instrument)
 
-        this.vm_state.queue_refresh_choose_percussion_button(channel, line_offset)
+        if (this.ui_lock.is_locked()) return
         this.vm_state.update_line(
             this.get_visible_row_from_ctl_line(
                 this.get_actual_line_index(
@@ -991,7 +988,6 @@ class OpusLayerInterface(val vm_state: ViewModelEditorState, val vm_controller: 
     // It's implicitly wrapped in a lock_ui_full call
     override fun _project_change_midi(midi: Midi) {
         super._project_change_midi(midi)
-        this.get_activity()?.active_project = null
     }
 
 
@@ -1107,15 +1103,13 @@ class OpusLayerInterface(val vm_state: ViewModelEditorState, val vm_controller: 
     override fun channel_set_instrument(channel: Int, instrument: Pair<Int, Int>) {
         super.channel_set_instrument(channel, instrument)
 
-        if (this.ui_lock.is_locked()) return
-
-        // Updating channel instruments doesn't strictly need to be gated behind the full lock,
-        // BUT this way these don't get called multiple times every setup
-        this.get_activity()?.update_channel_instrument(
+        this.vm_controller.audio_interface.update_channel_instrument(
             this.get_midi_channel(channel),
-            instrument
+            instrument.first,
+            instrument.second
         )
 
+        if (this.ui_lock.is_locked()) return
         this.vm_state.set_channel_data(channel, this.is_percussion(channel), instrument, this.channels[channel].muted)
     }
 
@@ -1872,7 +1866,7 @@ class OpusLayerInterface(val vm_state: ViewModelEditorState, val vm_controller: 
                         }
                         else -> {
                             val cursor = this.cursor
-                            val offset = when (this.get_activity()?.configuration?.note_memory) {
+                            val offset = when (this.note_memory) {
                                 PaganConfiguration.NoteMemory.UserInput -> this.latest_set_offset
                                 else -> null
                             }
@@ -1942,7 +1936,7 @@ class OpusLayerInterface(val vm_state: ViewModelEditorState, val vm_controller: 
                         }
                         else -> {
                             val cursor = this.cursor
-                            val octave = when (this.get_activity()?.configuration?.note_memory) {
+                            val octave = when (this.note_memory) {
                                 PaganConfiguration.NoteMemory.UserInput -> this.latest_set_octave
                                 else -> null
                             }

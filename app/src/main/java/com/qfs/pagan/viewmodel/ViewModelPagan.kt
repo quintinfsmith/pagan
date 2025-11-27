@@ -26,7 +26,6 @@ class ViewModelPagan: ViewModel() {
             return relative_path.joinToString("/")
         }
     }
-
     var dialog_queue: MutableState<DialogChain?> = mutableStateOf(null)
     var project_manager: ProjectManager? = null
 
@@ -54,10 +53,6 @@ class ViewModelPagan: ViewModel() {
                 }
             }
         )
-    }
-
-    fun <T> create_sortable_menu_dialog(title: Int, selected_sort_option: Int, sort_options: List<Pair<Int, () -> List<Triple<T, Int?, String?>>>>, callback: (T) -> Unit) {
-        TODO()
     }
 
     internal fun save_configuration() {

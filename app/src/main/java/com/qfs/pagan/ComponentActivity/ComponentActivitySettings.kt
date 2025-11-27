@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -51,6 +52,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
 import com.qfs.pagan.R
@@ -61,20 +63,23 @@ import java.io.FileInputStream
 import java.io.FileNotFoundException
 
 class ComponentActivitySettings: PaganComponentActivity() {
-    internal var _set_soundfont_directory_intent_launcher =
+    class ViewModelSettings: ViewModel() {
+        val soundfont_directory = mutableStateOf<String?>(null)
+        val project_directory = mutableStateOf<String?>(null)
+    }
+    private var _set_soundfont_directory_intent_launcher =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
-                result.data?.also { result_data ->
-                    result_data.data?.also { uri  ->
-                        val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                        this.contentResolver.takePersistableUriPermission(uri, new_flags)
-                        this.view_model.configuration.soundfont_directory = uri
-                        this.view_model.save_configuration()
-                    }
-                }
-            }
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            val result_data = result.data ?: return@registerForActivityResult
+            val uri = result_data.data ?: return@registerForActivityResult
+            val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            this.contentResolver.takePersistableUriPermission(uri, new_flags)
+            this.view_model.configuration.soundfont_directory = uri
+            this.settings_model.soundfont_directory.value = uri.pathSegments?.last()
+            this.view_model.save_configuration()
         }
-    var result_launcher_import_soundfont =
+
+    private var result_launcher_import_soundfont =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode != RESULT_OK) return@registerForActivityResult
             val uri = result.data?.data ?: return@registerForActivityResult
@@ -135,7 +140,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             }
         }
 
-    internal var result_launcher_set_project_directory =
+    private var result_launcher_set_project_directory =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode != RESULT_OK) return@registerForActivityResult
             val result_data = result.data ?: return@registerForActivityResult
@@ -149,17 +154,19 @@ class ComponentActivitySettings: PaganComponentActivity() {
             this.view_model.project_manager?.change_project_path(uri, this.intent.data)?.let {
                 this.result_intent.putExtra(EXTRA_ACTIVE_PROJECT, it.toString())
             }
+            this.settings_model.project_directory.value = uri.pathSegments?.last()
 
             this.update_result()
         }
 
+    val settings_model: ViewModelSettings by this.viewModels()
     var result_intent = Intent()
     private fun update_result() {
         // RESULT_OK lets the other activities know they need to reload the configuration
         this.setResult(RESULT_OK, this.result_intent)
     }
 
-    fun parse_file_name(uri: Uri): String? {
+    private fun parse_file_name(uri: Uri): String? {
         var result: String? = null
         if (uri.scheme == "content") {
             val cursor: Cursor? = this.contentResolver.query(uri, null, null, null, null)
@@ -183,13 +190,13 @@ class ComponentActivitySettings: PaganComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        this.settings_model.project_directory.value = view_model.configuration.project_directory?.pathSegments?.last()
+        this.settings_model.soundfont_directory.value = view_model.configuration.soundfont_directory?.pathSegments?.last()
         super.onCreate(savedInstanceState)
     }
 
     override fun on_config_load() {
         super.on_config_load()
-
-
     }
 
     @Composable
@@ -292,6 +299,8 @@ class ComponentActivitySettings: PaganComponentActivity() {
         val context = LocalContext.current.find_activity()
         val view_model = (context as ComponentActivitySettings).view_model
         val no_soundfont_text = stringResource(R.string.no_soundfont)
+        val soundfont_directory = context.settings_model.soundfont_directory
+        val project_directory = context.settings_model.project_directory
 
         Column {
             Text(stringResource(R.string.label_settings_sf))
@@ -356,10 +365,9 @@ class ComponentActivitySettings: PaganComponentActivity() {
                             }
                         }
                     }
-                }
-            ) {
-                Text(view_model.soundfont_name.value ?: no_soundfont_text)
-            }
+                },
+                content = { Text(view_model.soundfont_name.value ?: no_soundfont_text) }
+            )
 
             Text(stringResource(R.string.label_settings_soundfont_directory))
             Button(
@@ -374,10 +382,11 @@ class ComponentActivitySettings: PaganComponentActivity() {
                             }
                         }
                     )
-                }) {
-                Text("SF Directory")
-            }
-
+                },
+                content = {
+                    Text(soundfont_directory.value ?: stringResource(R.string.label_settings_soundfont_directory))
+                }
+            )
 
             Text(stringResource(R.string.label_settings_projects_directory))
             Button(
@@ -392,10 +401,11 @@ class ComponentActivitySettings: PaganComponentActivity() {
                             }
                         }
                     )
+                },
+                content = {
+                    Text(project_directory.value ?: stringResource(R.string.label_settings_projects_directory))
                 }
-            ) {
-                Text("Project Directory")
-            }
+            )
 
         }
     }

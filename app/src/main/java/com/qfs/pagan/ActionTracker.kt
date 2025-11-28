@@ -2,7 +2,6 @@ package com.qfs.pagan
 
 import android.net.Uri
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,8 +15,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.core.net.toUri
-import androidx.lifecycle.ViewModel
-import com.qfs.apres.VirtualMidiInputDevice
 import com.qfs.json.JSONBoolean
 import com.qfs.json.JSONFloat
 import com.qfs.json.JSONInteger
@@ -28,23 +25,18 @@ import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.composable.IntegerInput
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.TextInput
-import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
+import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
-import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
 import com.qfs.pagan.structure.opusmanager.base.InvalidOverwriteCall
 import com.qfs.pagan.structure.opusmanager.base.MixedInstrumentException
-import com.qfs.pagan.structure.opusmanager.base.NoteOutOfRange
-import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.viewmodel.ViewModelEditorController
-import com.qfs.pagan.viewmodel.ViewModelEditorState
 import com.qfs.pagan.viewmodel.ViewModelPagan
-import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
@@ -1106,7 +1098,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             options.add(Triple(ctl_type, icon_id, ctl_type.name))
         }
 
-        this.dialog_popup_menu(R.string.show_line_controls, options, stub_output = forced_value) { index: Int, ctl_type: EffectType ->
+        this.dialog_popup_menu(R.string.show_line_controls, options, stub_output = forced_value) { ctl_type: EffectType ->
             this.track(TrackedAction.ShowLineController, ActionTracker.string_to_ints(ctl_type.name))
             opus_manager.toggle_line_controller_visibility(ctl_type, cursor.channel, cursor.line_offset)
         }
@@ -1122,7 +1114,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             options.add(Triple(ctl_type, icon_id, ctl_type.name))
         }
 
-        this.dialog_popup_menu(R.string.show_channel_controls, options, stub_output = forced_value) { index: Int, ctl_type: EffectType ->
+        this.dialog_popup_menu(R.string.show_channel_controls, options, stub_output = forced_value) { ctl_type: EffectType ->
             this.track(TrackedAction.ShowChannelController, ActionTracker.string_to_ints(ctl_type.name))
             opus_manager.toggle_channel_controller_visibility(ctl_type, cursor.channel)
         }
@@ -1137,7 +1129,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             options.add(Triple(ctl_type, icon_id, ctl_type.name))
         }
 
-        this.dialog_popup_menu(R.string.show_global_controls, options, stub_output = forced_value) { index: Int, ctl_type: EffectType ->
+        this.dialog_popup_menu(R.string.show_global_controls, options, stub_output = forced_value) { ctl_type: EffectType ->
             this.track(TrackedAction.ShowGlobalController, ActionTracker.string_to_ints(ctl_type.name))
             opus_manager.toggle_global_controller_visibility(ctl_type)
         }
@@ -1227,13 +1219,17 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     }
 
     fun adjust_selection(amount: Int? = null) {
-        // val opus_manager = this.get_opus_manager()
-        // if (amount == null) {
-        //     this.activity?.dialog_popup_selection_offset()
-        // } else {
-        //     this.track(TrackedAction.AdjustSelection, listOf(amount))
-        //     opus_manager.offset_selection(amount)
-        // }
+        val opus_manager = this.get_opus_manager()
+        if (amount == null) {
+            this.vm_top.create_dialog { close ->
+                @Composable {
+                    Text("TODO")
+                }
+            }
+        } else {
+            this.track(TrackedAction.AdjustSelection, listOf(amount))
+            opus_manager.offset_selection(amount)
+        }
     }
 
     fun unset() {
@@ -1736,8 +1732,27 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
      * wrapper around MainActivity::dialog_popup_menu
      * will subvert popup on replay
      */
-    private fun <T> dialog_popup_menu(title: Int, options: List<Triple<T, Int?, String>>, default: T? = null, stub_output: T? = null, callback: (index: Int, value: T) -> Unit) {
+    private fun <T> dialog_popup_menu(title: Int, options: List<Triple<T, Int?, String>>, default: T? = null, stub_output: T? = null, callback: (value: T) -> Unit) {
+        if (stub_output != null) return callback(stub_output)
 
+        this.vm_top.create_dialog { close ->
+            @Composable {
+                Column {
+                    Row {
+                        SText(title)
+                    }
+                    Row {
+                        UnSortableMenu(options, default, callback)
+                    }
+                    Row {
+                        TextButton(
+                            onClick = { close() },
+                            content = { SText(android.R.string.cancel) }
+                        )
+                    }
+                }
+            }
+        }
         // if (stub_output != null) {
         //     callback(-1, stub_output)
         // } else {

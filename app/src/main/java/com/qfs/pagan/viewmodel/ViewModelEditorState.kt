@@ -83,6 +83,7 @@ class ViewModelEditorState: ViewModel() {
     var project_name: MutableState<String?> = mutableStateOf(null)
     var beat_count: MutableState<Int> = mutableIntStateOf(0)
     var line_count: MutableState<Int> = mutableIntStateOf(0)
+    var channel_count: MutableState<Int> = mutableIntStateOf(0)
     val line_data: MutableList<LineData> = mutableListOf()
     val column_data: MutableList<MutableState<ColumnData>> = mutableListOf()
     val cell_map = mutableListOf<MutableList<MutableState<ReducibleTree<Pair<LeafData, OpusEvent?>>>>>()
@@ -103,9 +104,10 @@ class ViewModelEditorState: ViewModel() {
     val playback_state_midi: MutableState<PlaybackState> = mutableStateOf(PlaybackState.NotReady)
     val relative_input_mode: MutableState<RelativeInputMode> = mutableStateOf(RelativeInputMode.Absolute)
 
+    val highlighted_offset: MutableState<Int?> = mutableStateOf(null)
+    val highlighted_octave: MutableState<Int?> = mutableStateOf(null)
+
     val is_buffering: MutableState<Boolean> = mutableStateOf(false)
-
-
 
     fun clear() {
         this.project_name.value = null
@@ -114,8 +116,12 @@ class ViewModelEditorState: ViewModel() {
         this.active_cursor.value = null
         this.radix.value = 12
         this.line_count.value = 0
+        this.channel_count.value = 0
         this.project_exists.value = false
         this.blocker_leaf = null
+
+        this.highlighted_octave.value = null
+        this.highlighted_offset.value = null
 
         this.line_data.clear()
         this.column_data.clear()

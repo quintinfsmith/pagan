@@ -82,7 +82,7 @@ fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
                 .fillMaxSize()
                 .weight(1f),
             onClick = { dispatcher.set_channel_instrument(channel_index) },
-            content = { Text("TODO") }
+            content = { Text(ui_facade.available_preset_names?.get(active_channel.instrument) ?: "???") }
         )
     }
 }

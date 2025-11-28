@@ -880,9 +880,15 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     fun set_latest_octave(octave: Int? = null) {
         this.latest_set_octave = octave
+        if (!this.ui_lock.is_locked()) {
+            this.vm_state.highlighted_octave.value = octave
+        }
     }
     fun set_latest_offset(offset: Int? = null) {
         this.latest_set_offset = offset
+        if (!this.ui_lock.is_locked()) {
+            this.vm_state.highlighted_offset.value = offset
+        }
     }
 
     fun ui_full_refresh() {

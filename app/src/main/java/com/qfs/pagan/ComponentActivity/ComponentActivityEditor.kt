@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -53,8 +52,6 @@ import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
-import com.qfs.apres.event.BankSelect
-import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.soundfont2.Riff
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.ActionTracker
@@ -63,7 +60,6 @@ import com.qfs.pagan.Activity.ActivityEditor.PlaybackState
 import com.qfs.pagan.Activity.ActivitySettings
 import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
 import com.qfs.pagan.CompatibleFileType
-import com.qfs.pagan.DrawerChannelMenu.ChannelOptionRecycler
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.button.ConfigDrawerButton
@@ -103,7 +99,6 @@ import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.InputStreamReader
 import kotlin.math.abs
-import kotlin.text.split
 
 class ComponentActivityEditor: PaganComponentActivity() {
     val controller_model: ViewModelEditorController by this.viewModels()
@@ -946,44 +941,69 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     override fun Drawer(modifier: Modifier) {
+        val dispatcher = this.controller_model.action_interface
+        val state_model = this.state_model
         Card {
             Column {
-                Row {
-                    Button(
-                        onClick = { TODO() },
-                        content = { SText(R.string.label_tuning) }
-                    )
-                    Spacer(modifier = Modifier.weight(1F))
-                    ConfigDrawerButton(
-                        icon = R.drawable.icon_add_channel_kit,
-                        description = R.string.btn_cfg_add_kit_channel,
-                        onClick = { TODO() }
-                    )
-                    ConfigDrawerButton(
-                        icon = R.drawable.icon_add_channel,
-                        description = R.string.btn_cfg_add_channel,
-                        onClick = { TODO() }
-                    )
-
+                Row(horizontalArrangement = Arrangement.SpaceBetween) {
+                    Column {
+                        Button(
+                            onClick = { dispatcher.set_tuning_table_and_transpose() },
+                            content = { SText(R.string.label_tuning) }
+                        )
+                    }
+                    Column {
+                        ConfigDrawerButton(
+                            icon = R.drawable.icon_add_channel_kit,
+                            description = R.string.btn_cfg_add_kit_channel,
+                            onClick = { dispatcher.insert_percussion_channel() }
+                        )
+                        ConfigDrawerButton(
+                            icon = R.drawable.icon_add_channel,
+                            description = R.string.btn_cfg_add_channel,
+                            onClick = { dispatcher.insert_channel() }
+                        )
+                    }
                 }
+
                 Row(modifier = Modifier.weight(1F)) {
-
+                    Column {
+                        for (i in 0 until state_model.channel_count.value) {
+                            val channel_data = state_model.channel_data[i]
+                            Row {
+                                Button(
+                                    onClick = { dispatcher.set_channel_instrument(i) },
+                                    content = { Text(state_model.available_preset_names?.get(channel_data.instrument) ?: "??") }
+                                )
+                                Button(
+                                    onClick = { dispatcher.remove_channel(i) },
+                                    content = {
+                                        Icon(
+                                            painter = painterResource(R.drawable.icon_delete_channel),
+                                            contentDescription = stringResource(R.string.remove_channel, i)
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                    }
                 }
+
                 Row {
                     ConfigDrawerButton(
                         icon = R.drawable.icon_save,
                         description = R.string.btn_cfg_save,
-                        onClick = { TODO() }
+                        onClick = { dispatcher.save() }
                     )
                     ConfigDrawerButton(
                         icon = R.drawable.icon_ic_baseline_content_copy_24,
                         description = R.string.btn_cfg_copy,
-                        onClick = { TODO() }
+                        onClick = { dispatcher.project_copy() }
                     )
                     ConfigDrawerButton(
                         icon = R.drawable.icon_trash,
                         description = R.string.btn_cfg_delete,
-                        onClick = { TODO() }
+                        onClick = { dispatcher.delete() }
                     )
                     ConfigDrawerButton(
                         icon = R.drawable.icon_export,

@@ -241,23 +241,31 @@ fun TextInput(modifier: Modifier = Modifier, input: MutableState<String>, callba
 }
 
 @Composable
-fun <T, R: Comparable<R>> SortableMenu(default_menu: List<Triple<T, Int?, String>>, sort_options: List<Pair<Int, (Triple<T, Int?, String>) -> R>>, selected_sort: Int, default_value: T? = null, callback: (T) -> Unit) {
+fun <T, R: Comparable<R>> SortableMenu(default_menu: List<Triple<T, Int?, String>>, sort_options: List<Pair<Int, (Triple<T, Int?, String>) -> R>>, selected_sort: Int = -1, default_value: T? = null, callback: (T) -> Unit) {
     val active_sort_option = remember { mutableStateOf(selected_sort) }
     Column {
-        Row(horizontalArrangement = Arrangement.SpaceBetween) {
-            SText(R.string.sorting_by)
-            Button(
-                modifier = Modifier.weight(1F),
-                onClick = { TODO() },
-                content = { SText(sort_options[active_sort_option.value].first) }
-            )
+        if (sort_options.isNotEmpty()) {
+            Row(horizontalArrangement = Arrangement.SpaceBetween) {
+                SText(R.string.sorting_by)
+                Button(
+                    modifier = Modifier.weight(1F),
+                    onClick = { TODO() },
+                    content = { SText(sort_options[active_sort_option.value].first) }
+                )
+            }
         }
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
         ) {
-            for ((uri, icon, label) in default_menu.sortedBy(sort_options[active_sort_option.value].second)) {
+            val sorted_menu = if (sort_options.isEmpty() || active_sort_option.value == -1) {
+                default_menu
+            } else {
+                default_menu.sortedBy(sort_options[active_sort_option.value].second)
+            }
+
+            for ((uri, icon, label) in sorted_menu) {
                 Row(
                     modifier = Modifier
                         .combinedClickable(
@@ -276,4 +284,9 @@ fun <T, R: Comparable<R>> SortableMenu(default_menu: List<Triple<T, Int?, String
         }
 
     }
+}
+
+@Composable
+fun <T> UnSortableMenu(options: List<Triple<T, Int?, String>>, default_value: T? = null, callback: (T) -> Unit) {
+    SortableMenu<T, Int>(options, listOf(), default_value = default_value, callback = callback)
 }

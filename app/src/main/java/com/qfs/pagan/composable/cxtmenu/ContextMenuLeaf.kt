@@ -121,7 +121,7 @@ fun ContextMenuSinglePrimary(ui_facade: ViewModelEditorState, dispatcher: Action
                             .weight(1F),
                         index = i,
                         selected = octave == i,
-                        highlighted = false, // TODO
+                        highlighted = ui_facade.highlighted_octave.value == i,
                         alternate = false,
                         callback = { dispatcher.set_octave(i) }
                     )
@@ -154,7 +154,7 @@ fun ContextMenuSingleSecondary(ui_facade: ViewModelEditorState, dispatcher: Acti
                     .weight(1F),
                 index = i,
                 selected = offset == i,
-                highlighted = false, // TODO
+                highlighted = ui_facade.highlighted_offset.value == i,
                 alternate = true,
                 callback = { dispatcher.set_offset(i) }
             )

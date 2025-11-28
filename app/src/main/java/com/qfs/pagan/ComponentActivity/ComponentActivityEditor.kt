@@ -564,8 +564,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun LineLabelView(modifier: Modifier = Modifier, y: Int, ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
         val line_info = ui_facade.line_data[y]
         val cursor = ui_facade.active_cursor.value
-        val is_line_selected = cursor != null && ui_facade.is_line_selected(cursor, y)
-        val (background_color, content_color) = if (is_line_selected) {
+        val (background_color, content_color) = if (line_info.is_selected) {
             Pair(R.color.label_selected, R.color.label_selected_text)
         } else {
             Pair(R.color.line_label, R.color.line_label_text)
@@ -581,7 +580,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
                 Button(
                     onClick = {
-                        if (is_line_selected && cursor.type == CursorMode.Line) {
+                        if (line_info.is_selected && cursor?.type == CursorMode.Line) {
                             dispatcher.cursor_select_channel(line_info.channel!!)
                         } else {
                             dispatcher.cursor_select_line_std(line_info.channel!!, line_info.line_offset!!)
@@ -675,8 +674,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         if (!column_info.is_tagged) {
             modifier.border(width = 1.dp, color = Color.Red)
         }
-        val cursor = ui_facade.active_cursor.value
-        val (background_color, content_color) = if (cursor != null && ui_facade.is_column_selected(cursor, x)) {
+        val (background_color, content_color) = if (column_info.is_selected) {
             Pair(
                 R.color.label_selected,
                 R.color.label_selected_text
@@ -716,22 +714,21 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun <T: OpusEvent> LeafView(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, y: Int, x: Int, path: List<Int>, event: T?, modifier: Modifier = Modifier) {
-        val cursor = ui_facade.active_cursor.value
+    fun <T: OpusEvent> LeafView(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, y: Int, x: Int, path: List<Int>, event_pair: Pair<ViewModelEditorState.LeafData, T?>, modifier: Modifier = Modifier) {
+        val leaf_data = event_pair.first
+        val event = event_pair.second
         val line_data = ui_facade.line_data[y]
-        val cell_selected = cursor != null && ui_facade.is_cell_selected(cursor, y, x)
-        val leaf_selected = cursor != null && ui_facade.is_leaf_selected(cursor, y, x, path)
         val corner_radius = when (event) {
             is InstrumentEvent -> 12.dp
             else -> 4.dp
         }
-        val leaf_color = if (leaf_selected) {
+        val leaf_color = if (leaf_data.is_selected) {
             when (event) {
                 is InstrumentEvent -> colorResource(R.color.leaf_selected)
                 is EffectEvent -> colorResource(R.color.ctl_leaf_selected)
                 else -> colorResource(R.color.leaf_empty_selected)
             }
-        } else if (cell_selected) {
+        } else if (leaf_data.is_secondary) {
             when (event) {
                 is InstrumentEvent -> colorResource(R.color.leaf_secondary)
                 is EffectEvent -> colorResource(R.color.ctl_leaf_secondary)
@@ -818,7 +815,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             composable_traverse(cell, listOf()) { tree, path, event, weight ->
                 if (tree.is_leaf()) {
                     this@ComponentActivityEditor.LeafView(
-                        ui_facade, dispatcher, y, x, path, event,
+                        ui_facade, dispatcher, y, x, path, event!!,
                         Modifier
                             .width(dimensionResource(R.dimen.base_leaf_width))
                             .weight(weight)

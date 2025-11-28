@@ -762,7 +762,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
             this.vm_state.add_row(
                 ctl_row++,
-                MutableList(line.beats.size) { mutableStateOf(line.beats[it].copy()) },
+                line.beats,
                 ViewModelEditorState.LineData(
                     channel,
                     j,
@@ -900,16 +900,14 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 }
                 this.vm_state.add_row(
                     i++,
-                    MutableList(this.length) { mutableStateOf(this.get_tree_copy(BeatKey(c, l, it))) },
+                    line.beats,
                     ViewModelEditorState.LineData(c, l, null, instrument, line.muted)
                 )
                 for ((type, controller) in line.controllers.get_all()) {
                     if (!controller.visible) continue
                     this.vm_state.add_row(
                         i++,
-                        MutableList(this.length) {
-                            mutableStateOf(controller.beats[it].copy())
-                        },
+                        controller.beats,
                         ViewModelEditorState.LineData(c, l, type, null, line.muted)
                     )
                 }
@@ -918,7 +916,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 if (!controller.visible) continue
                 this.vm_state.add_row(
                     i++,
-                    MutableList(this.length) { mutableStateOf(controller.beats[it].copy()) },
+                    controller.beats,
                     ViewModelEditorState.LineData(c, null, type, null, channel.muted)
                 )
             }
@@ -927,7 +925,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             if (!controller.visible) continue
             this.vm_state.add_row(
                 i++,
-                MutableList(this.length) { mutableStateOf(controller.beats[it].copy()) },
+                controller.beats,
                 ViewModelEditorState.LineData(null, null, type, null, false)
             )
         }
@@ -940,23 +938,23 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     private fun ui_add_column(beat_index: Int) {
         if (this.ui_lock.is_locked()) return
-        val new_cells = mutableListOf<MutableState<ReducibleTree<out OpusEvent>>>()
+        val new_cells = mutableListOf<ReducibleTree<out OpusEvent>>()
         for ((c, channel) in this.channels.enumerate()) {
             for ((l, line) in channel.lines.enumerate()) {
-                new_cells.add(mutableStateOf(this.get_tree_copy(BeatKey(c, l, beat_index))))
+                new_cells.add(this.get_tree(BeatKey(c, l, beat_index)))
                 for ((type, controller) in line.controllers.get_all()) {
                     if (!controller.visible) continue
-                    new_cells.add(mutableStateOf(this.get_line_ctl_tree_copy(type, BeatKey(c, l, beat_index))))
+                    new_cells.add(this.get_line_ctl_tree(type, BeatKey(c, l, beat_index)))
                 }
             }
             for ((type, controller) in channel.controllers.get_all()) {
                 if (!controller.visible) continue
-                new_cells.add(mutableStateOf(this.get_channel_ctl_tree_copy(type, c, beat_index)))
+                new_cells.add(this.get_channel_ctl_tree(type, c, beat_index))
             }
         }
         for ((type, controller) in this.controllers.get_all()) {
             if (!controller.visible) continue
-            new_cells.add(mutableStateOf(this.get_global_ctl_tree_copy(type, beat_index)))
+            new_cells.add(this.get_global_ctl_tree(type, beat_index))
         }
 
         this.vm_state.add_column(beat_index, this.is_beat_tagged(beat_index), new_cells)
@@ -1726,7 +1724,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         val line = channel.lines[line_offset ?: (channel.lines.size - 1)]
         this.vm_state.add_row(
             y,
-            MutableList(controller_line.beats.size) { mutableStateOf(controller_line.beats[it].copy()) },
+            controller_line.beats,
             ViewModelEditorState.LineData(channel_index, line_offset, ctl_type, null, line.muted)
         )
     }
@@ -1748,7 +1746,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
         this.vm_state.add_row(
             visible_row,
-            MutableList(new_line.beats.size) { mutableStateOf(new_line.beats[it].copy()) },
+            new_line.beats,
             ViewModelEditorState.LineData(
                 channel,
                 line_offset,
@@ -1788,6 +1786,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 column.add(1)
             }
         }
+
         for ((_, controller) in this.controllers.get_all()) {
             if (!controller.visible) continue
             column.add(1)

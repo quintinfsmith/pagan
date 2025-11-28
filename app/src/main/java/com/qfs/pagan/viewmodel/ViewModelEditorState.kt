@@ -72,9 +72,10 @@ class ViewModelEditorState: ViewModel() {
         Secondary
     }
 
-    data class LineData(var channel: Int?, var line_offset: Int?, var ctl_type: EffectType?, var assigned_offset: Int? = null, var is_mute: Boolean)
-    data class ColumnData(var is_tagged: Boolean)
-    data class ChannelData(var percussion: Boolean, var instrument: Pair<Int, Int>, var is_mute: Boolean)
+    data class LineData(var channel: Int?, var line_offset: Int?, var ctl_type: EffectType?, var assigned_offset: Int? = null, var is_mute: Boolean, var is_selected: Boolean = false)
+    data class ColumnData(var is_tagged: Boolean, var is_selected: Boolean = false)
+    data class LeafData(var is_selected: Boolean = false, var is_secondary: Boolean = false, var is_valid: Boolean = true, var is_spillover: Boolean = false)
+    data class ChannelData(var percussion: Boolean, var instrument: Pair<Int, Int>, var is_mute: Boolean, var is_selected: Boolean = false)
     class CacheCursor(var type: CursorMode, vararg ints: Int) {
         var ints = ints.toList()
     }
@@ -84,12 +85,17 @@ class ViewModelEditorState: ViewModel() {
     var line_count: MutableState<Int> = mutableIntStateOf(0)
     val line_data: MutableList<LineData> = mutableListOf()
     val column_data: MutableList<MutableState<ColumnData>> = mutableListOf()
-    val cell_map = mutableListOf<MutableList<MutableState<ReducibleTree<out OpusEvent>>>>()
+    val cell_map = mutableListOf<MutableList<MutableState<ReducibleTree<Pair<LeafData, OpusEvent?>>>>>()
     val channel_data: MutableList<ChannelData> = mutableListOf()
     var radix: MutableState<Int> = mutableIntStateOf(12)
 
     var active_event: MutableState<OpusEvent?> = mutableStateOf(null)
     var active_cursor: MutableState<CacheCursor?> = mutableStateOf(null)
+    // selected_* are used to quickly unset is_selected when cursor is changed
+    var selected_columns: MutableList<ColumnData> = mutableListOf()
+    var selected_lines: MutableList<LineData> = mutableListOf()
+    var selected_leafs: MutableList<LeafData> = mutableListOf()
+
     var project_exists: MutableState<Boolean> = mutableStateOf(false)
     var instrument_names = HashMap<Int, HashMap<Int, String>?>() // NOTE: "instrument". Not "preset".
     var blocker_leaf: List<Int>? = null
@@ -98,6 +104,8 @@ class ViewModelEditorState: ViewModel() {
     val relative_input_mode: MutableState<RelativeInputMode> = mutableStateOf(RelativeInputMode.Absolute)
 
     val is_buffering: MutableState<Boolean> = mutableStateOf(false)
+
+
 
     fun clear() {
         this.project_name.value = null
@@ -123,17 +131,18 @@ class ViewModelEditorState: ViewModel() {
         }
     }
 
+    // TODO: This isn't right
     fun update_cell(coordinate: EditorTable.Coordinate, tree: ReducibleTree<out OpusEvent>) {
-        this.cell_map[coordinate.y][coordinate.x].value = tree
+        this.cell_map[coordinate.y][coordinate.x].value = this.copy_tree_for_cell(tree).value
     }
 
     fun update_column(column: Int, is_tagged: Boolean) {
         this.column_data[column].value.is_tagged = is_tagged
     }
 
-    fun add_row(y: Int, cells: MutableList<MutableState<ReducibleTree<out OpusEvent>>>, new_line_data: LineData) {
+    fun add_row(y: Int, cells: List<ReducibleTree<out OpusEvent>>, new_line_data: LineData) {
         this.line_data.add(y, new_line_data)
-        this.cell_map.add(y, cells)
+        this.cell_map.add(y, MutableList(cells.size) { i -> this.copy_tree_for_cell(cells[i]) })
         this.line_count.value += 1
     }
 
@@ -187,12 +196,26 @@ class ViewModelEditorState: ViewModel() {
         this.channel_data.removeAt(channel)
     }
 
-    fun add_column(column: Int, is_tagged: Boolean, new_cells: List<MutableState<ReducibleTree<out OpusEvent>>>) {
+    fun add_column(column: Int, is_tagged: Boolean, new_cells: List<ReducibleTree<out OpusEvent>>) {
         this.column_data.add(column, mutableStateOf(ColumnData(is_tagged)))
         for ((y, line) in this.cell_map.enumerate()) {
-            line.add(column, new_cells[y])
+            line.add(column, this.copy_tree_for_cell(new_cells[y]))
         }
         this.beat_count.value += 1
+    }
+
+    private fun copy_tree_for_cell(tree: ReducibleTree<out OpusEvent>): MutableState<ReducibleTree<Pair<LeafData, OpusEvent?>>> {
+        val new_tree = tree.copy<Pair<LeafData, OpusEvent?>> { event ->
+            Pair(LeafData(), event.copy())
+        }
+
+        new_tree.traverse { tree, pair ->
+            if (pair == null && tree.is_leaf()) {
+                tree.event = Pair(LeafData(), null)
+            }
+        }
+
+        return mutableStateOf(new_tree)
     }
 
     fun remove_column(column: Int) {
@@ -263,7 +286,23 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun set_cursor(cursor: CacheCursor) {
+        // Deselect old cursor
+        while (this.selected_lines.isNotEmpty()) {
+            this.selected_lines.removeAt(0).is_selected = false
+        }
+        while (this.selected_columns.isNotEmpty()) {
+            this.selected_columns.removeAt(0).is_selected = false
+        }
+        while (this.selected_leafs.isNotEmpty()) {
+            val leaf = this.selected_leafs.removeAt(0)
+            leaf.is_selected = false
+            leaf.is_secondary = false
+        }
+
         this.active_cursor.value = cursor
+        this.populate_selected_leafs(cursor)
+        this.populate_selected_lines(cursor)
+        this.populate_selected_columns(cursor)
     }
 
     fun shift_up_percussion_names(channel: Int) {
@@ -285,59 +324,122 @@ class ViewModelEditorState: ViewModel() {
         }
     }
 
-    fun is_column_selected(cursor: CacheCursor, x: Int): Boolean {
-        return when (cursor.type) {
-            CursorMode.Column -> cursor.ints[0] == x
-            CursorMode.Single -> cursor.ints[1] == x
-            CursorMode.Range -> {
-                (min(cursor.ints[1], cursor.ints[3]) .. max(cursor.ints[1], cursor.ints[3])).contains(x)
+    private fun populate_selected_leafs(cursor: CacheCursor) {
+        when (cursor.type) {
+            CursorMode.Column -> {
+                for (y in 0 until this.line_count.value) {
+                    this.cell_map[y][cursor.ints[0]].value.also {
+                        it.traverse { tree, pair ->
+                            if (tree.is_leaf()) {
+                                pair?.first?.let { leaf_data ->
+                                    leaf_data.is_selected = false
+                                    leaf_data.is_secondary = true
+                                    this.selected_leafs.add(leaf_data)
+                                }
+                            }
+                        }
+                    }
+                }
             }
-            CursorMode.Channel,
-            CursorMode.Unset,
-            CursorMode.Line -> false
-        }
-    }
-
-    // TODO: Handle Effects
-    fun is_line_selected(cursor: CacheCursor, y: Int): Boolean {
-        return when (cursor.type) {
             CursorMode.Line -> {
-                val cursor_line = this.line_data[cursor.ints[0]]
-                val check_line = this.line_data[y]
-                cursor.ints[0] == y ||
-                        (check_line.channel == cursor_line.channel && check_line.line_offset == cursor_line.line_offset)
+                for (x in 0 until this.beat_count.value) {
+                    this.cell_map[cursor.ints[0]][x].value.also {
+                        it.traverse { tree, pair ->
+                            if (tree.is_leaf()) {
+                                pair?.first?.let { leaf_data ->
+                                    leaf_data.is_selected = false
+                                    leaf_data.is_secondary = true
+                                    this.selected_leafs.add(leaf_data)
+                                }
+                            }
+                        }
+                    }
+                }
             }
-            CursorMode.Single -> cursor.ints[0] == y
+            CursorMode.Single -> {
+                this.cell_map[cursor.ints[0]][cursor.ints[1]].value.also {
+                    it.traverse { tree, pair ->
+                        if (tree.is_leaf()) {
+                            pair?.first?.let { leaf_data ->
+                                leaf_data.is_selected = tree.get_path() == cursor.ints.subList(2, cursor.ints.size)
+                                leaf_data.is_secondary = false // TODO
+                                this.selected_leafs.add(leaf_data)
+                            }
+                        }
+                    }
+                }
+            }
             CursorMode.Range -> {
-                (min(cursor.ints[0], cursor.ints[2]) .. max(cursor.ints[0], cursor.ints[2])).contains(y)
+                for (y in min(cursor.ints[0], cursor.ints[2]) .. max(cursor.ints[0], cursor.ints[2])) {
+                    for (x in min(cursor.ints[1], cursor.ints[3]) .. max(cursor.ints[1], cursor.ints[3])) {
+                        this.cell_map[y][x].value.also {
+                            it.traverse { tree, pair ->
+                                if (tree.is_leaf()) {
+                                    val is_selected = x == cursor.ints[0] && y == cursor.ints[1]
+                                    pair?.first?.let { leaf_data ->
+                                        leaf_data.is_selected = is_selected
+                                        leaf_data.is_secondary = !is_selected
+                                        this.selected_leafs.add(leaf_data)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
-            CursorMode.Channel,
-            CursorMode.Column,
-            CursorMode.Unset -> false
+            else -> {}
         }
     }
-
-    // TODO: Handle Effects
-    fun is_cell_selected(cursor: CacheCursor, y: Int, x: Int): Boolean {
-        return when (cursor.type) {
-            CursorMode.Line -> cursor.ints[0] == y
-            CursorMode.Column -> cursor.ints[0] == x
-            CursorMode.Channel -> this.line_data[y].channel == cursor.ints[0]
-            CursorMode.Range -> {
-                val xrange = min(cursor.ints[1], cursor.ints[3]) .. max(cursor.ints[1], cursor.ints[3])
-                val yrange = min(cursor.ints[0], cursor.ints[2]) .. max(cursor.ints[0], cursor.ints[2])
-                yrange.contains(y) && xrange.contains(x)
+    private fun populate_selected_columns(cursor: CacheCursor) {
+        when (cursor.type) {
+            CursorMode.Column -> {
+                this.column_data[cursor.ints[0]].value.also {
+                    it.is_selected = true
+                    this.selected_columns.add(it)
+                }
             }
-            CursorMode.Unset,
-            CursorMode.Single -> false
+            CursorMode.Single -> {
+                this.column_data[cursor.ints[1]].value.also {
+                    it.is_selected = true
+                    this.selected_columns.add(it)
+                }
+            }
+            CursorMode.Range -> {
+                for (x in min(cursor.ints[1], cursor.ints[3]) .. max(cursor.ints[1], cursor.ints[3])) {
+                    this.column_data[x].value.also {
+                        it.is_selected = true
+                        this.selected_columns.add(it)
+                    }
+                }
+            }
+            else -> {}
         }
     }
-
-    fun is_leaf_selected(cursor: CacheCursor, y: Int, x: Int, path: List<Int>): Boolean {
-        if (cursor.type != CursorMode.Single) return false
-
-        return cursor.ints[0] == y && cursor.ints[1] == x && path == cursor.ints.subList(2, cursor.ints.size)
-
+    private fun populate_selected_lines(cursor: CacheCursor) {
+        when (cursor.type) {
+            CursorMode.Line -> {
+                // TODO: link effect lines
+                this.line_data[cursor.ints[0]].also {
+                    it.is_selected = true
+                    this.selected_lines.add(it)
+                }
+            }
+            CursorMode.Single -> {
+                this.line_data[cursor.ints[0]].also {
+                    it.is_selected = true
+                    this.selected_lines.add(it)
+                }
+            }
+            CursorMode.Range -> {
+                for (y in min(cursor.ints[0], cursor.ints[2]) .. max(cursor.ints[0], cursor.ints[2])) {
+                    this.line_data[y].also {
+                        it.is_selected = true
+                        this.selected_lines.add(it)
+                    }
+                }
+            }
+            else -> {}
+        }
     }
 
     fun swap_line_cells(y_a: Int, y_b: Int) {

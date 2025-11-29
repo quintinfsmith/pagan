@@ -32,7 +32,7 @@ class ViewModelEditorController(): ViewModel() {
     var playback_state_midi: ActivityEditor.PlaybackState = ActivityEditor.PlaybackState.NotReady
     var move_mode: MutableState<PaganConfiguration.MoveMode> = mutableStateOf(PaganConfiguration.MoveMode.COPY)
     var export_handle: WavConverter? = null
-    var active_project: MutableState<Uri?> = mutableStateOf(null)
+    var active_project: Uri? = null
 
     fun export_wav(
         opus_manager: OpusLayerBase,

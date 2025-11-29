@@ -98,7 +98,7 @@ class ChannelOptionAdapter(
     }
 
     private fun interact_btnChooseInstrument(c: Int) {
-        this.get_activity().get_action_interface().set_channel_instrument(c)
+        this.get_activity().get_action_interface().set_channel_preset(c)
     }
 
     override fun getItemCount(): Int {

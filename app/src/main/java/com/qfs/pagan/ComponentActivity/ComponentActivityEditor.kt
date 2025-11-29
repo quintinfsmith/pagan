@@ -31,10 +31,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +54,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import androidx.lifecycle.lifecycleScope
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
 import com.qfs.apres.soundfont2.Riff
@@ -103,6 +108,23 @@ import kotlin.math.abs
 class ComponentActivityEditor: PaganComponentActivity() {
     val controller_model: ViewModelEditorController by this.viewModels()
     val state_model: ViewModelEditorState by this.viewModels()
+    val menu_items: List<Pair<Int, () -> Unit>> = listOf(
+        Pair(R.string.menu_item_new_project) {
+            this.controller_model.action_interface.save_before {
+                this.controller_model.action_interface.new_project()
+            }
+        },
+        Pair(R.string.menu_item_import) {
+            this.result_launcher_import.launch(
+                Intent().apply {
+                    this.setAction(Intent.ACTION_GET_CONTENT)
+                    this.setType("*/*") // Allow all, for some reason the emulators don't recognize midi files
+                }
+            )
+        },
+        Pair(R.string.menu_item_settings) { this.startActivity(Intent(this, ComponentActivitySettings::class.java)) },
+        Pair(R.string.menu_item_about) { this.startActivity(Intent(this, ComponentActivityAbout::class.java)) },
+    )
     private val _result_launcher_set_project_directory_and_save =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode != RESULT_OK) return@registerForActivityResult
@@ -116,7 +138,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             this.view_model.save_configuration()
 
             // No need to update the active_project here. using this intent launcher implies the active_project will be changed in the ucheck
-            this.view_model.project_manager?.change_project_path(tree_uri, this.controller_model.active_project.value)
+            this.view_model.project_manager?.change_project_path(tree_uri, this.controller_model.active_project)
 
             this._project_save()
         }
@@ -125,19 +147,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode != RESULT_OK) return@registerForActivityResult
             val uri = result.data?.getStringExtra(EXTRA_ACTIVE_PROJECT)?.toUri() ?: return@registerForActivityResult
-            this.controller_model.active_project.value = uri
+            this.controller_model.active_project = uri
         }
 
-    init {
-    }
-    //internal var result_launcher_import =
-    //    this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-    //        if (result.resultCode == RESULT_OK) {
-    //            result?.data?.data?.also { uri ->
-    //                this.handle_uri(uri)
-    //            }
-    //        }
-    //    }
+    internal var result_launcher_import = this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                result?.data?.data?.also { uri ->
+                    this.handle_uri(uri)
+                }
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -153,24 +172,18 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 val that = this@ComponentActivityEditor
                 val opus_manager = that.controller_model.opus_manager
                 val ui_facade = opus_manager.vm_state
-                if (ui_facade.active_cursor.value != null) {
+                if (this@ComponentActivityEditor.drawer_state.isOpen) {
+                    this@ComponentActivityEditor.lifecycleScope.launch {
+                        this@ComponentActivityEditor.close_drawer()
+                    }
+                } else if (ui_facade.active_cursor.value != null) {
                     action_interface.cursor_clear()
                 } else {
-                    TODO()
+                    action_interface.save_before {
+                        action_interface.save()
+                        that.finish()
+                    }
                 }
-
-                // val drawer_layout = that.findViewById<DrawerLayout>(R.id.drawer_layout)
-                // if (drawer_layout.isDrawerOpen(GravityCompat.START)) {
-                //     //TODO()
-                //     that.drawer_close()
-                // } else if (opus_manager.cursor.mode != CursorMode.Unset) {
-                //     opus_manager.cursor_clear()
-                // } else {
-                //     that.dialog_save_project {
-                //         that.save_to_backup()
-                //         that.finish()
-                //     }
-                // }
             }
         })
 
@@ -255,7 +268,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
             val bytes = FileInputStream(it.fileDescriptor).readBytes()
             this.controller_model.opus_manager.load(bytes)
-            this.controller_model.active_project.value = null
+            this.controller_model.active_project = null
         }
     }
 
@@ -275,7 +288,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val filename = this.parse_file_name(uri)
         opus_manager.set_project_name(filename?.substring(0, filename.lastIndexOf(".")) ?: this.getString( R.string.default_imported_midi_title))
         opus_manager.clear_history()
-        this.controller_model.active_project.value = null
+        this.controller_model.active_project = null
     }
 
     fun parse_file_name(uri: Uri): String? {
@@ -390,15 +403,29 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         onClick = { dispatcher.playback() }
                     )
             )
-            Icon(
-                painter = painterResource(R.drawable.icon_hamburger_32), // TODO: 3-dot icon
-                contentDescription = stringResource(R.string.menu_item_playpause),
-                modifier = Modifier
-                    .padding(0.dp)
-                    .combinedClickable(
-                        onClick = { /* TODO: drop down */ },
-                    )
-            )
+            Box {
+                val expanded = remember { mutableStateOf(false) }
+                Icon(
+                    painter = painterResource(R.drawable.icon_hamburger_32), // TODO: 3-dot icon
+                    contentDescription = stringResource(R.string.menu_item_playpause),
+                    modifier = Modifier
+                        .padding(0.dp)
+                        .combinedClickable(
+                            onClick = { /* TODO: drop down */ },
+                        )
+                )
+                DropdownMenu(
+                    expanded = expanded.value,
+                    onDismissRequest = { expanded.value = false }
+                ) {
+                    for ((i, item) in this@ComponentActivityEditor.menu_items.enumerate()) {
+                        DropdownMenuItem(
+                            text = { Text(option) },
+                            onClick = { /* Do something... */ }
+                        )
+                    }
+                }
+            }
         }
     }
 
@@ -966,7 +993,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             val channel_data = state_model.channel_data[i]
                             Row {
                                 Button(
-                                    onClick = { dispatcher.set_channel_instrument(i) },
+                                    onClick = { dispatcher.set_channel_preset(i) },
                                     content = { Text(state_model.available_preset_names?.get(channel_data.instrument.value) ?: "??") }
                                 )
                                 Button(
@@ -1039,7 +1066,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.view_model.project_manager?.let {
             it.save(
                 this.controller_model.opus_manager,
-                this.controller_model.active_project.value,
+                this.controller_model.active_project,
                 this.view_model.configuration.indent_json
             )
             this.controller_model.opus_manager.vm_state.set_project_exists(true)
@@ -1072,7 +1099,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun open_settings() {
         this.result_launcher_settings.launch(
             Intent(this, ActivitySettings::class.java).apply {
-                this@ComponentActivityEditor.controller_model.active_project.value?.let {
+                this@ComponentActivityEditor.controller_model.active_project?.let {
                     this.putExtra(EXTRA_ACTIVE_PROJECT, it.toString())
                 }
             }
@@ -1124,7 +1151,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     private fun needs_save(): Boolean {
         val opus_manager = this.controller_model.opus_manager
 
-        val active_project = this.controller_model.active_project.value ?: return !opus_manager.history_cache.is_empty()
+        val active_project = this.controller_model.active_project ?: return !opus_manager.history_cache.is_empty()
         if (DocumentFile.fromSingleUri(this, active_project)?.exists() != true) return true
 
         val input_stream = this.contentResolver.openInputStream(active_project)
@@ -1149,7 +1176,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         input_stream?.close()
 
         this.controller_model.opus_manager.load(content) {
-            this.controller_model.active_project.value = uri
+            this.controller_model.active_project = uri
         }
     }
 

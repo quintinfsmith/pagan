@@ -16,7 +16,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.core.net.toUri
 import com.qfs.json.JSONBoolean
-import com.qfs.json.JSONFloat
 import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONObject
@@ -95,7 +94,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         Unset,
         UnsetRoot,
         SetDuration,
-        SetDurationCtl,
         SetChannelInstrument,
         SetPercussionInstrument,
         ToggleControllerVisibility,
@@ -108,11 +106,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         InsertChannel,
         RemoveChannel,
         MoveChannel,
-        SetTransitionAtCursor,
-        SetVelocityAtCursor,
-        SetTempoAtCursor,
-        SetPanAtCursor,
-        SetDelayAtCursor,
         RemoveBeat,
         InsertBeat,
         InsertBeatAt,
@@ -149,16 +142,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         val name_ints = this.string_to_ints(name)
                         listOf(name_ints.size) + name_ints + this.string_to_ints(notes)
                     }
-                    TrackedAction.SetDelayAtCursor -> {
-                        listOf(
-                            entry.get_int(1),
-                            entry.get_int(2),
-                            entry.get_float(3).toBits(),
-                            entry.get_int(4)
-                        )
-                    }
                     // STRING
-                    TrackedAction.SetTransitionAtCursor,
                     TrackedAction.ImportSong,
                     TrackedAction.ShowLineController,
                     TrackedAction.ShowChannelController,
@@ -185,9 +169,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                                 }
                             )
                         }
-                    }
-                    TrackedAction.SetTempoAtCursor -> {
-                        listOf(entry.get_float(1).toBits())
                     }
                     TrackedAction.CursorSelectChannel -> {
                         listOf(entry.get_int(1))
@@ -297,17 +278,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         )
                     }
 
-                    TrackedAction.SetDelayAtCursor -> {
-                        arrayOf(
-                            JSONInteger(integers[0]!!),
-                            JSONInteger(integers[1]!!),
-                            JSONFloat(Float.fromBits(integers[2]!!)),
-                            JSONInteger(integers[3]!!)
-                        )
-                    }
-
                     // STRING
-                    TrackedAction.SetTransitionAtCursor,
                     TrackedAction.ShowLineController,
                     TrackedAction.ShowChannelController,
                     TrackedAction.ShowGlobalController,
@@ -319,10 +290,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                     // Boolean
                     TrackedAction.GoBack -> {
                         arrayOf(JSONBoolean(integers[0] != 0))
-                    }
-
-                    TrackedAction.SetTempoAtCursor -> {
-                        arrayOf(JSONFloat(Float.fromBits(integers[0]!!)))
                     }
 
                     TrackedAction.TagColumn -> {
@@ -378,7 +345,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             return JSONList(JSONString(token.name), *var_args)
         }
     }
-
 
     private var ignore_flagged: Boolean = false
     private val action_queue = mutableListOf<Pair<TrackedAction, List<Int?>?>>()
@@ -456,24 +422,29 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     fun save() {
         this.track(TrackedAction.SaveProject)
         this.vm_top.project_manager?.let {
-            val uri = it.save(this.vm_controller.opus_manager, this.vm_controller.active_project.value)
-            this.vm_controller.active_project.value = uri
+            val uri = it.save(this.vm_controller.opus_manager, this.vm_controller.active_project)
+            this.vm_controller.active_project = uri
         }
     }
 
     fun delete() {
-        // TODO
-       // this.track(TrackedAction.DeleteProject)
-       // val activity = this.get_activity()
-       // activity.project_delete()
-       // this.ignore().drawer_close()
+        this.vm_controller.active_project?.let { project ->
+            this.vm_top.project_manager?.delete(project)
+        }
+        TODO("Track, Close Drawer && show toast")
     }
 
     fun project_copy() {
-        // this.track(TrackedAction.CopyProject)
-        // val activity = this.get_activity()
-        // activity.project_move_to_copy()
-        // this.ignore().drawer_close()
+        this.vm_controller.active_project ?: return
+        this.save_before {
+            val opus_manager = this.vm_controller.opus_manager
+            val old_title = opus_manager.project_name
+            opus_manager.set_project_name(
+                if (old_title == null) null
+                else "$old_title (Copy)"
+            )
+            this.vm_controller.active_project = null
+        }
     }
 
     fun cursor_clear() {
@@ -556,7 +527,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                 this._move_channel_ctl_to_beat(channel, beat)
             }
             PaganConfiguration.MoveMode.MERGE -> TODO()
-            null,
             PaganConfiguration.MoveMode.COPY -> {
                 this._copy_channel_ctl_to_beat(channel, beat)
             }
@@ -924,6 +894,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     }
 
 
+
     fun new_project() {
         this.track(TrackedAction.NewProject)
         val opus_manager = this.get_opus_manager()
@@ -952,89 +923,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         opus_manager.set_event_at_cursor(event)
     }
 
-    fun <K: EffectEvent> set_ctl_duration(duration: Int? = null) {
-        TODO()
-        // val main = this.get_activity()
-        // val context_menu = main.active_context_menu as ContextMenuControlLeaf<K>
-        // val event = context_menu.get_control_event<K>().copy() as K
-        // val event_duration = event.duration
-
-        // this.dialog_number_input(main.getString(R.string.dlg_duration), 1, 99, event_duration, duration) { value: Int ->
-        //     this.track(TrackedAction.SetDurationCtl, listOf(value))
-        //     event.duration = max(1, value)
-        //     context_menu._widget_callback(event)
-        // }
-    }
-
-    fun set_ctl_transition(transition: EffectTransition? = null) {
-        TODO()
-        // val main = this.get_activity()
-        // val context_menu = main.active_context_menu as ContextMenuControlLeaf<EffectEvent>
-        // val event = context_menu.get_control_event<EffectEvent>().copy()
-
-
-        // val filter = when (event.event_type) {
-        //     EffectType.Tempo -> listOf(EffectTransition.Instant, EffectTransition.RInstant)
-        //     else -> listOf(
-        //         EffectTransition.Instant,
-        //         EffectTransition.Linear,
-        //         EffectTransition.RInstant,
-        //         EffectTransition.RLinear
-        //     )
-        // }
-
-        // val options = listOf(
-        //     Triple(
-        //         EffectTransition.Instant,
-        //         main.get_effect_transition_icon(EffectTransition.Instant),
-        //         main.getString(R.string.effect_transition_instant)
-        //     ),
-        //     Triple(
-        //         EffectTransition.Linear,
-        //         main.get_effect_transition_icon(EffectTransition.Linear),
-        //         main.getString(R.string.effect_transition_linear)
-        //     ),
-        //     Triple(
-        //         EffectTransition.RInstant,
-        //         main.get_effect_transition_icon(EffectTransition.RInstant),
-        //         main.getString(R.string.effect_transition_rinstant)
-        //     ),
-        //     Triple(
-        //         EffectTransition.RLinear,
-        //         main.get_effect_transition_icon(EffectTransition.RLinear),
-        //         main.getString(R.string.effect_transition_rlinear)
-        //     )
-        // ).filter { filter.contains(it.first) }
-
-        // this.dialog_popup_menu(main.getString(R.string.dialog_transition), options, default = event.transition, transition) { i: Int, transition: EffectTransition ->
-        //     this.track(TrackedAction.SetTransitionAtCursor, ActionTracker.string_to_ints(transition.name))
-        //     event.transition = transition
-        //     context_menu.widget.set_event(event)
-        // }
-    }
-
-    fun set_velocity(velocity: Int? = null) {
-       //  val main = this.get_activity()
-
-       //  val context_menu = main.active_context_menu
-       //  if (context_menu !is ContextMenuWithController<*>) {
-       //      return
-       //  }
-
-       //  val widget: ControlWidgetVelocity = context_menu.get_widget() as ControlWidgetVelocity
-
-       //  val dlg_default = (widget.get_event().value * 100F).toInt()
-       //  val dlg_title = main.getString(R.string.dlg_set_velocity)
-       //  this.dialog_number_input(dlg_title, widget.min, widget.max, dlg_default, velocity) { new_value: Int ->
-       //      this.track(TrackedAction.SetVelocityAtCursor, listOf(new_value))
-       //      val new_event = OpusVelocityEvent(
-       //          new_value.toFloat() / 100F,
-       //          widget.get_event().duration,
-       //          widget.get_event().transition,
-       //      )
-       //      widget.set_event(new_event)
-       //  }
-    }
     fun set_volume_at_cursor(volume: Float? = null) {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
@@ -1326,7 +1214,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         }
     }
 
-    fun set_channel_instrument(channel: Int, instrument: Pair<Int, Int>? = null) {
+    fun set_channel_preset(channel: Int, instrument: Pair<Int, Int>? = null) {
         // val activity = this.get_activity()
         // val supported_instrument_names = activity.get_supported_preset_names()
         // val sorted_keys = supported_instrument_names.keys.toList().sortedBy {
@@ -1459,88 +1347,35 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
 
     fun insert_line(count: Int? = null) {
-        // val main = this.get_activity()
-        // val opus_manager = main.get_opus_manager()
-        // this.dialog_number_input(main.getString(R.string.dlg_insert_lines), 1, 9, stub_output = count) { count: Int ->
-        //     this.track(TrackedAction.InsertLine, listOf(count))
-        //     opus_manager.insert_line_at_cursor(count)
-        // }
+        val opus_manager = this.get_opus_manager()
+        this.dialog_number_input(R.string.dlg_insert_lines, 1, 9, stub_output = count) { i: Int ->
+            this.track(TrackedAction.InsertLine, listOf(i))
+            opus_manager.insert_line_at_cursor(i)
+        }
     }
 
     fun remove_line(count: Int? = null) {
-        // val main = this.get_activity()
-        // val opus_manager = main.get_opus_manager()
-        // val lines = opus_manager.get_all_channels()[opus_manager.cursor.channel].size
-        // val max_lines = Integer.min(lines - 1, lines - opus_manager.cursor.line_offset)
-        // this.dialog_number_input(main.getString(R.string.dlg_remove_lines), 1, max_lines, stub_output = count) { count: Int ->
-        //     this.track(TrackedAction.RemoveLine, listOf(count))
-        //     opus_manager.remove_line_at_cursor(count)
-        // }
+        val opus_manager = this.get_opus_manager()
+        val lines = opus_manager.get_all_channels()[opus_manager.cursor.channel].size
+        val max_lines = Integer.min(lines - 1, lines - opus_manager.cursor.line_offset)
+        this.dialog_number_input(R.string.dlg_remove_lines, 1, max_lines, stub_output = count) { i: Int ->
+            this.track(TrackedAction.RemoveLine, listOf(i))
+            opus_manager.remove_line_at_cursor(i)
+        }
     }
 
     fun set_percussion_instrument(value: Int? = null) {
-        // val main = this.get_activity()
-        // val opus_manager = this.get_opus_manager()
-        // val cursor = opus_manager.cursor
-        // val default_instrument = opus_manager.get_percussion_instrument(cursor.channel, cursor.line_offset)
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        val default_instrument = opus_manager.get_percussion_instrument(cursor.channel, cursor.line_offset)
 
-        // val options = mutableListOf<Triple<Int, Int?, String>>()
-        // this.dialog_popup_menu(main.getString(R.string.dropdown_choose_percussion), options, default_instrument, stub_output = value) { _: Int, value: Int ->
-        //     this.track(TrackedAction.SetPercussionInstrument, listOf(value))
-        //     opus_manager.set_percussion_instrument(value)
-        //     main.play_event(cursor.channel, value)
-        // }
-    }
-
-    fun set_pan_at_cursor(value: Int) {
-        // val main = this.get_activity()
-
-        // this.track(TrackedAction.SetPanAtCursor, listOf(value))
-        // val context_menu = main.active_context_menu
-        // if (context_menu !is ContextMenuWithController<*>) {
-        //     return
-        // }
-
-        // val widget = context_menu.get_widget() as ControlWidgetPan
-        // val new_event = widget.get_event().copy()
-        // new_event.value = (value.toFloat() / widget.max.toFloat()) * -1F
-        // widget.set_event(new_event)
-    }
-
-    fun set_tempo_at_cursor(input_value: Float) {
-        // val main = this.get_activity()
-
-        // val context_menu = main.active_context_menu
-        // if (context_menu !is ContextMenuWithController<*>) {
-        //     return
-        // }
-        // val widget = context_menu.get_widget() as ControlWidgetTempo
-        // val rounded_value = (input_value * 1000F).roundToInt().toFloat() / 1000F
-        // this.track(TrackedAction.SetTempoAtCursor, listOf(input_value.toBits()))
-
-        // val new_event = widget.get_event().copy()
-        // new_event.value = rounded_value
-
-        // widget.set_event(new_event)
-    }
-
-    fun set_delay_at_cursor(numerator: Int, denominator: Int, fade: Float, repeat: Int) {
-        // val main = this.get_activity()
-
-        // this.track(TrackedAction.SetDelayAtCursor, listOf(numerator, denominator, fade.toBits(), repeat))
-        // val context_menu = main.active_context_menu
-        // if (context_menu !is ContextMenuWithController<*>) {
-        //     return
-        // }
-
-        // val widget = context_menu.get_widget() as ControlWidgetDelay
-        // val new_event = widget.get_event().copy()
-        // new_event.numerator = numerator
-        // new_event.denominator = denominator
-        // new_event.fade = fade
-        // new_event.echo = repeat
-
-        // widget.set_event(new_event)
+        val options = mutableListOf<Triple<Int, Int?, String>>()
+        this.dialog_popup_menu(R.string.dropdown_choose_percussion, options, default_instrument, stub_output = value) { value: Int ->
+            this.track(TrackedAction.SetPercussionInstrument, listOf(value))
+            opus_manager.set_percussion_instrument(value)
+            // TODO
+            // main.play_event(cursor.channel, value)
+        }
     }
 
     fun insert_beat(beat: Int, repeat: Int? = null) {
@@ -1704,7 +1539,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         // }
     }
 
-    private fun dialog_save_project(stub_output: Boolean? = null, callback: (Boolean) -> Unit) {
+    fun save_before(stub_output: Boolean? = null, callback: (Boolean) -> Unit) {
         if (stub_output == null) {
             this.vm_top.create_dialog { close ->
                 @Composable {
@@ -1847,14 +1682,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
     fun process_queued_action(token: TrackedAction, integers: List<Int?>) {
         when (token) {
-            TrackedAction.SetDelayAtCursor -> {
-                this.set_delay_at_cursor(
-                    integers[0]!!,
-                    integers[1]!!,
-                    Float.fromBits(integers[2]!!),
-                    integers[3]!!
-                )
-            }
             TrackedAction.ApplyUndo -> {
                 this.apply_undo()
             }
@@ -2091,9 +1918,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             TrackedAction.SetDuration -> {
                 this.set_duration(integers[0])
             }
-            TrackedAction.SetDurationCtl -> {
-                this.set_ctl_duration<EffectEvent>(integers[0])
-            }
             TrackedAction.SetPercussionInstrument -> {
                 this.set_percussion_instrument(integers[0])
             }
@@ -2106,28 +1930,14 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             TrackedAction.RemoveLine -> {
                 this.remove_line(integers[0])
             }
-            TrackedAction.SetTransitionAtCursor -> {
-                this.set_ctl_transition(EffectTransition.valueOf(string_from_ints(integers)))
-            }
-            TrackedAction.SetVelocityAtCursor -> {
-                this.set_velocity(integers[0])
-            }
-            TrackedAction.SetTempoAtCursor -> {
-                this.set_tempo_at_cursor(
-                    Float.fromBits(integers[0]!!)
-                )
-            }
             TrackedAction.SetChannelInstrument -> {
-                this.set_channel_instrument(integers[0]!!, Pair(integers[1]!!, integers[2]!!))
+                this.set_channel_preset(integers[0]!!, Pair(integers[1]!!, integers[2]!!))
             }
             TrackedAction.RemoveBeat -> {
                 this.remove_beat_at_cursor(integers[0])
             }
             TrackedAction.InsertBeat -> {
                 this.insert_beat_after_cursor(integers[0]!!)
-            }
-            TrackedAction.SetPanAtCursor -> {
-                this.set_pan_at_cursor(integers[0]!!)
             }
             TrackedAction.ToggleControllerVisibility -> {
                 this.toggle_controller_visibility()
@@ -2484,5 +2294,4 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     fun clear() {
         this.action_queue.clear()
     }
-
 }

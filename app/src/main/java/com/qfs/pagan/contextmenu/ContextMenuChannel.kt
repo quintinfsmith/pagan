@@ -173,7 +173,7 @@ class ContextMenuChannel(primary_container: ViewGroup, secondary_container: View
     private fun interact_choose_instrument() {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        this.get_activity().get_action_interface().set_channel_instrument(cursor.channel)
+        this.get_activity().get_action_interface().set_channel_preset(cursor.channel)
     }
 
     override fun matches_cursor(cursor: OpusManagerCursor): Boolean {

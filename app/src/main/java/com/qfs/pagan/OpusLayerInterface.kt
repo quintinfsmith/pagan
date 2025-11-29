@@ -193,7 +193,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 y = this.get_visible_row_from_ctl_line_global(type),
                 x = beat
             ),
-            controller.get_tree(beat).copy { it.copy() }
+            controller.get_tree(beat).copy { it?.copy() }
         )
     }
 
@@ -208,7 +208,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 y = this.get_visible_row_from_ctl_line_channel(type, channel),
                 x = beat
             ),
-            controller.get_tree(beat).copy { it.copy() }
+            controller.get_tree(beat).copy { it?.copy() }
         )
     }
 
@@ -223,7 +223,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 y = this.get_visible_row_from_ctl_line_line(type, beat_key.channel, beat_key.line_offset),
                 x = beat_key.beat
             ),
-            controller.get_tree(beat_key.beat).copy { it.copy() }
+            controller.get_tree(beat_key.beat).copy { it?.copy() }
         )
     }
     // UI BILL Interface functions ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -540,14 +540,12 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         // this.get_activity()?.get_drum_name(channel, instrument)
 
         if (this.ui_lock.is_locked()) return
-        this.vm_state.update_line(
-            this.get_visible_row_from_ctl_line(
-                this.get_actual_line_index(
-                    this.get_instrument_line_index(channel, line_offset)
-                )
-            )!!,
-            ViewModelEditorState.LineData(channel, line_offset, null, instrument, this.channels[channel].lines[line_offset].muted)
-        )
+        val y = this.get_visible_row_from_ctl_line(
+            this.get_actual_line_index(
+                this.get_instrument_line_index(channel, line_offset)
+            )
+        )!!
+        this.vm_state.line_data[y].assigned_offset.value = instrument
     }
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
@@ -679,14 +677,14 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 }
 
                 if (y >= first_swapped_line) {
-                    this.vm_state.update_line(y, ViewModelEditorState.LineData(c, l, null, instrument, line.muted))
+                    this.vm_state.update_line(y, c, l, null, instrument, line.muted, false)
                 }
                 y++
 
                 for ((type, controller) in line.controllers.get_all()) {
                     if (!controller.visible) continue
                     if (y > first_swapped_line) {
-                        this.vm_state.update_line(y, ViewModelEditorState.LineData(c, l, type, instrument, line.muted))
+                        this.vm_state.update_line(y, c, l, type, instrument, line.muted, false)
                     }
                     y++
                 }
@@ -695,7 +693,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             for ((type, controller) in channel.controllers.get_all()) {
                 if (!controller.visible) continue
                 if (y > first_swapped_line) {
-                    this.vm_state.update_line(y, ViewModelEditorState.LineData(c, null, type, null, channel.muted))
+                    this.vm_state.update_line(y, c, null, type, null, channel.muted, false)
                 }
                 y++
             }
@@ -704,7 +702,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         for ((type, controller) in this.controllers.get_all()) {
             if (!controller.visible) continue
             if (y > first_swapped_line) {
-                this.vm_state.update_line(y, ViewModelEditorState.LineData(null, null, type, null, false))
+                this.vm_state.update_line(y, null, null, type, null, false, false)
             }
             y++
         }

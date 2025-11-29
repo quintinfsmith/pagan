@@ -72,10 +72,33 @@ class ViewModelEditorState: ViewModel() {
         Secondary
     }
 
-    data class LineData(var channel: Int?, var line_offset: Int?, var ctl_type: EffectType?, var assigned_offset: Int? = null, var is_mute: Boolean, var is_selected: Boolean = false)
-    data class ColumnData(var is_tagged: Boolean, var is_selected: Boolean = false)
-    data class LeafData(var is_selected: Boolean = false, var is_secondary: Boolean = false, var is_valid: Boolean = true, var is_spillover: Boolean = false)
-    data class ChannelData(var percussion: Boolean, var instrument: Pair<Int, Int>, var is_mute: Boolean, var is_selected: Boolean = false)
+    class LineData(channel: Int?, line_offset: Int?, ctl_type: EffectType?, assigned_offset: Int? = null, is_mute: Boolean, is_selected: Boolean = false) {
+        val channel = mutableStateOf(channel)
+        val line_offset = mutableStateOf(line_offset)
+        val ctl_type = mutableStateOf(ctl_type)
+        val assigned_offset = mutableStateOf(assigned_offset)
+        val is_mute = mutableStateOf(is_mute)
+        val is_selected = mutableStateOf(is_selected)
+    }
+
+    class ColumnData(is_tagged: Boolean, is_selected: Boolean = false) {
+        val is_tagged = mutableStateOf(is_tagged)
+        val is_selected = mutableStateOf(is_selected)
+    }
+
+    class LeafData(is_selected: Boolean = false, is_secondary: Boolean = false, is_valid: Boolean = true, is_spillover: Boolean = false) {
+        val is_selected = mutableStateOf(is_selected)
+        val is_secondary = mutableStateOf(is_secondary)
+        val is_valid = mutableStateOf(is_valid)
+        val is_spillover = mutableStateOf(is_spillover)
+    }
+
+    class ChannelData(percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean, is_selected: Boolean = false) {
+        val percussion = mutableStateOf(percussion)
+        val instrument = mutableStateOf(instrument)
+        val is_mute = mutableStateOf(is_mute)
+        val is_selected = mutableStateOf(is_selected)
+    }
     class CacheCursor(var type: CursorMode, vararg ints: Int) {
         var ints = ints.toList()
     }
@@ -85,7 +108,7 @@ class ViewModelEditorState: ViewModel() {
     var line_count: MutableState<Int> = mutableIntStateOf(0)
     var channel_count: MutableState<Int> = mutableIntStateOf(0)
     val line_data: MutableList<LineData> = mutableListOf()
-    val column_data: MutableList<MutableState<ColumnData>> = mutableListOf()
+    val column_data: MutableList<ColumnData> = mutableListOf()
     val cell_map = mutableListOf<MutableList<MutableState<ReducibleTree<Pair<LeafData, OpusEvent?>>>>>()
     val channel_data: MutableList<ChannelData> = mutableListOf()
     var radix: MutableState<Int> = mutableIntStateOf(12)
@@ -143,7 +166,7 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun update_column(column: Int, is_tagged: Boolean) {
-        this.column_data[column].value.is_tagged = is_tagged
+        this.column_data[column].is_tagged.value = is_tagged
     }
 
     fun add_row(y: Int, cells: List<ReducibleTree<out OpusEvent>>, new_line_data: LineData) {
@@ -160,8 +183,13 @@ class ViewModelEditorState: ViewModel() {
         TODO()
     }
 
-    fun update_line(y: Int, line_data: LineData) {
-        this.line_data[y] = line_data
+    fun update_line(y: Int, channel: Int?, line_offset: Int?, ctl_type: EffectType?, assigned_offset: Int?, is_mute: Boolean, is_selected: Boolean) {
+        this.line_data[y].channel.value = channel
+        this.line_data[y].line_offset.value = line_offset
+        this.line_data[y].ctl_type.value = ctl_type
+        this.line_data[y].assigned_offset.value = assigned_offset
+        this.line_data[y].is_mute.value = is_mute
+        this.line_data[y].is_selected.value = is_selected
     }
 
     fun remove_row(y: Int, count: Int) {
@@ -174,9 +202,9 @@ class ViewModelEditorState: ViewModel() {
 
     fun add_channel(channel: Int, percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean) {
         for (ld in this.line_data) {
-            ld.channel?.let {
+            ld.channel.value?.let {
                 if (it >= channel) {
-                    ld.channel = it + 1
+                    ld.channel.value = it + 1
                 }
             }
         }
@@ -187,14 +215,14 @@ class ViewModelEditorState: ViewModel() {
         var i = 0
         while (i < this.line_data.size) {
             val ld = this.line_data[i]
-            ld.channel?.let { line_channel ->
+            ld.channel.value?.let { line_channel ->
                 if (line_channel == channel) {
                     this.line_data.removeAt(i)
                     this.cell_map.removeAt(i)
                     this.line_count.value -= 1
                     continue
                 } else if (line_channel > channel) {
-                    ld.channel = line_channel - 1
+                    ld.channel.value = line_channel - 1
                 }
             }
             i++
@@ -203,7 +231,7 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun add_column(column: Int, is_tagged: Boolean, new_cells: List<ReducibleTree<out OpusEvent>>) {
-        this.column_data.add(column, mutableStateOf(ColumnData(is_tagged)))
+        this.column_data.add(column, ColumnData(is_tagged))
         for ((y, line) in this.cell_map.enumerate()) {
             line.add(column, this.copy_tree_for_cell(new_cells[y]))
         }
@@ -211,14 +239,8 @@ class ViewModelEditorState: ViewModel() {
     }
 
     private fun copy_tree_for_cell(tree: ReducibleTree<out OpusEvent>): MutableState<ReducibleTree<Pair<LeafData, OpusEvent?>>> {
-        val new_tree = tree.copy<Pair<LeafData, OpusEvent?>> { event ->
-            Pair(LeafData(), event.copy())
-        }
-
-        new_tree.traverse { tree, pair ->
-            if (pair == null && tree.is_leaf()) {
-                tree.event = Pair(LeafData(), null)
-            }
+        val new_tree = tree.copy { event ->
+            Pair(LeafData(), event?.copy())
         }
 
         return mutableStateOf(new_tree)
@@ -242,7 +264,7 @@ class ViewModelEditorState: ViewModel() {
 
         // First, Get the 2 channel start indices...
         for (y in this.line_data.indices) {
-            this.line_data[y].channel?.let { working_channel ->
+            this.line_data[y].channel.value?.let { working_channel ->
                 if (to_index == -1 && new_channel_index == working_channel) {
                     to_index = y
                 }
@@ -255,7 +277,7 @@ class ViewModelEditorState: ViewModel() {
 
         // ... Then move the lines ...
         if (from_index > to_index) {
-            while (from_index < this.line_data.size && this.line_data[from_index].channel != channel_index) {
+            while (from_index < this.line_data.size && this.line_data[from_index].channel.value != channel_index) {
                 this.cell_map.add(to_index, this.cell_map.removeAt(from_index))
                 this.line_data.add(to_index++, this.line_data.removeAt(from_index))
             }
@@ -270,12 +292,12 @@ class ViewModelEditorState: ViewModel() {
         var working_channel = -1
         var c = -1
         for (line in this.line_data) {
-            if (line.channel == null) continue
-            if (line.channel != working_channel) {
+            if (line.channel.value == null) continue
+            if (line.channel.value != working_channel) {
                 working_channel++
                 c++
             }
-            line.channel = c
+            line.channel.value = c
         }
     }
 
@@ -294,15 +316,15 @@ class ViewModelEditorState: ViewModel() {
     fun set_cursor(cursor: CacheCursor) {
         // Deselect old cursor
         while (this.selected_lines.isNotEmpty()) {
-            this.selected_lines.removeAt(0).is_selected = false
+            this.selected_lines.removeAt(0).is_selected.value = false
         }
         while (this.selected_columns.isNotEmpty()) {
-            this.selected_columns.removeAt(0).is_selected = false
+            this.selected_columns.removeAt(0).is_selected.value = false
         }
         while (this.selected_leafs.isNotEmpty()) {
             val leaf = this.selected_leafs.removeAt(0)
-            leaf.is_selected = false
-            leaf.is_secondary = false
+            leaf.is_selected.value = false
+            leaf.is_secondary.value = false
         }
 
         this.active_cursor.value = cursor
@@ -338,8 +360,8 @@ class ViewModelEditorState: ViewModel() {
                         it.traverse { tree, pair ->
                             if (tree.is_leaf()) {
                                 pair?.first?.let { leaf_data ->
-                                    leaf_data.is_selected = false
-                                    leaf_data.is_secondary = true
+                                    leaf_data.is_selected.value = false
+                                    leaf_data.is_secondary.value = true
                                     this.selected_leafs.add(leaf_data)
                                 }
                             }
@@ -353,8 +375,8 @@ class ViewModelEditorState: ViewModel() {
                         it.traverse { tree, pair ->
                             if (tree.is_leaf()) {
                                 pair?.first?.let { leaf_data ->
-                                    leaf_data.is_selected = false
-                                    leaf_data.is_secondary = true
+                                    leaf_data.is_selected.value= false
+                                    leaf_data.is_secondary.value = true
                                     this.selected_leafs.add(leaf_data)
                                 }
                             }
@@ -367,8 +389,8 @@ class ViewModelEditorState: ViewModel() {
                     it.traverse { tree, pair ->
                         if (tree.is_leaf()) {
                             pair?.first?.let { leaf_data ->
-                                leaf_data.is_selected = tree.get_path() == cursor.ints.subList(2, cursor.ints.size)
-                                leaf_data.is_secondary = false // TODO
+                                leaf_data.is_selected.value = tree.get_path() == cursor.ints.subList(2, cursor.ints.size)
+                                leaf_data.is_secondary.value = false // TODO
                                 this.selected_leafs.add(leaf_data)
                             }
                         }
@@ -383,8 +405,8 @@ class ViewModelEditorState: ViewModel() {
                                 if (tree.is_leaf()) {
                                     val is_selected = x == cursor.ints[0] && y == cursor.ints[1]
                                     pair?.first?.let { leaf_data ->
-                                        leaf_data.is_selected = is_selected
-                                        leaf_data.is_secondary = !is_selected
+                                        leaf_data.is_selected.value = is_selected
+                                        leaf_data.is_secondary.value = !is_selected
                                         this.selected_leafs.add(leaf_data)
                                     }
                                 }
@@ -396,24 +418,25 @@ class ViewModelEditorState: ViewModel() {
             else -> {}
         }
     }
+
     private fun populate_selected_columns(cursor: CacheCursor) {
         when (cursor.type) {
             CursorMode.Column -> {
-                this.column_data[cursor.ints[0]].value.also {
-                    it.is_selected = true
+                this.column_data[cursor.ints[0]].also {
+                    it.is_selected.value = true
                     this.selected_columns.add(it)
                 }
             }
             CursorMode.Single -> {
-                this.column_data[cursor.ints[1]].value.also {
-                    it.is_selected = true
+                this.column_data[cursor.ints[1]].also {
+                    it.is_selected.value = true
                     this.selected_columns.add(it)
                 }
             }
             CursorMode.Range -> {
                 for (x in min(cursor.ints[1], cursor.ints[3]) .. max(cursor.ints[1], cursor.ints[3])) {
-                    this.column_data[x].value.also {
-                        it.is_selected = true
+                    this.column_data[x].also {
+                        it.is_selected.value = true
                         this.selected_columns.add(it)
                     }
                 }
@@ -423,23 +446,29 @@ class ViewModelEditorState: ViewModel() {
     }
     private fun populate_selected_lines(cursor: CacheCursor) {
         when (cursor.type) {
+            CursorMode.Channel -> {
+                for (line_data in this.line_data) {
+                    line_data.is_selected.value = cursor.ints[0] == line_data.channel.value
+                    this.selected_lines.add(line_data)
+                }
+            }
             CursorMode.Line -> {
                 // TODO: link effect lines
                 this.line_data[cursor.ints[0]].also {
-                    it.is_selected = true
+                    it.is_selected.value = true
                     this.selected_lines.add(it)
                 }
             }
             CursorMode.Single -> {
                 this.line_data[cursor.ints[0]].also {
-                    it.is_selected = true
+                    it.is_selected.value = true
                     this.selected_lines.add(it)
                 }
             }
             CursorMode.Range -> {
                 for (y in min(cursor.ints[0], cursor.ints[2]) .. max(cursor.ints[0], cursor.ints[2])) {
                     this.line_data[y].also {
-                        it.is_selected = true
+                        it.is_selected.value = true
                         this.selected_lines.add(it)
                     }
                 }
@@ -460,13 +489,13 @@ class ViewModelEditorState: ViewModel() {
         var larger_line_count = 0
 
         var i = lesser
-        while (this.line_data[i].channel == lesser_line_data.channel && this.line_data[i].line_offset == lesser_line_data.line_offset) {
+        while (this.line_data[i].channel.value == lesser_line_data.channel.value && this.line_data[i].line_offset.value == lesser_line_data.line_offset.value) {
             i++
             lesser_line_count++
         }
 
         i = larger
-        while (this.line_data[i].channel == larger_line_data.channel && this.line_data[i].line_offset == larger_line_data.line_offset) {
+        while (this.line_data[i].channel.value == larger_line_data.channel.value && this.line_data[i].line_offset.value == larger_line_data.line_offset.value) {
             i++
             larger_line_count++
         }
@@ -491,11 +520,11 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun mute_channel(channel: Int, mute: Boolean) {
-        this.channel_data[channel].is_mute = mute
+        this.channel_data[channel].is_mute.value = mute
     }
 
     fun mute_line(line: Int, mute: Boolean) {
-        this.line_data[line].is_mute = mute
+        this.line_data[line].is_mute.value = mute
     }
 
     fun populate_preset_names(soundfont: SoundFont) {

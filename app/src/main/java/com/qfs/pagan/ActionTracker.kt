@@ -507,6 +507,22 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         }
     }
 
+    fun cursor_select_line(channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        if (cursor.mode == CursorMode.Line && channel == cursor.channel && line_offset == cursor.line_offset && cursor.ctl_type == ctl_type) {
+            this.cursor_select_channel(channel)
+        } else if (ctl_type == null) {
+             this.cursor_select_line_std(channel!!, line_offset!!)
+        } else if (line_offset != null) {
+            this.cursor_select_line_ctl_line(ctl_type, channel!!, line_offset)
+        } else if (channel != null) {
+            this.cursor_select_channel_ctl_line(ctl_type, channel)
+        } else {
+            this.cursor_select_global_ctl_line(ctl_type)
+        }
+    }
+
     fun move_line_ctl_to_beat(beat_key: BeatKey) {
         when (this.vm_controller.move_mode.value)  {
             PaganConfiguration.MoveMode.MOVE -> {

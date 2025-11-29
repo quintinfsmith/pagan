@@ -110,7 +110,7 @@ fun ContextMenuSinglePrimary(ui_facade: ViewModelEditorState, dispatcher: Action
             }
         }
 
-        if (ui_facade.line_data[cursor.ints[0]].assigned_offset == null) {
+        if (ui_facade.line_data[cursor.ints[0]].assigned_offset.value == null) {
             // Octave Selector
             Row {
                 for (i in 0 until 8) {
@@ -142,7 +142,7 @@ fun ContextMenuSingleSecondary(ui_facade: ViewModelEditorState, dispatcher: Acti
         null -> 0
         else -> throw Exception("Invalid Event Type") // TODO: Specify
     }
-    if (ui_facade.line_data[cursor.ints[0]].assigned_offset != null) return
+    if (ui_facade.line_data[cursor.ints[0]].assigned_offset.value != null) return
 
     // Offset Selector
     Row(modifier = Modifier.height(dimensionResource(R.dimen.contextmenu_secondary_button_height))) {

@@ -15,15 +15,15 @@ import com.qfs.pagan.viewmodel.ViewModelEditorState
 fun ContextMenuColumnPrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
     val cursor = ui_facade.active_cursor.value ?: return
     val beat = cursor.ints[0]
-    val column_data = ui_facade.column_data[beat].value
+    val column_data = ui_facade.column_data[beat]
 
     Row(Modifier.height(dimensionResource(R.dimen.icon_button_height))) {
         IconCMenuButton(
             onClick = { dispatcher.tag_column(beat, null, true) },
             onLongClick = { dispatcher.tag_column(beat) },
-            icon = if (column_data.is_tagged) R.drawable.icon_untag
+            icon = if (column_data.is_tagged.value) R.drawable.icon_untag
                 else R.drawable.icon_tag,
-            description = if (column_data.is_tagged) R.string.cd_remove_section_mark
+            description = if (column_data.is_tagged.value) R.string.cd_remove_section_mark
                 else R.string.cd_mark_section
         )
         Spacer(Modifier.weight(1F))

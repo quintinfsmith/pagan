@@ -283,7 +283,7 @@ class ReducibleTree<T> {
         return copied
     }
 
-    fun <K> copy(copy_func: ((event: T) -> K)): ReducibleTree<K> {
+    fun <K> copy(copy_func: ((event: T?) -> K?)): ReducibleTree<K> {
         val copied = ReducibleTree<K>()
         for (key in this.divisions.keys) {
             this[key].let { subdivision ->
@@ -293,8 +293,8 @@ class ReducibleTree<T> {
             }
         }
 
-        this.event?.let { event ->
-            copied.event = copy_func(event)
+        if (this.is_leaf()) {
+            copied.event = copy_func(this.event)
         }
 
         copied._real_size = this._real_size

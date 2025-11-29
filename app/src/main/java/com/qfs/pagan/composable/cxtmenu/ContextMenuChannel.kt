@@ -66,13 +66,13 @@ fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
         IconCMenuButton(
             modifier = Modifier.fillMaxHeight(),
             onClick = {
-                if (active_channel.is_mute) {
+                if (active_channel.is_mute.value) {
                     dispatcher.channel_unmute()
                 } else {
                     dispatcher.channel_mute()
                 }
             },
-            icon = if (active_channel.is_mute) R.drawable.icon_unmute
+            icon = if (active_channel.is_mute.value) R.drawable.icon_unmute
                 else R.drawable.icon_mute,
             description = R.string.cd_line_mute
         )
@@ -82,7 +82,7 @@ fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
                 .fillMaxSize()
                 .weight(1f),
             onClick = { dispatcher.set_channel_instrument(channel_index) },
-            content = { Text(ui_facade.available_preset_names?.get(active_channel.instrument) ?: "???") }
+            content = { Text(ui_facade.available_preset_names?.get(active_channel.instrument.value) ?: "???") }
         )
     }
 }

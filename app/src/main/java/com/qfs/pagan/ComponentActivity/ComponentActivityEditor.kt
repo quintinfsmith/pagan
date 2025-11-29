@@ -424,7 +424,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val cursor = ui_facade.active_cursor.value
         when (cursor?.type) {
             CursorMode.Line -> {
-                ContextMenuLineSecondary(ui_facade, dispatcher, ui_facade.active_event.value as OpusVolumeEvent)
+                ContextMenuLineSecondary(ui_facade, dispatcher)
             }
             CursorMode.Column -> ContextMenuColumnSecondary(ui_facade, dispatcher)
             CursorMode.Single -> ContextMenuSingleSecondary(ui_facade, dispatcher)
@@ -447,7 +447,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
         val scope = rememberCoroutineScope()
-
         val scroll_state_v = rememberScrollState()
         val scroll_state_h = rememberScrollState()
 
@@ -474,11 +473,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 Column(Modifier.verticalScroll(scroll_state_v)) {
                     var working_channel: Int? = 0
                     for (y in 0 until ui_facade.line_count.value) {
-                        if (ui_facade.line_data[y].channel != working_channel) {
+                        if (ui_facade.line_data[y].channel.value != working_channel) {
                             Row(Modifier.height(dimensionResource(R.dimen.channel_gap_size))) { }
                         }
-                        working_channel = ui_facade.line_data[y].channel
-                        val use_height = if (ui_facade.line_data[y].ctl_type != null) {
+
+                        working_channel = ui_facade.line_data[y].channel.value
+                        val use_height = if (ui_facade.line_data[y].ctl_type.value != null) {
                             ctl_line_height
                         } else {
                             line_height
@@ -489,7 +489,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 .height(use_height)
                                 .width(dimensionResource(R.dimen.line_label_width))
                         ) {
-                            LineLabelView(modifier = Modifier.fillMaxSize(), y, ui_facade, dispatcher)
+                            LineLabelView(modifier = Modifier.fillMaxSize(), dispatcher, ui_facade.line_data[y])
                         }
                     }
                 }
@@ -500,11 +500,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 ) {
                     var working_channel: Int? = 0
                     for (y in 0 until ui_facade.line_count.value) {
-                        if (ui_facade.line_data[y].channel != working_channel) {
+                        if (ui_facade.line_data[y].channel.value != working_channel) {
                             Row(Modifier.height(dimensionResource(R.dimen.channel_gap_size))) { }
                         }
-                        working_channel = ui_facade.line_data[y].channel
-                        val use_height = if (ui_facade.line_data[y].ctl_type != null) {
+                        working_channel = ui_facade.line_data[y].channel.value
+                        val use_height = if (ui_facade.line_data[y].ctl_type.value != null) {
                             ctl_line_height
                         } else {
                             line_height
@@ -556,30 +556,24 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun LineLabelView(modifier: Modifier = Modifier, y: Int, ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
-        val line_info = ui_facade.line_data[y]
-        val cursor = ui_facade.active_cursor.value
-        val (background_color, content_color) = if (line_info.is_selected) {
+    fun LineLabelView(modifier: Modifier = Modifier, dispatcher: ActionTracker, line_info: ViewModelEditorState.LineData) {
+        val (background_color, content_color) = if (line_info.is_selected.value) {
             Pair(R.color.label_selected, R.color.label_selected_text)
         } else {
             Pair(R.color.line_label, R.color.line_label_text)
         }
 
-        val ctl_type = line_info.ctl_type
+        val ctl_type = line_info.ctl_type.value
         Box(Modifier.padding(1.dp)) {
             if (ctl_type == null) {
-                val (label_a, label_b) = if (line_info.assigned_offset != null) {
-                    Pair("!${line_info.channel}", "${line_info.assigned_offset}")
+                val (label_a, label_b) = if (line_info.assigned_offset.value != null) {
+                    Pair("!${line_info.channel.value}", "${line_info.assigned_offset.value}")
                 } else {
-                    Pair("${line_info.channel}", "${line_info.line_offset}")
+                    Pair("${line_info.channel.value}", "${line_info.line_offset.value}")
                 }
                 Button(
                     onClick = {
-                        if (line_info.is_selected && cursor?.type == CursorMode.Line) {
-                            dispatcher.cursor_select_channel(line_info.channel!!)
-                        } else {
-                            dispatcher.cursor_select_line_std(line_info.channel!!, line_info.line_offset!!)
-                        }
+                        dispatcher.cursor_select_line(line_info.channel.value, line_info.line_offset.value, line_info.ctl_type.value)
                     },
                     modifier = Modifier
                         .combinedClickable(
@@ -639,14 +633,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         Icon(
                             modifier = modifier.combinedClickable(
                                 onClick = {
-                                    if (line_info.line_offset != null) {
+                                    if (line_info.line_offset.value != null) {
                                         dispatcher.cursor_select_line_ctl_line(
                                             ctl_type,
-                                            line_info.channel!!,
-                                            line_info.line_offset!!
+                                            line_info.channel.value!!,
+                                            line_info.line_offset.value!!
                                         )
-                                    } else if (line_info.channel != null) {
-                                        dispatcher.cursor_select_channel_ctl_line(ctl_type, line_info.channel!!)
+                                    } else if (line_info.channel.value != null) {
+                                        dispatcher.cursor_select_channel_ctl_line(ctl_type, line_info.channel.value!!)
                                     } else {
                                         dispatcher.cursor_select_global_ctl_line(ctl_type)
                                     }
@@ -663,13 +657,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     fun BeatLabelView(x: Int, ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
-        val column_info = ui_facade.column_data[x].value
+        val column_info = ui_facade.column_data[x]
         val modifier = Modifier
 
-        if (!column_info.is_tagged) {
+        if (!column_info.is_tagged.value) {
             modifier.border(width = 1.dp, color = Color.Red)
         }
-        val (background_color, content_color) = if (column_info.is_selected) {
+        val (background_color, content_color) = if (column_info.is_selected.value) {
             Pair(
                 R.color.label_selected,
                 R.color.label_selected_text
@@ -709,21 +703,18 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun <T: OpusEvent> LeafView(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, y: Int, x: Int, path: List<Int>, event_pair: Pair<ViewModelEditorState.LeafData, T?>, modifier: Modifier = Modifier) {
-        val leaf_data = event_pair.first
-        val event = event_pair.second
-        val line_data = ui_facade.line_data[y]
+    fun <T: OpusEvent> LeafView(line_data: ViewModelEditorState.LineData, leaf_data: ViewModelEditorState.LeafData, event: T?, radix: Int, modifier: Modifier = Modifier) {
         val corner_radius = when (event) {
             is InstrumentEvent -> 12.dp
             else -> 4.dp
         }
-        val leaf_color = if (leaf_data.is_selected) {
+        val leaf_color = if (leaf_data.is_selected.value) {
             when (event) {
                 is InstrumentEvent -> colorResource(R.color.leaf_selected)
                 is EffectEvent -> colorResource(R.color.ctl_leaf_selected)
                 else -> colorResource(R.color.leaf_empty_selected)
             }
-        } else if (leaf_data.is_secondary) {
+        } else if (leaf_data.is_secondary.value) {
             when (event) {
                 is InstrumentEvent -> colorResource(R.color.leaf_secondary)
                 is EffectEvent -> colorResource(R.color.ctl_leaf_secondary)
@@ -736,7 +727,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 else -> Color(0x10000000)
             }
         }
-        val background_color = if (line_data.ctl_type != null) {
+        val background_color = if (line_data.ctl_type.value != null) {
             colorResource(R.color.ctl_line)
         } else {
             colorResource(R.color.table_background)
@@ -766,16 +757,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
             ) {
                 when (event) {
                     is AbsoluteNoteEvent -> {
-                        val octave = event.note / ui_facade.radix.value
-                        val offset = event.note % ui_facade.radix.value
+                        val octave = event.note / radix
+                        val offset = event.note % radix
                         Text(
                             AnnotatedString.fromHtml("<sub>$octave</sub>$offset")
                         )
                     }
 
                     is RelativeNoteEvent -> {
-                        val octave = abs(event.offset) / ui_facade.radix.value
-                        val offset = abs(event.offset) % ui_facade.radix.value
+                        val octave = abs(event.offset) / radix
+                        val offset = abs(event.offset) % radix
                         Row {
                             Column(modifier = Modifier
                                 .fillMaxSize()
@@ -810,7 +801,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
             composable_traverse(cell, listOf()) { tree, path, event, weight ->
                 if (tree.is_leaf()) {
                     this@ComponentActivityEditor.LeafView(
-                        ui_facade, dispatcher, y, x, path, event!!,
+                        line_info,
+                        event!!.first,
+                        event.second,
+                        ui_facade.radix.value,
                         Modifier
                             .width(dimensionResource(R.dimen.base_leaf_width))
                             .weight(weight)
@@ -818,73 +812,73 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 onClick = {
                                     val cursor = ui_facade.active_cursor.value
                                     val selecting_range = ui_facade.active_cursor.value?.type == CursorMode.Range
-                                    if (line_info.ctl_type == null) {
-                                        if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type == null) {
+                                    if (line_info.ctl_type.value == null) {
+                                        if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type.value == null) {
                                             dispatcher.move_selection_to_beat(
-                                                BeatKey(line_info.channel!!, line_info.line_offset!!, x)
+                                                BeatKey(line_info.channel.value!!, line_info.line_offset.value!!, x)
                                             )
                                         } else {
                                             dispatcher.cursor_select(
-                                                BeatKey(line_info.channel!!, line_info.line_offset!!, x), path
+                                                BeatKey(line_info.channel.value!!, line_info.line_offset.value!!, x), path
                                             )
                                         }
-                                    } else if (line_info.line_offset != null) {
-                                        if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type == line_info.ctl_type) {
+                                    } else if (line_info.line_offset.value != null) {
+                                        if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type.value == line_info.ctl_type.value) {
                                             dispatcher.move_line_ctl_to_beat(
                                                 BeatKey(
-                                                    line_info.channel!!,
-                                                    line_info.line_offset!!,
+                                                    line_info.channel.value!!,
+                                                    line_info.line_offset.value!!,
                                                     x
                                                 )
                                             )
                                         } else {
                                             dispatcher.cursor_select_ctl_at_line(
-                                                line_info.ctl_type!!,
-                                                BeatKey(line_info.channel!!, line_info.line_offset!!, x),
+                                                line_info.ctl_type.value!!,
+                                                BeatKey(line_info.channel.value!!, line_info.line_offset.value!!, x),
                                                 path
                                             )
                                         }
-                                    } else if (line_info.channel != null) {
-                                        if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type == line_info.ctl_type) {
-                                            dispatcher.move_channel_ctl_to_beat(line_info.channel!!, x)
+                                    } else if (line_info.channel.value != null) {
+                                        if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type.value == line_info.ctl_type.value) {
+                                            dispatcher.move_channel_ctl_to_beat(line_info.channel.value!!, x)
                                         } else {
                                             dispatcher.cursor_select_ctl_at_channel(
-                                                line_info.ctl_type!!,
-                                                line_info.channel!!,
+                                                line_info.ctl_type.value!!,
+                                                line_info.channel.value!!,
                                                 x,
                                                 path
                                             )
                                         }
                                     } else {
-                                        if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type == line_info.ctl_type) {
+                                        if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type.value == line_info.ctl_type.value) {
                                             dispatcher.move_global_ctl_to_beat(x)
                                         } else {
-                                            dispatcher.cursor_select_ctl_at_global(line_info.ctl_type!!, x, path)
+                                            dispatcher.cursor_select_ctl_at_global(line_info.ctl_type.value!!, x, path)
                                         }
                                     }
                                 },
                                 onLongClick = {
-                                    if (line_info.ctl_type == null) {
+                                    if (line_info.ctl_type.value == null) {
                                         dispatcher.cursor_select_range_next(
                                             BeatKey(
-                                                line_info.channel!!,
-                                                line_info.line_offset!!,
+                                                line_info.channel.value!!,
+                                                line_info.line_offset.value!!,
                                                 x
                                             )
                                         )
-                                    } else if (line_info.line_offset != null) {
+                                    } else if (line_info.line_offset.value != null) {
                                         dispatcher.cursor_select_line_ctl_range_next(
-                                            line_info.ctl_type!!,
-                                            BeatKey(line_info.channel!!, line_info.line_offset!!, x)
+                                            line_info.ctl_type.value!!,
+                                            BeatKey(line_info.channel.value!!, line_info.line_offset.value!!, x)
                                         )
-                                    } else if (line_info.channel != null) {
+                                    } else if (line_info.channel.value != null) {
                                         dispatcher.cursor_select_channel_ctl_range_next(
-                                            line_info.ctl_type!!,
-                                            line_info.channel!!,
+                                            line_info.ctl_type.value!!,
+                                            line_info.channel.value!!,
                                             x
                                         )
                                     } else {
-                                        dispatcher.cursor_select_global_ctl_range_next(line_info.ctl_type!!, x)
+                                        dispatcher.cursor_select_global_ctl_range_next(line_info.ctl_type.value!!, x)
                                     }
                                 }
                             )
@@ -973,7 +967,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             Row {
                                 Button(
                                     onClick = { dispatcher.set_channel_instrument(i) },
-                                    content = { Text(state_model.available_preset_names?.get(channel_data.instrument) ?: "??") }
+                                    content = { Text(state_model.available_preset_names?.get(channel_data.instrument.value) ?: "??") }
                                 )
                                 Button(
                                     onClick = { dispatcher.remove_channel(i) },

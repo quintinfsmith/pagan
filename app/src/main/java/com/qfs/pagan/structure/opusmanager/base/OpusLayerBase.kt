@@ -629,7 +629,7 @@ open class OpusLayerBase: Effectable {
         // Because of the variance (out InstrumentEvent) my copy function in the OpusTree doesn't work correctly
         // Instead just copy the events here
         val working_tree = this.get_tree(beat_key, position).copy { event ->
-            event.copy()
+            event?.copy()
         }
         return working_tree
     }
@@ -4684,8 +4684,12 @@ open class OpusLayerBase: Effectable {
         return this.get_beatkeys_in_range(beat_key, target_second_key)
     }
 
-    fun <T: EffectEvent> copy_control_event(event: T): T {
-        return event.copy() as T
+    fun <T: EffectEvent> copy_control_event(event: T?): T? {
+        return if (event == null) {
+            null
+        } else {
+            event.copy() as T
+        }
     }
 
     private fun _is_valid_beat_range(first_corner: BeatKey, second_corner: BeatKey): Boolean {

@@ -513,7 +513,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         Row(Modifier.height(use_height)) {
                             for (x in 0 until length.value) {
                                 Column(Modifier.width(leaf_width * column_widths[x])) {
-                                    CellView(ui_facade, dispatcher, y, x)
+                                    val cell = ui_facade.cell_map[y][x]
+                                    CellView(ui_facade, dispatcher, cell, y, x)
                                 }
                             }
                         }
@@ -794,11 +795,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun CellView(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, y: Int, x: Int, modifier: Modifier = Modifier) {
-        val cell = ui_facade.cell_map[y][x].value
+    fun CellView(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, cell: MutableState<ReducibleTree<Pair<ViewModelEditorState.LeafData, OpusEvent?>>>, y: Int, x: Int, modifier: Modifier = Modifier) {
         val line_info = ui_facade.line_data[y]
         Row(modifier.fillMaxSize()) {
-            composable_traverse(cell, listOf()) { tree, path, event, weight ->
+            composable_traverse(cell.value, listOf()) { tree, path, event, weight ->
                 if (tree.is_leaf()) {
                     this@ComponentActivityEditor.LeafView(
                         line_info,

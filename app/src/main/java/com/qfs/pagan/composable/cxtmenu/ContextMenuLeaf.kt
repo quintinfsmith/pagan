@@ -60,20 +60,20 @@ fun ContextMenuStructureControls(ui_facade: ViewModelEditorState, dispatcher: Ac
         )
         IconCMenuButton(
             onClick = {
-                if (active_line.assigned_offset != null) {
+                if (active_line.assigned_offset.value != null) {
                     dispatcher.toggle_percussion()
                 } else if (active_event != null) {
                     dispatcher.unset()
                 }
             },
             onLongClick = { dispatcher.unset_root() },
-            icon = if (active_line.assigned_offset != null) {
+            icon = if (active_line.assigned_offset.value != null) {
                 if (active_event != null) R.drawable.icon_unset
                 else R.drawable.icon_set_percussion
             } else {
                 R.drawable.icon_unset
             },
-            description = if (active_line.assigned_offset != null) {
+            description = if (active_line.assigned_offset.value != null) {
                 R.string.set_percussion_event
             } else {
                 R.string.btn_unset

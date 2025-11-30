@@ -45,7 +45,7 @@ fun DelayEventMenu (ui_facade: ViewModelEditorState, dispatcher: ActionTracker, 
             dispatcher.set_effect_at_cursor(event)
         }
         Slider(
-            value = fade.value,
+            value = fade.floatValue,
             steps = 100,
             valueRange = 0F .. 1F,
             onValueChange = {

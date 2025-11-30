@@ -6,7 +6,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.unit.Velocity
 import kotlinx.coroutines.CoroutineScope
 
-class NoverScrollEffect(val scope: CoroutineScope) : OverscrollEffect {
+class  NoverScrollEffect(val scope: CoroutineScope) : OverscrollEffect {
     override val isInProgress: Boolean
         get() = false
 

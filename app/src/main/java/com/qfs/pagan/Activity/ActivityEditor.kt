@@ -87,21 +87,6 @@ import com.qfs.pagan.PlaybackDevice
 import com.qfs.pagan.R
 import com.qfs.pagan.TuningMapRecycler
 import com.qfs.pagan.TuningMapRecyclerAdapter
-import com.qfs.pagan.contextmenu.ContextMenuChannel
-import com.qfs.pagan.contextmenu.ContextMenuColumn
-import com.qfs.pagan.contextmenu.ContextMenuControlLeaf
-import com.qfs.pagan.contextmenu.ContextMenuControlLeafRange
-import com.qfs.pagan.contextmenu.ContextMenuControlLine
-import com.qfs.pagan.contextmenu.ContextMenuLeaf
-import com.qfs.pagan.contextmenu.ContextMenuLeafPercussion
-import com.qfs.pagan.contextmenu.ContextMenuLine
-import com.qfs.pagan.contextmenu.ContextMenuRange
-import com.qfs.pagan.contextmenu.ContextMenuView
-import com.qfs.pagan.controlwidgets.ControlWidgetDelay
-import com.qfs.pagan.controlwidgets.ControlWidgetPan
-import com.qfs.pagan.controlwidgets.ControlWidgetTempo
-import com.qfs.pagan.controlwidgets.ControlWidgetVelocity
-import com.qfs.pagan.controlwidgets.ControlWidgetVolume
 import com.qfs.pagan.databinding.ActivityEditorBinding
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.numberinput.RangedFloatInput
@@ -176,7 +161,6 @@ class ActivityEditor : PaganActivity() {
     private var _notification_channel: NotificationChannel? = null
     private var _active_notification: NotificationCompat.Builder? = null
     // -------------------------------------------------------------------
-    var active_context_menu: ContextMenuView? = null
 
     var active_project: Uri?
         get() = this.editor_view_model.active_project
@@ -888,7 +872,6 @@ class ActivityEditor : PaganActivity() {
                 this.loading_reticle_show()
                 this.runOnUiThread {
                     this.findViewById<EditorTable>(R.id.etEditorTable).visibility = View.GONE
-                    this.clear_context_menu()
                 }
 
                 val fallback_msg = try {
@@ -1703,9 +1686,7 @@ class ActivityEditor : PaganActivity() {
             this.findViewById<ChannelOptionRecycler?>(R.id.rvActiveChannels)?.notify_soundfont_changed()
             when (this.get_opus_manager().cursor.mode) {
                 CursorMode.Line,
-                CursorMode.Channel -> {
-                    this.refresh_context_menu()
-                }
+                CursorMode.Channel -> { }
                 else -> {}
             }
         }
@@ -2335,239 +2316,9 @@ class ActivityEditor : PaganActivity() {
     }
 
     // vv Formerly Fragment Functions ---------------------------------------------------------
-    fun clear_context_menu() {
-        this.hide_context_menus()
-        this.active_context_menu?.let { context_menu: ContextMenuView ->
-            context_menu.destroy()
-            context_menu.primary?.parent?.let {
-                (it as ViewGroup).removeAllViews()
-            }
-            context_menu.secondary?.parent?.let {
-                (it as ViewGroup).removeAllViews()
-            }
-        }
-        this.active_context_menu = null
-    }
-
-    private fun hide_context_menus() {
-        this.findViewById<LinearLayout>(R.id.llContextMenuPrimary)?.visibility = View.GONE
-        this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)?.visibility = View.GONE
-    }
-
-    fun on_show_context_menus(a: View, b: Int, c: Int, d: Int, e: Int, f: Int, g: Int, h: Int, i: Int): Boolean {
-        val editor_table = this.findViewById<EditorTable>(R.id.etEditorTable)
-        editor_table.force_scroll_to_cursor_vertical()
-        return false
-    }
-
-    private fun show_context_menus() {
-        val primary = this.findViewById<LinearLayout>(R.id.llContextMenuPrimary)
-        primary.removeOnLayoutChangeListener(this::on_show_context_menus)
-        primary.visibility = if (primary.isNotEmpty()) {
-            primary.addOnLayoutChangeListener(this::on_show_context_menus)
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
-
-        val secondary = this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
-        secondary.removeOnLayoutChangeListener(this::on_show_context_menus)
-        secondary.visibility = if (secondary.isNotEmpty()) {
-            if (primary.isEmpty()) {
-                secondary.addOnLayoutChangeListener(this::on_show_context_menus)
-            }
-            View.VISIBLE
-        } else {
-            View.GONE
-        }
-
-    }
-
-    internal fun set_context_menu_control_line() {
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-
-        if (!(this.active_context_menu?.matches_cursor(cursor) ?: false)) {
-            this.clear_context_menu()
-            val is_initial_event = true
-            val widget = when (cursor.ctl_type!!) {
-                EffectType.Tempo -> {
-                    ControlWidgetTempo(cursor.ctl_level!!, is_initial_event, this) { event: OpusTempoEvent ->
-                        opus_manager.set_initial_event(event)
-                    }
-                }
-                EffectType.Volume -> {
-                    ControlWidgetVolume(cursor.ctl_level!!, is_initial_event, this) { event: OpusVolumeEvent ->
-                        opus_manager.set_initial_event(event)
-                    }
-                }
-                EffectType.Velocity -> {
-                    ControlWidgetVelocity(cursor.ctl_level!!, is_initial_event, this) { event: OpusVelocityEvent ->
-                        opus_manager.set_initial_event(event)
-                    }
-                }
-
-                EffectType.Pan -> {
-                    ControlWidgetPan(cursor.ctl_level!!, is_initial_event, this) { event: OpusPanEvent ->
-                        opus_manager.set_initial_event(event)
-                    }
-                }
-
-                EffectType.Delay -> {
-                    ControlWidgetDelay(cursor.ctl_level!!, is_initial_event, this) { event: DelayEvent ->
-                        opus_manager.set_initial_event(event)
-                    }
-                }
-
-                EffectType.Reverb -> TODO()
-                EffectType.LowPass -> TODO()
-            }
 
 
-            this.active_context_menu = ContextMenuControlLine(
-                widget,
-                this.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
-            )
-        } else {
-            this.active_context_menu?.refresh()
-        }
 
-        this.show_context_menus()
-    }
-
-    internal fun set_context_menu_line_control_leaf() {
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-
-        if (!(this.active_context_menu?.matches_cursor(cursor) ?: false)) {
-            this.clear_context_menu()
-            val is_initial_event = false
-            val widget = when (cursor.ctl_type!!) {
-                EffectType.Tempo -> {
-                    ControlWidgetTempo(cursor.ctl_level!!, is_initial_event, this) { event: OpusTempoEvent ->
-                        opus_manager.set_event_at_cursor(event)
-                    }
-                }
-
-                EffectType.Volume -> {
-                    ControlWidgetVolume(cursor.ctl_level!!, is_initial_event, this) { event: OpusVolumeEvent ->
-                        opus_manager.set_event_at_cursor(event)
-                    }
-                }
-
-                EffectType.Velocity -> {
-                    ControlWidgetVelocity(cursor.ctl_level!!, is_initial_event, this) { event: OpusVelocityEvent ->
-                        opus_manager.set_event_at_cursor(event)
-                    }
-                }
-
-                EffectType.Pan -> {
-                    ControlWidgetPan(cursor.ctl_level!!, is_initial_event, this) { event: OpusPanEvent ->
-                        opus_manager.set_event_at_cursor(event)
-                    }
-                }
-
-                EffectType.Delay -> {
-                    ControlWidgetDelay(cursor.ctl_level!!, is_initial_event, this) { event: DelayEvent ->
-                        opus_manager.set_event_at_cursor(event)
-                    }
-                }
-
-                EffectType.Reverb -> TODO()
-                EffectType.LowPass -> TODO()
-            }
-
-            this.active_context_menu = ContextMenuControlLeaf(
-                widget,
-                this.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
-            )
-        } else {
-            this.active_context_menu?.refresh()
-        }
-        this.show_context_menus()
-    }
-
-    internal fun set_context_menu_line_control_leaf_b() {
-        if (!this.refresh_or_clear_context_menu<ContextMenuControlLeafRange>()) {
-            this.active_context_menu = ContextMenuControlLeafRange(
-                this.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
-            )
-        }
-        this.show_context_menus()
-    }
-
-    internal fun set_context_menu_range() {
-        if (!this.refresh_or_clear_context_menu<ContextMenuRange>()) {
-            this.active_context_menu = ContextMenuRange(
-                this.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
-            )
-        }
-        this.show_context_menus()
-    }
-
-    internal fun set_context_menu_column() {
-        if (this.in_playback()) {
-            this.clear_context_menu()
-            return
-        }
-
-        if (!this.refresh_or_clear_context_menu<ContextMenuColumn>()) {
-            this.active_context_menu = ContextMenuColumn(
-                this.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
-            )
-        }
-        this.show_context_menus()
-    }
-
-    fun refresh_context_menu() {
-        this.active_context_menu?.refresh() ?: this.hide_context_menus()
-    }
-
-    internal fun set_context_menu_line() {
-        if (!this.refresh_or_clear_context_menu<ContextMenuLine>()) {
-            this.active_context_menu = ContextMenuLine(
-                this.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
-            )
-        }
-        this.show_context_menus()
-    }
-
-    internal fun set_context_menu_channel() {
-        if (!this.refresh_or_clear_context_menu<ContextMenuChannel>()) {
-            this.active_context_menu = ContextMenuChannel(
-                this.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
-            )
-        }
-        this.show_context_menus()
-    }
-
-
-    internal fun set_context_menu_leaf() {
-        if (!this.refresh_or_clear_context_menu<ContextMenuLeaf>()) {
-            this.active_context_menu = ContextMenuLeaf(
-                this.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
-            )
-        }
-        this.show_context_menus()
-    }
-
-    internal fun set_context_menu_leaf_percussion() {
-        if (!this.refresh_or_clear_context_menu<ContextMenuLeafPercussion>()) {
-            this.active_context_menu = ContextMenuLeafPercussion(
-                this.findViewById<LinearLayout>(R.id.llContextMenuPrimary),
-                this.findViewById<LinearLayout>(R.id.llContextMenuSecondary)
-            )
-        }
-        this.show_context_menus()
-    }
 
     fun shortcut_dialog() {
         val view = LayoutInflater.from(this)
@@ -2636,16 +2387,6 @@ class ActivityEditor : PaganActivity() {
         }
     }
 
-    private inline fun <reified T: ContextMenuView?> refresh_or_clear_context_menu(): Boolean {
-        if (this.active_context_menu !is T) {
-            this.clear_context_menu()
-            return false
-        }
-
-        this.active_context_menu?.refresh()
-
-        return true
-    }
 
     // ^^ Formerly Fragment Functions ---------------------------------------------------------
     fun dialog_tuning_table() {
@@ -2707,12 +2448,6 @@ class ActivityEditor : PaganActivity() {
                 this.set_soundfont()
             } else if (this.configuration.sample_rate != original.sample_rate && this.configuration.soundfont != null) {
                 this.set_soundfont()
-            }
-        }
-
-        if (original.relative_mode != this.configuration.relative_mode) {
-            if (this.active_context_menu is ContextMenuLeaf) {
-                this.active_context_menu!!.refresh()
             }
         }
 

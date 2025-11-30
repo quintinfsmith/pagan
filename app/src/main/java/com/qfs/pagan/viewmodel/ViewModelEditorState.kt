@@ -389,6 +389,7 @@ class ViewModelEditorState: ViewModel() {
                     it.traverse { tree, pair ->
                         if (tree.is_leaf()) {
                             pair?.first?.let { leaf_data ->
+                                println("FUCL: ${tree.get_path()}")
                                 leaf_data.is_selected.value = tree.get_path() == cursor.ints.subList(2, cursor.ints.size)
                                 leaf_data.is_secondary.value = false // TODO
                                 this.selected_leafs.add(leaf_data)
@@ -560,4 +561,5 @@ class ViewModelEditorState: ViewModel() {
     fun set_relative_mode(value: RelativeInputMode) {
         this.relative_input_mode.value = value
     }
+
 }

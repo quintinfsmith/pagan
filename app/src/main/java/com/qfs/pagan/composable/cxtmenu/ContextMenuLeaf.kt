@@ -139,7 +139,7 @@ fun ContextMenuSingleSecondary(ui_facade: ViewModelEditorState, dispatcher: Acti
         is AbsoluteNoteEvent -> active_event.note % ui_facade.radix.value
         is RelativeNoteEvent -> active_event.offset % ui_facade.radix.value
         is PercussionEvent -> 0
-        null -> 0
+        null -> null
         else -> throw Exception("Invalid Event Type") // TODO: Specify
     }
     if (ui_facade.line_data[cursor.ints[0]].assigned_offset.value != null) return

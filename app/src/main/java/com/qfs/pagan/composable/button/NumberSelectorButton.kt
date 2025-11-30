@@ -1,5 +1,7 @@
 package com.qfs.pagan.composable.button
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,26 +18,23 @@ import com.qfs.pagan.R
 
 @Composable
 fun NumberSelectorButton(modifier: Modifier = Modifier, index: Int, alternate: Boolean, selected: Boolean, highlighted: Boolean, callback: () -> Unit) {
+    if (highlighted) {
+        println("H: $index, $alternate")
+    }
     Button(
         modifier = modifier,
         onClick = callback,
         shape = RoundedCornerShape(12.dp),
+        border = if (highlighted) BorderStroke(2.dp, color = colorResource(R.color.number_selector_highlight))
+            else null,
         contentPadding = PaddingValues(0.dp),
         colors = ButtonColors(
-            containerColor = if (selected) {
-                colorResource(R.color.number_selector_highlight)
-            } else if (alternate) {
-                colorResource(R.color.ns_alt)
-            } else {
-                colorResource(R.color.ns_default)
-            },
-            contentColor = if (selected) {
-                colorResource(R.color.ns_selected_text)
-            } else if (alternate) {
-                colorResource(R.color.ns_alt_text)
-            } else {
-                colorResource(R.color.ns_default_text)
-            },
+            containerColor = if (selected) colorResource(R.color.number_selector_highlight)
+                else if (alternate) colorResource(R.color.ns_alt)
+                else colorResource(R.color.ns_default),
+            contentColor = if (selected) colorResource(R.color.ns_selected_text)
+                else if (alternate) colorResource(R.color.ns_alt_text)
+                else colorResource(R.color.ns_default_text),
             disabledContentColor = Color.Transparent,
             disabledContainerColor = Color.Transparent
         ),

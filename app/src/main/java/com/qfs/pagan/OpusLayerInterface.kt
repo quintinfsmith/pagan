@@ -550,6 +550,14 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
         super.split_tree(beat_key, position, splits, move_event_to_end)
+        val y = this.get_visible_row_from_ctl_line(
+            this.get_actual_line_index(
+                this.get_instrument_line_index(
+                    beat_key.channel,
+                    beat_key.line_offset
+                )
+            )
+        )!!
         this._queue_cell_change(beat_key)
     }
 
@@ -1272,6 +1280,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     }
 
     override fun cursor_select(beat_key: BeatKey, position: List<Int>) {
+        println("CUR!!! $beat_key, $position")
         if (this._block_cursor_selection()) return
 
         this._unset_temporary_blocker()
@@ -1281,6 +1290,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         if (!this.is_percussion(beat_key.channel) && current_tree.has_event()) {
             this.set_relative_mode(current_tree.get_event()!! as TunedInstrumentEvent)
         }
+
 
         this._queue_cursor_update(this.cursor)
         this.vm_state.set_active_event(current_tree.get_event()?.copy())
@@ -1925,7 +1935,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
         val new_event = when (this.relative_mode) {
             RelativeInputMode.Absolute -> {
-                this.set_latest_offset()
+                this.set_latest_offset(offset)
                 AbsoluteNoteEvent(
                     when (current_event) {
                         is AbsoluteNoteEvent -> {

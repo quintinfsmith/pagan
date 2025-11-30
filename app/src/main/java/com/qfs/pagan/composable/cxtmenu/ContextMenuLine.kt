@@ -1,5 +1,6 @@
 package com.qfs.pagan.composable.cxtmenu
 
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -53,12 +54,20 @@ fun ContextMenuLinePrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTr
         } ?: Spacer(Modifier.weight(1F))
 
         IconCMenuButton(
-            onClick = { dispatcher.remove_line() },
+            onClick = { dispatcher.remove_line(1) },
+            modifier = Modifier.combinedClickable(
+                onClick = {},
+                onLongClick = { dispatcher.remove_line() }
+            ),
             icon = R.drawable.icon_remove_line,
             description = R.string.cd_remove_line
         )
         IconCMenuButton(
-            onClick = { dispatcher.insert_line() },
+            onClick = { dispatcher.insert_line(1) },
+            modifier = Modifier.combinedClickable(
+                onClick = {},
+                onLongClick = { dispatcher.insert_line() }
+            ),
             icon = R.drawable.icon_insert_line,
             description = R.string.cd_insert_line
         )

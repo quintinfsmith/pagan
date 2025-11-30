@@ -420,8 +420,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 ) {
                     for ((i, item) in this@ComponentActivityEditor.menu_items.enumerate()) {
                         DropdownMenuItem(
-                            text = { Text(option) },
-                            onClick = { /* Do something... */ }
+                            text = { SText(item.first) },
+                            onClick = { item.second }
                         )
                     }
                 }
@@ -490,7 +490,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     .width(leaf_width * width)
                                     .height(line_height)
                             ) {
-                                BeatLabelView(x, ui_facade, dispatcher)
+                                BeatLabelView(x, ui_facade, dispatcher, ui_facade.column_data[x])
                             }
                         }
                     }
@@ -684,8 +684,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun BeatLabelView(x: Int, ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
-        val column_info = ui_facade.column_data[x]
+    fun BeatLabelView(x: Int, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, column_info: ViewModelEditorState.ColumnData) {
         val modifier = Modifier
 
         if (!column_info.is_tagged.value) {
@@ -732,6 +731,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     fun <T: OpusEvent> LeafView(line_data: ViewModelEditorState.LineData, leaf_data: ViewModelEditorState.LeafData, event: T?, radix: Int, modifier: Modifier = Modifier) {
+        println(" - $leaf_data")
         val corner_radius = when (event) {
             is InstrumentEvent -> 12.dp
             else -> 4.dp

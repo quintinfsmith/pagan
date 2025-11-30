@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
 import com.qfs.json.JSONBoolean
 import com.qfs.json.JSONInteger
@@ -1457,13 +1458,17 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         }
                         Row {
                             TextButton(
-                                modifier = Modifier.fillMaxWidth().weight(1F),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1F),
                                 onClick = { close() },
                                 content = { SText(android.R.string.cancel) }
                             )
 
                             Button(
-                                modifier = Modifier.fillMaxWidth().weight(1F),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1F),
                                 onClick = {
                                     close()
                                     callback()
@@ -1506,13 +1511,17 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
                         Row {
                             TextButton(
-                                modifier = Modifier.fillMaxWidth().weight(1F),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1F),
                                 onClick = { close() },
                                 content = { SText(android.R.string.cancel) }
                             )
 
                             Button(
-                                modifier = Modifier.fillMaxWidth().weight(1F),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1F),
                                 onClick = {
                                     close()
                                     callback(value.value)
@@ -1548,19 +1557,24 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                             SText(R.string.dialog_save_warning_title)
                         }
                         Row {
+                            Button(
+                                modifier = Modifier.weight(1F),
+                                onClick = {
+                                    close()
+                                    callback(false)
+
+                                },
+                                content = { SText(R.string.no) }
+                            )
                             TextButton(
                                 modifier = Modifier.weight(1F),
-                                onClick = {},
+                                onClick = { close() },
                                 content = { SText(android.R.string.cancel) }
                             )
                             Button(
                                 modifier = Modifier.weight(1F),
-                                onClick = { callback(false) },
-                                content = { SText(android.R.string.no) }
-                            )
-                            Button(
-                                modifier = Modifier.weight(1F),
                                 onClick = {
+                                    close()
                                     this@ActionTracker.save()
                                     callback(true)
                                 },

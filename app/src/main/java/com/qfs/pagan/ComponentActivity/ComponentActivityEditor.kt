@@ -34,6 +34,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -104,6 +105,7 @@ import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.InputStreamReader
 import kotlin.math.abs
+import kotlin.math.exp
 
 class ComponentActivityEditor: PaganComponentActivity() {
     val controller_model: ViewModelEditorController by this.viewModels()
@@ -353,6 +355,23 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
+    fun TopBarIcon(icon: Int, description: Int, callback: () -> Unit) {
+        val v_padding = dimensionResource(R.dimen.topbar_icon_padding_v)
+        IconButton(
+            onClick  = callback,
+            content = {
+                Icon(
+                    painter = painterResource(icon),
+                    contentDescription = stringResource(description),
+                    modifier = Modifier
+                        .padding(v_padding)
+                        .height(dimensionResource(R.dimen.topbar_icon_height))
+                )
+            }
+        )
+    }
+
+    @Composable
     override fun TopBar(modifier: Modifier) {
         val ui_facade = this.controller_model.opus_manager.vm_state
         val dispatcher = this.controller_model.action_interface
@@ -360,18 +379,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                painter = painterResource(R.drawable.icon_hamburger_32),
-                contentDescription = stringResource(R.string.song_configuration),
-                modifier = Modifier
-                    .combinedClickable(
-                        onClick = {
-                            scope.launch {
-                                this@ComponentActivityEditor.open_drawer()
-                            }
-                        }
-                    )
-                    .padding(0.dp)
+            TopBarIcon(
+                icon = R.drawable.icon_hamburger_32,
+                description = R.string.song_configuration,
+                callback = {
+                    scope.launch {
+                        this@ComponentActivityEditor.open_drawer()
+                    }
+                }
             )
             Text(
                 modifier = Modifier
@@ -382,46 +397,37 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         onClick = { dispatcher.set_project_name_and_notes() }
                     ),
                 textAlign = TextAlign.Center,
+                maxLines = 1,
                 text = ui_facade.project_name.value ?: stringResource(R.string.untitled_opus)
             )
-            Icon(
-                painter = painterResource(R.drawable.icon_undo),
-                contentDescription = stringResource(R.string.menu_item_undo),
-                modifier = Modifier
-                    .padding(0.dp)
-                    .combinedClickable(
-                        onClick = { dispatcher.apply_undo() }
-                    )
+            TopBarIcon(
+                icon = R.drawable.icon_undo,
+                description = R.string.menu_item_undo,
+                callback = { dispatcher.apply_undo() }
             )
-            Icon(
-                painter = painterResource(R.drawable.icon_play), // TODO: Play state
-                contentDescription = stringResource(R.string.menu_item_playpause),
-                modifier = Modifier
-                    .background(Color.Red)
-                    .padding(0.dp)
-                    .combinedClickable(
-                        onClick = { dispatcher.playback() }
-                    )
+            TopBarIcon(
+                icon = R.drawable.icon_play, // TODO: Play state
+                description = R.string.menu_item_playpause,
+                callback = { dispatcher.playback() }
             )
             Box {
                 val expanded = remember { mutableStateOf(false) }
-                Icon(
-                    painter = painterResource(R.drawable.icon_hamburger_32), // TODO: 3-dot icon
-                    contentDescription = stringResource(R.string.menu_item_playpause),
-                    modifier = Modifier
-                        .padding(0.dp)
-                        .combinedClickable(
-                            onClick = { /* TODO: drop down */ },
-                        )
+                TopBarIcon(
+                    icon = R.drawable.kebab,
+                    description = R.string.menu_item_playpause,
+                    callback = { expanded.value = !expanded.value }
                 )
                 DropdownMenu(
                     expanded = expanded.value,
                     onDismissRequest = { expanded.value = false }
                 ) {
-                    for ((i, item) in this@ComponentActivityEditor.menu_items.enumerate()) {
+                    for ((_, item) in this@ComponentActivityEditor.menu_items.enumerate()) {
                         DropdownMenuItem(
                             text = { SText(item.first) },
-                            onClick = { item.second }
+                            onClick = {
+                                expanded.value = false
+                                item.second()
+                            }
                         )
                     }
                 }

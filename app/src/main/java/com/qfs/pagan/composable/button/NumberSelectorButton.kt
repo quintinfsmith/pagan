@@ -18,9 +18,6 @@ import com.qfs.pagan.R
 
 @Composable
 fun NumberSelectorButton(modifier: Modifier = Modifier, index: Int, alternate: Boolean, selected: Boolean, highlighted: Boolean, callback: () -> Unit) {
-    if (highlighted) {
-        println("H: $index, $alternate")
-    }
     Button(
         modifier = modifier,
         onClick = callback,

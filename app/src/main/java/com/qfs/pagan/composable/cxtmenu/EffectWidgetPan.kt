@@ -21,8 +21,8 @@ fun PanEventMenu (ui_facade: ViewModelEditorState, dispatcher: ActionTracker, ev
     val default_colors = SliderDefaults.colors()
     val colors = SliderColors(
         thumbColor = default_colors.thumbColor,
-        activeTrackColor = default_colors.activeTrackColor,
-        activeTickColor = default_colors.activeTickColor,
+        activeTrackColor = default_colors.inactiveTrackColor,
+        activeTickColor = default_colors.inactiveTickColor,
         inactiveTrackColor = default_colors.inactiveTrackColor,
         inactiveTickColor = default_colors.inactiveTickColor,
         disabledThumbColor = default_colors.disabledThumbColor,
@@ -34,16 +34,18 @@ fun PanEventMenu (ui_facade: ViewModelEditorState, dispatcher: ActionTracker, ev
     val working_value = remember { mutableFloatStateOf(event.value) }
     Row {
         Slider(
-            value = working_value.value,
-            onValueChange = { },
+            value = working_value.floatValue,
+            onValueChange = { working_value.value = it },
             onValueChangeFinished = {
-                event.value = working_value.value
+                event.value = working_value.floatValue
                 dispatcher.set_effect_at_cursor(event)
             },
             valueRange = -1F..1F,
             steps = 20,
             colors = colors,
-            modifier = Modifier.fillMaxWidth().weight(1F),
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1F),
         )
 
         if (!is_initial) {

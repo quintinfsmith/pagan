@@ -10,6 +10,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -44,7 +45,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -52,6 +55,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
@@ -69,6 +73,7 @@ import com.qfs.pagan.CompatibleFileType
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.button.ConfigDrawerButton
+import com.qfs.pagan.composable.button.TopBarIcon
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelPrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuColumnPrimary
@@ -352,23 +357,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-    }
-
-    @Composable
-    fun TopBarIcon(icon: Int, description: Int, callback: () -> Unit) {
-        val v_padding = dimensionResource(R.dimen.topbar_icon_padding_v)
-        IconButton(
-            onClick  = callback,
-            content = {
-                Icon(
-                    painter = painterResource(icon),
-                    contentDescription = stringResource(description),
-                    modifier = Modifier
-                        .padding(v_padding)
-                        .height(dimensionResource(R.dimen.topbar_icon_height))
-                )
-            }
-        )
     }
 
     @Composable
@@ -737,28 +725,27 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     fun <T: OpusEvent> LeafView(line_data: ViewModelEditorState.LineData, leaf_data: ViewModelEditorState.LeafData, event: T?, radix: Int, modifier: Modifier = Modifier) {
-        println(" - $leaf_data")
         val corner_radius = when (event) {
             is InstrumentEvent -> 12.dp
             else -> 4.dp
         }
-        val leaf_color = if (leaf_data.is_selected.value) {
+        val (leaf_color, text_color) = if (leaf_data.is_selected.value) {
             when (event) {
-                is InstrumentEvent -> colorResource(R.color.leaf_selected)
-                is EffectEvent -> colorResource(R.color.ctl_leaf_selected)
-                else -> colorResource(R.color.leaf_empty_selected)
+                is InstrumentEvent -> Pair(colorResource(R.color.leaf_selected), colorResource(R.color.leaf_selected_text))
+                is EffectEvent -> Pair(colorResource(R.color.ctl_leaf_selected), colorResource(R.color.ctl_leaf_selected_text))
+                else -> Pair(colorResource(R.color.leaf_empty_selected), colorResource(R.color.leaf_empty_selected_foreground))
             }
         } else if (leaf_data.is_secondary.value) {
             when (event) {
-                is InstrumentEvent -> colorResource(R.color.leaf_secondary)
-                is EffectEvent -> colorResource(R.color.ctl_leaf_secondary)
-                else -> colorResource(R.color.leaf_empty_selected)
+                is InstrumentEvent -> Pair(colorResource(R.color.leaf_secondary), colorResource(R.color.leaf_secondary_text))
+                is EffectEvent -> Pair(colorResource(R.color.ctl_leaf_secondary), colorResource(R.color.ctl_leaf_selected_text))
+                else -> Pair(colorResource(R.color.leaf_empty_selected), colorResource(R.color.leaf_empty_selected_foreground))
             }
         } else {
             when (event) {
-                is InstrumentEvent -> colorResource(R.color.leaf_main)
-                is EffectEvent -> colorResource(R.color.ctl_leaf)
-                else -> Color(0x10000000)
+                is InstrumentEvent -> Pair(colorResource(R.color.leaf_main), colorResource(R.color.leaf_text))
+                is EffectEvent -> Pair(colorResource(R.color.ctl_leaf), colorResource(R.color.ctl_leaf_text))
+                else -> Pair(Color(0x10000000), Color(0x000000))
             }
         }
         val background_color = if (line_data.ctl_type.value != null) {
@@ -770,21 +757,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
         Box(
             modifier
                 .fillMaxSize()
-                .background(color = background_color)
+                .background(color = background_color),
+            contentAlignment = Alignment.Center
         ) {
             Box(
                 modifier = Modifier
                     .padding(1.dp)
                     .clip(RoundedCornerShape(corner_radius))
-                    // .dropShadow(
-                    //     shape = RoundedCornerShape(8.dp),
-                    //     shadow = Shadow(
-                    //         radius = 4.dp,
-                    //         spread = 2.dp,
-                    //         color = Color(0x10000000),
-                    //         offset = DpOffset(x = 4.dp, 4.dp)
-                    //     )
-                    // )
                     .background(color = leaf_color)
                     .fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -794,7 +773,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         val octave = event.note / radix
                         val offset = event.note % radix
                         Text(
-                            AnnotatedString.fromHtml("<sub>$octave</sub>$offset")
+                            AnnotatedString.fromHtml("<sub>$octave</sub>$offset"),
+                            color = text_color
                         )
                     }
 
@@ -805,21 +785,21 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             Column(modifier = Modifier
                                 .fillMaxSize()
                                 .weight(1F)) {
-                                Text( if (event.offset > 0) "+" else "-" )
-                                Text("$octave")
+                                Text(if (event.offset > 0) "+" else "-" , color = text_color)
+                                Text("$octave", color = text_color)
                             }
                             Column(modifier = Modifier
                                 .fillMaxSize()
                                 .weight(1F)) {
-                                Text("$offset")
+                                Text("$offset", color = text_color)
                             }
                         }
                     }
-                    is PercussionEvent -> SText(R.string.percussion_label)
-                    is OpusVolumeEvent -> Text("${event.value}")
+                    is PercussionEvent -> SText(R.string.percussion_label, color = text_color)
+                    is OpusVolumeEvent -> Text("${event.value}", color = text_color)
                     is OpusPanEvent -> {}
                     is DelayEvent -> {}
-                    is OpusTempoEvent -> Text("${event.value} BPM")
+                    is OpusTempoEvent -> Text("${event.value} BPM", color = text_color)
                     is OpusVelocityEvent -> {}
                     null -> {}
                 }

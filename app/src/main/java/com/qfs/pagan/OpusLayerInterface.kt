@@ -180,6 +180,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             ),
             tree
         )
+        this.vm_state.refresh_cursor()
     }
 
     private fun _queue_global_ctl_cell_change(type: EffectType, beat: Int) {
@@ -550,14 +551,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
         super.split_tree(beat_key, position, splits, move_event_to_end)
-        val y = this.get_visible_row_from_ctl_line(
-            this.get_actual_line_index(
-                this.get_instrument_line_index(
-                    beat_key.channel,
-                    beat_key.line_offset
-                )
-            )
-        )!!
         this._queue_cell_change(beat_key)
     }
 

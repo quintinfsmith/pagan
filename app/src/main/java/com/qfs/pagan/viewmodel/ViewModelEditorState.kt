@@ -313,6 +313,11 @@ class ViewModelEditorState: ViewModel() {
         this.active_event.value = event
     }
 
+    fun refresh_cursor() {
+        this.active_cursor.value?.let {
+            this.set_cursor(it)
+        }
+    }
     fun set_cursor(cursor: CacheCursor) {
         // Deselect old cursor
         while (this.selected_lines.isNotEmpty()) {

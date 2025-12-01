@@ -76,6 +76,9 @@ class ViewModelEditorController(): ViewModel() {
     fun unset_soundfont() {
         this.audio_interface.unset_soundfont()
         this.destroy_playback_device()
+        this.opus_manager.vm_state.populate_presets()
+        this.opus_manager.vm_state.update_channel_names()
+
     }
 
 
@@ -86,6 +89,10 @@ class ViewModelEditorController(): ViewModel() {
     fun set_soundfont(soundfont: SoundFont) {
         this.audio_interface.set_soundfont(soundfont)
         this.create_playback_device()
+
+        val vm_state = this.opus_manager.vm_state
+        vm_state.populate_presets(soundfont)
+        vm_state.update_channel_names()
     }
 
     fun create_playback_device() {
@@ -131,4 +138,5 @@ class ViewModelEditorController(): ViewModel() {
             this.audio_interface.update_channel_instrument(midi_channel, midi_bank, midi_program)
         }
     }
+
 }

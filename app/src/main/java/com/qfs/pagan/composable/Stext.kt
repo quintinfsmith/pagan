@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.TextAutoSize
@@ -38,6 +39,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
 import kotlin.math.max
 import kotlin.math.min
@@ -241,7 +243,7 @@ fun TextInput(modifier: Modifier = Modifier, input: MutableState<String>, callba
 }
 
 @Composable
-fun <T, R: Comparable<R>> SortableMenu(default_menu: List<Triple<T, Int?, String>>, sort_options: List<Pair<Int, (Triple<T, Int?, String>) -> R>>, selected_sort: Int = -1, default_value: T? = null, callback: (T) -> Unit) {
+fun <T, R: Comparable<R>> SortableMenu(default_menu: List<Pair<T, @Composable () -> Unit>>, sort_options: List<Pair<Int, (Int) -> R>>, selected_sort: Int = -1, default_value: T? = null, callback: (T) -> Unit) {
     val active_sort_option = remember { mutableStateOf(selected_sort) }
     Column {
         if (sort_options.isNotEmpty()) {
@@ -262,24 +264,19 @@ fun <T, R: Comparable<R>> SortableMenu(default_menu: List<Triple<T, Int?, String
             val sorted_menu = if (sort_options.isEmpty() || active_sort_option.value == -1) {
                 default_menu
             } else {
-                default_menu.sortedBy(sort_options[active_sort_option.value].second)
+                val indices = default_menu.indices.sortedBy(sort_options[active_sort_option.value].second)
+                List(default_menu.size) { i -> default_menu[indices[i]] }
             }
+            println("${sorted_menu.size} -------------------------")
 
-            for ((uri, icon, label) in sorted_menu) {
+            for ((uri, label_content) in sorted_menu) {
                 Row(
                     modifier = Modifier
                         .combinedClickable(
                             onClick = { callback(uri) }
-                        )
-                ) {
-                    icon?.let {
-                        Icon(
-                            painter = painterResource(it),
-                            contentDescription = label
-                        )
-                    }
-                    Text(text = label)
-                }
+                        ),
+                    content = { label_content() }
+                )
             }
         }
 
@@ -287,6 +284,6 @@ fun <T, R: Comparable<R>> SortableMenu(default_menu: List<Triple<T, Int?, String
 }
 
 @Composable
-fun <T> UnSortableMenu(options: List<Triple<T, Int?, String>>, default_value: T? = null, callback: (T) -> Unit) {
+fun <T> UnSortableMenu(options: List<Pair<T, @Composable () -> Unit>>, default_value: T? = null, callback: (T) -> Unit) {
     SortableMenu<T, Int>(options, listOf(), default_value = default_value, callback = callback)
 }

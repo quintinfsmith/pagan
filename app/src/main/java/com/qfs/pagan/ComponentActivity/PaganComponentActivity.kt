@@ -42,6 +42,7 @@ import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.qfs.pagan.DialogChain
 import com.qfs.pagan.MenuDialogEventHandler
+import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.R
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import com.qfs.pagan.composable.SText
@@ -54,7 +55,6 @@ abstract class PaganComponentActivity: ComponentActivity() {
         val SIZE_L = Pair(640.dp, 480.dp)
         val SIZE_M = Pair(470.dp, 320.dp)
         val SIZE_S = Pair(426.dp, 320.dp)
-
     }
 
     @Composable
@@ -178,6 +178,11 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 }
             }
         }
+    }
+
+    fun reload_config() {
+        this.view_model.reload_config()
+        this.on_config_load()
     }
 
     open fun on_config_load() {

@@ -162,6 +162,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
     val settings_model: ViewModelSettings by this.viewModels()
     var result_intent = Intent()
     private fun update_result() {
+        println("---------update ok------------------")
         // RESULT_OK lets the other activities know they need to reload the configuration
         this.setResult(RESULT_OK, this.result_intent)
     }
@@ -312,14 +313,14 @@ class ComponentActivitySettings: PaganComponentActivity() {
                         this@ComponentActivitySettings.import_soundfont()
                         return@Button
                     }
-                    val soundfonts = mutableListOf<Triple<Uri, Int?, String>>()
+                    val soundfonts = mutableListOf<Pair<Uri, @Composable () -> Unit>>()
                     for (uri in file_list) {
                         val relative_path_segments = uri.pathSegments.last().split("/")
-                        soundfonts.add(Triple(uri, null, relative_path_segments.last()))
+                        soundfonts.add(Pair(uri, { Text(relative_path_segments.last()) }))
                     }
 
                     val sort_options = listOf(
-                        Pair(R.string.sort_option_abc) { item: Triple<Uri, Int?, String> -> item.third.lowercase() }
+                        Pair(R.string.sort_option_abc) { i: Int -> file_list[i].pathSegments.last().split("/").last().lowercase() }
                     )
 
                     view_model.create_dialog { close ->
@@ -352,6 +353,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                     SortableMenu(soundfonts, sort_options, 0, null) { uri ->
                                         view_model.set_soundfont_uri(uri)
                                         view_model.save_configuration()
+                                        this@ComponentActivitySettings.update_result()
                                         close()
                                     }
                                 }

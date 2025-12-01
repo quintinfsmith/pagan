@@ -19,9 +19,6 @@ import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
 fun ContextMenuChannelPrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
-    val cursor = ui_facade.active_cursor.value ?: return
-    val channel_index = cursor.ints[0]
-
     Row(Modifier.height(dimensionResource(R.dimen.icon_button_height))) {
         IconCMenuButton(
             onClick = { dispatcher.show_hidden_channel_controller() },
@@ -82,7 +79,8 @@ fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
                 .fillMaxSize()
                 .weight(1f),
             onClick = { dispatcher.set_channel_preset(channel_index) },
-            content = { Text(ui_facade.available_preset_names?.get(active_channel.instrument.value) ?: "???") }
+            content = { Text(active_channel.active_name.value) }
         )
     }
 }
+

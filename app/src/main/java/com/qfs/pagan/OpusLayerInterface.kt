@@ -1114,6 +1114,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
         if (this.ui_lock.is_locked()) return
         this.vm_state.set_channel_data(channel, this.is_percussion(channel), instrument, this.channels[channel].muted)
+
     }
 
    // override fun toggle_global_control_visibility(type: ControlEventType) {

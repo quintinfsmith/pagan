@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -70,6 +71,7 @@ import com.qfs.pagan.Activity.ActivityEditor.PlaybackState
 import com.qfs.pagan.Activity.ActivitySettings
 import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
 import com.qfs.pagan.CompatibleFileType
+import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.button.ConfigDrawerButton
@@ -129,7 +131,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             )
         },
-        Pair(R.string.menu_item_settings) { this.startActivity(Intent(this, ComponentActivitySettings::class.java)) },
+        Pair(R.string.menu_item_settings) {
+            this.result_launcher_settings.launch(
+                Intent(this, ComponentActivitySettings::class.java)
+            )
+        },
         Pair(R.string.menu_item_about) { this.startActivity(Intent(this, ComponentActivityAbout::class.java)) },
     )
     private val _result_launcher_set_project_directory_and_save =
@@ -153,26 +159,28 @@ class ComponentActivityEditor: PaganComponentActivity() {
     internal var result_launcher_settings =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode != RESULT_OK) return@registerForActivityResult
-            val uri = result.data?.getStringExtra(EXTRA_ACTIVE_PROJECT)?.toUri() ?: return@registerForActivityResult
-            this.controller_model.active_project = uri
+            result.data?.getStringExtra(EXTRA_ACTIVE_PROJECT)?.toUri()?.let { uri ->
+                this.controller_model.active_project = uri
+            }
+            this.reload_config()
         }
 
     internal var result_launcher_import = this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
-                result?.data?.data?.also { uri ->
-                    this.handle_uri(uri)
-                }
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            result.data?.data?.also { uri ->
+                this.handle_uri(uri)
             }
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
         val action_interface = this.controller_model.action_interface
         this.controller_model.attach_state_model(this.state_model)
         action_interface.attach_top_model(this.view_model)
 
+        super.onCreate(savedInstanceState)
+
         action_interface.new_project()
+
 
         this.onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -452,7 +460,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
             CursorMode.Range -> {
                 ContextMenuRangeSecondary(ui_facade, dispatcher, this@ComponentActivityEditor.controller_model.move_mode.value)
             }
-            CursorMode.Channel -> ContextMenuChannelSecondary(ui_facade, dispatcher)
+            CursorMode.Channel -> {
+                ContextMenuChannelSecondary(ui_facade, dispatcher)
+            }
             CursorMode.Unset,
             null -> Text("TODO")
         }
@@ -951,25 +961,27 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val dispatcher = this.controller_model.action_interface
         val state_model = this.state_model
         Card {
-            Column {
+            Column(modifier = Modifier.fillMaxHeight()) {
                 Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column {
+                    Column(modifier = Modifier.weight(1F)) {
                         Button(
                             onClick = { dispatcher.set_tuning_table_and_transpose() },
                             content = { SText(R.string.label_tuning) }
                         )
                     }
                     Column {
-                        ConfigDrawerButton(
-                            icon = R.drawable.icon_add_channel_kit,
-                            description = R.string.btn_cfg_add_kit_channel,
-                            onClick = { dispatcher.insert_percussion_channel() }
-                        )
-                        ConfigDrawerButton(
-                            icon = R.drawable.icon_add_channel,
-                            description = R.string.btn_cfg_add_channel,
-                            onClick = { dispatcher.insert_channel() }
-                        )
+                        Row {
+                            ConfigDrawerButton(
+                                icon = R.drawable.icon_add_channel_kit,
+                                description = R.string.btn_cfg_add_kit_channel,
+                                onClick = { dispatcher.insert_percussion_channel() }
+                            )
+                            ConfigDrawerButton(
+                                icon = R.drawable.icon_add_channel,
+                                description = R.string.btn_cfg_add_channel,
+                                onClick = { dispatcher.insert_channel() }
+                            )
+                        }
                     }
                 }
 
@@ -980,7 +992,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             Row {
                                 Button(
                                     onClick = { dispatcher.set_channel_preset(i) },
-                                    content = { Text(state_model.available_preset_names?.get(channel_data.instrument.value) ?: "??") }
+                                    content = { Text(channel_data.active_name.value) }
                                 )
                                 Button(
                                     onClick = { dispatcher.remove_channel(i) },

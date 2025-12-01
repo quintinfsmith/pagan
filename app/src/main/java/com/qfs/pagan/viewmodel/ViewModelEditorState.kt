@@ -14,8 +14,11 @@ import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
+import kotlin.collections.containsKey
+import kotlin.collections.get
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.text.clear
 
 class ViewModelEditorState: ViewModel() {
     companion object {
@@ -60,11 +63,8 @@ class ViewModelEditorState: ViewModel() {
         }
     }
 
-    var available_preset_names: HashMap<Pair<Int, Int>, String>? = null
 
     ///////////////////////////////////////////////////////
-
-    private val working_path = mutableListOf<Int>()
 
     enum class SelectionLevel {
         Unselected,
@@ -93,11 +93,12 @@ class ViewModelEditorState: ViewModel() {
         val is_spillover = mutableStateOf(is_spillover)
     }
 
-    class ChannelData(percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean, is_selected: Boolean = false) {
+    class ChannelData(percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean, is_selected: Boolean = false, name: String) {
         val percussion = mutableStateOf(percussion)
         val instrument = mutableStateOf(instrument)
         val is_mute = mutableStateOf(is_mute)
         val is_selected = mutableStateOf(is_selected)
+        val active_name = mutableStateOf<String>(name)
     }
     class CacheCursor(var type: CursorMode, vararg ints: Int) {
         var ints = ints.toList()
@@ -131,6 +132,10 @@ class ViewModelEditorState: ViewModel() {
     val highlighted_octave: MutableState<Int?> = mutableStateOf(null)
 
     val is_buffering: MutableState<Boolean> = mutableStateOf(false)
+
+    private val working_path = mutableListOf<Int>()
+    val preset_names = HashMap<Int, HashMap<Int, String>>()
+
 
     fun clear() {
         this.project_name.value = null
@@ -208,7 +213,9 @@ class ViewModelEditorState: ViewModel() {
                 }
             }
         }
-        this.channel_data.add(channel, ChannelData(percussion, instrument, is_mute))
+        this.channel_count.value += 1
+        val name = this.get_preset_name(instrument.first, instrument.second)
+        this.channel_data.add(channel, ChannelData(percussion, instrument, is_mute, name = name ?: "TODO"))
     }
 
     fun remove_channel(channel: Int) {
@@ -227,6 +234,7 @@ class ViewModelEditorState: ViewModel() {
             }
             i++
         }
+        this.channel_count.value -= 1
         this.channel_data.removeAt(channel)
     }
 
@@ -302,7 +310,8 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun set_channel_data(channel_index: Int, percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean) {
-        this.channel_data[channel_index] = ChannelData(percussion, instrument, is_mute)
+        val name = this.get_preset_name(instrument.first, instrument.second)
+        this.channel_data[channel_index] = ChannelData(percussion, instrument, is_mute, is_selected = false, name = name ?: "TODO")
     }
 
     fun set_project_name(name: String? = null) {
@@ -533,30 +542,8 @@ class ViewModelEditorState: ViewModel() {
         this.line_data[line].is_mute.value = mute
     }
 
-    fun populate_preset_names(soundfont: SoundFont) {
-        this.available_preset_names = HashMap()
-        for ((name, program, bank) in soundfont.get_available_presets()) {
-            this.available_preset_names?.set(Pair(bank, program), name)
-        }
-    }
-    fun clear_preset_names() {
-        this.available_preset_names = null
-    }
-
     fun clear_instrument_names() {
         this.instrument_names.clear()
-    }
-
-    fun set_instrument_names(channel: Int, names: List<Pair<String, Int>>?) {
-        this.instrument_names[channel] = if (names == null) {
-            null
-        } else {
-            val hashmap = HashMap<Int, String>()
-            for ((name, index) in names) {
-                hashmap[index] = name
-            }
-            hashmap
-        }
     }
 
     fun set_is_buffering(value: Boolean) {
@@ -567,4 +554,26 @@ class ViewModelEditorState: ViewModel() {
         this.relative_input_mode.value = value
     }
 
+    fun populate_presets(soundfont: SoundFont? = null) {
+        this.preset_names.clear()
+        if (soundfont == null) return
+
+        for ((name, program, bank) in soundfont.get_available_presets()) {
+            if (!this.preset_names.containsKey(program)) {
+                this.preset_names[program] = HashMap()
+            }
+            this.preset_names[program]?.set(bank, name)
+        }
+    }
+
+    fun get_preset_name(program: Int, bank: Int): String? {
+        return this.preset_names[program]?.get(bank)
+    }
+
+    fun update_channel_names() {
+        for (channel in this.channel_data) {
+            val (program, bank) = channel.instrument.value
+            channel.active_name.value = this.get_preset_name(program, bank) ?: "TODO"
+        }
+    }
 }

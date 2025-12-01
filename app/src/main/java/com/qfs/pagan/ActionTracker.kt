@@ -2,10 +2,13 @@ package com.qfs.pagan
 
 import android.net.Uri
 import android.util.Log
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -14,7 +17,9 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.core.net.toUri
 import com.qfs.json.JSONBoolean
 import com.qfs.json.JSONInteger
@@ -24,6 +29,7 @@ import com.qfs.json.JSONString
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.composable.IntegerInput
 import com.qfs.pagan.composable.SText
+import com.qfs.pagan.composable.SortableMenu
 import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
@@ -995,12 +1001,26 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
     fun show_hidden_line_controller(forced_value: EffectType? = null) {
         val opus_manager = this.get_opus_manager()
-        val options = mutableListOf<Triple<EffectType, Int?, String>>( )
+        val options = mutableListOf<Pair<EffectType, @Composable () -> Unit>>( )
         val cursor = opus_manager.cursor
 
         for ((ctl_type, icon_id) in OpusLayerInterface.line_controller_domain) {
             if (opus_manager.is_line_ctl_visible(ctl_type, cursor.channel, cursor.line_offset)) continue
-            options.add(Triple(ctl_type, icon_id, ctl_type.name))
+            options.add(
+                Pair(
+                    ctl_type,
+                    {
+                        Row {
+                            Icon(
+                                painter = painterResource(icon_id),
+                                contentDescription = ctl_type.name // TODO: extract string resource
+                            )
+                            Text(ctl_type.name)
+                        }
+                    }
+                )
+            )
+
         }
 
         this.dialog_popup_menu(R.string.show_line_controls, options, stub_output = forced_value) { ctl_type: EffectType ->
@@ -1012,11 +1032,24 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     fun show_hidden_channel_controller(forced_value: EffectType? =  null) {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        val options = mutableListOf<Triple<EffectType, Int?, String>>( )
+        val options = mutableListOf<Pair<EffectType, @Composable () -> Unit>>( )
 
         for ((ctl_type, icon_id) in OpusLayerInterface.channel_controller_domain) {
             if (opus_manager.is_channel_ctl_visible(ctl_type, cursor.channel)) continue
-            options.add(Triple(ctl_type, icon_id, ctl_type.name))
+            options.add(
+                Pair(
+                    ctl_type,
+                    {
+                        Row {
+                            Icon(
+                                painter = painterResource(icon_id),
+                                contentDescription = ctl_type.name // TODO: extract string resource
+                            )
+                            Text(ctl_type.name)
+                        }
+                    }
+                )
+            )
         }
 
         this.dialog_popup_menu(R.string.show_channel_controls, options, stub_output = forced_value) { ctl_type: EffectType ->
@@ -1027,11 +1060,24 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
     fun show_hidden_global_controller(forced_value: EffectType? =  null) {
         val opus_manager = this.get_opus_manager()
-        val options = mutableListOf<Triple<EffectType, Int?, String>>( )
+        val options = mutableListOf<Pair<EffectType, @Composable () -> Unit>>( )
 
         for ((ctl_type, icon_id) in OpusLayerInterface.global_controller_domain) {
             if (opus_manager.is_global_ctl_visible(ctl_type)) continue
-            options.add(Triple(ctl_type, icon_id, ctl_type.name))
+            options.add(
+                Pair(
+                    ctl_type,
+                    {
+                        Row {
+                            Icon(
+                                painter = painterResource(icon_id),
+                                contentDescription = ctl_type.name // TODO: extract string resource
+                            )
+                            Text(ctl_type.name)
+                        }
+                    }
+                )
+            )
         }
 
         this.dialog_popup_menu(R.string.show_global_controls, options, stub_output = forced_value) { ctl_type: EffectType ->
@@ -1216,6 +1262,70 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     }
 
     fun set_channel_preset(channel: Int, instrument: Pair<Int, Int>? = null) {
+        val opus_manager = this.get_opus_manager()
+        if (instrument != null) {
+            this.track(TrackedAction.SetChannelInstrument, listOf(channel, instrument.first, instrument.second))
+            opus_manager.channel_set_instrument(channel, instrument)
+            return
+        }
+        val default = this.get_opus_manager().get_channel_instrument(channel)
+        this.vm_top.create_dialog { close ->
+
+            val preset_names =  mutableListOf<Triple<Int, Int, String>>()
+            val options = mutableListOf<Pair<Pair<Int, Int>, @Composable () -> Unit>>()
+            for ((program, bank_map) in opus_manager.vm_state.preset_names.toSortedMap()) {
+                val plural = bank_map.size > 1
+                for ((bank, name) in bank_map.toSortedMap()) {
+                    preset_names.add(Triple(program, bank, name))
+                    val label_a = if (plural) "$program - $bank:"
+                        else "$program:"
+                    options.add(
+                        Pair(
+                            Pair(program, bank),
+                            {
+                                Row(horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text(label_a)
+                                    Text(name,
+                                        modifier = Modifier.weight(1F),
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 1
+                                    )
+                                }
+                            }
+                        )
+                    )
+                }
+            }
+
+
+            @Composable {
+                val sort_options = listOf<Pair<Int, (Int) -> Comparable<*>>>(
+                    Pair(R.string.sort_option_program) { i: Int -> preset_names[i].first },
+                    Pair(R.string.sort_option_bank) { i: Int -> preset_names[i].second },
+                    Pair(R.string.sort_option_abc) { i: Int -> preset_names[i].third }
+                )
+                Column(verticalArrangement = Arrangement.SpaceBetween) {
+                    Row {
+                        SText(R.string.dropdown_choose_instrument)
+                    }
+                    Row(Modifier.weight(1F)) {
+                        SortableMenu(options, sort_options = sort_options, 0, default) { instrument ->
+                            close()
+                            opus_manager.channel_set_instrument(channel, instrument)
+                        }
+                    }
+                    Row {
+                        Button(
+                            onClick = { close() },
+                            content = {
+                                SText(android.R.string.cancel)
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
         // val activity = this.get_activity()
         // val supported_instrument_names = activity.get_supported_preset_names()
         // val sorted_keys = supported_instrument_names.keys.toList().sortedBy {
@@ -1226,7 +1336,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         // val is_percussion = opus_manager.is_percussion(channel)
         // val default_position = opus_manager.get_channel_instrument(channel)
 
-        // val options = mutableListOf<Triple<Pair<Int, Int>, Int?, String>>()
         // val current_instrument_supported = sorted_keys.contains(default_position)
 
         // fun padded_hex(i: Int): String {
@@ -1370,7 +1479,8 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         val cursor = opus_manager.cursor
         val default_instrument = opus_manager.get_percussion_instrument(cursor.channel, cursor.line_offset)
 
-        val options = mutableListOf<Triple<Int, Int?, String>>()
+        val options = mutableListOf<Pair<Int, @Composable () -> Unit>>()
+        // TODO()
         this.dialog_popup_menu(R.string.dropdown_choose_percussion, options, default_instrument, stub_output = value) { value: Int ->
             this.track(TrackedAction.SetPercussionInstrument, listOf(value))
             opus_manager.set_percussion_instrument(value)
@@ -1597,7 +1707,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
      * wrapper around MainActivity::dialog_popup_menu
      * will subvert popup on replay
      */
-    private fun <T> dialog_popup_menu(title: Int, options: List<Triple<T, Int?, String>>, default: T? = null, stub_output: T? = null, callback: (value: T) -> Unit) {
+    private fun <T> dialog_popup_menu(title: Int, options: List<Pair<T, @Composable () -> Unit>>, default: T? = null, stub_output: T? = null, callback: (value: T) -> Unit) {
         if (stub_output != null) return callback(stub_output)
 
         this.vm_top.create_dialog { close ->

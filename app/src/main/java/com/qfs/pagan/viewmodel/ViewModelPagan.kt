@@ -44,6 +44,10 @@ class ViewModelPagan: ViewModel() {
         this.soundfont_name.value = this.configuration.soundfont
     }
 
+    fun reload_config() {
+        this.load_config(this.configuration_path ?: return)
+    }
+
     fun create_dialog(dialog_callback: (() -> Unit) -> (@Composable (() -> Unit))) {
         this.dialog_queue.value = DialogChain(
             parent = this.dialog_queue.value,

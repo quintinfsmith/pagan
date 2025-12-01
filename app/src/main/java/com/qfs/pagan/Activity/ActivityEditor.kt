@@ -1627,7 +1627,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun get_supported_preset_names(): HashMap<Pair<Int, Int>, String> {
-        return this.view_model_ui_state.available_preset_names ?: this.get_general_midi_preset_names()
+        return HashMap()//this.view_model_ui_state.available_preset_names ?: this.get_general_midi_preset_names()
     }
 
     fun get_general_midi_preset_names(): HashMap<Pair<Int, Int>, String> {
@@ -1675,7 +1675,7 @@ class ActivityEditor : PaganActivity() {
         }
 
         this.editor_view_model.get_soundfont()?.let {
-            this.view_model_ui_state.populate_preset_names(it)
+            //this.view_model_ui_state.populate_preset_names(it)
         }
 
         this.reinit_playback_device()
@@ -1699,7 +1699,7 @@ class ActivityEditor : PaganActivity() {
     fun disable_soundfont() {
         if (!this.editor_view_model.update_playback_state_soundfont(PlaybackState.NotReady)) return
         this.editor_view_model.unset_soundfont()
-        this.view_model_ui_state.clear_preset_names()
+        //this.view_model_ui_state.clear_preset_names()
         this.view_model_ui_state.clear_instrument_names()
     }
 

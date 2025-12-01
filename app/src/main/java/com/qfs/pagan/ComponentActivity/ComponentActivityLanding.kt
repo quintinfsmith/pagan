@@ -163,7 +163,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
                     },
                 )
 
-                this.dialog_popup_sortable_menu(this.getString(R.string.dialog_select_soundfont), items, null, sort_options, 0, object: MenuDialogEventHandler<Uri>() {
+                this.dialog_popup_sortable_menu(R.string.dialog_select_soundfont, items, null, sort_options, 0, object: MenuDialogEventHandler<Uri>() {
                     override fun on_submit(index: Int, value: Uri) {
                         this@ComponentActivityLanding.startActivity(
                             Intent(this@ComponentActivityLanding, ActivityEditor::class.java).apply {

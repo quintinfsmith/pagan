@@ -2,12 +2,10 @@ package com.qfs.pagan
 
 import android.net.Uri
 import android.util.Log
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.windowInsetsEndWidth
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -19,7 +17,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.core.net.toUri
 import com.qfs.json.JSONBoolean
@@ -35,8 +32,11 @@ import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
 import com.qfs.pagan.structure.opusmanager.base.InvalidOverwriteCall
 import com.qfs.pagan.structure.opusmanager.base.MixedInstrumentException
+import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
+import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
@@ -1262,6 +1262,46 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         }
     }
 
+    fun set_percussion_instrument(channel: Int, line_offset: Int, instrument: Int?) {
+        val opus_manager = this.get_opus_manager()
+        if (instrument != null) {
+            this.track(TrackedAction.SetPercussionInstrument, listOf(channel, line_offset, instrument))
+            opus_manager.percussion_set_instrument(channel, line_offset, instrument)
+            return
+        }
+
+        this.vm_top.create_dialog { close ->
+            val options = mutableListOf<Pair<Int, @Composable () -> Unit>>()
+            val preset = opus_manager.get_channel_instrument(channel)
+            val instruments = this.vm_controller.get_available_instruments(preset)
+            for ((name, index) in instruments) {
+                options.add(
+                    Pair(index, { Text("$name") })
+                )
+            }
+            val current_instrument = (opus_manager.get_channel(channel).lines[line_offset] as OpusLinePercussion).instrument
+            @Composable {
+                Column {
+                    Row { SText(R.string.dropdown_choose_instrument) }
+                    Row {
+                        UnSortableMenu(options, default_value = current_instrument) { value ->
+                            this@ActionTracker.track(TrackedAction.SetPercussionInstrument, listOf(channel, line_offset, value))
+                            opus_manager.percussion_set_instrument(channel, line_offset, value)
+                            close()
+                        }
+                    }
+                    Row {
+                        Button(
+                            modifier = Modifier.weight(1F),
+                            onClick = { close() },
+                            content = { SText(android.R.string.cancel) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     fun set_channel_preset(channel: Int, instrument: Pair<Int, Int>? = null) {
         val opus_manager = this.get_opus_manager()
         if (instrument != null) {
@@ -1269,6 +1309,14 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             opus_manager.channel_set_instrument(channel, instrument)
             return
         }
+        fun padded_hex(i: Int): String {
+            var s = Integer.toHexString(i)
+            while (s.length < 2) {
+                s = "0$s"
+            }
+            return s.uppercase()
+        }
+
         val default = this.get_opus_manager().get_channel_instrument(channel)
         this.vm_top.create_dialog { close ->
 
@@ -1286,7 +1334,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                             Pair(program, bank),
                             {
                                 Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("$program | $bank")
+                                    Text("${padded_hex(program)} | ${padded_hex(bank)}")
                                     Text(name,
                                         modifier = Modifier.weight(1F),
                                         textAlign = TextAlign.Center,
@@ -1339,14 +1387,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         // val default_position = opus_manager.get_channel_instrument(channel)
 
         // val current_instrument_supported = sorted_keys.contains(default_position)
-
-        // fun padded_hex(i: Int): String {
-        //     var s = Integer.toHexString(i)
-        //     while (s.length < 2) {
-        //         s = "0$s"
-        //     }
-        //     return s.uppercase()
-        // }
 
         // for (key in sorted_keys) {
         //     val name = supported_instrument_names[key]
@@ -1660,7 +1700,20 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         // }
     }
 
+    private fun needs_save(): Boolean {
+        val opus_manager = this.get_opus_manager()
+
+        val active_project = this.vm_controller.active_project ?: return !opus_manager.history_cache.is_empty()
+        val other = this.vm_top.project_manager?.open_project(active_project)
+        return (opus_manager as OpusLayerBase) != other
+    }
+
     fun save_before(stub_output: Boolean? = null, callback: (Boolean) -> Unit) {
+        if (!this.needs_save()) {
+            callback(false)
+            return
+        }
+
         if (stub_output == null) {
             this.vm_top.create_dialog { close ->
                 @Composable {
@@ -2045,7 +2098,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                 this.set_duration(integers[0])
             }
             TrackedAction.SetPercussionInstrument -> {
-                this.set_percussion_instrument(integers[0])
+                this.set_percussion_instrument(integers[0]!!, integers[1]!!, integers[2])
             }
             TrackedAction.UnsetRoot -> {
                 this.unset_root()
@@ -2356,23 +2409,24 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     }
 
     fun move_line(channel_from: Int, line_offset_from: Int, channel_to: Int, line_offset_to: Int, before: Boolean = true) {
-       // try {
-       //     val adj_to_index = line_offset_to + if (before) 0 else 1
-       //     if (adj_to_index == line_offset_from && channel_from == channel_to) return
+       try {
+           val adj_to_index = line_offset_to + if (before) 0 else 1
+           if (adj_to_index == line_offset_from && channel_from == channel_to) return
 
-       //     this.get_opus_manager().move_line(
-       //         channel_from,
-       //         line_offset_from,
-       //         channel_to,
-       //         adj_to_index
-       //     )
-       //     this.track(
-       //         TrackedAction.MoveLine,
-       //         listOf(channel_from, line_offset_from, channel_to, adj_to_index)
-       //     )
-       // } catch (e: IncompatibleChannelException) {
-       //     this.toast(R.string.std_percussion_swap)
-       // }
+           this.get_opus_manager().move_line(
+               channel_from,
+               line_offset_from,
+               channel_to,
+               adj_to_index
+           )
+           this.track(
+               TrackedAction.MoveLine,
+               listOf(channel_from, line_offset_from, channel_to, adj_to_index)
+           )
+       } catch (e: IncompatibleChannelException) {
+           // TODO
+          //  this.toast(R.string.std_percussion_swap)
+       }
     }
 
 

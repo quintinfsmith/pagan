@@ -42,12 +42,11 @@ import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.qfs.pagan.DialogChain
 import com.qfs.pagan.MenuDialogEventHandler
-import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.R
-import com.qfs.pagan.viewmodel.ViewModelPagan
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.ScaffoldWithTopBar
 import com.qfs.pagan.enumerate
+import com.qfs.pagan.viewmodel.ViewModelPagan
 
 abstract class PaganComponentActivity: ComponentActivity() {
     companion object {
@@ -192,7 +191,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
     }
 
 
-    internal fun <T> dialog_popup_sortable_menu(title: String, options: List<Triple<T, Int?, String>>, default: T? = null, sort_options: List<Pair<String, (List<Triple<T, Int?, String>>) -> List<Triple<T, Int?, String>>>>, default_sort_option: Int = 0, event_handler: MenuDialogEventHandler<T>) {
+    internal fun <T> dialog_popup_sortable_menu(title: Int, options: List<Triple<T, Int?, String>>, default: T? = null, sort_options: List<Pair<String, (List<Triple<T, Int?, String>>) -> List<Triple<T, Int?, String>>>>, default_sort_option: Int = 0, event_handler: MenuDialogEventHandler<T>) {
         this.view_model.create_dialog { close ->
             @Composable {
                 Column {

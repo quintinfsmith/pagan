@@ -149,7 +149,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         val active_project_uri = uri ?: this.get_new_file_uri() ?: throw NewFileFailException()
         // Untrack then track in order to update the project title in the cache
         active_project_uri.let {
-            val content = opus_manager.to_json()
+            val conterojectpus_manager.to_json()
             this.context.contentResolver.openOutputStream(it, "wt")?.let { output_stream ->
                 output_stream.write(content.to_string(if (indent) 4 else null).toByteArray(Charsets.UTF_8))
                 output_stream.flush()
@@ -533,6 +533,21 @@ class ProjectManager(val context: Context, var uri: Uri?) {
                 file.delete()
             }
         }
+    }
+
+    fun open_project(uri: Uri): OpusLayerBase {
+        val output = OpusLayerBase()
+        if (DocumentFile.fromSingleUri(this.context, uri)?.exists() != true) return output
+
+        val input_stream = this.context.contentResolver.openInputStream(uri)
+        val reader = BufferedReader(InputStreamReader(input_stream))
+        val content = reader.readText().toByteArray(Charsets.UTF_8)
+
+        reader.close()
+        input_stream?.close()
+
+        output.load(content) {}
+        return output
     }
 
     /**

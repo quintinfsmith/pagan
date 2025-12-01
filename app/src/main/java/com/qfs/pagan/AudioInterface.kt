@@ -129,10 +129,13 @@ class AudioInterface {
     fun get_preset(channel: Int): Preset? {
         return this.playback_sample_handle_manager?.get_preset(channel)
     }
+    fun get_preset(key: Pair<Int, Int>): Preset? {
+        return this.playback_sample_handle_manager?.get_preset(key)
+    }
 
-    fun get_instrument_options(midi_channel: Int): List<Pair<String, Int>>? {
+    fun get_instrument_options(preset_key: Pair<Int, Int>): List<Pair<String, Int>>? {
         if (this.soundfont == null) return null
-        val preset = this.get_preset(midi_channel) ?: return null
+        val preset = this.get_preset(preset_key) ?: return null
 
         val available_drum_keys = mutableSetOf<Pair<String, Int>>()
         for ((_, preset_instrument) in preset.instruments) {

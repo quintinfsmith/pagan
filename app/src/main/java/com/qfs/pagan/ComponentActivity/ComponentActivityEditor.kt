@@ -341,7 +341,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             else -> { _ -> throw FileNotFoundException(uri.toString()) }
         }
 
-        this.dialog_save_project {
+        this.controller_model.action_interface.save_before {
             val fallback_msg = try {
                 inner_callback(uri)
                 null
@@ -1106,63 +1106,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     fun open_about() {
         this.startActivity(Intent(this, ActivityAbout::class.java))
-    }
-
-    fun dialog_save_project(callback: (Boolean) -> Unit) {
-        if (!this.needs_save()) {
-            callback(false)
-            return
-        }
-
-        this.view_model.create_dialog { close ->
-            @Composable {
-                Column {
-                    SText(R.string.dialog_save_warning_title)
-                    Row {
-                        Button(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1F),
-                            onClick = {
-                                close()
-                                callback(false)
-                            },
-                            content = { SText(android.R.string.no) }
-                        )
-                        Button(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1F),
-                            onClick = {
-                                this@ComponentActivityEditor.project_save()
-                                close()
-                                callback(true)
-                            },
-                            content = { SText(android.R.string.ok) }
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    private fun needs_save(): Boolean {
-        val opus_manager = this.controller_model.opus_manager
-
-        val active_project = this.controller_model.active_project ?: return !opus_manager.history_cache.is_empty()
-        if (DocumentFile.fromSingleUri(this, active_project)?.exists() != true) return true
-
-        val input_stream = this.contentResolver.openInputStream(active_project)
-        val reader = BufferedReader(InputStreamReader(input_stream))
-        val content: ByteArray = reader.readText().toByteArray(Charsets.UTF_8)
-
-        val other = OpusLayerBase()
-        other.load(content)
-
-        reader.close()
-        input_stream?.close()
-
-        return (opus_manager as OpusLayerBase) != other
     }
 
     fun load_project(uri: Uri) {

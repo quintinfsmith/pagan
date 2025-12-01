@@ -1,6 +1,4 @@
 package com.qfs.pagan
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
 import com.qfs.apres.Midi
 import com.qfs.json.JSONHashMap
 import com.qfs.pagan.Activity.ActivityEditor
@@ -648,7 +646,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         // set the default instrument to the first available in the soundfont (if applicable)
         if (this.is_percussion(channel)) {
             (this.get_channel(channel) as OpusPercussionChannel).let {
-                it.lines[line_offset ?: (it.size - 1)].instrument = this.get_minimum_percussion_instrument(channel) - 27
+                it.lines[line_offset ?: (it.size - 1)].instrument = max(0, this.get_minimum_percussion_instrument(channel) - 27)
             }
         }
 

@@ -48,14 +48,17 @@ class ViewModelPagan: ViewModel() {
         this.load_config(this.configuration_path ?: return)
     }
 
-    fun create_dialog(dialog_callback: (() -> Unit) -> (@Composable (() -> Unit))) {
+    fun create_dialog(level: Int = 0, dialog_callback: (() -> Unit) -> (@Composable (() -> Unit))) {
+        // Use level to block Dup dialogs. set it to allow for dialogs opened from other dialogs
+        if (this.dialog_queue.value?.level == level) return
         this.dialog_queue.value = DialogChain(
             parent = this.dialog_queue.value,
             dialog = dialog_callback {
                 this.dialog_queue.value?.let {
                     this.dialog_queue.value = it.parent
                 }
-            }
+            },
+            level = level
         )
     }
 

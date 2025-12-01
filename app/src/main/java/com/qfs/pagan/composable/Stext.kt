@@ -1,7 +1,10 @@
 package com.qfs.pagan.composable
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,6 +17,8 @@ import androidx.compose.foundation.text.input.TextFieldBuffer
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.OutlinedTextField
@@ -23,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
@@ -41,6 +47,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
+import com.qfs.pagan.enumerate
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -241,19 +248,40 @@ fun TextInput(modifier: Modifier = Modifier, input: MutableState<String>, callba
         }
     )
 }
-
 @Composable
-fun <T, R: Comparable<R>> SortableMenu(default_menu: List<Pair<T, @Composable () -> Unit>>, sort_options: List<Pair<Int, (Int) -> R>>, selected_sort: Int = -1, default_value: T? = null, callback: (T) -> Unit) {
+fun <T> SortableMenu(default_menu: List<Pair<T, @Composable () -> Unit>>, sort_options: List<Pair<Int, (Int, Int) -> Int>>, selected_sort: Int = -1, default_value: T? = null, callback: (T) -> Unit) {
     val active_sort_option = remember { mutableStateOf(selected_sort) }
     Column {
         if (sort_options.isNotEmpty()) {
-            Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                SText(R.string.sorting_by)
-                Button(
-                    modifier = Modifier.weight(1F),
-                    onClick = { TODO() },
-                    content = { SText(sort_options[active_sort_option.value].first) }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                val expanded = remember { mutableStateOf(false) }
+                SText(
+                    R.string.sorting_by,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1F)
                 )
+                Box {
+                    Button(
+                        onClick = { expanded.value = !expanded.value },
+                        content = { SText(sort_options[active_sort_option.value].first) }
+                    )
+                    DropdownMenu(
+                        expanded = expanded.value,
+                        onDismissRequest = { expanded.value = false }
+                    ) {
+                        for (x in sort_options.indices) {
+                            DropdownMenuItem(
+                                text = { SText(sort_options[x].first) },
+                                onClick = {
+                                    expanded.value = false
+                                    active_sort_option.value = x
+                                }
+                            )
+                        }
+                    }
+                }
             }
         }
         Column(
@@ -264,10 +292,9 @@ fun <T, R: Comparable<R>> SortableMenu(default_menu: List<Pair<T, @Composable ()
             val sorted_menu = if (sort_options.isEmpty() || active_sort_option.value == -1) {
                 default_menu
             } else {
-                val indices = default_menu.indices.sortedBy(sort_options[active_sort_option.value].second)
+                val indices = default_menu.indices.sortedWith(sort_options[active_sort_option.value].second)
                 List(default_menu.size) { i -> default_menu[indices[i]] }
             }
-            println("${sorted_menu.size} -------------------------")
 
             for ((uri, label_content) in sorted_menu) {
                 Row(
@@ -285,5 +312,5 @@ fun <T, R: Comparable<R>> SortableMenu(default_menu: List<Pair<T, @Composable ()
 
 @Composable
 fun <T> UnSortableMenu(options: List<Pair<T, @Composable () -> Unit>>, default_value: T? = null, callback: (T) -> Unit) {
-    SortableMenu<T, Int>(options, listOf(), default_value = default_value, callback = callback)
+    SortableMenu(options, listOf(), default_value = default_value, callback = callback)
 }

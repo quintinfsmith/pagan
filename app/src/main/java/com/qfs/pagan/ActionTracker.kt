@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.windowInsetsEndWidth
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -1273,18 +1274,19 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
             val preset_names =  mutableListOf<Triple<Int, Int, String>>()
             val options = mutableListOf<Pair<Pair<Int, Int>, @Composable () -> Unit>>()
+            val is_percussion = opus_manager.is_percussion(channel)
             for ((program, bank_map) in opus_manager.vm_state.preset_names.toSortedMap()) {
-                val plural = bank_map.size > 1
                 for ((bank, name) in bank_map.toSortedMap()) {
+                    if (is_percussion && bank != 128) continue
+                    if (!this.vm_top.configuration.allow_std_percussion && !is_percussion && bank == 128) continue
+
                     preset_names.add(Triple(program, bank, name))
-                    val label_a = if (plural) "$program - $bank:"
-                        else "$program:"
                     options.add(
                         Pair(
                             Pair(program, bank),
                             {
                                 Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text(label_a)
+                                    Text("$program | $bank")
                                     Text(name,
                                         modifier = Modifier.weight(1F),
                                         textAlign = TextAlign.Center,
@@ -1297,12 +1299,11 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                 }
             }
 
-
             @Composable {
-                val sort_options = listOf<Pair<Int, (Int) -> Comparable<*>>>(
-                    Pair(R.string.sort_option_program) { i: Int -> preset_names[i].first },
-                    Pair(R.string.sort_option_bank) { i: Int -> preset_names[i].second },
-                    Pair(R.string.sort_option_abc) { i: Int -> preset_names[i].third }
+                val sort_options = listOf(
+                    Pair(R.string.sort_option_program) { a: Int, b: Int -> preset_names[a].first.compareTo(preset_names[b].first) },
+                    Pair(R.string.sort_option_bank) { a: Int, b: Int -> preset_names[a].second.compareTo(preset_names[b].second) },
+                    Pair(R.string.sort_option_abc) { a: Int, b: Int -> preset_names[a].third.compareTo(preset_names[b].third) }
                 )
                 Column(verticalArrangement = Arrangement.SpaceBetween) {
                     Row {
@@ -1317,6 +1318,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                     Row {
                         Button(
                             onClick = { close() },
+                            modifier = Modifier.fillMaxWidth(),
                             content = {
                                 SText(android.R.string.cancel)
                             }

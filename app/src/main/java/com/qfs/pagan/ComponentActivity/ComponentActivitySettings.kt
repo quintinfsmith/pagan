@@ -320,7 +320,11 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     }
 
                     val sort_options = listOf(
-                        Pair(R.string.sort_option_abc) { i: Int -> file_list[i].pathSegments.last().split("/").last().lowercase() }
+                        Pair(R.string.sort_option_abc) { a: Int, b: Int ->
+                            val file_name_a = file_list[a].pathSegments.last().split("/").last().lowercase()
+                            val file_name_b = file_list[b].pathSegments.last().split("/").last().lowercase()
+                            file_name_a.compareTo(file_name_b)
+                        }
                     )
 
                     view_model.create_dialog { close ->

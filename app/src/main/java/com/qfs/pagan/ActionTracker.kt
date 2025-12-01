@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -1824,6 +1825,23 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     }
 
     private fun dialog_name_and_notes_popup(default: Pair<String, String>? = null, stub_output: Pair<String, String>? = null, callback: (String, String) -> Unit) {
+        if (stub_output != null) return callback(stub_output.first, stub_output.second)
+
+        this.vm_top.create_dialog { close ->
+            @Composable  {
+                Column {
+                    Row {
+                        OutlinedTextField(
+                            maxLines = 1
+                        )
+                    }
+                    Row {
+                        OutlinedTextField(
+                        )
+                    }
+                }
+            }
+        }
         // val activity = this.get_activity()
         // if (stub_output != null) {
         //     callback(stub_output.first, stub_output.second)

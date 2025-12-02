@@ -265,7 +265,13 @@ fun <T> SortableMenu(default_menu: List<Pair<T, @Composable () -> Unit>>, sort_o
                 Box {
                     Button(
                         onClick = { expanded.value = !expanded.value },
-                        content = { SText(sort_options[active_sort_option.value].first) }
+                        content = {
+                            if (selected_sort == -1) {
+                                SText(R.string.unsorted)
+                            } else {
+                                SText(sort_options[active_sort_option.value].first)
+                            }
+                        }
                     )
                     DropdownMenu(
                         expanded = expanded.value,

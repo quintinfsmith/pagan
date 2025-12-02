@@ -9,7 +9,7 @@ import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONList
 import com.qfs.json.JSONParser
 import com.qfs.json.JSONString
-import com.qfs.pagan.Activity.PaganActivity
+import com.qfs.pagan.ComponentActivity.PaganComponentActivity
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
@@ -187,7 +187,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
     }
 
     fun get_existing_uris(): List<Uri> {
-        return (this.context as PaganActivity).get_existing_uris(this.uri)
+        return (this.context as PaganComponentActivity).get_existing_uris(this.uri)
     }
 
     /**

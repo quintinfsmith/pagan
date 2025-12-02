@@ -275,6 +275,8 @@
     <string name="move_mode_merge">Merge</string>
     <string name="remove_channel">Remove Channel %1$d</string>
     <string name="no">No</string>
+    <string name="last_modified">Last Modified</string>
+    <string name="unsorted">Unsorted</string>
 
     <string-array name="general_midi_presets">
         <item>Grand Acoustic Piano</item>

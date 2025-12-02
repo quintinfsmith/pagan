@@ -116,6 +116,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 this.controller_model.action_interface.new_project()
             }
         },
+        Pair(R.string.menu_item_load_project) {
+            this.load_menu_dialog { uri ->
+                this.load_project(uri)
+            }
+        },
         Pair(R.string.menu_item_import) {
             this.result_launcher_import.launch(
                 Intent().apply {

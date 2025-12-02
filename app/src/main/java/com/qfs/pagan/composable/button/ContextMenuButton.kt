@@ -21,7 +21,7 @@ fun IconCMenuButton(modifier: Modifier = Modifier, onClick: () -> Unit, onLongCl
         modifier = modifier,
         onClick = onClick,
         onLongClick = onLongClick ?: {},
-        contentPadding = PaddingValues(4.dp)
+        contentPadding = PaddingValues(8.dp)
     ) {
         Icon(
             painter = painterResource(icon),
@@ -34,7 +34,7 @@ fun IconCMenuButton(modifier: Modifier = Modifier, onClick: () -> Unit, onLongCl
 fun TextCMenuButton(modifier: Modifier = Modifier, onClick: () -> Unit, onLongClick: (() -> Unit) ?= null, text: String) {
     BetterButton(
         modifier = modifier,
-        contentPadding = PaddingValues(4.dp),
+        contentPadding = PaddingValues(8.dp),
         onClick = onClick,
         onLongClick = onLongClick ?: {}
     ) {

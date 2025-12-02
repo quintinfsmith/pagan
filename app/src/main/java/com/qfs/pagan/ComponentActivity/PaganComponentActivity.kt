@@ -28,6 +28,7 @@ import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -38,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
@@ -47,8 +49,16 @@ import com.qfs.pagan.MenuDialogEventHandler
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.ScaffoldWithTopBar
+import com.qfs.pagan.composable.SortableMenu
+import com.qfs.pagan.composable.button.BetterButton
 import com.qfs.pagan.enumerate
+import com.qfs.pagan.projectmanager.ProjectManager
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.viewmodel.ViewModelPagan
+import java.text.SimpleDateFormat
+import java.util.Date
+import kotlin.math.roundToInt
 
 abstract class PaganComponentActivity: ComponentActivity() {
     companion object {
@@ -195,6 +205,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
     }
 
     open fun on_config_load() {
+        this.view_model.project_manager = ProjectManager(this, this.view_model.configuration.project_directory)
         this.view_model.configuration.callbacks_force_orientation.add {
             this.requestedOrientation = it
         }
@@ -342,6 +353,136 @@ abstract class PaganComponentActivity: ComponentActivity() {
             }
 
             DocumentFile.fromFile(soundfont_dir)
+        }
+    }
+
+    private fun create_project_card_dialog(title: String, uri: Uri) {
+        this.view_model.create_dialog(level = 1) { close ->
+            @Composable {
+                Column {
+                    Row { ProjectCard(uri) }
+                    Row(horizontalArrangement = Arrangement.SpaceBetween) {
+                        OutlinedButton(
+                            onClick = close,
+                            content = { SText(android.R.string.cancel) }
+                        )
+                        BetterButton(
+                            onClick = {
+                                close()
+                                this@PaganComponentActivity.view_model.create_dialog { close_subdialog ->
+                                    @Composable {
+                                        Column {
+                                            Row { Text(stringResource(R.string.dlg_delete_title, title)) }
+                                            Row {
+                                                BetterButton(
+                                                    onClick = close_subdialog,
+                                                    content = { SText(android.R.string.cancel) }
+                                                )
+                                                BetterButton(
+                                                    onClick = {
+                                                        close_subdialog()
+                                                        this@PaganComponentActivity.view_model.project_manager?.delete(
+                                                            uri
+                                                        )
+                                                    },
+                                                    content = { SText(android.R.string.cancel) }
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            content = { SText(R.string.delete_project) }
+                        )
+                        BetterButton(
+                            onClick = {
+                                close()
+                                TODO()
+                            },
+                            content = { SText(R.string.details_load_project) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    fun load_menu_dialog(load_callback: (Uri) -> Unit) {
+        val project_list = this.view_model.project_manager?.get_project_list() ?: return
+        val items = mutableListOf<Pair<Uri, @Composable () -> Unit>>()
+        for ((uri, title) in project_list) {
+            items.add(
+                Pair(uri, {
+                    Text(
+                        modifier = Modifier.combinedClickable(
+                            onClick = {},
+                            onLongClick = { this@PaganComponentActivity.create_project_card_dialog(title, uri) }
+                        ),
+                        text = title
+                    )
+                })
+            )
+        }
+
+        val sort_options = listOf(
+            Pair(R.string.sort_option_abc) { a: Int, b: Int -> project_list[a].second.lowercase().compareTo(project_list[b].second.lowercase()) },
+            Pair(R.string.sort_option_date_modified) { a: Int, b: Int ->
+                val df_a = DocumentFile.fromSingleUri(this, project_list[a].first) ?: return@Pair -1
+                val df_b = DocumentFile.fromSingleUri(this, project_list[b].first) ?: return@Pair 1
+                df_a.lastModified().compareTo(df_b.lastModified())
+            },
+        )
+
+        this.view_model.create_dialog {  close ->
+            @Composable {
+                Column {
+                    Row { SText(R.string.menu_item_load_project) }
+                    Row {
+                        SortableMenu(items, sort_options, selected_sort = 0) {
+                            close()
+                            load_callback(it)
+                        }
+                    }
+                    Row {
+                        BetterButton(
+                            onClick = close,
+                            content = { SText(android.R.string.cancel) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun ProjectCard(uri: Uri) {
+        val other_project = this.view_model.project_manager?.open_project(uri) ?: return
+        val document_file = DocumentFile.fromSingleUri(this@PaganComponentActivity, uri) ?: return
+        val time = Date(document_file.lastModified())
+        val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        val initial_tempo = other_project.get_global_controller<OpusTempoEvent>(EffectType.Tempo).initial_event.value
+
+        Column {
+            Row {
+                if (other_project.project_name == null) {
+                    SText(R.string.untitled_opus)
+                } else {
+                    Text(other_project.project_name!!)
+                }
+            }
+            Row {
+                SText(R.string.last_modified)
+                Text(formatter.format(time))
+            }
+            Row {
+                Text(stringResource(R.string.project_info_beat_count, other_project.length))
+                Text(stringResource(R.string.project_info_channel_count, other_project.channels.size))
+                Text(stringResource(R.string.project_info_tempo, initial_tempo.roundToInt()))
+            }
+
+            other_project.project_notes?.let {
+                Row { Text(it) }
+            }
         }
     }
 

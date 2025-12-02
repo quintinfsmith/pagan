@@ -1263,7 +1263,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         }
     }
 
-    fun set_percussion_instrument(channel: Int, line_offset: Int, instrument: Int?) {
+    fun set_percussion_instrument(channel: Int, line_offset: Int, instrument: Int? = null) {
         val opus_manager = this.get_opus_manager()
         if (instrument != null) {
             this.track(TrackedAction.SetPercussionInstrument, listOf(channel, line_offset, instrument))
@@ -1274,11 +1274,9 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         this.vm_top.create_dialog { close ->
             val options = mutableListOf<Pair<Int, @Composable () -> Unit>>()
             val preset = opus_manager.get_channel_instrument(channel)
-            val instruments = this.vm_controller.get_available_instruments(preset)
+            val instruments = opus_manager.vm_state.get_available_instruments(preset)
             for ((name, index) in instruments) {
-                options.add(
-                    Pair(index, { Text("$name") })
-                )
+                options.add(Pair(index, { Text("$index: $name") }))
             }
             val current_instrument = (opus_manager.get_channel(channel).lines[line_offset] as OpusLinePercussion).instrument
             @Composable {
@@ -1287,6 +1285,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                     Row {
                         UnSortableMenu(options, default_value = current_instrument) { value ->
                             this@ActionTracker.track(TrackedAction.SetPercussionInstrument, listOf(channel, line_offset, value))
+                            println("$value")
                             opus_manager.percussion_set_instrument(channel, line_offset, value)
                             close()
                         }
@@ -1324,18 +1323,17 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             val preset_names =  mutableListOf<Triple<Int, Int, String>>()
             val options = mutableListOf<Pair<Pair<Int, Int>, @Composable () -> Unit>>()
             val is_percussion = opus_manager.is_percussion(channel)
-            for ((program, bank_map) in opus_manager.vm_state.preset_names.toSortedMap()) {
-                for ((bank, name) in bank_map.toSortedMap()) {
-                    if (is_percussion && bank != 128) continue
-                    if (!this.vm_top.configuration.allow_std_percussion && !is_percussion && bank == 128) continue
-
-                    preset_names.add(Triple(program, bank, name))
+            for ((bank, bank_map) in opus_manager.vm_state.preset_names.toSortedMap()) {
+                if (is_percussion && bank != 128) continue
+                if (!this.vm_top.configuration.allow_std_percussion && !is_percussion && bank == 128) continue
+                for ((program, name) in bank_map.toSortedMap()) {
+                    preset_names.add(Triple(bank, program, name))
                     options.add(
                         Pair(
-                            Pair(program, bank),
+                            Pair(bank, program),
                             {
                                 Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("${padded_hex(program)} | ${padded_hex(bank)}")
+                                    Text("${padded_hex(bank)} | ${padded_hex(program)}")
                                     Text(name,
                                         modifier = Modifier.weight(1F),
                                         textAlign = TextAlign.Center,
@@ -1350,8 +1348,8 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
             @Composable {
                 val sort_options = listOf(
-                    Pair(R.string.sort_option_program) { a: Int, b: Int -> preset_names[a].first.compareTo(preset_names[b].first) },
-                    Pair(R.string.sort_option_bank) { a: Int, b: Int -> preset_names[a].second.compareTo(preset_names[b].second) },
+                    Pair(R.string.sort_option_bank) { a: Int, b: Int -> preset_names[a].first.compareTo(preset_names[b].first) },
+                    Pair(R.string.sort_option_program) { a: Int, b: Int -> preset_names[a].second.compareTo(preset_names[b].second) },
                     Pair(R.string.sort_option_abc) { a: Int, b: Int -> preset_names[a].third.compareTo(preset_names[b].third) }
                 )
                 Column(verticalArrangement = Arrangement.SpaceBetween) {
@@ -1829,17 +1827,17 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
         this.vm_top.create_dialog { close ->
             @Composable  {
-                Column {
-                    Row {
-                        OutlinedTextField(
-                            maxLines = 1
-                        )
-                    }
-                    Row {
-                        OutlinedTextField(
-                        )
-                    }
-                }
+               //  Column {
+               //      Row {
+               //          OutlinedTextField(
+               //              maxLines = 1
+               //          )
+               //      }
+               //      Row {
+               //          OutlinedTextField(
+               //          )
+               //      }
+               //  }
             }
         }
         // val activity = this.get_activity()

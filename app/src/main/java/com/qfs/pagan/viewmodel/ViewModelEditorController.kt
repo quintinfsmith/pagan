@@ -34,7 +34,6 @@ class ViewModelEditorController(): ViewModel() {
     var export_handle: WavConverter? = null
     var active_project: Uri? = null
 
-    val available_instruments = HashMap<Pair<Int, Int>, List<Pair<String, Int>>>()
 
     fun export_wav(
         opus_manager: OpusLayerBase,
@@ -80,7 +79,7 @@ class ViewModelEditorController(): ViewModel() {
         this.destroy_playback_device()
         this.opus_manager.vm_state.populate_presets()
         this.opus_manager.vm_state.update_channel_names()
-        this.available_instruments.clear()
+        this.opus_manager.vm_state.available_instruments.clear()
     }
 
 
@@ -95,7 +94,7 @@ class ViewModelEditorController(): ViewModel() {
         val vm_state = this.opus_manager.vm_state
         vm_state.populate_presets(soundfont)
         vm_state.update_channel_names()
-        this.available_instruments.clear()
+
     }
 
     fun create_playback_device() {
@@ -142,10 +141,4 @@ class ViewModelEditorController(): ViewModel() {
         }
     }
 
-    fun get_available_instruments(preset_key: Pair<Int, Int>): List<Pair<String, Int>> {
-        if (!this.available_instruments.containsKey(preset_key)) {
-            this.available_instruments[preset_key] = this.audio_interface.get_instrument_options(preset_key) ?: listOf() // TODO: Default
-        }
-        return this.available_instruments[preset_key] ?: listOf()
-    }
 }

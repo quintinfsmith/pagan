@@ -53,8 +53,6 @@ import androidx.core.graphics.blue
 import androidx.core.graphics.green
 import androidx.core.graphics.red
 import androidx.core.net.toUri
-import androidx.core.view.isEmpty
-import androidx.core.view.isNotEmpty
 import androidx.core.view.isVisible
 import androidx.documentfile.provider.DocumentFile
 import androidx.drawerlayout.widget.DrawerLayout
@@ -94,12 +92,6 @@ import com.qfs.pagan.numberinput.RangedIntegerInput
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
@@ -1518,12 +1510,6 @@ class ActivityEditor : PaganActivity() {
         return List(midi_drums.size) { i: Int ->
             Pair(midi_drums[i]!!, i + 27)
         }
-    }
-
-    fun get_drum_options(channel_index: Int): List<Pair<String, Int>>? {
-        if (this.editor_view_model.active_midi_device != null) return null
-        val midi_channel = this.get_opus_manager().get_midi_channel(channel_index)
-        return this.editor_view_model.audio_interface.get_instrument_options(midi_channel)
     }
 
     fun update_channel_instrument(midi_channel: Int, instrument: Pair<Int, Int>) {

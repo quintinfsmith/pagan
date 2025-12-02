@@ -16,7 +16,6 @@ import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.IconCMenuButton
-import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
@@ -25,12 +24,11 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEve
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.viewmodel.ViewModelEditorState
-import kotlin.collections.get
 
 @Composable
-fun ContextMenuLinePrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
-    val cursor = ui_facade.active_cursor.value ?: return
-    val active_line = ui_facade.line_data[cursor.ints[0]]
+fun ContextMenuLinePrimary(vm_state: ViewModelEditorState, dispatcher: ActionTracker) {
+    val cursor = vm_state.active_cursor.value ?: return
+    val active_line = vm_state.line_data[cursor.ints[0]]
 
     Row(Modifier.height(dimensionResource(R.dimen.icon_button_height))) {
         IconCMenuButton(
@@ -40,15 +38,17 @@ fun ContextMenuLinePrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTr
         )
 
         active_line.assigned_offset.value?.let {
+            val active_channel = vm_state.channel_data[active_line.channel.value!!]
+            val label = vm_state.get_instrument_name(active_channel.instrument.value, it)
             Button(
                 contentPadding = PaddingValues(10.dp),
                 modifier = Modifier
                     .padding(3.dp)
                     .fillMaxHeight()
                     .weight(1F),
-                onClick = { dispatcher.set_percussion_instrument() },
+                onClick = { dispatcher.set_percussion_instrument(active_line.channel.value!!, active_line.line_offset.value!!) },
                 content = {
-                    Text(ui_facade.instrument_names[active_line.channel.value]?.get(it) ?: "???")
+                    Text(label)
                 }
             )
         } ?: Spacer(Modifier.weight(1F))

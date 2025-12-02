@@ -149,7 +149,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         val active_project_uri = uri ?: this.get_new_file_uri() ?: throw NewFileFailException()
         // Untrack then track in order to update the project title in the cache
         active_project_uri.let {
-            val conterojectpus_manager.to_json()
+            val content = opus_manager.to_json()
             this.context.contentResolver.openOutputStream(it, "wt")?.let { output_stream ->
                 output_stream.write(content.to_string(if (indent) 4 else null).toByteArray(Charsets.UTF_8))
                 output_stream.flush()

@@ -14,11 +14,11 @@ import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
-import kotlin.collections.containsKey
-import kotlin.collections.get
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.iterator
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.text.clear
 
 class ViewModelEditorState: ViewModel() {
     companion object {
@@ -122,7 +122,6 @@ class ViewModelEditorState: ViewModel() {
     var selected_leafs: MutableList<LeafData> = mutableListOf()
 
     var project_exists: MutableState<Boolean> = mutableStateOf(false)
-    var instrument_names = HashMap<Int, HashMap<Int, String>?>() // NOTE: "instrument". Not "preset".
     var blocker_leaf: List<Int>? = null
     val playback_state_soundfont: MutableState<PlaybackState> = mutableStateOf(PlaybackState.NotReady)
     val playback_state_midi: MutableState<PlaybackState> = mutableStateOf(PlaybackState.NotReady)
@@ -135,7 +134,7 @@ class ViewModelEditorState: ViewModel() {
 
     private val working_path = mutableListOf<Int>()
     val preset_names = HashMap<Int, HashMap<Int, String>>()
-
+    val available_instruments = HashMap<Pair<Int, Int>, List<Pair<String, Int>>>()
 
     fun clear() {
         this.project_name.value = null
@@ -155,7 +154,8 @@ class ViewModelEditorState: ViewModel() {
         this.column_data.clear()
         this.cell_map.clear()
         this.channel_data.clear()
-        this.instrument_names.clear()
+        // this.preset_names.clear()
+        // this.available_instruments.clear()
     }
 
     /** Only used in full refresh **/
@@ -215,7 +215,7 @@ class ViewModelEditorState: ViewModel() {
         }
         this.channel_count.value += 1
         val name = this.get_preset_name(instrument.first, instrument.second)
-        this.channel_data.add(channel, ChannelData(percussion, instrument, is_mute, name = name ?: "TODO"))
+        this.channel_data.add(channel, ChannelData(percussion, instrument, is_mute, name = name ?: "TODO_B"))
     }
 
     fun remove_channel(channel: Int) {
@@ -347,25 +347,6 @@ class ViewModelEditorState: ViewModel() {
         this.populate_selected_columns(cursor)
     }
 
-    fun shift_up_percussion_names(channel: Int) {
-        val keys = this.instrument_names.keys.sorted().reversed()
-        for (k in keys) {
-            if (k < channel) continue
-            this.instrument_names[k + 1] = this.instrument_names.remove(k)!!
-        }
-    }
-
-    fun shift_down_percussion_names(channel: Int) {
-        val keys = this.instrument_names.keys.sorted()
-        for (k in keys) {
-            if (k > channel) {
-                this.instrument_names[k - 1] = this.instrument_names.remove(k)!!
-            } else if (k == channel) {
-                this.instrument_names.remove(k)
-            }
-        }
-    }
-
     private fun populate_selected_leafs(cursor: CacheCursor) {
         when (cursor.type) {
             CursorMode.Column -> {
@@ -384,14 +365,40 @@ class ViewModelEditorState: ViewModel() {
                 }
             }
             CursorMode.Line -> {
+                val active_line = this.line_data[cursor.ints[0]]
                 for (x in 0 until this.beat_count.value) {
-                    this.cell_map[cursor.ints[0]][x].value.also {
-                        it.traverse { tree, pair ->
-                            if (tree.is_leaf()) {
-                                pair?.first?.let { leaf_data ->
-                                    leaf_data.is_selected.value= false
-                                    leaf_data.is_secondary.value = true
-                                    this.selected_leafs.add(leaf_data)
+                    for ((y, line) in this.line_data.enumerate()) {
+                        if (line.channel.value != active_line.channel.value) continue
+                        if (line.line_offset.value != active_line.line_offset.value) continue
+                        if (active_line.ctl_type.value != null && active_line.ctl_type.value != line.ctl_type.value) continue
+
+                        this.cell_map[y][x].value.also {
+                            it.traverse { tree, pair ->
+                                if (tree.is_leaf()) {
+                                    pair?.first?.let { leaf_data ->
+                                        leaf_data.is_selected.value = false
+                                        leaf_data.is_secondary.value = true
+                                        this.selected_leafs.add(leaf_data)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            CursorMode.Channel -> {
+                for (x in 0 until this.beat_count.value) {
+                    for ((y, line) in this.line_data.enumerate()) {
+                        if (line.channel.value != cursor.ints[0]) continue
+
+                        this.cell_map[y][x].value.also {
+                            it.traverse { tree, pair ->
+                                if (tree.is_leaf()) {
+                                    pair?.first?.let { leaf_data ->
+                                        leaf_data.is_selected.value = false
+                                        leaf_data.is_secondary.value = true
+                                        this.selected_leafs.add(leaf_data)
+                                    }
                                 }
                             }
                         }
@@ -403,7 +410,6 @@ class ViewModelEditorState: ViewModel() {
                     it.traverse { tree, pair ->
                         if (tree.is_leaf()) {
                             pair?.first?.let { leaf_data ->
-                                println("FUCL: ${tree.get_path()}")
                                 leaf_data.is_selected.value = tree.get_path() == cursor.ints.subList(2, cursor.ints.size)
                                 leaf_data.is_secondary.value = false // TODO
                                 this.selected_leafs.add(leaf_data)
@@ -459,19 +465,25 @@ class ViewModelEditorState: ViewModel() {
             else -> {}
         }
     }
+
     private fun populate_selected_lines(cursor: CacheCursor) {
         when (cursor.type) {
             CursorMode.Channel -> {
                 for (line_data in this.line_data) {
-                    line_data.is_selected.value = cursor.ints[0] == line_data.channel.value
+                    if (line_data.channel.value != cursor.ints[0]) continue
+                    line_data.is_selected.value = true
                     this.selected_lines.add(line_data)
                 }
             }
             CursorMode.Line -> {
-                // TODO: link effect lines
-                this.line_data[cursor.ints[0]].also {
-                    it.is_selected.value = true
-                    this.selected_lines.add(it)
+                val active_line = this.line_data[cursor.ints[0]]
+                for ((y, line) in this.line_data.enumerate()) {
+                    if (line.channel.value != active_line.channel.value) continue
+                    if (line.line_offset.value != active_line.line_offset.value) continue
+                    if (active_line.ctl_type.value != null && active_line.ctl_type.value != line.ctl_type.value) continue
+                    line.is_selected.value = true
+                    this.selected_lines.add(line)
+
                 }
             }
             CursorMode.Single -> {
@@ -543,7 +555,7 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun clear_instrument_names() {
-        this.instrument_names.clear()
+        this.available_instruments.clear()
     }
 
     fun set_is_buffering(value: Boolean) {
@@ -556,24 +568,65 @@ class ViewModelEditorState: ViewModel() {
 
     fun populate_presets(soundfont: SoundFont? = null) {
         this.preset_names.clear()
+        this.available_instruments.clear()
         if (soundfont == null) return
 
-        for ((name, program, bank) in soundfont.get_available_presets()) {
-            if (!this.preset_names.containsKey(program)) {
-                this.preset_names[program] = HashMap()
+        for ((name, bank, program) in soundfont.get_available_presets()) {
+            if (!this.preset_names.containsKey(bank)) {
+                this.preset_names[bank] = HashMap()
             }
-            this.preset_names[program]?.set(bank, name)
+            this.preset_names[bank]?.set(program, name)
+
+            if (bank != 128) continue
+            val preset = soundfont.get_preset(program, bank)
+
+            val available_keys = mutableSetOf<Pair<String, Int>>()
+            for ((_, preset_instrument) in preset.instruments) {
+                if (preset_instrument.instrument == null) continue
+                val instrument_range = preset_instrument.key_range ?: Pair(0, 127)
+
+                for (sample_directive in preset_instrument.instrument!!.sample_directives.values) {
+                    val key_range = sample_directive.key_range ?: Pair(0, 127)
+                    val usable_range = max(key_range.first, instrument_range.first)..min(key_range.second, instrument_range.second)
+
+                    var instrument_name = sample_directive.sample!!.first().name
+                    if (instrument_name.contains("(")) {
+                        instrument_name = instrument_name.substring(0, instrument_name.indexOf("("))
+                    }
+
+                    for (key in usable_range) {
+                        val use_name = if (usable_range.first != usable_range.last) {
+                            "$instrument_name - ${(key - usable_range.first) + 1}"
+                        } else {
+                            instrument_name
+                        }
+                        available_keys.add(Pair(use_name, key - 27))
+                    }
+                }
+            }
+
+            this.available_instruments[Pair(bank, program)] = available_keys.sortedBy { it.second }
         }
     }
 
-    fun get_preset_name(program: Int, bank: Int): String? {
-        return this.preset_names[program]?.get(bank)
+    fun get_preset_name(bank: Int, program: Int): String? {
+        return this.preset_names[bank]?.get(program)
     }
 
     fun update_channel_names() {
         for (channel in this.channel_data) {
             val (program, bank) = channel.instrument.value
-            channel.active_name.value = this.get_preset_name(program, bank) ?: "TODO"
+            channel.active_name.value = this.get_preset_name(program, bank) ?: "TODO_A"
         }
+    }
+
+    fun get_available_instruments(preset_key: Pair<Int, Int>): List<Pair<String, Int>> {
+        return this.available_instruments[preset_key] ?: listOf()
+    }
+
+    fun get_instrument_name(preset_key: Pair<Int, Int>, offset: Int): String {
+        val available = this.get_available_instruments(preset_key)
+        return if (available.size <= offset) "TODO"
+            else available[offset].first
     }
 }

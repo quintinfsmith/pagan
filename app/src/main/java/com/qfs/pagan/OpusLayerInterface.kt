@@ -783,8 +783,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             if (! controller.visible) continue
             this._add_controller_to_column_width_map(ctl_row++, controller, channel, null, type)
         }
-
-        this.vm_state.shift_up_percussion_names(channel)
     }
 
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?, is_percussion: Boolean) {

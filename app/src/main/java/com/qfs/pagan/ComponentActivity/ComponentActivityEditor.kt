@@ -30,7 +30,6 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
@@ -69,6 +68,7 @@ import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
 import com.qfs.pagan.CompatibleFileType
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.SText
+import com.qfs.pagan.composable.button.BetterButton
 import com.qfs.pagan.composable.button.ConfigDrawerButton
 import com.qfs.pagan.composable.button.TopBarIcon
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelPrimary
@@ -559,7 +559,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             Modifier.padding(1.dp),
             contentAlignment = Alignment.Center
         ) {
-            Button(
+            BetterButton(
                 onClick = {},
                 shape = RoundedCornerShape(4.dp),
                 contentPadding = PaddingValues(2.dp),
@@ -601,7 +601,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 } else {
                     Pair("${line_info.channel.value}", "${line_info.line_offset.value}")
                 }
-                Button(
+                BetterButton(
                     onClick = {
                         dispatcher.cursor_select_line(line_info.channel.value, line_info.line_offset.value, line_info.ctl_type.value)
                     },
@@ -649,7 +649,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     EffectType.LowPass -> TODO()
                     EffectType.Reverb -> TODO()
                 }
-                Button(
+                BetterButton(
                     onClick = {},
                     shape = RoundedCornerShape(4.dp),
                     contentPadding = PaddingValues(2.dp),
@@ -709,7 +709,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 .padding(1.dp)
                 .fillMaxSize()
         ) {
-            Button(
+            BetterButton(
                 shape = RoundedCornerShape(4.dp),
                 colors = ButtonColors(
                     containerColor = colorResource(background_color),
@@ -958,6 +958,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
     override fun Drawer(modifier: Modifier) {
         val dispatcher = this.controller_model.action_interface
         val state_model = this.state_model
+        val scope = rememberCoroutineScope()
+
         Card(modifier.wrapContentWidth()) {
             Column(
                 modifier = Modifier.padding(12.dp).wrapContentWidth()
@@ -967,14 +969,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     modifier = Modifier.height(42.dp)
                 ) {
                     Column(modifier = Modifier.weight(1F)) {
-                        Button(
+                        BetterButton(
                             onClick = { dispatcher.set_tuning_table_and_transpose() },
                             content = { SText(R.string.label_tuning) }
                         )
                     }
                     Column {
                         Row {
-                            Button(
+                            BetterButton(
                                 onClick = { dispatcher.insert_percussion_channel() },
                                 content = {
                                     Icon(
@@ -984,7 +986,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 }
                             )
                             Spacer(modifier = Modifier.width(4.dp))
-                            Button(
+                            BetterButton(
                                 onClick = { dispatcher.insert_channel() },
                                 content = {
                                     Icon(
@@ -1002,14 +1004,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         for (i in 0 until state_model.channel_count.value) {
                             val channel_data = state_model.channel_data[i]
                             Row {
-                                Button(
+                                BetterButton(
                                     shape = RoundedCornerShape(50, 0, 0, 50),
                                     modifier = Modifier.weight(1F),
                                     onClick = { dispatcher.set_channel_preset(i) },
                                     content = { Text(channel_data.active_name.value) }
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Button(
+                                BetterButton(
                                     contentPadding = PaddingValues(4.dp),
                                     shape = RoundedCornerShape(0, 50, 50, 0),
                                     onClick = { dispatcher.remove_channel(i) },
@@ -1032,22 +1034,37 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     ConfigDrawerButton(
                         icon = R.drawable.icon_save,
                         description = R.string.btn_cfg_save,
-                        onClick = { dispatcher.save() }
+                        onClick = {
+                            scope.launch { this@ComponentActivityEditor.close_drawer() }
+                            dispatcher.save()
+                        }
                     )
                     ConfigDrawerButton(
                         icon = R.drawable.icon_ic_baseline_content_copy_24,
                         description = R.string.btn_cfg_copy,
-                        onClick = { dispatcher.project_copy() }
+                        onClick = {
+                            scope.launch { this@ComponentActivityEditor.close_drawer() }
+                            dispatcher.project_copy()
+                        }
                     )
                     ConfigDrawerButton(
                         icon = R.drawable.icon_trash,
                         description = R.string.btn_cfg_delete,
-                        onClick = { dispatcher.delete() }
+                        onClick = {
+                            scope.launch { this@ComponentActivityEditor.close_drawer() }
+                            dispatcher.delete()
+                        }
                     )
                     ConfigDrawerButton(
                         icon = R.drawable.icon_export,
                         description = R.string.btn_cfg_export,
-                        onClick = { TODO() }
+                        onClick = { 
+                            this@ComponentActivityEditor.view_model.create_dialog { close ->
+                                @Composable {
+                                    BetterButton(onClick = close, content = { Text("TODO") })
+                                }
+                            }
+                        }
                     )
                 }
             }

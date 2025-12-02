@@ -6,9 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -31,6 +29,7 @@ import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.SortableMenu
 import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.UnSortableMenu
+import com.qfs.pagan.composable.button.BetterButton
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
@@ -432,13 +431,14 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         this.track(TrackedAction.SaveProject)
         this.vm_top.project_manager?.let {
             val uri = it.save(this.vm_controller.opus_manager, this.vm_controller.active_project)
+            this.vm_top.has_saved_project = true
             this.vm_controller.active_project = uri
         }
     }
 
     fun delete() {
         this.vm_controller.active_project?.let { project ->
-            this.vm_top.project_manager?.delete(project)
+            this.vm_top.delete_project(project)
         }
         TODO("Track, Close Drawer && show toast")
     }
@@ -1285,15 +1285,14 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                     Row {
                         UnSortableMenu(options, default_value = current_instrument) { value ->
                             this@ActionTracker.track(TrackedAction.SetPercussionInstrument, listOf(channel, line_offset, value))
-                            println("$value")
                             opus_manager.percussion_set_instrument(channel, line_offset, value)
                             close()
                         }
                     }
                     Row {
-                        Button(
+                        BetterButton(
                             modifier = Modifier.weight(1F),
-                            onClick = { close() },
+                            onClick = close,
                             content = { SText(android.R.string.cancel) }
                         )
                     }
@@ -1363,7 +1362,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         }
                     }
                     Row {
-                        Button(
+                        BetterButton(
                             onClick = { close() },
                             modifier = Modifier.fillMaxWidth(),
                             content = {
@@ -1616,7 +1615,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                                 content = { SText(android.R.string.cancel) }
                             )
 
-                            Button(
+                            BetterButton(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(1F),
@@ -1669,7 +1668,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                                 content = { SText(android.R.string.cancel) }
                             )
 
-                            Button(
+                            BetterButton(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(1F),
@@ -1721,7 +1720,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                             SText(R.string.dialog_save_warning_title)
                         }
                         Row {
-                            Button(
+                            BetterButton(
                                 modifier = Modifier.weight(1F),
                                 onClick = {
                                     close()
@@ -1735,7 +1734,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                                 onClick = { close() },
                                 content = { SText(android.R.string.cancel) }
                             )
-                            Button(
+                            BetterButton(
                                 modifier = Modifier.weight(1F),
                                 onClick = {
                                     close()
@@ -1812,7 +1811,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         onClick = {},
                         content = { SText(android.R.string.cancel) }
                     )
-                    Button(
+                    BetterButton(
                         modifier = Modifier.weight(1F),
                         onClick = { callback(value.value) },
                         content = { SText(android.R.string.ok) }

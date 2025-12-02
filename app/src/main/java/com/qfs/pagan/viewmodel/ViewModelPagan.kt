@@ -33,6 +33,13 @@ class ViewModelPagan: ViewModel() {
     var configuration = PaganConfiguration()
 
     val soundfont_name: MutableState<String?> = mutableStateOf(this.configuration.soundfont)
+    val requires_soundfont: MutableState<Boolean> = mutableStateOf(false)
+    val has_saved_project: MutableState<Boolean> = mutableStateOf(false)
+
+    fun delete_project(uri: Uri) {
+        this.project_manager?.delete(project)
+        this.has_saved_project = this.project_manager?.has_projects_saved()
+    }
 
     fun load_config(path: String) {
         this.configuration_path = path
@@ -46,6 +53,10 @@ class ViewModelPagan: ViewModel() {
 
     fun reload_config() {
         this.load_config(this.configuration_path ?: return)
+    }
+    fun set_project_manager(project_manager: ProjectManager) {
+        this.project_manager = project_manager
+        this.has_saved_project.value = this.project_manager.has_projects_saved()
     }
 
     fun create_dialog(level: Int = 0, dialog_callback: (() -> Unit) -> (@Composable (() -> Unit))) {
@@ -76,4 +87,5 @@ class ViewModelPagan: ViewModel() {
         this.configuration.soundfont = this.coerce_relative_soundfont_path(uri)
         this.soundfont_name.value = this.configuration.soundfont
     }
+    
 }

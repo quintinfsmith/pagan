@@ -202,13 +202,15 @@ abstract class PaganComponentActivity: ComponentActivity() {
     fun reload_config() {
         this.view_model.reload_config()
         this.on_config_load()
+        
     }
 
     open fun on_config_load() {
-        this.view_model.project_manager = ProjectManager(this, this.view_model.configuration.project_directory)
+        this.view_model.set_project_manager(ProjectManager(this, this.view_model.configuration.project_directory))
         this.view_model.configuration.callbacks_force_orientation.add {
             this.requestedOrientation = it
         }
+        this.view_model.requires_soundfont.value = !this.is_soundfont_available()
     }
 
 
@@ -485,5 +487,4 @@ abstract class PaganComponentActivity: ComponentActivity() {
             }
         }
     }
-
 }

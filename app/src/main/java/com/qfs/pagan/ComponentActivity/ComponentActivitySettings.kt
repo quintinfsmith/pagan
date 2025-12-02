@@ -25,7 +25,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -58,6 +57,8 @@ import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.SortableMenu
+import com.qfs.pagan.composable.button.BetterButton
+import com.qfs.pagan.composable.SoundFontWarning
 import com.qfs.pagan.find_activity
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -305,13 +306,13 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
         Column {
             Text(stringResource(R.string.label_settings_sf))
-            Button(
+            BetterButton(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
                     val file_list = this@ComponentActivitySettings.get_existing_soundfonts()
                     if (file_list.isEmpty()) {
                         this@ComponentActivitySettings.import_soundfont()
-                        return@Button
+                        return@BetterButton
                     }
                     val soundfonts = mutableListOf<Pair<Uri, @Composable () -> Unit>>()
                     for (uri in file_list) {
@@ -334,7 +335,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                     SText(R.string.dialog_select_soundfont)
                                 }
                                 Row {
-                                    Button(
+                                    BetterButton(
                                         content = { SText(R.string.no_soundfont) },
                                         modifier = Modifier
                                             .weight(1F),
@@ -344,7 +345,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                             close()
                                         }
                                     )
-                                    Button(
+                                    BetterButton(
                                         content = { SText(R.string.option_import_soundfont) },
                                         modifier = Modifier.weight(1F),
                                         onClick = {
@@ -375,8 +376,12 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 content = { Text(view_model.soundfont_name.value ?: no_soundfont_text) }
             )
 
+            if (this@ComponentActivitySettings.view_model.requires_soundfont.value) {
+                SoundFontWarning()
+            }
+
             Text(stringResource(R.string.label_settings_soundfont_directory))
-            Button(
+            BetterButton(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
                     context._set_soundfont_directory_intent_launcher.launch(
@@ -395,7 +400,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             )
 
             Text(stringResource(R.string.label_settings_projects_directory))
-            Button(
+            BetterButton(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
                     context.result_launcher_set_project_directory.launch(

@@ -10,7 +10,6 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,12 +20,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -36,7 +36,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -46,9 +45,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -56,7 +53,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
@@ -71,7 +67,6 @@ import com.qfs.pagan.Activity.ActivityEditor.PlaybackState
 import com.qfs.pagan.Activity.ActivitySettings
 import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
 import com.qfs.pagan.CompatibleFileType
-import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.button.ConfigDrawerButton
@@ -91,7 +86,6 @@ import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
-import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
@@ -112,7 +106,6 @@ import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.InputStreamReader
 import kotlin.math.abs
-import kotlin.math.exp
 
 class ComponentActivityEditor: PaganComponentActivity() {
     val controller_model: ViewModelEditorController by this.viewModels()
@@ -960,9 +953,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
     override fun Drawer(modifier: Modifier) {
         val dispatcher = this.controller_model.action_interface
         val state_model = this.state_model
-        Card {
-            Column(modifier = Modifier.fillMaxHeight()) {
-                Row(horizontalArrangement = Arrangement.SpaceBetween) {
+        Card(modifier.wrapContentWidth()) {
+            Column(
+                modifier = Modifier.padding(12.dp).wrapContentWidth()
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.height(42.dp)
+                ) {
                     Column(modifier = Modifier.weight(1F)) {
                         Button(
                             onClick = { dispatcher.set_tuning_table_and_transpose() },
@@ -971,15 +969,24 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     }
                     Column {
                         Row {
-                            ConfigDrawerButton(
-                                icon = R.drawable.icon_add_channel_kit,
-                                description = R.string.btn_cfg_add_kit_channel,
-                                onClick = { dispatcher.insert_percussion_channel() }
+                            Button(
+                                onClick = { dispatcher.insert_percussion_channel() },
+                                content = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.icon_add_channel_kit),
+                                        contentDescription = stringResource(R.string.btn_cfg_add_kit_channel),
+                                    )
+                                }
                             )
-                            ConfigDrawerButton(
-                                icon = R.drawable.icon_add_channel,
-                                description = R.string.btn_cfg_add_channel,
-                                onClick = { dispatcher.insert_channel() }
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Button(
+                                onClick = { dispatcher.insert_channel() },
+                                content = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.icon_add_channel),
+                                        contentDescription = stringResource(R.string.btn_cfg_add_channel),
+                                    )
+                                }
                             )
                         }
                     }
@@ -991,10 +998,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             val channel_data = state_model.channel_data[i]
                             Row {
                                 Button(
+                                    shape = RoundedCornerShape(50, 0, 0, 50),
+                                    modifier = Modifier.weight(1F),
                                     onClick = { dispatcher.set_channel_preset(i) },
                                     content = { Text(channel_data.active_name.value) }
                                 )
+                                Spacer(modifier = Modifier.width(4.dp))
                                 Button(
+                                    contentPadding = PaddingValues(4.dp),
+                                    shape = RoundedCornerShape(0, 50, 50, 0),
                                     onClick = { dispatcher.remove_channel(i) },
                                     content = {
                                         Icon(
@@ -1008,7 +1020,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     }
                 }
 
-                Row {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
                     ConfigDrawerButton(
                         icon = R.drawable.icon_save,
                         description = R.string.btn_cfg_save,

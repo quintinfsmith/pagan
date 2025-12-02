@@ -30,35 +30,47 @@ fun ContextMenuStructureControls(ui_facade: ViewModelEditorState, dispatcher: Ac
     val active_line = ui_facade.line_data[cursor.ints[0]]
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(dimensionResource(R.dimen.icon_button_height)),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         IconCMenuButton(
+            modifier = Modifier
+                .height(dimensionResource(R.dimen.icon_button_height))
+                .weight(1F),
             onClick = { dispatcher.split(2) },
             onLongClick = { dispatcher.split() },
             icon = R.drawable.icon_split,
             description = R.string.btn_split
         )
         IconCMenuButton(
+            modifier = Modifier
+                .height(dimensionResource(R.dimen.icon_button_height))
+                .weight(1F),
             onClick = { dispatcher.insert_leaf(1) },
             onLongClick = { dispatcher.insert_leaf() },
             icon = R.drawable.icon_insert,
             description = R.string.btn_insert
         )
         IconCMenuButton(
+            modifier = Modifier
+                .height(dimensionResource(R.dimen.icon_button_height))
+                .weight(1F),
             onClick = { dispatcher.remove_at_cursor() },
             icon = R.drawable.icon_remove,
             description = R.string.btn_remove
         )
         TextCMenuButton(
-            modifier = Modifier.fillMaxHeight(),
+            modifier = Modifier
+                .height(dimensionResource(R.dimen.icon_button_height))
+                .weight(1F),
             onClick = { dispatcher.set_duration() },
             onLongClick = { dispatcher.set_duration(1) },
             text = "x${active_event?.duration ?: 1}"
         )
         IconCMenuButton(
+            modifier = Modifier
+                .height(dimensionResource(R.dimen.icon_button_height))
+                .weight(1F),
             onClick = {
                 if (active_line.assigned_offset.value != null) {
                     dispatcher.toggle_percussion()
@@ -86,7 +98,6 @@ fun ContextMenuStructureControls(ui_facade: ViewModelEditorState, dispatcher: Ac
 fun ContextMenuSinglePrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, show_relative_input: Boolean) {
     val active_event = ui_facade.active_event.value
     val cursor = ui_facade.active_cursor.value ?: return
-    val active_line = ui_facade.line_data[cursor.ints[0]]
 
     val octave = when (active_event) {
         is AbsoluteNoteEvent -> active_event.note / ui_facade.radix.value

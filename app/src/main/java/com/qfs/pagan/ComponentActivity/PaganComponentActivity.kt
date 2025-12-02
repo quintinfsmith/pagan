@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -31,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
@@ -86,6 +88,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
 
     val view_model: ViewModelPagan by this.viewModels()
     lateinit var drawer_state: DrawerState
+    val drawer_gesture_enabled = mutableStateOf(false)
 
     init {
         System.loadLibrary("pagan")
@@ -102,11 +105,18 @@ abstract class PaganComponentActivity: ComponentActivity() {
             // Allow night mode mutability
             val night_mode = remember { mutableIntStateOf(view_model.configuration.night_mode) }
             view_model.configuration.callbacks_night_mode.add { night_mode.intValue = it }
-            this.drawer_state = rememberDrawerState(DrawerValue.Closed)
+
+            this.drawer_state = rememberDrawerState(DrawerValue.Closed) { state ->
+                this.drawer_gesture_enabled.value = state == DrawerValue.Open
+                true
+            }
+
             ModalNavigationDrawer(
-                modifier = Modifier.safeContentPadding(),
+                modifier = Modifier
+                    .wrapContentWidth()
+                    .safeContentPadding(),
                 drawerState = this.drawer_state,
-                gesturesEnabled = true,
+                gesturesEnabled = this.drawer_gesture_enabled.value,
                 drawerContent = { this.Drawer() }
             ) {
                 ScaffoldWithTopBar(

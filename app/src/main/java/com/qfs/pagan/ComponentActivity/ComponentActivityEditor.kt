@@ -69,7 +69,10 @@ import com.qfs.pagan.CompatibleFileType
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.button.BetterButton
-import com.qfs.pagan.composable.button.ConfigDrawerButton
+import com.qfs.pagan.composable.button.ConfigDrawerBottomButton
+import com.qfs.pagan.composable.button.ConfigDrawerChannelLeftButton
+import com.qfs.pagan.composable.button.ConfigDrawerChannelRightButton
+import com.qfs.pagan.composable.button.ConfigDrawerTopButton
 import com.qfs.pagan.composable.button.TopBarIcon
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelPrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelSecondary
@@ -969,14 +972,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     modifier = Modifier.height(42.dp)
                 ) {
                     Column(modifier = Modifier.weight(1F)) {
-                        BetterButton(
+                        ConfigDrawerTopButton(
                             onClick = { dispatcher.set_tuning_table_and_transpose() },
                             content = { SText(R.string.label_tuning) }
                         )
                     }
                     Column {
                         Row {
-                            BetterButton(
+                            ConfigDrawerTopButton(
                                 onClick = { dispatcher.insert_percussion_channel() },
                                 content = {
                                     Icon(
@@ -986,7 +989,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 }
                             )
                             Spacer(modifier = Modifier.width(4.dp))
-                            BetterButton(
+                            ConfigDrawerTopButton(
                                 onClick = { dispatcher.insert_channel() },
                                 content = {
                                     Icon(
@@ -1004,16 +1007,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         for (i in 0 until state_model.channel_count.value) {
                             val channel_data = state_model.channel_data[i]
                             Row {
-                                BetterButton(
-                                    shape = RoundedCornerShape(50, 0, 0, 50),
+                                ConfigDrawerChannelLeftButton(
                                     modifier = Modifier.weight(1F),
                                     onClick = { dispatcher.set_channel_preset(i) },
                                     content = { Text(channel_data.active_name.value) }
                                 )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                BetterButton(
-                                    contentPadding = PaddingValues(4.dp),
-                                    shape = RoundedCornerShape(0, 50, 50, 0),
+                                Spacer(modifier = Modifier.width(2.dp))
+                                ConfigDrawerChannelRightButton(
                                     onClick = { dispatcher.remove_channel(i) },
                                     content = {
                                         Icon(
@@ -1031,7 +1031,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    ConfigDrawerButton(
+                    ConfigDrawerBottomButton(
                         icon = R.drawable.icon_save,
                         description = R.string.btn_cfg_save,
                         onClick = {
@@ -1039,7 +1039,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             dispatcher.save()
                         }
                     )
-                    ConfigDrawerButton(
+                    ConfigDrawerBottomButton(
                         icon = R.drawable.icon_ic_baseline_content_copy_24,
                         description = R.string.btn_cfg_copy,
                         onClick = {
@@ -1047,7 +1047,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             dispatcher.project_copy()
                         }
                     )
-                    ConfigDrawerButton(
+                    ConfigDrawerBottomButton(
                         icon = R.drawable.icon_trash,
                         description = R.string.btn_cfg_delete,
                         onClick = {
@@ -1055,7 +1055,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             dispatcher.delete()
                         }
                     )
-                    ConfigDrawerButton(
+                    ConfigDrawerBottomButton(
                         icon = R.drawable.icon_export,
                         description = R.string.btn_cfg_export,
                         onClick = { 

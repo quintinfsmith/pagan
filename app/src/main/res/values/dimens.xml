@@ -47,7 +47,10 @@
     <dimen name="landing_button_space">6dp</dimen>
     <dimen name="landing_button_space_h">6dp</dimen>
     <dimen name="config_icon_corner">10dp</dimen>
+
     <dimen name="config_icon_size">42dp</dimen>
+    <dimen name="config_icon_padding">4dp</dimen>
+
     <dimen name="channel_cfg_icon_size">24dp</dimen>
     <dimen name="dialog_name_and_notes_padding_v">12dp</dimen>
     <dimen name="dialog_name_and_notes_padding_h">12dp</dimen>

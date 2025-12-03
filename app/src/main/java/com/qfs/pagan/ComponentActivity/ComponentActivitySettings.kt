@@ -59,6 +59,7 @@ import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.SortableMenu
 import com.qfs.pagan.composable.button.BetterButton
 import com.qfs.pagan.composable.SoundFontWarning
+import com.qfs.pagan.composable.button.BetterOutLinedButton
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.find_activity
 import java.io.FileInputStream
@@ -357,7 +358,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                     }
                                 }
                                 Row {
-                                    TextButton(
+                                    BetterOutLinedButton(
                                         modifier = Modifier.fillMaxWidth(),
                                         onClick = { close() },
                                         content = { SText(android.R.string.cancel) }

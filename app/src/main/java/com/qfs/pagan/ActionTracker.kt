@@ -30,6 +30,7 @@ import com.qfs.pagan.composable.SortableMenu
 import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.composable.button.BetterButton
+import com.qfs.pagan.composable.button.BetterOutLinedButton
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
@@ -1290,7 +1291,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         }
                     }
                     Row {
-                        BetterButton(
+                        BetterOutLinedButton(
                             modifier = Modifier.weight(1F),
                             onClick = close,
                             content = { SText(android.R.string.cancel) }
@@ -1362,7 +1363,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         }
                     }
                     Row {
-                        BetterButton(
+                        BetterOutLinedButton(
                             onClick = { close() },
                             modifier = Modifier.fillMaxWidth(),
                             content = {
@@ -1607,7 +1608,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                             Text(title)
                         }
                         Row {
-                            TextButton(
+                            BetterOutLinedButton(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(1F),
@@ -1660,7 +1661,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         }
 
                         Row {
-                            TextButton(
+                            BetterOutLinedButton(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(1F),

@@ -20,7 +20,7 @@ class PaganConfiguration(
     allow_std_percussion: Boolean = false,
     project_directory: Uri? = null,
     soundfont_directory: Uri? = null,
-    night_mode: Int = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM,
+    var night_mode: Int = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM,
     indent_json: Boolean = false,
     note_memory: NoteMemory = NoteMemory.UserInput
 ) {
@@ -136,14 +136,6 @@ class PaganConfiguration(
             val original = field
             field = value
             this.callbacks_note_memory.forEach { if (original != value) { it(value) } }
-        }
-
-    var callbacks_night_mode = mutableListOf<(Int) -> Unit>()
-    var night_mode: Int = night_mode
-        set(value) {
-            val original = field
-            field = value
-            this.callbacks_night_mode.forEach { if (original != value) { it(value) } }
         }
 
     var callbacks_force_orientation = mutableListOf<(Int) -> Unit>()

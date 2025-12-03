@@ -431,7 +431,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         this.track(TrackedAction.SaveProject)
         this.vm_top.project_manager?.let {
             val uri = it.save(this.vm_controller.opus_manager, this.vm_controller.active_project)
-            this.vm_top.has_saved_project = true
+            this.vm_top.has_saved_project.value = true
             this.vm_controller.active_project = uri
         }
     }

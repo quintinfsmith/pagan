@@ -36,8 +36,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.qfs.pagan.Activity.ActivityEditor
+import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
 import com.qfs.pagan.MenuDialogEventHandler
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.SText
@@ -67,6 +69,12 @@ class ComponentActivityLanding: PaganComponentActivity() {
                 }
             }
         }
+    internal var result_launcher_settings =
+        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            this.reload_config()
+        }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -88,7 +96,9 @@ class ComponentActivityLanding: PaganComponentActivity() {
         Column( verticalArrangement = Arrangement.Center ) {
             Row { ButtonRecent() }
             Row { ButtonNew() }
-            Row { ButtonLoad() }
+            if (this@ComponentActivityLanding.view_model.has_saved_project.value) {
+                Row { ButtonLoad() }
+            }
             Row { ButtonImport() }
             Row { ButtonSettings() }
             Row { ButtonAbout() }
@@ -101,9 +111,13 @@ class ComponentActivityLanding: PaganComponentActivity() {
             Row { ButtonRecent() }
             Row {
                 ButtonNew(Modifier.weight(1F))
-                ButtonLoad(Modifier
-                    .padding(start = 8.dp)
-                    .weight(1F))
+                if (this@ComponentActivityLanding.view_model.has_saved_project.value) {
+                    ButtonLoad(
+                        Modifier
+                            .padding(start = 8.dp)
+                            .weight(1F)
+                    )
+                }
             }
             Row { ButtonImport() }
             Row {
@@ -184,7 +198,9 @@ class ComponentActivityLanding: PaganComponentActivity() {
             modifier = modifier.fillMaxWidth(),
             content = { Text(stringResource(R.string.btn_landing_settings)) },
             onClick = {
-                this@ComponentActivityLanding.startActivity(Intent(this@ComponentActivityLanding, ComponentActivitySettings::class.java))
+                this@ComponentActivityLanding.result_launcher_settings.launch(
+                    Intent(this@ComponentActivityLanding, ComponentActivitySettings::class.java)
+                )
             }
         )
     }

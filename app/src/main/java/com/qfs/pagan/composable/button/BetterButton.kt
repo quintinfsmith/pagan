@@ -18,10 +18,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.minimumInteractiveComponentSize
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,6 +29,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.dp
 
 @Composable
 fun BetterButton(
@@ -48,30 +47,41 @@ fun BetterButton(
    // val shadowElevation = elevation?.shadowElevation(enabled)?.value ?: 0.dp
    // val contentColor = colors.contentColor(enabled)
     Box(
+        propagateMinConstraints = true,
         modifier = modifier
-            .then(if (border != null) modifier.border(border, shape) else modifier)
-            .clip(shape)
-            .background(color = colors.containerColor)
-            .minimumInteractiveComponentSize()
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick,
-            )
-            .semantics { role = Role.Button },
-        contentAlignment = Alignment.Center,
+            .padding(4.dp)
+            .minimumInteractiveComponentSize(),
         content = {
             ProvideContentColorTextStyle(contentColor = colors.contentColor, textStyle = TextStyle.Default) {
-                Row(
-                    Modifier
-                        .padding(contentPadding)
-                        .defaultMinSize(
-                            minWidth = ButtonDefaults.MinWidth,
-                            minHeight = ButtonDefaults.MinHeight,
-                        ),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                    content = content,
-                )
+                Box(
+                    modifier = modifier
+                        .then(if (border != null) modifier.border(border, shape) else modifier)
+                        .combinedClickable(
+                            onClick = onClick,
+                            onLongClick = onLongClick,
+                        )
+                        .clip(shape)
+                        .background(color = colors.containerColor)
+                        .minimumInteractiveComponentSize()
+                        .combinedClickable(
+                            onClick = onClick,
+                            onLongClick = onLongClick,
+                        )
+                        .semantics { role = Role.Button },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Row(
+                        Modifier
+                            .padding(contentPadding)
+                            .defaultMinSize(
+                                minWidth = ButtonDefaults.MinWidth,
+                                minHeight = ButtonDefaults.MinHeight,
+                            ),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                        content = content,
+                    )
+                }
             }
         }
     )

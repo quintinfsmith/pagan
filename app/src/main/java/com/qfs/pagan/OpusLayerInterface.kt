@@ -1465,7 +1465,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     }
 
 
-
     private fun _set_overlap_callbacks() {
         val channels = this.get_all_channels()
         for (channel in channels.indices) {

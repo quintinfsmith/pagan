@@ -8,6 +8,7 @@ import android.provider.DocumentsContract.Document.COLUMN_MIME_TYPE
 import android.provider.DocumentsContract.Document.MIME_TYPE_DIR
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -44,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
 import com.qfs.pagan.DialogChain
 import com.qfs.pagan.MenuDialogEventHandler
 import com.qfs.pagan.R
@@ -68,6 +70,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
         val SIZE_S = Pair(426.dp, 320.dp)
     }
 
+
     @Composable
     abstract fun LayoutXLargePortrait()
     @Composable
@@ -88,6 +91,8 @@ abstract class PaganComponentActivity: ComponentActivity() {
     abstract fun TopBar(modifier: Modifier = Modifier)
     @Composable
     abstract fun Drawer(modifier: Modifier = Modifier)
+
+
 
     suspend fun open_drawer() {
         this.drawer_state.open()
@@ -112,10 +117,6 @@ abstract class PaganComponentActivity: ComponentActivity() {
         this.on_config_load()
 
         this.setContent {
-            // Allow night mode mutability
-            val night_mode = remember { mutableIntStateOf(view_model.configuration.night_mode) }
-            view_model.configuration.callbacks_night_mode.add { night_mode.intValue = it }
-
             this.drawer_state = rememberDrawerState(DrawerValue.Closed) { state ->
                 this.drawer_gesture_enabled.value = state == DrawerValue.Open
                 true
@@ -131,7 +132,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
             ) {
                 ScaffoldWithTopBar(
                     top_app_bar = { this.TopBar() },
-                    night_mode
+                    this@PaganComponentActivity.view_model.night_mode
                 ) {
                     BoxWithConstraints(modifier = Modifier.padding(it)) {
                         Box(modifier = Modifier
@@ -202,14 +203,12 @@ abstract class PaganComponentActivity: ComponentActivity() {
     fun reload_config() {
         this.view_model.reload_config()
         this.on_config_load()
-        
     }
 
     open fun on_config_load() {
         this.view_model.set_project_manager(ProjectManager(this, this.view_model.configuration.project_directory))
-        this.view_model.configuration.callbacks_force_orientation.add {
-            this.requestedOrientation = it
-        }
+        this.requestedOrientation = this.view_model.configuration.force_orientation
+        println("RELOADED")
         this.view_model.requires_soundfont.value = !this.is_soundfont_available()
     }
 
@@ -486,5 +485,9 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 Row { Text(it) }
             }
         }
+    }
+
+    fun is_soundfont_available(): Boolean {
+        return this.get_existing_soundfonts().isNotEmpty()
     }
 }

@@ -126,9 +126,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         SetCopyMode,
         DrawerOpen,
         DrawerClose,
-        OpenSettings,
-        OpenAbout,
-        GoBack,
         SetProjectNameAndNotes,
         SetTuningTable,
         ImportSong,
@@ -167,23 +164,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         this.string_to_ints(string)
                     }
 
-                    // Boolean
-                    TrackedAction.GoBack -> {
-                        if (entry.size == 1) {
-                            listOf()
-                        } else {
-                            val value = entry.get_booleann(1)
-                            listOf(
-                                if (value == null) {
-                                    null
-                                } else if (value) {
-                                    1
-                                } else {
-                                    0
-                                }
-                            )
-                        }
-                    }
                     TrackedAction.CursorSelectChannel -> {
                         listOf(entry.get_int(1))
                     }
@@ -301,10 +281,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                     TrackedAction.LoadProject -> {
                         arrayOf(JSONString(this.string_from_ints(integers)))
                     }
-                    // Boolean
-                    TrackedAction.GoBack -> {
-                        arrayOf(JSONBoolean(integers[0] != 0))
-                    }
 
                     TrackedAction.TagColumn -> {
                         arrayOf(
@@ -374,33 +350,12 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         this.get_opus_manager().apply_undo()
     }
 
-    fun go_back(do_save: Boolean? = null) {
-        TODO()
-        //val activity = this.get_activity()
-        //val opus_manager = activity.get_opus_manager()
-        //val navController = activity.findNavController(R.id.nav_host_fragment_content_main)
-        //if (navController.currentDestination?.id == R.id.EditorFragment) {
-        //    if (opus_manager.cursor.mode != OpusManagerCursor.CursorMode.Unset) {
-        //        this.track(TrackedAction.GoBack)
-        //        opus_manager.cursor_clear()
-        //    } else {
-        //        this.dialog_save_project(do_save) { saved: Boolean ->
-        //            this.track(TrackedAction.GoBack, listOf(if (saved) 1 else 0))
-        //            activity.finish()
-        //        }
-        //    }
-        //} else {
-        //    this.track(TrackedAction.GoBack)
-        //    navController.popBackStack()
-        //}
-    }
-
     fun _move_selection_to_beat(beat_key: BeatKey) {
         this.track(
             TrackedAction.MoveSelectionToBeat,
             beat_key.to_list()
         )
-        this.vm_controller.opus_manager?.move_to_beat(beat_key)
+        this.vm_controller.opus_manager.move_to_beat(beat_key)
     }
 
     fun _copy_selection_to_beat(beat_key: BeatKey) {
@@ -897,18 +852,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         this.track(TrackedAction.CursorSelectGlobalCtlRange, ActionTracker.enum_to_ints(type) + listOf(first_beat, second_beat))
         this.vm_controller.opus_manager.cursor_select_global_ctl_range(type, first_beat, second_beat)
     }
-
-    fun open_settings() {
-        this.track(TrackedAction.OpenSettings)
-        TODO()
-    }
-
-    fun open_about() {
-        this.track(TrackedAction.OpenAbout)
-        TODO()
-    }
-
-
 
     fun new_project() {
         this.track(TrackedAction.NewProject)
@@ -2149,19 +2092,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         ActionTracker.string_from_ints(integers)
                     )
                 )
-            }
-            TrackedAction.OpenSettings -> {
-                this.open_settings()
-            }
-            TrackedAction.OpenAbout -> {
-                this.open_about()
-            }
-            TrackedAction.GoBack -> {
-                if (integers.isEmpty()) {
-                    this.go_back()
-                } else {
-                    this.go_back(integers[0] != 0)
-                }
             }
 
             TrackedAction.SetProjectNameAndNotes -> {

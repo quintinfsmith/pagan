@@ -1,13 +1,11 @@
 package com.qfs.pagan.composable.cxtmenu
 
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -31,9 +29,8 @@ fun ContextMenuLinePrimary(vm_state: ViewModelEditorState, dispatcher: ActionTra
     val cursor = vm_state.active_cursor.value ?: return
     val active_line = vm_state.line_data[cursor.ints[0]]
 
-    Row(Modifier.height(dimensionResource(R.dimen.icon_button_height))) {
+    Row {
         IconCMenuButton(
-            modifier = Modifier.fillMaxHeight(),
             onClick = { dispatcher.show_hidden_line_controller() },
             icon = R.drawable.icon_ctl,
             description = R.string.cd_show_effect_controls
@@ -46,7 +43,6 @@ fun ContextMenuLinePrimary(vm_state: ViewModelEditorState, dispatcher: ActionTra
                 contentPadding = PaddingValues(10.dp),
                 modifier = Modifier
                     .padding(3.dp)
-                    .fillMaxHeight()
                     .weight(1F),
                 onClick = { dispatcher.set_percussion_instrument(active_line.channel.value!!, active_line.line_offset.value!!) },
                 content = {
@@ -57,23 +53,13 @@ fun ContextMenuLinePrimary(vm_state: ViewModelEditorState, dispatcher: ActionTra
 
         IconCMenuButton(
             onClick = { dispatcher.remove_line(1) },
-            modifier = Modifier
-                .fillMaxHeight()
-                .combinedClickable(
-                    onClick = {},
-                    onLongClick = { dispatcher.remove_line() }
-                ),
+            onLongClick = { dispatcher.remove_line() },
             icon = R.drawable.icon_remove_line,
             description = R.string.cd_remove_line
         )
         IconCMenuButton(
             onClick = { dispatcher.insert_line(1) },
-            modifier = Modifier
-                .fillMaxHeight()
-                .combinedClickable(
-                    onClick = {},
-                    onLongClick = { dispatcher.insert_line() }
-                ),
+            onLongClick = { dispatcher.insert_line() },
             icon = R.drawable.icon_insert_line,
             description = R.string.cd_insert_line
         )

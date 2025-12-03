@@ -2,10 +2,8 @@ package com.qfs.pagan.composable.cxtmenu
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.IconCMenuButton
@@ -17,7 +15,7 @@ fun ContextMenuColumnPrimary(ui_facade: ViewModelEditorState, dispatcher: Action
     val beat = cursor.ints[0]
     val column_data = ui_facade.column_data[beat]
 
-    Row(Modifier.height(dimensionResource(R.dimen.icon_button_height))) {
+    Row {
         IconCMenuButton(
             onClick = { dispatcher.tag_column(beat, null, true) },
             onLongClick = { dispatcher.tag_column(beat) },

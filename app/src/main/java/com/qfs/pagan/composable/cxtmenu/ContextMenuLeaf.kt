@@ -3,7 +3,6 @@ package com.qfs.pagan.composable.cxtmenu
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -34,43 +33,33 @@ fun ContextMenuStructureControls(ui_facade: ViewModelEditorState, dispatcher: Ac
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         IconCMenuButton(
-            modifier = Modifier
-                .height(dimensionResource(R.dimen.icon_button_height))
-                .weight(1F),
+            modifier = Modifier.weight(1F),
             onClick = { dispatcher.split(2) },
             onLongClick = { dispatcher.split() },
             icon = R.drawable.icon_split,
             description = R.string.btn_split
         )
         IconCMenuButton(
-            modifier = Modifier
-                .height(dimensionResource(R.dimen.icon_button_height))
-                .weight(1F),
+            modifier = Modifier.weight(1F),
             onClick = { dispatcher.insert_leaf(1) },
             onLongClick = { dispatcher.insert_leaf() },
             icon = R.drawable.icon_insert,
             description = R.string.btn_insert
         )
         IconCMenuButton(
-            modifier = Modifier
-                .height(dimensionResource(R.dimen.icon_button_height))
-                .weight(1F),
+            modifier = Modifier.weight(1F),
             onClick = { dispatcher.remove_at_cursor() },
             icon = R.drawable.icon_remove,
             description = R.string.btn_remove
         )
         TextCMenuButton(
-            modifier = Modifier
-                .height(dimensionResource(R.dimen.icon_button_height))
-                .weight(1F),
+            modifier = Modifier.weight(1F),
             onClick = { dispatcher.set_duration() },
             onLongClick = { dispatcher.set_duration(1) },
             text = "x${active_event?.duration ?: 1}"
         )
         IconCMenuButton(
-            modifier = Modifier
-                .height(dimensionResource(R.dimen.icon_button_height))
-                .weight(1F),
+            modifier = Modifier.weight(1F),
             onClick = {
                 if (active_line.assigned_offset.value != null) {
                     dispatcher.toggle_percussion()

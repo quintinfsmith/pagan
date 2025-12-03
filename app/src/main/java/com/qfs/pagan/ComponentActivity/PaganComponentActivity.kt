@@ -8,7 +8,6 @@ import android.provider.DocumentsContract.Document.COLUMN_MIME_TYPE
 import android.provider.DocumentsContract.Document.MIME_TYPE_DIR
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,7 +22,6 @@ import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
@@ -33,9 +31,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
@@ -45,14 +41,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
 import com.qfs.pagan.DialogChain
 import com.qfs.pagan.MenuDialogEventHandler
 import com.qfs.pagan.R
+import com.qfs.pagan.composable.DialogSTitle
+import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.ScaffoldWithTopBar
 import com.qfs.pagan.composable.SortableMenu
 import com.qfs.pagan.composable.button.BetterButton
+import com.qfs.pagan.composable.button.BetterOutLinedButton
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.projectmanager.ProjectManager
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
@@ -142,8 +140,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                 painter = painterResource(R.drawable.rowanleaf_no_padding),
                                 tint = colorResource(R.color.main_background_etching),
                                 contentDescription = "",
-                                modifier = Modifier
-                                    .fillMaxSize()
+                                modifier = Modifier.fillMaxSize()
                             )
                         }
 
@@ -208,7 +205,6 @@ abstract class PaganComponentActivity: ComponentActivity() {
     open fun on_config_load() {
         this.view_model.set_project_manager(ProjectManager(this, this.view_model.configuration.project_directory))
         this.requestedOrientation = this.view_model.configuration.force_orientation
-        println("RELOADED")
         this.view_model.requires_soundfont.value = !this.is_soundfont_available()
     }
 
@@ -217,6 +213,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
         this.view_model.create_dialog { close ->
             @Composable {
                 Column {
+                    Row { DialogSTitle(title, modifier = Modifier.weight(1F)) }
                     Row {
                         Column(
                             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
@@ -242,7 +239,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                     }
 
                     Row {
-                        Button(
+                        BetterOutLinedButton(
                             modifier = Modifier.fillMaxWidth().weight(1F),
                             onClick = { close() },
                             content = { SText(android.R.string.cancel) }
@@ -373,7 +370,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                 this@PaganComponentActivity.view_model.create_dialog { close_subdialog ->
                                     @Composable {
                                         Column {
-                                            Row { Text(stringResource(R.string.dlg_delete_title, title)) }
+                                            Row { DialogTitle(stringResource(R.string.dlg_delete_title, title), modifier = Modifier.weight(1F)) }
                                             Row {
                                                 BetterButton(
                                                     onClick = close_subdialog,
@@ -437,7 +434,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
         this.view_model.create_dialog {  close ->
             @Composable {
                 Column {
-                    Row { SText(R.string.menu_item_load_project) }
+                    Row { DialogSTitle(R.string.menu_item_load_project, modifier = Modifier.weight(1F)) }
                     Row {
                         SortableMenu(items, sort_options, selected_sort = 0) {
                             close()
@@ -445,7 +442,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                         }
                     }
                     Row {
-                        BetterButton(
+                        BetterOutLinedButton(
                             onClick = close,
                             content = { SText(android.R.string.cancel) }
                         )

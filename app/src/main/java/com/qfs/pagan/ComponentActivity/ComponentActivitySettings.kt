@@ -8,7 +8,6 @@ import android.os.Bundle
 import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -34,7 +33,6 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -44,7 +42,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.integerArrayResource
 import androidx.compose.ui.res.painterResource
@@ -55,13 +52,13 @@ import androidx.lifecycle.ViewModel
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
 import com.qfs.pagan.R
+import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.SortableMenu
-import com.qfs.pagan.composable.button.BetterButton
 import com.qfs.pagan.composable.SoundFontWarning
+import com.qfs.pagan.composable.button.BetterButton
 import com.qfs.pagan.composable.button.BetterOutLinedButton
 import com.qfs.pagan.enumerate
-import com.qfs.pagan.find_activity
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 
@@ -327,7 +324,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                         @Composable {
                             Column {
                                 Row {
-                                    SText(R.string.dialog_select_soundfont)
+                                    DialogSTitle(R.string.dialog_select_soundfont, modifier =Modifier.weight(1F))
                                 }
                                 Row {
                                     BetterButton(

@@ -608,11 +608,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     onClick = {
                         dispatcher.cursor_select_line(line_info.channel.value, line_info.line_offset.value, line_info.ctl_type.value)
                     },
-                    modifier = Modifier
-                        .combinedClickable(
-                            onClick = {},
-                            onLongClick = {}
-                        ),
                     contentPadding = PaddingValues(2.dp),
                     shape = RoundedCornerShape(4.dp),
                     colors = ButtonColors(
@@ -726,8 +721,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 content = {
                     Text(
                         text = "$x",
-                        modifier = modifier
-                            .padding(0.dp)
+                        modifier = modifier.padding(0.dp)
                     )
                 }
             )

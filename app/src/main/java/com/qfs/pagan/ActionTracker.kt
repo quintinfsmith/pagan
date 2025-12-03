@@ -5,7 +5,9 @@ import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -15,6 +17,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.core.net.toUri
@@ -24,6 +27,8 @@ import com.qfs.json.JSONList
 import com.qfs.json.JSONObject
 import com.qfs.json.JSONString
 import com.qfs.pagan.OpusLayerInterface
+import com.qfs.pagan.composable.DialogSTitle
+import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.IntegerInput
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.SortableMenu
@@ -1002,6 +1007,22 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         }
     }
 
+    private fun generate_effect_menu_option(ctl_type: EffectType, icon_id: Int): Pair<EffectType, @Composable () -> Unit> {
+        return Pair(
+            ctl_type,
+            {
+                Row(modifier = Modifier.height(dimensionResource(R.dimen.dialog_menu_line_height))) {
+                    Icon(
+                        modifier = Modifier.fillMaxHeight(),
+                        painter = painterResource(icon_id),
+                        contentDescription = ctl_type.name // TODO: extract string resource
+                    )
+                    Text(ctl_type.name)
+                }
+            }
+        )
+    }
+
     fun show_hidden_line_controller(forced_value: EffectType? = null) {
         val opus_manager = this.get_opus_manager()
         val options = mutableListOf<Pair<EffectType, @Composable () -> Unit>>( )
@@ -1009,20 +1030,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
         for ((ctl_type, icon_id) in OpusLayerInterface.line_controller_domain) {
             if (opus_manager.is_line_ctl_visible(ctl_type, cursor.channel, cursor.line_offset)) continue
-            options.add(
-                Pair(
-                    ctl_type,
-                    {
-                        Row {
-                            Icon(
-                                painter = painterResource(icon_id),
-                                contentDescription = ctl_type.name // TODO: extract string resource
-                            )
-                            Text(ctl_type.name)
-                        }
-                    }
-                )
-            )
+            options.add(this.generate_effect_menu_option(ctl_type, icon_id))
 
         }
 
@@ -1039,20 +1047,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
         for ((ctl_type, icon_id) in OpusLayerInterface.channel_controller_domain) {
             if (opus_manager.is_channel_ctl_visible(ctl_type, cursor.channel)) continue
-            options.add(
-                Pair(
-                    ctl_type,
-                    {
-                        Row {
-                            Icon(
-                                painter = painterResource(icon_id),
-                                contentDescription = ctl_type.name // TODO: extract string resource
-                            )
-                            Text(ctl_type.name)
-                        }
-                    }
-                )
-            )
+            options.add(this.generate_effect_menu_option(ctl_type, icon_id))
         }
 
         this.dialog_popup_menu(R.string.show_channel_controls, options, stub_output = forced_value) { ctl_type: EffectType ->
@@ -1067,20 +1062,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
         for ((ctl_type, icon_id) in OpusLayerInterface.global_controller_domain) {
             if (opus_manager.is_global_ctl_visible(ctl_type)) continue
-            options.add(
-                Pair(
-                    ctl_type,
-                    {
-                        Row {
-                            Icon(
-                                painter = painterResource(icon_id),
-                                contentDescription = ctl_type.name // TODO: extract string resource
-                            )
-                            Text(ctl_type.name)
-                        }
-                    }
-                )
-            )
+            options.add(this.generate_effect_menu_option(ctl_type, icon_id))
         }
 
         this.dialog_popup_menu(R.string.show_global_controls, options, stub_output = forced_value) { ctl_type: EffectType ->
@@ -1089,11 +1071,9 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         }
     }
 
-
     fun split(split: Int? = null) {
         this.dialog_number_input(R.string.dlg_split, 2, 32, stub_output = split) { splits: Int ->
             this.track(TrackedAction.SplitLeaf, listOf(splits))
-
             val opus_manager = this.get_opus_manager()
             val cursor = opus_manager.cursor
             when (cursor.ctl_level) {
@@ -1282,7 +1262,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             val current_instrument = (opus_manager.get_channel(channel).lines[line_offset] as OpusLinePercussion).instrument
             @Composable {
                 Column {
-                    Row { SText(R.string.dropdown_choose_instrument) }
+                    Row { DialogSTitle(R.string.dropdown_choose_instrument, modifier = Modifier.weight(1F)) }
                     Row {
                         UnSortableMenu(options, default_value = current_instrument) { value ->
                             this@ActionTracker.track(TrackedAction.SetPercussionInstrument, listOf(channel, line_offset, value))
@@ -1319,7 +1299,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
         val default = this.get_opus_manager().get_channel_instrument(channel)
         this.vm_top.create_dialog { close ->
-
             val preset_names =  mutableListOf<Triple<Int, Int, String>>()
             val options = mutableListOf<Pair<Pair<Int, Int>, @Composable () -> Unit>>()
             val is_percussion = opus_manager.is_percussion(channel)
@@ -1604,9 +1583,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             this.vm_top.create_dialog { close ->
                 @Composable {
                     Column {
-                        Row {
-                            Text(title)
-                        }
+                        Row { DialogTitle(title, modifier = Modifier.weight(1F)) }
                         Row {
                             BetterOutLinedButton(
                                 modifier = Modifier
@@ -1645,9 +1622,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                 @Composable {
                     val value: MutableState<Int> = remember { mutableIntStateOf(default ?: min_value) }
                     Column {
-                        Row {
-                            SText(title_string_id)
-                        }
+                        Row { DialogSTitle(title_string_id, modifier = Modifier.weight(1F)) }
                         Row {
                             IntegerInput(
                                 value = value,
@@ -1660,19 +1635,13 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                             }
                         }
 
-                        Row {
+                        Row(horizontalArrangement = Arrangement.SpaceBetween) {
                             BetterOutLinedButton(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1F),
                                 onClick = { close() },
                                 content = { SText(android.R.string.cancel) }
                             )
 
                             BetterButton(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1F),
                                 onClick = {
                                     close()
                                     callback(value.value)
@@ -1717,9 +1686,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             this.vm_top.create_dialog { close ->
                 @Composable {
                     Column {
-                        Row {
-                            SText(R.string.dialog_save_warning_title)
-                        }
+                        Row { DialogSTitle(R.string.dialog_save_warning_title, modifier = Modifier.weight(1F)) }
                         Row {
                             BetterButton(
                                 modifier = Modifier.weight(1F),
@@ -1767,9 +1734,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         this.vm_top.create_dialog { close ->
             @Composable {
                 Column {
-                    Row {
-                        SText(title)
-                    }
+                    Row { DialogSTitle(title, modifier = Modifier.weight(1F)) }
                     Row {
                         UnSortableMenu(options, default, callback)
                     }
@@ -1796,9 +1761,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         this.vm_top.create_dialog { close ->
             @Composable {
                 val value = remember { mutableStateOf(default ?: "") }
-                Row {
-                    SText(title)
-                }
+                Row { DialogSTitle(title, modifier = Modifier.weight(1F)) }
                 Row {
                     TextInput(
                         modifier = Modifier,

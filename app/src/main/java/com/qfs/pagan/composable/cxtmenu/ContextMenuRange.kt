@@ -13,16 +13,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.PaganConfiguration
-import com.qfs.pagan.composable.button.IconCMenuButton
-import com.qfs.pagan.viewmodel.ViewModelEditorState
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.SText
+import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
 fun ContextMenuRangePrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
     Column {
-        Row(Modifier.height(dimensionResource(R.dimen.icon_button_height))) {
+        Row {
             Spacer(modifier = Modifier.fillMaxWidth().weight(1F))
             IconCMenuButton(
                 onClick = { dispatcher.adjust_selection() },

@@ -120,4 +120,5 @@
     <dimen name="topbar_icon_padding_v">4dp</dimen>
     <dimen name="topbar_icon_padding_h">12dp</dimen>
     <dimen name="dialog_padding">16dp</dimen>
+    <dimen name="dialog_menu_line_height">24dp</dimen>
 </resources>

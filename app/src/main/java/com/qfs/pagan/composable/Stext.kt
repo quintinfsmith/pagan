@@ -1,14 +1,10 @@
 package com.qfs.pagan.composable
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.snapping.SnapPosition
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.TextAutoSize
@@ -19,7 +15,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -32,7 +27,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextRange
@@ -45,9 +39,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
-import com.qfs.pagan.enumerate
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -319,4 +311,14 @@ fun <T> SortableMenu(default_menu: List<Pair<T, @Composable () -> Unit>>, sort_o
 @Composable
 fun <T> UnSortableMenu(options: List<Pair<T, @Composable () -> Unit>>, default_value: T? = null, callback: (T) -> Unit) {
     SortableMenu(options, listOf(), default_value = default_value, callback = callback)
+}
+
+@Composable
+fun DialogTitle(text: String, modifier: Modifier = Modifier) {
+    Text(text = text, modifier = modifier)
+}
+
+@Composable
+fun DialogSTitle(text: Int, modifier: Modifier = Modifier) {
+    DialogTitle(text = stringResource(text), modifier = modifier)
 }

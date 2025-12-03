@@ -19,7 +19,7 @@ import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
 fun ContextMenuChannelPrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
-    Row(Modifier.height(dimensionResource(R.dimen.icon_button_height))) {
+    Row {
         IconCMenuButton(
             onClick = { dispatcher.show_hidden_channel_controller() },
             icon = R.drawable.icon_ctl,

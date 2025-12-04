@@ -306,6 +306,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                         this@ComponentActivitySettings.import_soundfont()
                         return@BetterButton
                     }
+
                     val soundfonts = mutableListOf<Pair<Uri, @Composable () -> Unit>>()
                     for (uri in file_list) {
                         val relative_path_segments = uri.pathSegments.last().split("/")

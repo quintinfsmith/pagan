@@ -35,7 +35,6 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
     class BlockedTreeException(var line_offset: Int, var e: ReducibleTreeArray.BlockedTreeException): Exception()
     class BlockedLineCtlTreeException(var line_offset: Int, var e: OpusLineAbstract.BlockedCtlTreeException): Exception()
     class BlockedCtlTreeException(var e: OpusLineAbstract.BlockedCtlTreeException): Exception()
-
     var lines: MutableList<T> = mutableListOf()
     var controllers = EffectControlSet(0)
     var midi_program = 0

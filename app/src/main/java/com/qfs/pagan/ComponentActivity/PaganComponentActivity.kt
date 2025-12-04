@@ -9,6 +9,7 @@ import android.provider.DocumentsContract.Document.MIME_TYPE_DIR
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,11 +22,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -51,6 +54,7 @@ import com.qfs.pagan.composable.ScaffoldWithTopBar
 import com.qfs.pagan.composable.SortableMenu
 import com.qfs.pagan.composable.button.BetterButton
 import com.qfs.pagan.composable.button.BetterOutLinedButton
+import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.projectmanager.ProjectManager
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
@@ -154,8 +158,15 @@ abstract class PaganComponentActivity: ComponentActivity() {
 
                         for (dialog in dialogs.reversed()) {
                             Dialog(onDismissRequest = { view_model.dialog_queue.value = dialog.parent }) {
-                                Card {
-                                    Box(modifier = Modifier.padding(dimensionResource(R.dimen.dialog_padding))) {
+                                ProvideContentColorTextStyle(MaterialTheme.colorScheme.onBackground) {
+                                    Box(
+                                        modifier = Modifier
+                                            .padding(dimensionResource(R.dimen.dialog_padding))
+                                            .background(
+                                                MaterialTheme.colorScheme.background,
+                                                RoundedCornerShape(corner = CornerSize(12.dp))
+                                            )
+                                    ) {
                                         dialog.dialog()
                                     }
                                 }

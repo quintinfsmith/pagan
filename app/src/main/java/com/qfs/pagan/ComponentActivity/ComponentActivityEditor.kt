@@ -14,8 +14,6 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,8 +26,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.overscroll
-import androidx.compose.foundation.rememberOverscrollEffect
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -46,10 +42,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -784,34 +778,54 @@ class ComponentActivityEditor: PaganComponentActivity() {
             else -> 4.dp
         }
 
-        val (leaf_color, text_color) = if (leaf_data.is_selected.value) {
-            when (event) {
-                is InstrumentEvent -> Pair(colorResource(R.color.leaf_selected), colorResource(R.color.leaf_selected_text))
-                is EffectEvent -> Pair(colorResource(R.color.ctl_leaf_selected), colorResource(R.color.ctl_leaf_selected_text))
-                else -> Pair(colorResource(R.color.leaf_empty_selected), colorResource(R.color.leaf_empty_selected_foreground))
+        val test_colors = listOf(
+            0x765bd5,
+            0xAA0000,
+            0x006633,
+            0x003366
+        )
+
+        val base_color = line_data.channel.value?.let {
+            test_colors[it % test_colors.size]
+        } ?: 0x000090
+
+        val spill_color = (0x000000 / 10) + (base_color * 9 / 10)
+        val empty_color = (base_color and (0xFFFFFF)) + 0x22000000
+
+        val leaf_color = Color(
+            if (leaf_data.is_spillover.value) {
+                spill_color
+            } else {
+                when (event) {
+                    is InstrumentEvent -> base_color
+                    is EffectEvent -> base_color
+                    else -> empty_color
+                }
             }
+        )
+
+        val text_color =  colorResource(R.color.leaf_text)
+
+        val border_color = if (leaf_data.is_selected.value) {
+            Color(0xFFFF00)
         } else if (leaf_data.is_secondary.value) {
-            when (event) {
-                is InstrumentEvent -> Pair(colorResource(R.color.leaf_secondary), colorResource(R.color.leaf_secondary_text))
-                is EffectEvent -> Pair(colorResource(R.color.ctl_leaf_secondary), colorResource(R.color.ctl_leaf_selected_text))
-                else -> Pair(colorResource(R.color.leaf_empty_selected), colorResource(R.color.leaf_empty_selected_foreground))
-            }
+            Color(0xFFAA00)
         } else {
-            when (event) {
-                is InstrumentEvent -> Pair(colorResource(R.color.leaf_main), colorResource(R.color.leaf_text))
-                is EffectEvent -> Pair(colorResource(R.color.ctl_leaf), colorResource(R.color.ctl_leaf_text))
-                else -> Pair(Color(0x10000000), Color(0x000000))
-            }
+            Color.Transparent
         }
+
         Box(
-            modifier .fillMaxSize(),
+            modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Box(
                 modifier = Modifier
                     .padding(1.dp)
-                    .clip(RoundedCornerShape(corner_radius))
-                    .background(color = leaf_color)
+                    .background(
+                        color = leaf_color,
+                        RoundedCornerShape(corner_radius)
+                    )
+                    .border(2.dp, color = border_color)
                     .fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {

@@ -2,6 +2,7 @@ package com.qfs.pagan.composable.cxtmenu
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
@@ -9,13 +10,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
 import com.qfs.pagan.ActionTracker
+import com.qfs.pagan.R
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun PanEventMenu (ui_facade: ViewModelEditorState, dispatcher: ActionTracker, event: OpusPanEvent) {
+fun PanEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, event: OpusPanEvent) {
     val cursor = ui_facade.active_cursor.value ?: return
     val is_initial = cursor.type == CursorMode.Line
     val default_colors = SliderDefaults.colors()
@@ -32,6 +35,7 @@ fun PanEventMenu (ui_facade: ViewModelEditorState, dispatcher: ActionTracker, ev
         disabledInactiveTickColor = default_colors.disabledInactiveTickColor
     )
     val working_value = remember { mutableFloatStateOf(event.value) }
+
     Row {
         Slider(
             value = working_value.floatValue,

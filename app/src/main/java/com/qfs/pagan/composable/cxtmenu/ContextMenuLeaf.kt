@@ -33,33 +33,46 @@ fun ContextMenuStructureControls(ui_facade: ViewModelEditorState, dispatcher: Ac
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         IconCMenuButton(
-            modifier = Modifier.weight(1F),
+            modifier = Modifier
+                .height(dimensionResource(R.dimen.icon_button_height))
+                .weight(1F),
             onClick = { dispatcher.split(2) },
             onLongClick = { dispatcher.split() },
             icon = R.drawable.icon_split,
             description = R.string.btn_split
         )
         IconCMenuButton(
-            modifier = Modifier.weight(1F),
+            modifier = Modifier
+                .height(dimensionResource(R.dimen.icon_button_height))
+                .weight(1F),
             onClick = { dispatcher.insert_leaf(1) },
             onLongClick = { dispatcher.insert_leaf() },
             icon = R.drawable.icon_insert,
             description = R.string.btn_insert
         )
         IconCMenuButton(
-            modifier = Modifier.weight(1F),
+            modifier = Modifier
+                .height(dimensionResource(R.dimen.icon_button_height))
+                .weight(1F),
+            enabled = (cursor.ints.size > 2),
             onClick = { dispatcher.remove_at_cursor() },
             icon = R.drawable.icon_remove,
             description = R.string.btn_remove
         )
         TextCMenuButton(
-            modifier = Modifier.weight(1F),
+            modifier = Modifier
+                .height(dimensionResource(R.dimen.icon_button_height))
+                .weight(1F),
+            enabled = active_event != null,
             onClick = { dispatcher.set_duration() },
             onLongClick = { dispatcher.set_duration(1) },
-            text = "x${active_event?.duration ?: 1}"
+            text = if (active_event == null) "" else "x${active_event.duration}"
         )
         IconCMenuButton(
-            modifier = Modifier.weight(1F),
+            modifier = Modifier
+                .height(dimensionResource(R.dimen.icon_button_height))
+                .weight(1F),
+            enabled = active_line.assigned_offset.value != null || active_event != null,
             onClick = {
                 if (active_line.assigned_offset.value != null) {
                     dispatcher.toggle_percussion()
@@ -132,7 +145,7 @@ fun ContextMenuSinglePrimary(ui_facade: ViewModelEditorState, dispatcher: Action
 }
 
 @Composable
-fun ContextMenuSingleSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
+fun ContextMenuSingleSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier) {
     val cursor = ui_facade.active_cursor.value ?: return
     val active_event = ui_facade.active_event.value
     val offset = when (active_event) {
@@ -145,7 +158,7 @@ fun ContextMenuSingleSecondary(ui_facade: ViewModelEditorState, dispatcher: Acti
     if (ui_facade.line_data[cursor.ints[0]].assigned_offset.value != null) return
 
     // Offset Selector
-    Row(modifier = Modifier.height(dimensionResource(R.dimen.contextmenu_secondary_button_height))) {
+    Row(modifier = modifier) {
         for (i in 0 until ui_facade.radix.value) {
             NumberSelectorButton(
                 modifier = Modifier

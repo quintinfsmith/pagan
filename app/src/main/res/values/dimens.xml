@@ -48,8 +48,8 @@
     <dimen name="landing_button_space_h">6dp</dimen>
     <dimen name="config_icon_corner">10dp</dimen>
 
-    <dimen name="config_icon_size">42dp</dimen>
-    <dimen name="config_icon_padding">4dp</dimen>
+    <dimen name="config_icon_size">54dp</dimen>
+    <dimen name="config_icon_padding">8dp</dimen>
 
     <dimen name="channel_cfg_icon_size">24dp</dimen>
     <dimen name="dialog_name_and_notes_padding_v">12dp</dimen>
@@ -96,12 +96,12 @@
     <dimen name="contextmenu_secondary_padding_bottom">0dp</dimen>
 
     <dimen name="contextmenu_primary_width">-1px</dimen>
-    <dimen name="contextmenu_primary_height">-2px</dimen>
+    <dimen name="contextmenu_primary_height">54dp</dimen>
     <dimen name="contextmenu_primary_inner_width">-1px</dimen>
     <dimen name="contextmenu_primary_inner_height">-1px</dimen>
     <dimen name="contextmenu_secondary_width">-1px</dimen>
-    <dimen name="contextmenu_secondary_height">-2px</dimen>
-    <dimen name="contextmenu_secondary_button_height">30dp</dimen>
+    <dimen name="contextmenu_secondary_height">54dp</dimen>
+    <dimen name="contextmenu_secondary_button_height">48dp</dimen>
 
     <dimen name="contextmenu_primary_landscape_height">-1px</dimen>
     <dimen name="contextmenu_primary_corner_radius_top_left">0dp</dimen>
@@ -120,5 +120,6 @@
     <dimen name="topbar_icon_padding_v">4dp</dimen>
     <dimen name="topbar_icon_padding_h">12dp</dimen>
     <dimen name="dialog_padding">16dp</dimen>
-    <dimen name="dialog_menu_line_height">24dp</dimen>
+    <dimen name="dialog_menu_line_height">32dp</dimen>
+    <dimen name="dialog_menu_line_padding">4dp</dimen>
 </resources>

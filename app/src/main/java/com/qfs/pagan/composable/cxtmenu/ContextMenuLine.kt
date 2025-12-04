@@ -15,6 +15,7 @@ import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.BetterButton
 import com.qfs.pagan.composable.button.IconCMenuButton
+import com.qfs.pagan.composable.button.TextCMenuButton
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
@@ -31,6 +32,7 @@ fun ContextMenuLinePrimary(vm_state: ViewModelEditorState, dispatcher: ActionTra
 
     Row {
         IconCMenuButton(
+            modifier = Modifier.height(dimensionResource(R.dimen.contextmenu_primary_height)),
             onClick = { dispatcher.show_hidden_line_controller() },
             icon = R.drawable.icon_ctl,
             description = R.string.cd_show_effect_controls
@@ -39,25 +41,28 @@ fun ContextMenuLinePrimary(vm_state: ViewModelEditorState, dispatcher: ActionTra
         active_line.assigned_offset.value?.let {
             val active_channel = vm_state.channel_data[active_line.channel.value!!]
             val label = vm_state.get_instrument_name(active_channel.instrument.value, it)
-            BetterButton(
-                contentPadding = PaddingValues(10.dp),
+            TextCMenuButton(
                 modifier = Modifier
-                    .padding(3.dp)
+                    .height(dimensionResource(R.dimen.contextmenu_primary_height))
                     .weight(1F),
                 onClick = { dispatcher.set_percussion_instrument(active_line.channel.value!!, active_line.line_offset.value!!) },
-                content = {
-                    Text(label)
-                }
+                text = label
             )
         } ?: Spacer(Modifier.weight(1F))
 
+        if (active_line.ctl_type.value == null) {
+            IconCMenuButton(
+                modifier = Modifier.height(dimensionResource(R.dimen.contextmenu_primary_height)),
+                enabled = vm_state.channel_data[active_line.channel.value!!].size.value > 1,
+                onClick = { dispatcher.remove_line(1) },
+                onLongClick = { dispatcher.remove_line() },
+                icon = R.drawable.icon_remove_line,
+                description = R.string.cd_remove_line
+            )
+        }
+
         IconCMenuButton(
-            onClick = { dispatcher.remove_line(1) },
-            onLongClick = { dispatcher.remove_line() },
-            icon = R.drawable.icon_remove_line,
-            description = R.string.cd_remove_line
-        )
-        IconCMenuButton(
+            modifier = Modifier.height(dimensionResource(R.dimen.contextmenu_primary_height)),
             onClick = { dispatcher.insert_line(1) },
             onLongClick = { dispatcher.insert_line() },
             icon = R.drawable.icon_insert_line,
@@ -67,24 +72,23 @@ fun ContextMenuLinePrimary(vm_state: ViewModelEditorState, dispatcher: ActionTra
 }
 
 @Composable
-fun ContextMenuLineSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
+fun ContextMenuLineSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier) {
     val cursor = ui_facade.active_cursor.value ?: return
     val y = cursor.ints[0]
     val line = ui_facade.line_data[y]
     val initial_event = ui_facade.active_event.value
     if (line.ctl_type.value == null) {
-        ContextMenuLineStdSecondary(ui_facade, dispatcher, initial_event as OpusVolumeEvent)
+        ContextMenuLineStdSecondary(ui_facade, dispatcher, initial_event as OpusVolumeEvent, modifier = modifier)
     } else {
-        ContextMenuLineCtlSecondary(ui_facade, dispatcher, initial_event as EffectEvent)
+        ContextMenuLineCtlSecondary(ui_facade, dispatcher, initial_event as EffectEvent, modifier = modifier)
     }
 }
 
 @Composable
-fun ContextMenuLineCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, initial_event: EffectEvent) {
-    val height = dimensionResource(R.dimen.contextmenu_secondary_button_height)
-    Row(modifier = Modifier.height(height)) {
+fun ContextMenuLineCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, initial_event: EffectEvent, modifier: Modifier = Modifier) {
+    Row(modifier.padding(top = 1.dp, bottom = 1.dp)) {
         when (initial_event) {
-            is OpusVolumeEvent -> VolumeEventMenu(modifier = Modifier.fillMaxHeight(), ui_facade, dispatcher, initial_event)
+            is OpusVolumeEvent -> VolumeEventMenu(ui_facade, dispatcher, initial_event)
             is OpusTempoEvent -> TempoEventMenu(ui_facade, dispatcher, initial_event)
             is OpusPanEvent -> PanEventMenu(ui_facade, dispatcher, initial_event)
             is OpusReverbEvent -> ReverbEventMenu(ui_facade, dispatcher, initial_event)
@@ -96,15 +100,12 @@ fun ContextMenuLineCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
 }
 
 @Composable
-fun ContextMenuLineStdSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, volume_event: OpusVolumeEvent) {
+fun ContextMenuLineStdSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, volume_event: OpusVolumeEvent, modifier: Modifier = Modifier) {
     val cursor = ui_facade.active_cursor.value ?: return
     val y = cursor.ints[0]
     val line = ui_facade.line_data[y]
-    Row(
-        modifier = Modifier.height(dimensionResource(R.dimen.contextmenu_secondary_button_height))
-    ) {
+    Row(modifier = modifier) {
         IconCMenuButton(
-            modifier = Modifier.fillMaxHeight(),
             onClick = {
                 if (line.is_mute.value) {
                     dispatcher.line_unmute()
@@ -117,7 +118,6 @@ fun ContextMenuLineStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
             description = R.string.cd_line_mute
         )
         VolumeEventMenu(
-            modifier = Modifier.fillMaxHeight(),
             ui_facade, dispatcher, volume_event)
     }
 }

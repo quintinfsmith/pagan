@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.TextAutoSize
@@ -27,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextRange
@@ -40,6 +43,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import com.qfs.pagan.R
+import com.qfs.pagan.composable.button.BetterButton
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -245,9 +249,7 @@ fun <T> SortableMenu(default_menu: List<Pair<T, @Composable () -> Unit>>, sort_o
     val active_sort_option = remember { mutableStateOf(selected_sort) }
     Column {
         if (sort_options.isNotEmpty()) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 val expanded = remember { mutableStateOf(false) }
                 SText(
                     R.string.sorting_by,
@@ -255,7 +257,7 @@ fun <T> SortableMenu(default_menu: List<Pair<T, @Composable () -> Unit>>, sort_o
                     modifier = Modifier.weight(1F)
                 )
                 Box {
-                    Button(
+                    BetterButton(
                         onClick = { expanded.value = !expanded.value },
                         content = {
                             if (selected_sort == -1) {
@@ -297,6 +299,8 @@ fun <T> SortableMenu(default_menu: List<Pair<T, @Composable () -> Unit>>, sort_o
             for ((uri, label_content) in sorted_menu) {
                 Row(
                     modifier = Modifier
+                        .height(dimensionResource(R.dimen.dialog_menu_line_height))
+                        .padding(dimensionResource(R.dimen.dialog_menu_line_padding))
                         .combinedClickable(
                             onClick = { callback(uri) }
                         ),

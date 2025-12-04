@@ -28,11 +28,12 @@ fun ConfigDrawerTopButton(modifier: Modifier = Modifier, content: (@Composable R
 }
 
 @Composable
-fun ConfigDrawerBottomButton(modifier: Modifier = Modifier, icon: Int, description: Int, onClick: () -> Unit) {
+fun ConfigDrawerBottomButton(modifier: Modifier = Modifier, icon: Int, description: Int, enabled: Boolean = true, onClick: () -> Unit) {
     BetterButton(
         modifier = modifier.height(dimensionResource(R.dimen.config_icon_size)),
         contentPadding = PaddingValues(dimensionResource(R.dimen.config_icon_padding)),
         onClick = onClick,
+        enabled = enabled,
         content = {
             Icon(
                 painter = painterResource(icon),

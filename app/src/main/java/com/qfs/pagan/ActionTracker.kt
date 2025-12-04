@@ -16,9 +16,11 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.core.net.toUri
 import com.qfs.json.JSONBoolean
@@ -394,6 +396,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             val uri = it.save(this.vm_controller.opus_manager, this.vm_controller.active_project)
             this.vm_top.has_saved_project.value = true
             this.vm_controller.active_project = uri
+            this.vm_controller.project_exists.value = true
         }
     }
 
@@ -414,6 +417,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                 else "$old_title (Copy)"
             )
             this.vm_controller.active_project = null
+            this.vm_controller.project_exists.value = false
         }
     }
 
@@ -787,9 +791,27 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         }
     }
 
-    fun cursor_select_column(beat: Int) {
-        this.track(TrackedAction.CursorSelectColumn, listOf(beat))
-        this.get_opus_manager().cursor_select_column(beat)
+    fun cursor_select_column(beat: Int? = null) {
+        if (beat != null) {
+            this.track(TrackedAction.CursorSelectColumn, listOf(beat))
+            this.get_opus_manager().cursor_select_column(beat)
+            return
+        }
+
+        this.vm_top.create_dialog { close ->
+            @Composable {
+                val scope = rememberCoroutineScope()
+                val opus_manager = this.get_opus_manager()
+                val scrolled_value = remember { mutableStateOf(0) }
+
+                Row {
+                    DialogTitle(stringResource(R.string.label_shortcut_scrollbar, scrolled_value))
+                }
+                Row {
+
+                }
+            }
+        }
     }
 
     fun cursor_select_range_next(beat_key: BeatKey) {
@@ -1459,6 +1481,10 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             opus_manager.insert_beats(beat, count)
         }
     }
+    fun append_beats(repeat: Int? = null) {
+        val opus_manager = this.get_opus_manager()
+        this.insert_beat(opus_manager.length, repeat)
+    }
 
     fun remove_beat(repeat: Int? = null) {
         val opus_manager = this.get_opus_manager()
@@ -1771,6 +1797,10 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
     fun get_opus_manager(): OpusManager {
         return this.vm_controller.opus_manager
+    }
+
+    fun play_opus() {
+        this.vm_controller.playback_device?.play_opus(0)
     }
 
     fun playback() {

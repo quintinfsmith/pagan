@@ -14,13 +14,16 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
+import com.qfs.pagan.composable.button.BetterButton
 import com.qfs.pagan.composable.button.IconCMenuButton
+import com.qfs.pagan.composable.button.TextCMenuButton
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
 fun ContextMenuChannelPrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
     Row {
         IconCMenuButton(
+            modifier = Modifier.height(dimensionResource(R.dimen.icon_button_height)),
             onClick = { dispatcher.show_hidden_channel_controller() },
             icon = R.drawable.icon_ctl,
             description = R.string.cd_show_effect_controls
@@ -29,23 +32,27 @@ fun ContextMenuChannelPrimary(ui_facade: ViewModelEditorState, dispatcher: Actio
         Spacer(Modifier.weight(1F))
 
         IconCMenuButton(
+            modifier = Modifier.height(dimensionResource(R.dimen.icon_button_height)),
             onClick = { dispatcher.adjust_selection() },
             icon = R.drawable.icon_adjust,
             description = R.string.cd_adjust_selection
         )
 
         IconCMenuButton(
+            modifier = Modifier.height(dimensionResource(R.dimen.icon_button_height)),
             onClick = { dispatcher.remove_channel() },
             icon = R.drawable.icon_remove_channel,
             description = R.string.cd_remove_channel
         )
 
         IconCMenuButton(
+            modifier = Modifier.height(dimensionResource(R.dimen.icon_button_height)),
             onClick = { dispatcher.insert_percussion_channel() },
             icon = R.drawable.icon_add_channel_kit,
             description = R.string.cd_insert_channel_percussion
         )
         IconCMenuButton(
+            modifier = Modifier.height(dimensionResource(R.dimen.icon_button_height)),
             onClick = { dispatcher.insert_channel() },
             icon = R.drawable.icon_add_channel,
             description = R.string.cd_insert_channel
@@ -54,12 +61,12 @@ fun ContextMenuChannelPrimary(ui_facade: ViewModelEditorState, dispatcher: Actio
 }
 
 @Composable
-fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
+fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier) {
     val cursor = ui_facade.active_cursor.value ?: return
     val channel_index = cursor.ints[0]
     val active_channel = ui_facade.channel_data[channel_index]
 
-    Row(modifier = Modifier.height(dimensionResource(R.dimen.contextmenu_secondary_button_height))) {
+    Row(modifier = modifier) {
         IconCMenuButton(
             modifier = Modifier.fillMaxHeight(),
             onClick = {
@@ -73,13 +80,12 @@ fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
                 else R.drawable.icon_mute,
             description = R.string.cd_line_mute
         )
-        Button(
+        TextCMenuButton(
             modifier = Modifier
-                .padding(3.dp)
                 .fillMaxSize()
                 .weight(1f),
             onClick = { dispatcher.set_channel_preset(channel_index) },
-            content = { Text(active_channel.active_name.value) }
+            text = active_channel.active_name.value
         )
     }
 }

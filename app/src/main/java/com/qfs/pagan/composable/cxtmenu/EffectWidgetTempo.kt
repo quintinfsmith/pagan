@@ -2,11 +2,15 @@ package com.qfs.pagan.composable.cxtmenu
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
@@ -17,7 +21,7 @@ import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun TempoEventMenu (ui_facade: ViewModelEditorState, dispatcher: ActionTracker, event: OpusTempoEvent) {
+fun TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, event: OpusTempoEvent) {
     val cursor = ui_facade.active_cursor.value ?: return
     val is_initial = cursor.type == CursorMode.Line
     val working_value = remember { mutableFloatStateOf(event.value) }
@@ -27,14 +31,20 @@ fun TempoEventMenu (ui_facade: ViewModelEditorState, dispatcher: ActionTracker, 
             contentDescription = "",
             tint = colorResource(R.color.context_menu_background_icon)
         )
-        FloatInput(value = working_value, precision = 3) { new_value ->
+        FloatInput(
+            value = working_value,
+            precision = 3
+        ) { new_value ->
             event.value = new_value
             dispatcher.set_effect_at_cursor(event)
         }
         SText(R.string.bpm)
+
+        Spacer(Modifier.weight(1F))
+
+        if (!is_initial) {
+            EffectTransitionButton(event.transition, dispatcher)
+        }
     }
 
-    if (!is_initial) {
-        EffectTransitionButton(event.transition, dispatcher)
-    }
 }

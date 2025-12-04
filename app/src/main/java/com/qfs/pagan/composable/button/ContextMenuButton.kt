@@ -1,6 +1,8 @@
 package com.qfs.pagan.composable.button
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fitInside
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -13,12 +15,13 @@ import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
 
 @Composable
-fun IconCMenuButton(modifier: Modifier = Modifier, onClick: () -> Unit, onLongClick: (() -> Unit)? = null, icon: Int, description: Int) {
+fun IconCMenuButton(modifier: Modifier = Modifier, onClick: () -> Unit, onLongClick: (() -> Unit)? = null, icon: Int, description: Int, enabled: Boolean = true, contentPadding: PaddingValues = PaddingValues(8.dp)) {
     BetterButton(
-        modifier = modifier.height(dimensionResource(R.dimen.icon_button_height)),
+        enabled = enabled,
+        modifier = modifier,
         onClick = onClick,
         onLongClick = onLongClick ?: {},
-        contentPadding = PaddingValues(8.dp),
+        contentPadding = contentPadding,
         content = {
             Icon(
                 painter = painterResource(icon),
@@ -29,10 +32,11 @@ fun IconCMenuButton(modifier: Modifier = Modifier, onClick: () -> Unit, onLongCl
 }
 
 @Composable
-fun TextCMenuButton(modifier: Modifier = Modifier, onClick: () -> Unit, onLongClick: (() -> Unit) ?= null, text: String) {
+fun TextCMenuButton(modifier: Modifier = Modifier, onClick: () -> Unit, onLongClick: (() -> Unit) ?= null, text: String, enabled: Boolean = true, contentPadding: PaddingValues = PaddingValues(8.dp)) {
     BetterButton(
-        modifier = modifier.height(dimensionResource(R.dimen.icon_button_height)),
-        contentPadding = PaddingValues(8.dp),
+        enabled = enabled,
+        modifier = modifier,
+        contentPadding = contentPadding,
         onClick = onClick,
         onLongClick = onLongClick ?: {},
         content = { Text(text = text) }

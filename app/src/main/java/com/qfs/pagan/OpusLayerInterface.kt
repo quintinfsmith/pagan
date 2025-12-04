@@ -194,6 +194,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             ),
             controller.get_tree(beat).copy { it?.copy() }
         )
+        this.vm_state.refresh_cursor()
     }
 
     private fun _queue_channel_ctl_cell_change(type: EffectType, channel: Int, beat: Int) {
@@ -209,6 +210,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             ),
             controller.get_tree(beat).copy { it?.copy() }
         )
+        this.vm_state.refresh_cursor()
     }
 
     private fun _queue_line_ctl_cell_change(type: EffectType, beat_key: BeatKey) {
@@ -224,6 +226,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             ),
             controller.get_tree(beat_key.beat).copy { it?.copy() }
         )
+        this.vm_state.refresh_cursor()
     }
     // UI BILL Interface functions ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -506,16 +509,19 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     override fun <T: EffectEvent> controller_global_set_event(type: EffectType, beat: Int, position: List<Int>, event: T) {
         super.controller_global_set_event(type, beat, position, event)
         this._queue_global_ctl_cell_change(type, beat)
+        this.vm_state.set_active_event(event)
     }
 
     override fun <T: EffectEvent> controller_channel_set_event(type: EffectType, channel: Int, beat: Int, position: List<Int>, event: T) {
         super.controller_channel_set_event(type, channel, beat, position, event)
         this._queue_channel_ctl_cell_change(type, channel, beat)
+        this.vm_state.set_active_event(event)
     }
 
     override fun <T: EffectEvent> controller_line_set_event(type: EffectType, beat_key: BeatKey, position: List<Int>, event: T) {
         super.controller_line_set_event(type, beat_key, position, event)
         this._queue_line_ctl_cell_change(type, beat_key)
+        this.vm_state.set_active_event(event)
     }
 
     override fun <T: InstrumentEvent> set_event(beat_key: BeatKey, position: List<Int>, event: T) {
@@ -526,6 +532,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         }
 
         this._queue_cell_change(beat_key)
+        this.vm_state.set_active_event(event)
     }
 
     override fun percussion_set_event(beat_key: BeatKey, position: List<Int>) {
@@ -619,21 +626,25 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     override fun controller_line_insert(type: EffectType, beat_key: BeatKey, position: List<Int>) {
         super.controller_line_insert(type, beat_key, position)
         this._queue_line_ctl_cell_change(type, beat_key)
+        this.vm_state.refresh_cursor()
     }
 
     override fun controller_global_remove_standard(type: EffectType, beat: Int, position: List<Int>) {
         super.controller_global_remove_standard(type, beat, position)
         this._queue_global_ctl_cell_change(type, beat)
+        this.vm_state.refresh_cursor()
     }
 
     override fun controller_channel_remove_standard(type: EffectType, channel: Int, beat: Int, position: List<Int>) {
         super.controller_channel_remove_standard(type, channel, beat, position)
         this._queue_channel_ctl_cell_change(type, channel, beat)
+        this.vm_state.refresh_cursor()
     }
 
     override fun controller_line_remove_standard(type: EffectType, beat_key: BeatKey, position: List<Int>) {
         super.controller_line_remove_standard(type, beat_key, position)
         this._queue_line_ctl_cell_change(type, beat_key)
+        this.vm_state.refresh_cursor()
     }
 
     private fun get_minimum_percussion_instrument(channel: Int): Int {
@@ -651,11 +662,13 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         }
 
         this._update_after_new_line(channel, line_offset)
+        this.vm_state.refresh_cursor()
     }
 
     override fun insert_line(channel: Int, line_offset: Int, line: OpusLineAbstract<*>) {
         super.insert_line(channel, line_offset, line)
         this._update_after_new_line(channel, line_offset)
+        this.vm_state.refresh_cursor()
     }
 
     private fun _swap_line_ui_update(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
@@ -792,9 +805,11 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         if (!this.ui_lock.is_locked()) {
             this.vm_state.add_channel(notify_index, is_percussion, this.channels[notify_index].get_instrument(), this.channels[notify_index].muted)
             this._post_new_channel(notify_index, lines)
+            this.vm_state.refresh_cursor()
         }
 
         this._activity?.update_channel_instruments()
+
     }
 
     override fun remove_beat(beat_index: Int, count: Int) {
@@ -806,16 +821,24 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             for (i in 0 until count) {
                 this.vm_state.remove_column(x)
             }
+            this.vm_state.refresh_cursor()
         }
     }
 
     override fun insert_beats(beat_index: Int, count: Int) {
         super.insert_beats(beat_index, count)
+
+        if (!this.ui_lock.is_locked()) {
+            this.vm_state.refresh_cursor()
+        }
     }
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<ReducibleTree<OpusEvent>>?) {
         super.insert_beat(beat_index, beats_in_column)
         this.ui_add_column(beat_index)
+        if (!this.ui_lock.is_locked()) {
+            this.vm_state.refresh_cursor()
+        }
     }
 
     fun all_global_controllers_visible(): Boolean {
@@ -860,7 +883,10 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     override fun remove_channel(channel: Int) {
         super.remove_channel(channel)
         // this.get_activity()?.shift_down_percussion_names(channel)
-        this.vm_state.remove_channel(channel)
+        if (!this.ui_lock.is_locked()) {
+            this.vm_state.remove_channel(channel)
+            this.vm_state.refresh_cursor()
+        }
         this._activity?.update_channel_instruments()
     }
 
@@ -1109,7 +1135,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         )
 
         if (this.ui_lock.is_locked()) return
-        this.vm_state.set_channel_data(channel, this.is_percussion(channel), instrument, this.channels[channel].muted)
+        this.vm_state.set_channel_data(channel, this.is_percussion(channel), instrument, this.channels[channel].muted, size = this.channels[channel].lines.size)
 
     }
 
@@ -1270,7 +1296,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     }
 
     override fun cursor_select(beat_key: BeatKey, position: List<Int>) {
-        println("CUR!!! $beat_key, $position")
         if (this._block_cursor_selection()) return
 
         this._unset_temporary_blocker()

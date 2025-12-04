@@ -74,24 +74,25 @@ fun BetterButton(
     Box(
         propagateMinConstraints = true,
         modifier = modifier
-            .padding(4.dp)
+            .padding(top = 2.dp, bottom = 2.dp, start = 1.dp, end = 2.dp)
             .minimumInteractiveComponentSize(),
         content = {
             ProvideContentColorTextStyle(contentColor = colors.contentColor, textStyle = TextStyle.Default) {
                 Box(
                     modifier = modifier
                         .then(if (border != null) modifier.border(border, shape) else modifier)
-                        .combinedClickable(
-                            onClick = onClick,
-                            onLongClick = onLongClick,
+                        .then(
+                            if (enabled) {
+                                modifier.combinedClickable(
+                                    onClick = onClick,
+                                    onLongClick = onLongClick,
+                                )
+                                .background(color = colors.containerColor, shape)
+                            } else {
+                                modifier.background(color = colors.disabledContentColor, shape)
+                            }
                         )
-                        .clip(shape)
-                        .background(color = colors.containerColor)
                         .minimumInteractiveComponentSize()
-                        .combinedClickable(
-                            onClick = onClick,
-                            onLongClick = onLongClick,
-                        )
                         .semantics { role = Role.Button },
                     contentAlignment = Alignment.Center,
                 ) {

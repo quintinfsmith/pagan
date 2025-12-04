@@ -93,12 +93,13 @@ class ViewModelEditorState: ViewModel() {
         val is_spillover = mutableStateOf(is_spillover)
     }
 
-    class ChannelData(percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean, is_selected: Boolean = false, name: String) {
+    class ChannelData(percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean, is_selected: Boolean = false, name: String, size: Int = 0) {
         val percussion = mutableStateOf(percussion)
         val instrument = mutableStateOf(instrument)
         val is_mute = mutableStateOf(is_mute)
         val is_selected = mutableStateOf(is_selected)
         val active_name = mutableStateOf<String>(name)
+        val size = mutableStateOf<Int>(size)
     }
     class CacheCursor(var type: CursorMode, vararg ints: Int) {
         var ints = ints.toList()
@@ -121,7 +122,6 @@ class ViewModelEditorState: ViewModel() {
     var selected_lines: MutableList<LineData> = mutableListOf()
     var selected_leafs: MutableList<LeafData> = mutableListOf()
 
-    var project_exists: MutableState<Boolean> = mutableStateOf(false)
     var blocker_leaf: List<Int>? = null
     val playback_state_soundfont: MutableState<PlaybackState> = mutableStateOf(PlaybackState.NotReady)
     val playback_state_midi: MutableState<PlaybackState> = mutableStateOf(PlaybackState.NotReady)
@@ -144,7 +144,6 @@ class ViewModelEditorState: ViewModel() {
         this.radix.value = 12
         this.line_count.value = 0
         this.channel_count.value = 0
-        this.project_exists.value = false
         this.blocker_leaf = null
 
         this.highlighted_octave.value = null
@@ -176,12 +175,11 @@ class ViewModelEditorState: ViewModel() {
 
     fun add_row(y: Int, cells: List<ReducibleTree<out OpusEvent>>, new_line_data: LineData) {
         this.line_data.add(y, new_line_data)
+        if (new_line_data.channel.value != null && new_line_data.line_offset.value != null && new_line_data.ctl_type.value == null) {
+            this.channel_data[new_line_data.channel.value!!].size.value += 1
+        }
         this.cell_map.add(y, MutableList(cells.size) { i -> this.copy_tree_for_cell(cells[i]) })
         this.line_count.value += 1
-    }
-
-    fun set_project_exists(value: Boolean) {
-        this.project_exists.value = value
     }
 
     fun queue_config_drawer_redraw_export_button() {
@@ -199,13 +197,16 @@ class ViewModelEditorState: ViewModel() {
 
     fun remove_row(y: Int, count: Int) {
         for (i in 0 until count) {
-            this.line_data.removeAt(y)
+            val line = this.line_data.removeAt(y)
+            if (line.channel.value != null && line.line_offset.value != null && line.ctl_type.value == null) {
+                this.channel_data[line.channel.value!!].size.value -= 1
+            }
             this.cell_map.removeAt(y)
         }
         this.line_count.value -= 1
     }
 
-    fun add_channel(channel: Int, percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean) {
+    fun add_channel(channel: Int, percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean, size: Int = 0) {
         for (ld in this.line_data) {
             ld.channel.value?.let {
                 if (it >= channel) {
@@ -215,7 +216,7 @@ class ViewModelEditorState: ViewModel() {
         }
         this.channel_count.value += 1
         val name = this.get_preset_name(instrument.first, instrument.second)
-        this.channel_data.add(channel, ChannelData(percussion, instrument, is_mute, name = name ?: "TODO_B"))
+        this.channel_data.add(channel, ChannelData(percussion, instrument, is_mute, name = name ?: "TODO_B", is_selected = false, size = size))
     }
 
     fun remove_channel(channel: Int) {
@@ -309,9 +310,9 @@ class ViewModelEditorState: ViewModel() {
         }
     }
 
-    fun set_channel_data(channel_index: Int, percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean) {
+    fun set_channel_data(channel_index: Int, percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean, size: Int = 0) {
         val name = this.get_preset_name(instrument.first, instrument.second)
-        this.channel_data[channel_index] = ChannelData(percussion, instrument, is_mute, is_selected = false, name = name ?: "TODO")
+        this.channel_data[channel_index] = ChannelData(percussion, instrument, is_mute, is_selected = false, name = name ?: "TODO", size)
     }
 
     fun set_project_name(name: String? = null) {

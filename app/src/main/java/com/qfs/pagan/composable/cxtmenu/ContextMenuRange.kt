@@ -25,11 +25,13 @@ fun ContextMenuRangePrimary(ui_facade: ViewModelEditorState, dispatcher: ActionT
         Row {
             Spacer(modifier = Modifier.fillMaxWidth().weight(1F))
             IconCMenuButton(
+                modifier = Modifier.height(dimensionResource(R.dimen.icon_button_height)),
                 onClick = { dispatcher.adjust_selection() },
                 icon = R.drawable.icon_adjust,
                 description = R.string.cd_adjust_selection
             )
             IconCMenuButton(
+                modifier = Modifier.height(dimensionResource(R.dimen.icon_button_height)),
                 onClick = { dispatcher.unset() },
                 icon = R.drawable.icon_unset,
                 description = R.string.cd_unset

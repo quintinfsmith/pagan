@@ -33,7 +33,12 @@ class ViewModelEditorController(): ViewModel() {
     var move_mode: MutableState<PaganConfiguration.MoveMode> = mutableStateOf(PaganConfiguration.MoveMode.COPY)
     var export_handle: WavConverter? = null
     var active_project: Uri? = null
+    var project_exists: MutableState<Boolean> = mutableStateOf(false)
 
+
+    fun set_project_exists(value: Boolean) {
+        this.project_exists.value = value
+    }
 
     fun export_wav(
         opus_manager: OpusLayerBase,

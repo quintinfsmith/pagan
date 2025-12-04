@@ -14,11 +14,12 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,10 +28,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.overscroll
+import androidx.compose.foundation.rememberOverscrollEffect
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -45,6 +48,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -154,7 +159,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             // No need to update the active_project here. using this intent launcher implies the active_project will be changed in the ucheck
             this.view_model.project_manager?.change_project_path(tree_uri, this.controller_model.active_project)
 
-            this._project_save()
+            TODO()
         }
 
     internal var result_launcher_settings =
@@ -285,6 +290,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             val bytes = FileInputStream(it.fileDescriptor).readBytes()
             this.controller_model.opus_manager.load(bytes)
             this.controller_model.active_project = null
+            this.controller_model.project_exists.value = false
         }
     }
 
@@ -305,6 +311,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         opus_manager.set_project_name(filename?.substring(0, filename.lastIndexOf(".")) ?: this.getString( R.string.default_imported_midi_title))
         opus_manager.clear_history()
         this.controller_model.active_project = null
+        this.controller_model.project_exists.value = false
     }
 
     fun parse_file_name(uri: Uri): String? {
@@ -405,7 +412,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             TopBarIcon(
                 icon = R.drawable.icon_play, // TODO: Play state
                 description = R.string.menu_item_playpause,
-                callback = { dispatcher.playback() }
+                callback = { dispatcher.play_opus() }
             )
             Box {
                 val expanded = remember { mutableStateOf(false) }
@@ -451,26 +458,36 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
     @Composable
     fun ContextMenuSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
-        val cursor = ui_facade.active_cursor.value
-        when (cursor?.type) {
-            CursorMode.Line -> {
-                ContextMenuLineSecondary(ui_facade, dispatcher)
+        val cursor = ui_facade.active_cursor.value ?: return
+        if (cursor.type == CursorMode.Unset) return
+
+        val modifier = Modifier.height(dimensionResource(R.dimen.contextmenu_secondary_height))
+        Row {
+            when (cursor.type) {
+                CursorMode.Line -> {
+                    ContextMenuLineSecondary(ui_facade, dispatcher, modifier)
+                }
+
+                CursorMode.Column -> ContextMenuColumnSecondary(ui_facade, dispatcher, modifier)
+                CursorMode.Single -> ContextMenuSingleSecondary(ui_facade, dispatcher, modifier)
+                CursorMode.Range -> {
+                    ContextMenuRangeSecondary(
+                        ui_facade,
+                        dispatcher,
+                        this@ComponentActivityEditor.controller_model.move_mode.value
+                    )
+                }
+
+                CursorMode.Channel -> ContextMenuChannelSecondary(ui_facade, dispatcher, modifier)
+
+                CursorMode.Unset -> TODO("This shouldn't be reachable")
             }
-            CursorMode.Column -> ContextMenuColumnSecondary(ui_facade, dispatcher)
-            CursorMode.Single -> ContextMenuSingleSecondary(ui_facade, dispatcher)
-            CursorMode.Range -> {
-                ContextMenuRangeSecondary(ui_facade, dispatcher, this@ComponentActivityEditor.controller_model.move_mode.value)
-            }
-            CursorMode.Channel -> {
-                ContextMenuChannelSecondary(ui_facade, dispatcher)
-            }
-            CursorMode.Unset,
-            null -> Text("TODO")
         }
     }
 
     @Composable
     fun MainTable(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, length: MutableState<Int>) {
+        val window_height =  LocalConfiguration.current.screenHeightDp.dp
         val line_height = dimensionResource(R.dimen.line_height)
         val ctl_line_height = dimensionResource(R.dimen.ctl_line_height)
         val leaf_width = dimensionResource(R.dimen.base_leaf_width)
@@ -484,10 +501,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         Column {
             Row {
-                Column {
-                    ShortcutView(dispatcher, scope, scroll_state_h)
-                }
-                Column(Modifier.horizontalScroll(scroll_state_h)) {
+                Column { ShortcutView(dispatcher, scope, scroll_state_h) }
+                Column(Modifier.horizontalScroll(scroll_state_h, overscrollEffect = null)) {
                     Row {
                         for ((x, width) in column_widths.enumerate()) {
                             Box(
@@ -498,11 +513,21 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 BeatLabelView(x, ui_facade, dispatcher, ui_facade.column_data[x])
                             }
                         }
+                        Icon(
+                            modifier = Modifier
+                                .width(dimensionResource(R.dimen.base_leaf_width))
+                                .combinedClickable(
+                                    onClick = { dispatcher.append_beats(1) },
+                                    onLongClick = { dispatcher.append_beats() }
+                                ),
+                            painter = painterResource(R.drawable.icon_add_channel),
+                            contentDescription = stringResource(R.string.cd_insert_beat)
+                        )
                     }
                 }
             }
             Row {
-                Column(Modifier.verticalScroll(scroll_state_v)) {
+                Column(Modifier.verticalScroll(scroll_state_v, overscrollEffect = null)) {
                     var working_channel: Int? = 0
                     for (y in 0 until ui_facade.line_count.value) {
                         if (ui_facade.line_data[y].channel.value != working_channel) {
@@ -524,11 +549,27 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             LineLabelView(modifier = Modifier.fillMaxSize(), dispatcher, ui_facade.line_data[y])
                         }
                     }
+                    Row(
+                        Modifier
+                            .height(line_height)
+                            .combinedClickable(
+                                onClick = { dispatcher.show_hidden_global_controller() }
+                            )
+                    ) {
+                        Icon(
+                            modifier = Modifier
+                                .background(color = Color.Transparent, CircleShape)
+                                .padding(4.dp),
+                            painter = painterResource(R.drawable.icon_ctl),
+                            contentDescription = stringResource(R.string.cd_show_effect_controls)
+                        )
+                    }
+                    Spacer(Modifier.height(window_height / 2))
                 }
                 Column(
                     modifier = Modifier
-                        .verticalScroll(scroll_state_v)
-                        .horizontalScroll(scroll_state_h)
+                        .horizontalScroll(scroll_state_h, overscrollEffect = null)
+                        .verticalScroll(scroll_state_v, overscrollEffect = null)
                 ) {
                     var working_channel: Int? = 0
                     for (y in 0 until ui_facade.line_count.value) {
@@ -542,7 +583,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             line_height
                         }
 
-                        Row(Modifier.height(use_height)) {
+                        Row(Modifier
+                            .padding(end = dimensionResource(R.dimen.base_leaf_width))
+                            .height(use_height)) {
                             for (x in 0 until length.value) {
                                 Column(Modifier.width(leaf_width * column_widths[x])) {
                                     val cell = ui_facade.cell_map[y][x]
@@ -551,6 +594,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             }
                         }
                     }
+                    Spacer(Modifier.height(window_height / 2))
                 }
             }
         }
@@ -559,33 +603,29 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     fun ShortcutView(dispatcher: ActionTracker, scope: CoroutineScope, scroll_state: ScrollState) {
         Box(
-            Modifier.padding(1.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            BetterButton(
-                onClick = {},
-                shape = RoundedCornerShape(4.dp),
-                contentPadding = PaddingValues(2.dp),
-                modifier = Modifier
-                    .width(dimensionResource(R.dimen.line_label_width) - (2.dp))
-                    .height(dimensionResource(R.dimen.line_height) - 2.dp),
-                content = {
-                    Icon(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .combinedClickable(
-                                onClick = { TODO() },
-                                onLongClick = {
-                                    dispatcher.cursor_select_column(0)
-                                    scope.launch { scroll_state.animateScrollTo(0) }
-                                }
-                            ),
-                        painter = painterResource(R.drawable.icon_shortcut),
-                        contentDescription = stringResource(R.string.jump_to_section)
-                    )
-                }
-            )
-        }
+            Modifier
+                .background(colorResource(R.color.line_label), shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp, bottomStart = 0.dp, bottomEnd = 8.dp))
+                .width(dimensionResource(R.dimen.line_label_width))
+                .height(dimensionResource(R.dimen.line_height))
+                .padding(top = 0.dp, start = 0.dp, end = 1.dp, bottom = 1.dp)
+                .combinedClickable(
+                    onClick = { dispatcher.cursor_select_column() },
+                    onLongClick = {
+                        dispatcher.cursor_select_column(0)
+                        scope.launch { scroll_state.animateScrollTo(0) }
+                    }
+                ),
+            contentAlignment = Alignment.Center,
+            content = {
+                Icon(
+                    modifier = Modifier
+                        .padding(4.dp)
+                        .fillMaxSize(),
+                    painter = painterResource(R.drawable.icon_shortcut),
+                    contentDescription = stringResource(R.string.jump_to_section)
+                )
+            }
+        )
     }
 
     @Composable
@@ -595,29 +635,46 @@ class ComponentActivityEditor: PaganComponentActivity() {
         } else {
             Pair(R.color.line_label, R.color.line_label_text)
         }
-
         val ctl_type = line_info.ctl_type.value
-        Box(Modifier.padding(1.dp)) {
-            if (ctl_type == null) {
-                val (label_a, label_b) = if (line_info.assigned_offset.value != null) {
-                    Pair("!${line_info.channel.value}", "${line_info.assigned_offset.value}")
-                } else {
-                    Pair("${line_info.channel.value}", "${line_info.line_offset.value}")
-                }
-                BetterButton(
-                    onClick = {
-                        dispatcher.cursor_select_line(line_info.channel.value, line_info.line_offset.value, line_info.ctl_type.value)
-                    },
-                    contentPadding = PaddingValues(2.dp),
-                    shape = RoundedCornerShape(4.dp),
-                    colors = ButtonColors(
-                        containerColor = colorResource(background_color),
-                        contentColor = colorResource(content_color),
-                        disabledContentColor = Color.Magenta,
-                        disabledContainerColor = Color.Magenta
-                    ),
-                    content = {
-                        Row {
+        Box(
+            Modifier
+                .padding(
+                    start = 0.dp,
+                    end = 1.dp,
+                    top = 1.dp,
+                    bottom = 1.dp
+                )
+        ) {
+            Box(
+                modifier = Modifier
+                    .combinedClickable(
+                        onClick = {
+                            dispatcher.cursor_select_line(
+                                line_info.channel.value,
+                                line_info.line_offset.value,
+                                line_info.ctl_type.value
+                            )
+                        },
+                        onLongClick = {}
+                    )
+                    .background(
+                        shape = RoundedCornerShape(
+                            topStart = 0.dp,
+                            bottomStart = 0.dp,
+                            topEnd = 3.dp,
+                            bottomEnd = 3.dp
+                        ),
+                        color = colorResource(background_color),
+                    )
+                    .fillMaxSize(),
+                content = {
+                    if (ctl_type == null) {
+                        val (label_a, label_b) = if (line_info.assigned_offset.value != null) {
+                            Pair("!${line_info.channel.value}", "${line_info.assigned_offset.value}")
+                        } else {
+                            Pair("${line_info.channel.value}", "${line_info.line_offset.value}")
+                        }
+                        Row(modifier = Modifier.padding(2.dp)) {
                             Column(
                                 verticalArrangement = Arrangement.Top,
                                 horizontalAlignment = Alignment.Start,
@@ -635,51 +692,43 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 content = { Text(label_b) }
                             )
                         }
-                    }
-                )
-            } else {
-                val (drawable_id, description_id) = when (ctl_type) {
-                    EffectType.Tempo -> Pair(R.drawable.icon_tempo, R.string.ctl_desc_tempo)
-                    EffectType.Velocity -> Pair(R.drawable.icon_velocity, R.string.ctl_desc_velocity)
-                    EffectType.Volume -> Pair(R.drawable.icon_volume, R.string.ctl_desc_volume)
-                    EffectType.Delay -> Pair(R.drawable.icon_echo, R.string.ctl_desc_delay)
-                    EffectType.Pan -> Pair(R.drawable.icon_pan, R.string.ctl_desc_pan)
-                    EffectType.LowPass -> TODO()
-                    EffectType.Reverb -> TODO()
-                }
-                BetterButton(
-                    onClick = {},
-                    shape = RoundedCornerShape(4.dp),
-                    contentPadding = PaddingValues(2.dp),
-                    colors = ButtonColors(
-                        containerColor = colorResource(background_color),
-                        contentColor = colorResource(content_color),
-                        disabledContentColor = Color.Magenta,
-                        disabledContainerColor = Color.Magenta
-                    ),
-                    content = {
+                    } else {
+                        val (drawable_id, description_id) = when (ctl_type) {
+                            EffectType.Tempo -> Pair(R.drawable.icon_tempo, R.string.ctl_desc_tempo)
+                            EffectType.Velocity -> Pair(R.drawable.icon_velocity, R.string.ctl_desc_velocity)
+                            EffectType.Volume -> Pair(R.drawable.icon_volume, R.string.ctl_desc_volume)
+                            EffectType.Delay -> Pair(R.drawable.icon_echo, R.string.ctl_desc_delay)
+                            EffectType.Pan -> Pair(R.drawable.icon_pan, R.string.ctl_desc_pan)
+                            EffectType.LowPass -> TODO()
+                            EffectType.Reverb -> TODO()
+                        }
                         Icon(
-                            modifier = modifier.combinedClickable(
-                                onClick = {
-                                    if (line_info.line_offset.value != null) {
-                                        dispatcher.cursor_select_line_ctl_line(
-                                            ctl_type,
-                                            line_info.channel.value!!,
-                                            line_info.line_offset.value!!
-                                        )
-                                    } else if (line_info.channel.value != null) {
-                                        dispatcher.cursor_select_channel_ctl_line(ctl_type, line_info.channel.value!!)
-                                    } else {
-                                        dispatcher.cursor_select_global_ctl_line(ctl_type)
+                            modifier = modifier
+                                .padding(2.dp)
+                                .combinedClickable(
+                                    onClick = {
+                                        if (line_info.line_offset.value != null) {
+                                            dispatcher.cursor_select_line_ctl_line(
+                                                ctl_type,
+                                                line_info.channel.value!!,
+                                                line_info.line_offset.value!!
+                                            )
+                                        } else if (line_info.channel.value != null) {
+                                            dispatcher.cursor_select_channel_ctl_line(
+                                                ctl_type,
+                                                line_info.channel.value!!
+                                            )
+                                        } else {
+                                            dispatcher.cursor_select_global_ctl_line(ctl_type)
+                                        }
                                     }
-                                }
-                            ),
+                                ),
                             painter = painterResource(drawable_id),
                             contentDescription = stringResource(description_id)
                         )
                     }
-                )
-            }
+                }
+            )
         }
     }
 
@@ -704,28 +753,28 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         Box(
             modifier = Modifier
-                .padding(1.dp)
-                .fillMaxSize()
-        ) {
-            BetterButton(
-                shape = RoundedCornerShape(4.dp),
-                colors = ButtonColors(
-                    containerColor = colorResource(background_color),
-                    contentColor = colorResource(content_color),
-                    disabledContentColor = Color.Magenta,
-                    disabledContainerColor = Color.Magenta
-                ),
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(0.dp),
-                onClick = { dispatcher.cursor_select_column(x) },
-                content = {
-                    Text(
-                        text = "$x",
-                        modifier = modifier.padding(0.dp)
+                .padding(top = 0.dp, end = 1.dp, bottom = 1.dp, start = 1.dp)
+                .background(
+                    color = colorResource(background_color),
+                    shape = RoundedCornerShape(
+                        topStart = 0.dp,
+                        topEnd = 0.dp,
+                        bottomEnd = 4.dp,
+                        bottomStart = 4.dp
                     )
-                }
-            )
-        }
+                )
+                .combinedClickable(
+                    onClick = { dispatcher.cursor_select_column(x) },
+                )
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center,
+            content = {
+                Text(
+                    text = "$x",
+                    modifier = modifier.padding(0.dp)
+                )
+            }
+        )
     }
 
     @Composable
@@ -734,6 +783,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             is InstrumentEvent -> 12.dp
             else -> 4.dp
         }
+
         val (leaf_color, text_color) = if (leaf_data.is_selected.value) {
             when (event) {
                 is InstrumentEvent -> Pair(colorResource(R.color.leaf_selected), colorResource(R.color.leaf_selected_text))
@@ -753,16 +803,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 else -> Pair(Color(0x10000000), Color(0x000000))
             }
         }
-        val background_color = if (line_data.ctl_type.value != null) {
-            colorResource(R.color.ctl_line)
-        } else {
-            colorResource(R.color.table_background)
-        }
-
         Box(
-            modifier
-                .fillMaxSize()
-                .background(color = background_color),
+            modifier .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Box(
@@ -943,7 +985,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     Box(Modifier) {
                         Column {
                             Row { ContextMenuPrimary(ui_facade, view_model.action_interface) }
-                            Row { ContextMenuSecondary(ui_facade, view_model.action_interface) }
+                            ContextMenuSecondary(ui_facade, view_model.action_interface)
                         }
                     }
                 }
@@ -957,13 +999,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val state_model = this.state_model
         val scope = rememberCoroutineScope()
 
-        Card(modifier.wrapContentWidth()) {
-            Column(
-                modifier = Modifier.padding(12.dp).wrapContentWidth()
-            ) {
+        Card(
+            shape = RoundedCornerShape(topStart = 0.dp, bottomStart = 0.dp, topEnd = 4.dp, bottomEnd = 4.dp),
+            modifier = modifier.wrapContentWidth()
+        ) {
+            Column(modifier = Modifier.padding(12.dp).wrapContentWidth()) {
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.height(42.dp)
                 ) {
                     Column(modifier = Modifier.weight(1F)) {
                         ConfigDrawerTopButton(
@@ -1036,6 +1078,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     ConfigDrawerBottomButton(
                         icon = R.drawable.icon_ic_baseline_content_copy_24,
                         description = R.string.btn_cfg_copy,
+                        enabled = this@ComponentActivityEditor.controller_model.project_exists.value,
                         onClick = {
                             scope.launch { this@ComponentActivityEditor.close_drawer() }
                             dispatcher.project_copy()
@@ -1044,6 +1087,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     ConfigDrawerBottomButton(
                         icon = R.drawable.icon_trash,
                         description = R.string.btn_cfg_delete,
+                        enabled = this@ComponentActivityEditor.controller_model.project_exists.value,
                         onClick = {
                             scope.launch { this@ComponentActivityEditor.close_drawer() }
                             dispatcher.delete()
@@ -1090,19 +1134,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
         TODO("Not yet implemented")
     }
 
-
-    private fun _project_save() {
-        this.view_model.project_manager?.let {
-            it.save(
-                this.controller_model.opus_manager,
-                this.controller_model.active_project,
-                this.view_model.configuration.indent_json
-            )
-            this.controller_model.opus_manager.vm_state.set_project_exists(true)
-            this.toast(R.string.feedback_project_saved)
-        }
-    }
-
     fun project_save() {
         val configuration = this.view_model.configuration
         if (configuration.project_directory == null || DocumentFile.fromTreeUri(this, configuration.project_directory!!)?.exists() != true) {
@@ -1116,8 +1147,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     }
                 }
             )
-        } else {
-            this._project_save()
         }
     }
 
@@ -1149,6 +1178,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         this.controller_model.opus_manager.load(content) {
             this.controller_model.active_project = uri
+            this.controller_model.project_exists.value = true
         }
     }
 

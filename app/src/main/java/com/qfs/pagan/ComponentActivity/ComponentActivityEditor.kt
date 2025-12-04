@@ -52,6 +52,9 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.blue
+import androidx.core.graphics.green
+import androidx.core.graphics.red
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.lifecycleScope
@@ -771,6 +774,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
         )
     }
 
+    private fun mix_colors(first: Int, second: Int, numer_a: Int, numer_b: Int): Int {
+        val denominator = numer_a + numer_b
+        val red = (first.red * numer_a / denominator) + (second.red * numer_b / denominator)
+        val green = (first.green * numer_a / denominator) + (second.green * numer_b /denominator)
+        val blue = (first.blue * numer_a / denominator) + (second.blue * numer_b /denominator)
+        return (red shl 16) + (green shl 8) + blue
+    }
+
     @Composable
     fun <T: OpusEvent> LeafView(line_data: ViewModelEditorState.LineData, leaf_data: ViewModelEditorState.LeafData, event: T?, radix: Int, modifier: Modifier = Modifier) {
         val corner_radius = when (event) {
@@ -789,8 +800,17 @@ class ComponentActivityEditor: PaganComponentActivity() {
             test_colors[it % test_colors.size]
         } ?: 0x000090
 
-        val spill_color = (0x000000 / 10) + (base_color * 9 / 10)
-        val empty_color = (base_color and (0xFFFFFF)) + 0x22000000
+        // alternate slight shading
+        val adjusted_base_color = line_data.line_offset.value?.let {
+            if (it % 2 == 0) {
+                base_color
+            } else {
+                this.mix_colors(0xFFFFFF, base_color, 3, 7)
+            }
+        } ?: base_color
+
+        val spill_color = this.mix_colors(0x000000, adjusted_base_color, 1, 9)
+        val empty_color = (adjusted_base_color and (0xFFFFFF)) + 0x22000000
 
         val leaf_color = Color(
             if (leaf_data.is_spillover.value) {

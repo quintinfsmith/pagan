@@ -3,7 +3,6 @@ package com.qfs.pagan
 import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,8 +35,8 @@ import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.SortableMenu
 import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.UnSortableMenu
-import com.qfs.pagan.composable.button.BetterButton
-import com.qfs.pagan.composable.button.BetterOutLinedButton
+import com.qfs.pagan.composable.button.Button
+import com.qfs.pagan.composable.button.OutlinedButton
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
@@ -801,7 +800,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         this.vm_top.create_dialog { close ->
             @Composable {
                 val scope = rememberCoroutineScope()
-                val opus_manager = this.get_opus_manager()
+                //val opus_manager = this.get_opus_manager()
                 val scrolled_value = remember { mutableStateOf(0) }
 
                 Row {
@@ -1226,22 +1225,20 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             }
             val current_instrument = (opus_manager.get_channel(channel).lines[line_offset] as OpusLinePercussion).instrument
             @Composable {
-                Column {
-                    Row { DialogSTitle(R.string.dropdown_choose_instrument, modifier = Modifier.weight(1F)) }
-                    Row {
-                        UnSortableMenu(options, default_value = current_instrument) { value ->
-                            this@ActionTracker.track(TrackedAction.SetPercussionInstrument, listOf(channel, line_offset, value))
-                            opus_manager.percussion_set_instrument(channel, line_offset, value)
-                            close()
-                        }
+                Row { DialogSTitle(R.string.dropdown_choose_instrument, modifier = Modifier.weight(1F)) }
+                Row {
+                    UnSortableMenu(options, default_value = current_instrument) { value ->
+                        this@ActionTracker.track(TrackedAction.SetPercussionInstrument, listOf(channel, line_offset, value))
+                        opus_manager.percussion_set_instrument(channel, line_offset, value)
+                        close()
                     }
-                    Row {
-                        BetterOutLinedButton(
-                            modifier = Modifier.weight(1F),
-                            onClick = close,
-                            content = { SText(android.R.string.cancel) }
-                        )
-                    }
+                }
+                Row {
+                    OutlinedButton(
+                        modifier = Modifier.weight(1F),
+                        onClick = close,
+                        content = { SText(android.R.string.cancel) }
+                    )
                 }
             }
         }
@@ -1296,25 +1293,23 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                     Pair(R.string.sort_option_program) { a: Int, b: Int -> preset_names[a].second.compareTo(preset_names[b].second) },
                     Pair(R.string.sort_option_abc) { a: Int, b: Int -> preset_names[a].third.compareTo(preset_names[b].third) }
                 )
-                Column(verticalArrangement = Arrangement.SpaceBetween) {
-                    Row {
-                        SText(R.string.dropdown_choose_instrument)
+                Row {
+                    SText(R.string.dropdown_choose_instrument)
+                }
+                Row(Modifier.weight(1F)) {
+                    SortableMenu(options, sort_options = sort_options, 0, default) { instrument ->
+                        close()
+                        opus_manager.channel_set_instrument(channel, instrument)
                     }
-                    Row(Modifier.weight(1F)) {
-                        SortableMenu(options, sort_options = sort_options, 0, default) { instrument ->
-                            close()
-                            opus_manager.channel_set_instrument(channel, instrument)
+                }
+                Row {
+                    OutlinedButton(
+                        onClick = { close() },
+                        modifier = Modifier.fillMaxWidth(),
+                        content = {
+                            SText(android.R.string.cancel)
                         }
-                    }
-                    Row {
-                        BetterOutLinedButton(
-                            onClick = { close() },
-                            modifier = Modifier.fillMaxWidth(),
-                            content = {
-                                SText(android.R.string.cancel)
-                            }
-                        )
-                    }
+                    )
                 }
             }
         }
@@ -1551,28 +1546,26 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         } else {
             this.vm_top.create_dialog { close ->
                 @Composable {
-                    Column {
-                        Row { DialogTitle(title, modifier = Modifier.weight(1F)) }
-                        Row {
-                            BetterOutLinedButton(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1F),
-                                onClick = { close() },
-                                content = { SText(android.R.string.cancel) }
-                            )
+                    Row { DialogTitle(title, modifier = Modifier.weight(1F)) }
+                    Row {
+                        OutlinedButton(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1F),
+                            onClick = { close() },
+                            content = { SText(android.R.string.cancel) }
+                        )
 
-                            BetterButton(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1F),
-                                onClick = {
-                                    close()
-                                    callback()
-                                },
-                                content = { SText(android.R.string.ok) }
-                            )
-                        }
+                        Button(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1F),
+                            onClick = {
+                                close()
+                                callback()
+                            },
+                            content = { SText(android.R.string.ok) }
+                        )
                     }
                 }
             }
@@ -1590,34 +1583,33 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             this.vm_top.create_dialog { close ->
                 @Composable {
                     val value: MutableState<Int> = remember { mutableIntStateOf(default ?: min_value) }
-                    Column {
-                        Row { DialogSTitle(title_string_id, modifier = Modifier.weight(1F)) }
-                        Row {
-                            IntegerInput(
-                                value = value,
-                                minimum = min_value,
-                                maximum = max_value,
-                                modifier = Modifier.fillMaxWidth()
-                            ) { new_value ->
+
+                    Row { DialogSTitle(title_string_id, modifier = Modifier.weight(1F)) }
+                    Row {
+                        IntegerInput(
+                            value = value,
+                            minimum = min_value,
+                            maximum = max_value,
+                            modifier = Modifier.fillMaxWidth()
+                        ) { new_value ->
+                            close()
+                            callback(new_value)
+                        }
+                    }
+
+                    Row(horizontalArrangement = Arrangement.SpaceBetween) {
+                        OutlinedButton(
+                            onClick = { close() },
+                            content = { SText(android.R.string.cancel) }
+                        )
+
+                        Button(
+                            onClick = {
                                 close()
-                                callback(new_value)
-                            }
-                        }
-
-                        Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                            BetterOutLinedButton(
-                                onClick = { close() },
-                                content = { SText(android.R.string.cancel) }
-                            )
-
-                            BetterButton(
-                                onClick = {
-                                    close()
-                                    callback(value.value)
-                                },
-                                content = { SText(android.R.string.ok) }
-                            )
-                        }
+                                callback(value.value)
+                            },
+                            content = { SText(android.R.string.ok) }
+                        )
                     }
                 }
             }
@@ -1654,33 +1646,31 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         if (stub_output == null) {
             this.vm_top.create_dialog { close ->
                 @Composable {
-                    Column {
-                        Row { DialogSTitle(R.string.dialog_save_warning_title, modifier = Modifier.weight(1F)) }
-                        Row {
-                            BetterButton(
-                                modifier = Modifier.weight(1F),
-                                onClick = {
-                                    close()
-                                    callback(false)
+                    Row { DialogSTitle(R.string.dialog_save_warning_title, modifier = Modifier.weight(1F)) }
+                    Row {
+                        Button(
+                            modifier = Modifier.weight(1F),
+                            onClick = {
+                                close()
+                                callback(false)
 
-                                },
-                                content = { SText(R.string.no) }
-                            )
-                            TextButton(
-                                modifier = Modifier.weight(1F),
-                                onClick = { close() },
-                                content = { SText(android.R.string.cancel) }
-                            )
-                            BetterButton(
-                                modifier = Modifier.weight(1F),
-                                onClick = {
-                                    close()
-                                    this@ActionTracker.save()
-                                    callback(true)
-                                },
-                                content = { SText(android.R.string.ok) }
-                            )
-                        }
+                            },
+                            content = { SText(R.string.no) }
+                        )
+                        TextButton(
+                            modifier = Modifier.weight(1F),
+                            onClick = { close() },
+                            content = { SText(android.R.string.cancel) }
+                        )
+                        Button(
+                            modifier = Modifier.weight(1F),
+                            onClick = {
+                                close()
+                                this@ActionTracker.save()
+                                callback(true)
+                            },
+                            content = { SText(android.R.string.ok) }
+                        )
                     }
                 }
             }
@@ -1702,17 +1692,15 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
         this.vm_top.create_dialog { close ->
             @Composable {
-                Column {
-                    Row { DialogSTitle(title, modifier = Modifier.weight(1F)) }
-                    Row {
-                        UnSortableMenu(options, default, callback)
-                    }
-                    Row {
-                        TextButton(
-                            onClick = { close() },
-                            content = { SText(android.R.string.cancel) }
-                        )
-                    }
+                Row { DialogSTitle(title, modifier = Modifier.weight(1F)) }
+                Row {
+                    UnSortableMenu(options, default, callback)
+                }
+                Row {
+                    TextButton(
+                        onClick = { close() },
+                        content = { SText(android.R.string.cancel) }
+                    )
                 }
             }
         }
@@ -1744,7 +1732,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         onClick = {},
                         content = { SText(android.R.string.cancel) }
                     )
-                    BetterButton(
+                    Button(
                         modifier = Modifier.weight(1F),
                         onClick = { callback(value.value) },
                         content = { SText(android.R.string.ok) }
@@ -1759,7 +1747,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
         this.vm_top.create_dialog { close ->
             @Composable  {
-               //  Column {
                //      Row {
                //          OutlinedTextField(
                //              maxLines = 1
@@ -1769,7 +1756,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                //          OutlinedTextField(
                //          )
                //      }
-               //  }
             }
         }
         // val activity = this.get_activity()

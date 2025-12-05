@@ -29,7 +29,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun BetterOutLinedButton(
+fun OutlinedButton(
     onClick: () -> Unit,
     onLongClick: () -> Unit = {},
     modifier: Modifier = Modifier,
@@ -38,7 +38,7 @@ fun BetterOutLinedButton(
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
     content: @Composable RowScope.() -> Unit
 ) {
-    BetterButton(
+    Button(
         onClick = onClick,
         onLongClick = onLongClick,
         modifier = modifier,
@@ -52,7 +52,7 @@ fun BetterOutLinedButton(
 }
 
 @Composable
-fun BetterButton(
+fun Button(
     onClick: () -> Unit,
     onLongClick: () -> Unit = {},
     modifier: Modifier = Modifier,

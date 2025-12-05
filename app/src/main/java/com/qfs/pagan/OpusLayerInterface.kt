@@ -1300,6 +1300,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.temporary_blocker = null
         this._queue_cursor_update(this.cursor)
         this.vm_state.set_active_event(null)
+
+        this.vm_state.scroll_to_beat(beat)
     }
 
     override fun cursor_select(beat_key: BeatKey, position: List<Int>) {
@@ -1312,7 +1314,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         if (!this.is_percussion(beat_key.channel) && current_tree.has_event()) {
             this.set_relative_mode(current_tree.get_event()!! as TunedInstrumentEvent)
         }
-
 
         this._queue_cursor_update(this.cursor)
         this.vm_state.set_active_event(current_tree.get_event()?.copy())

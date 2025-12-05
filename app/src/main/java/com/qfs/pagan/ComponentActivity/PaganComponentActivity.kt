@@ -30,7 +30,6 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -47,13 +46,13 @@ import androidx.documentfile.provider.DocumentFile
 import com.qfs.pagan.DialogChain
 import com.qfs.pagan.MenuDialogEventHandler
 import com.qfs.pagan.R
+import com.qfs.pagan.composable.Card
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.ScaffoldWithTopBar
 import com.qfs.pagan.composable.SortableMenu
-import com.qfs.pagan.composable.button.BetterButton
-import com.qfs.pagan.composable.button.BetterOutLinedButton
+import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.projectmanager.ProjectManager
@@ -159,16 +158,15 @@ abstract class PaganComponentActivity: ComponentActivity() {
                         for (dialog in dialogs.reversed()) {
                             Dialog(onDismissRequest = { view_model.dialog_queue.value = dialog.parent }) {
                                 ProvideContentColorTextStyle(MaterialTheme.colorScheme.onBackground) {
-                                    Box(
+                                    Card(
                                         modifier = Modifier
                                             .padding(dimensionResource(R.dimen.dialog_padding))
                                             .background(
                                                 MaterialTheme.colorScheme.background,
                                                 RoundedCornerShape(corner = CornerSize(12.dp))
-                                            )
-                                    ) {
-                                        dialog.dialog()
-                                    }
+                                            ),
+                                        content = dialog.dialog
+                                    )
                                 }
                             }
                         }
@@ -250,7 +248,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                     }
 
                     Row {
-                        BetterOutLinedButton(
+                        com.qfs.pagan.composable.button.OutlinedButton(
                             modifier = Modifier.fillMaxWidth().weight(1F),
                             onClick = { close() },
                             content = { SText(android.R.string.cancel) }
@@ -371,11 +369,11 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 Column {
                     Row { ProjectCard(uri) }
                     Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                        OutlinedButton(
+                        androidx.compose.material3.OutlinedButton(
                             onClick = close,
                             content = { SText(android.R.string.cancel) }
                         )
-                        BetterButton(
+                        Button(
                             onClick = {
                                 close()
                                 this@PaganComponentActivity.view_model.create_dialog { close_subdialog ->
@@ -383,11 +381,11 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                         Column {
                                             Row { DialogTitle(stringResource(R.string.dlg_delete_title, title), modifier = Modifier.weight(1F)) }
                                             Row {
-                                                BetterButton(
+                                                Button(
                                                     onClick = close_subdialog,
                                                     content = { SText(android.R.string.cancel) }
                                                 )
-                                                BetterButton(
+                                                Button(
                                                     onClick = {
                                                         close_subdialog()
                                                         this@PaganComponentActivity.view_model.project_manager?.delete(
@@ -403,7 +401,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                             },
                             content = { SText(R.string.delete_project) }
                         )
-                        BetterButton(
+                        Button(
                             onClick = {
                                 close()
                                 TODO()
@@ -453,7 +451,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                         }
                     }
                     Row {
-                        BetterOutLinedButton(
+                        com.qfs.pagan.composable.button.OutlinedButton(
                             onClick = close,
                             content = { SText(android.R.string.cancel) }
                         )

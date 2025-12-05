@@ -56,8 +56,8 @@ import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.SortableMenu
 import com.qfs.pagan.composable.SoundFontWarning
-import com.qfs.pagan.composable.button.BetterButton
-import com.qfs.pagan.composable.button.BetterOutLinedButton
+import com.qfs.pagan.composable.button.Button
+import com.qfs.pagan.composable.button.OutlinedButton
 import com.qfs.pagan.enumerate
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -298,14 +298,14 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
         Column {
             Text(stringResource(R.string.label_settings_sf))
-            BetterButton(
+            Button(
                 modifier = Modifier.fillMaxWidth(),
                 content = { Text(view_model.soundfont_name.value ?: no_soundfont_text) },
                 onClick = {
                     val file_list = this@ComponentActivitySettings.get_existing_soundfonts()
                     if (file_list.isEmpty()) {
                         this@ComponentActivitySettings.import_soundfont()
-                        return@BetterButton
+                        return@Button
                     }
 
                     val soundfonts = mutableListOf<Pair<Uri, @Composable () -> Unit>>()
@@ -329,7 +329,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                     DialogSTitle(R.string.dialog_select_soundfont, modifier =Modifier.weight(1F))
                                 }
                                 Row {
-                                    BetterButton(
+                                    Button(
                                         content = { SText(R.string.no_soundfont) },
                                         modifier = Modifier
                                             .weight(1F),
@@ -339,7 +339,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                             close()
                                         }
                                     )
-                                    BetterButton(
+                                    Button(
                                         content = { SText(R.string.option_import_soundfont) },
                                         modifier = Modifier.weight(1F),
                                         onClick = {
@@ -357,7 +357,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                     }
                                 }
                                 Row {
-                                    BetterOutLinedButton(
+                                    OutlinedButton(
                                         modifier = Modifier.fillMaxWidth(),
                                         onClick = { close() },
                                         content = { SText(android.R.string.cancel) }
@@ -374,7 +374,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             }
 
             Text(stringResource(R.string.label_settings_soundfont_directory))
-            BetterButton(
+            Button(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
                     this@ComponentActivitySettings._set_soundfont_directory_intent_launcher.launch(
@@ -393,7 +393,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             )
 
             Text(stringResource(R.string.label_settings_projects_directory))
-            BetterButton(
+            Button(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
                     this@ComponentActivitySettings.result_launcher_set_project_directory.launch(

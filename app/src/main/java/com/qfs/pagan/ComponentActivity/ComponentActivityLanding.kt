@@ -1,60 +1,25 @@
 package com.qfs.pagan.ComponentActivity
 
-import android.app.AlertDialog
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.core.net.toUri
-import androidx.documentfile.provider.DocumentFile
 import com.qfs.pagan.Activity.ActivityEditor
-import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
-import com.qfs.pagan.MenuDialogEventHandler
 import com.qfs.pagan.R
-import com.qfs.pagan.composable.SText
-import com.qfs.pagan.composable.SortableMenu
 import com.qfs.pagan.composable.SoundFontWarning
-import com.qfs.pagan.composable.button.BetterButton
-import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.text.SimpleDateFormat
-import java.util.Date
-import kotlin.Pair
-import kotlin.math.roundToInt
 
 class ComponentActivityLanding: PaganComponentActivity() {
     internal var result_launcher_import_project =
@@ -133,7 +98,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
     @Composable
     fun ButtonRecent(modifier: Modifier = Modifier) {
-        BetterButton(
+        com.qfs.pagan.composable.button.Button(
             modifier = modifier.fillMaxWidth(),
             content = { Text(stringResource(R.string.btn_landing_most_recent)) },
             onClick = {
@@ -148,7 +113,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
     @Composable
     fun ButtonNew(modifier: Modifier = Modifier) {
-        BetterButton(
+        com.qfs.pagan.composable.button.Button(
             modifier = modifier.fillMaxWidth(),
             content = { Text(stringResource(R.string.btn_landing_new)) },
             onClick = {
@@ -159,7 +124,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
     @Composable
     fun ButtonLoad(modifier: Modifier = Modifier) {
-        BetterButton(
+        com.qfs.pagan.composable.button.Button(
             modifier = modifier.fillMaxWidth(),
             content = { Text(stringResource(R.string.btn_landing_load)) },
             onClick = {
@@ -177,7 +142,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
     @Composable
     fun ButtonImport(modifier: Modifier = Modifier) {
-        BetterButton(
+        com.qfs.pagan.composable.button.Button(
             modifier = modifier.fillMaxWidth(),
             content = { Text(stringResource(R.string.btn_landing_import)) },
             onClick = {
@@ -194,7 +159,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
     @Composable
     fun ButtonSettings(modifier: Modifier = Modifier) {
-        BetterButton(
+        com.qfs.pagan.composable.button.Button(
             modifier = modifier.fillMaxWidth(),
             content = { Text(stringResource(R.string.btn_landing_settings)) },
             onClick = {
@@ -207,7 +172,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
     @Composable
     fun ButtonAbout(modifier: Modifier = Modifier) {
-        BetterButton(
+        com.qfs.pagan.composable.button.Button(
             modifier = modifier.fillMaxWidth(),
             content = { Text(stringResource(R.string.btn_landing_about)) },
             onClick = {

@@ -2,6 +2,7 @@ package com.qfs.pagan.viewmodel
 
 import android.net.Uri
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -73,7 +74,7 @@ class ViewModelPagan: ViewModel() {
         this.has_saved_project.value = this.project_manager?.has_projects_saved() ?: false
     }
 
-    fun create_dialog(level: Int = 0, dialog_callback: (() -> Unit) -> (@Composable (() -> Unit))) {
+    fun create_dialog(level: Int = 0, dialog_callback: (() -> Unit) -> (@Composable (ColumnScope.() -> Unit))) {
         // Use level to block Dup dialogs. set it to allow for dialogs opened from other dialogs
         if (this.dialog_queue.value?.level == level) return
         this.dialog_queue.value = DialogChain(

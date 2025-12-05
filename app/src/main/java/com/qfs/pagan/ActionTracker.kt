@@ -51,6 +51,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEv
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelPagan
+import kotlinx.coroutines.CoroutineScope
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
@@ -1785,7 +1786,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         return this.vm_controller.opus_manager
     }
 
-    fun play_opus() {
+    fun play_opus(scope: CoroutineScope) {
         this.vm_controller.playback_device?.play_opus(0)
     }
 

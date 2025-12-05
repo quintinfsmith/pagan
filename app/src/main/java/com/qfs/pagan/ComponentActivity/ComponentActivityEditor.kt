@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -409,7 +408,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
             TopBarIcon(
                 icon = R.drawable.icon_play, // TODO: Play state
                 description = R.string.menu_item_playpause,
-                callback = { dispatcher.play_opus() }
+                callback = {
+                    scope.launch { dispatcher.play_opus(this) }
+                }
             )
             Box {
                 val expanded = remember { mutableStateOf(false) }
@@ -493,8 +494,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
         val scope = rememberCoroutineScope()
-        val scroll_state_v = rememberScrollState()
-        val scroll_state_h = rememberScrollState()
+        val scroll_state_v = ui_facade.scroll_state_y.value
+        val scroll_state_h = ui_facade.scroll_state_x.value
 
         Column {
             Row {

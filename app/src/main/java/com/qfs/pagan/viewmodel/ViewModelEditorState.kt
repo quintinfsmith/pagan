@@ -1,5 +1,6 @@
 package com.qfs.pagan.viewmodel
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -14,9 +15,9 @@ import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.iterator
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
 
@@ -131,6 +132,10 @@ class ViewModelEditorState: ViewModel() {
     val highlighted_octave: MutableState<Int?> = mutableStateOf(null)
 
     val is_buffering: MutableState<Boolean> = mutableStateOf(false)
+
+    val scroll_state_x: MutableState<ScrollState> = mutableStateOf(ScrollState(0))
+    val scroll_state_y: MutableState<ScrollState> = mutableStateOf(ScrollState(0))
+    val coroutine_scope: MutableState<CoroutineScope?> = mutableStateOf(CoroutineScope(Dispatchers.Default))
 
     private val working_path = mutableListOf<Int>()
     val preset_names = HashMap<Int, HashMap<Int, String>>()
@@ -629,5 +634,19 @@ class ViewModelEditorState: ViewModel() {
         val available = this.get_available_instruments(preset_key)
         return if (available.size <= offset) "TODO"
             else available[offset].first
+    }
+
+    fun scroll_to_beat(beat: Int) {
+        val leaf_width =  100  // TODO: Declare this somewhere else (ALSO 100 is just to test. needs to be base width)
+
+        val target_x = leaf_width * Array(beat) { i ->
+            Array(this.cell_map.size) { j -> this.cell_map[j][i].value.weighted_size }.max()
+        }.sum()
+
+        this.coroutine_scope.value?.let {
+            it.launch {
+                this@ViewModelEditorState.scroll_state_x.value.scrollTo(target_x)
+            }
+        }
     }
 }

@@ -52,6 +52,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
+import com.qfs.pagan.composable.button.Button
+import com.qfs.pagan.composable.button.OutlinedButton
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -355,7 +357,7 @@ fun DialogBar(modifier: Modifier = Modifier.fillMaxWidth(), positive: (() -> Uni
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         negative?.let {
-            BetterButton(
+            Button(
                 contentPadding = PaddingValues(top = 2.dp, bottom = 2.dp, end = 4.dp, start = 4.dp),
                 onClick = it,
                 content = { SText(android.R.string.no) }
@@ -369,7 +371,7 @@ fun DialogBar(modifier: Modifier = Modifier.fillMaxWidth(), positive: (() -> Uni
             )
         }
         positive?.let {
-            BetterButton(
+            Button(
                 contentPadding = PaddingValues(top = 2.dp, bottom = 2.dp, end = 4.dp, start = 4.dp),
                 onClick = it,
                 content = { SText(android.R.string.ok) }

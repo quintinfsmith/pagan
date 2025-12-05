@@ -2,9 +2,11 @@ package com.qfs.pagan.composable
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -344,4 +346,34 @@ fun Card(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     OriginalCard(modifier, shape, colors, elevation, border, content)
+}
+
+@Composable
+fun DialogBar(modifier: Modifier = Modifier.fillMaxWidth(), positive: (() -> Unit)? = null, negative: (() -> Unit)? = null, neutral: (() -> Unit)? = null) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        negative?.let {
+            BetterButton(
+                contentPadding = PaddingValues(top = 2.dp, bottom = 2.dp, end = 4.dp, start = 4.dp),
+                onClick = it,
+                content = { SText(android.R.string.no) }
+            )
+        }
+        neutral?.let {
+            OutlinedButton(
+                contentPadding = PaddingValues(top = 2.dp, bottom = 2.dp, end = 4.dp, start = 4.dp),
+                onClick = it,
+                content = { SText(android.R.string.cancel) }
+            )
+        }
+        positive?.let {
+            BetterButton(
+                contentPadding = PaddingValues(top = 2.dp, bottom = 2.dp, end = 4.dp, start = 4.dp),
+                onClick = it,
+                content = { SText(android.R.string.ok) }
+            )
+        }
+    }
 }

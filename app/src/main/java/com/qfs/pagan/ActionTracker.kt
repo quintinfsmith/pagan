@@ -28,6 +28,7 @@ import com.qfs.json.JSONList
 import com.qfs.json.JSONObject
 import com.qfs.json.JSONString
 import com.qfs.pagan.OpusLayerInterface
+import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.IntegerInput
@@ -1234,13 +1235,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         close()
                     }
                 }
-                Row {
-                    OutlinedButton(
-                        modifier = Modifier.weight(1F),
-                        onClick = close,
-                        content = { SText(android.R.string.cancel) }
-                    )
-                }
+                DialogBar(neutral = close)
             }
         }
     }
@@ -1303,15 +1298,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         opus_manager.channel_set_instrument(channel, instrument)
                     }
                 }
-                Row {
-                    OutlinedButton(
-                        onClick = { close() },
-                        modifier = Modifier.fillMaxWidth(),
-                        content = {
-                            SText(android.R.string.cancel)
-                        }
-                    )
-                }
+                DialogBar(neutral = close)
             }
         }
 
@@ -1548,26 +1535,13 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             this.vm_top.create_dialog { close ->
                 @Composable {
                     Row { DialogTitle(title, modifier = Modifier.weight(1F)) }
-                    Row {
-                        OutlinedButton(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1F),
-                            onClick = { close() },
-                            content = { SText(android.R.string.cancel) }
-                        )
-
-                        Button(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1F),
-                            onClick = {
-                                close()
-                                callback()
-                            },
-                            content = { SText(android.R.string.ok) }
-                        )
-                    }
+                    DialogBar(
+                        neutral = close,
+                        positive = {
+                            close()
+                            callback()
+                        }
+                    )
                 }
             }
         }
@@ -1598,20 +1572,13 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         }
                     }
 
-                    Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                        OutlinedButton(
-                            onClick = { close() },
-                            content = { SText(android.R.string.cancel) }
-                        )
-
-                        Button(
-                            onClick = {
-                                close()
-                                callback(value.value)
-                            },
-                            content = { SText(android.R.string.ok) }
-                        )
-                    }
+                    DialogBar(
+                        neutral = close,
+                        positive = {
+                            close()
+                            callback(value.value)
+                        }
+                    )
                 }
             }
         }
@@ -1697,12 +1664,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                 Row {
                     UnSortableMenu(options, default, callback)
                 }
-                Row {
-                    TextButton(
-                        onClick = { close() },
-                        content = { SText(android.R.string.cancel) }
-                    )
-                }
+                DialogBar(neutral = close)
             }
         }
         // if (stub_output != null) {
@@ -1727,18 +1689,13 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         callback = callback
                     )
                 }
-                Row {
-                    TextButton(
-                        modifier = Modifier.weight(1F),
-                        onClick = {},
-                        content = { SText(android.R.string.cancel) }
-                    )
-                    Button(
-                        modifier = Modifier.weight(1F),
-                        onClick = { callback(value.value) },
-                        content = { SText(android.R.string.ok) }
-                    )
-                }
+                DialogBar(
+                    neutral = close,
+                    positive = {
+                        close()
+                        callback(value.value)
+                    }
+                )
             }
         }
     }

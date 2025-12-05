@@ -64,7 +64,13 @@ fun ContextMenuChannelPrimary(ui_facade: ViewModelEditorState, dispatcher: Actio
 fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier) {
     val cursor = ui_facade.active_cursor.value ?: return
     val channel_index = cursor.ints[0]
-    val active_channel = ui_facade.channel_data[channel_index]
+    println("CHANNEL: $channel_index")
+    val active_channel = try {
+        ui_facade.channel_data[channel_index]
+    } catch (e: Exception) {
+        println("burp")
+        return
+    }
 
     Row(modifier = modifier) {
         IconCMenuButton(

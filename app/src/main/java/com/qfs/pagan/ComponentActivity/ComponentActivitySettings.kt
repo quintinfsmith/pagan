@@ -75,6 +75,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             this.view_model.configuration.soundfont_directory = uri
             this.view_model.soundfont_directory.value = uri
             this.view_model.save_configuration()
+            this.view_model.requires_soundfont.value = !this.is_soundfont_available()
         }
 
     private var result_launcher_import_soundfont =

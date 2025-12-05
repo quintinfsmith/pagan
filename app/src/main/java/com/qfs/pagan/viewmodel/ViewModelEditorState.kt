@@ -206,6 +206,28 @@ class ViewModelEditorState: ViewModel() {
         this.line_count.value -= 1
     }
 
+    // Call after removing std line's row
+    fun shift_line_offsets_down(channel: Int, line_offset: Int, count: Int = 1) {
+        for (line_data in this.line_data) {
+            if (line_data.channel.value != channel) continue
+            line_data.line_offset.value?.let { check_offset ->
+                if (check_offset <= line_offset) continue
+                line_data.line_offset.value = check_offset - count
+            }
+        }
+    }
+
+    // Call after adding std line's row
+    fun shift_line_offsets_up(channel: Int, line_offset: Int, count: Int = 1) {
+        for (line_data in this.line_data) {
+            if (line_data.channel.value != channel) continue
+            line_data.line_offset.value?.let { check_offset ->
+                if (check_offset <= line_offset) continue
+                line_data.line_offset.value = check_offset + count
+            }
+        }
+    }
+
     fun add_channel(channel: Int, percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean, size: Int = 0) {
         for (ld in this.line_data) {
             ld.channel.value?.let {

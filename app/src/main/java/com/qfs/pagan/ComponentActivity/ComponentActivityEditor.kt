@@ -52,9 +52,11 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.alpha
 import androidx.core.graphics.blue
 import androidx.core.graphics.green
 import androidx.core.graphics.red
+import androidx.core.graphics.toColorLong
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.lifecycleScope
@@ -774,12 +776,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
         )
     }
 
-    private fun mix_colors(first: Int, second: Int, numer_a: Int, numer_b: Int): Int {
+    private fun mix_colors(first: Long, second: Long, numer_a: Int, numer_b: Int): Long {
         val denominator = numer_a + numer_b
-        val red = (first.red * numer_a / denominator) + (second.red * numer_b / denominator)
-        val green = (first.green * numer_a / denominator) + (second.green * numer_b /denominator)
-        val blue = (first.blue * numer_a / denominator) + (second.blue * numer_b /denominator)
-        return (red shl 16) + (green shl 8) + blue
+        val alpha = (((first and 0xFF000000) shr 24) * numer_a / denominator) + (((second and 0xFF000000) shr 24) * numer_b / denominator)
+        val red = (((first and 0xFF0000) shr 16) * numer_a / denominator) + (((second and 0xFF0000) shr 16) * numer_b / denominator)
+        val green = (((first and 0xFF00) shr 8) * numer_a / denominator) + (((second and 0xFF00) shr 8) * numer_b / denominator)
+        val blue = ((first and 0xFF) * numer_a / denominator) + ((second and 0xFF) * numer_b / denominator)
+        return (alpha shl 24) + (red shl 16) + (green shl 8) + blue
     }
 
     @Composable
@@ -790,46 +793,48 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
         val test_colors = listOf(
-            0x765bd5,
-            0xAA0000,
-            0x006633,
-            0x003366
+            0xFF765bd5,
+            0xFFAA0000,
+            0xFF006633,
+            0xFF003366
         )
 
         val base_color = line_data.channel.value?.let {
             test_colors[it % test_colors.size]
-        } ?: 0x000090
+        } ?: 0xFF000090L
 
         // alternate slight shading
         val adjusted_base_color = line_data.line_offset.value?.let {
             if (it % 2 == 0) {
                 base_color
             } else {
-                this.mix_colors(0xFFFFFF, base_color, 3, 7)
+                this.mix_colors(0xFFFFFFFF, base_color, 3, 7)
             }
         } ?: base_color
 
-        val spill_color = this.mix_colors(0x000000, adjusted_base_color, 1, 9)
-        val empty_color = (adjusted_base_color and (0xFFFFFF)) + 0x22000000
-
-        val leaf_color = Color(
-            if (leaf_data.is_spillover.value) {
-                spill_color
-            } else {
-                when (event) {
-                    is InstrumentEvent -> base_color
-                    is EffectEvent -> base_color
-                    else -> empty_color
-                }
+        val spill_color = this.mix_colors(0xFF000000, adjusted_base_color, 1, 9)
+        val empty_color = this.mix_colors(adjusted_base_color, 0x11888888, 1, 1)
+        val leaf_color = if (leaf_data.is_spillover.value) {
+            spill_color
+        } else {
+            when (event) {
+                is EffectEvent,
+                is InstrumentEvent -> adjusted_base_color
+                else -> empty_color
             }
-        )
+        }
 
-        val text_color =  colorResource(R.color.leaf_text)
+        val avg = (((adjusted_base_color / (256 * 256)) and 0xFF) + ((adjusted_base_color / 256) and 0xFF) + (adjusted_base_color and 0xFF)) / 3
+        val text_color = if (avg > 0x88) {
+            Color(0xFF000000)
+        } else {
+            Color(0xFFFFFFFF)
+        }
 
         val border_color = if (leaf_data.is_selected.value) {
-            Color(0xFFFF00)
+            Color(0xFFFFFF00)
         } else if (leaf_data.is_secondary.value) {
-            Color(0xFFAA00)
+            Color(0xFFFFAA00)
         } else {
             Color.Transparent
         }
@@ -842,7 +847,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 modifier = Modifier
                     .padding(1.dp)
                     .background(
-                        color = leaf_color,
+                        color = Color(leaf_color),
                         RoundedCornerShape(corner_radius)
                     )
                     .border(2.dp, color = border_color)

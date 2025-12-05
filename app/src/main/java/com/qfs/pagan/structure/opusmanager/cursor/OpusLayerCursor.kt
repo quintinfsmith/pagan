@@ -766,6 +766,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor.clear()
     }
     open fun cursor_select_channel(channel: Int) {
+        println("SELC: $channel")
         if (this._block_cursor_selection()) return
         this.cursor.select_channel(channel)
     }

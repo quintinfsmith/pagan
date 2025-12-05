@@ -243,6 +243,10 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         super.remove_global_controller(type)
     }
 
+    override fun remove_line_repeat(channel: Int, line_offset: Int, count: Int) {
+        super.remove_line_repeat(channel, line_offset, count)
+    }
+
     override fun remove_line_controller(type: EffectType, channel_index: Int, line_offset: Int) {
         if (this.is_line_ctl_visible(type, channel_index, line_offset )) {
             val abs_line = this.get_visible_row_from_ctl_line_line(type, channel_index, line_offset)
@@ -752,6 +756,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             }
 
             this.vm_state.remove_row(abs_line, row_count)
+            this.vm_state.shift_line_offsets_down(channel, line_offset)
+            this.vm_state.refresh_cursor()
         }
 
         return output
@@ -800,6 +806,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?, is_percussion: Boolean) {
         val notify_index = channel ?: this.channels.size
+        println("$notify_index <---- CCGABEK")
         super.new_channel(channel, lines, uuid, is_percussion)
 
         if (!this.ui_lock.is_locked()) {
@@ -1710,37 +1717,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 this.vm_state.set_cursor(ViewModelEditorState.CacheCursor(cursor.mode, cursor.beat))
             }
             CursorMode.Channel -> {
-                val y = when (cursor.ctl_level) {
-                    null -> {
-                        try {
-                            this.get_visible_row_from_ctl_line(
-                                this.get_actual_line_index(
-                                    this.get_instrument_line_index(cursor.channel, 0)
-                                )
-                            ) ?: return
-                        } catch (_: IndexOutOfBoundsException) {
-                            return
-                        }
-                    }
-                    else -> return // TODO: Throw Exception?
-                }
-
-                val channels = this.get_all_channels()
-                var line_count = 0
-                for (line in channels[cursor.channel].lines) {
-                    line_count++
-                    for ((_, controller) in line.controllers.get_all()) {
-                        if (!controller.visible) continue
-                        line_count++
-                    }
-                }
-
-                for ((_, controller) in channels[cursor.channel].controllers.get_all()) {
-                    if (!controller.visible) continue
-                    line_count++
-                }
-
-                this.vm_state.set_cursor(ViewModelEditorState.CacheCursor(cursor.mode, y, line_count))
+                this.vm_state.set_cursor(ViewModelEditorState.CacheCursor(cursor.mode, cursor.channel))
             }
             CursorMode.Unset -> { }
         }
@@ -1794,6 +1771,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             if (!controller.visible) continue
             this._add_controller_to_column_width_map(visible_row + i + 1, controller, channel, adj_line_offset, type)
         }
+
+        this.vm_state.shift_line_offsets_up(channel, adj_line_offset)
     }
 
     private fun _new_column_in_column_width_map(index: Int) {

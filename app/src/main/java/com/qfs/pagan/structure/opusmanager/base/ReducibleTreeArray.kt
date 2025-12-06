@@ -729,6 +729,7 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
         return null
     }
 
+
     fun get_preceding_event(beat: Int, position: List<Int>): T? {
         val (event_beat, event_position) = this.get_preceding_event_position(beat, position) ?: return null
         return this.get_tree(beat, position).get_event()

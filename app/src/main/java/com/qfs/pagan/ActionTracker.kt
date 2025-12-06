@@ -1662,7 +1662,10 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             @Composable {
                 Row { DialogSTitle(title, modifier = Modifier.weight(1F)) }
                 Row {
-                    UnSortableMenu(options, default, callback)
+                    UnSortableMenu(options, default) { value ->
+                        close()
+                        callback(value)
+                    }
                 }
                 DialogBar(neutral = close)
             }

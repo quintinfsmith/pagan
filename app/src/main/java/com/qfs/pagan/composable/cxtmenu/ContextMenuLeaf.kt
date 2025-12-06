@@ -20,6 +20,12 @@ import com.qfs.pagan.composable.button.TextCMenuButton
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
@@ -106,7 +112,10 @@ fun ContextMenuSinglePrimary(ui_facade: ViewModelEditorState, dispatcher: Action
         is RelativeNoteEvent -> active_event.offset / ui_facade.radix.value
         is PercussionEvent -> 0
         null -> null
-        else -> throw Exception("Invalid Event Type") // TODO: Specify
+        else -> {
+            ContextMenuStructureControls(ui_facade, dispatcher)
+            return
+        }
     }
 
     Column {
@@ -147,6 +156,40 @@ fun ContextMenuSinglePrimary(ui_facade: ViewModelEditorState, dispatcher: Action
 @Composable
 fun ContextMenuSingleSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier) {
     val cursor = ui_facade.active_cursor.value ?: return
+    val line_data = ui_facade.line_data[cursor.ints[0]]
+    if (line_data.assigned_offset.value != null) return
+    if (line_data.ctl_type.value == null) {
+        ContextMenuSingleStdSecondary(ui_facade, dispatcher, modifier)
+    } else {
+        ContextMenuSingleCtlSecondary(ui_facade, dispatcher, modifier)
+    }
+}
+@Composable
+fun ContextMenuSingleCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier) {
+    println("AAA")
+    val cursor = ui_facade.active_cursor.value ?: return
+    println("BB")
+    val active_event = ui_facade.active_event.value ?: return
+    println("CCC")
+    Row {
+        when (active_event) {
+            is OpusVolumeEvent -> VolumeEventMenu(ui_facade, dispatcher, active_event)
+            is OpusTempoEvent -> TempoEventMenu(ui_facade, dispatcher, active_event)
+            is OpusPanEvent -> PanEventMenu(ui_facade, dispatcher, active_event)
+            is OpusReverbEvent -> ReverbEventMenu(ui_facade, dispatcher, active_event)
+            is DelayEvent -> DelayEventMenu(ui_facade, dispatcher, active_event)
+            is OpusVelocityEvent -> VelocityEventMenu(ui_facade, dispatcher, active_event)
+            else -> {}
+        }
+    }
+
+}
+
+@Composable
+fun ContextMenuSingleStdSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier) {
+    val cursor = ui_facade.active_cursor.value ?: return
+    if (ui_facade.line_data[cursor.ints[0]].assigned_offset.value != null) return
+
     val active_event = ui_facade.active_event.value
     val offset = when (active_event) {
         is AbsoluteNoteEvent -> active_event.note % ui_facade.radix.value
@@ -155,7 +198,6 @@ fun ContextMenuSingleSecondary(ui_facade: ViewModelEditorState, dispatcher: Acti
         null -> null
         else -> throw Exception("Invalid Event Type") // TODO: Specify
     }
-    if (ui_facade.line_data[cursor.ints[0]].assigned_offset.value != null) return
 
     // Offset Selector
     Row(modifier = modifier) {

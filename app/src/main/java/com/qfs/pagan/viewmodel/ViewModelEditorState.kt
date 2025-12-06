@@ -6,7 +6,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.qfs.apres.soundfont2.SoundFont
-import com.qfs.pagan.Activity.ActivityEditor.PlaybackState
+import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.EditorTable
 import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.enumerate
@@ -22,51 +22,6 @@ import kotlin.math.max
 import kotlin.math.min
 
 class ViewModelEditorState: ViewModel() {
-    companion object {
-        fun get_next_playback_state(input_state: PlaybackState, next_state: PlaybackState): PlaybackState? {
-            return when (input_state) {
-                PlaybackState.NotReady -> {
-                    when (next_state) {
-                        PlaybackState.NotReady,
-                        PlaybackState.Ready -> next_state
-                        else -> null
-                    }
-                }
-                PlaybackState.Ready -> {
-                    when (next_state) {
-                        PlaybackState.NotReady,
-                        PlaybackState.Ready,
-                        PlaybackState.Queued -> next_state
-                        else -> null
-                    }
-                }
-                PlaybackState.Playing -> {
-                    when (next_state) {
-                        PlaybackState.Ready,
-                        PlaybackState.Stopping -> next_state
-                        else -> null
-                    }
-                }
-                PlaybackState.Queued -> {
-                    when (next_state) {
-                        PlaybackState.Ready,
-                        PlaybackState.Playing -> next_state
-                        else -> null
-                    }
-                }
-                PlaybackState.Stopping -> {
-                    when (next_state) {
-                        PlaybackState.Ready -> next_state
-                        else -> null
-                    }
-                }
-            }
-        }
-    }
-
-
-    ///////////////////////////////////////////////////////
-
     enum class SelectionLevel {
         Unselected,
         Primary,
@@ -140,6 +95,7 @@ class ViewModelEditorState: ViewModel() {
     private val working_path = mutableListOf<Int>()
     val preset_names = HashMap<Int, HashMap<Int, String>>()
     val available_instruments = HashMap<Pair<Int, Int>, List<Pair<String, Int>>>()
+    val base_leaf_width = mutableStateOf(0F)
 
     fun clear() {
         this.project_name.value = null
@@ -658,16 +614,62 @@ class ViewModelEditorState: ViewModel() {
             else available[offset].first
     }
 
-    fun scroll_to_beat(beat: Int) {
-        val leaf_width =  100  // TODO: Declare this somewhere else (ALSO 100 is just to test. needs to be base width)
+    // TODO: (maybe) cache these values so we don't have to calculate on every scroll
+    private fun get_column_from_leaf(leaf: Int): Int {
+        var output = 0
+        var working_value = leaf
+        for (i in 0 until this.beat_count.value) {
+            if (working_value == 0) break
+            working_value -= Array(this.cell_map.size) { j -> this.cell_map[j][i].value.weighted_size }.max()
+            output = i
+            if (working_value < 0) break
+        }
+        return output
+    }
 
-        val target_x = leaf_width * Array(beat) { i ->
+    fun get_first_visible_column_index(): Int {
+        val scroll_container_offset = this.scroll_state_x.value.value
+        val min_leaf_width = this.base_leaf_width.value
+        val reduced_x = scroll_container_offset / min_leaf_width
+        val column_position = this.get_column_from_leaf(reduced_x.toInt())
+        return column_position
+    }
+
+    fun get_last_visible_column_index(): Int {
+        val scroll_container_offset = this.scroll_state_x.value.value
+        val min_leaf_width = this.base_leaf_width.value
+        val reduced_x = scroll_container_offset / min_leaf_width
+        val column_position = this.get_column_from_leaf(reduced_x.toInt())
+        return column_position
+    }
+
+    fun scroll_to_beat(beat: Int) {
+        if (beat >= this.beat_count.value) return
+
+        val beat_x = this.base_leaf_width.value * Array(beat) { i ->
             Array(this.cell_map.size) { j -> this.cell_map[j][i].value.weighted_size }.max()
         }.sum()
+        val beat_width = this.base_leaf_width.value * Array(this.cell_map.size) { j -> this.cell_map[j][beat].value.weighted_size }.max()
 
+        val target_x = if (this.playback_state_soundfont.value != PlaybackState.Ready) {
+            beat_x
+        } else {
+            this.scroll_state_x.value.let {
+                if (beat_x < it.value) {
+                    beat_x
+                } else if (beat_x + beat_width > it.value + it.viewportSize) {
+                    beat_x + beat_width - it.viewportSize
+                } else {
+                    return
+                }
+            }
+        }
+
+
+        // TODO: Animate when not playing
         this.coroutine_scope.value?.let {
             it.launch {
-                this@ViewModelEditorState.scroll_state_x.value.scrollTo(target_x)
+                this@ViewModelEditorState.scroll_state_x.value.scrollTo(target_x.toInt())
             }
         }
     }

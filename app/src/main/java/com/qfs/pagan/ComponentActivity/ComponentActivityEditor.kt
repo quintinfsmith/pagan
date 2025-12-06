@@ -50,11 +50,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.alpha
-import androidx.core.graphics.blue
-import androidx.core.graphics.green
-import androidx.core.graphics.red
-import androidx.core.graphics.toColorLong
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.lifecycleScope
@@ -64,7 +59,7 @@ import com.qfs.apres.soundfont2.Riff
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.Activity.ActivityAbout
-import com.qfs.pagan.Activity.ActivityEditor.PlaybackState
+import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.Activity.ActivitySettings
 import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
 import com.qfs.pagan.CompatibleFileType
@@ -178,6 +173,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val action_interface = this.controller_model.action_interface
+        this.state_model.base_leaf_width.value = this.resources.getDimension(R.dimen.base_leaf_width)
         this.controller_model.attach_state_model(this.state_model)
         action_interface.attach_top_model(this.view_model)
 
@@ -240,7 +236,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
         // Failed to change playback_state
+        println("///")
         if (!this.controller_model.update_playback_state_soundfont(PlaybackState.Ready)) return
+        println("///!!!!")
 
         val soundfont_directory = this.get_soundfont_directory()
         var soundfont_file = soundfont_directory
@@ -351,7 +349,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             val fallback_msg = try {
                 inner_callback(uri)
                 null
-            } catch (_: Exception) {
+            } catch (e: Exception) {
                 when (type) {
                     CompatibleFileType.Midi1 -> this.getString(R.string.feedback_midi_fail)
                     CompatibleFileType.Pagan -> this.getString(R.string.feedback_import_fail)
@@ -403,16 +401,30 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 text = ui_facade.project_name.value ?: stringResource(R.string.untitled_opus)
             )
             TopBarIcon(
+                icon = when (this@ComponentActivityEditor.state_model.playback_state_soundfont.value) {
+                    PlaybackState.Queued,
+                    PlaybackState.NotReady -> R.drawable.baseline_play_disabled_24
+                    PlaybackState.Ready -> R.drawable.icon_play
+                    PlaybackState.Stopping,
+                    PlaybackState.Playing -> R.drawable.icon_pause
+                },
+                description = R.string.menu_item_playpause,
+                callback = {
+                    scope.launch {
+                        when (this@ComponentActivityEditor.controller_model.playback_state_soundfont) {
+                            PlaybackState.Queued -> TODO()
+                            PlaybackState.Stopping -> TODO()
+                            PlaybackState.NotReady -> TODO()
+                            PlaybackState.Ready -> { dispatcher.play_opus(this) }
+                            PlaybackState.Playing -> { dispatcher.stop_opus() }
+                        }
+                    }
+                }
+            )
+            TopBarIcon(
                 icon = R.drawable.icon_undo,
                 description = R.string.menu_item_undo,
                 callback = { dispatcher.apply_undo() }
-            )
-            TopBarIcon(
-                icon = R.drawable.icon_play, // TODO: Play state
-                description = R.string.menu_item_playpause,
-                callback = {
-                    scope.launch { dispatcher.play_opus(this) }
-                }
             )
             Box {
                 val expanded = remember { mutableStateOf(false) }

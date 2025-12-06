@@ -82,6 +82,7 @@ import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.PaganBroadcastReceiver
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.PlaybackDevice
+import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.R
 import com.qfs.pagan.TuningMapRecycler
 import com.qfs.pagan.TuningMapRecyclerAdapter
@@ -116,14 +117,6 @@ class ActivityEditor : PaganActivity() {
         init {
             System.loadLibrary("pagan")
         }
-    }
-
-    enum class PlaybackState {
-        NotReady,
-        Ready,
-        Playing,
-        Queued,
-        Stopping
     }
 
     val editor_view_model: ViewModelEditorController by this.viewModels()
@@ -307,7 +300,7 @@ class ActivityEditor : PaganActivity() {
                             opus_manager_copy.project_change_json(it)
                             this.on_project_change_json(it)
                         }
-
+1
                         var line_count = 0
                         val skip_lines = mutableSetOf<Pair<Int, Int>>()
 

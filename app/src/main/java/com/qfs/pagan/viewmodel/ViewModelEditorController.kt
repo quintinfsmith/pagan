@@ -10,14 +10,14 @@ import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.apres.soundfontplayer.WaveGenerator
 import com.qfs.pagan.ActionTracker
-import com.qfs.pagan.Activity.ActivityEditor
-import com.qfs.pagan.Activity.ActivityEditor.PlaybackState
+import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.AudioInterface
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.PlaybackDevice
 import com.qfs.pagan.PlaybackFrameMap
 import com.qfs.pagan.enumerate
+import com.qfs.pagan.get_next_playback_state
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import java.io.DataOutputStream
 import java.io.File
@@ -28,8 +28,8 @@ class ViewModelEditorController(): ViewModel() {
     var active_midi_device: MidiDeviceInfo? = null
     var audio_interface = AudioInterface()
     var playback_device: PlaybackDevice? = null
-    var playback_state_soundfont: ActivityEditor.PlaybackState = ActivityEditor.PlaybackState.NotReady
-    var playback_state_midi: ActivityEditor.PlaybackState = ActivityEditor.PlaybackState.NotReady
+    var playback_state_soundfont: PlaybackState = PlaybackState.NotReady
+    var playback_state_midi: PlaybackState = PlaybackState.NotReady
     var move_mode: MutableState<PaganConfiguration.MoveMode> = mutableStateOf(PaganConfiguration.MoveMode.COPY)
     var export_handle: WavConverter? = null
     var active_project: Uri? = null
@@ -99,7 +99,6 @@ class ViewModelEditorController(): ViewModel() {
         val vm_state = this.opus_manager.vm_state
         vm_state.populate_presets(soundfont)
         vm_state.update_channel_names()
-
     }
 
     fun create_playback_device() {
@@ -117,16 +116,17 @@ class ViewModelEditorController(): ViewModel() {
     }
 
     fun in_playback(): Boolean {
-        return this.playback_state_midi == ActivityEditor.PlaybackState.Playing || this.playback_state_soundfont == ActivityEditor.PlaybackState.Playing
+        return this.playback_state_midi == PlaybackState.Playing || this.playback_state_soundfont == PlaybackState.Playing
     }
 
     fun update_playback_state_soundfont(next_state: PlaybackState): Boolean {
-        this.playback_state_soundfont = ViewModelEditorState.get_next_playback_state(this.playback_state_soundfont, next_state) ?: return false
+        this.playback_state_soundfont = get_next_playback_state(this.playback_state_soundfont, next_state) ?: return false
+        this.opus_manager.vm_state.playback_state_soundfont.value = this.playback_state_soundfont
         return true
     }
 
     fun update_playback_state_midi(next_state: PlaybackState): Boolean {
-        this.playback_state_midi = ViewModelEditorState.get_next_playback_state(this.playback_state_midi, next_state) ?: return false
+        this.playback_state_midi = get_next_playback_state(this.playback_state_midi, next_state) ?: return false
         return true
     }
 

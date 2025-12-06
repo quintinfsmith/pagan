@@ -341,7 +341,12 @@ fun DialogSTitle(text: Int, modifier: Modifier = Modifier) {
 @Composable
 fun Card(
     modifier: Modifier = Modifier,
-    colors: CardColors = CardDefaults.cardColors(),
+    colors: CardColors = CardColors(
+        containerColor = Color.Red,
+        contentColor = Color.Blue,
+        disabledContentColor = Color.Gray,
+        disabledContainerColor = Color.Green,
+    ),
     elevation: CardElevation = CardDefaults.cardElevation(),
     shape: Shape = RoundedCornerShape(12.dp),
     border: BorderStroke? = null,

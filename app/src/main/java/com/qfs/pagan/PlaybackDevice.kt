@@ -1,14 +1,10 @@
 package com.qfs.pagan
 
-import androidx.compose.ui.Modifier
 import com.qfs.apres.soundfontplayer.MappedPlaybackDevice
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WaveGenerator
 import com.qfs.pagan.Activity.ActivityEditor
-import com.qfs.pagan.Activity.ActivityEditor.PlaybackState
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlin.math.max
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
@@ -45,7 +41,6 @@ class PlaybackDevice(
         val vm_controller = this.opus_manager.vm_controller
         if (vm_controller.update_playback_state_soundfont(PlaybackState.Ready)) {
             val vm_state = this.opus_manager.vm_state
-            vm_state.playback_state_soundfont.value = vm_controller.playback_state_soundfont
         }
         (this.sample_frame_map as PlaybackFrameMap).clear()
     }
@@ -56,9 +51,7 @@ class PlaybackDevice(
 
     override fun on_start() {
         val vm_controller = this.opus_manager.vm_controller
-        val vm_state = this.opus_manager.vm_state
-        vm_controller.update_playback_state_soundfont(ActivityEditor.PlaybackState.Playing)
-        vm_state.playback_state_soundfont.value = vm_controller.playback_state_soundfont
+        vm_controller.update_playback_state_soundfont(PlaybackState.Playing)
     }
 
     override fun on_mark(i: Int) {
@@ -91,6 +84,9 @@ class PlaybackDevice(
     }
 
     fun play_opus(start_beat: Int, play_in_loop: Boolean = false) {
+        val vm_controller = this.opus_manager.vm_controller
+        vm_controller.update_playback_state_soundfont(PlaybackState.Queued)
+
         this._first_beat_passed = false
         val sample_frame_map = this.sample_frame_map as PlaybackFrameMap
 
@@ -106,7 +102,6 @@ class PlaybackDevice(
         if (play_in_loop && start_frame != 0) {
             sample_frame_map.shift_before_frame(start_frame)
         }
-
         this.play(start_frame)
     }
 

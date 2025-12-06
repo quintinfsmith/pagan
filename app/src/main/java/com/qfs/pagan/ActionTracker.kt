@@ -1746,6 +1746,9 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     fun play_opus(scope: CoroutineScope) {
         this.vm_controller.playback_device?.play_opus(0)
     }
+    fun stop_opus() {
+        this.vm_controller.playback_device?.kill()
+    }
 
     fun playback() {
         this.lock = true

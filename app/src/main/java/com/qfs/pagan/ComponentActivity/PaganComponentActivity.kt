@@ -47,6 +47,7 @@ import com.qfs.pagan.DialogChain
 import com.qfs.pagan.MenuDialogEventHandler
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.Card
+import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.SText
@@ -450,12 +451,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                             load_callback(it)
                         }
                     }
-                    Row {
-                        com.qfs.pagan.composable.button.OutlinedButton(
-                            onClick = close,
-                            content = { SText(android.R.string.cancel) }
-                        )
-                    }
+                    DialogBar(neutral = close)
                 }
             }
         }

@@ -61,10 +61,10 @@ import com.qfs.apres.soundfont2.Riff
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.Activity.ActivityAbout
-import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.Activity.ActivitySettings
 import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
 import com.qfs.pagan.CompatibleFileType
+import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.Card
 import com.qfs.pagan.composable.SText
@@ -669,87 +669,73 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     horizontal = 0.dp,
                     vertical = 1.dp
                 )
-        ) {
-            Box(
-                modifier = Modifier
-                    .combinedClickable(
-                        onClick = {
-                            dispatcher.cursor_select_line(
-                                line_info.channel.value,
-                                line_info.line_offset.value,
-                                line_info.ctl_type.value
-                            )
-                        },
-                        onLongClick = {}
-                    )
-                    .background(
-                        shape = RectangleShape,
-                        color = colorResource(background_color),
-                    )
-                    .fillMaxSize(),
-                content = {
-                    if (ctl_type == null) {
-                        val (label_a, label_b) = if (line_info.assigned_offset.value != null) {
-                            Pair("!${line_info.channel.value}", "${line_info.assigned_offset.value}")
-                        } else {
-                            Pair("${line_info.channel.value}", "${line_info.line_offset.value}")
-                        }
-                        Row(modifier = Modifier.padding(2.dp)) {
-                            Column(
-                                verticalArrangement = Arrangement.Top,
-                                horizontalAlignment = Alignment.Start,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .weight(1F),
-                                content = { Text(label_a) }
-                            )
-                            Column(
-                                verticalArrangement = Arrangement.Bottom,
-                                horizontalAlignment = Alignment.End,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .weight(1F),
-                                content = { Text(label_b) }
-                            )
-                        }
-                    } else {
-                        val (drawable_id, description_id) = when (ctl_type) {
-                            EffectType.Tempo -> Pair(R.drawable.icon_tempo, R.string.ctl_desc_tempo)
-                            EffectType.Velocity -> Pair(R.drawable.icon_velocity, R.string.ctl_desc_velocity)
-                            EffectType.Volume -> Pair(R.drawable.icon_volume, R.string.ctl_desc_volume)
-                            EffectType.Delay -> Pair(R.drawable.icon_echo, R.string.ctl_desc_delay)
-                            EffectType.Pan -> Pair(R.drawable.icon_pan, R.string.ctl_desc_pan)
-                            EffectType.LowPass -> TODO()
-                            EffectType.Reverb -> TODO()
-                        }
-                        Icon(
-                            modifier = modifier
-                                .padding(2.dp)
-                                .combinedClickable(
-                                    onClick = {
-                                        if (line_info.line_offset.value != null) {
-                                            dispatcher.cursor_select_line_ctl_line(
-                                                ctl_type,
-                                                line_info.channel.value!!,
-                                                line_info.line_offset.value!!
-                                            )
-                                        } else if (line_info.channel.value != null) {
-                                            dispatcher.cursor_select_channel_ctl_line(
-                                                ctl_type,
-                                                line_info.channel.value!!
-                                            )
-                                        } else {
-                                            dispatcher.cursor_select_global_ctl_line(ctl_type)
-                                        }
-                                    }
-                                ),
-                            painter = painterResource(drawable_id),
-                            contentDescription = stringResource(description_id)
+                .combinedClickable(
+                    onClick = {
+                        dispatcher.cursor_select_line(
+                            line_info.channel.value,
+                            line_info.line_offset.value,
+                            line_info.ctl_type.value
                         )
+                    },
+                    onLongClick = {}
+                )
+                .background(
+                    shape = RectangleShape,
+                    color = colorResource(background_color),
+                )
+                .fillMaxSize(),
+            content = {
+                if (ctl_type == null) {
+                    val (label_a, label_b) = if (line_info.assigned_offset.value != null) {
+                        Pair("!${line_info.channel.value}", "${line_info.assigned_offset.value}")
+                    } else {
+                        Pair("${line_info.channel.value}", "${line_info.line_offset.value}")
                     }
+                    Box(Modifier.padding(2.dp)) {
+                        Box(modifier = Modifier.align(Alignment.TopStart)) {
+                            Text(label_a)
+                        }
+                        Box(modifier = Modifier.align(Alignment.BottomEnd)) {
+                            Text(label_b)
+                        }
+                    }
+                } else {
+                    val (drawable_id, description_id) = when (ctl_type) {
+                        EffectType.Tempo -> Pair(R.drawable.icon_tempo, R.string.ctl_desc_tempo)
+                        EffectType.Velocity -> Pair(R.drawable.icon_velocity, R.string.ctl_desc_velocity)
+                        EffectType.Volume -> Pair(R.drawable.icon_volume, R.string.ctl_desc_volume)
+                        EffectType.Delay -> Pair(R.drawable.icon_echo, R.string.ctl_desc_delay)
+                        EffectType.Pan -> Pair(R.drawable.icon_pan, R.string.ctl_desc_pan)
+                        EffectType.LowPass -> TODO()
+                        EffectType.Reverb -> TODO()
+                    }
+                    Icon(
+                        modifier = modifier
+                            .padding(2.dp)
+                            .combinedClickable(
+                                onClick = {
+                                    if (line_info.line_offset.value != null) {
+                                        dispatcher.cursor_select_line_ctl_line(
+                                            ctl_type,
+                                            line_info.channel.value!!,
+                                            line_info.line_offset.value!!
+                                        )
+                                    } else if (line_info.channel.value != null) {
+                                        dispatcher.cursor_select_channel_ctl_line(
+                                            ctl_type,
+                                            line_info.channel.value!!
+                                        )
+                                    } else {
+                                        dispatcher.cursor_select_global_ctl_line(ctl_type)
+                                    }
+                                }
+                            ),
+                        painter = painterResource(drawable_id),
+                        contentDescription = stringResource(description_id)
+                    )
                 }
-            )
-        }
+            }
+        )
     }
 
     @Composable

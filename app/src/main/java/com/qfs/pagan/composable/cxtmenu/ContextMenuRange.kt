@@ -1,5 +1,6 @@
 package com.qfs.pagan.composable.cxtmenu
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -41,8 +42,12 @@ fun ContextMenuRangePrimary(ui_facade: ViewModelEditorState, dispatcher: ActionT
 }
 @Composable
 fun ContextMenuRangeSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, move_mode: PaganConfiguration.MoveMode) {
-    Column {
-        Row(modifier = Modifier.height(dimensionResource(R.dimen.contextmenu_secondary_button_height))) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .height(dimensionResource(R.dimen.contextmenu_secondary_button_height)),
+            horizontalArrangement = Arrangement.SpaceAround
+        ) {
             val cursor_mode = ui_facade.active_cursor.value?.type
             SText(
                 when (move_mode) {
@@ -70,7 +75,7 @@ fun ContextMenuRangeSecondary(ui_facade: ViewModelEditorState, dispatcher: Actio
                 }
             )
         }
-        Row {
+        Row(horizontalArrangement = Arrangement.SpaceAround) {
             SingleChoiceSegmentedButtonRow {
                 PaganConfiguration.MoveMode.entries.forEachIndexed { i, mode ->
                     SegmentedButton(

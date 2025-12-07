@@ -693,10 +693,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     }
                     Box(Modifier.padding(2.dp)) {
                         Box(modifier = Modifier.align(Alignment.TopStart)) {
-                            Text(label_a)
+                            Text(label_a, maxLines = 1)
                         }
                         Box(modifier = Modifier.align(Alignment.BottomEnd)) {
-                            Text(label_b)
+                            Text(label_b, maxLines = 1)
                         }
                     }
                 } else {

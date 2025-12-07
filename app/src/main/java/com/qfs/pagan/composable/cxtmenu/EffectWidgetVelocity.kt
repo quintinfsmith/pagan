@@ -25,7 +25,7 @@ fun VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionTracker
     Row {
         TextCMenuButton(
             contentPadding = PaddingValues(4.dp),
-            text = "${event.value}",
+            text = "%.2${event.value}f",
             onClick = {},
             onLongClick = {}
         )
@@ -36,7 +36,10 @@ fun VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionTracker
                 event.value = it
                 dispatcher.set_effect_at_cursor(event)
             },
-            modifier = Modifier.fillMaxWidth().weight(2F).height(height)
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(2F)
+                .height(height)
         )
 
         if (!is_initial) {

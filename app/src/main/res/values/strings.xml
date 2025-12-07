@@ -210,7 +210,7 @@
     <string name="cd_mark_section">Tag Section</string>
     <string name="cd_remove_section_mark">Remove Section Tag</string>
     <string name="dialog_mark_section">Tag Section</string>
-    <string name="section_spinner_item">%2$d: Section %1$02d</string>
+    <string name="section_spinner_item">%02$d: Section %1$02d</string>
     <string name="sorted_list_desc">%1$s desc.</string>
     <string name="sorting_by">Sorting By:</string>
     <string name="sort_option_date_created">Date Created</string>

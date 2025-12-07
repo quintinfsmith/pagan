@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 class ViewModelEditorState: ViewModel() {
     enum class SelectionLevel {
@@ -646,10 +647,10 @@ class ViewModelEditorState: ViewModel() {
     fun scroll_to_beat(beat: Int) {
         if (beat >= this.beat_count.value) return
 
-        val beat_x = this.base_leaf_width.value * Array(beat) { i ->
-            Array(this.cell_map.size) { j -> this.cell_map[j][i].value.weighted_size }.max()
+        val beat_x = Array(beat) { i ->
+            (this.base_leaf_width.value * Array(this.cell_map.size) { j -> this.cell_map[j][i].value.weighted_size }.max()).roundToInt()
         }.sum()
-        val beat_width = this.base_leaf_width.value * Array(this.cell_map.size) { j -> this.cell_map[j][beat].value.weighted_size }.max()
+        val beat_width = (this.base_leaf_width.value * Array(this.cell_map.size) { j -> this.cell_map[j][beat].value.weighted_size }.max()).roundToInt()
 
         val target_x = if (this.playback_state_soundfont.value != PlaybackState.Ready) {
             beat_x
@@ -664,7 +665,6 @@ class ViewModelEditorState: ViewModel() {
                 }
             }
         }
-
 
         // TODO: Animate when not playing
         this.coroutine_scope.value?.let {

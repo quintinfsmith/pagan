@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -41,6 +42,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
@@ -111,32 +113,6 @@ import kotlin.math.abs
 class ComponentActivityEditor: PaganComponentActivity() {
     val controller_model: ViewModelEditorController by this.viewModels()
     val state_model: ViewModelEditorState by this.viewModels()
-    val menu_items: List<Pair<Int, () -> Unit>> = listOf(
-        Pair(R.string.menu_item_new_project) {
-            this.controller_model.action_interface.save_before {
-                this.controller_model.action_interface.new_project()
-            }
-        },
-        Pair(R.string.menu_item_load_project) {
-            this.load_menu_dialog { uri ->
-                this.load_project(uri)
-            }
-        },
-        Pair(R.string.menu_item_import) {
-            this.result_launcher_import.launch(
-                Intent().apply {
-                    this.setAction(Intent.ACTION_GET_CONTENT)
-                    this.setType("*/*") // Allow all, for some reason the emulators don't recognize midi files
-                }
-            )
-        },
-        Pair(R.string.menu_item_settings) {
-            this.result_launcher_settings.launch(
-                Intent(this, ComponentActivitySettings::class.java)
-            )
-        },
-        Pair(R.string.menu_item_about) { this.startActivity(Intent(this, ComponentActivityAbout::class.java)) },
-    )
     private val _result_launcher_set_project_directory_and_save =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode != RESULT_OK) return@registerForActivityResult
@@ -180,7 +156,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
         super.onCreate(savedInstanceState)
 
         action_interface.new_project()
-
 
         this.onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -236,9 +211,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
         // Failed to change playback_state
-        println("///")
         if (!this.controller_model.update_playback_state_soundfont(PlaybackState.Ready)) return
-        println("///!!!!")
 
         val soundfont_directory = this.get_soundfont_directory()
         var soundfont_file = soundfont_directory
@@ -376,6 +349,47 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val ui_facade = this.controller_model.opus_manager.vm_state
         val dispatcher = this.controller_model.action_interface
         val scope = rememberCoroutineScope()
+        val menu_items: MutableList<Pair<Int, () -> Unit>> = mutableListOf(
+            Pair(R.string.menu_item_new_project) {
+                dispatcher.save_before {
+                    dispatcher.new_project()
+                }
+            }
+        )
+        if (this@ComponentActivityEditor.view_model.has_saved_project.value) {
+            menu_items.add(
+                Pair(R.string.menu_item_load_project) {
+                    this@ComponentActivityEditor.load_menu_dialog { uri ->
+                        this@ComponentActivityEditor.load_project(uri)
+                    }
+                }
+            )
+        }
+        menu_items.add(
+            Pair(R.string.menu_item_import) {
+                this@ComponentActivityEditor.result_launcher_import.launch(
+                    Intent().apply {
+                        this.setAction(Intent.ACTION_GET_CONTENT)
+                        this.setType("*/*") // Allow all, for some reason the emulators don't recognize midi files
+                    }
+                )
+            }
+        )
+        menu_items.add(
+            Pair(R.string.menu_item_settings) {
+                this@ComponentActivityEditor.result_launcher_settings.launch(
+                    Intent(this@ComponentActivityEditor, ComponentActivitySettings::class.java)
+                )
+            }
+        )
+        menu_items.add(
+            Pair(R.string.menu_item_about) {
+                this@ComponentActivityEditor.startActivity(
+                    Intent(this@ComponentActivityEditor, ComponentActivityAbout::class.java)
+                )
+            }
+        )
+
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -437,7 +451,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     expanded = expanded.value,
                     onDismissRequest = { expanded.value = false }
                 ) {
-                    for ((_, item) in this@ComponentActivityEditor.menu_items.enumerate()) {
+                    for ((_, item) in menu_items.enumerate()) {
                         DropdownMenuItem(
                             text = { SText(item.first) },
                             onClick = {
@@ -513,7 +527,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         Column {
             Row {
-                Column { ShortcutView(dispatcher, scope, scroll_state_h) }
+                Column {
+                    ShortcutView(dispatcher, scope, scroll_state_h)
+                }
                 Column(Modifier.horizontalScroll(scroll_state_h, overscrollEffect = null)) {
                     Row {
                         for ((x, width) in column_widths.enumerate()) {
@@ -616,10 +632,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun ShortcutView(dispatcher: ActionTracker, scope: CoroutineScope, scroll_state: ScrollState) {
         Box(
             Modifier
-                .background(colorResource(R.color.line_label), shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp, bottomStart = 0.dp, bottomEnd = 8.dp))
+                .background(colorResource(R.color.line_label), shape = RectangleShape)
                 .width(dimensionResource(R.dimen.line_label_width))
                 .height(dimensionResource(R.dimen.line_height))
-                .padding(top = 0.dp, start = 0.dp, end = 1.dp, bottom = 1.dp)
                 .combinedClickable(
                     onClick = { dispatcher.cursor_select_column() },
                     onLongClick = {
@@ -651,10 +666,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
         Box(
             Modifier
                 .padding(
-                    start = 0.dp,
-                    end = 1.dp,
-                    top = 1.dp,
-                    bottom = 1.dp
+                    horizontal = 0.dp,
+                    vertical = 1.dp
                 )
         ) {
             Box(
@@ -670,12 +683,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         onLongClick = {}
                     )
                     .background(
-                        shape = RoundedCornerShape(
-                            topStart = 0.dp,
-                            bottomStart = 0.dp,
-                            topEnd = 3.dp,
-                            bottomEnd = 3.dp
-                        ),
+                        shape = RectangleShape,
                         color = colorResource(background_color),
                     )
                     .fillMaxSize(),
@@ -765,15 +773,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         Box(
             modifier = Modifier
-                .padding(top = 0.dp, end = 1.dp, bottom = 1.dp, start = 1.dp)
+                .padding(top = 0.dp, end = 1.dp, bottom = 0.dp, start = 1.dp)
                 .background(
                     color = colorResource(background_color),
-                    shape = RoundedCornerShape(
-                        topStart = 0.dp,
-                        topEnd = 0.dp,
-                        bottomEnd = 4.dp,
-                        bottomStart = 4.dp
-                    )
+                    shape = RectangleShape
                 )
                 .combinedClickable(
                     onClick = { dispatcher.cursor_select_column(x) },
@@ -844,64 +847,60 @@ class ComponentActivityEditor: PaganComponentActivity() {
             Color(0xFFFFFFFF)
         }
 
-        val border_color = if (leaf_data.is_selected.value) {
-            Color(0xFFFFFF00)
-        } else if (leaf_data.is_secondary.value) {
-            Color(0xFFFFAA00)
-        } else {
-            Color.Transparent
-        }
 
         Box(
-            modifier.fillMaxSize(),
+            modifier = modifier
+                .padding(1.dp)
+                .background(
+                    color = Color(leaf_color),
+                    RoundedCornerShape(corner_radius)
+                )
+                .then(
+                    if (leaf_data.is_selected.value) {
+                        modifier.border(2.dp, Color(0xFFFFFF00))
+                    } else if (leaf_data.is_secondary.value) {
+                        modifier.border(2.dp, Color(0xFFFFAA00))
+                    } else {
+                        modifier
+                    }
+                )
+                .fillMaxHeight(),
             contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .padding(1.dp)
-                    .background(
-                        color = Color(leaf_color),
-                        RoundedCornerShape(corner_radius)
+            when (event) {
+                is AbsoluteNoteEvent -> {
+                    val octave = event.note / radix
+                    val offset = event.note % radix
+                    Text(
+                        AnnotatedString.fromHtml("<sub>$octave</sub>$offset"),
+                        color = text_color
                     )
-                    .border(2.dp, color = border_color)
-                    .fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                when (event) {
-                    is AbsoluteNoteEvent -> {
-                        val octave = event.note / radix
-                        val offset = event.note % radix
-                        Text(
-                            AnnotatedString.fromHtml("<sub>$octave</sub>$offset"),
-                            color = text_color
-                        )
-                    }
+                }
 
-                    is RelativeNoteEvent -> {
-                        val octave = abs(event.offset) / radix
-                        val offset = abs(event.offset) % radix
-                        Row {
-                            Column(modifier = Modifier
-                                .fillMaxSize()
-                                .weight(1F)) {
-                                Text(if (event.offset > 0) "+" else "-" , color = text_color)
-                                Text("$octave", color = text_color)
-                            }
-                            Column(modifier = Modifier
-                                .fillMaxSize()
-                                .weight(1F)) {
-                                Text("$offset", color = text_color)
-                            }
+                is RelativeNoteEvent -> {
+                    val octave = abs(event.offset) / radix
+                    val offset = abs(event.offset) % radix
+                    Row {
+                        Column(modifier = Modifier
+                            .fillMaxSize()
+                            .weight(1F)) {
+                            Text(if (event.offset > 0) "+" else "-" , color = text_color)
+                            Text("$octave", color = text_color)
+                        }
+                        Column(modifier = Modifier
+                            .fillMaxSize()
+                            .weight(1F)) {
+                            Text("$offset", color = text_color)
                         }
                     }
-                    is PercussionEvent -> SText(R.string.percussion_label, color = text_color)
-                    is OpusVolumeEvent -> Text("${event.value}", color = text_color)
-                    is OpusPanEvent -> {}
-                    is DelayEvent -> {}
-                    is OpusTempoEvent -> Text("${event.value} BPM", color = text_color)
-                    is OpusVelocityEvent -> {}
-                    null -> {}
                 }
+                is PercussionEvent -> SText(R.string.percussion_label, color = text_color)
+                is OpusVolumeEvent -> Text("${event.value}", color = text_color)
+                is OpusPanEvent -> {}
+                is DelayEvent -> {}
+                is OpusTempoEvent -> Text("${event.value} BPM", color = text_color)
+                is OpusVelocityEvent -> {}
+                null -> {}
             }
         }
     }
@@ -918,7 +917,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         event.second,
                         ui_facade.radix.value,
                         Modifier
-                            .width(dimensionResource(R.dimen.base_leaf_width))
                             .weight(weight)
                             .combinedClickable(
                                 onClick = {

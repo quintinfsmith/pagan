@@ -71,7 +71,7 @@ fun Button(
     Box(
         propagateMinConstraints = true,
         modifier = modifier
-            .padding(top = 2.dp, bottom = 2.dp, start = 1.dp, end = 2.dp)
+            .padding(vertical = 2.dp, horizontal = 1.dp)
             .minimumInteractiveComponentSize(),
         content = {
             ProvideContentColorTextStyle(contentColor = colors.contentColor, textStyle = TextStyle.Default) {

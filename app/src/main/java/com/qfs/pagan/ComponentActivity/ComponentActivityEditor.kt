@@ -27,6 +27,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -611,12 +613,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             line_height
                         }
 
-                        Row(Modifier
+                        LazyRow(
+                            Modifier
                             .padding(end = dimensionResource(R.dimen.base_leaf_width))
-                            .height(use_height)) {
-                            for (x in 0 until length.value) {
+                            .height(use_height)
+                        ) {
+                            items(ui_facade.cell_map[y].enumerate()) { (x, cell) ->
                                 Column(Modifier.width(leaf_width * column_widths[x])) {
-                                    val cell = ui_facade.cell_map[y][x]
                                     CellView(ui_facade, dispatcher, cell, y, x)
                                 }
                             }
@@ -840,7 +843,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
             Color(0xFFFFFFFF)
         }
 
-
         Box(
             modifier = modifier
                 .padding(1.dp)
@@ -898,108 +900,105 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
+    private fun <T> get_leaf_list(tree: ReducibleTree<T>): List<Triple<List<Int>, T?,Float>> {
+        val output = mutableListOf<Triple<List<Int>, T?, Float>>()
+        tree.weighted_traverse { tree, event, path, weight ->
+            if (tree.is_leaf()) {
+                output.add(Triple(path, event, weight))
+            }
+        }
+        return output
+    }
+
     @Composable
     fun CellView(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, cell: MutableState<ReducibleTree<Pair<ViewModelEditorState.LeafData, OpusEvent?>>>, y: Int, x: Int, modifier: Modifier = Modifier) {
         val line_info = ui_facade.line_data[y]
         Row(modifier.fillMaxSize()) {
-            composable_traverse(cell.value, listOf()) { tree, path, event, weight ->
-                if (tree.is_leaf()) {
-                    this@ComponentActivityEditor.LeafView(
-                        line_info,
-                        event!!.first,
-                        event.second,
-                        ui_facade.radix.value,
-                        Modifier
-                            .weight(weight)
-                            .combinedClickable(
-                                onClick = {
-                                    val cursor = ui_facade.active_cursor.value
-                                    val selecting_range = ui_facade.active_cursor.value?.type == CursorMode.Range
-                                    if (line_info.ctl_type.value == null) {
-                                        if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type.value == null) {
-                                            dispatcher.move_selection_to_beat(
-                                                BeatKey(line_info.channel.value!!, line_info.line_offset.value!!, x)
-                                            )
-                                        } else {
-                                            dispatcher.cursor_select(
-                                                BeatKey(line_info.channel.value!!, line_info.line_offset.value!!, x), path
-                                            )
-                                        }
-                                    } else if (line_info.line_offset.value != null) {
-                                        if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type.value == line_info.ctl_type.value) {
-                                            dispatcher.move_line_ctl_to_beat(
-                                                BeatKey(
-                                                    line_info.channel.value!!,
-                                                    line_info.line_offset.value!!,
-                                                    x
-                                                )
-                                            )
-                                        } else {
-                                            dispatcher.cursor_select_ctl_at_line(
-                                                line_info.ctl_type.value!!,
-                                                BeatKey(line_info.channel.value!!, line_info.line_offset.value!!, x),
-                                                path
-                                            )
-                                        }
-                                    } else if (line_info.channel.value != null) {
-                                        if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type.value == line_info.ctl_type.value) {
-                                            dispatcher.move_channel_ctl_to_beat(line_info.channel.value!!, x)
-                                        } else {
-                                            dispatcher.cursor_select_ctl_at_channel(
-                                                line_info.ctl_type.value!!,
-                                                line_info.channel.value!!,
-                                                x,
-                                                path
-                                            )
-                                        }
+            for ((path, event, weight) in this@ComponentActivityEditor.get_leaf_list(cell.value)) {
+                this@ComponentActivityEditor.LeafView(
+                    line_info,
+                    event!!.first,
+                    event.second,
+                    ui_facade.radix.value,
+                    Modifier
+                        .weight(weight)
+                        .combinedClickable(
+                            onClick = {
+                                val cursor = ui_facade.active_cursor.value
+                                val selecting_range = ui_facade.active_cursor.value?.type == CursorMode.Range
+                                if (line_info.ctl_type.value == null) {
+                                    if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type.value == null) {
+                                        dispatcher.move_selection_to_beat(
+                                            BeatKey(line_info.channel.value!!, line_info.line_offset.value!!, x)
+                                        )
                                     } else {
-                                        if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type.value == line_info.ctl_type.value) {
-                                            dispatcher.move_global_ctl_to_beat(x)
-                                        } else {
-                                            dispatcher.cursor_select_ctl_at_global(line_info.ctl_type.value!!, x, path)
-                                        }
+                                        dispatcher.cursor_select(
+                                            BeatKey(line_info.channel.value!!, line_info.line_offset.value!!, x), path
+                                        )
                                     }
-                                },
-                                onLongClick = {
-                                    if (line_info.ctl_type.value == null) {
-                                        dispatcher.cursor_select_range_next(
+                                } else if (line_info.line_offset.value != null) {
+                                    if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type.value == line_info.ctl_type.value) {
+                                        dispatcher.move_line_ctl_to_beat(
                                             BeatKey(
                                                 line_info.channel.value!!,
                                                 line_info.line_offset.value!!,
                                                 x
                                             )
                                         )
-                                    } else if (line_info.line_offset.value != null) {
-                                        dispatcher.cursor_select_line_ctl_range_next(
+                                    } else {
+                                        dispatcher.cursor_select_ctl_at_line(
                                             line_info.ctl_type.value!!,
-                                            BeatKey(line_info.channel.value!!, line_info.line_offset.value!!, x)
+                                            BeatKey(line_info.channel.value!!, line_info.line_offset.value!!, x),
+                                            path
                                         )
-                                    } else if (line_info.channel.value != null) {
-                                        dispatcher.cursor_select_channel_ctl_range_next(
+                                    }
+                                } else if (line_info.channel.value != null) {
+                                    if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type.value == line_info.ctl_type.value) {
+                                        dispatcher.move_channel_ctl_to_beat(line_info.channel.value!!, x)
+                                    } else {
+                                        dispatcher.cursor_select_ctl_at_channel(
                                             line_info.ctl_type.value!!,
                                             line_info.channel.value!!,
-                                            x
+                                            x,
+                                            path
                                         )
+                                    }
+                                } else {
+                                    if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type.value == line_info.ctl_type.value) {
+                                        dispatcher.move_global_ctl_to_beat(x)
                                     } else {
-                                        dispatcher.cursor_select_global_ctl_range_next(line_info.ctl_type.value!!, x)
+                                        dispatcher.cursor_select_ctl_at_global(line_info.ctl_type.value!!, x, path)
                                     }
                                 }
-                            )
-                    )
-                }
+                            },
+                            onLongClick = {
+                                if (line_info.ctl_type.value == null) {
+                                    dispatcher.cursor_select_range_next(
+                                        BeatKey(
+                                            line_info.channel.value!!,
+                                            line_info.line_offset.value!!,
+                                            x
+                                        )
+                                    )
+                                } else if (line_info.line_offset.value != null) {
+                                    dispatcher.cursor_select_line_ctl_range_next(
+                                        line_info.ctl_type.value!!,
+                                        BeatKey(line_info.channel.value!!, line_info.line_offset.value!!, x)
+                                    )
+                                } else if (line_info.channel.value != null) {
+                                    dispatcher.cursor_select_channel_ctl_range_next(
+                                        line_info.ctl_type.value!!,
+                                        line_info.channel.value!!,
+                                        x
+                                    )
+                                } else {
+                                    dispatcher.cursor_select_global_ctl_range_next(line_info.ctl_type.value!!, x)
+                                }
+                            }
+                        )
+                )
             }
         }
-    }
-
-    @Composable
-    fun <T> composable_traverse(tree: ReducibleTree<T>, path: List<Int>, weight: Float = 1F, callback: @Composable (ReducibleTree<T>, List<Int>, T?, Float) -> Unit) {
-        if (! tree.is_leaf()) {
-            val new_weight = weight / tree.size.toFloat()
-            for ((i, child) in tree.divisions) {
-                this.composable_traverse(child, path + listOf(i), new_weight, callback)
-            }
-        }
-        callback(tree, path, tree.event, weight)
     }
 
     @Composable

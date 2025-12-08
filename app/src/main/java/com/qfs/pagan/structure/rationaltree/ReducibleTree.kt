@@ -791,6 +791,16 @@ class ReducibleTree<T> {
         callback(this, this.event)
     }
 
+    fun weighted_traverse(input_weight: Float = 1F, input_path: List<Int> = listOf(), callback: (ReducibleTree<T>, T?, List<Int>, Float) -> Unit) {
+        if (! this.is_leaf()) {
+            val new_weight = input_weight / this.size.toFloat()
+            for ((i, tree) in this.divisions) {
+                tree.weighted_traverse(new_weight, input_path + listOf(i), callback)
+            }
+        }
+        callback(this, this.event, input_path, input_weight)
+    }
+
     /**
      * Does this tree or it's descendants have an event?
      */

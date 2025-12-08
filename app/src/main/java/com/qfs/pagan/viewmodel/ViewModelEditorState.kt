@@ -1,6 +1,7 @@
 package com.qfs.pagan.viewmodel
 
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -89,7 +90,7 @@ class ViewModelEditorState: ViewModel() {
 
     val is_buffering: MutableState<Boolean> = mutableStateOf(false)
 
-    val scroll_state_x: MutableState<ScrollState> = mutableStateOf(ScrollState(0))
+    val scroll_state_x = mutableStateOf(LazyListState(0))
     val scroll_state_y: MutableState<ScrollState> = mutableStateOf(ScrollState(0))
     val coroutine_scope: MutableState<CoroutineScope?> = mutableStateOf(CoroutineScope(Dispatchers.Default))
 
@@ -628,48 +629,48 @@ class ViewModelEditorState: ViewModel() {
         return output
     }
 
-    fun get_first_visible_column_index(): Int {
-        val scroll_container_offset = this.scroll_state_x.value.value
-        val min_leaf_width = this.base_leaf_width.value
-        val reduced_x = scroll_container_offset / min_leaf_width
-        val column_position = this.get_column_from_leaf(reduced_x.toInt())
-        return column_position
-    }
+    // fun get_first_visible_column_index(): Int {
+    //     val scroll_container_offset = this.scroll_state_x.value.value
+    //     val min_leaf_width = this.base_leaf_width.value
+    //     val reduced_x = scroll_container_offset / min_leaf_width
+    //     val column_position = this.get_column_from_leaf(reduced_x.toInt())
+    //     return column_position
+    // }
 
-    fun get_last_visible_column_index(): Int {
-        val scroll_container_offset = this.scroll_state_x.value.value
-        val min_leaf_width = this.base_leaf_width.value
-        val reduced_x = scroll_container_offset / min_leaf_width
-        val column_position = this.get_column_from_leaf(reduced_x.toInt())
-        return column_position
-    }
+    // fun get_last_visible_column_index(): Int {
+    //     val scroll_container_offset = this.scroll_state_x.value.
+    //     val min_leaf_width = this.base_leaf_width.value
+    //     val reduced_x = scroll_container_offset / min_leaf_width
+    //     val column_position = this.get_column_from_leaf(reduced_x.toInt())
+    //     return column_position
+    // }
 
     fun scroll_to_beat(beat: Int) {
-        if (beat >= this.beat_count.value) return
+        // if (beat >= this.beat_count.value) return
 
-        val beat_x = Array(beat) { i ->
-            (this.base_leaf_width.value * Array(this.cell_map.size) { j -> this.cell_map[j][i].value.weighted_size }.max()).roundToInt()
-        }.sum()
-        val beat_width = (this.base_leaf_width.value * Array(this.cell_map.size) { j -> this.cell_map[j][beat].value.weighted_size }.max()).roundToInt()
+        // val beat_x = Array(beat) { i ->
+        //     (this.base_leaf_width.value * Array(this.cell_map.size) { j -> this.cell_map[j][i].value.weighted_size }.max()).roundToInt()
+        // }.sum()
+        // val beat_width = (this.base_leaf_width.value * Array(this.cell_map.size) { j -> this.cell_map[j][beat].value.weighted_size }.max()).roundToInt()
 
-        val target_x = if (this.playback_state_soundfont.value != PlaybackState.Ready) {
-            beat_x
-        } else {
-            this.scroll_state_x.value.let {
-                if (beat_x < it.value) {
-                    beat_x
-                } else if (beat_x + beat_width > it.value + it.viewportSize) {
-                    beat_x + beat_width - it.viewportSize
-                } else {
-                    return
-                }
-            }
-        }
+        // val target_x = if (this.playback_state_soundfont.value != PlaybackState.Ready) {
+        //     beat_x
+        // } else {
+        //     this.scroll_state_x.value.let {
+        //         if (beat_x < it.firstVisibleItemScrollOffset) {
+        //             beat_x
+        //         } else if (beat_x + beat_width > it.value + it.viewportSize) {
+        //             beat_x + beat_width - it.viewportSize
+        //         } else {
+        //             return
+        //         }
+        //     }
+        // }
 
         // TODO: Animate when not playing
         this.coroutine_scope.value?.let {
             it.launch {
-                this@ViewModelEditorState.scroll_state_x.value.scrollTo(target_x.toInt())
+                this@ViewModelEditorState.scroll_state_x.value.requestScrollToItem(beat)
             }
         }
     }

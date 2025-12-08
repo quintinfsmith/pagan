@@ -1455,28 +1455,6 @@ class ActivityEditor : PaganActivity() {
                 View.VISIBLE
             }
         }
-
-        this.findViewById<View>(R.id.btnExportProject).let {
-            val export_options = this.get_exportable_options()
-            it.visibility = if (export_options.isEmpty() || this.editor_view_model.is_exporting()) {
-                View.INVISIBLE
-            } else {
-                View.VISIBLE
-            }
-
-            it.setOnClickListener {
-                this.dialog_popup_menu(this.getString(R.string.dlg_export), export_options, default = null) { _: Int, value: Int ->
-                    when (value) {
-                        0 -> this.export_project()
-                        1 -> this.export_midi_check()
-                        2 -> this.export_wav()
-                        3 -> this.export_multi_lines_wav()
-                        4 -> this.export_multi_channels_wav()
-                    }
-                }
-            }
-        }
-
     }
 
 

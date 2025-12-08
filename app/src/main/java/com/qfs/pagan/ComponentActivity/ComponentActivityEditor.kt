@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -528,36 +529,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val scroll_state_v = ui_facade.scroll_state_y.value
         val scroll_state_h = ui_facade.scroll_state_x.value
 
-        Column {
-            Row {
-                Column {
-                    ShortcutView(dispatcher, scope, scroll_state_h)
-                }
-                Column(Modifier.horizontalScroll(scroll_state_h, overscrollEffect = null)) {
-                    Row {
-                        for ((x, width) in column_widths.enumerate()) {
-                            Box(
-                                Modifier
-                                    .width(leaf_width * width)
-                                    .height(line_height)
-                            ) {
-                                BeatLabelView(x, ui_facade, dispatcher, ui_facade.column_data[x])
-                            }
-                        }
-                        Icon(
-                            modifier = Modifier
-                                .width(dimensionResource(R.dimen.base_leaf_width))
-                                .combinedClickable(
-                                    onClick = { dispatcher.append_beats(1) },
-                                    onLongClick = { dispatcher.append_beats() }
-                                ),
-                            painter = painterResource(R.drawable.icon_add_channel),
-                            contentDescription = stringResource(R.string.cd_insert_beat)
-                        )
-                    }
-                }
-            }
-            Row {
+        Row(Modifier.fillMaxWidth()) {
+            Column {
+                ShortcutView(dispatcher, scope, scroll_state_h)
                 Column(Modifier.verticalScroll(scroll_state_v, overscrollEffect = null)) {
                     var working_channel: Int? = 0
                     for (y in 0 until ui_facade.line_count.value) {
@@ -597,43 +571,68 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     }
                     Spacer(Modifier.height(window_height / 2))
                 }
-                Column(
-                    modifier = Modifier
-                        .horizontalScroll(scroll_state_h, overscrollEffect = null)
-                        .verticalScroll(scroll_state_v, overscrollEffect = null)
-                ) {
-                    var working_channel: Int? = 0
-                    for (y in 0 until ui_facade.line_count.value) {
-                        if (ui_facade.line_data[y].channel.value != working_channel) {
-                            Row(Modifier.height(dimensionResource(R.dimen.channel_gap_size))) { }
-                        }
-                        working_channel = ui_facade.line_data[y].channel.value
-                        val use_height = if (ui_facade.line_data[y].ctl_type.value != null) {
-                            ctl_line_height
-                        } else {
-                            line_height
-                        }
+            }
+            LazyRow(state = scroll_state_h, overscrollEffect = null) {
+                items(column_widths.enumerate() + listOf(Pair(column_widths.size, 1))) { (x, width) ->
+                    if (x == column_widths.size) {
+                        Icon(
+                            modifier = Modifier
+                                .width(dimensionResource(R.dimen.base_leaf_width))
+                                .combinedClickable(
+                                    onClick = { dispatcher.append_beats(1) },
+                                    onLongClick = { dispatcher.append_beats() }
+                                ),
+                            painter = painterResource(R.drawable.icon_add_channel),
+                            contentDescription = stringResource(R.string.cd_insert_beat)
+                        )
 
-                        LazyRow(
+                        return@items
+                    }
+
+                    Column {
+                        BeatLabelView(
+                            modifier = Modifier
+                                .width(leaf_width * width)
+                                .height(line_height),
+                            x = x,
+                            ui_facade = ui_facade,
+                            dispatcher = dispatcher,
+                            column_info = ui_facade.column_data[x]
+                        )
+                        Column(
                             Modifier
-                            .padding(end = dimensionResource(R.dimen.base_leaf_width))
-                            .height(use_height)
+                                .verticalScroll(scroll_state_v, overscrollEffect = null)
+                                .width(leaf_width * column_widths[x])
                         ) {
-                            items(ui_facade.cell_map[y].enumerate()) { (x, cell) ->
-                                Column(Modifier.width(leaf_width * column_widths[x])) {
+                            var working_channel: Int? = 0
+                            for (y in 0 until ui_facade.line_count.value) {
+                                if (ui_facade.line_data[y].channel.value != working_channel) {
+                                    Row(Modifier.height(dimensionResource(R.dimen.channel_gap_size))) { }
+                                }
+                                working_channel = ui_facade.line_data[y].channel.value
+
+                                val cell = ui_facade.cell_map[y][x]
+                                Row(
+                                    Modifier
+                                        .height(
+                                            if (ui_facade.line_data[y].ctl_type.value != null) ctl_line_height
+                                            else line_height
+                                        )
+                                ) {
                                     CellView(ui_facade, dispatcher, cell, y, x)
                                 }
                             }
+                            Spacer(Modifier.height(window_height / 2))
                         }
                     }
-                    Spacer(Modifier.height(window_height / 2))
                 }
             }
+
         }
     }
 
     @Composable
-    fun ShortcutView(dispatcher: ActionTracker, scope: CoroutineScope, scroll_state: ScrollState) {
+    fun ShortcutView(dispatcher: ActionTracker, scope: CoroutineScope, scroll_state: LazyListState) {
         Box(
             Modifier
                 .background(colorResource(R.color.line_label), shape = RectangleShape)
@@ -643,7 +642,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     onClick = { dispatcher.cursor_select_column() },
                     onLongClick = {
                         dispatcher.cursor_select_column(0)
-                        scope.launch { scroll_state.animateScrollTo(0) }
+                        scope.launch { scroll_state.scrollToItem(0) }
                     }
                 ),
             contentAlignment = Alignment.Center,
@@ -750,9 +749,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun BeatLabelView(x: Int, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, column_info: ViewModelEditorState.ColumnData) {
-        val modifier = Modifier
-
+    fun BeatLabelView(modifier: Modifier = Modifier, x: Int, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, column_info: ViewModelEditorState.ColumnData) {
         if (!column_info.is_tagged.value) {
             modifier.border(width = 1.dp, color = Color.Red)
         }
@@ -769,7 +766,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
         Box(
-            modifier = Modifier
+            modifier = modifier
                 .padding(top = 0.dp, end = 1.dp, bottom = 0.dp, start = 1.dp)
                 .background(
                     color = colorResource(background_color),
@@ -781,10 +778,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 .fillMaxSize(),
             contentAlignment = Alignment.Center,
             content = {
-                Text(
-                    text = "$x",
-                    modifier = modifier.padding(0.dp)
-                )
+                Text(text = "$x")
             }
         )
     }

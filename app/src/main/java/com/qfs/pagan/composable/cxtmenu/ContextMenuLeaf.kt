@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
@@ -137,10 +138,7 @@ fun ContextMenuSinglePrimary(ui_facade: ViewModelEditorState, dispatcher: Action
             Row {
                 for (i in 0 until 8) {
                     NumberSelectorButton(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(1.dp)
-                            .weight(1F),
+                        modifier = Modifier.weight(1F),
                         index = i,
                         selected = octave == i,
                         highlighted = ui_facade.highlighted_octave.value == i,
@@ -166,12 +164,8 @@ fun ContextMenuSingleSecondary(ui_facade: ViewModelEditorState, dispatcher: Acti
 }
 @Composable
 fun ContextMenuSingleCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier) {
-    println("AAA")
-    val cursor = ui_facade.active_cursor.value ?: return
-    println("BB")
     val active_event = ui_facade.active_event.value ?: return
-    println("CCC")
-    Row {
+    Row(modifier = modifier) {
         when (active_event) {
             is OpusVolumeEvent -> VolumeEventMenu(ui_facade, dispatcher, active_event)
             is OpusTempoEvent -> TempoEventMenu(ui_facade, dispatcher, active_event)
@@ -182,7 +176,6 @@ fun ContextMenuSingleCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: A
             else -> {}
         }
     }
-
 }
 
 @Composable
@@ -203,10 +196,7 @@ fun ContextMenuSingleStdSecondary(ui_facade: ViewModelEditorState, dispatcher: A
     Row(modifier = modifier) {
         for (i in 0 until ui_facade.radix.value) {
             NumberSelectorButton(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(1.dp)
-                    .weight(1F),
+                modifier = Modifier.weight(1F),
                 index = i,
                 selected = offset == i,
                 highlighted = ui_facade.highlighted_offset.value == i,

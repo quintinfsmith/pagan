@@ -2,17 +2,15 @@ package com.qfs.pagan.composable.cxtmenu
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
 import com.qfs.pagan.ActionTracker
-import com.qfs.pagan.R
+import com.qfs.pagan.composable.Slider
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.viewmodel.ViewModelEditorState
@@ -34,23 +32,27 @@ fun PanEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, eve
         disabledInactiveTrackColor = default_colors.disabledInactiveTrackColor,
         disabledInactiveTickColor = default_colors.disabledInactiveTickColor
     )
-    val working_value = remember { mutableFloatStateOf(event.value) }
 
     Row {
-        Slider(
-            value = working_value.floatValue,
-            onValueChange = { working_value.value = it },
-            onValueChangeFinished = {
-                event.value = working_value.floatValue
-                dispatcher.set_effect_at_cursor(event)
-            },
-            valueRange = -1F..1F,
-            steps = 20,
-            colors = colors,
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1F),
-        )
+        key(ui_facade.active_event.value.hashCode()) {
+            val working_value = remember { mutableFloatStateOf(event.value) }
+            Slider(
+                value = working_value.floatValue,
+                onValueChange = {
+                    working_value.floatValue = it
+                },
+                onValueChangeFinished = {
+                    event.value = working_value.floatValue
+                    dispatcher.set_effect_at_cursor(event)
+                },
+                valueRange = -1F..1F,
+                steps = 21,
+                colors = colors,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1F)
+            )
+        }
 
         if (!is_initial) {
             EffectTransitionButton(event.transition, dispatcher)

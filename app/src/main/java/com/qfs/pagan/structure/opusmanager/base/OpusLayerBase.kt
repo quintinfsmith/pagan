@@ -705,14 +705,10 @@ open class OpusLayerBase: Effectable {
      * [position] defaults to null, indicating the root tree of the beat
      */
     fun <T : EffectEvent> get_line_ctl_tree(type: EffectType, beat_key: BeatKey, position: List<Int>? = null): ReducibleTree<T> {
-        if (beat_key.channel >= this.channels.size) {
-            throw BadBeatKey(beat_key)
-        }
+        if (beat_key.channel >= this.channels.size) throw BadBeatKey(beat_key)
 
         val working_channel = this.get_channel(beat_key.channel)
-        if (beat_key.line_offset > working_channel.size) {
-            throw BadBeatKey(beat_key)
-        }
+        if (beat_key.line_offset > working_channel.size) throw BadBeatKey(beat_key)
 
         return working_channel.get_ctl_tree(
             beat_key.line_offset,

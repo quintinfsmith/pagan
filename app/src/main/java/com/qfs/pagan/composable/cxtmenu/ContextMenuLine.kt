@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
@@ -114,8 +115,7 @@ fun ContextMenuLineStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
             else R.drawable.icon_mute,
             description = R.string.cd_line_mute
         )
-        VolumeEventMenu(
-            ui_facade, dispatcher, volume_event)
+        VolumeEventMenu(ui_facade, dispatcher, volume_event)
     }
 }
 

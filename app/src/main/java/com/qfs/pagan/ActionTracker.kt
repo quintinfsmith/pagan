@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -35,6 +34,7 @@ import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.IntegerInput
 import com.qfs.pagan.composable.SText
+import com.qfs.pagan.composable.Slider
 import com.qfs.pagan.composable.SortableMenu
 import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.UnSortableMenu
@@ -812,6 +812,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                     Slider(
                         modifier = Modifier.weight(1F).fillMaxHeight(),
                         value = slider_position.value,
+                        steps = opus_manager.length,
                         valueRange = 0F .. (opus_manager.length - 1).toFloat(),
                         onValueChange = { value ->
                             this@ActionTracker.cursor_select_column(value.toInt())
@@ -974,10 +975,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                 }
             }
 
-            CursorMode.Single -> {
-
-            }
-
+            CursorMode.Single -> { }
             else -> throw Exception()
         }
         // val main = this.get_activity()

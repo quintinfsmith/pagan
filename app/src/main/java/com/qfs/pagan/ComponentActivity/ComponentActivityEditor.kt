@@ -691,12 +691,19 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     } else {
                         Pair("${line_info.channel.value}", "${line_info.line_offset.value}")
                     }
-                    Box(Modifier.padding(2.dp)) {
+                    Box(Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 2.dp)
+                    ) {
                         Box(modifier = Modifier.align(Alignment.TopStart)) {
                             Text(label_a, maxLines = 1)
                         }
-                        Box(modifier = Modifier.align(Alignment.BottomEnd)) {
-                            Text(label_b, maxLines = 1)
+                        Box(modifier = Modifier .align(Alignment.BottomEnd)) {
+                            Text(
+                                text = label_b,
+                                maxLines = 1,
+                                textAlign = TextAlign.End
+                            )
                         }
                     }
                 } else {

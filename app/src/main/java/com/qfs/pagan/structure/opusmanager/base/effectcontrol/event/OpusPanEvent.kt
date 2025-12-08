@@ -5,6 +5,10 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 
 class OpusPanEvent(value: Float, duration: Int = 1, transition: EffectTransition = EffectTransition.Instant): SingleFloatEvent(value, duration, transition) {
+    companion object {
+        var gen_id = 0;
+    }
+    val uuid = gen_id++
     override val event_type = EffectType.Pan
     override fun to_float_array(): FloatArray {
         return floatArrayOf(this.value)

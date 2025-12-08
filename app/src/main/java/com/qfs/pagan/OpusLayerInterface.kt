@@ -1329,9 +1329,11 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         if (this.ui_lock.is_locked()) return
         this._queue_cursor_update(this.cursor)
         val controller = this.get_line_controller<EffectEvent>(ctl_type, beat_key.channel, beat_key.line_offset)
-        val working_event = this.get_line_ctl_tree<EffectEvent>(ctl_type, beat_key, position).get_event() ?:
-            controller.get_preceding_event(beat_key.beat, position) ?:
-            controller.initial_event
+        val this_event = this.get_line_ctl_tree<EffectEvent>(ctl_type, beat_key, position).get_event()
+        val that_event = controller.get_preceding_event(beat_key.beat, position)
+        val initial_event = controller.initial_event
+
+        val working_event = this_event ?: that_event ?: initial_event
 
         this.vm_state.set_active_event(working_event.copy())
     }

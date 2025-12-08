@@ -84,7 +84,12 @@ fun ContextMenuLineSecondary(ui_facade: ViewModelEditorState, dispatcher: Action
 @Composable
 fun ContextMenuLineCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, initial_event: EffectEvent, modifier: Modifier = Modifier) {
 
-    Row(modifier.padding(top = 1.dp, bottom = 1.dp)) {
+    Row(modifier
+        .padding(
+            vertical = 1.dp,
+            horizontal = 12.dp
+        )
+    ) {
         when (initial_event) {
             is OpusVolumeEvent -> VolumeEventMenu(ui_facade, dispatcher, initial_event)
             is OpusTempoEvent -> TempoEventMenu(ui_facade, dispatcher, initial_event)

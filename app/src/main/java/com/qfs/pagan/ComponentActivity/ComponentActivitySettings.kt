@@ -30,7 +30,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -54,6 +53,7 @@ import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.SText
+import com.qfs.pagan.composable.Slider
 import com.qfs.pagan.composable.SortableMenu
 import com.qfs.pagan.composable.SoundFontWarning
 import com.qfs.pagan.composable.button.Button
@@ -480,16 +480,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Slider(
-                    thumb = {
-                        Box(
-                            Modifier
-                                .background(
-                                    MaterialTheme.colorScheme.primary,
-                                    RoundedCornerShape(corner = CornerSize(12.dp))
-                                )
-                                .size(24.dp)
-                        )
-                    },
+                    modifier = Modifier.weight(1F),
                     steps = options_playback.size - 2,
                     valueRange = 0F .. 1F,
                     value = slider_position,
@@ -499,11 +490,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                         view_model.configuration.sample_rate = options_playback[slider_option_index]
                         view_model.save_configuration()
                         this@ComponentActivitySettings.update_result()
-                    },
-
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(2F)
+                    }
                 )
             }
             Row(

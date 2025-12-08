@@ -69,8 +69,9 @@ import com.qfs.pagan.CompatibleFileType
 import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.Card
+import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.SText
-import com.qfs.pagan.composable.button.Button
+import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.composable.button.ConfigDrawerBottomButton
 import com.qfs.pagan.composable.button.ConfigDrawerChannelLeftButton
 import com.qfs.pagan.composable.button.ConfigDrawerChannelRightButton
@@ -1138,12 +1139,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     ConfigDrawerBottomButton(
                         icon = R.drawable.icon_export,
                         description = R.string.btn_cfg_export,
-                        onClick = { 
-                            this@ComponentActivityEditor.view_model.create_dialog { close ->
-                                @Composable {
-                                    Button(onClick = close, content = { Text("TODO") })
-                                }
-                            }
+                        onClick = {
+                            dispatcher.export()
                         }
                     )
                 }

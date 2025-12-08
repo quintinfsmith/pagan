@@ -1,6 +1,5 @@
 package com.qfs.pagan.composable
 
-import androidx.compose.material3.Slider as StupidSlider
 import androidx.annotation.IntRange
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.combinedClickable
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -32,7 +30,6 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.SliderState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -61,12 +58,12 @@ import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.OutlinedButton
-import kotlin.Float
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import androidx.compose.material3.Card as OriginalCard
+import androidx.compose.material3.Slider as StupidSlider
 
 @Composable
 fun SText(
@@ -231,7 +228,7 @@ fun FloatInput(value: MutableState<Float>, minimum: Float? = null, maximum: Floa
 }
 
 @Composable
-fun TextInput(modifier: Modifier = Modifier, input: MutableState<String>, callback: (String) -> Unit) {
+fun TextInput(modifier: Modifier = Modifier, input: MutableState<String>, maxLines: Int = 1, callback: (String) -> Unit) {
     val state = rememberTextFieldState(input.value)
     OutlinedTextField(
         state = state,

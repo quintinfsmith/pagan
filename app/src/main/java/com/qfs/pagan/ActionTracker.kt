@@ -4,7 +4,9 @@ import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -1047,6 +1049,68 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         }
     }
 
+    fun export(type: Exportable? = null) {
+        type?.let {
+            // TODO: Track and implement
+            return
+        }
+
+        this.vm_top.create_dialog { close ->
+            @Composable {
+                Row {
+                    UnSortableMenu(this@ActionTracker.get_exportable_options()) { export_type ->
+                        this@ActionTracker.export(export_type)
+                    }
+                }
+                DialogBar(neutral = close)
+            }
+        }
+    }
+
+    private fun get_exportable_options(): List<Pair<Exportable, @Composable () -> Unit>> {
+        val export_options = mutableListOf<Pair<Exportable, @Composable () -> Unit>>()
+        val opus_manager = this.get_opus_manager()
+
+        export_options.add(
+            Pair(
+                Exportable.JSON,
+                @Composable { SText(R.string.export_option_json) }
+            )
+        )
+
+        if (opus_manager.is_tuning_standard()) {
+            export_options.add(
+                Pair(
+                    Exportable.MIDI1,
+                    @Composable { SText(R.string.export_option_midi) }
+                )
+            )
+        }
+
+        this.vm_controller.audio_interface.soundfont?.let {
+            export_options.add(
+                Pair(
+                    Exportable.WAV_SINGLE,
+                    @Composable { SText(R.string.export_option_wav) }
+                )
+            )
+            export_options.add(
+                Pair(
+                    Exportable.WAV_LINES,
+                    @Composable { SText(R.string.export_option_wav_lines) }
+                )
+            )
+            export_options.add(
+                Pair(
+                    Exportable.WAV_CHANNELS,
+                    @Composable { SText(R.string.export_option_wav_channels) }
+                )
+            )
+        }
+
+        return export_options
+    }
+
     fun show_hidden_channel_controller(forced_value: EffectType? =  null) {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
@@ -1548,20 +1612,38 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
     fun set_project_name_and_notes(project_name_and_notes: Pair<String, String>? = null) {
         val opus_manager = this.get_opus_manager()
-        val default = Pair(opus_manager.project_name ?: "", opus_manager.project_notes ?: "")
-
-        this.dialog_name_and_notes_popup(default, project_name_and_notes) { name: String, notes: String ->
+        project_name_and_notes?.let { (name, notes) ->
             val name_ints = ActionTracker.string_to_ints(name)
             this.track(
                 TrackedAction.SetProjectNameAndNotes,
                 listOf(name_ints.size) + name_ints + ActionTracker.string_to_ints(notes)
             )
 
-            val opus_manager = this.get_opus_manager()
             opus_manager.set_name_and_notes(
                 if (name == "") null else name,
                 if (notes == "") null else notes
             )
+            return
+        }
+
+        this.vm_top.create_dialog { close ->
+            @Composable {
+                val project_name = remember { mutableStateOf(opus_manager.project_name ?: "") }
+                val project_notes = remember { mutableStateOf(opus_manager.project_notes ?: "") }
+                Row {
+                    TextInput(input = project_name, maxLines = 1) {}
+                }
+                Row {
+                    TextInput(input = project_notes, maxLines = 10) {}
+                }
+                DialogBar(
+                    neutral = close,
+                    positive = {
+                        close()
+                        this@ActionTracker.set_project_name_and_notes(Pair(project_name.value, project_notes.value))
+                    }
+                )
+            }
         }
     }
 
@@ -1744,29 +1826,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         }
     }
 
-    private fun dialog_name_and_notes_popup(default: Pair<String, String>? = null, stub_output: Pair<String, String>? = null, callback: (String, String) -> Unit) {
-        if (stub_output != null) return callback(stub_output.first, stub_output.second)
-
-        this.vm_top.create_dialog { close ->
-            @Composable  {
-               //      Row {
-               //          OutlinedTextField(
-               //              maxLines = 1
-               //          )
-               //      }
-               //      Row {
-               //          OutlinedTextField(
-               //          )
-               //      }
-            }
-        }
-        // val activity = this.get_activity()
-        // if (stub_output != null) {
-        //     callback(stub_output.first, stub_output.second)
-        // } else {
-        //     activity.dialog_name_and_notes_popup(default, callback)
-        // }
-    }
 
     fun ignore(): ActionTracker {
         this.ignore_flagged = true
@@ -2329,13 +2388,84 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     }
 
     fun set_tuning_table_and_transpose(tuning_map: Array<Pair<Int, Int>>? = null, transpose: Pair<Int, Int>? = null) {
-        // if (tuning_map == null || transpose == null) {
-        //     this.get_activity().dialog_tuning_table()
-        // } else {
-        //     val opus_manager = this.get_opus_manager()
-        //     this._track_tuning_map_and_transpose(tuning_map, transpose)
-        //     opus_manager.set_tuning_map_and_transpose(tuning_map, transpose)
-        // }
+        val opus_manager = this.get_opus_manager()
+        if (tuning_map != null && transpose != null) {
+            this._track_tuning_map_and_transpose(tuning_map, transpose)
+            opus_manager.set_tuning_map_and_transpose(tuning_map, transpose)
+            return
+        }
+
+        this.vm_top.create_dialog { close ->
+            @Composable {
+                val original_radix = opus_manager.get_radix()
+                val transpose_numerator = remember { mutableIntStateOf(opus_manager.transpose.first) }
+                val transpose_denominator = remember { mutableIntStateOf(opus_manager.transpose.second) }
+                val radix = remember { mutableIntStateOf(original_radix) }
+                val mutable_map = Array<MutableState<Pair<Int, Int>>>(radix.value) { i ->
+                    mutableStateOf(
+                        if (radix.value == original_radix) opus_manager.tuning_map[i]
+                        else Pair(i, radix.value)
+                    )
+                }
+                Row {
+                    SText(R.string.dlg_transpose)
+                    IntegerInput(
+                        value = transpose_numerator,
+                        minimum = 0,
+                        callback = {}
+                    )
+                    Text("/")
+                    IntegerInput(
+                        value = transpose_denominator,
+                        minimum = 0
+                    ) { }
+                    SText(R.string.dlg_set_radix)
+                    IntegerInput(
+                        value = radix,
+                        minimum = 0,
+                        maximum = 36,
+                        callback = {}
+                    )
+                }
+                Row {
+                    Column {
+                        for ((i, state) in mutable_map.enumerate()) {
+                            val pair = state.value
+                            val numer = remember { mutableStateOf(pair.first) }
+                            val denom = remember { mutableStateOf(pair.second) }
+                            Row {
+                                Text("%02d".format(i))
+                                Spacer(Modifier.weight(1F))
+                                IntegerInput(
+                                    value = numer,
+                                    minimum = 0,
+                                    callback = { mutable_map[i].value = Pair(numer.value, denom.value) }
+                                )
+                                Text("/")
+                                IntegerInput(
+                                    value = denom,
+                                    minimum = 1,
+                                    callback = { mutable_map[i].value = Pair(numer.value, denom.value) }
+                                )
+                            }
+                        }
+                    }
+                }
+                DialogBar(
+                    neutral = close,
+                    positive = {
+                        close()
+                        this@ActionTracker.set_tuning_table_and_transpose(
+                            Array(mutable_map.size) { i -> mutable_map[i].value },
+                            Pair(
+                                transpose_numerator.value,
+                                transpose_denominator.value
+                            )
+                        )
+                    }
+                )
+            }
+        }
     }
 
     fun move_line(channel_from: Int, line_offset_from: Int, channel_to: Int, line_offset_to: Int, before: Boolean = true) {

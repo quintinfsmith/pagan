@@ -1479,22 +1479,6 @@ class ActivityEditor : PaganActivity() {
 
     }
 
-    private fun get_exportable_options(): List<Triple<Int, Int?, String>> {
-        val export_options = mutableListOf<Triple<Int, Int?, String>>(
-            Triple(0, null, this.getString(R.string.export_option_json))
-        )
-        if (this.get_opus_manager().is_tuning_standard()) {
-            export_options.add( Triple(1, null, this.getString(R.string.export_option_midi)) )
-        }
-
-        if (this.get_soundfont() != null) {
-            export_options.add(Triple(2, null, this.getString(R.string.export_option_wav)))
-            export_options.add(Triple(3, null, this.getString(R.string.export_option_wav_lines)))
-            export_options.add(Triple(4, null, this.getString(R.string.export_option_wav_channels)))
-        }
-
-        return export_options
-    }
 
     // Ui Wrappers End ////////////////////////////////////////
 

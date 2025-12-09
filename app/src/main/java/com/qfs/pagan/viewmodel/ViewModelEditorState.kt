@@ -90,7 +90,7 @@ class ViewModelEditorState: ViewModel() {
 
     val is_buffering: MutableState<Boolean> = mutableStateOf(false)
 
-    val scroll_state_x = mutableStateOf(LazyListState(0))
+    val scroll_state_x = mutableStateOf(LazyListState())
     val scroll_state_y: MutableState<ScrollState> = mutableStateOf(ScrollState(0))
     val coroutine_scope: MutableState<CoroutineScope?> = mutableStateOf(CoroutineScope(Dispatchers.Default))
 
@@ -646,32 +646,26 @@ class ViewModelEditorState: ViewModel() {
     // }
 
     fun scroll_to_beat(beat: Int) {
-        // if (beat >= this.beat_count.value) return
+        if (beat >= this.beat_count.value) return
 
-        // val beat_x = Array(beat) { i ->
-        //     (this.base_leaf_width.value * Array(this.cell_map.size) { j -> this.cell_map[j][i].value.weighted_size }.max()).roundToInt()
-        // }.sum()
-        // val beat_width = (this.base_leaf_width.value * Array(this.cell_map.size) { j -> this.cell_map[j][beat].value.weighted_size }.max()).roundToInt()
-
-        // val target_x = if (this.playback_state_soundfont.value != PlaybackState.Ready) {
-        //     beat_x
-        // } else {
-        //     this.scroll_state_x.value.let {
-        //         if (beat_x < it.firstVisibleItemScrollOffset) {
-        //             beat_x
-        //         } else if (beat_x + beat_width > it.value + it.viewportSize) {
-        //             beat_x + beat_width - it.viewportSize
-        //         } else {
-        //             return
-        //         }
-        //     }
-        // }
+        val state = this.scroll_state_x.value
+        val target = if (this.playback_state_soundfont.value != PlaybackState.Ready) {
+            Pair(beat, 0)
+        } else if (state.firstVisibleItemIndex >= beat) {
+            Pair(beat, 0)
+        } else if (state.layoutInfo.visibleItemsInfo.last().index <= beat) {
+            val beat_width = Array(this.line_count.value) { this.cell_map[it][beat].value.weighted_size }.max()
+            Pair(beat, (0 - state.layoutInfo.viewportSize.width + (beat_width * this.base_leaf_width.value)).toInt())
+        } else {
+            return
+        }
 
         // TODO: Animate when not playing
-        this.coroutine_scope.value?.let {
-            it.launch {
-                this@ViewModelEditorState.scroll_state_x.value.requestScrollToItem(beat)
-            }
+        CoroutineScope(Dispatchers.Default).launch {
+            this@ViewModelEditorState.scroll_state_x.value.requestScrollToItem(target.first, target.second)
         }
+    }
+    fun scroll_to_leaf(beat: Int, offset: Rational) {
+
     }
 }

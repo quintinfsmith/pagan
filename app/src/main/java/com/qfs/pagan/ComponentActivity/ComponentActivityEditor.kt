@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -572,8 +573,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     Spacer(Modifier.height(window_height / 2))
                 }
             }
-            LazyRow(state = scroll_state_h, overscrollEffect = null) {
-                items(column_widths.enumerate() + listOf(Pair(column_widths.size, 1))) { (x, width) ->
+            LazyRow(
+                state = scroll_state_h,
+                overscrollEffect = null
+            ) {
+                itemsIndexed(column_widths + listOf(1)) { x, width ->
                     if (x == column_widths.size) {
                         Icon(
                             modifier = Modifier
@@ -586,7 +590,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             contentDescription = stringResource(R.string.cd_insert_beat)
                         )
 
-                        return@items
+                        return@itemsIndexed
                     }
 
                     Column {
@@ -627,7 +631,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     }
                 }
             }
-
         }
     }
 

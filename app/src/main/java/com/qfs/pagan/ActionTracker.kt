@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -24,6 +26,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.qfs.json.JSONBoolean
 import com.qfs.json.JSONInteger
@@ -2209,7 +2212,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
             TrackedAction.SetTuningTable -> {
                 this.set_tuning_table_and_transpose(
-                    Array<Pair<Int, Int>>((integers.size - 2) / 2) { i: Int ->
+                    Array((integers.size - 2) / 2) { i: Int ->
                         Pair(integers[i * 2]!!, integers[(i * 2) + 1]!!)
                     },
                     Pair(
@@ -2401,53 +2404,69 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                 val transpose_numerator = remember { mutableIntStateOf(opus_manager.transpose.first) }
                 val transpose_denominator = remember { mutableIntStateOf(opus_manager.transpose.second) }
                 val radix = remember { mutableIntStateOf(original_radix) }
-                val mutable_map = Array<MutableState<Pair<Int, Int>>>(radix.value) { i ->
+                val mutable_map = Array(radix.intValue) { i ->
                     mutableStateOf(
-                        if (radix.value == original_radix) opus_manager.tuning_map[i]
-                        else Pair(i, radix.value)
+                        if (radix.intValue == original_radix) opus_manager.tuning_map[i]
+                        else Pair(i, radix.intValue)
                     )
                 }
-                Row {
-                    SText(R.string.dlg_transpose)
-                    IntegerInput(
-                        value = transpose_numerator,
-                        minimum = 0,
-                        callback = {}
-                    )
-                    Text("/")
-                    IntegerInput(
-                        value = transpose_denominator,
-                        minimum = 0
-                    ) { }
-                    SText(R.string.dlg_set_radix)
-                    IntegerInput(
-                        value = radix,
-                        minimum = 0,
-                        maximum = 36,
-                        callback = {}
-                    )
+                Column {
+                    Row {
+                        SText(R.string.dlg_transpose, Modifier.weight(1F))
+                        SText(R.string.dlg_set_radix, Modifier.weight(1F))
+                    }
+                    Row {
+                        IntegerInput(
+                            value = transpose_numerator,
+                            outlined = false,
+                            modifier = Modifier
+                                .padding(2.dp)
+                                .weight(1F),
+                            minimum = 0,
+                            callback = {}
+                        )
+                        Text("/")
+                        IntegerInput(
+                            value = transpose_denominator,
+                            outlined = false,
+                            modifier = Modifier
+                                .padding(2.dp)
+                                .weight(1F),
+                            minimum = 0
+                        ) { }
+                        Spacer(modifier = Modifier.weight(1F))
+                        IntegerInput(
+                            value = radix,
+                            outlined = false,
+                            modifier = Modifier
+                                .padding(2.dp)
+                                .weight(1F),
+                            minimum = 0,
+                            maximum = 36,
+                            callback = {}
+                        )
+                    }
                 }
-                Row {
-                    Column {
-                        for ((i, state) in mutable_map.enumerate()) {
-                            val pair = state.value
-                            val numer = remember { mutableStateOf(pair.first) }
-                            val denom = remember { mutableStateOf(pair.second) }
-                            Row {
-                                Text("%02d".format(i))
-                                Spacer(Modifier.weight(1F))
-                                IntegerInput(
-                                    value = numer,
-                                    minimum = 0,
-                                    callback = { mutable_map[i].value = Pair(numer.value, denom.value) }
-                                )
-                                Text("/")
-                                IntegerInput(
-                                    value = denom,
-                                    minimum = 1,
-                                    callback = { mutable_map[i].value = Pair(numer.value, denom.value) }
-                                )
-                            }
+                Column {
+                    for ((i, state) in mutable_map.enumerate()) {
+                        val pair = state.value
+                        val numer = remember { mutableIntStateOf(pair.first) }
+                        val denom = remember { mutableIntStateOf(pair.second) }
+                        Row {
+                            Text("%02d".format(i))
+                            IntegerInput(
+                                value = numer,
+                                modifier = Modifier.weight(1F),
+                                minimum = 0,
+                                callback = { mutable_map[i].value = Pair(numer.value, denom.value) }
+                            )
+                            Text("/")
+                            IntegerInput(
+                                value = denom,
+                                modifier = Modifier.weight(1F),
+                                minimum = 1,
+                                callback = { mutable_map[i].value = Pair(numer.value, denom.value) }
+                            )
                         }
                     }
                 }

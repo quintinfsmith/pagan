@@ -1317,7 +1317,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
         this._queue_cursor_update(this.cursor)
         this.vm_state.set_active_event(current_tree.get_event()?.copy())
-        this.vm_state.scroll_to_beat(beat_key.beat)
+        this.vm_state.scroll_to_leaf(beat_key.beat, current_tree.get_rational_position(position))
     }
 
     override fun cursor_select_ctl_at_line(ctl_type: EffectType, beat_key: BeatKey, position: List<Int>) {

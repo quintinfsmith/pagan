@@ -38,6 +38,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -90,58 +91,73 @@ fun SText(
 }
 
 @Composable
-fun IntegerInput(value: MutableState<Int>, minimum: Int? = null, maximum: Int? = null, modifier: Modifier = Modifier, callback: (Int) -> Unit) {
+fun IntegerInput(value: MutableState<Int>, minimum: Int? = null, maximum: Int? = null, modifier: Modifier = Modifier, outlined: Boolean = true, callback: (Int) -> Unit) {
     val state = rememberTextFieldState("${value.value}")
-    OutlinedTextField(
-        state = state,
-        textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End),
-        modifier = modifier.onFocusChanged { focus_state ->
-            if (focus_state.hasFocus) {
-                state.edit {
-                    this.selection = TextRange(0, this.length)
-                }
+    val input_transformation = object : InputTransformation {
+        override fun TextFieldBuffer.transformInput() {
+            var working_string = this.toString()
+            val enter_pressed = this.length > 0 && this.charAt(this.length - 1) == '\n'
+
+            if (enter_pressed) {
+                working_string = working_string.substring(0, this.length - 1)
             }
-        },
-        keyboardOptions = KeyboardOptions.Companion.Default.copy(keyboardType = KeyboardType.Companion.Number),
-        inputTransformation = object : InputTransformation {
-            override fun TextFieldBuffer.transformInput() {
-                var working_string = this.toString()
-                val enter_pressed = this.length > 0 && this.charAt(this.length - 1) == '\n'
 
-                if (enter_pressed) {
-                    working_string = working_string.substring(0, this.length - 1)
+            if (working_string == "-" && minimum != null && minimum < 0) return
+
+            if (enter_pressed && working_string.isNotEmpty()) {
+                callback(value.value)
+                this.revertAllChanges()
+                return
+            }
+
+            var int_value = try {
+                if (working_string.isEmpty()) {
+                    0
+                } else {
+                    this.toString().toInt()
                 }
+            } catch (_: Exception) {
+                this.revertAllChanges()
+                return
+            }
 
-                if (working_string == "-" && minimum != null && minimum < 0) return
+            minimum?.let {
+                int_value = max(it, int_value)
+            }
+            maximum?.let {
+                int_value = min(it, int_value)
+            }
 
-                if (enter_pressed && working_string.isNotEmpty()) {
-                    callback(value.value)
-                    this.revertAllChanges()
-                    return
-                }
+            value.value = int_value
+        }
+    }
 
-                var int_value = try {
-                    if (working_string.isEmpty()) {
-                        0
-                    } else {
-                        this.toString().toInt()
-                    }
-                } catch (_: Exception) {
-                    this.revertAllChanges()
-                    return
-                }
-
-                minimum?.let {
-                    int_value = max(it, int_value)
-                }
-                maximum?.let {
-                    int_value = min(it, int_value)
-                }
-
-                value.value = int_value
+    val focus_change_callback = { focus_state: FocusState ->
+        if (focus_state.hasFocus) {
+            state.edit {
+                this.selection = TextRange(0, this.length)
             }
         }
-    )
+    }
+
+    if (outlined) {
+        OutlinedTextField(
+            state = state,
+            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End),
+            modifier = modifier.onFocusChanged(focus_change_callback),
+            keyboardOptions = KeyboardOptions.Companion.Default.copy(keyboardType = KeyboardType.Companion.Number),
+            inputTransformation = input_transformation,
+        )
+    } else {
+        TextField(
+            state = state,
+            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End),
+            modifier = modifier.onFocusChanged(focus_change_callback),
+            keyboardOptions = KeyboardOptions.Companion.Default.copy(keyboardType = KeyboardType.Companion.Number),
+            inputTransformation = input_transformation,
+        )
+
+    }
 }
 
 @Composable

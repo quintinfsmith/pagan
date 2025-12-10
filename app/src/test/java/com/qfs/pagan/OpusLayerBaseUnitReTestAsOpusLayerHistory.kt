@@ -21,7 +21,6 @@ import com.qfs.pagan.structure.opusmanager.base.EventlessTreeException
 import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
 import com.qfs.pagan.structure.opusmanager.base.InvalidChannel
 import com.qfs.pagan.structure.opusmanager.base.NonEventConversion
-import com.qfs.pagan.structure.opusmanager.base.NoteOutOfRange
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
@@ -54,7 +53,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
     fun test_set_channel_instrument() {
         val manager = OpusManager()
         manager._project_change_new()
-        manager.channel_set_instrument(0, Pair(5,2))
+        manager.channel_set_preset(0, Pair(5,2))
         assertEquals(
             "Failed to set channel instrument",
             Pair(5,2),

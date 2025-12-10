@@ -118,7 +118,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         Unset,
         UnsetRoot,
         SetDuration,
-        SetChannelInstrument,
+        SetChannelPreset,
         SetPercussionInstrument,
         ToggleControllerVisibility,
         ShowLineController,
@@ -1352,8 +1352,8 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     fun set_channel_preset(channel: Int, instrument: Pair<Int, Int>? = null) {
         val opus_manager = this.get_opus_manager()
         if (instrument != null) {
-            this.track(TrackedAction.SetChannelInstrument, listOf(channel, instrument.first, instrument.second))
-            opus_manager.channel_set_instrument(channel, instrument)
+            this.track(TrackedAction.SetChannelPreset, listOf(channel, instrument.first, instrument.second))
+            opus_manager.channel_set_preset(channel, instrument)
             return
         }
         fun padded_hex(i: Int): String {
@@ -1403,7 +1403,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                 }
                 SortableMenu(modifier = Modifier.weight(1F), default_menu = options, sort_options = sort_options, selected_sort = 0, default_value = default) { instrument ->
                     close()
-                    opus_manager.channel_set_instrument(channel, instrument)
+                    opus_manager.channel_set_preset(channel, instrument)
                 }
                 DialogBar(neutral = close)
             }
@@ -2100,7 +2100,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             TrackedAction.RemoveLine -> {
                 this.remove_line(integers[0])
             }
-            TrackedAction.SetChannelInstrument -> {
+            TrackedAction.SetChannelPreset -> {
                 this.set_channel_preset(integers[0]!!, Pair(integers[1]!!, integers[2]!!))
             }
             TrackedAction.RemoveBeat -> {

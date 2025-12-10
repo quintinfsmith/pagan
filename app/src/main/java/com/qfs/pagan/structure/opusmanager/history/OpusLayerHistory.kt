@@ -460,7 +460,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                         uuid = current_node.args[1] as Int,
                         is_percussion = is_percussion
                     )
-                    this.channel_set_instrument(channel, Pair(current_node.args[2] as Int, current_node.args[3] as Int))
+                    this.channel_set_preset(channel, Pair(current_node.args[2] as Int, current_node.args[3] as Int))
                 }
 
                 HistoryToken.REMOVE -> {
@@ -596,7 +596,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 }
 
                 HistoryToken.SET_CHANNEL_INSTRUMENT -> {
-                    this.channel_set_instrument(
+                    this.channel_set_preset(
                         current_node.args[0] as Int,
                         checked_cast<Pair<Int, Int>>(current_node.args[1])
                     )
@@ -1440,13 +1440,13 @@ open class OpusLayerHistory: OpusLayerCursor() {
         super.set_transpose(new_transpose)
     }
 
-    override fun channel_set_instrument(channel: Int, instrument: Pair<Int, Int>) {
+    override fun channel_set_preset(channel: Int, instrument: Pair<Int, Int>) {
         this._remember {
             this.push_to_history_stack(
                 HistoryToken.SET_CHANNEL_INSTRUMENT,
                 listOf(channel, this.get_channel_instrument(channel))
             )
-            super.channel_set_instrument(channel, instrument)
+            super.channel_set_preset(channel, instrument)
         }
     }
 

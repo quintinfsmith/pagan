@@ -186,7 +186,7 @@ class ActionTrackerUnitTest {
                 ActionTracker.TrackedAction.MoveSelectionToBeat,
                 ActionTracker.TrackedAction.CopySelectionToBeat,
                 ActionTracker.TrackedAction.MergeSelectionIntoBeat,
-                ActionTracker.TrackedAction.SetChannelInstrument -> {
+                ActionTracker.TrackedAction.SetChannelPreset -> {
                     Pair(enum, listOf(4, 2, 6))
                 }
 
@@ -358,7 +358,7 @@ class ActionTrackerUnitTest {
                     ActionTracker.TrackedAction.MoveSelectionToBeat,
                     ActionTracker.TrackedAction.CopySelectionToBeat,
                     ActionTracker.TrackedAction.MergeSelectionIntoBeat,
-                    ActionTracker.TrackedAction.SetChannelInstrument -> {
+                    ActionTracker.TrackedAction.SetChannelPreset -> {
                         val test_ints = listOf(4,2,6)
                         JSONList(json_name, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }

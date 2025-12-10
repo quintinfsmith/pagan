@@ -1361,7 +1361,7 @@ open class OpusLayerBase: Effectable {
     /**
      * Set the bank of the channel at [channel] to [instrument.first] and the program to [instrument.second].
      */
-    open fun channel_set_instrument(channel: Int, instrument: Pair<Int, Int>) {
+    open fun channel_set_preset(channel: Int, instrument: Pair<Int, Int>) {
         if (!this.is_percussion(channel)) {
             this.set_channel_bank(channel, instrument.first)
         }

@@ -1132,8 +1132,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         }
     }
 
-    override fun channel_set_instrument(channel: Int, instrument: Pair<Int, Int>) {
-        super.channel_set_instrument(channel, instrument)
+    override fun channel_set_preset(channel: Int, instrument: Pair<Int, Int>) {
+        super.channel_set_preset(channel, instrument)
 
         this.vm_controller.audio_interface.update_channel_instrument(
             this.get_midi_channel(channel),

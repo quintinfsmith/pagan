@@ -1,9 +1,13 @@
 package com.qfs.pagan
 
+import android.app.Activity
+import android.view.WindowManager
 import com.qfs.apres.soundfontplayer.MappedPlaybackDevice
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WaveGenerator
-import com.qfs.pagan.Activity.ActivityEditor
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlin.math.max
 import com.qfs.pagan.OpusLayerInterface as OpusManager
@@ -21,7 +25,7 @@ class PlaybackDevice(
     private var _first_beat_passed = false
     private var _buffering_cancelled = false
     private var _buffering_mutex = Mutex()
-    var activity: ActivityEditor? = null
+    var activity: Activity? = null
     /*
         All of this notification stuff is used with the understanding that the PaganPlaybackDevice
         used to export wavs will be discarded after a single use. It'll need to be cleaned up to
@@ -39,10 +43,14 @@ class PlaybackDevice(
 
     fun restore_playback_state() {
         val vm_controller = this.opus_manager.vm_controller
-        if (vm_controller.update_playback_state_soundfont(PlaybackState.Ready)) {
-            val vm_state = this.opus_manager.vm_state
-        }
+        vm_controller.update_playback_state_soundfont(PlaybackState.Ready)
         (this.sample_frame_map as PlaybackFrameMap).clear()
+
+        this.activity?.let {
+            it.runOnUiThread {
+                it.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            }
+        }
     }
 
     override fun on_stop() {
@@ -52,6 +60,13 @@ class PlaybackDevice(
     override fun on_start() {
         val vm_controller = this.opus_manager.vm_controller
         vm_controller.update_playback_state_soundfont(PlaybackState.Playing)
+
+
+        this.activity?.let {
+            it.runOnUiThread {
+                it.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            }
+        }
     }
 
     override fun on_mark(i: Int) {

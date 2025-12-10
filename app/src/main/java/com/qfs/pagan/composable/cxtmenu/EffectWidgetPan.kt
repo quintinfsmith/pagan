@@ -49,7 +49,7 @@ fun PanEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, eve
         disabledInactiveTickColor = default_colors.disabledInactiveTickColor
     )
 
-    Row {
+    Row(verticalAlignment = Alignment.CenterVertically) {
         key(ui_facade.active_event.value.hashCode()) {
             val working_value = remember { mutableFloatStateOf(event.value) }
             Box(modifier = Modifier.weight(1F)) {

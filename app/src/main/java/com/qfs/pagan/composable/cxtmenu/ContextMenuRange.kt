@@ -17,6 +17,7 @@ import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.button.IconCMenuButton
+import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
@@ -45,6 +46,7 @@ fun ContextMenuRangeSecondary(ui_facade: ViewModelEditorState, dispatcher: Actio
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
+                .fillMaxWidth()
                 .height(dimensionResource(R.dimen.contextmenu_secondary_button_height)),
             horizontalArrangement = Arrangement.SpaceAround
         ) {
@@ -75,23 +77,32 @@ fun ContextMenuRangeSecondary(ui_facade: ViewModelEditorState, dispatcher: Actio
                 }
             )
         }
-        Row(horizontalArrangement = Arrangement.SpaceAround) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceAround
+        ) {
+
             SingleChoiceSegmentedButtonRow {
-                PaganConfiguration.MoveMode.entries.forEachIndexed { i, mode ->
+                // TODO: MERGE
+                val options = PaganConfiguration.MoveMode.entries.filter { it != PaganConfiguration.MoveMode.MERGE }
+                for ((i, mode) in options.enumerate()) {
+
                     SegmentedButton(
                         shape = SegmentedButtonDefaults.itemShape(
                             index = i,
-                            count = PaganConfiguration.MoveMode.entries.size
+                            count = options.size
                         ),
                         onClick = { dispatcher.set_copy_mode(mode) },
                         selected = mode == move_mode,
-                        label = { SText(
-                            when (mode) {
-                                PaganConfiguration.MoveMode.MOVE -> R.string.move_mode_move
-                                PaganConfiguration.MoveMode.COPY -> R.string.move_mode_copy
-                                PaganConfiguration.MoveMode.MERGE -> R.string.move_mode_merge
-                            }
-                        ) }
+                        label = {
+                            SText(
+                                when (mode) {
+                                    PaganConfiguration.MoveMode.MOVE -> R.string.move_mode_move
+                                    PaganConfiguration.MoveMode.COPY -> R.string.move_mode_copy
+                                    PaganConfiguration.MoveMode.MERGE -> R.string.move_mode_merge
+                                }
+                            )
+                        }
                     )
                 }
             }

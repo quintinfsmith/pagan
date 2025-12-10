@@ -130,7 +130,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
             onClick = {
                 this.load_menu_dialog {
                     this@ComponentActivityLanding.startActivity(
-                        Intent(this@ComponentActivityLanding, ActivityEditor::class.java).apply {
+                        Intent(this@ComponentActivityLanding, ComponentActivityEditor::class.java).apply {
                             this.data = it
                         }
                     )

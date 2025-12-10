@@ -1,6 +1,7 @@
 package com.qfs.pagan.composable.button
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -10,13 +11,22 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun IconCMenuButton(modifier: Modifier = Modifier, onClick: () -> Unit, onLongClick: (() -> Unit)? = null, icon: Int, description: Int, enabled: Boolean = true, contentPadding: PaddingValues = PaddingValues(8.dp)) {
+fun IconCMenuButton(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null,
+    icon: Int,
+    description: Int,
+    enabled: Boolean = true,
+    contentPadding: PaddingValues = PaddingValues(0.dp)
+) {
     Button(
         enabled = enabled,
         modifier = modifier,
         onClick = onClick,
         onLongClick = onLongClick ?: {},
         contentPadding = contentPadding,
+        shape = RoundedCornerShape(4.dp),
         content = {
             Icon(
                 painter = painterResource(icon),
@@ -27,11 +37,19 @@ fun IconCMenuButton(modifier: Modifier = Modifier, onClick: () -> Unit, onLongCl
 }
 
 @Composable
-fun TextCMenuButton(modifier: Modifier = Modifier, onClick: () -> Unit, onLongClick: (() -> Unit) ?= null, text: String, enabled: Boolean = true, contentPadding: PaddingValues = PaddingValues(8.dp)) {
+fun TextCMenuButton(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+    onLongClick: (() -> Unit) ?= null,
+    text: String,
+    enabled: Boolean = true,
+    contentPadding: PaddingValues = PaddingValues(0.dp)
+) {
     Button(
         enabled = enabled,
         modifier = modifier,
         contentPadding = contentPadding,
+        shape = RoundedCornerShape(4.dp),
         onClick = onClick,
         onLongClick = onLongClick ?: {},
         content = { Text(text = text) }

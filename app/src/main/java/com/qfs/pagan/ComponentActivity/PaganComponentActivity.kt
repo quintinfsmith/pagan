@@ -422,10 +422,10 @@ abstract class PaganComponentActivity: ComponentActivity() {
             items.add(
                 Pair(uri, {
                     Text(
-                        modifier = Modifier.combinedClickable(
-                            onClick = {},
-                            onLongClick = { this@PaganComponentActivity.create_project_card_dialog(title, uri) }
-                        ),
+                        // modifier = Modifier.combinedClickable(
+                        //     onClick = {},
+                        //     onLongClick = { this@PaganComponentActivity.create_project_card_dialog(title, uri) }
+                        // ),
                         text = title
                     )
                 })
@@ -443,14 +443,27 @@ abstract class PaganComponentActivity: ComponentActivity() {
 
         this.view_model.create_dialog {  close ->
             @Composable {
-                Column {
+                Column(
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
                     Row { DialogSTitle(R.string.menu_item_load_project, modifier = Modifier.weight(1F)) }
-                    Row {
-                        SortableMenu(items, sort_options, selected_sort = 0) {
+                    SortableMenu(
+                        modifier = Modifier.weight(1F),
+                        default_menu = items,
+                        sort_options = sort_options,
+                        selected_sort = 0,
+                        onLongClick = {
+                            for ((uri, title) in project_list) {
+                                if (uri != it) continue
+                                this@PaganComponentActivity.create_project_card_dialog(title, it)
+                                break
+                            }
+                        },
+                        onClick = {
                             close()
                             load_callback(it)
                         }
-                    }
+                    )
                     DialogBar(neutral = close)
                 }
             }

@@ -51,6 +51,7 @@ import androidx.lifecycle.ViewModel
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
 import com.qfs.pagan.R
+import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.Slider
@@ -348,21 +349,13 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                         }
                                     )
                                 }
-                                Row {
-                                    SortableMenu(soundfonts, sort_options, 0, null) { uri ->
-                                        view_model.set_soundfont_uri(uri)
-                                        view_model.save_configuration()
-                                        this@ComponentActivitySettings.update_result()
-                                        close()
-                                    }
+                                SortableMenu(modifier = Modifier.weight(1F), default_menu = soundfonts, sort_options = sort_options, selected_sort = 0) { uri ->
+                                    view_model.set_soundfont_uri(uri)
+                                    view_model.save_configuration()
+                                    this@ComponentActivitySettings.update_result()
+                                    close()
                                 }
-                                Row {
-                                    OutlinedButton(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        onClick = { close() },
-                                        content = { SText(android.R.string.cancel) }
-                                    )
-                                }
+                                DialogBar(neutral = close)
                             }
                         }
                     }
@@ -481,7 +474,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             ) {
                 Slider(
                     modifier = Modifier.weight(1F),
-                    steps = options_playback.size - 2,
+                    steps = options_playback.size,
                     valueRange = 0F .. 1F,
                     value = slider_position,
                     onValueChange = {

@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import com.qfs.pagan.ActionTracker
@@ -25,7 +26,7 @@ fun DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, e
     val denominator = remember { mutableIntStateOf(event.denominator) }
     val fade = remember { mutableFloatStateOf(event.fade) }
 
-    Row {
+    Row(verticalAlignment = Alignment.CenterVertically) {
         IntegerInput(
             value = echo,
             minimum = 1,

@@ -31,11 +31,10 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -71,9 +70,9 @@ import com.qfs.pagan.CompatibleFileType
 import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.Card
-import com.qfs.pagan.composable.DialogBar
+import com.qfs.pagan.composable.DropdownMenu
+import com.qfs.pagan.composable.DropdownMenuItem
 import com.qfs.pagan.composable.SText
-import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.composable.button.ConfigDrawerBottomButton
 import com.qfs.pagan.composable.button.ConfigDrawerChannelLeftButton
 import com.qfs.pagan.composable.button.ConfigDrawerChannelRightButton
@@ -232,6 +231,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         try {
             this.controller_model.set_soundfont(SoundFont(this, soundfont_file.uri))
+            this.controller_model.playback_device?.activity = this
         } catch (_: Riff.InvalidRiff) {
             // Possible if user puts the sf2 in their files manually
             //this.feedback_msg(this.getString(R.string.invalid_soundfont))
@@ -346,6 +346,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     override fun onDestroy() {
+        this.controller_model.playback_device?.activity = null
         super.onDestroy()
     }
 
@@ -495,10 +496,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val modifier = Modifier.height(dimensionResource(R.dimen.contextmenu_secondary_height))
         Row {
             when (cursor.type) {
-                CursorMode.Line -> {
-                    ContextMenuLineSecondary(ui_facade, dispatcher, modifier)
-                }
-
+                CursorMode.Line -> ContextMenuLineSecondary(ui_facade, dispatcher, modifier)
                 CursorMode.Column -> ContextMenuColumnSecondary(ui_facade, dispatcher, modifier)
                 CursorMode.Single -> ContextMenuSingleSecondary(ui_facade, dispatcher, modifier)
                 CursorMode.Range -> {
@@ -1024,7 +1022,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 AnimatedVisibility(ui_facade.active_cursor.value != null) {
                     Box(Modifier) {
                         Column {
-                            Row { ContextMenuPrimary(ui_facade, view_model.action_interface) }
+                            ContextMenuPrimary(ui_facade, view_model.action_interface)
                             ContextMenuSecondary(ui_facade, view_model.action_interface)
                         }
                     }
@@ -1043,7 +1041,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
             shape = RoundedCornerShape(topStart = 0.dp, bottomStart = 0.dp, topEnd = 4.dp, bottomEnd = 4.dp),
             modifier = modifier.wrapContentWidth()
         ) {
-            Column(modifier = Modifier.padding(12.dp).wrapContentWidth()) {
+            Column(
+                modifier = Modifier
+                    .padding(12.dp)
+                    .wrapContentWidth(),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
@@ -1078,27 +1081,29 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     }
                 }
 
-                Row(modifier = Modifier.weight(1F)) {
-                    Column {
-                        for (i in 0 until state_model.channel_count.value) {
-                            val channel_data = state_model.channel_data[i]
-                            Row {
-                                ConfigDrawerChannelLeftButton(
-                                    modifier = Modifier.weight(1F),
-                                    onClick = { dispatcher.set_channel_preset(i) },
-                                    content = { Text(channel_data.active_name.value) }
-                                )
-                                Spacer(modifier = Modifier.width(2.dp))
-                                ConfigDrawerChannelRightButton(
-                                    onClick = { dispatcher.remove_channel(i) },
-                                    content = {
-                                        Icon(
-                                            painter = painterResource(R.drawable.icon_delete_channel),
-                                            contentDescription = stringResource(R.string.remove_channel, i)
-                                        )
-                                    }
-                                )
-                            }
+                Column(
+                    Modifier
+                        .verticalScroll(rememberScrollState())
+                        .weight(1F),
+                ) {
+                    for (i in 0 until state_model.channel_count.value) {
+                        val channel_data = state_model.channel_data[i]
+                        Row {
+                            ConfigDrawerChannelLeftButton(
+                                modifier = Modifier.weight(1F),
+                                onClick = { dispatcher.set_channel_preset(i) },
+                                content = { Text(channel_data.active_name.value) }
+                            )
+                            Spacer(modifier = Modifier.width(2.dp))
+                            ConfigDrawerChannelRightButton(
+                                onClick = { dispatcher.remove_channel(i) },
+                                content = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.icon_delete_channel),
+                                        contentDescription = stringResource(R.string.remove_channel, i)
+                                    )
+                                }
+                            )
                         }
                     }
                 }

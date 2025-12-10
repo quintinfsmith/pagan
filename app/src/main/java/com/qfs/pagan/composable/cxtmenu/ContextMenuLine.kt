@@ -2,10 +2,12 @@ package com.qfs.pagan.composable.cxtmenu
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
@@ -83,7 +85,6 @@ fun ContextMenuLineSecondary(ui_facade: ViewModelEditorState, dispatcher: Action
 
 @Composable
 fun ContextMenuLineCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, initial_event: EffectEvent, modifier: Modifier = Modifier) {
-
     Row(modifier
         .padding(
             vertical = 1.dp,
@@ -107,8 +108,12 @@ fun ContextMenuLineStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
     val cursor = ui_facade.active_cursor.value ?: return
     val y = cursor.ints[0]
     val line = ui_facade.line_data[y]
-    Row(modifier = modifier) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         IconCMenuButton(
+            modifier = Modifier.fillMaxHeight(),
             onClick = {
                 if (line.is_mute.value) {
                     dispatcher.line_unmute()
@@ -117,7 +122,7 @@ fun ContextMenuLineStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
                 }
             },
             icon = if (line.is_mute.value) R.drawable.icon_unmute
-            else R.drawable.icon_mute,
+                else R.drawable.icon_mute,
             description = R.string.cd_line_mute
         )
         VolumeEventMenu(ui_facade, dispatcher, volume_event)

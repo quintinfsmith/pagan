@@ -11,8 +11,8 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.DropdownMenu
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -37,6 +37,7 @@ import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DialogTitle
+import com.qfs.pagan.composable.DropdownMenu
 import com.qfs.pagan.composable.IntegerInput
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.Slider
@@ -1061,7 +1062,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         this.vm_top.create_dialog { close ->
             @Composable {
                 Row {
-                    UnSortableMenu(this@ActionTracker.get_exportable_options()) { export_type ->
+                    UnSortableMenu(Modifier, this@ActionTracker.get_exportable_options()) { export_type ->
                         this@ActionTracker.export(export_type)
                     }
                 }
@@ -1337,7 +1338,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             @Composable {
                 Row { DialogSTitle(R.string.dropdown_choose_instrument, modifier = Modifier.weight(1F)) }
                 Row {
-                    UnSortableMenu(options, default_value = current_instrument) { value ->
+                    UnSortableMenu(Modifier, options, default_value = current_instrument) { value ->
                         this@ActionTracker.track(TrackedAction.SetPercussionInstrument, listOf(channel, line_offset, value))
                         opus_manager.percussion_set_instrument(channel, line_offset, value)
                         close()
@@ -1400,11 +1401,9 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                 Row {
                     SText(R.string.dropdown_choose_instrument)
                 }
-                Row(Modifier.weight(1F)) {
-                    SortableMenu(options, sort_options = sort_options, 0, default) { instrument ->
-                        close()
-                        opus_manager.channel_set_instrument(channel, instrument)
-                    }
+                SortableMenu(modifier = Modifier.weight(1F), default_menu = options, sort_options = sort_options, selected_sort = 0, default_value = default) { instrument ->
+                    close()
+                    opus_manager.channel_set_instrument(channel, instrument)
                 }
                 DialogBar(neutral = close)
             }
@@ -1741,31 +1740,18 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             this.vm_top.create_dialog { close ->
                 @Composable {
                     Row { DialogSTitle(R.string.dialog_save_warning_title, modifier = Modifier.weight(1F)) }
-                    Row {
-                        Button(
-                            modifier = Modifier.weight(1F),
-                            onClick = {
-                                close()
-                                callback(false)
-
-                            },
-                            content = { SText(R.string.no) }
-                        )
-                        TextButton(
-                            modifier = Modifier.weight(1F),
-                            onClick = { close() },
-                            content = { SText(android.R.string.cancel) }
-                        )
-                        Button(
-                            modifier = Modifier.weight(1F),
-                            onClick = {
-                                close()
-                                this@ActionTracker.save()
-                                callback(true)
-                            },
-                            content = { SText(android.R.string.ok) }
-                        )
-                    }
+                    DialogBar(
+                        negative = {
+                            close()
+                            callback(false)
+                        },
+                        neutral = close,
+                        positive = {
+                            close()
+                            this@ActionTracker.save()
+                            callback(true)
+                        }
+                    )
                 }
             }
         } else {
@@ -1788,7 +1774,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             @Composable {
                 Row { DialogSTitle(title, modifier = Modifier.weight(1F)) }
                 Row {
-                    UnSortableMenu(options, default) { value ->
+                    UnSortableMenu(Modifier, options, default) { value ->
                         close()
                         callback(value)
                     }
@@ -2447,7 +2433,11 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         )
                     }
                 }
-                Column {
+                Column(
+                    modifier = Modifier
+                        .weight(1F)
+                        .verticalScroll(rememberScrollState())
+                ) {
                     for ((i, state) in mutable_map.enumerate()) {
                         val pair = state.value
                         val numer = remember { mutableIntStateOf(pair.first) }

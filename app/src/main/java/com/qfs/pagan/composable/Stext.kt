@@ -2,6 +2,8 @@ package com.qfs.pagan.composable
 
 import androidx.annotation.IntRange
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -24,10 +26,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CardElevation
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenu as OriginalDropdownMenu
+import androidx.compose.material3.DropdownMenuItem as OriginalDropdownMenuItem
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
+import androidx.compose.material3.MenuItemColors
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -42,6 +48,7 @@ import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextLayoutResult
@@ -54,11 +61,15 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupProperties
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.OutlinedButton
+import com.qfs.pagan.enumerate
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -277,9 +288,17 @@ fun TextInput(modifier: Modifier = Modifier, input: MutableState<String>, maxLin
     )
 }
 @Composable
-fun <T> SortableMenu(default_menu: List<Pair<T, @Composable () -> Unit>>, sort_options: List<Pair<Int, (Int, Int) -> Int>>, selected_sort: Int = -1, default_value: T? = null, callback: (T) -> Unit) {
+fun <T> SortableMenu(
+    modifier: Modifier = Modifier,
+    default_menu: List<Pair<T, @Composable () -> Unit>>,
+    sort_options: List<Pair<Int, (Int, Int) -> Int>>,
+    selected_sort: Int = -1,
+    default_value: T? = null,
+    onLongClick: (T) -> Unit = {},
+    onClick: (T) -> Unit
+) {
     val active_sort_option = remember { mutableStateOf(selected_sort) }
-    Column {
+    Column(modifier = modifier) {
         if (sort_options.isNotEmpty()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 val expanded = remember { mutableStateOf(false) }
@@ -289,7 +308,7 @@ fun <T> SortableMenu(default_menu: List<Pair<T, @Composable () -> Unit>>, sort_o
                     modifier = Modifier.weight(1F)
                 )
                 Box {
-                    com.qfs.pagan.composable.button.Button(
+                    Button(
                         onClick = { expanded.value = !expanded.value },
                         content = {
                             if (selected_sort == -1) {
@@ -328,30 +347,48 @@ fun <T> SortableMenu(default_menu: List<Pair<T, @Composable () -> Unit>>, sort_o
                 List(default_menu.size) { i -> default_menu[indices[i]] }
             }
 
-            for ((uri, label_content) in sorted_menu) {
+
+            for ((i, row) in sorted_menu.enumerate()) {
+                val (uri, label_content) = row
                 Row(
                     modifier = Modifier
+                        .then(
+                            if (i % 2 == 0) {
+                                Modifier.background(Color(0x20000000))
+                            } else {
+                                Modifier.background(Color(0x20FFFFFF))
+                            }
+                        )
                         .height(dimensionResource(R.dimen.dialog_menu_line_height))
                         .padding(dimensionResource(R.dimen.dialog_menu_line_padding))
+                        .fillMaxWidth()
                         .combinedClickable(
-                            onClick = { callback(uri) }
+                            onClick = { onClick(uri) }
                         ),
                     content = { label_content() }
                 )
             }
         }
-
     }
 }
 
 @Composable
-fun <T> UnSortableMenu(options: List<Pair<T, @Composable () -> Unit>>, default_value: T? = null, callback: (T) -> Unit) {
-    SortableMenu(options, listOf(), default_value = default_value, callback = callback)
+fun <T> UnSortableMenu(modifier: Modifier = Modifier, options: List<Pair<T, @Composable () -> Unit>>, default_value: T? = null, callback: (T) -> Unit) {
+    SortableMenu(modifier, options, listOf(), default_value = default_value, onClick = callback)
 }
 
 @Composable
 fun DialogTitle(text: String, modifier: Modifier = Modifier) {
-    Text(text = text, modifier = modifier)
+    ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+        Text(
+            text = text,
+            modifier = modifier
+                .padding(
+                    vertical = 16.dp,
+                    horizontal = 12.dp
+                )
+        )
+    }
 }
 
 @Composable
@@ -380,10 +417,12 @@ fun Card(
 fun DialogBar(modifier: Modifier = Modifier.fillMaxWidth(), positive: (() -> Unit)? = null, negative: (() -> Unit)? = null, neutral: (() -> Unit)? = null) {
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         negative?.let {
             Button(
+                modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(top = 2.dp, bottom = 2.dp, end = 4.dp, start = 4.dp),
                 onClick = it,
                 content = { SText(android.R.string.no) }
@@ -391,6 +430,7 @@ fun DialogBar(modifier: Modifier = Modifier.fillMaxWidth(), positive: (() -> Uni
         }
         neutral?.let {
             OutlinedButton(
+                modifier = Modifier.weight(1F),
                 contentPadding = PaddingValues(top = 2.dp, bottom = 2.dp, end = 4.dp, start = 4.dp),
                 onClick = it,
                 content = { SText(android.R.string.cancel) }
@@ -398,6 +438,7 @@ fun DialogBar(modifier: Modifier = Modifier.fillMaxWidth(), positive: (() -> Uni
         }
         positive?.let {
             Button(
+                modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(top = 2.dp, bottom = 2.dp, end = 4.dp, start = 4.dp),
                 onClick = it,
                 content = { SText(android.R.string.ok) }
@@ -420,4 +461,37 @@ fun Slider(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     StupidSlider(value, onValueChange, modifier, enabled, valueRange, steps - 2, onValueChangeFinished, colors, interactionSource)
+}
+
+@Composable
+fun DropdownMenu(
+    expanded: Boolean,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
+    offset: DpOffset = DpOffset(0.dp, 0.dp),
+    scrollState: ScrollState = rememberScrollState(),
+    properties: PopupProperties = PopupProperties(focusable = true),
+    shape: Shape = MenuDefaults.shape,
+    containerColor: Color = colorResource(R.color.surface_container),
+    tonalElevation: Dp = MenuDefaults.TonalElevation,
+    shadowElevation: Dp = MenuDefaults.ShadowElevation,
+    border: BorderStroke? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    OriginalDropdownMenu(expanded, onDismissRequest, modifier, offset, scrollState, properties, shape, containerColor, tonalElevation, shadowElevation, border, content)
+}
+
+@Composable
+fun DropdownMenuItem(
+    text: @Composable () -> Unit,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    leadingIcon: @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
+    enabled: Boolean = true,
+    colors: MenuItemColors = MenuDefaults.itemColors(),
+    contentPadding: PaddingValues = MenuDefaults.DropdownMenuItemContentPadding,
+    interactionSource: MutableInteractionSource? = null,
+) {
+    OriginalDropdownMenuItem(text, onClick, modifier, leadingIcon, trailingIcon, enabled, colors, contentPadding, interactionSource)
 }

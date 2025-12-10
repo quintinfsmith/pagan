@@ -15,7 +15,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableIntStateOf
@@ -1053,68 +1052,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         }
     }
 
-    fun export(type: Exportable? = null) {
-        type?.let {
-            // TODO: Track and implement
-            return
-        }
-
-        this.vm_top.create_dialog { close ->
-            @Composable {
-                Row {
-                    UnSortableMenu(Modifier, this@ActionTracker.get_exportable_options()) { export_type ->
-                        this@ActionTracker.export(export_type)
-                    }
-                }
-                DialogBar(neutral = close)
-            }
-        }
-    }
-
-    private fun get_exportable_options(): List<Pair<Exportable, @Composable () -> Unit>> {
-        val export_options = mutableListOf<Pair<Exportable, @Composable () -> Unit>>()
-        val opus_manager = this.get_opus_manager()
-
-        export_options.add(
-            Pair(
-                Exportable.JSON,
-                @Composable { SText(R.string.export_option_json) }
-            )
-        )
-
-        if (opus_manager.is_tuning_standard()) {
-            export_options.add(
-                Pair(
-                    Exportable.MIDI1,
-                    @Composable { SText(R.string.export_option_midi) }
-                )
-            )
-        }
-
-        this.vm_controller.audio_interface.soundfont?.let {
-            export_options.add(
-                Pair(
-                    Exportable.WAV_SINGLE,
-                    @Composable { SText(R.string.export_option_wav) }
-                )
-            )
-            export_options.add(
-                Pair(
-                    Exportable.WAV_LINES,
-                    @Composable { SText(R.string.export_option_wav_lines) }
-                )
-            )
-            export_options.add(
-                Pair(
-                    Exportable.WAV_CHANNELS,
-                    @Composable { SText(R.string.export_option_wav_channels) }
-                )
-            )
-        }
-
-        return export_options
-    }
-
     fun show_hidden_channel_controller(forced_value: EffectType? =  null) {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
@@ -1356,6 +1293,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             opus_manager.channel_set_preset(channel, instrument)
             return
         }
+
         fun padded_hex(i: Int): String {
             var s = Integer.toHexString(i)
             while (s.length < 2) {

@@ -7,8 +7,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.qfs.apres.soundfont2.SoundFont
-import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.EditorTable
+import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.Rational
@@ -21,7 +21,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.roundToInt
 
 class ViewModelEditorState: ViewModel() {
     enum class SelectionLevel {
@@ -58,6 +57,14 @@ class ViewModelEditorState: ViewModel() {
         val is_selected = mutableStateOf(is_selected)
         val active_name = mutableStateOf<String>(name)
         val size = mutableStateOf<Int>(size)
+        fun update(percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean, is_selected: Boolean = false, name: String, size: Int = 0) {
+            this.percussion.value = percussion
+            this.instrument.value = instrument
+            this.is_mute.value = is_mute
+            this.is_selected.value = is_selected
+            this.active_name.value = name
+            this.size.value = size
+        }
     }
     class CacheCursor(var type: CursorMode, vararg ints: Int) {
         var ints = ints.toList()
@@ -295,9 +302,9 @@ class ViewModelEditorState: ViewModel() {
         }
     }
 
-    fun set_channel_data(channel_index: Int, percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean, size: Int = 0) {
-        val name = this.get_preset_name(instrument.first, instrument.second)
-        this.channel_data[channel_index] = ChannelData(percussion, instrument, is_mute, is_selected = false, name = name ?: "TODO", size)
+    fun set_channel_data(channel_index: Int, percussion: Boolean, preset: Pair<Int, Int>, is_mute: Boolean, size: Int = 0) {
+        val name = this.get_preset_name(preset.first, preset.second)
+        this.channel_data[channel_index].update(percussion, preset, is_mute, is_selected = false, name = name ?: "TODO", size)
     }
 
     fun set_project_name(name: String? = null) {

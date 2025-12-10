@@ -1142,7 +1142,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         )
 
         if (this.ui_lock.is_locked()) return
-        this.vm_state.set_channel_data(channel, this.is_percussion(channel), instrument, this.channels[channel].muted, size = this.channels[channel].lines.size)
+        this.vm_state.set_channel_data(channel, this.is_percussion(channel), instrument, this.channels[channel].muted, size = this.channels[channel].lines.size, )
 
     }
 
@@ -2085,4 +2085,12 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.vm_state.mute_line(y, false)
     }
 
+    fun get_safe_name(): String? {
+        val reserved_chars = "|\\?*<\":>+[]/'"
+        var base_name: String = this.project_name ?: return null
+        for (c in reserved_chars) {
+            base_name = base_name.replace("$c", "_")
+        }
+        return base_name
+    }
 }

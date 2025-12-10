@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,8 +25,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CardElevation
-import androidx.compose.material3.DropdownMenu as OriginalDropdownMenu
-import androidx.compose.material3.DropdownMenuItem as OriginalDropdownMenuItem
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
@@ -75,6 +72,8 @@ import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import androidx.compose.material3.Card as OriginalCard
+import androidx.compose.material3.DropdownMenu as OriginalDropdownMenu
+import androidx.compose.material3.DropdownMenuItem as OriginalDropdownMenuItem
 import androidx.compose.material3.Slider as StupidSlider
 
 @Composable
@@ -347,23 +346,34 @@ fun <T> SortableMenu(
                 List(default_menu.size) { i -> default_menu[indices[i]] }
             }
 
-
             for ((i, row) in sorted_menu.enumerate()) {
-                val (uri, label_content) = row
+                val (item, label_content) = row
+                val row_modifier = Modifier
                 Row(
                     modifier = Modifier
                         .then(
-                            if (i % 2 == 0) {
-                                Modifier.background(Color(0x20000000))
+                            if (item == default_value) {
+                                row_modifier.background(colorResource(R.color.leaf_empty_selected))
                             } else {
-                                Modifier.background(Color(0x20FFFFFF))
+                                row_modifier
                             }
                         )
-                        .height(dimensionResource(R.dimen.dialog_menu_line_height))
-                        .padding(dimensionResource(R.dimen.dialog_menu_line_padding))
+                        .then(
+                            if (i % 2 == 0) {
+                                row_modifier.background(Color(0x20000000))
+                            } else {
+                                row_modifier.background(Color(0x20FFFFFF))
+                            }
+                        )
+                        //.height(dimensionResource(R.dimen.dialog_menu_line_height))
+                        .padding(
+                            vertical = dimensionResource(R.dimen.dialog_menu_line_padding_vertical),
+                             horizontal = dimensionResource(R.dimen.dialog_menu_line_padding_horizontal)
+                        )
                         .fillMaxWidth()
                         .combinedClickable(
-                            onClick = { onClick(uri) }
+                            onClick = { onClick(item) },
+                            onLongClick = { onLongClick(item) }
                         ),
                     content = { label_content() }
                 )

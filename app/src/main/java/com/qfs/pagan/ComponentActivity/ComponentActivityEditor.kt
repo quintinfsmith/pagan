@@ -1,20 +1,26 @@
 package com.qfs.pagan.ComponentActivity
 
+import android.Manifest
+import android.app.AlertDialog
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.DocumentsContract
 import android.provider.OpenableColumns
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,7 +35,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -55,6 +60,9 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.lifecycleScope
@@ -62,17 +70,23 @@ import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
 import com.qfs.apres.soundfont2.Riff
 import com.qfs.apres.soundfont2.SoundFont
+import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.Activity.ActivityAbout
 import com.qfs.pagan.Activity.ActivitySettings
 import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
 import com.qfs.pagan.CompatibleFileType
+import com.qfs.pagan.Exportable
+import com.qfs.pagan.MultiExporterEventHandler
 import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.R
+import com.qfs.pagan.SingleExporterEventHandler
 import com.qfs.pagan.composable.Card
+import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DropdownMenu
 import com.qfs.pagan.composable.DropdownMenuItem
 import com.qfs.pagan.composable.SText
+import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.composable.button.ConfigDrawerBottomButton
 import com.qfs.pagan.composable.button.ConfigDrawerChannelLeftButton
 import com.qfs.pagan.composable.button.ConfigDrawerChannelRightButton
@@ -92,7 +106,9 @@ import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
+import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
+import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
@@ -108,15 +124,314 @@ import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.io.BufferedOutputStream
 import java.io.BufferedReader
+import java.io.DataOutputStream
+import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
+import java.io.FileOutputStream
 import java.io.InputStreamReader
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import kotlin.concurrent.thread
 import kotlin.math.abs
 
 class ComponentActivityEditor: PaganComponentActivity() {
     val controller_model: ViewModelEditorController by this.viewModels()
     val state_model: ViewModelEditorState by this.viewModels()
+
+    // Notification shiz -------------------------------------------------
+    var NOTIFICATION_ID = 0
+    val CHANNEL_ID = "com.qfs.pagan" // TODO: Use String Resource
+    private var _notification_channel: NotificationChannel? = null
+    private var _active_notification: NotificationCompat.Builder? = null
+    // -------------------------------------------------------------------
+
+    private var _result_launcher_export_multi_line_wav =
+        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            val soundfont = this.controller_model.audio_interface.soundfont ?: return@registerForActivityResult
+
+            this.getNotificationPermission()
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            val tree_uri = result.data?.data ?: return@registerForActivityResult
+            if (this.controller_model.export_handle != null) return@registerForActivityResult
+            val directory = DocumentFile.fromTreeUri(this, tree_uri) ?: return@registerForActivityResult
+            thread {
+                val opus_manager_copy = OpusLayerBase()
+
+                this.controller_model.opus_manager.to_json().let {
+                    opus_manager_copy.project_change_json(it)
+                }
+
+                var line_count = 0
+                val skip_lines = mutableSetOf<Pair<Int, Int>>()
+
+                opus_manager_copy.get_all_channels()
+                    .forEachIndexed channel_loop@{ i: Int, channel: OpusChannelAbstract<*, *> ->
+                        line_loop@ for (j in 0 until channel.lines.size) {
+                            val line = channel.lines[j]
+                            if (line.muted || channel.muted) {
+                                skip_lines.add(Pair(i, j))
+                                continue
+                            }
+
+                            var skip = true
+                            for (beat in line.beats) {
+                                if (!beat.is_eventless()) {
+                                    skip = false
+                                    break
+                                }
+                            }
+
+                            if (skip) {
+                                skip_lines.add(Pair(i, j))
+                            } else {
+                                line_count += 1
+                            }
+                        }
+                    }
+
+                val export_event_handler = MultiExporterEventHandler(this, line_count)
+
+                var y = 0
+                outer@ for (c in opus_manager_copy.get_all_channels().indices) {
+                    val channel = opus_manager_copy.get_channel(c)
+                    for (l in channel.lines.indices) {
+                        if (skip_lines.contains(Pair(c, l))) continue
+
+                        val file = directory.createFile("audio/wav",
+                            this.getString(R.string.export_wav_lines_filename, c, l)
+                        ) ?: continue
+                        val file_uri = file.uri
+
+                        /* TMP file is necessary since we can't easily predict the exact frame count. */
+                        val tmp_file = File("${this.filesDir}/.tmp_wav_data")
+                        if (tmp_file.exists()) {
+                            tmp_file.delete()
+                        }
+
+                        tmp_file.deleteOnExit()
+                        // FIXME: Move magic numbers
+                        val exporter_sample_handle_manager = SampleHandleManager(soundfont, 44100, 22050)
+
+                        for (c_b in opus_manager_copy.get_all_channels().indices) {
+                            val channel_copy = opus_manager_copy.get_channel(c_b)
+                            for (l_b in channel_copy.lines.indices) {
+                                val line_copy = channel_copy.get_line(l_b)
+                                if (c_b == c && l_b == l) {
+                                    line_copy.unmute()
+                                } else {
+                                    line_copy.mute()
+                                }
+                            }
+                        }
+
+
+                        val parcel_file_descriptor =
+                            this.applicationContext.contentResolver.openFileDescriptor(file_uri, "w")
+                                ?: continue@outer
+                        val output_stream =
+                            FileOutputStream(parcel_file_descriptor.fileDescriptor)
+                        val buffered_output_stream = BufferedOutputStream(output_stream)
+                        val data_output_buffer = DataOutputStream(buffered_output_stream)
+
+                        export_event_handler.update(y++, file_uri)
+                        this.controller_model.export_wav(
+                            opus_manager_copy,
+                            exporter_sample_handle_manager,
+                            data_output_buffer,
+                            tmp_file,
+                            this.view_model.configuration,
+                            export_event_handler,
+                            ignore_global_effects = true,
+                            ignore_channel_effects = true,
+                            ignore_line_effects = false
+                        )
+
+                        data_output_buffer.close()
+                        buffered_output_stream.close()
+                        output_stream.close()
+                        parcel_file_descriptor.close()
+                        tmp_file.delete()
+
+                        if (export_event_handler.cancelled) break@outer
+                    }
+                }
+            }
+        }
+
+    private var _result_launcher_export_multi_channel_wav = this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode != RESULT_OK) return@registerForActivityResult
+        val soundfont = this.controller_model.audio_interface.soundfont ?: return@registerForActivityResult
+        val tree_uri = result.data?.data ?: return@registerForActivityResult
+        this.getNotificationPermission()
+        thread {
+            if (this.controller_model.export_handle != null) return@thread
+            val directory = DocumentFile.fromTreeUri(this, tree_uri) ?: return@thread
+
+            val opus_manager_copy = OpusLayerBase()
+            this.controller_model.opus_manager.to_json().let {
+                opus_manager_copy.project_change_json(it)
+            }
+
+            var channel_count = 0
+            val skip_channels = mutableSetOf<Int>()
+
+            opus_manager_copy.get_all_channels().forEachIndexed channel_loop@{ i: Int, channel: OpusChannelAbstract<*, *> ->
+                if (channel.muted) {
+                    skip_channels.add(i)
+                    return@channel_loop
+                }
+
+                var skip = true
+                line_loop@ for (line in channel.lines) {
+                    if (line.muted || !skip) break
+
+                    for (beat in line.beats) {
+                        if (!beat.is_eventless()) {
+                            skip = false
+                            continue@line_loop
+                        }
+                    }
+                }
+
+                if (skip) {
+                    skip_channels.add(i)
+                } else {
+                    channel_count += 1
+                }
+            }
+
+            val export_event_handler = MultiExporterEventHandler(this, channel_count)
+
+            var y = 0
+            outer@ for (c in opus_manager_copy.get_all_channels().indices) {
+                if (skip_channels.contains(c)) continue
+
+                val file = directory.createFile("audio/wav", this.getString(R.string.export_wav_channels_filename, c)) ?: continue
+                val file_uri = file.uri
+
+                /* TMP file is necessary since we can't easily predict the exact frame count. */
+                val tmp_file = File("${this.filesDir}/.tmp_wav_data")
+                if (tmp_file.exists()) {
+                    tmp_file.delete()
+                }
+
+                tmp_file.deleteOnExit()
+                val exporter_sample_handle_manager = SampleHandleManager(soundfont, 44100, 22050)
+
+                for (c_b in opus_manager_copy.get_all_channels().indices) {
+                    val channel_copy = opus_manager_copy.get_channel(c_b)
+                    if (c_b == c) {
+                        channel_copy.unmute()
+                    } else {
+                        channel_copy.mute()
+                    }
+                }
+
+                val parcel_file_descriptor = this.applicationContext.contentResolver.openFileDescriptor(file_uri, "w") ?: continue@outer
+                val output_stream = FileOutputStream(parcel_file_descriptor.fileDescriptor)
+                val buffered_output_stream = BufferedOutputStream(output_stream)
+                val data_output_buffer = DataOutputStream(buffered_output_stream)
+
+                export_event_handler.update(y++, file_uri)
+                this.controller_model.export_wav(
+                    opus_manager_copy,
+                    exporter_sample_handle_manager,
+                    data_output_buffer,
+                    tmp_file,
+                    this.view_model.configuration,
+                    export_event_handler,
+                    ignore_global_effects = true,
+                    ignore_channel_effects = false,
+                    ignore_line_effects = false
+                )
+
+                data_output_buffer.close()
+                buffered_output_stream.close()
+                output_stream.close()
+                parcel_file_descriptor.close()
+                tmp_file.delete()
+
+                if (export_event_handler.cancelled) {
+                    break@outer
+                }
+            }
+        }
+    }
+
+    private var _result_launcher_export_wav =
+        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            val soundfont = this.controller_model.audio_interface.soundfont ?: return@registerForActivityResult
+            val uri = result.data?.data ?: return@registerForActivityResult
+
+            this.getNotificationPermission()
+            thread {
+                if (this.controller_model.export_handle != null) return@thread
+
+                /* TMP file is necessary since we can't easily predict the exact frame count. */
+                val tmp_file = File("${this.filesDir}/.tmp_wav_data")
+                if (tmp_file.exists()) {
+                    tmp_file.delete()
+                }
+
+                tmp_file.deleteOnExit()
+                val exporter_sample_handle_manager = SampleHandleManager(
+                    soundfont,
+                    this.resources.getInteger(R.integer.EXPORTED_SAMPLE_RATE),
+                    this.resources.getInteger(R.integer.EXPORTED_CHUNK_SIZE)
+                )
+
+                val parcel_file_descriptor = this.applicationContext.contentResolver.openFileDescriptor(uri, "w") ?: return@thread
+                val output_stream = FileOutputStream(parcel_file_descriptor.fileDescriptor)
+                val buffered_output_stream = BufferedOutputStream(output_stream)
+                val data_output_buffer = DataOutputStream(buffered_output_stream)
+
+                this.controller_model.export_wav(
+                    this.controller_model.opus_manager,
+                    exporter_sample_handle_manager,
+                    data_output_buffer,
+                    tmp_file,
+                    this.view_model.configuration,
+                    SingleExporterEventHandler(this, uri) {
+                        data_output_buffer.close()
+                        buffered_output_stream.close()
+                        output_stream.close()
+                        parcel_file_descriptor.close()
+                        tmp_file.delete()
+                    }
+                )
+
+
+                exporter_sample_handle_manager.destroy()
+            }
+        }
+
+    private var _result_launcher_export_project =
+        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            val uri = result.data?.data ?: return@registerForActivityResult
+            val opus_manager = this.controller_model.opus_manager
+            this.applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
+                val json_string = opus_manager.to_json().to_string()
+                FileOutputStream(it.fileDescriptor).write(json_string.toByteArray())
+                Toast.makeText(this, this.getString(R.string.feedback_exported), Toast.LENGTH_SHORT)
+            }
+        }
+
+    private var _result_launcher_export_midi =
+        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            val uri = result.data?.data ?: return@registerForActivityResult
+            val opus_manager = this.controller_model.opus_manager
+            this.applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
+                FileOutputStream(it.fileDescriptor).write(opus_manager.get_midi().as_bytes())
+                Toast.makeText(this, this.getString(R.string.feedback_exported_to_midi), Toast.LENGTH_SHORT)
+            }
+        }
+
     private val _result_launcher_set_project_directory_and_save =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode != RESULT_OK) return@registerForActivityResult
@@ -382,18 +697,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
         )
         menu_items.add(
-            Pair(R.string.menu_item_settings) {
-                this@ComponentActivityEditor.result_launcher_settings.launch(
-                    Intent(this@ComponentActivityEditor, ComponentActivitySettings::class.java)
-                )
-            }
+            Pair(R.string.menu_item_settings) { this.open_settings() }
         )
         menu_items.add(
-            Pair(R.string.menu_item_about) {
-                this@ComponentActivityEditor.startActivity(
-                    Intent(this@ComponentActivityEditor, ComponentActivityAbout::class.java)
-                )
-            }
+            Pair(R.string.menu_item_about) { this.open_about() }
         )
 
         Row(
@@ -1142,7 +1449,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         icon = R.drawable.icon_export,
                         description = R.string.btn_cfg_export,
                         onClick = {
-                            dispatcher.export()
+                            this@ComponentActivityEditor.export()
                         }
                     )
                 }
@@ -1222,5 +1529,220 @@ class ComponentActivityEditor: PaganComponentActivity() {
             this.controller_model.project_exists.value = true
         }
     }
+
+    private fun get_export_name(): String? {
+        return this.controller_model.opus_manager.get_safe_name() ?: this.get_default_export_name()
+    }
+
+    private fun get_default_export_name(): String {
+        val now = LocalDateTime.now()
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        return this.resources.getString(R.string.default_export_name, now.format(formatter))
+    }
+
+    fun export_multi_lines_wav() {
+        this._result_launcher_export_multi_line_wav.launch(
+            Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also {
+                it.putExtra(Intent.EXTRA_TITLE, this.get_export_name())
+            }
+        )
+    }
+
+    fun export_multi_channels_wav() {
+        this._result_launcher_export_multi_channel_wav.launch(
+            Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also {
+                it.putExtra(Intent.EXTRA_TITLE, this.get_export_name())
+            }
+        )
+    }
+
+    fun export_wav() {
+        this._result_launcher_export_wav.launch(
+            Intent(Intent.ACTION_CREATE_DOCUMENT).also {
+                it.addCategory(Intent.CATEGORY_OPENABLE)
+                it.type = "audio/wav"
+                it.putExtra(Intent.EXTRA_TITLE, "${this.get_export_name()}.wav")
+            }
+        )
+    }
+
+    fun export_wav_cancel() {
+        this.controller_model.cancel_export()
+    }
+
+    fun export_midi_check() {
+        val opus_manager = this.controller_model.opus_manager
+        if (opus_manager.get_percussion_channels().size > 1) {
+            val text_view = TextView(this)
+            text_view.text = this.getString(R.string.multiple_kit_warning)
+
+            AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
+                .setTitle(R.string.generic_warning)
+                .setView(text_view)
+                .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                    this.export_midi()
+                    dialog.dismiss()
+                }
+                .setNeutralButton(android.R.string.cancel) { dialog, _ ->
+                    dialog.cancel()
+                }
+                .show()
+        } else {
+            this.export_midi()
+        }
+    }
+
+    fun export_midi() {
+        this._result_launcher_export_midi.launch(
+            Intent(Intent.ACTION_CREATE_DOCUMENT).also {
+                it.addCategory(Intent.CATEGORY_OPENABLE)
+                it.type = "audio/midi"
+                it.putExtra(Intent.EXTRA_TITLE, "${this.get_export_name()}.mid")
+            }
+        )
+    }
+
+    fun export_project() {
+        this._result_launcher_export_project.launch(
+            Intent(Intent.ACTION_CREATE_DOCUMENT).also {
+                it.addCategory(Intent.CATEGORY_OPENABLE)
+                it.type = "application/json"
+                it.putExtra(Intent.EXTRA_TITLE, "${this.get_export_name()}.json")
+            }
+        )
+    }
+
+    fun has_notification_permission(): Boolean {
+        return (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED )
+    }
+
+    private fun getNotificationPermission(): Boolean {
+        if (! this.has_notification_permission()) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 100)
+        }
+
+        return this.has_notification_permission()
+    }
+
+    fun get_notification(): NotificationCompat.Builder? {
+        if (!this.has_notification_permission()) return null
+
+        if (this._active_notification == null) {
+            this.get_notification_channel()
+
+            val cancel_export_flag = "com.qfs.pagan.CANCEL_EXPORT_WAV"
+            val intent = Intent()
+            intent.setAction(cancel_export_flag)
+            intent.setPackage(this.packageName)
+
+            val pending_cancel_intent = PendingIntent.getBroadcast(
+                this,
+                1,
+                intent,
+                PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val opus_manager = this.controller_model.opus_manager
+            val builder = NotificationCompat.Builder(this, this.CHANNEL_ID)
+                .setContentTitle(this.getString(R.string.export_wav_notification_title, opus_manager.project_name ?: "Untitled Project"))
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setSmallIcon(R.drawable.small_logo_rowan)
+                .setSilent(true)
+                .addAction(R.drawable.baseline_cancel_24, this.getString(android.R.string.cancel), pending_cancel_intent)
+
+            this._active_notification = builder
+        }
+
+        return this._active_notification!!
+    }
+
+    fun get_notification_channel(): NotificationChannel? {
+        if (!this.has_notification_permission()) return null
+
+        if (this._notification_channel == null) {
+            val notification_manager = NotificationManagerCompat.from(this)
+            // Create the NotificationChannel.
+            val name = this.getString(R.string.export_wav_file_progress)
+            val descriptionText = this.getString(R.string.export_wav_notification_description)
+            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            val mChannel = NotificationChannel(this.CHANNEL_ID, name, importance)
+            mChannel.description = descriptionText
+            // Register the channel with the system. You can't change the importance
+            // or other notification behaviors after this.
+            notification_manager.createNotificationChannel(mChannel)
+            this._notification_channel = mChannel
+        }
+
+        return this._notification_channel
+    }
+
+    fun export(type: Exportable? = null) {
+        type?.let { it
+            when (it) {
+                Exportable.JSON -> { this.export_project() }
+                Exportable.MIDI1 -> { this.export_midi_check() }
+                Exportable.WAV_SINGLE -> { this.export_wav() }
+                Exportable.WAV_LINES -> { this.export_multi_lines_wav() }
+                Exportable.WAV_CHANNELS -> { this.export_multi_channels_wav() }
+            }
+            return
+        }
+
+        this.view_model.create_dialog { close ->
+            @Composable {
+                Row {
+                    UnSortableMenu(Modifier, this@ComponentActivityEditor.get_exportable_options()) { export_type ->
+                        this@ComponentActivityEditor.export(export_type)
+                    }
+                }
+                DialogBar(neutral = close)
+            }
+        }
+    }
+
+    private fun get_exportable_options(): List<Pair<Exportable, @Composable () -> Unit>> {
+        val export_options = mutableListOf<Pair<Exportable, @Composable () -> Unit>>()
+        val opus_manager = this.controller_model.opus_manager
+
+        export_options.add(
+            Pair(
+                Exportable.JSON,
+                @Composable { SText(R.string.export_option_json) }
+            )
+        )
+
+        if (opus_manager.is_tuning_standard()) {
+            export_options.add(
+                Pair(
+                    Exportable.MIDI1,
+                    @Composable { SText(R.string.export_option_midi) }
+                )
+            )
+        }
+
+        this.controller_model.audio_interface.soundfont?.let {
+            export_options.add(
+                Pair(
+                    Exportable.WAV_SINGLE,
+                    @Composable { SText(R.string.export_option_wav) }
+                )
+            )
+            export_options.add(
+                Pair(
+                    Exportable.WAV_LINES,
+                    @Composable { SText(R.string.export_option_wav_lines) }
+                )
+            )
+            export_options.add(
+                Pair(
+                    Exportable.WAV_CHANNELS,
+                    @Composable { SText(R.string.export_option_wav_channels) }
+                )
+            )
+        }
+
+        return export_options
+    }
+
 
 }

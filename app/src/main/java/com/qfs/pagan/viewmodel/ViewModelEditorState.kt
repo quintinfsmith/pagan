@@ -123,6 +123,12 @@ class ViewModelEditorState: ViewModel() {
         this.column_data.clear()
         this.cell_map.clear()
         this.channel_data.clear()
+
+        this.coroutine_scope.value?.launch {
+            this@ViewModelEditorState.scroll_state_x.value.scrollToItem(0)
+            this@ViewModelEditorState.scroll_state_y.value.scrollTo(0)
+        }
+
         // this.preset_names.clear()
         // this.available_instruments.clear()
     }
@@ -597,7 +603,6 @@ class ViewModelEditorState: ViewModel() {
                     }
                 }
             }
-
             this.available_instruments[Pair(bank, program)] = available_keys.sortedBy { it.second }
         }
     }

@@ -38,13 +38,13 @@ class OpusTreeJSONInterface {
             if (event_hashmap != null) {
                 new_tree.set_event(event_generalizer_callback(event_hashmap))
             } else {
+                new_tree.set_size(input.get_int("size"))
                 input.get_listn("divisions")?.let { divisions ->
                     for (i in divisions.indices) {
                         val pair = divisions.get_list(i)
                         new_tree[pair.get_int(0)] = this.from_json(pair.get_hashmap(1), event_generalizer_callback)
                     }
                 }
-                new_tree.set_size(input.get_int("size"))
             }
 
             return new_tree
@@ -56,8 +56,7 @@ class OpusTreeJSONInterface {
             if (event_hashmap != null) {
                 new_tree.set_event(event_generalizer_callback(event_hashmap))
             } else {
-                val children = input.get_listn("children")
-                if (children != null) {
+                input.get_listn("children")?.let { children ->
                     new_tree.set_size(children.size)
                     children.forEachIndexed { i: Int, child_json: JSONObject? ->
                         if (child_json == null) return@forEachIndexed

@@ -18,20 +18,22 @@ import com.qfs.pagan.R
 
 @Composable
 fun NumberSelectorButton(modifier: Modifier = Modifier, index: Int, alternate: Boolean, selected: Boolean, highlighted: Boolean, callback: () -> Unit) {
+    val shape = RoundedCornerShape(12.dp)
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .height(dimensionResource(R.dimen.number_selector_button_height))
             .padding(1.dp)
             .background(
-                if (selected) colorResource(R.color.number_selector_highlight)
-                else if (alternate) colorResource(R.color.ns_alt)
+                if (alternate) colorResource(R.color.ns_alt)
                 else colorResource(R.color.ns_default),
-                RoundedCornerShape(12.dp)
+                shape
             )
             .then(
-                if (highlighted) {
-                    modifier.border(2.dp, colorResource(R.color.number_selector_highlight))
+                if (selected) {
+                    modifier.border(3.dp, colorResource(R.color.selected_primary), shape)
+                } else if (highlighted) {
+                    modifier.border(1.dp, colorResource(R.color.selected_secondary), shape)
                 } else {
                     modifier
                 }
@@ -44,8 +46,7 @@ fun NumberSelectorButton(modifier: Modifier = Modifier, index: Int, alternate: B
         Text(
             "$index",
             maxLines = 1,
-            color = if (selected) colorResource(R.color.ns_selected_text)
-                else if (alternate) colorResource(R.color.ns_alt_text)
+            color = if (alternate) colorResource(R.color.ns_alt_text)
                 else colorResource(R.color.ns_default_text)
         )
     }

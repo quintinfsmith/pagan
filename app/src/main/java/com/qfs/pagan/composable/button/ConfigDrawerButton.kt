@@ -15,9 +15,12 @@ import com.qfs.pagan.R
 
 @Composable
 fun ConfigDrawerTopButton(modifier: Modifier = Modifier, content: (@Composable RowScope.() -> Unit), onClick: () -> Unit) {
-    com.qfs.pagan.composable.button.Button(
+    Button(
         modifier = modifier.height(dimensionResource(R.dimen.config_icon_size)),
-        contentPadding = PaddingValues(dimensionResource(R.dimen.config_icon_padding)),
+        contentPadding = PaddingValues(
+            horizontal = dimensionResource(R.dimen.config_icon_padding_horizontal),
+            vertical = dimensionResource(R.dimen.config_icon_padding_vertical)
+        ),
         onClick = onClick,
         content = content,
     )
@@ -25,9 +28,12 @@ fun ConfigDrawerTopButton(modifier: Modifier = Modifier, content: (@Composable R
 
 @Composable
 fun ConfigDrawerBottomButton(modifier: Modifier = Modifier, icon: Int, description: Int, enabled: Boolean = true, onClick: () -> Unit) {
-    com.qfs.pagan.composable.button.Button(
+    Button(
         modifier = modifier.height(dimensionResource(R.dimen.config_icon_size)),
-        contentPadding = PaddingValues(dimensionResource(R.dimen.config_icon_padding)),
+        contentPadding = PaddingValues(
+            horizontal = dimensionResource(R.dimen.config_icon_padding_horizontal),
+            vertical = dimensionResource(R.dimen.config_icon_padding_vertical)
+        ),
         onClick = onClick,
         enabled = enabled,
         content = {
@@ -41,7 +47,7 @@ fun ConfigDrawerBottomButton(modifier: Modifier = Modifier, icon: Int, descripti
 
 @Composable
 fun ConfigDrawerChannelLeftButton(modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit, onClick: () -> Unit) {
-    com.qfs.pagan.composable.button.Button(
+    Button(
         contentPadding = PaddingValues(4.dp),
         shape = RoundedCornerShape(50, 0, 0, 50),
         modifier = modifier,
@@ -51,7 +57,7 @@ fun ConfigDrawerChannelLeftButton(modifier: Modifier = Modifier, content: @Compo
 }
 @Composable
 fun ConfigDrawerChannelRightButton(modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit, onClick: () -> Unit) {
-    com.qfs.pagan.composable.button.Button(
+    Button(
         contentPadding = PaddingValues(4.dp),
         shape = RoundedCornerShape(0, 50, 50, 0),
         modifier = modifier,

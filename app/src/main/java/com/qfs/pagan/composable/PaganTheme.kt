@@ -34,5 +34,8 @@ fun PaganTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable 
     )
 
 
-    MaterialTheme(content = content, colorScheme = if (darkTheme) dark_color_scheme else light_color_palette)
+    MaterialTheme(
+        content = content,
+        colorScheme = if (darkTheme) dark_color_scheme else light_color_palette
+    )
 }

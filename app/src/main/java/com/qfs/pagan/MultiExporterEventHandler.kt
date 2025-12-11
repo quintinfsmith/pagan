@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import android.view.View
 import android.widget.ProgressBar
+import android.widget.Toast
 import androidx.core.app.NotificationManagerCompat
 import com.google.android.material.button.MaterialButton
 import com.qfs.apres.soundfontplayer.WavConverter
@@ -67,18 +68,18 @@ class MultiExporterEventHandler(var activity: ComponentActivityEditor, var total
             }
         }
 
-        this.activity.feedback_msg(this.activity.getString(R.string.export_wav_feedback_complete))
+        Toast.makeText(this.activity, this.activity.getString(R.string.export_wav_feedback_complete), Toast.LENGTH_SHORT).show()
 
         this.activity.runOnUiThread {
             this.activity.findViewById<View>(R.id.clExportProgress)?.visibility = View.GONE
             this.activity.findViewById<MaterialButton>(R.id.btnExportProject)?.visibility = View.VISIBLE
         }
-        this.activity._active_notification = null
+        this.activity.active_notification = null
     }
 
     override fun on_cancel() {
         this.cancelled = true
-        this.activity.feedback_msg(this.activity.getString(R.string.export_cancelled))
+        Toast.makeText(this.activity, this.activity.getString(R.string.export_cancelled), Toast.LENGTH_SHORT).show()
         this.activity.runOnUiThread {
             this.activity.findViewById<View>(R.id.clExportProgress)?.visibility = View.GONE
             this.activity.findViewById<MaterialButton>(R.id.btnExportProject)?.visibility = View.VISIBLE
@@ -96,7 +97,7 @@ class MultiExporterEventHandler(var activity: ComponentActivityEditor, var total
             val notification_manager = NotificationManagerCompat.from(this.activity)
             notification_manager.notify(this.activity.NOTIFICATION_ID, builder.build())
         }
-        this.activity._active_notification = null
+        this.activity.active_notification = null
     }
 
     override fun on_progress_update(progress: Double) {

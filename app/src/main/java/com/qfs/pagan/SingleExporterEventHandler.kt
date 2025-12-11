@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import android.view.View
 import android.widget.ProgressBar
+import android.widget.Toast
 import androidx.core.app.NotificationManagerCompat
 import com.google.android.material.button.MaterialButton
 import com.qfs.apres.soundfontplayer.WavConverter
@@ -22,7 +23,7 @@ class SingleExporterEventHandler(val context: ComponentActivityEditor, val uri: 
             this.context.findViewById<View>(R.id.clExportProgress)?.visibility = View.VISIBLE
             this.context.findViewById<ProgressBar>(R.id.export_progress_bar).progress = 0
         }
-        this.context.feedback_msg(this.context.getString(R.string.export_wav_feedback))
+        Toast.makeText(this.context, this.context.resources.getString(R.string.export_wav_feedback), Toast.LENGTH_SHORT).show()
         val builder = this.context.get_notification() ?: return
         @SuppressLint("MissingPermission")
         if (this.context.has_notification_permission()) {
@@ -66,19 +67,19 @@ class SingleExporterEventHandler(val context: ComponentActivityEditor, val uri: 
             }
         }
 
-        this.context.feedback_msg(this.context.getString(R.string.export_wav_feedback_complete))
+        Toast.makeText(this.context, this.context.resources.getString(R.string.export_wav_feedback_complete), Toast.LENGTH_SHORT).show()
 
         this.context.runOnUiThread {
             this.context.findViewById<View>(R.id.clExportProgress)?.visibility = View.GONE
             this.context.findViewById<MaterialButton>(R.id.btnExportProject)?.visibility = View.VISIBLE
         }
-        this.context._active_notification = null
+        this.context.active_notification = null
     }
 
     override fun on_cancel() {
         this.callback()
 
-        this.context.feedback_msg(this.context.getString(R.string.export_cancelled))
+        Toast.makeText(this.context, this.context.resources.getString(R.string.export_cancelled), Toast.LENGTH_SHORT).show()
         this.context.runOnUiThread {
             this.context.findViewById<View>(R.id.clExportProgress)?.visibility = View.GONE
             this.context.findViewById<MaterialButton>(R.id.btnExportProject)?.visibility = View.VISIBLE
@@ -97,7 +98,7 @@ class SingleExporterEventHandler(val context: ComponentActivityEditor, val uri: 
             notification_manager.notify(this.context.NOTIFICATION_ID, builder.build())
         }
 
-        this.context._active_notification = null
+        this.context.active_notification = null
     }
 
     override fun on_progress_update(progress: Double) {

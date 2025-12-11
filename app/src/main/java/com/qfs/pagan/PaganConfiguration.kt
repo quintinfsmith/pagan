@@ -8,21 +8,23 @@ import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONParser
 import kotlinx.serialization.Serializable
 import java.io.File
+
 @Serializable
 class PaganConfiguration(
-    soundfont: String? = null,
-    relative_mode: Boolean = false,
-    sample_rate: Int = 32000,
-    move_mode: MoveMode = MoveMode.COPY,
-    clip_same_line_release: Boolean = true,
-    use_preferred_soundfont: Boolean = true,
-    force_orientation: Int = ActivityInfo.SCREEN_ORIENTATION_USER,
-    allow_std_percussion: Boolean = false,
-    project_directory: Uri? = null,
-    soundfont_directory: Uri? = null,
+    var soundfont: String? = null,
+    var relative_mode: Boolean = false,
+    var sample_rate: Int = 32000,
+    var move_mode: MoveMode = MoveMode.COPY,
+    var clip_same_line_release: Boolean = true,
+    var use_preferred_soundfont: Boolean = true,
+    var force_orientation: Int = ActivityInfo.SCREEN_ORIENTATION_USER,
+    var allow_std_percussion: Boolean = false,
+    var project_directory: Uri? = null,
+    var soundfont_directory: Uri? = null,
     var night_mode: Int = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM,
-    indent_json: Boolean = false,
-    note_memory: NoteMemory = NoteMemory.UserInput
+    var indent_json: Boolean = false,
+    var note_memory: NoteMemory = NoteMemory.UserInput,
+    var channel_colors: Array<Long> = PaganConfiguration.DEFAULT_CHANNEL_COLORS
 ) {
     enum class NoteMemory {
         UserInput,
@@ -36,6 +38,11 @@ class PaganConfiguration(
     }
 
     companion object {
+        val DEFAULT_CHANNEL_COLORS = arrayOf(
+            0xFF765bd5,
+            0xFFAA0000,
+            0xFF006633
+        )
         fun from_json(content: JSONHashMap): PaganConfiguration {
             return PaganConfiguration(
                 soundfont = content.get_stringn("soundfont2"),
@@ -50,7 +57,8 @@ class PaganConfiguration(
                 soundfont_directory = content.get_stringn("soundfont_directory")?.toUri(),
                 night_mode = content.get_int("night_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM),
                 indent_json = content.get_boolean("indent_json", false),
-                note_memory = NoteMemory.valueOf(content.get_string("note_memory", "UserInput"))
+                note_memory = NoteMemory.valueOf(content.get_string("note_memory", "UserInput")),
+                channel_colors = PaganConfiguration.DEFAULT_CHANNEL_COLORS
             )
         }
 
@@ -65,102 +73,6 @@ class PaganConfiguration(
             }
         }
     }
-
-    var callbacks_soundfont = mutableListOf<(String?) -> Unit>()
-    var soundfont: String? = soundfont
-        set(value) {
-            val original = field
-            field = value
-            this.callbacks_soundfont.forEach { if (original != value) { it(value) } }
-        }
-
-    var callbacks_sample_rate = mutableListOf<(Int) -> Unit>()
-    var sample_rate: Int = sample_rate
-        set(value) {
-            val original = field
-            field = value
-            this.callbacks_sample_rate.forEach { if (original != value) { it(value) } }
-        }
-
-    var callbacks_relative_mode = mutableListOf<(Boolean) -> Unit>()
-    var relative_mode: Boolean = relative_mode
-        set(value) {
-            val original = field
-            field = value
-            this.callbacks_relative_mode.forEach { if (original != value) { it(value) } }
-        }
-
-    var callbacks_move_mode = mutableListOf<(MoveMode) -> Unit>()
-    var move_mode: MoveMode = move_mode
-        set(value) {
-            val original = field
-            field = value
-            this.callbacks_move_mode.forEach { if (original != value) { it(value) } }
-        }
-
-    var callbacks_clip_same_line_release = mutableListOf<(Boolean) -> Unit>()
-    var clip_same_line_release: Boolean = clip_same_line_release
-        set(value) {
-            val original = field
-            field = value
-            this.callbacks_clip_same_line_release.forEach { if (original != value) { it(value) } }
-        }
-
-    var callbacks_use_preferred_soundfont = mutableListOf<(Boolean) -> Unit>()
-    var use_preferred_soundfont: Boolean = use_preferred_soundfont
-        set(value) {
-            val original = field
-            field = value
-            this.callbacks_use_preferred_soundfont.forEach { if (original != value) { it(value) } }
-        }
-
-    var callbacks_allow_std_percussion = mutableListOf<(Boolean) -> Unit>()
-    var allow_std_percussion: Boolean = allow_std_percussion
-        set(value) {
-            val original = field
-            field = value
-            this.callbacks_allow_std_percussion.forEach { if (original != value) { it(value) } }
-        }
-
-    var callbacks_indent_json = mutableListOf<(Boolean) -> Unit>()
-    var indent_json: Boolean = indent_json
-        set(value) {
-            val original = field
-            field = value
-            this.callbacks_indent_json.forEach { if (original != value) { it(value) } }
-        }
-
-    var callbacks_note_memory = mutableListOf<(NoteMemory) -> Unit>()
-    var note_memory: NoteMemory = note_memory
-        set(value) {
-            val original = field
-            field = value
-            this.callbacks_note_memory.forEach { if (original != value) { it(value) } }
-        }
-
-    var callbacks_force_orientation = mutableListOf<(Int) -> Unit>()
-    var force_orientation: Int = force_orientation
-        set(value) {
-            val original = field
-            field = value
-            this.callbacks_force_orientation.forEach { if (original != value) { it(value) } }
-        }
-
-    var callbacks_project_directory = mutableListOf<(Uri?) -> Unit>()
-    var project_directory: Uri? = project_directory
-        set(value) {
-            val original = field
-            field = value
-            this.callbacks_project_directory.forEach { if (original != value) { it(value) } }
-        }
-
-    var callbacks_soundfont_directory = mutableListOf<(Uri?) -> Unit>()
-    var soundfont_directory: Uri? = soundfont_directory
-        set(value) {
-            val original = field
-            field = value
-            this.callbacks_soundfont_directory.forEach { if (original != value) { it(value) } }
-        }
 
     fun save(path: String) {
         File(path).writeText(this.to_json().to_string())
@@ -181,6 +93,9 @@ class PaganConfiguration(
         output["night_mode"] = this.night_mode
         output["indent_json"] = this.indent_json
         output["note_memory"] = this.note_memory.name
+        // output["channel_colors"] = JSONList(*Array(this.channel_colors.size) {
+        //     JSONString(this.channel_colors[it].toHexString(HexFormat.Default))
+        // })
         return output
     }
 }

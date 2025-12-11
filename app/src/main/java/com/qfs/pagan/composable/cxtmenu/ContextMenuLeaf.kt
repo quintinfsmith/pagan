@@ -1,22 +1,32 @@
 package com.qfs.pagan.composable.cxtmenu
 
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
+import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.composable.SText
+import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.button.NumberSelectorButton
+import com.qfs.pagan.composable.button.RelativeOptionButton
 import com.qfs.pagan.composable.button.TextCMenuButton
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
@@ -28,6 +38,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEve
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.viewmodel.ViewModelEditorState
+import kotlin.math.abs
 
 @Composable
 fun ContextMenuStructureControls(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
@@ -110,7 +121,7 @@ fun ContextMenuSinglePrimary(ui_facade: ViewModelEditorState, dispatcher: Action
 
     val octave = when (active_event) {
         is AbsoluteNoteEvent -> active_event.note / ui_facade.radix.value
-        is RelativeNoteEvent -> active_event.offset / ui_facade.radix.value
+        is RelativeNoteEvent -> abs(active_event.offset) / ui_facade.radix.value
         is PercussionEvent -> 0
         null -> null
         else -> {
@@ -119,21 +130,41 @@ fun ContextMenuSinglePrimary(ui_facade: ViewModelEditorState, dispatcher: Action
         }
     }
 
+    val active_line = ui_facade.line_data[cursor.ints[0]]
+    val is_percussion = active_line.assigned_offset.value != null
     Column {
-        ContextMenuStructureControls(ui_facade, dispatcher)
-        Row {
-            if (show_relative_input) {
-                Column {
-                    SText(R.string.absolute_label)
-                    Text("+")
-                    Text("-")
+        if (show_relative_input && !is_percussion) {
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                SingleChoiceSegmentedButtonRow {
+                    SegmentedButton(
+                        modifier = Modifier.weight(1F),
+                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3),
+                        onClick = { dispatcher.set_relative_mode(RelativeInputMode.Negative) },
+                        selected = ui_facade.relative_input_mode.value == RelativeInputMode.Negative,
+                        label = { Text("-") }
+                    )
+                    SegmentedButton(
+                        modifier = Modifier.weight(1F),
+                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 3),
+                        onClick = { dispatcher.set_relative_mode(RelativeInputMode.Absolute) },
+                        selected = ui_facade.relative_input_mode.value == RelativeInputMode.Absolute,
+                        label = { SText(R.string.absolute_label) }
+                    )
+                    SegmentedButton(
+                        modifier = Modifier.weight(1F),
+                        shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3),
+                        onClick = { dispatcher.set_relative_mode(RelativeInputMode.Positive) },
+                        selected = ui_facade.relative_input_mode.value == RelativeInputMode.Positive,
+                        label = { Text("+") }
+                    )
                 }
             }
-            Column {
-            }
         }
-
-        if (ui_facade.line_data[cursor.ints[0]].assigned_offset.value == null) {
+        ContextMenuStructureControls(ui_facade, dispatcher)
+        if (!is_percussion) {
             // Octave Selector
             Row {
                 for (i in 0 until 8) {
@@ -186,7 +217,7 @@ fun ContextMenuSingleStdSecondary(ui_facade: ViewModelEditorState, dispatcher: A
     val active_event = ui_facade.active_event.value
     val offset = when (active_event) {
         is AbsoluteNoteEvent -> active_event.note % ui_facade.radix.value
-        is RelativeNoteEvent -> active_event.offset % ui_facade.radix.value
+        is RelativeNoteEvent -> abs(active_event.offset) % ui_facade.radix.value
         is PercussionEvent -> 0
         null -> null
         else -> throw Exception("Invalid Event Type") // TODO: Specify

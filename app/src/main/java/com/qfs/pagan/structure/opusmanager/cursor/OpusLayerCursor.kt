@@ -1,4 +1,5 @@
 package com.qfs.pagan.structure.opusmanager.cursor
+import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel

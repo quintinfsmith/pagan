@@ -9,7 +9,6 @@ import android.provider.DocumentsContract.Document.MIME_TYPE_DIR
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,13 +21,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
@@ -36,7 +32,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -46,7 +41,7 @@ import androidx.documentfile.provider.DocumentFile
 import com.qfs.pagan.DialogChain
 import com.qfs.pagan.MenuDialogEventHandler
 import com.qfs.pagan.R
-import com.qfs.pagan.composable.Card
+import com.qfs.pagan.composable.DialogCard
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DialogTitle
@@ -54,7 +49,6 @@ import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.ScaffoldWithTopBar
 import com.qfs.pagan.composable.SortableMenu
 import com.qfs.pagan.composable.button.Button
-import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.projectmanager.ProjectManager
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
@@ -158,17 +152,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
 
                         for (dialog in dialogs.reversed()) {
                             Dialog(onDismissRequest = { view_model.dialog_queue.value = dialog.parent }) {
-                                ProvideContentColorTextStyle(MaterialTheme.colorScheme.onBackground) {
-                                    Card(
-                                        modifier = Modifier
-                                            .padding(dimensionResource(R.dimen.dialog_padding))
-                                            .background(
-                                                MaterialTheme.colorScheme.background,
-                                                RoundedCornerShape(corner = CornerSize(12.dp))
-                                            ),
-                                        content = dialog.dialog
-                                    )
-                                }
+                                DialogCard(content = dialog.dialog)
                             }
                         }
 

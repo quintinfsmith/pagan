@@ -3347,14 +3347,10 @@ open class OpusLayerBase: Effectable {
      */
     open fun convert_event_to_relative(beat_key: BeatKey, position: List<Int>) {
         val tree = this.get_tree(beat_key, position)
-        if (!tree.has_event()) {
-            throw NonEventConversion(beat_key, position)
-        }
+        if (!tree.has_event()) throw NonEventConversion(beat_key, position)
 
         val event = tree.get_event()!!
-        if (event !is AbsoluteNoteEvent) {
-            return
-        }
+        if (event !is AbsoluteNoteEvent) return
 
         var working_beat_key: BeatKey = beat_key
         var working_position: List<Int> = position
@@ -3366,15 +3362,8 @@ open class OpusLayerBase: Effectable {
             working_position = pair.second
         }
 
-
-        this.set_event(
-            beat_key,
-            position,
-            RelativeNoteEvent(
-                event.note - (preceding_value ?: 0),
-                event.duration
-            )
-        )
+        val new_value = event.note - (preceding_value ?: 0)
+        this.set_event(beat_key, position, RelativeNoteEvent(new_value, event.duration))
     }
 
     /**
@@ -3390,9 +3379,7 @@ open class OpusLayerBase: Effectable {
         }
 
         val event = tree.get_event()!!
-        if (event !is RelativeNoteEvent) {
-            return
-        }
+        if (event !is RelativeNoteEvent) return
 
         // The implied first value can be 0
         var value = this.get_absolute_value(beat_key, position) ?: event.offset

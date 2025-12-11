@@ -21,6 +21,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,6 +42,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -57,9 +60,11 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -81,8 +86,9 @@ import com.qfs.pagan.MultiExporterEventHandler
 import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.R
 import com.qfs.pagan.SingleExporterEventHandler
-import com.qfs.pagan.composable.Card
+import com.qfs.pagan.composable.DialogCard
 import com.qfs.pagan.composable.DialogBar
+import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DropdownMenu
 import com.qfs.pagan.composable.DropdownMenuItem
 import com.qfs.pagan.composable.SText
@@ -91,7 +97,9 @@ import com.qfs.pagan.composable.button.ConfigDrawerBottomButton
 import com.qfs.pagan.composable.button.ConfigDrawerChannelLeftButton
 import com.qfs.pagan.composable.button.ConfigDrawerChannelRightButton
 import com.qfs.pagan.composable.button.ConfigDrawerTopButton
+import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.button.TopBarIcon
+import com.qfs.pagan.composable.cxtmenu.CMBoxBottom
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelPrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuColumnPrimary
@@ -145,7 +153,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     var NOTIFICATION_ID = 0
     val CHANNEL_ID = "com.qfs.pagan" // TODO: Use String Resource
     private var _notification_channel: NotificationChannel? = null
-    private var _active_notification: NotificationCompat.Builder? = null
+    var active_notification: NotificationCompat.Builder? = null
     // -------------------------------------------------------------------
 
     private var _result_launcher_export_multi_line_wav =
@@ -968,92 +976,106 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     fun LineLabelView(modifier: Modifier = Modifier, dispatcher: ActionTracker, line_info: ViewModelEditorState.LineData) {
-        val (background_color, content_color) = if (line_info.is_selected.value) {
-            Pair(R.color.label_selected, R.color.label_selected_text)
-        } else {
-            Pair(R.color.line_label, R.color.line_label_text)
-        }
+        val background_color = R.color.line_label
         val ctl_type = line_info.ctl_type.value
-        Box(
-            Modifier
-                .padding(
-                    horizontal = 0.dp,
-                    vertical = 1.dp
-                )
-                .combinedClickable(
-                    onClick = {
-                        dispatcher.cursor_select_line(
-                            line_info.channel.value,
-                            line_info.line_offset.value,
-                            line_info.ctl_type.value
-                        )
-                    },
-                    onLongClick = {}
-                )
-                .background(
-                    shape = RectangleShape,
-                    color = colorResource(background_color),
-                )
-                .fillMaxSize(),
-            content = {
-                if (ctl_type == null) {
-                    val (label_a, label_b) = if (line_info.assigned_offset.value != null) {
-                        Pair("!${line_info.channel.value}", "${line_info.assigned_offset.value}")
-                    } else {
-                        Pair("${line_info.channel.value}", "${line_info.line_offset.value}")
-                    }
-                    Box(Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 2.dp)
-                    ) {
-                        Box(modifier = Modifier.align(Alignment.TopStart)) {
-                            Text(label_a, maxLines = 1)
-                        }
-                        Box(modifier = Modifier .align(Alignment.BottomEnd)) {
-                            Text(
-                                text = label_b,
-                                maxLines = 1,
-                                textAlign = TextAlign.End
-                            )
-                        }
-                    }
-                } else {
-                    val (drawable_id, description_id) = when (ctl_type) {
-                        EffectType.Tempo -> Pair(R.drawable.icon_tempo, R.string.ctl_desc_tempo)
-                        EffectType.Velocity -> Pair(R.drawable.icon_velocity, R.string.ctl_desc_velocity)
-                        EffectType.Volume -> Pair(R.drawable.icon_volume, R.string.ctl_desc_volume)
-                        EffectType.Delay -> Pair(R.drawable.icon_echo, R.string.ctl_desc_delay)
-                        EffectType.Pan -> Pair(R.drawable.icon_pan, R.string.ctl_desc_pan)
-                        EffectType.LowPass -> TODO()
-                        EffectType.Reverb -> TODO()
-                    }
-                    Icon(
-                        modifier = modifier
-                            .padding(2.dp)
-                            .combinedClickable(
-                                onClick = {
-                                    if (line_info.line_offset.value != null) {
-                                        dispatcher.cursor_select_line_ctl_line(
-                                            ctl_type,
-                                            line_info.channel.value!!,
-                                            line_info.line_offset.value!!
-                                        )
-                                    } else if (line_info.channel.value != null) {
-                                        dispatcher.cursor_select_channel_ctl_line(
-                                            ctl_type,
-                                            line_info.channel.value!!
-                                        )
-                                    } else {
-                                        dispatcher.cursor_select_global_ctl_line(ctl_type)
-                                    }
-                                }
-                            ),
-                        painter = painterResource(drawable_id),
-                        contentDescription = stringResource(description_id)
+
+        ProvideContentColorTextStyle(colorResource(R.color.line_label_text)) {
+            Box(
+                Modifier
+                    .padding(
+                        horizontal = 0.dp,
+                        vertical = 1.dp
                     )
+                    .combinedClickable(
+                        onClick = {
+                            dispatcher.cursor_select_line(
+                                line_info.channel.value,
+                                line_info.line_offset.value,
+                                line_info.ctl_type.value
+                            )
+                        },
+                        onLongClick = {}
+                    )
+                    .background(
+                        shape = RectangleShape,
+                        color = colorResource(background_color),
+                    )
+                    .fillMaxSize(),
+                content = {
+                    if (ctl_type == null) {
+                        val (label_a, label_b) = if (line_info.assigned_offset.value != null) {
+                            Pair("!${line_info.channel.value}", "${line_info.assigned_offset.value}")
+                        } else {
+                            Pair("${line_info.channel.value}", "${line_info.line_offset.value}")
+                        }
+                        Box(
+                            Modifier
+                                .fillMaxSize()
+                                .then(
+                                    if (line_info.is_selected.value) {
+                                        Modifier.border(2.dp, colorResource(R.color.selected_primary))
+                                    } else {
+                                        Modifier
+                                    }
+                                )
+                                .padding(horizontal = 2.dp)
+                        ) {
+                            Box(modifier = Modifier.align(Alignment.TopStart)) {
+                                Text(label_a, maxLines = 1)
+                            }
+                            Box(modifier = Modifier.align(Alignment.BottomEnd)) {
+                                Text(
+                                    text = label_b,
+                                    maxLines = 1,
+                                    textAlign = TextAlign.End
+                                )
+                            }
+                        }
+                    } else {
+                        val (drawable_id, description_id) = when (ctl_type) {
+                            EffectType.Tempo -> Pair(R.drawable.icon_tempo, R.string.ctl_desc_tempo)
+                            EffectType.Velocity -> Pair(R.drawable.icon_velocity, R.string.ctl_desc_velocity)
+                            EffectType.Volume -> Pair(R.drawable.icon_volume, R.string.ctl_desc_volume)
+                            EffectType.Delay -> Pair(R.drawable.icon_echo, R.string.ctl_desc_delay)
+                            EffectType.Pan -> Pair(R.drawable.icon_pan, R.string.ctl_desc_pan)
+                            EffectType.LowPass -> TODO()
+                            EffectType.Reverb -> TODO()
+                        }
+                        Icon(
+                            modifier = modifier
+                                .then(
+                                    if (line_info.is_selected.value) {
+                                        Modifier.border(2.dp, colorResource(R.color.selected_primary))
+                                    } else {
+                                        Modifier
+                                    }
+                                )
+                                .padding(2.dp)
+                                .combinedClickable(
+                                    onClick = {
+                                        if (line_info.line_offset.value != null) {
+                                            dispatcher.cursor_select_line_ctl_line(
+                                                ctl_type,
+                                                line_info.channel.value!!,
+                                                line_info.line_offset.value!!
+                                            )
+                                        } else if (line_info.channel.value != null) {
+                                            dispatcher.cursor_select_channel_ctl_line(
+                                                ctl_type,
+                                                line_info.channel.value!!
+                                            )
+                                        } else {
+                                            dispatcher.cursor_select_global_ctl_line(ctl_type)
+                                        }
+                                    }
+                                ),
+                            painter = painterResource(drawable_id),
+                            contentDescription = stringResource(description_id)
+                        )
+                    }
                 }
-            }
-        )
+            )
+        }
     }
 
     @Composable
@@ -1061,34 +1083,36 @@ class ComponentActivityEditor: PaganComponentActivity() {
         if (!column_info.is_tagged.value) {
             modifier.border(width = 1.dp, color = Color.Red)
         }
-        val (background_color, content_color) = if (column_info.is_selected.value) {
-            Pair(
-                R.color.label_selected,
-                R.color.label_selected_text
-            )
-        } else {
-            Pair(
-                R.color.line_label,
-                R.color.line_label_text
+
+        ProvideContentColorTextStyle(colorResource(R.color.line_label_text)) {
+            Box(
+                modifier = modifier
+                    .padding(top = 0.dp, end = 1.dp, bottom = 0.dp, start = 1.dp)
+                    .then(
+                        if (column_info.is_selected.value) {
+                            Modifier.border(2.dp, colorResource(R.color.selected_primary))
+                        } else {
+                            Modifier
+                        }
+                    )
+                    .background(
+                        color = colorResource(R.color.line_label),
+                        shape = RectangleShape
+                    )
+                    .combinedClickable(
+                        onClick = { dispatcher.cursor_select_column(x) },
+                    )
+                    .fillMaxSize(),
+                contentAlignment = Alignment.Center,
+                content = {
+                    if (column_info.is_tagged.value) {
+                        Text(text = "$x", modifier = Modifier.border(2.dp, Color.Red, CircleShape))
+                    } else {
+                        Text(text = "$x")
+                    }
+                }
             )
         }
-
-        Box(
-            modifier = modifier
-                .padding(top = 0.dp, end = 1.dp, bottom = 0.dp, start = 1.dp)
-                .background(
-                    color = colorResource(background_color),
-                    shape = RectangleShape
-                )
-                .combinedClickable(
-                    onClick = { dispatcher.cursor_select_column(x) },
-                )
-                .fillMaxSize(),
-            contentAlignment = Alignment.Center,
-            content = {
-                Text(text = "$x")
-            }
-        )
     }
 
     private fun mix_colors(first: Long, second: Long, numer_a: Int, numer_b: Int): Long {
@@ -1107,15 +1131,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
             else -> 4.dp
         }
 
-        val test_colors = listOf(
-            0xFF765bd5,
-            0xFFAA0000,
-            0xFF006633,
-            0xFF003366
-        )
+        val channel_colors = this.view_model.configuration.channel_colors
 
         val base_color = line_data.channel.value?.let {
-            test_colors[it % test_colors.size]
+            channel_colors[it % channel_colors.size]
         } ?: 0xFF000090L
 
         // alternate slight shading
@@ -1140,6 +1159,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
         val avg = (((adjusted_base_color / (256 * 256)) and 0xFF) + ((adjusted_base_color / 256) and 0xFF) + (adjusted_base_color and 0xFF)) / 3
+
         val text_color = if (avg > 0x88) {
             Color(0xFF000000)
         } else {
@@ -1155,9 +1175,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 )
                 .then(
                     if (leaf_data.is_selected.value) {
-                        modifier.border(2.dp, Color(0xFFFFFF00))
+                        modifier.border(2.dp, colorResource(R.color.selected_primary), RoundedCornerShape(corner_radius))
                     } else if (leaf_data.is_secondary.value) {
-                        modifier.border(2.dp, Color(0xFFFFAA00))
+                        modifier.border(2.dp, colorResource(R.color.selected_secondary), RoundedCornerShape(corner_radius))
                     } else {
                         modifier
                     }
@@ -1169,26 +1189,67 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 is AbsoluteNoteEvent -> {
                     val octave = event.note / radix
                     val offset = event.note % radix
-                    Text(
-                        AnnotatedString.fromHtml("<sub>$octave</sub>$offset"),
-                        color = text_color
-                    )
+                    Row(horizontalArrangement = Arrangement.Center) {
+                        Column(
+                            modifier = Modifier.fillMaxHeight(),
+                            verticalArrangement = Arrangement.Bottom
+                        ) {
+                            Spacer(modifier = Modifier.weight(.30F))
+                            ProvideTextStyle(TextStyle(fontSize = 14.sp, color = text_color)) {
+                                Text("$octave", modifier = Modifier.weight(.5F))
+                            }
+                            Spacer(modifier = Modifier.weight(.1F))
+                        }
+                        Column(
+                            modifier = Modifier.fillMaxHeight(),
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            ProvideTextStyle(TextStyle(fontSize = 20.sp, color = text_color)) {
+                                Text("$offset")
+                            }
+                        }
+                    }
                 }
 
                 is RelativeNoteEvent -> {
                     val octave = abs(event.offset) / radix
                     val offset = abs(event.offset) % radix
-                    Row {
-                        Column(modifier = Modifier
-                            .fillMaxSize()
-                            .weight(1F)) {
-                            Text(if (event.offset > 0) "+" else "-" , color = text_color)
-                            Text("$octave", color = text_color)
+                    Row(horizontalArrangement = Arrangement.Center) {
+                        Column(
+                            modifier = Modifier.fillMaxHeight(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Row(
+                                modifier = Modifier.weight(.4F),
+                                verticalAlignment = Alignment.Bottom
+                            ) {
+                                ProvideTextStyle(TextStyle(fontSize = 14.sp)) {
+                                    Text(
+                                        if (event.offset > 0) "+" else "-",
+                                        color = text_color
+                                    )
+                                }
+                            }
+                            Row(
+                                modifier = Modifier.weight(.4F),
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                ProvideTextStyle(TextStyle(fontSize = 14.sp)) {
+                                    Text("$octave", color = text_color)
+                                }
+                            }
+                            Spacer(modifier = Modifier.weight(.1F))
                         }
-                        Column(modifier = Modifier
-                            .fillMaxSize()
-                            .weight(1F)) {
-                            Text("$offset", color = text_color)
+                        Column(
+                            modifier = Modifier
+                                .fillMaxHeight(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            ProvideTextStyle(TextStyle(fontSize = 20.sp)) {
+                                Text("$offset", color = text_color)
+                            }
                         }
                     }
                 }
@@ -1327,11 +1388,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
             if (ui_facade.active_cursor.value?.type != CursorMode.Unset) {
                 AnimatedVisibility(ui_facade.active_cursor.value != null) {
-                    Box(Modifier) {
-                        Column {
-                            ContextMenuPrimary(ui_facade, view_model.action_interface)
-                            ContextMenuSecondary(ui_facade, view_model.action_interface)
-                        }
+                    CMBoxBottom {
+                        ContextMenuPrimary(ui_facade, view_model.action_interface)
+                        ContextMenuSecondary(ui_facade, view_model.action_interface)
                     }
                 }
             }
@@ -1344,7 +1403,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val state_model = this.state_model
         val scope = rememberCoroutineScope()
 
-        Card(
+        DialogCard(
             shape = RoundedCornerShape(topStart = 0.dp, bottomStart = 0.dp, topEnd = 4.dp, bottomEnd = 4.dp),
             modifier = modifier.wrapContentWidth()
         ) {
@@ -1363,28 +1422,26 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             content = { SText(R.string.label_tuning) }
                         )
                     }
-                    Column {
-                        Row {
-                            ConfigDrawerTopButton(
-                                onClick = { dispatcher.insert_percussion_channel() },
-                                content = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.icon_add_channel_kit),
-                                        contentDescription = stringResource(R.string.btn_cfg_add_kit_channel),
-                                    )
-                                }
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            ConfigDrawerTopButton(
-                                onClick = { dispatcher.insert_channel() },
-                                content = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.icon_add_channel),
-                                        contentDescription = stringResource(R.string.btn_cfg_add_channel),
-                                    )
-                                }
-                            )
-                        }
+                    Row {
+                        ConfigDrawerTopButton(
+                            onClick = { dispatcher.insert_percussion_channel() },
+                            content = {
+                                Icon(
+                                    painter = painterResource(R.drawable.icon_add_channel_kit),
+                                    contentDescription = stringResource(R.string.btn_cfg_add_kit_channel),
+                                )
+                            }
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        ConfigDrawerTopButton(
+                            onClick = { dispatcher.insert_channel() },
+                            content = {
+                                Icon(
+                                    painter = painterResource(R.drawable.icon_add_channel),
+                                    contentDescription = stringResource(R.string.btn_cfg_add_channel),
+                                )
+                            }
+                        )
                     }
                 }
 
@@ -1420,6 +1477,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     ConfigDrawerBottomButton(
+                        modifier = Modifier.weight(1F),
                         icon = R.drawable.icon_save,
                         description = R.string.btn_cfg_save,
                         onClick = {
@@ -1427,7 +1485,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             dispatcher.save()
                         }
                     )
+                    Spacer(Modifier.weight(.2F))
                     ConfigDrawerBottomButton(
+                        modifier = Modifier.weight(1F),
                         icon = R.drawable.icon_ic_baseline_content_copy_24,
                         description = R.string.btn_cfg_copy,
                         enabled = this@ComponentActivityEditor.controller_model.project_exists.value,
@@ -1436,7 +1496,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             dispatcher.project_copy()
                         }
                     )
+                    Spacer(Modifier.weight(.2F))
                     ConfigDrawerBottomButton(
+                        modifier = Modifier.weight(1F),
                         icon = R.drawable.icon_trash,
                         description = R.string.btn_cfg_delete,
                         enabled = this@ComponentActivityEditor.controller_model.project_exists.value,
@@ -1445,7 +1507,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             dispatcher.delete()
                         }
                     )
+                    Spacer(Modifier.weight(.2F))
                     ConfigDrawerBottomButton(
+                        modifier = Modifier.weight(1F),
                         icon = R.drawable.icon_export,
                         description = R.string.btn_cfg_export,
                         onClick = {
@@ -1504,7 +1568,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     fun open_settings() {
         this.result_launcher_settings.launch(
-            Intent(this, ActivitySettings::class.java).apply {
+            Intent(this, ComponentActivitySettings::class.java).apply {
                 this@ComponentActivityEditor.controller_model.active_project?.let {
                     this.putExtra(EXTRA_ACTIVE_PROJECT, it.toString())
                 }
@@ -1513,7 +1577,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     fun open_about() {
-        this.startActivity(Intent(this, ActivityAbout::class.java))
+        this.startActivity(Intent(this, ComponentActivityAbout::class.java))
     }
 
     fun load_project(uri: Uri) {
@@ -1627,7 +1691,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun get_notification(): NotificationCompat.Builder? {
         if (!this.has_notification_permission()) return null
 
-        if (this._active_notification == null) {
+        if (this.active_notification == null) {
             this.get_notification_channel()
 
             val cancel_export_flag = "com.qfs.pagan.CANCEL_EXPORT_WAV"
@@ -1650,10 +1714,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 .setSilent(true)
                 .addAction(R.drawable.baseline_cancel_24, this.getString(android.R.string.cancel), pending_cancel_intent)
 
-            this._active_notification = builder
+            this.active_notification = builder
         }
 
-        return this._active_notification!!
+        return this.active_notification!!
     }
 
     fun get_notification_channel(): NotificationChannel? {
@@ -1690,6 +1754,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         this.view_model.create_dialog { close ->
             @Composable {
+                Row{
+                    DialogSTitle(R.string.dlg_export)
+                }
                 Row {
                     UnSortableMenu(Modifier, this@ComponentActivityEditor.get_exportable_options()) { export_type ->
                         this@ComponentActivityEditor.export(export_type)

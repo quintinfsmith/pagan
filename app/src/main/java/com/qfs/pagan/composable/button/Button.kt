@@ -15,6 +15,8 @@ import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -69,47 +71,35 @@ fun Button(
    // val containerColor = colors.containerColor(enabled)
    // val shadowElevation = elevation?.shadowElevation(enabled)?.value ?: 0.dp
    // val contentColor = colors.contentColor(enabled)
-    Box(
-        propagateMinConstraints = true,
-        modifier = modifier
-            .clip(shape)
-            .padding(vertical = 2.dp, horizontal = 1.dp)
-            .minimumInteractiveComponentSize(),
-        content = {
-            ProvideContentColorTextStyle(contentColor = colors.contentColor, textStyle = TextStyle.Default) {
-                Box(
-                    modifier = modifier
-                        .then(if (border != null) modifier.border(border, shape) else modifier)
-                        .then(
-                            if (enabled) {
-                                modifier.combinedClickable(
-                                    onClick = onClick,
-                                    onLongClick = onLongClick,
-                                )
-                                .background(color = colors.containerColor, shape)
-                            } else {
-                                modifier.background(color = colors.disabledContentColor, shape)
-                            }
+    ProvideContentColorTextStyle(contentColor = colors.contentColor, textStyle = TextStyle.Default) {
+        Box(
+            modifier = modifier
+                .clip(shape)
+                .padding(vertical = 2.dp, horizontal = 1.dp)
+                .then(if (border != null) modifier.border(border, shape) else modifier)
+                .then(
+                    if (enabled) {
+                        modifier.combinedClickable(
+                            onClick = onClick,
+                            onLongClick = onLongClick,
                         )
-                        .minimumInteractiveComponentSize()
-                        .semantics { role = Role.Button },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Row(
-                        Modifier
-                            .padding(contentPadding)
-                            .defaultMinSize(
-                                minWidth = ButtonDefaults.MinWidth,
-                                minHeight = ButtonDefaults.MinHeight,
-                            ),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically,
-                        content = content,
-                    )
-                }
-            }
+                        .background(color = colors.containerColor, shape)
+                    } else {
+                        modifier.background(color = colors.disabledContentColor, shape)
+                    }
+                )
+                .minimumInteractiveComponentSize()
+                .semantics { role = Role.Button },
+            contentAlignment = Alignment.Center,
+        ) {
+            Row(
+                Modifier.padding(contentPadding),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+                content = content,
+            )
         }
-    )
+    }
 }
 
 @Composable
@@ -124,4 +114,38 @@ internal fun ProvideContentColorTextStyle(
         LocalTextStyle provides mergedStyle,
         content = content,
     )
+}
+
+@Composable
+fun SmallButton(
+    onClick: () -> Unit,
+    onLongClick: () -> Unit = {},
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+
+    shape: Shape = ButtonDefaults.shape,
+    colors: ButtonColors = ButtonDefaults.buttonColors(),
+    border: BorderStroke? = null,
+
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    content: @Composable RowScope.() -> Unit
+) {
+    ProvideTextStyle(MaterialTheme.typography.bodySmall) {
+        Button(onClick, onLongClick, modifier, enabled, shape, colors, border, contentPadding, content)
+    }
+}
+
+@Composable
+fun SmallOutlinedButton(
+    onClick: () -> Unit,
+    onLongClick: () -> Unit = {},
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    content: @Composable RowScope.() -> Unit
+) {
+    ProvideTextStyle(MaterialTheme.typography.bodySmall) {
+        OutlinedButton(onClick, onLongClick, modifier, enabled, contentPadding, content)
+    }
 }

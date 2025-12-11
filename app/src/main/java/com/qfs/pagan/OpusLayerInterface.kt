@@ -10,6 +10,7 @@ import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.BlockedActionException
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
+import com.qfs.pagan.structure.opusmanager.base.NonEventConversion
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusLineAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
@@ -64,7 +65,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     var initialized = false
     var relative_mode: RelativeInputMode = RelativeInputMode.Absolute
-    private var _activity: ActivityEditor? = null
     var marked_range: Pair<BeatKey, BeatKey>? = null
 
     var temporary_blocker: OpusManagerCursor? = null
@@ -806,7 +806,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?, is_percussion: Boolean) {
         val notify_index = channel ?: this.channels.size
-        println("$notify_index <---- CCGABEK")
         super.new_channel(channel, lines, uuid, is_percussion)
 
         if (!this.ui_lock.is_locked()) {
@@ -814,9 +813,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             this._post_new_channel(notify_index, lines)
             this.vm_state.refresh_cursor()
         }
-
-        this._activity?.update_channel_instruments()
-
     }
 
     override fun remove_beat(beat_index: Int, count: Int) {
@@ -894,7 +890,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             this.vm_state.remove_channel(channel)
             this.vm_state.refresh_cursor()
         }
-        this._activity?.update_channel_instruments()
     }
 
     override fun on_project_changed() {
@@ -1113,7 +1108,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         if (!this.ui_lock.is_locked()) {
             this.vm_state.move_channel(channel_index, new_channel_index)
         }
-        this._activity?.update_channel_instruments()
     }
 
     override fun clear() {
@@ -1645,7 +1639,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             CursorMode.Unset -> Triple(null, Rational(0, 1), Rational(1, 1))
         }
 
-        this.vm_state.queue_force_scroll(y ?: -1, beat ?: -1, offset, offset_width, this._activity?.in_playback() == true)
+        this.vm_state.queue_force_scroll(y ?: -1, beat ?: -1, offset, offset_width, this.vm_controller.in_playback())
     }
 
     private fun _queue_cursor_update(cursor: OpusManagerCursor) {
@@ -1825,49 +1819,40 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     }
 
-    private fun run_on_ui_thread(callback: (ActivityEditor) -> Unit) {
-        val main = this._activity ?: return // TODO: Throw Exception?
-        val runnable = Runnable {
-            callback(main)
-        }
-        synchronized(runnable) {
-            main.runOnUiThread(runnable)
-        }
-    }
 
     // END UI FUNCS -----------------------
 
     private fun _ui_clear() {
-        this.run_on_ui_thread { main ->
-            val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
-            if (channel_recycler.adapter != null) {
-                val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
-                channel_adapter.clear()
-            }
-        }
+        // this.run_on_ui_thread { main ->
+        //     val channel_recycler = main.findViewById<ChannelOptionRecycler>(R.id.rvActiveChannels)
+        //     if (channel_recycler.adapter != null) {
+        //         val channel_adapter = (channel_recycler.adapter as ChannelOptionAdapter)
+        //         channel_adapter.clear()
+        //     }
+        // }
     }
 
     fun set_relative_mode(mode: RelativeInputMode) {
         this.relative_mode = mode
+        try {
+            when (mode) {
+                RelativeInputMode.Absolute -> this.convert_event_to_absolute()
+                RelativeInputMode.Positive -> this.convert_event_to_relative()
+                RelativeInputMode.Negative -> this.convert_event_to_relative()
+            }
+        } catch (e: NonEventConversion) {
+            // pass
+        }
         this.vm_state.set_relative_mode(this.relative_mode)
     }
 
     fun set_relative_mode(event: TunedInstrumentEvent) {
-        if (this._activity != null && this._activity!!.configuration.relative_mode) {
-            this.relative_mode = when (event) {
-                is RelativeNoteEvent -> {
-                    if (event.offset >= 0) {
-                        RelativeInputMode.Positive
-                    } else {
-                        RelativeInputMode.Negative
-                    }
-                }
-                else -> {
-                    RelativeInputMode.Absolute
-                }
+        this.relative_mode = when (event) {
+            is RelativeNoteEvent -> {
+                if (event.offset >= 0) RelativeInputMode.Positive
+                else RelativeInputMode.Negative
             }
-        } else {
-            this.relative_mode = RelativeInputMode.Absolute
+            else -> RelativeInputMode.Absolute
         }
         this.vm_state.set_relative_mode(this.relative_mode)
     }
@@ -1914,7 +1899,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 this.set_latest_offset()
                 RelativeNoteEvent(
                     when (current_event) {
-                        is RelativeNoteEvent -> (octave * radix) + (current_event.offset % radix)
+                        is RelativeNoteEvent -> (octave * radix) + (abs(current_event.offset) % radix)
                         is AbsoluteNoteEvent -> {
                             this.convert_event_to_relative(beat_key, position)
                             return this._set_note_octave(beat_key, position, octave)
@@ -1929,7 +1914,9 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 this.set_latest_offset()
                 RelativeNoteEvent(
                     when (current_event) {
-                        is RelativeNoteEvent -> 0 - ((octave * radix) + (abs(current_event.offset) % radix))
+                        is RelativeNoteEvent -> {
+                            0 - ((octave * radix) + (abs(current_event.offset) % radix))
+                        }
                         is AbsoluteNoteEvent -> {
                             this.convert_event_to_relative(beat_key, position)
                             return this._set_note_octave(beat_key, position, octave)
@@ -1983,7 +1970,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 this.set_latest_octave()
                 RelativeNoteEvent(
                     when (current_event) {
-                        is RelativeNoteEvent -> ((current_event.offset / radix) * radix) + offset
+                        is RelativeNoteEvent -> ((abs(current_event.offset) / radix) * radix) + offset
                         is AbsoluteNoteEvent -> {
                             this.convert_event_to_relative(beat_key, position)
                             return this._set_note_offset(beat_key, position, offset)
@@ -1998,7 +1985,9 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 this.set_latest_octave()
                 RelativeNoteEvent(
                     when (current_event) {
-                        is RelativeNoteEvent -> ((current_event.offset / radix) * radix) - offset
+                        is RelativeNoteEvent -> {
+                            0 - ((abs(current_event.offset) / radix) * radix) - offset
+                        }
                         is AbsoluteNoteEvent -> {
                             this.convert_event_to_relative(beat_key, position)
                             return this._set_note_offset(beat_key, position, offset)

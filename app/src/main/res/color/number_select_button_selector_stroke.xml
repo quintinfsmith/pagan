@@ -5,5 +5,5 @@
         android:color="#00000000"/>
     <item
         app:state_highlighted="true"
-        android:color="@color/number_selector_highlight"/>
+        android:color="#FFFFFF"/>
 </selector>

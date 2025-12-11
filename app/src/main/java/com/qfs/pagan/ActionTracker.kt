@@ -49,6 +49,7 @@ import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
 import com.qfs.pagan.structure.opusmanager.base.InvalidOverwriteCall
 import com.qfs.pagan.structure.opusmanager.base.MixedInstrumentException
+import com.qfs.pagan.structure.opusmanager.base.NonEventConversion
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
@@ -435,10 +436,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     }
 
     fun cursor_select(beat_key: BeatKey, position: List<Int>) {
-        this.track(
-            TrackedAction.CursorSelectLeaf,
-            beat_key.to_list() + position
-        )
+        this.track(TrackedAction.CursorSelectLeaf, beat_key.to_list() + position)
 
         val opus_manager = this.vm_controller.opus_manager
         opus_manager.cursor_select(beat_key, position)
@@ -1540,14 +1538,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
     fun set_relative_mode(mode: RelativeInputMode) {
         this.track(TrackedAction.SetRelativeMode, listOf(mode.ordinal))
-
-        val opus_manager = this.get_opus_manager()
-        opus_manager.set_relative_mode(mode)
-        when (mode) {
-            RelativeInputMode.Absolute -> opus_manager.convert_event_to_absolute()
-            RelativeInputMode.Positive -> opus_manager.convert_event_to_relative()
-            RelativeInputMode.Negative -> opus_manager.convert_event_to_relative()
-        }
+        this.get_opus_manager().set_relative_mode(mode)
     }
 
     fun set_project_name_and_notes(project_name_and_notes: Pair<String, String>? = null) {

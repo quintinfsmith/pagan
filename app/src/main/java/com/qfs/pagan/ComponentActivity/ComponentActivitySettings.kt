@@ -15,8 +15,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -45,6 +47,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.integerArrayResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -298,7 +301,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
         val no_soundfont_text = stringResource(R.string.no_soundfont)
 
         Column {
-            Text(stringResource(R.string.label_settings_sf))
+            SText(R.string.label_settings_sf)
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 content = { Text(view_model.soundfont_name.value ?: no_soundfont_text) },
@@ -363,10 +366,12 @@ class ComponentActivitySettings: PaganComponentActivity() {
             )
 
             if (this@ComponentActivitySettings.view_model.requires_soundfont.value) {
-                SoundFontWarning()
+                Row(modifier = Modifier.padding(8.dp)) {
+                    SoundFontWarning()
+                }
             }
 
-            Text(stringResource(R.string.label_settings_soundfont_directory))
+            SText(R.string.label_settings_soundfont_directory)
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
@@ -385,7 +390,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 }
             )
 
-            Text(stringResource(R.string.label_settings_projects_directory))
+            SText(R.string.label_settings_projects_directory)
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
@@ -459,7 +464,12 @@ class ComponentActivitySettings: PaganComponentActivity() {
             mutableIntStateOf(1)
         }
 
-        Column {
+        Column(Modifier.padding(horizontal = 0.dp, vertical = 12.dp)) {
+            Spacer(
+                modifier = Modifier
+                    .height(4.dp)
+                    .fillMaxWidth()
+            )
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -491,7 +501,10 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(stringResource(R.string.label_settings_same_line_release))
+                Text(
+                    stringResource(R.string.label_settings_same_line_release),
+                    modifier = Modifier.weight(1F)
+                )
                 Switch(
                     checked = clip_same_line_release,
                     onCheckedChange = {
@@ -507,7 +520,10 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(stringResource(R.string.label_settings_relative))
+                Text(
+                    stringResource(R.string.label_settings_relative),
+                    modifier = Modifier.weight(1F)
+                )
                 Switch(
                     checked = relative_mode,
                     onCheckedChange = {
@@ -523,7 +539,10 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(stringResource(R.string.label_settings_use_preferred_sf))
+                Text(
+                    stringResource(R.string.label_settings_use_preferred_sf),
+                    modifier = Modifier.weight(1F)
+                )
                 Switch(
                     checked = use_preferred_soundfont,
                     onCheckedChange = {
@@ -539,7 +558,10 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(stringResource(R.string.label_settings_allow_std_percussion))
+                Text(
+                    stringResource(R.string.label_settings_allow_std_percussion),
+                    modifier = Modifier.weight(1F)
+                )
                 Switch(
                     checked = allow_std_percussion,
                     onCheckedChange = {
@@ -551,45 +573,60 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 )
             }
 
-            Text(stringResource(R.string.settings_screen_orientation))
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                options_orientation.forEachIndexed { index, (mode, resource) ->
-                    SegmentedButton(
-                        shape = SegmentedButtonDefaults.itemShape(
-                            index = index,
-                            count = options_orientation.size
-                        ),
-                        onClick = {
-                            this@ComponentActivitySettings.requestedOrientation = mode
-                            view_model.configuration.force_orientation = mode
-                            selected_orientation_index = index
-                            view_model.save_configuration()
-                            this@ComponentActivitySettings.update_result()
-                        },
-                        selected = index == selected_orientation_index,
-                        label = { Text(stringResource(resource)) }
-                    )
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 0.dp, vertical = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+
+                Text(stringResource(R.string.settings_screen_orientation))
+                SingleChoiceSegmentedButtonRow(modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                    options_orientation.forEachIndexed { index, (mode, resource) ->
+                        SegmentedButton(
+                            shape = SegmentedButtonDefaults.itemShape(
+                                index = index,
+                                count = options_orientation.size
+                            ),
+                            onClick = {
+                                this@ComponentActivitySettings.requestedOrientation = mode
+                                view_model.configuration.force_orientation = mode
+                                selected_orientation_index = index
+                                view_model.save_configuration()
+                                this@ComponentActivitySettings.update_result()
+                            },
+                            selected = index == selected_orientation_index,
+                            label = { Text(stringResource(resource)) }
+                        )
+                    }
                 }
             }
 
-            Text(stringResource(R.string.settings_night_mode))
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                options_nightmode.forEachIndexed { index, (mode, resource) ->
-                    SegmentedButton(
-                        shape = SegmentedButtonDefaults.itemShape(
-                            index = index,
-                            count = options_nightmode.size
-                        ),
-                        onClick = {
-                            selected_night_mode_index = index
-                            view_model.configuration.night_mode = mode
-                            view_model.night_mode.value = mode
-                            view_model.save_configuration()
-                            this@ComponentActivitySettings.update_result()
-                        },
-                        selected = index == selected_night_mode_index,
-                        label = { Text(stringResource(resource)) }
-                    )
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 0.dp, vertical = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(stringResource(R.string.settings_night_mode))
+                SingleChoiceSegmentedButtonRow(modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                    options_nightmode.forEachIndexed { index, (mode, resource) ->
+                        SegmentedButton(
+                            shape = SegmentedButtonDefaults.itemShape(
+                                index = index,
+                                count = options_nightmode.size
+                            ),
+                            onClick = {
+                                selected_night_mode_index = index
+                                view_model.configuration.night_mode = mode
+                                view_model.night_mode.value = mode
+                                view_model.save_configuration()
+                                this@ComponentActivitySettings.update_result()
+                            },
+                            selected = index == selected_night_mode_index,
+                            label = { Text(stringResource(resource)) }
+                        )
+                    }
                 }
             }
         }

@@ -4,6 +4,7 @@ import androidx.annotation.IntRange
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +15,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -36,9 +40,11 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusState
@@ -64,14 +70,16 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import com.qfs.pagan.R
-import com.qfs.pagan.composable.button.Button
-import com.qfs.pagan.composable.button.OutlinedButton
+import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
+import com.qfs.pagan.composable.button.SmallButton
+import com.qfs.pagan.composable.button.SmallOutlinedButton
 import com.qfs.pagan.enumerate
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
-import androidx.compose.material3.Card as OriginalCard
 import androidx.compose.material3.DropdownMenu as OriginalDropdownMenu
 import androidx.compose.material3.DropdownMenuItem as OriginalDropdownMenuItem
 import androidx.compose.material3.Slider as StupidSlider
@@ -297,18 +305,25 @@ fun <T> SortableMenu(
     onClick: (T) -> Unit
 ) {
     val active_sort_option = remember { mutableStateOf(selected_sort) }
+    val scope = rememberCoroutineScope()
+    var active_item = 0
+    val scroll_state = rememberLazyListState()
     Column(modifier = modifier) {
         if (sort_options.isNotEmpty()) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = 4.dp)
+            ) {
                 val expanded = remember { mutableStateOf(false) }
                 SText(
                     R.string.sorting_by,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.weight(1F)
                 )
-                Box {
-                    Button(
+                Box(modifier = Modifier.weight(1F)) {
+                    SmallButton(
                         onClick = { expanded.value = !expanded.value },
+                        modifier = Modifier.fillMaxWidth(),
                         content = {
                             if (selected_sort == -1) {
                                 SText(R.string.unsorted)
@@ -334,10 +349,9 @@ fun <T> SortableMenu(
                 }
             }
         }
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
+        LazyColumn(
+            state = scroll_state,
+            modifier = Modifier.fillMaxWidth()
         ) {
             val sorted_menu = if (sort_options.isEmpty() || active_sort_option.value == -1) {
                 default_menu
@@ -345,9 +359,7 @@ fun <T> SortableMenu(
                 val indices = default_menu.indices.sortedWith(sort_options[active_sort_option.value].second)
                 List(default_menu.size) { i -> default_menu[indices[i]] }
             }
-
-            for ((i, row) in sorted_menu.enumerate()) {
-                val (item, label_content) = row
+            itemsIndexed(sorted_menu) { i, (item, label_content) ->
                 val row_modifier = Modifier
                 Row(
                     modifier = Modifier
@@ -360,9 +372,9 @@ fun <T> SortableMenu(
                         )
                         .then(
                             if (i % 2 == 0) {
-                                row_modifier.background(Color(0x20000000))
+                                row_modifier.background(Color(0x10000000))
                             } else {
-                                row_modifier.background(Color(0x20FFFFFF))
+                                row_modifier.background(Color(0x10FFFFFF))
                             }
                         )
                         //.height(dimensionResource(R.dimen.dialog_menu_line_height))
@@ -407,11 +419,11 @@ fun DialogSTitle(text: Int, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun Card(
+fun DialogCard(
     modifier: Modifier = Modifier,
     colors: CardColors = CardColors(
-        containerColor = Color.Red,
-        contentColor = Color.Blue,
+        containerColor = colorResource(R.color.surface_container),
+        contentColor = colorResource(R.color.on_surface_container),
         disabledContentColor = Color.Gray,
         disabledContainerColor = Color.Green,
     ),
@@ -420,36 +432,49 @@ fun Card(
     border: BorderStroke? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    OriginalCard(modifier, shape, colors, elevation, border, content)
+    ProvideContentColorTextStyle(contentColor = colors.contentColor) {
+        Box(
+            modifier
+                .then(if (border != null) modifier.border(border) else modifier)
+                .background(color = colors.containerColor, shape),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                modifier = Modifier.padding(dimensionResource(R.dimen.dialog_padding)),
+                content = content
+            )
+        }
+    }
 }
 
 @Composable
 fun DialogBar(modifier: Modifier = Modifier.fillMaxWidth(), positive: (() -> Unit)? = null, negative: (() -> Unit)? = null, neutral: (() -> Unit)? = null) {
     Row(
-        modifier = modifier,
+        modifier = modifier
+            .padding(
+                top = dimensionResource(R.dimen.dialog_bar_padding_vertical),
+                bottom = 0.dp
+            ),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         negative?.let {
-            Button(
+            SmallButton(
                 modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(top = 2.dp, bottom = 2.dp, end = 4.dp, start = 4.dp),
                 onClick = it,
                 content = { SText(android.R.string.no) }
             )
         }
         neutral?.let {
-            OutlinedButton(
+            SmallOutlinedButton(
                 modifier = Modifier.weight(1F),
-                contentPadding = PaddingValues(top = 2.dp, bottom = 2.dp, end = 4.dp, start = 4.dp),
                 onClick = it,
                 content = { SText(android.R.string.cancel) }
             )
         }
         positive?.let {
-            Button(
+            SmallButton(
                 modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(top = 2.dp, bottom = 2.dp, end = 4.dp, start = 4.dp),
                 onClick = it,
                 content = { SText(android.R.string.ok) }
             )

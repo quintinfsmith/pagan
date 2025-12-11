@@ -195,7 +195,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
                 verticalArrangement = Arrangement.Center
             ) {
                 if (this@ComponentActivityLanding.view_model.requires_soundfont.value) {
-                    Row { SoundFontWarning() }
+                    Row(modifier = Modifier.padding(8.dp)) { SoundFontWarning() }
                 }
                 Row { LayoutMenu() }
             }
@@ -221,7 +221,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
                 verticalArrangement = Arrangement.Center
             ) {
                 if (this@ComponentActivityLanding.view_model.requires_soundfont.value) {
-                    Row { SoundFontWarning() }
+                    Row(modifier = Modifier.padding(8.dp)) { SoundFontWarning() }
                 }
                 Row { LayoutMenu() }
             }
@@ -243,7 +243,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
                 verticalArrangement = Arrangement.Center
             ) {
                 if (this@ComponentActivityLanding.view_model.requires_soundfont.value) {
-                    Row { SoundFontWarning() }
+                    Row(modifier = Modifier.padding(8.dp)) { SoundFontWarning() }
                 }
                 Row { LayoutMenu() }
             }
@@ -262,7 +262,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
                 verticalArrangement = Arrangement.Center
             ) {
                 if (this@ComponentActivityLanding.view_model.requires_soundfont.value) {
-                    Row { SoundFontWarning() }
+                    Row(modifier = Modifier.padding(8.dp)) { SoundFontWarning() }
                 }
                 Row { LayoutMenuCompact() }
             }
@@ -287,7 +287,10 @@ class ComponentActivityLanding: PaganComponentActivity() {
                 verticalArrangement = Arrangement.SpaceBetween,
             ) {
                 if (this@ComponentActivityLanding.view_model.requires_soundfont.value) {
-                    Row(Modifier.fillMaxWidth()) {
+                    Row(Modifier
+                        .padding(8.dp)
+                        .fillMaxWidth()
+                    ) {
                         SoundFontWarning()
                     }
                 }
@@ -306,7 +309,9 @@ class ComponentActivityLanding: PaganComponentActivity() {
             horizontalArrangement = Arrangement.SpaceBetween,
        ) {
             if (this@ComponentActivityLanding.view_model.requires_soundfont.value) {
-                SoundFontWarning()
+                Row(Modifier.padding(8.dp)) {
+                    SoundFontWarning()
+                }
             }
             LayoutMenuCompact()
         }

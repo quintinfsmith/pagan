@@ -267,7 +267,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     private fun push_set_event(beat_key: BeatKey, position: List<Int>, event: InstrumentEvent) {
-        this.push_to_history_stack( HistoryToken.SET_EVENT, listOf(beat_key.copy(), position, event.copy()) )
+        this.push_to_history_stack(HistoryToken.SET_EVENT, listOf(beat_key.copy(), position, event.copy()))
     }
 
     private fun push_set_percussion_event(beat_key: BeatKey, position: List<Int>, duration: Int) {

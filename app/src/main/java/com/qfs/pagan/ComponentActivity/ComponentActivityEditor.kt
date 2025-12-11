@@ -21,7 +21,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,7 +41,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -59,9 +57,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -77,8 +73,6 @@ import com.qfs.apres.soundfont2.Riff
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.ActionTracker
-import com.qfs.pagan.Activity.ActivityAbout
-import com.qfs.pagan.Activity.ActivitySettings
 import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
 import com.qfs.pagan.CompatibleFileType
 import com.qfs.pagan.Exportable
@@ -86,8 +80,8 @@ import com.qfs.pagan.MultiExporterEventHandler
 import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.R
 import com.qfs.pagan.SingleExporterEventHandler
-import com.qfs.pagan.composable.DialogCard
 import com.qfs.pagan.composable.DialogBar
+import com.qfs.pagan.composable.DialogCard
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DropdownMenu
 import com.qfs.pagan.composable.DropdownMenuItem
@@ -1462,7 +1456,19 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             ConfigDrawerChannelLeftButton(
                                 modifier = Modifier.weight(1F),
                                 onClick = { dispatcher.set_channel_preset(i) },
-                                content = { Text(channel_data.active_name.value) }
+                                content = {
+                                    Row(
+                                        Modifier.weight(1F),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        if (channel_data.percussion.value) {
+                                            Text("!%02d:".format(i))
+                                        } else {
+                                            Text("%02d:".format(i))
+                                        }
+                                        Text(channel_data.active_name.value)
+                                    }
+                                }
                             )
                             Spacer(modifier = Modifier.width(2.dp))
                             ConfigDrawerChannelRightButton(

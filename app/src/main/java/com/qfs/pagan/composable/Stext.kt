@@ -454,7 +454,7 @@ fun DialogBar(modifier: Modifier = Modifier.fillMaxWidth(), positive: (() -> Uni
             SmallButton(
                 modifier = Modifier.weight(1f),
                 onClick = it,
-                content = { SText(android.R.string.no) }
+                content = { SText(R.string.no) }
             )
         }
         neutral?.let {

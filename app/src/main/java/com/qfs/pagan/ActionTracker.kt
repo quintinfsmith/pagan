@@ -49,7 +49,6 @@ import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
 import com.qfs.pagan.structure.opusmanager.base.InvalidOverwriteCall
 import com.qfs.pagan.structure.opusmanager.base.MixedInstrumentException
-import com.qfs.pagan.structure.opusmanager.base.NonEventConversion
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
@@ -1334,9 +1333,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                     Pair(R.string.sort_option_program) { a: Int, b: Int -> preset_names[a].second.compareTo(preset_names[b].second) },
                     Pair(R.string.sort_option_abc) { a: Int, b: Int -> preset_names[a].third.compareTo(preset_names[b].third) }
                 )
-                Row {
-                    SText(R.string.dropdown_choose_instrument)
-                }
+                DialogSTitle(R.string.dropdown_choose_instrument)
                 SortableMenu(modifier = Modifier.weight(1F), default_menu = options, sort_options = sort_options, selected_sort = 0, default_value = default) { instrument ->
                     close()
                     opus_manager.channel_set_preset(channel, instrument)

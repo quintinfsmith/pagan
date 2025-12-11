@@ -93,6 +93,20 @@ class ReducibleTree<T> {
         return this.parent
     }
 
+    fun update(input_tree: ReducibleTree<T>, event_callback: (T, T) -> Unit) {
+        if (this.has_event() && input_tree.has_event()) {
+            event_callback(this.event!!, input_tree.event!!)
+        } else if (input_tree.has_event()) {
+            this.set_event(input_tree.event)
+        } else {
+            this.set_size(input_tree.size, true) // NoClobber
+            for (i in 0 until this._real_size) {
+                this[i].update(input_tree[i], event_callback)
+            }
+        }
+
+    }
+
     /**
      * Get index relative to siblings if applicable, null otherwise
      */

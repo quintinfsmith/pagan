@@ -1177,7 +1177,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     if (leaf_data.is_selected.value) {
                         modifier.border(2.dp, colorResource(R.color.selected_primary), RoundedCornerShape(corner_radius))
                     } else if (leaf_data.is_secondary.value) {
-                        modifier.border(2.dp, colorResource(R.color.selected_secondary), RoundedCornerShape(corner_radius))
+                        modifier.border(
+                            2.dp,
+                            colorResource(R.color.selected_secondary),
+                            RoundedCornerShape(corner_radius)
+                        )
+                    } else if (!leaf_data.is_valid.value) {
+                        modifier.border(2.dp, colorResource(R.color.leaf_invalid), RoundedCornerShape(corner_radius))
                     } else {
                         modifier
                     }

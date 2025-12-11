@@ -535,7 +535,17 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             this.set_relative_mode(event)
         }
 
+        if (this.ui_lock.is_locked()) return
         this._queue_cell_change(beat_key)
+        if (event is RelativeNoteEvent) {
+            val abs_value = this.get_absolute_value(beat_key, position) ?: 0
+            val y = this.get_visible_row_from_ctl_line(
+                this.get_actual_line_index(
+                    this.get_instrument_line_index(beat_key.channel, beat_key.line_offset)
+                )
+            )!!
+            this.vm_state.cell_map[y][beat_key.beat].value.get(*position.toIntArray()).event?.first?.is_valid?.value = abs_value > 0
+        }
         this.vm_state.set_active_event(event)
     }
 

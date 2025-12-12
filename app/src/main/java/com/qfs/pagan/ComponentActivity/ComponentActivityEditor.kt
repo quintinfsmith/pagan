@@ -40,7 +40,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -87,6 +90,7 @@ import com.qfs.pagan.composable.DropdownMenu
 import com.qfs.pagan.composable.DropdownMenuItem
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.UnSortableMenu
+import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.ConfigDrawerBottomButton
 import com.qfs.pagan.composable.button.ConfigDrawerChannelLeftButton
 import com.qfs.pagan.composable.button.ConfigDrawerChannelRightButton
@@ -194,7 +198,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         }
                     }
 
-                val export_event_handler = MultiExporterEventHandler(this, line_count)
+                val export_event_handler = MultiExporterEventHandler(this, this.state_model, line_count)
 
                 var y = 0
                 outer@ for (c in opus_manager_copy.get_all_channels().indices) {
@@ -305,7 +309,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             }
 
-            val export_event_handler = MultiExporterEventHandler(this, channel_count)
+            val export_event_handler = MultiExporterEventHandler(this, this.state_model, channel_count)
 
             var y = 0
             outer@ for (c in opus_manager_copy.get_all_channels().indices) {
@@ -397,7 +401,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     data_output_buffer,
                     tmp_file,
                     this.view_model.configuration,
-                    SingleExporterEventHandler(this, uri) {
+                    SingleExporterEventHandler(this, this.state_model, uri) {
                         data_output_buffer.close()
                         buffered_output_stream.close()
                         output_stream.close()
@@ -1413,9 +1417,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     .wrapContentWidth(),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
+                Row(horizontalArrangement = Arrangement.SpaceBetween) {
                     Column(modifier = Modifier.weight(1F)) {
                         ConfigDrawerTopButton(
                             onClick = { dispatcher.set_tuning_table_and_transpose() },
@@ -1448,7 +1450,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 Column(
                     Modifier
                         .verticalScroll(rememberScrollState())
-                        .weight(1F),
+                        .weight(1F)
                 ) {
                     for (i in 0 until state_model.channel_count.value) {
                         val channel_data = state_model.channel_data[i]
@@ -1461,12 +1463,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         Modifier.weight(1F),
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
-                                        if (channel_data.percussion.value) {
-                                            Text("!%02d:".format(i))
-                                        } else {
-                                            Text("%02d:".format(i))
-                                        }
-                                        Text(channel_data.active_name.value)
+                                        Text(
+                                            text = if (channel_data.percussion.value) "!%02d:".format(i)
+                                                else "%02d:".format(i),
+                                            modifier = Modifier.padding(vertical = 0.dp, horizontal = 12.dp)
+                                        )
+                                        Text(
+                                            channel_data.active_name.value ?: this@ComponentActivityEditor.get_default_preset_name(channel_data.instrument.value.first, channel_data.instrument.value.second),
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier.weight(1F)
+                                        )
                                     }
                                 }
                             )
@@ -1486,7 +1492,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     ConfigDrawerBottomButton(
                         modifier = Modifier.weight(1F),
@@ -1520,14 +1527,37 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         }
                     )
                     Spacer(Modifier.weight(.2F))
-                    ConfigDrawerBottomButton(
-                        modifier = Modifier.weight(1F),
-                        icon = R.drawable.icon_export,
-                        description = R.string.btn_cfg_export,
-                        onClick = {
-                            this@ComponentActivityEditor.export()
-                        }
-                    )
+                    if (!this@ComponentActivityEditor.state_model.export_in_progress.value) {
+                        ConfigDrawerBottomButton(
+                            modifier = Modifier.weight(1F),
+                            icon = R.drawable.icon_export,
+                            description = R.string.btn_cfg_export,
+                            onClick = {
+                                this@ComponentActivityEditor.export()
+                            }
+                        )
+                    } else {
+                        CircularProgressIndicator(
+                            progress = { this@ComponentActivityEditor.state_model.export_progress.value },
+                            modifier = Modifier.combinedClickable(
+                                onClick = {
+                                    this@ComponentActivityEditor.runOnUiThread {
+                                        Toast.makeText(
+                                            this@ComponentActivityEditor,
+                                            "Hold to cancel Export",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                },
+                                onLongClick = {
+                                     this@ComponentActivityEditor.export_wav_cancel()
+                                }
+                            ),
+                            color = ProgressIndicatorDefaults.linearColor,
+                            trackColor = ProgressIndicatorDefaults.linearTrackColor,
+                            strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
+                        )
+                    }
                 }
             }
         }
@@ -1556,6 +1586,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     override fun LayoutSmallLandscape() {
         TODO("Not yet implemented")
+    }
+
+    private fun get_default_preset_name(bank: Int, program: Int): String {
+        val preset_names = this.resources.getStringArray(R.array.general_midi_presets)
+        return this.resources.getString(R.string.unavailable_preset, preset_names[program])
     }
 
     fun project_save() {
@@ -1771,6 +1806,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
                 Row {
                     UnSortableMenu(Modifier, this@ComponentActivityEditor.get_exportable_options()) { export_type ->
+                        close()
                         this@ComponentActivityEditor.export(export_type)
                     }
                 }

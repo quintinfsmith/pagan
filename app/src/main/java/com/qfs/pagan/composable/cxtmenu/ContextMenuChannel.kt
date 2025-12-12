@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.IconCMenuButton
@@ -59,11 +61,9 @@ fun ContextMenuChannelPrimary(ui_facade: ViewModelEditorState, dispatcher: Actio
 fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier) {
     val cursor = ui_facade.active_cursor.value ?: return
     val channel_index = cursor.ints[0]
-    println("CHANNEL: $channel_index")
     val active_channel = try {
         ui_facade.channel_data[channel_index]
     } catch (e: Exception) {
-        println("burp")
         return
     }
 
@@ -86,7 +86,7 @@ fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
                 .fillMaxSize()
                 .weight(1f),
             onClick = { dispatcher.set_channel_preset(channel_index) },
-            text = active_channel.active_name.value
+            text = active_channel.active_name.value ?: stringResource(R.string.unavailable_preset, stringArrayResource(R.array.general_midi_presets)[active_channel.instrument.value.second])
         )
     }
 }

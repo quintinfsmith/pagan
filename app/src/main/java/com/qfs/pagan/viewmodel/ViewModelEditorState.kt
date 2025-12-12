@@ -50,14 +50,14 @@ class ViewModelEditorState: ViewModel() {
         val is_spillover = mutableStateOf(is_spillover)
     }
 
-    class ChannelData(percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean, is_selected: Boolean = false, name: String, size: Int = 0) {
+    class ChannelData(percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean, is_selected: Boolean = false, name: String?, size: Int = 0) {
         val percussion = mutableStateOf(percussion)
         val instrument = mutableStateOf(instrument)
         val is_mute = mutableStateOf(is_mute)
         val is_selected = mutableStateOf(is_selected)
-        val active_name = mutableStateOf<String>(name)
+        val active_name = mutableStateOf(name)
         val size = mutableStateOf<Int>(size)
-        fun update(percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean, is_selected: Boolean = false, name: String, size: Int = 0) {
+        fun update(percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean, is_selected: Boolean = false, name: String?, size: Int = 0) {
             this.percussion.value = percussion
             this.instrument.value = instrument
             this.is_mute.value = is_mute
@@ -100,6 +100,8 @@ class ViewModelEditorState: ViewModel() {
     val scroll_state_x = mutableStateOf(LazyListState())
     val scroll_state_y: MutableState<ScrollState> = mutableStateOf(ScrollState(0))
     val coroutine_scope: MutableState<CoroutineScope?> = mutableStateOf(CoroutineScope(Dispatchers.Default))
+    val export_progress: MutableState<Float> = mutableStateOf(0F)
+    val export_in_progress = mutableStateOf(false)
 
     private val working_path = mutableListOf<Int>()
     val preset_names = HashMap<Int, HashMap<Int, String>>()
@@ -124,10 +126,10 @@ class ViewModelEditorState: ViewModel() {
         this.cell_map.clear()
         this.channel_data.clear()
 
-        this.coroutine_scope.value?.launch {
-            this@ViewModelEditorState.scroll_state_x.value.scrollToItem(0)
-            this@ViewModelEditorState.scroll_state_y.value.scrollTo(0)
-        }
+        // CoroutineScope.launch {
+        //     this@ViewModelEditorState.scroll_state_x.value.scrollToItem(0)
+        //     this@ViewModelEditorState.scroll_state_y.value.scrollTo(0)
+        // }
 
         // this.preset_names.clear()
         // this.available_instruments.clear()
@@ -214,7 +216,7 @@ class ViewModelEditorState: ViewModel() {
         }
         this.channel_count.value += 1
         val name = this.get_preset_name(instrument.first, instrument.second)
-        this.channel_data.add(channel, ChannelData(percussion, instrument, is_mute, name = name ?: "TODO_B", is_selected = false, size = size))
+        this.channel_data.add(channel, ChannelData(percussion, instrument, is_mute, name = name, is_selected = false, size = size))
     }
 
     fun remove_channel(channel: Int) {
@@ -614,7 +616,7 @@ class ViewModelEditorState: ViewModel() {
     fun update_channel_names() {
         for (channel in this.channel_data) {
             val (program, bank) = channel.instrument.value
-            channel.active_name.value = this.get_preset_name(program, bank) ?: "TODO_A"
+            channel.active_name.value = this.get_preset_name(program, bank)
         }
     }
 

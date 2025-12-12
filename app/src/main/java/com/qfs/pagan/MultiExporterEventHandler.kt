@@ -11,9 +11,10 @@ import androidx.core.app.NotificationManagerCompat
 import com.google.android.material.button.MaterialButton
 import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.pagan.ComponentActivity.ComponentActivityEditor
+import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.roundToInt
 
-class MultiExporterEventHandler(var activity: ComponentActivityEditor, var total_count: Int): WavConverter.ExporterEventHandler {
+class MultiExporterEventHandler(var activity: ComponentActivityEditor, val state_model: ViewModelEditorState, var total_count: Int): WavConverter.ExporterEventHandler {
     var working_y = 0
     var file_uri: Uri? = null
     var cancelled = false
@@ -25,11 +26,8 @@ class MultiExporterEventHandler(var activity: ComponentActivityEditor, var total
     override fun on_start() {
         if (this.working_y != 0) return
 
-        this.activity.runOnUiThread {
-            this.activity.findViewById<MaterialButton>(R.id.btnExportProject)?.visibility = View.INVISIBLE
-            this.activity.findViewById<View>(R.id.clExportProgress)?.visibility = View.VISIBLE
-            this.activity.findViewById<ProgressBar>(R.id.export_progress_bar).progress = 0
-        }
+        this.state_model.export_progress.value = 0F
+        this.state_model.export_in_progress.value = true
 
         val builder = this.activity.get_notification() ?: return
         @SuppressLint("MissingPermission")
@@ -68,21 +66,20 @@ class MultiExporterEventHandler(var activity: ComponentActivityEditor, var total
             }
         }
 
-        Toast.makeText(this.activity, this.activity.getString(R.string.export_wav_feedback_complete), Toast.LENGTH_SHORT).show()
-
         this.activity.runOnUiThread {
-            this.activity.findViewById<View>(R.id.clExportProgress)?.visibility = View.GONE
-            this.activity.findViewById<MaterialButton>(R.id.btnExportProject)?.visibility = View.VISIBLE
+            Toast.makeText(this.activity, this.activity.getString(R.string.export_wav_feedback_complete), Toast.LENGTH_SHORT).show()
         }
+
         this.activity.active_notification = null
+
+        this.state_model.export_in_progress.value = false
+        this.state_model.export_progress.value = 0F
     }
 
     override fun on_cancel() {
         this.cancelled = true
-        Toast.makeText(this.activity, this.activity.getString(R.string.export_cancelled), Toast.LENGTH_SHORT).show()
         this.activity.runOnUiThread {
-            this.activity.findViewById<View>(R.id.clExportProgress)?.visibility = View.GONE
-            this.activity.findViewById<MaterialButton>(R.id.btnExportProject)?.visibility = View.VISIBLE
+            Toast.makeText(this.activity, this.activity.getString(R.string.export_cancelled), Toast.LENGTH_SHORT).show()
         }
 
         val builder = this.activity.get_notification() ?: return
@@ -98,14 +95,14 @@ class MultiExporterEventHandler(var activity: ComponentActivityEditor, var total
             notification_manager.notify(this.activity.NOTIFICATION_ID, builder.build())
         }
         this.activity.active_notification = null
+        this.state_model.export_in_progress.value = false
+        this.state_model.export_progress.value = 0F
     }
 
     override fun on_progress_update(progress: Double) {
-        val progress_rounded = ((progress + this.working_y) * this.MAX_PROGRESS / this.total_count.toDouble()).roundToInt()
-        this.activity.runOnUiThread {
-            val progress_bar = this.activity.findViewById<ProgressBar>(R.id.export_progress_bar) ?: return@runOnUiThread
-            progress_bar.progress = progress_rounded
-        }
+        val progress_relative = (progress + this.working_y) / this.total_count.toDouble()
+        val progress_rounded = (progress_relative * this.MAX_PROGRESS).roundToInt()
+        this.state_model.export_progress.value = progress_relative.toFloat()
 
         val builder = this.activity.get_notification() ?: return
         builder.setProgress(this.MAX_PROGRESS, progress_rounded, false)

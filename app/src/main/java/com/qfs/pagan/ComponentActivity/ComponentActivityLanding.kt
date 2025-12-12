@@ -17,7 +17,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.qfs.pagan.Activity.ActivityEditor
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.SoundFontWarning
 
@@ -102,11 +101,11 @@ class ComponentActivityLanding: PaganComponentActivity() {
             modifier = modifier.fillMaxWidth(),
             content = { Text(stringResource(R.string.btn_landing_most_recent)) },
             onClick = {
-                // this@ActivityComposeLanding.startActivity(
-                //     Intent(this, ActivityEditor::class.java).apply {
-                //         this.putExtra("load_backup", true)
-                //     }
-                // )
+                this@ComponentActivityLanding.startActivity(
+                    Intent(this, ComponentActivityEditor::class.java).apply {
+                        this.putExtra("load_backup", true)
+                    }
+                )
             }
         )
     }

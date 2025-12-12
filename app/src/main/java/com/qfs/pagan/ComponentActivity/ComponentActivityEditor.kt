@@ -479,7 +479,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         super.onCreate(savedInstanceState)
 
-        action_interface.new_project()
 
         this.onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -509,12 +508,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 //    savedInstanceState.getInt("y")
                 //)
             } else {
-                // this.load_from_bkp()
+                action_interface.load_from_bkp()
             }
         } else if (this.intent.getBooleanExtra("load_backup", false)) {
-            // this.load_from_bkp()
+            println("H?????????????????")
+            action_interface.load_from_bkp()
         } else if (this.intent.data == null) {
-           // this.setup_new()
+            action_interface.new_project()
         } else if (this.view_model.project_manager?.contains(this.intent.data!!) == true) {
             this.load_project(this.intent.data!!)
         } else {
@@ -1873,5 +1873,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
         return export_options
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        this.save_to_backup()
+    }
 
+    fun save_to_backup() {
+        this.view_model.project_manager?.save_to_backup(
+            this.controller_model.opus_manager,
+            this.controller_model.active_project
+        )
+    }
 }

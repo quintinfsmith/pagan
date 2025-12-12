@@ -74,6 +74,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     var DEBUG_ON = false
     class NoActivityException: Exception()
     class OpusManagerDetached: Exception()
+    class MissingProjectManager: Exception()
     enum class TrackedAction {
         ApplyUndo,
         NewProject,
@@ -2483,4 +2484,12 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     fun clear() {
         this.action_queue.clear()
     }
+
+    fun load_from_bkp() {
+        val (backup_uri, bytes) = this.vm_top.project_manager?.read_backup() ?: throw MissingProjectManager()
+        this.get_opus_manager().load(bytes) {
+            this.vm_controller.active_project = backup_uri
+        }
+    }
+
 }

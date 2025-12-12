@@ -10,12 +10,12 @@ import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.apres.soundfontplayer.WaveGenerator
 import com.qfs.pagan.ActionTracker
-import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.AudioInterface
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.PlaybackDevice
 import com.qfs.pagan.PlaybackFrameMap
+import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.get_next_playback_state
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
@@ -145,5 +145,4 @@ class ViewModelEditorController(): ViewModel() {
             this.audio_interface.update_channel_instrument(midi_channel, midi_bank, midi_program)
         }
     }
-
 }

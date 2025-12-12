@@ -99,7 +99,7 @@ class ViewModelEditorState: ViewModel() {
 
     val scroll_state_x = mutableStateOf(LazyListState())
     val scroll_state_y: MutableState<ScrollState> = mutableStateOf(ScrollState(0))
-    val coroutine_scope: MutableState<CoroutineScope?> = mutableStateOf(CoroutineScope(Dispatchers.Default))
+    val coroutine_scope: MutableState<CoroutineScope> = mutableStateOf(CoroutineScope(Dispatchers.Default))
     val export_progress: MutableState<Float> = mutableStateOf(0F)
     val export_in_progress = mutableStateOf(false)
 
@@ -126,10 +126,10 @@ class ViewModelEditorState: ViewModel() {
         this.cell_map.clear()
         this.channel_data.clear()
 
-        // CoroutineScope.launch {
-        //     this@ViewModelEditorState.scroll_state_x.value.scrollToItem(0)
-        //     this@ViewModelEditorState.scroll_state_y.value.scrollTo(0)
-        // }
+        this.coroutine_scope.value.launch {
+            this@ViewModelEditorState.scroll_state_x.value.requestScrollToItem(0)
+            this@ViewModelEditorState.scroll_state_y.value.scrollTo(0)
+        }
 
         // this.preset_names.clear()
         // this.available_instruments.clear()
@@ -643,13 +643,9 @@ class ViewModelEditorState: ViewModel() {
         return output
     }
 
-    // fun get_first_visible_column_index(): Int {
-    //     val scroll_container_offset = this.scroll_state_x.value.value
-    //     val min_leaf_width = this.base_leaf_width.value
-    //     val reduced_x = scroll_container_offset / min_leaf_width
-    //     val column_position = this.get_column_from_leaf(reduced_x.toInt())
-    //     return column_position
-    // }
+    fun get_first_visible_column_index(): Int {
+        return this.scroll_state_x.value.firstVisibleItemIndex
+    }
 
     // fun get_last_visible_column_index(): Int {
     //     val scroll_container_offset = this.scroll_state_x.value.

@@ -42,6 +42,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusState
@@ -70,6 +71,7 @@ import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.button.SmallButton
 import com.qfs.pagan.composable.button.SmallOutlinedButton
+import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -300,6 +302,7 @@ fun <T> SortableMenu(
 ) {
     val active_sort_option = remember { mutableStateOf(selected_sort) }
     val scroll_state = rememberLazyListState()
+    var default_index = 0
     Column(modifier = modifier) {
         if (sort_options.isNotEmpty()) {
             Row(
@@ -357,6 +360,7 @@ fun <T> SortableMenu(
                     modifier = Modifier
                         .then(
                             if (item == default_value) {
+                                default_index = i
                                 row_modifier.background(colorResource(R.color.leaf_empty_selected))
                             } else {
                                 row_modifier
@@ -383,6 +387,9 @@ fun <T> SortableMenu(
                 )
             }
         }
+    }
+    rememberCoroutineScope().launch {
+        scroll_state.requestScrollToItem(default_index)
     }
 }
 

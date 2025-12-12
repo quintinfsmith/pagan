@@ -2,7 +2,6 @@ package com.qfs.pagan
 
 import android.net.Uri
 import android.util.Log
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,6 +36,7 @@ import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.DropdownMenu
+import com.qfs.pagan.composable.DropdownMenuItem
 import com.qfs.pagan.composable.IntegerInput
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.Slider
@@ -805,24 +805,42 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
         this.vm_top.create_dialog { close ->
             @Composable {
-                val slider_position = remember { mutableStateOf(0F) }
+                val slider_position = remember {
+                    mutableStateOf(
+                        when (opus_manager.cursor.mode) {
+                            CursorMode.Column,
+                            CursorMode.Single -> {
+                                opus_manager.cursor.beat
+                            }
+
+                            CursorMode.Range -> {
+                                opus_manager.cursor.get_ordered_range()!!.first.beat
+                            }
+
+                            CursorMode.Channel,
+                            CursorMode.Unset,
+                            CursorMode.Line -> opus_manager.vm_state.scroll_state_x.value.firstVisibleItemIndex
+                        }.toFloat()
+                    )
+                }
 
                 Row {
                     DialogTitle(stringResource(R.string.label_shortcut_scrollbar, slider_position.value.toInt()))
                 }
-                Row {
-                    Slider(
-                        modifier = Modifier.weight(1F).fillMaxHeight(),
-                        value = slider_position.value,
-                        steps = opus_manager.length,
-                        valueRange = 0F .. (opus_manager.length - 1).toFloat(),
-                        onValueChange = { value ->
-                            this@ActionTracker.cursor_select_column(value.toInt())
-                        }
-                    )
-                }
+                Slider(
+                    value = slider_position.value,
+                    steps = opus_manager.length,
+                    valueRange = 0F .. (opus_manager.length - 1).toFloat(),
+                    onValueChange = { value ->
+                        slider_position.value = value
+                        this@ActionTracker.cursor_select_column(value.toInt())
+                    }
+                )
                 if (opus_manager.marked_sections.isNotEmpty()) {
-                    Row {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
                         val expanded = remember { mutableStateOf(false) }
                         Button(
                             onClick = {
@@ -836,27 +854,25 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         ) {
                             var section_index = 0
                             for ((i, tag) in opus_manager.marked_sections.toList().sortedBy { it.first }) {
-                                Row(
-                                    modifier = Modifier
-                                        .combinedClickable(
-                                            onClick = {
-                                                expanded.value = false
-                                                this@ActionTracker.cursor_select_column(i)
-                                            }
-                                        )
-                                ) {
-                                    if (tag == null) {
-                                        Text(stringResource(R.string.section_spinner_item, i, section_index))
-                                    } else {
-                                        Text("${"%02d".format(i)}: $tag")
+                                DropdownMenuItem(
+                                    onClick = {
+                                        close()
+                                        expanded.value = false
+                                        this@ActionTracker.cursor_select_column(i)
+                                    },
+                                    text = {
+                                        if (tag == null) {
+                                            Text(stringResource(R.string.section_spinner_item, i, section_index))
+                                        } else {
+                                            Text("${"%02d".format(i)}: $tag")
+                                        }
                                     }
-                                }
+                                )
                                 section_index++
                             }
                         }
                     }
                 }
-                DialogBar(neutral = close)
             }
         }
     }

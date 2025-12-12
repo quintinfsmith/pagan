@@ -501,17 +501,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
         })
 
         if (savedInstanceState != null) {
+            // TODO: Handle lost state without losing context
             // if the activity is forgotten, the opus_manager is be uninitialized
-            if (this.controller_model.opus_manager.is_initialized()) {
-                //this.refresh(
-                //    savedInstanceState.getInt("x"),
-                //    savedInstanceState.getInt("y")
-                //)
-            } else {
-                action_interface.load_from_bkp()
-            }
+            action_interface.load_from_bkp()
         } else if (this.intent.getBooleanExtra("load_backup", false)) {
-            println("H?????????????????")
             action_interface.load_from_bkp()
         } else if (this.intent.data == null) {
             action_interface.new_project()
@@ -1874,8 +1867,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
         this.save_to_backup()
+        super.onSaveInstanceState(outState)
     }
 
     fun save_to_backup() {

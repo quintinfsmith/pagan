@@ -55,7 +55,7 @@
     <string name="btn_cfg_export">Export</string>
 
     <string name="dlg_delete_title">Really Delete %1s?</string>
-    <string name="feedback_delete">Deleted %1s</string>
+    <string name="feedback_delete">Deleted Project</string>
     <string name="config_file_not_found">Configuration can\'t be accessed</string>
 
     <string name="label_manual">Manual</string>
@@ -141,6 +141,7 @@
     <string name="untitled_opus">Untitled</string>
     <string name="error_caught_from_keyboard_input">Error caught from keyboard input: %1$s</string>
     <string name="playback_failed">Playback Failed</string>
+    <string name="delete_failed">Failed to delete project</string>
     <string name="invalid_soundfont">Invalid Soundfont</string>
     <string name="std_percussion_swap">Can\'t swap percussion with other instruments</string>
     <string name="corrupted_project">Corrupted Project</string>

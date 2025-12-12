@@ -409,10 +409,24 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     }
 
     fun delete() {
-        this.vm_controller.active_project?.let { project ->
-            this.vm_top.delete_project(project)
+        this.vm_top.create_dialog { close ->
+            val project_name = this.get_opus_manager().project_name ?: "Project"
+            @Composable {
+                DialogTitle(stringResource(R.string.dlg_delete_title, project_name))
+                DialogBar(
+                    neutral = close,
+                    positive = {
+                        close()
+                        this@ActionTracker.vm_controller.active_project?.let { project ->
+                            this@ActionTracker.vm_top.delete_project(project)
+                            this@ActionTracker.new_project()
+                        }
+                    }
+                )
+            }
+
+
         }
-        TODO("Track, Close Drawer && show toast")
     }
 
     fun project_copy() {
@@ -1777,7 +1791,18 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     }
 
     fun play_opus(scope: CoroutineScope) {
-        this.vm_controller.playback_device?.play_opus(0)
+        val opus_manager = this.get_opus_manager()
+        this.vm_controller.playback_device?.play_opus(
+            when (opus_manager.cursor.mode) {
+                CursorMode.Single,
+                CursorMode.Column -> opus_manager.cursor.beat
+                CursorMode.Range -> opus_manager.cursor.get_ordered_range()!!.first.beat
+
+                CursorMode.Line,
+                CursorMode.Channel,
+                CursorMode.Unset -> 0
+            }
+        )
     }
     fun stop_opus() {
         this.vm_controller.playback_device?.kill()

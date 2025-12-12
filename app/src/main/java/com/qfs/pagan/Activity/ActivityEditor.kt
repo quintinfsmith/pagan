@@ -351,9 +351,6 @@ class ActivityEditor : PaganActivity() {
                 }
 
                 if (fallback_msg != null) {
-                    if (!this.get_opus_manager().is_initialized()) {
-                        this.setup_new()
-                    }
                     this.feedback_msg(fallback_msg)
                 }
 
@@ -476,14 +473,6 @@ class ActivityEditor : PaganActivity() {
 
         if (savedInstanceState != null) {
             // if the activity is forgotten, the opus_manager is be uninitialized
-            if (this.get_opus_manager().is_initialized()) {
-                this.refresh(
-                    savedInstanceState.getInt("x"),
-                    savedInstanceState.getInt("y")
-                )
-            } else {
-                this.load_from_bkp()
-            }
         } else if (this.intent.getBooleanExtra("load_backup", false)) {
             this.load_from_bkp()
         } else if (this.intent.data == null) {
@@ -1948,7 +1937,6 @@ class ActivityEditor : PaganActivity() {
     fun on_project_change_new() {
         // set the default instrument to the first available in the soundfont (if applicable)
         val opus_manager = this.get_opus_manager()
-        val ui_facade = this.get_ui_facade()
         for ((c, channel) in opus_manager.channels.enumerate()) {
             if (!opus_manager.is_percussion(c)) continue
 

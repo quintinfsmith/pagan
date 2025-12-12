@@ -60,7 +60,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     var minimum_percussions = HashMap<Int, Int>()
     /////////////////////////////////////////////
 
-    var initialized = false
     var relative_mode: RelativeInputMode = RelativeInputMode.Absolute
     var marked_range: Pair<BeatKey, BeatKey>? = null
 
@@ -897,7 +896,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         //this.recache_line_maps()
         this.set_latest_octave()
         this.set_latest_offset()
-        this.initialized = true
     }
 
     fun set_latest_octave(octave: Int? = null) {
@@ -1007,7 +1005,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     // It's implicitly wrapped in a lock_ui call
     override fun _project_change_new() {
         super._project_change_new()
-        // activity.active_project = null
+        this.vm_controller.active_project = null
+        this.vm_controller.project_exists.value = false
     }
 
     // This function is called from the Base Layer within th project_change_wrapper.
@@ -2031,9 +2030,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.vm_state.update_column(beat, false)
     }
 
-    fun is_initialized(): Boolean {
-        return this.initialized
-    }
 
     override fun mute_channel(channel: Int) {
         super.mute_channel(channel)

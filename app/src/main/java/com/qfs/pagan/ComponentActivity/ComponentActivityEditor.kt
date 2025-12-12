@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
@@ -42,7 +43,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
@@ -90,7 +90,6 @@ import com.qfs.pagan.composable.DropdownMenu
 import com.qfs.pagan.composable.DropdownMenuItem
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.UnSortableMenu
-import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.ConfigDrawerBottomButton
 import com.qfs.pagan.composable.button.ConfigDrawerChannelLeftButton
 import com.qfs.pagan.composable.button.ConfigDrawerChannelRightButton
@@ -1104,7 +1103,22 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 contentAlignment = Alignment.Center,
                 content = {
                     if (column_info.is_tagged.value) {
-                        Text(text = "$x", modifier = Modifier.border(2.dp, Color.Red, CircleShape))
+                        Box(
+                            modifier
+                                .wrapContentSize()
+                                .padding(2.dp)
+                                .background(
+                                    color = colorResource(R.color.line_label_text),
+                                    shape = RectangleShape
+                                ),
+                            content = {
+                                Text(
+                                    text = "$x",
+                                    color = colorResource(R.color.line_label),
+                                    modifier = Modifier.padding(2.dp),
+                                )
+                            }
+                        )
                     } else {
                         Text(text = "$x")
                     }

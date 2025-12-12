@@ -843,9 +843,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                     ) {
                         val expanded = remember { mutableStateOf(false) }
                         Button(
-                            onClick = {
-                                expanded.value = !expanded.value
-                            },
+                            onClick = { expanded.value = !expanded.value },
                             content = { SText(R.string.jump_to_section) }
                         )
                         DropdownMenu(

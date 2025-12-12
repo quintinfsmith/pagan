@@ -20,7 +20,13 @@ fun ContextMenuColumnPrimary(ui_facade: ViewModelEditorState, dispatcher: Action
     Row {
         IconCMenuButton(
             modifier = Modifier.height(dimensionResource(R.dimen.icon_button_height)),
-            onClick = { dispatcher.tag_column(beat, null, true) },
+            onClick = {
+                if (column_data.is_tagged.value) {
+                    dispatcher.untag_column(beat)
+                } else {
+                    dispatcher.tag_column(beat, null, true)
+                }
+            },
             onLongClick = { dispatcher.tag_column(beat) },
             icon = if (column_data.is_tagged.value) R.drawable.icon_untag
                 else R.drawable.icon_tag,

@@ -34,6 +34,7 @@ class ViewModelEditorController(): ViewModel() {
     var export_handle: WavConverter? = null
     var active_project: Uri? = null
     var project_exists: MutableState<Boolean> = mutableStateOf(false)
+    var active_soundfont_relative_path: String? = null
 
 
     fun set_project_exists(value: Boolean) {
@@ -85,6 +86,7 @@ class ViewModelEditorController(): ViewModel() {
         this.opus_manager.vm_state.populate_presets()
         this.opus_manager.vm_state.update_channel_names()
         this.opus_manager.vm_state.available_instruments.clear()
+        this.active_soundfont_relative_path = null
     }
 
 

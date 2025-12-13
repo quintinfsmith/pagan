@@ -904,6 +904,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             this.vm_state.highlighted_octave.value = octave
         }
     }
+
     fun set_latest_offset(offset: Int? = null) {
         this.latest_set_offset = offset
         if (!this.ui_lock.is_locked()) {
@@ -994,6 +995,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         }
         this.ui_full_refresh()
     }
+
     override fun project_refresh() {
         this.lock_ui {
             this._ui_clear()
@@ -1090,10 +1092,11 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     override fun to_json(): JSONHashMap {
         val output = super.to_json()
-        //val activity = this.get_activity() ?: return output
-        //if (activity.configuration.soundfont != null) {
-        //    output.get_hashmap("d")["sf"] = activity.configuration.soundfont
-        //}
+
+        this.vm_controller.active_soundfont_relative_path?.let {
+            output.get_hashmap("d")["sf"] = it
+        }
+
         return output
     }
 

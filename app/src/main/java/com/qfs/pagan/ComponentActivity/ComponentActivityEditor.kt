@@ -536,15 +536,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
             soundfont_file = soundfont_file.findFile(segment) ?: throw FileNotFoundException()
         }
 
-        if (!soundfont_file.exists()) {
-            // Possible if user puts the sf2 in their files manually
-            //this.feedback_msg(this.getString(R.string.soundfont_not_found))
-            throw FileNotFoundException()
-        }
+        // Possible if user puts the sf2 in their files manually
+        if (!soundfont_file.exists()) throw FileNotFoundException()
 
         try {
             this.controller_model.set_soundfont(SoundFont(this, soundfont_file.uri))
             this.controller_model.playback_device?.activity = this
+            this.controller_model.active_soundfont_relative_path = file_path
         } catch (_: Riff.InvalidRiff) {
             // Possible if user puts the sf2 in their files manually
             //this.feedback_msg(this.getString(R.string.invalid_soundfont))

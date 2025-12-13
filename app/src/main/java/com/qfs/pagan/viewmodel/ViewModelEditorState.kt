@@ -56,7 +56,7 @@ class ViewModelEditorState: ViewModel() {
         val is_mute = mutableStateOf(is_mute)
         val is_selected = mutableStateOf(is_selected)
         val active_name = mutableStateOf(name)
-        val size = mutableStateOf<Int>(size)
+        val size = mutableIntStateOf(size)
         fun update(percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean, is_selected: Boolean = false, name: String?, size: Int = 0) {
             this.percussion.value = percussion
             this.instrument.value = instrument
@@ -312,7 +312,7 @@ class ViewModelEditorState: ViewModel() {
 
     fun set_channel_data(channel_index: Int, percussion: Boolean, preset: Pair<Int, Int>, is_mute: Boolean, size: Int = 0) {
         val name = this.get_preset_name(preset.first, preset.second)
-        this.channel_data[channel_index].update(percussion, preset, is_mute, is_selected = false, name = name ?: "TODO", size)
+        this.channel_data[channel_index].update(percussion, preset, is_mute, is_selected = false, name = name, size)
     }
 
     fun set_project_name(name: String? = null) {

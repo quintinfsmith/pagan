@@ -54,9 +54,7 @@ class SoundFont(val context: Context, uri: Uri) {
 
     init {
         this.riff.with {
-            if (this.riff.type_cc != "sfbk") {
-                throw InvalidSoundFont(uri)
-            }
+            if (this.riff.type_cc != "sfbk") throw InvalidSoundFont(uri)
 
             val info_chunk = this.riff.get_chunk_data(this.riff.list_chunks[0])
             val pdta_chunk = this.riff.get_chunk_data(this.riff.list_chunks[2])

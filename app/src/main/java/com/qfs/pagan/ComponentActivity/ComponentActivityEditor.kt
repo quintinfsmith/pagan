@@ -786,14 +786,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 ContextMenuSinglePrimary(ui_facade, dispatcher, show_relative_input, landscape)
             }
             CursorMode.Range -> ContextMenuRangePrimary(ui_facade, dispatcher, landscape)
-            CursorMode.Channel -> ContextMenuChannelPrimary(ui_facade, dispatcher, landscape)
+            CursorMode.Channel -> ContextMenuChannelPrimary(Modifier, ui_facade, dispatcher, landscape)
             CursorMode.Unset,
             null -> Text("TODO")
         }
     }
 
     @Composable
-    fun ContextMenuSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
+    fun ContextMenuSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
         val cursor = ui_facade.active_cursor.value ?: return
         if (cursor.type == CursorMode.Unset) return
 
@@ -802,7 +802,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             when (cursor.type) {
                 CursorMode.Line -> ContextMenuLineSecondary(ui_facade, dispatcher, modifier)
                 CursorMode.Column -> ContextMenuColumnSecondary(ui_facade, dispatcher, modifier)
-                CursorMode.Single -> ContextMenuSingleSecondary(ui_facade, dispatcher, modifier)
+                CursorMode.Single -> ContextMenuSingleSecondary(ui_facade, dispatcher, modifier, landscape)
                 CursorMode.Range -> {
                     ContextMenuRangeSecondary(
                         ui_facade,
@@ -819,7 +819,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun MainTable(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, length: MutableState<Int>) {
+    fun MainTable(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, length: MutableState<Int>) {
         val window_height =  LocalConfiguration.current.screenHeightDp.dp
         val line_height = dimensionResource(R.dimen.line_height)
         val ctl_line_height = dimensionResource(R.dimen.ctl_line_height)
@@ -832,7 +832,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val scroll_state_v = ui_facade.scroll_state_y.value
         val scroll_state_h = ui_facade.scroll_state_x.value
 
-        Row(Modifier.fillMaxWidth()) {
+        Row(modifier) {
             Column {
                 ShortcutView(dispatcher, scope, scroll_state_h)
                 Column(Modifier.verticalScroll(scroll_state_v, overscrollEffect = null)) {
@@ -1393,14 +1393,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.BottomCenter
         ) {
-            Box(Modifier.fillMaxSize()) {
-                MainTable(ui_facade, view_model.action_interface,  ui_facade.beat_count)
-            }
+            MainTable(Modifier.fillMaxSize(), ui_facade, view_model.action_interface,  ui_facade.beat_count)
             if (ui_facade.active_cursor.value?.type != CursorMode.Unset) {
                 AnimatedVisibility(ui_facade.active_cursor.value != null) {
                     CMBoxBottom {
                         ContextMenuPrimary(ui_facade, view_model.action_interface, false)
-                        ContextMenuSecondary(ui_facade, view_model.action_interface)
+                        ContextMenuSecondary(ui_facade, view_model.action_interface, false)
                     }
                 }
             }
@@ -1590,19 +1588,21 @@ class ComponentActivityEditor: PaganComponentActivity() {
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.BottomCenter
         ) {
-            MainTable(ui_facade, view_model.action_interface,  ui_facade.beat_count)
-            if (ui_facade.active_cursor.value?.type != CursorMode.Unset) {
-                AnimatedVisibility(ui_facade.active_cursor.value != null) {
-                    Row {
-                        Column {}
-                        ContextMenuPrimary(ui_facade, view_model.action_interface, true)
+            MainTable(Modifier.fillMaxSize(), ui_facade, view_model.action_interface, ui_facade.beat_count)
+            AnimatedVisibility(ui_facade.active_cursor.value != null) {
+                Row(
+                    Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    CMBoxBottom(Modifier.weight(1F)) {
+                        ContextMenuSecondary(ui_facade, view_model.action_interface, true)
                     }
-                }
-            }
-            if (ui_facade.active_cursor.value?.type != CursorMode.Unset) {
-                AnimatedVisibility(ui_facade.active_cursor.value != null) {
-                    CMBoxBottom {
-                        ContextMenuSecondary(ui_facade, view_model.action_interface)
+                    Row(
+                        Modifier.fillMaxHeight(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        ContextMenuPrimary(ui_facade, view_model.action_interface, true)
                     }
                 }
             }

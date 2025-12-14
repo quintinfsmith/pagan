@@ -13,17 +13,14 @@ import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
 
 @Composable
-fun CMBoxBottom(content: @Composable ColumnScope.() -> Unit) {
-    Box(
-        Modifier.Companion
+fun CMBoxBottom(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        modifier
+            .padding(4.dp)
             .background(
                 colorResource(R.color.surface),
                 RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp, bottomStart = 0.dp, bottomEnd = 0.dp)
-            )
-    ) {
-        Column(
-            Modifier.Companion.padding(4.dp),
-            content = content
-        )
-    }
+            ),
+        content = content
+    )
 }

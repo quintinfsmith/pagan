@@ -96,12 +96,8 @@
     <dimen name="contextmenu_secondary_padding_end">0dp</dimen>
     <dimen name="contextmenu_secondary_padding_bottom">0dp</dimen>
 
-    <dimen name="contextmenu_primary_width">-1px</dimen>
-    <dimen name="contextmenu_primary_height">54dp</dimen>
     <dimen name="contextmenu_primary_inner_width">-1px</dimen>
     <dimen name="contextmenu_primary_inner_height">-1px</dimen>
-    <dimen name="contextmenu_secondary_width">-1px</dimen>
-    <dimen name="contextmenu_secondary_height">54dp</dimen>
     <dimen name="contextmenu_secondary_button_height">48dp</dimen>
 
     <dimen name="contextmenu_primary_landscape_height">-1px</dimen>
@@ -127,5 +123,13 @@
 
     <dimen name="dialog_bar_padding_horizontal">4dp</dimen>
     <dimen name="dialog_bar_padding_vertical">16dp</dimen>
+
+
+
+    <dimen name="contextmenu_primary_width">41dp</dimen>
+    <dimen name="contextmenu_primary_height">54dp</dimen>
+    <dimen name="contextmenu_secondary_width">41dp</dimen>
+    <dimen name="contextmenu_secondary_height">54dp</dimen>
+    <dimen name="numberselector_column_width">41dp</dimen>
 
 </resources>

@@ -4,8 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
 
 @Composable
-fun NumberSelectorButton(modifier: Modifier = Modifier, index: Int, alternate: Boolean, selected: Boolean, highlighted: Boolean, callback: () -> Unit) {
+fun NumberSelectorButton(modifier: Modifier = Modifier, index: Int, alternate: Boolean, selected: Boolean, highlighted: Boolean, callback: (Int) -> Unit) {
     val shape = RoundedCornerShape(12.dp)
     Box(
         contentAlignment = Alignment.Center,
@@ -40,7 +44,9 @@ fun NumberSelectorButton(modifier: Modifier = Modifier, index: Int, alternate: B
             )
             .padding(0.dp)
             .combinedClickable(
-                onClick = callback
+                onClick = {
+                    callback(index)
+                }
             )
     ) {
         Text(
@@ -49,5 +55,38 @@ fun NumberSelectorButton(modifier: Modifier = Modifier, index: Int, alternate: B
             color = if (alternate) colorResource(R.color.ns_alt_text)
                 else colorResource(R.color.ns_default_text)
         )
+    }
+}
+
+@Composable
+fun NumberSelectorRow(size: Int, selected: Int?, highlighted: Int?, alternate: Boolean, callback: (Int) -> Unit) {
+    Row {
+        for (i in 0 until size) {
+            NumberSelectorButton(
+                modifier = Modifier.weight(1F),
+                index = i,
+                selected = selected == i,
+                highlighted = highlighted == i,
+                alternate = alternate,
+                callback = callback
+            )
+        }
+    }
+}
+@Composable
+fun NumberSelectorColumn(size: Int, selected: Int?, highlighted: Int?, alternate: Boolean, callback: (Int) -> Unit) {
+    Column(Modifier.width(dimensionResource(R.dimen.numberselector_column_width))) {
+        for (i in 0 until size) {
+            NumberSelectorButton(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1F),
+                index = i,
+                selected = selected == i,
+                highlighted = highlighted == i,
+                alternate = alternate,
+                callback = callback
+            )
+        }
     }
 }

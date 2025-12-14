@@ -4,8 +4,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -20,27 +22,42 @@ import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.viewmodel.ViewModelEditorState
+@Composable
+fun AdjustRangeButton(modifier: Modifier, dispatcher: ActionTracker) {
+    IconCMenuButton(
+        modifier = modifier,
+        onClick = { dispatcher.adjust_selection() },
+        icon = R.drawable.icon_adjust,
+        description = R.string.cd_adjust_selection
+    )
+}
+
+@Composable
+fun UnsetRangeButton(modifier: Modifier, dispatcher: ActionTracker) {
+    IconCMenuButton(
+        modifier = modifier,
+        onClick = { dispatcher.unset() },
+        icon = R.drawable.icon_unset,
+        description = R.string.cd_unset
+    )
+}
 
 @Composable
 fun ContextMenuRangePrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
-    Column {
-        Row {
+    if (landscape) {
+        Column(modifier = Modifier.width(dimensionResource(R.dimen.contextmenu_primary_width))) {
+            UnsetRangeButton(Modifier.fillMaxWidth(), dispatcher)
+            AdjustRangeButton(Modifier.fillMaxWidth(), dispatcher)
+        }
+    } else {
+        Row(modifier = Modifier.height(dimensionResource(R.dimen.icon_button_height))) {
+            AdjustRangeButton(Modifier.fillMaxHeight(), dispatcher)
             Spacer(modifier = Modifier.fillMaxWidth().weight(1F))
-            IconCMenuButton(
-                modifier = Modifier.height(dimensionResource(R.dimen.icon_button_height)),
-                onClick = { dispatcher.adjust_selection() },
-                icon = R.drawable.icon_adjust,
-                description = R.string.cd_adjust_selection
-            )
-            IconCMenuButton(
-                modifier = Modifier.height(dimensionResource(R.dimen.icon_button_height)),
-                onClick = { dispatcher.unset() },
-                icon = R.drawable.icon_unset,
-                description = R.string.cd_unset
-            )
+            UnsetRangeButton(Modifier.fillMaxHeight(), dispatcher)
         }
     }
 }
+
 @Composable
 fun ContextMenuRangeSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, move_mode: PaganConfiguration.MoveMode) {
     Column(modifier = Modifier.fillMaxWidth()) {

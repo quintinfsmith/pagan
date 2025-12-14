@@ -1,32 +1,24 @@
 package com.qfs.pagan.composable.cxtmenu
 
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.composable.SText
-import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.button.NumberSelectorButton
-import com.qfs.pagan.composable.button.RelativeOptionButton
 import com.qfs.pagan.composable.button.TextCMenuButton
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
@@ -41,7 +33,7 @@ import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.abs
 
 @Composable
-fun ContextMenuStructureControls(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
+fun ContextMenuStructureControls(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
     val active_event = ui_facade.active_event.value
     val cursor = ui_facade.active_cursor.value ?: return
     val active_line = ui_facade.line_data[cursor.ints[0]]
@@ -115,7 +107,34 @@ fun ContextMenuStructureControls(ui_facade: ViewModelEditorState, dispatcher: Ac
 }
 
 @Composable
-fun ContextMenuSinglePrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, show_relative_input: Boolean) {
+fun UserCopyModeSelect(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
+    SingleChoiceSegmentedButtonRow {
+        SegmentedButton(
+            modifier = Modifier.weight(1F),
+            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3),
+            onClick = { dispatcher.set_relative_mode(RelativeInputMode.Negative) },
+            selected = ui_facade.relative_input_mode.value == RelativeInputMode.Negative,
+            label = { Text("-") }
+        )
+        SegmentedButton(
+            modifier = Modifier.weight(1F),
+            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 3),
+            onClick = { dispatcher.set_relative_mode(RelativeInputMode.Absolute) },
+            selected = ui_facade.relative_input_mode.value == RelativeInputMode.Absolute,
+            label = { SText(R.string.absolute_label) }
+        )
+        SegmentedButton(
+            modifier = Modifier.weight(1F),
+            shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3),
+            onClick = { dispatcher.set_relative_mode(RelativeInputMode.Positive) },
+            selected = ui_facade.relative_input_mode.value == RelativeInputMode.Positive,
+            label = { Text("+") }
+        )
+    }
+}
+
+@Composable
+fun ContextMenuSinglePrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, show_relative_input: Boolean, landscape: Boolean) {
     val active_event = ui_facade.active_event.value
     val cursor = ui_facade.active_cursor.value ?: return
 
@@ -125,46 +144,24 @@ fun ContextMenuSinglePrimary(ui_facade: ViewModelEditorState, dispatcher: Action
         is PercussionEvent -> 0
         null -> null
         else -> {
-            ContextMenuStructureControls(ui_facade, dispatcher)
+            ContextMenuStructureControls(ui_facade, dispatcher, landscape)
             return
         }
     }
 
     val active_line = ui_facade.line_data[cursor.ints[0]]
-    val is_percussion = active_line.assigned_offset.value != null
-    Column {
-        if (show_relative_input && !is_percussion) {
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                SingleChoiceSegmentedButtonRow {
-                    SegmentedButton(
-                        modifier = Modifier.weight(1F),
-                        shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3),
-                        onClick = { dispatcher.set_relative_mode(RelativeInputMode.Negative) },
-                        selected = ui_facade.relative_input_mode.value == RelativeInputMode.Negative,
-                        label = { Text("-") }
-                    )
-                    SegmentedButton(
-                        modifier = Modifier.weight(1F),
-                        shape = SegmentedButtonDefaults.itemShape(index = 1, count = 3),
-                        onClick = { dispatcher.set_relative_mode(RelativeInputMode.Absolute) },
-                        selected = ui_facade.relative_input_mode.value == RelativeInputMode.Absolute,
-                        label = { SText(R.string.absolute_label) }
-                    )
-                    SegmentedButton(
-                        modifier = Modifier.weight(1F),
-                        shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3),
-                        onClick = { dispatcher.set_relative_mode(RelativeInputMode.Positive) },
-                        selected = ui_facade.relative_input_mode.value == RelativeInputMode.Positive,
-                        label = { Text("+") }
-                    )
-                }
+    if (active_line.assigned_offset.value != null) {
+        ContextMenuStructureControls(ui_facade, dispatcher, landscape)
+    } else {
+        Column {
+            if (show_relative_input) {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    content = { UserCopyModeSelect(ui_facade, dispatcher) }
+                )
             }
-        }
-        ContextMenuStructureControls(ui_facade, dispatcher)
-        if (!is_percussion) {
+            ContextMenuStructureControls(ui_facade, dispatcher, false)
             // Octave Selector
             Row {
                 for (i in 0 until 8) {
@@ -180,6 +177,15 @@ fun ContextMenuSinglePrimary(ui_facade: ViewModelEditorState, dispatcher: Action
             }
         }
     }
+}
+
+@Composable
+fun ContextMenuSinglePrimaryVertical(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, show_relative_input: Boolean, octave: Int?) {
+
+}
+
+@Composable
+fun ContextMenuSinglePrimaryHorizontal(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, show_relative_input: Boolean, octave: Int?) {
 }
 
 @Composable

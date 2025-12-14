@@ -776,21 +776,22 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
 
     @Composable
-    fun ContextMenuPrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
+    fun ContextMenuPrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
         val cursor = ui_facade.active_cursor.value
         when (cursor?.type) {
-            CursorMode.Line -> ContextMenuLinePrimary(ui_facade, dispatcher)
-            CursorMode.Column -> ContextMenuColumnPrimary(ui_facade, dispatcher)
+            CursorMode.Line -> ContextMenuLinePrimary(ui_facade, dispatcher, landscape)
+            CursorMode.Column -> ContextMenuColumnPrimary(ui_facade, dispatcher, landscape)
             CursorMode.Single -> {
                 val show_relative_input = this@ComponentActivityEditor.view_model.configuration.relative_mode
-                ContextMenuSinglePrimary(ui_facade, dispatcher, show_relative_input)
+                ContextMenuSinglePrimary(ui_facade, dispatcher, show_relative_input, landscape)
             }
-            CursorMode.Range -> ContextMenuRangePrimary(ui_facade, dispatcher)
-            CursorMode.Channel -> ContextMenuChannelPrimary(ui_facade, dispatcher)
+            CursorMode.Range -> ContextMenuRangePrimary(ui_facade, dispatcher, landscape)
+            CursorMode.Channel -> ContextMenuChannelPrimary(ui_facade, dispatcher, landscape)
             CursorMode.Unset,
             null -> Text("TODO")
         }
     }
+
     @Composable
     fun ContextMenuSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
         val cursor = ui_facade.active_cursor.value ?: return
@@ -1398,7 +1399,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             if (ui_facade.active_cursor.value?.type != CursorMode.Unset) {
                 AnimatedVisibility(ui_facade.active_cursor.value != null) {
                     CMBoxBottom {
-                        ContextMenuPrimary(ui_facade, view_model.action_interface)
+                        ContextMenuPrimary(ui_facade, view_model.action_interface, false)
                         ContextMenuSecondary(ui_facade, view_model.action_interface)
                     }
                 }
@@ -1569,9 +1570,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    override fun LayoutSmallPortrait() {
-        TODO("Not yet implemented")
-    }
+    override fun LayoutSmallPortrait() = LayoutMediumPortrait()
 
     @Composable
     override fun LayoutXLargeLandscape() {
@@ -1585,13 +1584,33 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     override fun LayoutMediumLandscape() {
-        TODO("Not yet implemented")
+        val view_model = this.controller_model
+        val ui_facade = this.controller_model.opus_manager.vm_state
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            MainTable(ui_facade, view_model.action_interface,  ui_facade.beat_count)
+            if (ui_facade.active_cursor.value?.type != CursorMode.Unset) {
+                AnimatedVisibility(ui_facade.active_cursor.value != null) {
+                    Row {
+                        Column {}
+                        ContextMenuPrimary(ui_facade, view_model.action_interface, true)
+                    }
+                }
+            }
+            if (ui_facade.active_cursor.value?.type != CursorMode.Unset) {
+                AnimatedVisibility(ui_facade.active_cursor.value != null) {
+                    CMBoxBottom {
+                        ContextMenuSecondary(ui_facade, view_model.action_interface)
+                    }
+                }
+            }
+        }
     }
 
     @Composable
-    override fun LayoutSmallLandscape() {
-        TODO("Not yet implemented")
-    }
+    override fun LayoutSmallLandscape() = LayoutMediumLandscape()
 
     private fun get_default_preset_name(bank: Int, program: Int): String {
         val preset_names = this.resources.getStringArray(R.array.general_midi_presets)

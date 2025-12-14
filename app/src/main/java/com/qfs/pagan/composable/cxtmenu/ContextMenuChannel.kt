@@ -17,7 +17,7 @@ import com.qfs.pagan.composable.button.TextCMenuButton
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun ContextMenuChannelPrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
+fun ContextMenuChannelPrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
     Row {
         IconCMenuButton(
             modifier = Modifier.height(dimensionResource(R.dimen.icon_button_height)),

@@ -12,7 +12,7 @@ import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun ContextMenuColumnPrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
+fun ContextMenuColumnPrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
     val cursor = ui_facade.active_cursor.value ?: return
     val beat = cursor.ints[0]
     val column_data = ui_facade.column_data[beat]

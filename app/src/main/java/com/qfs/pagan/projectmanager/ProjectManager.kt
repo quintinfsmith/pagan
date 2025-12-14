@@ -495,7 +495,6 @@ class ProjectManager(val context: Context, var uri: Uri?) {
             path_file.writeText(uri.toString())
         }
 
-        println(">>>>>, ${this._bkp_path}")
         File(this._bkp_path).writeText(opus_manager.to_json().to_string())
     }
 

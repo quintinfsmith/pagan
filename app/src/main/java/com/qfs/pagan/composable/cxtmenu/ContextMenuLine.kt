@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -24,49 +23,75 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocity
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
+
 @Composable
-fun ContextMenuLinePrimary(vm_state: ViewModelEditorState, dispatcher: ActionTracker) {
+fun ToggleLineControllerButton(dispatcher: ActionTracker) {
+    IconCMenuButton(
+        modifier = Modifier.height(dimensionResource(R.dimen.contextmenu_primary_height)),
+        onClick = { dispatcher.show_hidden_line_controller() },
+        icon = R.drawable.icon_ctl,
+        description = R.string.cd_show_effect_controls
+    )
+}
+
+@Composable
+fun InsertLineButton(dispatcher: ActionTracker) {
+    IconCMenuButton(
+        modifier = Modifier.height(dimensionResource(R.dimen.contextmenu_primary_height)),
+        onClick = { dispatcher.insert_line(1) },
+        onLongClick = { dispatcher.insert_line() },
+        icon = R.drawable.icon_insert_line,
+        description = R.string.cd_insert_line
+    )
+}
+
+@Composable
+fun RemoveLineButton(dispatcher: ActionTracker, size: Int) {
+    IconCMenuButton(
+        modifier = Modifier.height(dimensionResource(R.dimen.contextmenu_primary_height)),
+        enabled = size > 1,
+        onClick = { dispatcher.remove_line(1) },
+        onLongClick = { dispatcher.remove_line() },
+        icon = R.drawable.icon_remove_line,
+        description = R.string.cd_remove_line
+    )
+}
+@Composable
+fun PercussionSetInstrumentButton(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, dispatcher: ActionTracker, y: Int) {
+    val active_line = vm_state.line_data[y]
+    val assigned_offset = active_line.assigned_offset.value ?: return
+    val active_channel = vm_state.channel_data[active_line.channel.value!!]
+    val label = vm_state.get_instrument_name(active_channel.instrument.value, assigned_offset)
+
+    TextCMenuButton(
+        modifier = modifier.height(dimensionResource(R.dimen.contextmenu_primary_height)),
+        onClick = { dispatcher.set_percussion_instrument(active_line.channel.value!!, active_line.line_offset.value!!) },
+        text = label
+    )
+}
+
+@Composable
+fun ContextMenuLinePrimary(vm_state: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
     val cursor = vm_state.active_cursor.value ?: return
     val active_line = vm_state.line_data[cursor.ints[0]]
 
     Row {
-        IconCMenuButton(
-            modifier = Modifier.height(dimensionResource(R.dimen.contextmenu_primary_height)),
-            onClick = { dispatcher.show_hidden_line_controller() },
-            icon = R.drawable.icon_ctl,
-            description = R.string.cd_show_effect_controls
-        )
+        ToggleLineControllerButton(dispatcher)
 
-        active_line.assigned_offset.value?.let {
-            val active_channel = vm_state.channel_data[active_line.channel.value!!]
-            val label = vm_state.get_instrument_name(active_channel.instrument.value, it)
-            TextCMenuButton(
-                modifier = Modifier
-                    .height(dimensionResource(R.dimen.contextmenu_primary_height))
-                    .weight(1F),
-                onClick = { dispatcher.set_percussion_instrument(active_line.channel.value!!, active_line.line_offset.value!!) },
-                text = label
-            )
-        } ?: Spacer(Modifier.weight(1F))
+        if (active_line.assigned_offset.value != null) {
+            PercussionSetInstrumentButton(Modifier.weight(1F), vm_state, dispatcher, cursor.ints[0])
+        } else {
+            Spacer(Modifier.weight(1F))
+        }
 
         if (active_line.ctl_type.value == null) {
-            IconCMenuButton(
-                modifier = Modifier.height(dimensionResource(R.dimen.contextmenu_primary_height)),
-                enabled = vm_state.channel_data[active_line.channel.value!!].size.value > 1,
-                onClick = { dispatcher.remove_line(1) },
-                onLongClick = { dispatcher.remove_line() },
-                icon = R.drawable.icon_remove_line,
-                description = R.string.cd_remove_line
+            RemoveLineButton(
+                dispatcher,
+                vm_state.channel_data[active_line.channel.value!!].size.value
             )
         }
 
-        IconCMenuButton(
-            modifier = Modifier.height(dimensionResource(R.dimen.contextmenu_primary_height)),
-            onClick = { dispatcher.insert_line(1) },
-            onLongClick = { dispatcher.insert_line() },
-            icon = R.drawable.icon_insert_line,
-            description = R.string.cd_insert_line
-        )
+        InsertLineButton(dispatcher)
     }
 }
 
@@ -104,6 +129,23 @@ fun ContextMenuLineCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
 }
 
 @Composable
+fun MuteButton(modifier: Modifier = Modifier, dispatcher: ActionTracker, line: ViewModelEditorState.LineData) {
+    IconCMenuButton(
+        modifier = modifier,
+        onClick = {
+            if (line.is_mute.value) {
+                dispatcher.line_unmute()
+            } else {
+                dispatcher.line_mute()
+            }
+        },
+        icon = if (line.is_mute.value) R.drawable.icon_unmute
+            else R.drawable.icon_mute,
+        description = R.string.cd_line_mute
+    )
+}
+
+@Composable
 fun ContextMenuLineStdSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, volume_event: OpusVolumeEvent, modifier: Modifier = Modifier) {
     val cursor = ui_facade.active_cursor.value ?: return
     val y = cursor.ints[0]
@@ -112,19 +154,7 @@ fun ContextMenuLineStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconCMenuButton(
-            modifier = Modifier.fillMaxHeight(),
-            onClick = {
-                if (line.is_mute.value) {
-                    dispatcher.line_unmute()
-                } else {
-                    dispatcher.line_mute()
-                }
-            },
-            icon = if (line.is_mute.value) R.drawable.icon_unmute
-                else R.drawable.icon_mute,
-            description = R.string.cd_line_mute
-        )
+        MuteButton(Modifier.fillMaxHeight(), dispatcher, line)
         VolumeEventMenu(ui_facade, dispatcher, volume_event)
     }
 }

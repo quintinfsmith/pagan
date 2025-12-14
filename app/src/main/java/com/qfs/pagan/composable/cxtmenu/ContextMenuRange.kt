@@ -22,7 +22,7 @@ import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun ContextMenuRangePrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
+fun ContextMenuRangePrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
     Column {
         Row {
             Spacer(modifier = Modifier.fillMaxWidth().weight(1F))

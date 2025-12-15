@@ -83,13 +83,10 @@ import com.qfs.pagan.MultiExporterEventHandler
 import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.R
 import com.qfs.pagan.SingleExporterEventHandler
-import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogCard
-import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DropdownMenu
 import com.qfs.pagan.composable.DropdownMenuItem
 import com.qfs.pagan.composable.SText
-import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.composable.button.ConfigDrawerBottomButton
 import com.qfs.pagan.composable.button.ConfigDrawerChannelLeftButton
 import com.qfs.pagan.composable.button.ConfigDrawerChannelRightButton
@@ -1376,36 +1373,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    override fun LayoutXLargePortrait() {
-        TODO("Not yet implemented")
-    }
-
-    @Composable
-    override fun LayoutLargePortrait() {
-        TODO("Not yet implemented")
-    }
-
-    @Composable
-    override fun LayoutMediumPortrait() {
-        val view_model = this.controller_model
-        val ui_facade = this.controller_model.opus_manager.vm_state
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.BottomCenter
-        ) {
-            MainTable(Modifier.fillMaxSize(), ui_facade, view_model.action_interface,  ui_facade.beat_count)
-            if (ui_facade.active_cursor.value?.type != CursorMode.Unset) {
-                AnimatedVisibility(ui_facade.active_cursor.value != null) {
-                    CMBoxBottom {
-                        ContextMenuPrimary(ui_facade, view_model.action_interface, false)
-                        ContextMenuSecondary(ui_facade, view_model.action_interface, false)
-                    }
-                }
-            }
-        }
-    }
-
-    @Composable
     override fun Drawer(modifier: Modifier) {
         val dispatcher = this.controller_model.action_interface
         val state_model = this.state_model
@@ -1469,7 +1436,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     ) {
                                         Text(
                                             text = if (channel_data.percussion.value) "!%02d:".format(i)
-                                                else "%02d:".format(i),
+                                            else "%02d:".format(i),
                                             modifier = Modifier.padding(vertical = 0.dp, horizontal = 12.dp)
                                         )
                                         Text(
@@ -1554,7 +1521,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     }
                                 },
                                 onLongClick = {
-                                     this@ComponentActivityEditor.export_wav_cancel()
+                                    this@ComponentActivityEditor.export_wav_cancel()
                                 }
                             ),
                             color = ProgressIndicatorDefaults.linearColor,
@@ -1568,17 +1535,56 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
+    override fun LayoutXLargePortrait() = LayoutLargePortrait()
+
+    @Composable
+    override fun LayoutLargePortrait() {
+        val view_model = this.controller_model
+        val ui_facade = this.controller_model.opus_manager.vm_state
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            Box(Modifier.fillMaxSize()) {
+                MainTable(Modifier, ui_facade, view_model.action_interface,  ui_facade.beat_count)
+            }
+            AnimatedVisibility(ui_facade.active_cursor.value != null) {
+                CMBoxBottom(Modifier.width(SIZE_M.first)) {
+                    ContextMenuPrimary(ui_facade, view_model.action_interface, false)
+                    ContextMenuSecondary(ui_facade, view_model.action_interface, false)
+                }
+            }
+        }
+    }
+
+    @Composable
+    override fun LayoutMediumPortrait() {
+        val view_model = this.controller_model
+        val ui_facade = this.controller_model.opus_manager.vm_state
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            Box(Modifier.fillMaxSize()) {
+                MainTable(Modifier, ui_facade, view_model.action_interface,  ui_facade.beat_count)
+            }
+            AnimatedVisibility(ui_facade.active_cursor.value != null) {
+                CMBoxBottom {
+                    ContextMenuPrimary(ui_facade, view_model.action_interface, false)
+                    ContextMenuSecondary(ui_facade, view_model.action_interface, false)
+                }
+            }
+        }
+    }
+
+    @Composable
     override fun LayoutSmallPortrait() = LayoutMediumPortrait()
 
     @Composable
-    override fun LayoutXLargeLandscape() {
-        TODO("Not yet implemented")
-    }
+    override fun LayoutXLargeLandscape() = LayoutMediumPortrait()
 
     @Composable
-    override fun LayoutLargeLandscape() {
-        TODO("Not yet implemented")
-    }
+    override fun LayoutLargeLandscape() = LayoutMediumPortrait()
 
     @Composable
     override fun LayoutMediumLandscape() {
@@ -1823,19 +1829,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
             return
         }
 
-        this.view_model.create_dialog { close ->
-            @Composable {
-                Row{
-                    DialogSTitle(R.string.dlg_export)
-                }
-                Row {
-                    UnSortableMenu(Modifier, this@ComponentActivityEditor.get_exportable_options()) { export_type ->
-                        close()
-                        this@ComponentActivityEditor.export(export_type)
-                    }
-                }
-                DialogBar(neutral = close)
-            }
+        this.view_model.unsortable_list_dialog(R.string.dlg_export, this.get_exportable_options()) { export_type ->
+            this.export(export_type)
         }
     }
 

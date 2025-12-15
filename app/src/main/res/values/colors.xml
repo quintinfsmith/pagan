@@ -5,7 +5,7 @@
     <color name="white">#FFFFFFFF</color>
     <color name="link_color">#2a2a46</color>
 
-    <color name="main_background_etching">#11000000</color>
+    <color name="main_background_etching">#08000000</color>
 
     <color name="leaf_main">#765BD5</color>
     <color name="leaf_spill">#5944a3</color>

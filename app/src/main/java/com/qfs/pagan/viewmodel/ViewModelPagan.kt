@@ -2,13 +2,22 @@ package com.qfs.pagan.viewmodel
 
 import android.net.Uri
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
 import com.qfs.pagan.DialogChain
 import com.qfs.pagan.PaganConfiguration
+import com.qfs.pagan.composable.DialogBar
+import com.qfs.pagan.composable.DialogSTitle
+import com.qfs.pagan.composable.SortableMenu
+import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.projectmanager.ProjectManager
 
 class ViewModelPagan: ViewModel() {
@@ -86,6 +95,58 @@ class ViewModelPagan: ViewModel() {
             },
             level = level
         )
+    }
+
+    fun <T> unsortable_list_dialog(title: Int, options: List<Pair<T, @Composable () -> Unit>>, default_value: T? = null, callback: (T) -> Unit) {
+        this.create_dialog { close ->
+            @Composable {
+                Row {
+                    DialogSTitle(title)
+                }
+                Row {
+                    UnSortableMenu(Modifier, options, default_value) {
+                        close()
+                        callback(it)
+                    }
+                }
+                DialogBar(neutral = close)
+            }
+        }
+    }
+
+    fun <T> sortable_list_dialog(
+        title: Int,
+        default_menu: List<Pair<T, @Composable () -> Unit>>,
+        sort_options: List<Pair<Int, (Int, Int) -> Int>>,
+        selected_sort: Int = -1,
+        default_value: T? = null,
+        content: (@Composable RowScope.() -> Unit)? = null,
+        onLongClick: (T) -> Unit = {},
+        onClick: (T) -> Unit
+    ) {
+        this.create_dialog { close ->
+            @Composable {
+                Column(
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row { DialogSTitle(title, modifier = Modifier.weight(1F)) }
+                    content?.let { Row(content = it) }
+                    SortableMenu(
+                        modifier = Modifier.weight(1F),
+                        default_menu = default_menu,
+                        sort_options = sort_options,
+                        selected_sort = selected_sort,
+                        onLongClick = onLongClick,
+                        onClick = {
+                            close()
+                            onClick(it)
+                        }
+                    )
+                    DialogBar(neutral = close)
+                }
+            }
+        }
+
     }
 
     internal fun save_configuration() {

@@ -3,7 +3,7 @@
     <color name="primary">#A6A6A6</color>
     <color name="primary_text">#000000</color>
 
-    <color name="main_background_etching">#11FFFFFF</color>
+    <color name="main_background_etching">#08FFFFFF</color>
 
     <color name="surface">#2d2d2d</color>
     <color name="on_surface">@color/main_foreground</color>

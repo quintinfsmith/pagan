@@ -3,11 +3,9 @@ package com.qfs.pagan.composable.cxtmenu
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -21,9 +19,8 @@ import com.qfs.pagan.composable.button.TextCMenuButton
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun ToggleEffectsButton(modifier: Modifier = Modifier, dispatcher: ActionTracker) {
+fun ToggleEffectsButton(dispatcher: ActionTracker) {
     IconCMenuButton(
-        modifier = modifier,
         onClick = { dispatcher.show_hidden_channel_controller() },
         icon = R.drawable.icon_ctl,
         description = R.string.cd_show_effect_controls
@@ -31,9 +28,8 @@ fun ToggleEffectsButton(modifier: Modifier = Modifier, dispatcher: ActionTracker
 }
 
 @Composable
-fun AdjustChannelButton(modifier: Modifier = Modifier, dispatcher: ActionTracker) {
+fun AdjustChannelButton(dispatcher: ActionTracker) {
     IconCMenuButton(
-        modifier = modifier,
         onClick = { dispatcher.adjust_selection() },
         icon = R.drawable.icon_adjust,
         description = R.string.cd_adjust_selection
@@ -41,9 +37,8 @@ fun AdjustChannelButton(modifier: Modifier = Modifier, dispatcher: ActionTracker
 }
 
 @Composable
-fun RemoveChannelButton(modifier: Modifier = Modifier, dispatcher: ActionTracker) {
+fun RemoveChannelButton(dispatcher: ActionTracker) {
     IconCMenuButton(
-        modifier = modifier,
         onClick = { dispatcher.remove_channel() },
         icon = R.drawable.icon_remove_channel,
         description = R.string.cd_remove_channel
@@ -53,9 +48,8 @@ fun RemoveChannelButton(modifier: Modifier = Modifier, dispatcher: ActionTracker
 }
 
 @Composable
-fun AddKitButton(modifier: Modifier = Modifier, dispatcher: ActionTracker) {
+fun AddKitButton(dispatcher: ActionTracker) {
     IconCMenuButton(
-        modifier = modifier,
         onClick = { dispatcher.insert_percussion_channel() },
         icon = R.drawable.icon_add_channel_kit,
         description = R.string.cd_insert_channel_percussion
@@ -63,9 +57,8 @@ fun AddKitButton(modifier: Modifier = Modifier, dispatcher: ActionTracker) {
 }
 
 @Composable
-fun AddChannelButton(modifier: Modifier = Modifier, dispatcher: ActionTracker) {
+fun AddChannelButton(dispatcher: ActionTracker) {
     IconCMenuButton(
-        modifier = modifier,
         onClick = { dispatcher.insert_channel() },
         icon = R.drawable.icon_add_channel,
         description = R.string.cd_insert_channel
@@ -73,9 +66,8 @@ fun AddChannelButton(modifier: Modifier = Modifier, dispatcher: ActionTracker) {
 }
 
 @Composable
-fun MuteChannelButton(modifier: Modifier = Modifier, dispatcher: ActionTracker, active_channel: ViewModelEditorState.ChannelData) {
+fun MuteChannelButton(dispatcher: ActionTracker, active_channel: ViewModelEditorState.ChannelData) {
     IconCMenuButton(
-        modifier = modifier,
         onClick = {
             if (active_channel.is_mute.value) {
                 dispatcher.channel_unmute()
@@ -102,57 +94,31 @@ fun SetPresetButton(modifier: Modifier = Modifier, dispatcher: ActionTracker, ch
 fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
     if (landscape) {
         Column(modifier.width(dimensionResource(R.dimen.contextmenu_primary_width))) {
-            RemoveChannelButton(Modifier, dispatcher)
-            AddKitButton(Modifier, dispatcher)
-            AddChannelButton(Modifier, dispatcher)
-            AdjustChannelButton(Modifier, dispatcher)
+            RemoveChannelButton(dispatcher)
+            AddKitButton(dispatcher)
+            AddChannelButton(dispatcher)
+            AdjustChannelButton(dispatcher)
             Spacer(Modifier.weight(1F))
-            ToggleEffectsButton(Modifier, dispatcher)
+            ToggleEffectsButton(dispatcher)
         }
     } else {
         Row(
             modifier
                 .fillMaxWidth()
-                .height(dimensionResource(R.dimen.contextmenu_primary_height))
         ) {
-            ToggleEffectsButton(
-                Modifier
-                    .fillMaxHeight()
-                    .width(dimensionResource(R.dimen.contextmenu_button_width)),
-                dispatcher
-            )
+            ToggleEffectsButton(dispatcher)
             Spacer(
                 Modifier
                     .width(dimensionResource(R.dimen.contextmenu_padding))
                     .weight(1F)
             )
-            AdjustChannelButton(
-                Modifier
-                    .fillMaxHeight()
-                    .width(dimensionResource(R.dimen.contextmenu_button_width)),
-                dispatcher
-            )
-            Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
-            RemoveChannelButton(
-                Modifier
-                    .fillMaxHeight()
-                    .width(dimensionResource(R.dimen.contextmenu_button_width)),
-                dispatcher
-            )
-            Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
-            AddKitButton(
-                Modifier
-                    .fillMaxHeight()
-                    .width(dimensionResource(R.dimen.contextmenu_button_width)),
-                dispatcher
-            )
-            Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
-            AddChannelButton(
-                Modifier
-                    .fillMaxHeight()
-                    .width(dimensionResource(R.dimen.contextmenu_button_width)),
-                dispatcher
-            )
+            AdjustChannelButton(dispatcher)
+            CMPadding()
+            RemoveChannelButton(dispatcher)
+            CMPadding()
+            AddKitButton(dispatcher)
+            CMPadding()
+            AddChannelButton(dispatcher)
         }
     }
 }
@@ -169,13 +135,10 @@ fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
 
     Row(modifier = modifier.height(dimensionResource(R.dimen.contextmenu_secondary_height))) {
         MuteChannelButton(
-            Modifier
-                .width(dimensionResource(R.dimen.contextmenu_button_width))
-                .fillMaxHeight(),
             dispatcher,
             active_channel
         )
-        Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
+        CMPadding()
         SetPresetButton(
             modifier = Modifier
                 .fillMaxSize()

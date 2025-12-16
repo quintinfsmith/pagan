@@ -130,6 +130,7 @@
 
     <dimen name="contextmenu_padding">4dp</dimen>
     <dimen name="contextmenu_button_width">54dp</dimen>
+    <dimen name="contextmenu_button_height">48dp</dimen>
     <dimen name="contextmenu_button_padding_h">8dp</dimen>
     <dimen name="contextmenu_button_padding_v">4dp</dimen>
     <dimen name="contextmenu_button_radius">16dp</dimen>

@@ -1,14 +1,10 @@
 package com.qfs.pagan.composable.cxtmenu
 
-import android.database.Cursor
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -18,13 +14,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.button.IconCMenuButton
-import com.qfs.pagan.composable.button.NumberSelectorButton
 import com.qfs.pagan.composable.button.NumberSelectorColumn
 import com.qfs.pagan.composable.button.NumberSelectorRow
 import com.qfs.pagan.composable.button.TextCMenuButton
@@ -40,10 +34,10 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocity
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.abs
+
 @Composable
-fun SplitButton(modifier: Modifier = Modifier, dispatcher: ActionTracker) {
+fun SplitButton(dispatcher: ActionTracker) {
     IconCMenuButton(
-        modifier = modifier,
         onClick = { dispatcher.split(2) },
         onLongClick = { dispatcher.split() },
         icon = R.drawable.icon_split,
@@ -51,9 +45,8 @@ fun SplitButton(modifier: Modifier = Modifier, dispatcher: ActionTracker) {
     )
 }
 @Composable
-fun InsertButton(modifier: Modifier = Modifier, dispatcher: ActionTracker) {
+fun InsertButton(dispatcher: ActionTracker) {
     IconCMenuButton(
-        modifier = modifier,
         onClick = { dispatcher.insert_leaf(1) },
         onLongClick = { dispatcher.insert_leaf() },
         icon = R.drawable.icon_insert,
@@ -62,9 +55,8 @@ fun InsertButton(modifier: Modifier = Modifier, dispatcher: ActionTracker) {
 }
 
 @Composable
-fun RemoveButton(modifier: Modifier = Modifier, dispatcher: ActionTracker, cursor: ViewModelEditorState.CacheCursor) {
+fun RemoveButton(dispatcher: ActionTracker, cursor: ViewModelEditorState.CacheCursor) {
     IconCMenuButton(
-        modifier = modifier,
         enabled = (cursor.ints.size > 2),
         onClick = { dispatcher.remove_at_cursor() },
         icon = R.drawable.icon_remove,
@@ -73,9 +65,9 @@ fun RemoveButton(modifier: Modifier = Modifier, dispatcher: ActionTracker, curso
 }
 
 @Composable
-fun DurationButton(modifier: Modifier = Modifier, dispatcher: ActionTracker, active_event: OpusEvent?) {
+fun DurationButton(dispatcher: ActionTracker, active_event: OpusEvent?) {
     TextCMenuButton(
-        modifier = modifier,
+        modifier = Modifier.width(dimensionResource(R.dimen.contextmenu_button_width)),
         enabled = active_event != null,
         onClick = { dispatcher.set_duration() },
         onLongClick = { dispatcher.set_duration(1) },
@@ -84,9 +76,8 @@ fun DurationButton(modifier: Modifier = Modifier, dispatcher: ActionTracker, act
 }
 
 @Composable
-fun UnsetButton(modifier: Modifier = Modifier, dispatcher: ActionTracker, active_line: ViewModelEditorState.LineData, active_event: OpusEvent?) {
+fun UnsetButton(dispatcher: ActionTracker, active_line: ViewModelEditorState.LineData, active_event: OpusEvent?) {
     IconCMenuButton(
-        modifier = modifier,
         enabled = active_line.assigned_offset.value != null || active_event != null,
         onClick = {
             if (active_line.assigned_offset.value != null) {
@@ -117,12 +108,15 @@ fun ContextMenuStructureControls(ui_facade: ViewModelEditorState, dispatcher: Ac
     val active_line = ui_facade.line_data[cursor.ints[0]]
 
     if (landscape) {
-        Column(verticalArrangement = Arrangement.SpaceBetween) {
-            SplitButton(Modifier, dispatcher)
-            InsertButton(Modifier, dispatcher)
-            RemoveButton(Modifier, dispatcher, cursor)
-            DurationButton(Modifier, dispatcher, active_event)
-            UnsetButton(Modifier, dispatcher, active_line, active_event)
+        Column(
+            Modifier.width(dimensionResource(R.dimen.contextmenu_button_width)),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            SplitButton(dispatcher)
+            InsertButton(dispatcher)
+            RemoveButton(dispatcher, cursor)
+            DurationButton(dispatcher, active_event)
+            UnsetButton(dispatcher, active_line, active_event)
         }
     } else {
         Row(
@@ -131,44 +125,15 @@ fun ContextMenuStructureControls(ui_facade: ViewModelEditorState, dispatcher: Ac
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            SplitButton(
-                Modifier
-                    .fillMaxHeight()
-                    .width(dimensionResource(R.dimen.contextmenu_button_width)),
-                dispatcher
-            )
-            Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
-            InsertButton(
-                Modifier
-                    .fillMaxHeight()
-                    .width(dimensionResource(R.dimen.contextmenu_button_width)),
-                dispatcher
-            )
-            Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
-            RemoveButton(
-                Modifier
-                    .fillMaxHeight()
-                    .width(dimensionResource(R.dimen.contextmenu_button_width)),
-                dispatcher,
-                cursor
-            )
-            Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
-            DurationButton(
-                Modifier
-                    .fillMaxHeight()
-                    .width(dimensionResource(R.dimen.contextmenu_button_width)),
-                dispatcher,
-                active_event
-            )
-            Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
-            UnsetButton(
-                Modifier
-                    .fillMaxHeight()
-                    .width(dimensionResource(R.dimen.contextmenu_button_width)),
-                dispatcher,
-                active_line,
-                active_event
-            )
+            SplitButton(dispatcher)
+            CMPadding()
+            InsertButton(dispatcher)
+            CMPadding()
+            RemoveButton(dispatcher, cursor)
+            CMPadding()
+            DurationButton(dispatcher, active_event)
+            CMPadding()
+            UnsetButton(dispatcher, active_line, active_event)
         }
     }
 }
@@ -270,9 +235,10 @@ fun ContextMenuSingleSecondary(ui_facade: ViewModelEditorState, dispatcher: Acti
 @Composable
 fun ContextMenuSingleCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier, landscape: Boolean = false) {
     val active_event = ui_facade.active_event.value ?: return
-    Row(modifier
-        .fillMaxWidth()
-        .padding(1.dp),
+    Row(
+        modifier
+            .height(dimensionResource(R.dimen.contextmenu_button_height))
+            .fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {

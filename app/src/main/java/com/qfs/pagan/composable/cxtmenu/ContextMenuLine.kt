@@ -7,13 +7,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.IconCMenuButton
@@ -26,6 +24,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEve
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.viewmodel.ViewModelEditorState
+
 @Composable
 fun AdjustLineButton(modifier: Modifier = Modifier, dispatcher: ActionTracker) {
     IconCMenuButton(
@@ -109,10 +108,12 @@ fun ContextMenuLinePrimary(vm_state: ViewModelEditorState, dispatcher: ActionTra
     val active_line = vm_state.line_data[cursor.ints[0]]
 
     if (landscape) {
-        Column(Modifier.width(dimensionResource(R.dimen.contextmenu_primary_width))) {
+        Column(Modifier.width(dimensionResource(R.dimen.contextmenu_button_width))) {
             if (active_line.assigned_offset.value != null) {
                 PercussionSetInstrumentButton(
-                    Modifier.fillMaxWidth(),
+                    Modifier
+                        .height(dimensionResource(R.dimen.contextmenu_button_height))
+                        .fillMaxWidth(),
                     vm_state,
                     dispatcher,
                     cursor.ints[0],
@@ -122,16 +123,33 @@ fun ContextMenuLinePrimary(vm_state: ViewModelEditorState, dispatcher: ActionTra
 
             if (active_line.ctl_type.value == null) {
                 RemoveLineButton(
-                    Modifier.fillMaxWidth(),
+                    Modifier
+                        .height(dimensionResource(R.dimen.contextmenu_button_height))
+                        .fillMaxWidth(),
                     dispatcher,
                     vm_state.channel_data[active_line.channel.value!!].size.intValue
                 )
             }
 
-            InsertLineButton(Modifier.fillMaxWidth(), dispatcher)
-            AdjustLineButton(Modifier.fillMaxWidth(), dispatcher)
+            InsertLineButton(
+                Modifier
+                    .height(dimensionResource(R.dimen.contextmenu_button_height))
+                    .fillMaxWidth(),
+                dispatcher
+            )
+            AdjustLineButton(
+                Modifier
+                    .height(dimensionResource(R.dimen.contextmenu_button_height))
+                    .fillMaxWidth(),
+                dispatcher
+            )
             Spacer(Modifier.weight(1F))
-            ToggleLineControllerButton(Modifier.fillMaxWidth(), dispatcher)
+            ToggleLineControllerButton(
+                Modifier
+                    .height(dimensionResource(R.dimen.contextmenu_button_height))
+                    .fillMaxWidth(),
+                dispatcher
+            )
         }
     } else {
         Row(
@@ -145,7 +163,7 @@ fun ContextMenuLinePrimary(vm_state: ViewModelEditorState, dispatcher: ActionTra
                     .width(dimensionResource(R.dimen.contextmenu_button_width)),
                 dispatcher
             )
-            Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
+            CMPadding()
 
             if (active_line.assigned_offset.value != null) {
                 PercussionSetInstrumentButton(
@@ -157,7 +175,7 @@ fun ContextMenuLinePrimary(vm_state: ViewModelEditorState, dispatcher: ActionTra
                     cursor.ints[0],
                     true
                 )
-                Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
+                CMPadding()
             } else {
                 Spacer(Modifier.weight(1F))
             }
@@ -168,7 +186,7 @@ fun ContextMenuLinePrimary(vm_state: ViewModelEditorState, dispatcher: ActionTra
                     .width(dimensionResource(R.dimen.contextmenu_button_width)),
                 dispatcher
             )
-            Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
+            CMPadding()
 
             if (active_line.ctl_type.value == null) {
                 RemoveLineButton(
@@ -178,7 +196,7 @@ fun ContextMenuLinePrimary(vm_state: ViewModelEditorState, dispatcher: ActionTra
                     dispatcher,
                     vm_state.channel_data[active_line.channel.value!!].size.intValue
                 )
-                Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
+                CMPadding()
             }
 
             InsertLineButton(
@@ -207,7 +225,9 @@ fun ContextMenuLineSecondary(ui_facade: ViewModelEditorState, dispatcher: Action
 @Composable
 fun ContextMenuLineCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, initial_event: EffectEvent, modifier: Modifier = Modifier) {
     Row(
-        modifier.fillMaxWidth(),
+        modifier
+            .height(dimensionResource(R.dimen.contextmenu_button_height))
+            .fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -229,7 +249,9 @@ fun ContextMenuLineStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
     val y = cursor.ints[0]
     val line = ui_facade.line_data[y]
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .height(dimensionResource(R.dimen.contextmenu_button_height))
+            .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
         MuteButton(

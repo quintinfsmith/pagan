@@ -1,7 +1,7 @@
 package com.qfs.pagan.composable.button
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -11,9 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
-import com.qfs.pagan.composable.button.ContextMenuButtonPadding
 
 @Composable
 fun ContextMenuButtonPadding(): PaddingValues {
@@ -40,7 +38,9 @@ fun IconCMenuButton(
 ) {
     Button(
         enabled = enabled,
-        modifier = modifier,
+        modifier = modifier
+            .height(dimensionResource(R.dimen.contextmenu_button_height))
+            .width(dimensionResource(R.dimen.contextmenu_button_width)),
         onClick = onClick,
         onLongClick = onLongClick ?: {},
         contentPadding = contentPadding,

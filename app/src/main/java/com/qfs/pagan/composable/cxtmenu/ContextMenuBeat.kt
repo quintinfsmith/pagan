@@ -3,16 +3,10 @@ package com.qfs.pagan.composable.cxtmenu
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.IconCMenuButton
@@ -20,9 +14,8 @@ import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 
 @Composable
-fun TagButton(modifier: Modifier = Modifier, dispatcher: ActionTracker, column_data: ViewModelEditorState.ColumnData, beat: Int) {
+fun TagButton(dispatcher: ActionTracker, column_data: ViewModelEditorState.ColumnData, beat: Int) {
     IconCMenuButton(
-        modifier = modifier,
         onClick = {
             if (column_data.is_tagged.value) {
                 dispatcher.untag_column(beat)
@@ -39,9 +32,8 @@ fun TagButton(modifier: Modifier = Modifier, dispatcher: ActionTracker, column_d
 }
 
 @Composable
-fun AdjustBeatButton(modifier: Modifier = Modifier, dispatcher: ActionTracker) {
+fun AdjustBeatButton(dispatcher: ActionTracker) {
     IconCMenuButton(
-        modifier = modifier,
         onClick = { dispatcher.adjust_selection() },
         icon = R.drawable.icon_adjust,
         description = R.string.cd_adjust_selection
@@ -49,9 +41,8 @@ fun AdjustBeatButton(modifier: Modifier = Modifier, dispatcher: ActionTracker) {
 }
 
 @Composable
-fun RemoveBeatButton(modifier: Modifier, dispatcher: ActionTracker, enabled: Boolean) {
+fun RemoveBeatButton(dispatcher: ActionTracker, enabled: Boolean) {
     IconCMenuButton(
-        modifier = modifier,
         enabled = enabled,
         onClick = { dispatcher.remove_beat_at_cursor(1) },
         onLongClick = { dispatcher.remove_beat_at_cursor() },
@@ -61,9 +52,8 @@ fun RemoveBeatButton(modifier: Modifier, dispatcher: ActionTracker, enabled: Boo
 }
 
 @Composable
-fun InsertBeatButton(modifier: Modifier, dispatcher: ActionTracker) {
+fun InsertBeatButton(dispatcher: ActionTracker) {
     IconCMenuButton(
-        modifier = modifier,
         onClick = { dispatcher.insert_beat_after_cursor(1) },
         onLongClick = { dispatcher.insert_beat_after_cursor() },
         icon = R.drawable.icon_insert_beat,
@@ -77,50 +67,25 @@ fun ContextMenuColumnPrimary(ui_facade: ViewModelEditorState, dispatcher: Action
     val column_data = ui_facade.column_data[beat]
 
     if (landscape) {
-        Column(Modifier.width(dimensionResource(R.dimen.contextmenu_primary_width))) {
-            TagButton(Modifier.fillMaxWidth(), dispatcher, column_data, beat)
-            RemoveBeatButton(Modifier.fillMaxWidth(), dispatcher, ui_facade.beat_count.value > 1)
-            InsertBeatButton(Modifier.fillMaxWidth(), dispatcher)
-            AdjustBeatButton(Modifier.fillMaxWidth(), dispatcher)
+        Column {
+            TagButton(dispatcher, column_data, beat)
+            RemoveBeatButton(dispatcher, ui_facade.beat_count.value > 1)
+            InsertBeatButton(dispatcher)
+            AdjustBeatButton(dispatcher)
         }
     } else {
         Row(
-            Modifier
-                .fillMaxWidth()
-                .height(dimensionResource(R.dimen.contextmenu_primary_height)),
+            Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TagButton(
-                Modifier
-                    .width(dimensionResource(R.dimen.contextmenu_button_width))
-                    .fillMaxHeight(),
-                dispatcher,
-                column_data,
-                beat
-            )
-            Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
-            AdjustBeatButton(
-                Modifier
-                    .width(dimensionResource(R.dimen.contextmenu_button_width))
-                    .fillMaxHeight(),
-                dispatcher
-            )
-            Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
-            RemoveBeatButton(
-                Modifier
-                    .width(dimensionResource(R.dimen.contextmenu_button_width))
-                    .fillMaxHeight(),
-                dispatcher,
-                ui_facade.beat_count.value > 1
-            )
-            Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
-            InsertBeatButton(
-                Modifier
-                    .width(dimensionResource(R.dimen.contextmenu_button_width))
-                    .fillMaxHeight(),
-                dispatcher
-            )
+            TagButton(dispatcher, column_data, beat)
+            CMPadding()
+            AdjustBeatButton(dispatcher)
+            CMPadding()
+            RemoveBeatButton(dispatcher, ui_facade.beat_count.value > 1)
+            CMPadding()
+            InsertBeatButton(dispatcher)
         }
     }
 }

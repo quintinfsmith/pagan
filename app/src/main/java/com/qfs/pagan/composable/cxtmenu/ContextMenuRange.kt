@@ -4,10 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -22,10 +20,10 @@ import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.viewmodel.ViewModelEditorState
+
 @Composable
-fun AdjustRangeButton(modifier: Modifier, dispatcher: ActionTracker) {
+fun AdjustRangeButton(dispatcher: ActionTracker) {
     IconCMenuButton(
-        modifier = modifier,
         onClick = { dispatcher.adjust_selection() },
         icon = R.drawable.icon_adjust,
         description = R.string.cd_adjust_selection
@@ -33,9 +31,8 @@ fun AdjustRangeButton(modifier: Modifier, dispatcher: ActionTracker) {
 }
 
 @Composable
-fun UnsetRangeButton(modifier: Modifier, dispatcher: ActionTracker) {
+fun UnsetRangeButton(dispatcher: ActionTracker) {
     IconCMenuButton(
-        modifier = modifier,
         onClick = { dispatcher.unset() },
         icon = R.drawable.icon_unset,
         description = R.string.cd_unset
@@ -45,29 +42,15 @@ fun UnsetRangeButton(modifier: Modifier, dispatcher: ActionTracker) {
 @Composable
 fun ContextMenuRangePrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
     if (landscape) {
-        Column(modifier = Modifier.width(dimensionResource(R.dimen.contextmenu_primary_width))) {
-            UnsetRangeButton(Modifier.fillMaxWidth(), dispatcher)
-            AdjustRangeButton(Modifier.fillMaxWidth(), dispatcher)
+        Column {
+            UnsetRangeButton(dispatcher)
+            AdjustRangeButton(dispatcher)
         }
     } else {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .height(dimensionResource(R.dimen.icon_button_height))
-        ) {
-            AdjustRangeButton(
-                Modifier
-                    .width(dimensionResource(R.dimen.contextmenu_button_width))
-                    .fillMaxHeight(),
-                dispatcher
-            )
+        Row(Modifier.fillMaxWidth()) {
+            AdjustRangeButton(dispatcher)
             Spacer(modifier = Modifier.fillMaxWidth().weight(1F))
-            UnsetRangeButton(
-                Modifier
-                    .width(dimensionResource(R.dimen.contextmenu_button_width))
-                    .fillMaxHeight(),
-                dispatcher
-            )
+            UnsetRangeButton(dispatcher)
         }
     }
 }

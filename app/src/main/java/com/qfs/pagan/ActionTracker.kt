@@ -7,9 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -38,6 +36,7 @@ import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.DropdownMenu
 import com.qfs.pagan.composable.DropdownMenuItem
 import com.qfs.pagan.composable.IntegerInput
+import com.qfs.pagan.composable.NumberPicker
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.Slider
 import com.qfs.pagan.composable.TextInput
@@ -1198,9 +1197,33 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     fun adjust_selection(amount: Int? = null) {
         val opus_manager = this.get_opus_manager()
         if (amount == null) {
+            val radix = opus_manager.get_radix()
             this.vm_top.create_dialog { close ->
                 @Composable {
-                    Text("TODO")
+                    val octave = remember { mutableIntStateOf(0) }
+                    val offset = remember { mutableIntStateOf(0) }
+                    Row {
+                        val max_abs = radix - 1
+                        Column {
+                            SText(R.string.offset_dialog_octaves)
+                            NumberPicker(Modifier, -7 .. 7, octave.value) { i ->
+                                octave.value = i
+                            }
+                        }
+                        Column {
+                            SText(R.string.offset_dialog_offset)
+                            NumberPicker(Modifier, 0 - max_abs .. max_abs, offset.value) { i ->
+                                offset.value = i
+                            }
+                        }
+                    }
+                    DialogBar(
+                        positive = {
+                            close()
+                            this@ActionTracker.adjust_selection((octave.value * radix) + offset.value)
+                        },
+                        neutral = close
+                    )
                 }
             }
         } else {

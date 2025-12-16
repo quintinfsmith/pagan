@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -44,7 +45,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusState
@@ -70,10 +70,11 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import com.qfs.pagan.R
+import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.button.SmallButton
 import com.qfs.pagan.composable.button.SmallOutlinedButton
-import kotlinx.coroutines.launch
+import com.qfs.pagan.enumerate
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -303,8 +304,22 @@ fun <T> SortableMenu(
     onClick: (T) -> Unit
 ) {
     val active_sort_option = remember { mutableStateOf(selected_sort) }
-    val scroll_state = rememberLazyListState()
+    val sorted_menu = if (sort_options.isEmpty() || active_sort_option.value == -1) {
+        default_menu
+    } else {
+        val indices = default_menu.indices.sortedWith(sort_options[active_sort_option.value].second)
+        List(default_menu.size) { i -> default_menu[indices[i]] }
+    }
+
     var default_index = 0
+    for ((i, item) in sorted_menu.enumerate()) {
+        if (item.first == default_value) {
+            default_index = i
+            break
+        }
+    }
+
+    val scroll_state = rememberLazyListState(default_index)
     Column(modifier = modifier) {
         if (sort_options.isNotEmpty()) {
             Row(
@@ -350,12 +365,6 @@ fun <T> SortableMenu(
             state = scroll_state,
             modifier = Modifier.fillMaxWidth()
         ) {
-            val sorted_menu = if (sort_options.isEmpty() || active_sort_option.value == -1) {
-                default_menu
-            } else {
-                val indices = default_menu.indices.sortedWith(sort_options[active_sort_option.value].second)
-                List(default_menu.size) { i -> default_menu[indices[i]] }
-            }
             itemsIndexed(sorted_menu) { i, (item, label_content) ->
                 val row_modifier = Modifier
                 Row(
@@ -532,4 +541,29 @@ fun DropdownMenuItem(
     interactionSource: MutableInteractionSource? = null,
 ) {
     OriginalDropdownMenuItem(text, onClick, modifier, leadingIcon, trailingIcon, enabled, colors, contentPadding, interactionSource)
+}
+
+@Composable
+fun NumberPicker(modifier: Modifier = Modifier, range: kotlin.ranges.IntRange, default: Int, callback: (Int) -> Unit) {
+    LazyColumn(
+        modifier,
+        state = rememberLazyListState(default)
+    ) {
+        items(range.toList()) { i ->
+            Box(
+                Modifier.padding(4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                NumberPickerButton(i, default == i, callback)
+            }
+        }
+    }
+}
+
+@Composable
+fun NumberPickerButton(i: Int, is_selected: Boolean, callback: (Int) -> Unit) {
+    Button(
+        onClick = { callback(i) },
+        content = { Text("$i") }
+    )
 }

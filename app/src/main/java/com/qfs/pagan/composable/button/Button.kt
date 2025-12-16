@@ -75,7 +75,7 @@ fun Button(
         Box(
             modifier = modifier
                 .clip(shape)
-                .padding(vertical = 2.dp, horizontal = 1.dp)
+                //.padding(vertical = 2.dp, horizontal = 1.dp)
                 .then(if (border != null) modifier.border(border, shape) else modifier)
                 .then(
                     if (enabled) {

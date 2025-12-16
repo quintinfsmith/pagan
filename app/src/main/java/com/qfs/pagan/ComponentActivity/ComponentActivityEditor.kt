@@ -95,6 +95,7 @@ import com.qfs.pagan.composable.button.ConfigDrawerTopButton
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.button.TopBarIcon
 import com.qfs.pagan.composable.cxtmenu.CMBoxBottom
+import com.qfs.pagan.composable.cxtmenu.CMBoxEnd
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelPrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuColumnPrimary
@@ -787,15 +788,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun ContextMenuSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
+    fun ContextMenuSecondary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
         val cursor = ui_facade.active_cursor.value ?: return
         if (cursor.type == CursorMode.Unset) return
 
-        val modifier = Modifier.height(dimensionResource(R.dimen.contextmenu_secondary_height))
+        val modifier = modifier.height(dimensionResource(R.dimen.contextmenu_secondary_height))
         Row {
             when (cursor.type) {
                 CursorMode.Line -> ContextMenuLineSecondary(ui_facade, dispatcher, modifier)
-                CursorMode.Column -> ContextMenuColumnSecondary(ui_facade, dispatcher, modifier)
                 CursorMode.Single -> ContextMenuSingleSecondary(ui_facade, dispatcher, modifier, landscape)
                 CursorMode.Range -> {
                     ContextMenuRangeSecondary(
@@ -807,6 +807,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                 CursorMode.Channel -> ContextMenuChannelSecondary(ui_facade, dispatcher, modifier)
 
+                CursorMode.Column -> return
                 CursorMode.Unset -> TODO("This shouldn't be reachable")
             }
         }
@@ -1555,7 +1556,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
             AnimatedVisibility(ui_facade.active_cursor.value != null) {
                 CMBoxBottom(Modifier.width(SIZE_M.first)) {
                     ContextMenuPrimary(ui_facade, view_model.action_interface, false)
-                    ContextMenuSecondary(ui_facade, view_model.action_interface, false)
+                    ContextMenuSecondary(
+                        Modifier.padding(top = dimensionResource(R.dimen.contextmenu_padding)),
+                        ui_facade,
+                        view_model.action_interface,
+                        false
+                    )
                 }
             }
         }
@@ -1575,7 +1581,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
             AnimatedVisibility(ui_facade.active_cursor.value != null) {
                 CMBoxBottom {
                     ContextMenuPrimary(ui_facade, view_model.action_interface, false)
-                    ContextMenuSecondary(ui_facade, view_model.action_interface, false)
+                    ContextMenuSecondary(
+                        Modifier.padding(top = dimensionResource(R.dimen.contextmenu_padding)),
+                        ui_facade,
+                        view_model.action_interface,
+                        false
+                    )
                 }
             }
         }
@@ -1605,14 +1616,22 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.Bottom
                 ) {
-                    CMBoxBottom(Modifier.weight(1F)) {
-                        ContextMenuSecondary(ui_facade, view_model.action_interface, true)
+                    Row(
+                        Modifier.weight(1F),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        CMBoxBottom(Modifier.width(SIZE_M.first)) {
+                            ContextMenuSecondary(Modifier, ui_facade, view_model.action_interface, true)
+                        }
                     }
                     Row(
                         Modifier.fillMaxHeight(),
-                        horizontalArrangement = Arrangement.End
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        ContextMenuPrimary(ui_facade, view_model.action_interface, true)
+                        CMBoxEnd {
+                            ContextMenuPrimary(ui_facade, view_model.action_interface, true)
+                        }
                     }
                 }
             }

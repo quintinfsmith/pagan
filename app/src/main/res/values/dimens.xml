@@ -127,18 +127,20 @@
 
 
 
-    <dimen name="effect_dialog_icon_width">32dp</dimen>
 
+    <dimen name="contextmenu_padding">4dp</dimen>
     <dimen name="contextmenu_button_width">54dp</dimen>
     <dimen name="contextmenu_button_padding_h">8dp</dimen>
     <dimen name="contextmenu_button_padding_v">4dp</dimen>
-    <dimen name="contextmenu_button_radius">4dp</dimen>
+    <dimen name="contextmenu_button_radius">16dp</dimen>
 
 
     <dimen name="contextmenu_primary_width">41dp</dimen>
     <dimen name="contextmenu_primary_height">54dp</dimen>
     <dimen name="contextmenu_secondary_width">41dp</dimen>
     <dimen name="contextmenu_secondary_height">54dp</dimen>
+
+    <dimen name="effect_dialog_icon_width">32dp</dimen>
     <dimen name="numberselector_column_width">41dp</dimen>
 
 </resources>

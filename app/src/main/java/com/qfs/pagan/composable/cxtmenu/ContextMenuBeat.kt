@@ -1,5 +1,6 @@
 package com.qfs.pagan.composable.cxtmenu
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,8 +9,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.IconCMenuButton
@@ -81,12 +84,43 @@ fun ContextMenuColumnPrimary(ui_facade: ViewModelEditorState, dispatcher: Action
             AdjustBeatButton(Modifier.fillMaxWidth(), dispatcher)
         }
     } else {
-        Row(Modifier.height(dimensionResource(R.dimen.contextmenu_primary_height))) {
-            TagButton(Modifier.fillMaxHeight(), dispatcher, column_data, beat)
-            Spacer(Modifier.weight(1F))
-            AdjustBeatButton(Modifier.fillMaxHeight(), dispatcher)
-            RemoveBeatButton(Modifier.fillMaxHeight(), dispatcher, ui_facade.beat_count.value > 1)
-            InsertBeatButton(Modifier.fillMaxHeight(), dispatcher)
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .height(dimensionResource(R.dimen.contextmenu_primary_height)),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TagButton(
+                Modifier
+                    .width(dimensionResource(R.dimen.contextmenu_button_width))
+                    .fillMaxHeight(),
+                dispatcher,
+                column_data,
+                beat
+            )
+            Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
+            AdjustBeatButton(
+                Modifier
+                    .width(dimensionResource(R.dimen.contextmenu_button_width))
+                    .fillMaxHeight(),
+                dispatcher
+            )
+            Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
+            RemoveBeatButton(
+                Modifier
+                    .width(dimensionResource(R.dimen.contextmenu_button_width))
+                    .fillMaxHeight(),
+                dispatcher,
+                ui_facade.beat_count.value > 1
+            )
+            Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
+            InsertBeatButton(
+                Modifier
+                    .width(dimensionResource(R.dimen.contextmenu_button_width))
+                    .fillMaxHeight(),
+                dispatcher
+            )
         }
     }
 }

@@ -4,6 +4,7 @@ import android.database.Cursor
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -136,12 +137,14 @@ fun ContextMenuStructureControls(ui_facade: ViewModelEditorState, dispatcher: Ac
                     .width(dimensionResource(R.dimen.contextmenu_button_width)),
                 dispatcher
             )
+            Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
             InsertButton(
                 Modifier
                     .fillMaxHeight()
                     .width(dimensionResource(R.dimen.contextmenu_button_width)),
                 dispatcher
             )
+            Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
             RemoveButton(
                 Modifier
                     .fillMaxHeight()
@@ -149,6 +152,7 @@ fun ContextMenuStructureControls(ui_facade: ViewModelEditorState, dispatcher: Ac
                 dispatcher,
                 cursor
             )
+            Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
             DurationButton(
                 Modifier
                     .fillMaxHeight()
@@ -156,6 +160,7 @@ fun ContextMenuStructureControls(ui_facade: ViewModelEditorState, dispatcher: Ac
                 dispatcher,
                 active_event
             )
+            Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
             UnsetButton(
                 Modifier
                     .fillMaxHeight()

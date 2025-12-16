@@ -979,6 +979,11 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     }
 
     fun set_volume_at_cursor(volume: Float? = null) {
+        this.vm_top.create_dialog { close ->
+            @Composable {
+                Text("TODO")
+            }
+        }
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         when (cursor.mode) {

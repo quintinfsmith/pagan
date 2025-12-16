@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -38,8 +39,13 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
         contentPadding = PaddingValues(4.dp),
         text = "%02d".format((event.value * 100).roundToInt()),
         onClick = {},
-        onLongClick = {}
+        onLongClick = {
+            event.value = 1F
+            dispatcher.set_effect_at_cursor(event)
+        }
     )
+
+    Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
 
     Slider(
         valueRange = 0F .. 1.27F,

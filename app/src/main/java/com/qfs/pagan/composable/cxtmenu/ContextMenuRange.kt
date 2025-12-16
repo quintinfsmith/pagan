@@ -50,10 +50,24 @@ fun ContextMenuRangePrimary(ui_facade: ViewModelEditorState, dispatcher: ActionT
             AdjustRangeButton(Modifier.fillMaxWidth(), dispatcher)
         }
     } else {
-        Row(modifier = Modifier.height(dimensionResource(R.dimen.icon_button_height))) {
-            AdjustRangeButton(Modifier.fillMaxHeight(), dispatcher)
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .height(dimensionResource(R.dimen.icon_button_height))
+        ) {
+            AdjustRangeButton(
+                Modifier
+                    .width(dimensionResource(R.dimen.contextmenu_button_width))
+                    .fillMaxHeight(),
+                dispatcher
+            )
             Spacer(modifier = Modifier.fillMaxWidth().weight(1F))
-            UnsetRangeButton(Modifier.fillMaxHeight(), dispatcher)
+            UnsetRangeButton(
+                Modifier
+                    .width(dimensionResource(R.dimen.contextmenu_button_width))
+                    .fillMaxHeight(),
+                dispatcher
+            )
         }
     }
 }

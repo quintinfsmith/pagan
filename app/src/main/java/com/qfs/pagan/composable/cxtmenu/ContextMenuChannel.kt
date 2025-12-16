@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -109,27 +111,46 @@ fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, ui_facade: ViewMode
         }
     } else {
         Row(
-            modifier.height(dimensionResource(R.dimen.contextmenu_primary_height))
+            modifier
+                .fillMaxWidth()
+                .height(dimensionResource(R.dimen.contextmenu_primary_height))
         ) {
             ToggleEffectsButton(
-                Modifier.width(dimensionResource(R.dimen.contextmenu_button_width)),
+                Modifier
+                    .fillMaxHeight()
+                    .width(dimensionResource(R.dimen.contextmenu_button_width)),
                 dispatcher
             )
-            Spacer(Modifier.weight(1F))
+            Spacer(
+                Modifier
+                    .width(dimensionResource(R.dimen.contextmenu_padding))
+                    .weight(1F)
+            )
             AdjustChannelButton(
-                Modifier.width(dimensionResource(R.dimen.contextmenu_button_width)),
+                Modifier
+                    .fillMaxHeight()
+                    .width(dimensionResource(R.dimen.contextmenu_button_width)),
                 dispatcher
             )
+            Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
             RemoveChannelButton(
-                Modifier.width(dimensionResource(R.dimen.contextmenu_button_width)),
+                Modifier
+                    .fillMaxHeight()
+                    .width(dimensionResource(R.dimen.contextmenu_button_width)),
                 dispatcher
             )
+            Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
             AddKitButton(
-                Modifier.width(dimensionResource(R.dimen.contextmenu_button_width)),
+                Modifier
+                    .fillMaxHeight()
+                    .width(dimensionResource(R.dimen.contextmenu_button_width)),
                 dispatcher
             )
+            Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
             AddChannelButton(
-                Modifier.width(dimensionResource(R.dimen.contextmenu_button_width)),
+                Modifier
+                    .fillMaxHeight()
+                    .width(dimensionResource(R.dimen.contextmenu_button_width)),
                 dispatcher
             )
         }
@@ -154,6 +175,7 @@ fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
             dispatcher,
             active_channel
         )
+        Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
         SetPresetButton(
             modifier = Modifier
                 .fillMaxSize()

@@ -11,7 +11,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.CMBoxBottomShape
-import com.qfs.pagan.composable.cxtmen.CMBoxEndShape
+import com.qfs.pagan.composable.CMBoxEndShape
 
 @Composable
 fun CMBoxBottom(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {

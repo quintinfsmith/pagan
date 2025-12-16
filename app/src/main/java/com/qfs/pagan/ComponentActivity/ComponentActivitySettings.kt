@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -204,7 +205,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
     override fun Drawer(modifier: Modifier) { }
 
     @Composable
-    override fun TopBar(modifier: Modifier) {
+    override fun RowScope.TopBar(modifier: Modifier) {
         Row {
             Icon(
                 painter = painterResource(R.drawable.baseline_arrow_back_24),
@@ -231,35 +232,27 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
     @Composable
     override fun LayoutXLargePortrait() {
-        Column(
+        Row(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .width(SIZE_XL.first),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Row(
+            Column(
                 modifier = Modifier
-                    .width(SIZE_XL.first - 8.dp)
-                    .padding(horizontal = 4.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.Top,
-                horizontalArrangement = Arrangement.SpaceBetween,
+                    .fillMaxWidth()
+                    .weight(.8f)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 4.dp)
-                        .weight(.8f)
-                ) {
-                    SettingsSectionA()
-                }
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 4.dp)
-                        .weight(1f)
-                ) {
-                    SettingsSectionB()
-                }
+                SettingsSectionA()
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp)
+                    .weight(1f)
+            ) {
+                SettingsSectionB()
             }
         }
     }
@@ -312,7 +305,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                         return@Button
                     }
 
-                    val soundfonts = mutableListOf<Pair<Uri, @Composable () -> Unit>>()
+                    val soundfonts = mutableListOf<Pair<Uri, @Composable RowScope.() -> Unit>>()
                     for (uri in file_list) {
                         val relative_path_segments = uri.pathSegments.last().split("/")
                         soundfonts.add(Pair(uri, { Text(relative_path_segments.last()) }))
@@ -367,7 +360,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
             if (this@ComponentActivitySettings.view_model.requires_soundfont.value) {
                 Row(modifier = Modifier.padding(8.dp)) {
-                    SoundFontWarning()
+                    SoundFontWarning(true)
                 }
             }
 

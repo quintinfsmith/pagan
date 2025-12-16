@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
@@ -74,7 +75,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
     @Composable
     abstract fun LayoutSmallLandscape()
     @Composable
-    abstract fun TopBar(modifier: Modifier = Modifier)
+    abstract fun RowScope.TopBar(modifier: Modifier = Modifier)
     @Composable
     abstract fun Drawer(modifier: Modifier = Modifier)
 
@@ -295,7 +296,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
 
     fun load_menu_dialog(load_callback: (Uri) -> Unit) {
         val project_list = this.view_model.project_manager?.get_project_list() ?: return
-        val items = mutableListOf<Pair<Uri, @Composable () -> Unit>>()
+        val items = mutableListOf<Pair<Uri, @Composable RowScope.() -> Unit>>()
         for ((uri, title) in project_list) {
             items.add(
                 Pair(uri, {

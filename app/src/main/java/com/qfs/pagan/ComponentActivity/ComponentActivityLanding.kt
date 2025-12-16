@@ -6,6 +6,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -45,7 +46,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
     }
 
     @Composable
-    override fun TopBar(modifier: Modifier) {
+    override fun RowScope.TopBar(modifier: Modifier) {
         // Row {
         //     Text(
         //         modifier = Modifier.weight(1F),

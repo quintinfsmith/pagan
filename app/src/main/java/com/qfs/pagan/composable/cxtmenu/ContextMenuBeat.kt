@@ -81,7 +81,7 @@ fun ContextMenuColumnPrimary(ui_facade: ViewModelEditorState, dispatcher: Action
             AdjustBeatButton(Modifier.fillMaxWidth(), dispatcher)
         }
     } else {
-        Row(Modifier.height(dimensionResource(R.dimen.contextmenu_primary_width))) {
+        Row(Modifier.height(dimensionResource(R.dimen.contextmenu_primary_height))) {
             TagButton(Modifier.fillMaxHeight(), dispatcher, column_data, beat)
             Spacer(Modifier.weight(1F))
             AdjustBeatButton(Modifier.fillMaxHeight(), dispatcher)

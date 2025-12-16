@@ -11,3 +11,12 @@ fun CMBoxBottomShape(): RoundedCornerShape {
         bottomEnd = 0.dp
     )
 }
+
+fun CMBoxEndShape(): RoundedCornerShape {
+    return RoundedCornerShape(
+        topStart = 0.dp,
+        topEnd = 4.dp,
+        bottomStart = 0.dp,
+        bottomEnd = 4.dp
+    )
+}

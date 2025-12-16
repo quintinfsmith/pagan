@@ -3,6 +3,7 @@ package com.qfs.pagan.composable.cxtmenu
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -32,7 +33,7 @@ import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun PanEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, event: OpusPanEvent) {
+fun RowScope.PanEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, event: OpusPanEvent) {
     val cursor = ui_facade.active_cursor.value ?: return
     val is_initial = cursor.type == CursorMode.Line
     val default_colors = SliderDefaults.colors()
@@ -49,38 +50,34 @@ fun PanEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, eve
         disabledInactiveTickColor = default_colors.disabledInactiveTickColor
     )
 
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        key(ui_facade.active_event.value.hashCode()) {
-            val working_value = remember { mutableFloatStateOf(event.value) }
-            Box(modifier = Modifier.weight(1F)) {
-                Box(
-                    Modifier
-                        .align(Alignment.TopCenter)
-                        .background(colors.thumbColor, CircleShape)
-                        .height(12.dp)
-                        .width(12.dp)
-                )
-                Slider(
-                    value = working_value.floatValue,
-                    onValueChange = {
-                        working_value.floatValue = it
-                    },
-                    onValueChangeFinished = {
-                        event.value = working_value.floatValue
-                        dispatcher.set_effect_at_cursor(event)
-                    },
-                    valueRange = -1F..1F,
-                    steps = 21,
-                    colors = colors,
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .fillMaxWidth()
-                )
-            }
-        }
-
-        if (!is_initial) {
-            EffectTransitionButton(event.transition, dispatcher)
+    key(ui_facade.active_event.value.hashCode()) {
+        val working_value = remember { mutableFloatStateOf(event.value) }
+        Box(modifier = Modifier.weight(1F)) {
+            Box(
+                Modifier
+                    .align(Alignment.TopCenter)
+                    .background(colors.thumbColor, CircleShape)
+                    .height(12.dp)
+                    .width(12.dp)
+            )
+            Slider(
+                value = working_value.floatValue,
+                onValueChange = {
+                    working_value.floatValue = it
+                },
+                onValueChangeFinished = {
+                    event.value = working_value.floatValue
+                    dispatcher.set_effect_at_cursor(event)
+                },
+                valueRange = -1F..1F,
+                steps = 21,
+                colors = colors,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .fillMaxWidth()
+            )
         }
     }
+
+    EffectTransitionButton(event.transition, dispatcher, is_initial)
 }

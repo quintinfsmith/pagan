@@ -14,25 +14,29 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
+import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.fontResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.find_activity
 
+
 @Composable
-fun SoundFontWarning() {
+fun SoundFontWarning(in_settings: Boolean = false) {
     val url = stringResource(R.string.url_fluid)
     val context = LocalContext.current.find_activity() ?: return
-
 
     ProvideContentColorTextStyle(contentColor = Color.Black) {
         Column(
@@ -52,7 +56,7 @@ fun SoundFontWarning() {
                     .fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
-                ProvideTextStyle(MaterialTheme.typography.bodyMedium) {
+                ProvideTextStyle(MaterialTheme.typography.displayMedium) {
                     Text(
                         text = url,
                         modifier = Modifier.clickable {
@@ -63,9 +67,11 @@ fun SoundFontWarning() {
                     )
                 }
             }
-            Row {
-                ProvideTextStyle(MaterialTheme.typography.bodySmall) {
-                    SText(R.string.warning_nosoundfont_2)
+            if (!in_settings) {
+                Row {
+                    ProvideTextStyle(MaterialTheme.typography.bodySmall) {
+                        SText(R.string.warning_nosoundfont_2)
+                    }
                 }
             }
         }

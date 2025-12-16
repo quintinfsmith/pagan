@@ -2,6 +2,7 @@ package com.qfs.pagan.composable
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -36,6 +37,7 @@ fun PaganTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable 
 
     MaterialTheme(
         content = content,
-        colorScheme = if (darkTheme) dark_color_scheme else light_color_palette
+        typography = Typography(),
+        colorScheme = if (darkTheme) darkColorScheme() else lightColorScheme()
     )
 }

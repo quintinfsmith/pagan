@@ -4,9 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -25,34 +28,30 @@ import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.roundToInt
 
 @Composable
-fun VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, event: OpusVelocityEvent) {
+fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, event: OpusVelocityEvent) {
     val cursor = ui_facade.active_cursor.value ?: return
     val is_initial = cursor.type == CursorMode.Line
+    TextCMenuButton(
+        modifier = Modifier
+            .width(dimensionResource(R.dimen.contextmenu_button_width))
+            .fillMaxHeight(),
+        contentPadding = PaddingValues(4.dp),
+        text = "%02d".format((event.value * 100).roundToInt()),
+        onClick = {},
+        onLongClick = {}
+    )
 
-    val height = dimensionResource(R.dimen.contextmenu_secondary_button_height)
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        TextCMenuButton(
-            contentPadding = PaddingValues(4.dp),
-            text = "%02d".format((event.value * 100).roundToInt()),
-            onClick = {},
-            onLongClick = {}
-        )
+    Slider(
+        valueRange = 0F .. 1.27F,
+        value = event.value,
+        onValueChange = {
+            event.value = it
+            dispatcher.set_effect_at_cursor(event)
+        },
+        modifier = Modifier
+            .weight(1F)
+            .fillMaxHeight()
+    )
 
-        Slider(
-            valueRange = 0F .. 1.27F,
-            value = event.value,
-            onValueChange = {
-                event.value = it
-                dispatcher.set_effect_at_cursor(event)
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1F)
-                .height(height)
-        )
-
-        if (!is_initial) {
-            EffectTransitionButton(event.transition, dispatcher)
-        }
-    }
+    EffectTransitionButton(event.transition, dispatcher, is_initial)
 }

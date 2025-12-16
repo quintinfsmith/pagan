@@ -21,7 +21,7 @@ import com.qfs.pagan.viewmodel.ViewModelEditorState
 @Composable
 fun ToggleEffectsButton(modifier: Modifier = Modifier, dispatcher: ActionTracker) {
     IconCMenuButton(
-        modifier = Modifier.height(dimensionResource(R.dimen.icon_button_height)),
+        modifier = modifier,
         onClick = { dispatcher.show_hidden_channel_controller() },
         icon = R.drawable.icon_ctl,
         description = R.string.cd_show_effect_controls
@@ -31,7 +31,7 @@ fun ToggleEffectsButton(modifier: Modifier = Modifier, dispatcher: ActionTracker
 @Composable
 fun AdjustChannelButton(modifier: Modifier = Modifier, dispatcher: ActionTracker) {
     IconCMenuButton(
-        modifier = Modifier.height(dimensionResource(R.dimen.icon_button_height)),
+        modifier = modifier,
         onClick = { dispatcher.adjust_selection() },
         icon = R.drawable.icon_adjust,
         description = R.string.cd_adjust_selection
@@ -41,7 +41,7 @@ fun AdjustChannelButton(modifier: Modifier = Modifier, dispatcher: ActionTracker
 @Composable
 fun RemoveChannelButton(modifier: Modifier = Modifier, dispatcher: ActionTracker) {
     IconCMenuButton(
-        modifier = Modifier.height(dimensionResource(R.dimen.icon_button_height)),
+        modifier = modifier,
         onClick = { dispatcher.remove_channel() },
         icon = R.drawable.icon_remove_channel,
         description = R.string.cd_remove_channel
@@ -53,7 +53,7 @@ fun RemoveChannelButton(modifier: Modifier = Modifier, dispatcher: ActionTracker
 @Composable
 fun AddKitButton(modifier: Modifier = Modifier, dispatcher: ActionTracker) {
     IconCMenuButton(
-        modifier = Modifier.height(dimensionResource(R.dimen.icon_button_height)),
+        modifier = modifier,
         onClick = { dispatcher.insert_percussion_channel() },
         icon = R.drawable.icon_add_channel_kit,
         description = R.string.cd_insert_channel_percussion
@@ -63,7 +63,7 @@ fun AddKitButton(modifier: Modifier = Modifier, dispatcher: ActionTracker) {
 @Composable
 fun AddChannelButton(modifier: Modifier = Modifier, dispatcher: ActionTracker) {
     IconCMenuButton(
-        modifier = Modifier,
+        modifier = modifier,
         onClick = { dispatcher.insert_channel() },
         icon = R.drawable.icon_add_channel,
         description = R.string.cd_insert_channel
@@ -108,13 +108,30 @@ fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, ui_facade: ViewMode
             ToggleEffectsButton(Modifier, dispatcher)
         }
     } else {
-        Row(modifier.height(dimensionResource(R.dimen.contextmenu_primary_height))) {
-            ToggleEffectsButton(Modifier, dispatcher)
+        Row(
+            modifier.height(dimensionResource(R.dimen.contextmenu_primary_height))
+        ) {
+            ToggleEffectsButton(
+                Modifier.width(dimensionResource(R.dimen.contextmenu_button_width)),
+                dispatcher
+            )
             Spacer(Modifier.weight(1F))
-            AdjustChannelButton(Modifier, dispatcher)
-            RemoveChannelButton(Modifier, dispatcher)
-            AddKitButton(Modifier, dispatcher)
-            AddChannelButton(Modifier, dispatcher)
+            AdjustChannelButton(
+                Modifier.width(dimensionResource(R.dimen.contextmenu_button_width)),
+                dispatcher
+            )
+            RemoveChannelButton(
+                Modifier.width(dimensionResource(R.dimen.contextmenu_button_width)),
+                dispatcher
+            )
+            AddKitButton(
+                Modifier.width(dimensionResource(R.dimen.contextmenu_button_width)),
+                dispatcher
+            )
+            AddChannelButton(
+                Modifier.width(dimensionResource(R.dimen.contextmenu_button_width)),
+                dispatcher
+            )
         }
     }
 }
@@ -131,7 +148,9 @@ fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
 
     Row(modifier = modifier.height(dimensionResource(R.dimen.contextmenu_secondary_height))) {
         MuteChannelButton(
-            Modifier.fillMaxHeight(),
+            Modifier
+                .width(dimensionResource(R.dimen.contextmenu_button_width))
+                .fillMaxHeight(),
             dispatcher,
             active_channel
         )

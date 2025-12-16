@@ -13,7 +13,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -293,7 +295,7 @@ fun TextInput(modifier: Modifier = Modifier, input: MutableState<String>, maxLin
 @Composable
 fun <T> SortableMenu(
     modifier: Modifier = Modifier,
-    default_menu: List<Pair<T, @Composable () -> Unit>>,
+    default_menu: List<Pair<T, @Composable RowScope.() -> Unit>>,
     sort_options: List<Pair<Int, (Int, Int) -> Int>>,
     selected_sort: Int = -1,
     default_value: T? = null,
@@ -373,7 +375,7 @@ fun <T> SortableMenu(
                                 row_modifier.background(Color(0x10FFFFFF))
                             }
                         )
-                        //.height(dimensionResource(R.dimen.dialog_menu_line_height))
+                        .height(dimensionResource(R.dimen.dialog_menu_line_height))
                         .padding(
                             vertical = dimensionResource(R.dimen.dialog_menu_line_padding_vertical),
                              horizontal = dimensionResource(R.dimen.dialog_menu_line_padding_horizontal)
@@ -383,18 +385,20 @@ fun <T> SortableMenu(
                             onClick = { onClick(item) },
                             onLongClick = { onLongClick(item) }
                         ),
-                    content = { label_content() }
+                    content = label_content,
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 )
             }
         }
     }
-    rememberCoroutineScope().launch {
-        scroll_state.requestScrollToItem(default_index)
-    }
+   // rememberCoroutineScope().launch {
+   //     scroll_state.requestScrollToItem(default_index)
+   // }
 }
 
 @Composable
-fun <T> UnSortableMenu(modifier: Modifier = Modifier, options: List<Pair<T, @Composable () -> Unit>>, default_value: T? = null, callback: (T) -> Unit) {
+fun <T> UnSortableMenu(modifier: Modifier = Modifier, options: List<Pair<T, @Composable RowScope.() -> Unit>>, default_value: T? = null, callback: (T) -> Unit) {
     SortableMenu(modifier, options, listOf(), default_value = default_value, onClick = callback)
 }
 

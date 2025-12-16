@@ -5,11 +5,12 @@ import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
@@ -24,7 +25,6 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.qfs.json.JSONBoolean
 import com.qfs.json.JSONInteger
@@ -40,7 +40,6 @@ import com.qfs.pagan.composable.DropdownMenuItem
 import com.qfs.pagan.composable.IntegerInput
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.Slider
-import com.qfs.pagan.composable.SortableMenu
 import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.composable.button.Button
@@ -1045,25 +1044,26 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         }
     }
 
-    private fun generate_effect_menu_option(ctl_type: EffectType, icon_id: Int): Pair<EffectType, @Composable () -> Unit> {
+    private fun generate_effect_menu_option(ctl_type: EffectType, icon_id: Int): Pair<EffectType, @Composable RowScope.() -> Unit> {
         return Pair(
             ctl_type,
             {
-                Row(modifier = Modifier.height(dimensionResource(R.dimen.dialog_menu_line_height))) {
-                    Icon(
-                        modifier = Modifier.fillMaxHeight(),
-                        painter = painterResource(icon_id),
-                        contentDescription = ctl_type.name // TODO: extract string resource
-                    )
-                    Text(ctl_type.name)
-                }
+                Icon(
+                    modifier = Modifier.width(dimensionResource(R.dimen.effect_dialog_icon_width)),
+                    painter = painterResource(icon_id),
+                    contentDescription = ctl_type.name // TODO: extract string resource
+                )
+                Text(
+                    ctl_type.name,
+                    Modifier.weight(1F)
+                )
             }
         )
     }
 
     fun show_hidden_line_controller(forced_value: EffectType? = null) {
         val opus_manager = this.get_opus_manager()
-        val options = mutableListOf<Pair<EffectType, @Composable () -> Unit>>( )
+        val options = mutableListOf<Pair<EffectType, @Composable RowScope.() -> Unit>>( )
         val cursor = opus_manager.cursor
 
         for ((ctl_type, icon_id) in OpusLayerInterface.line_controller_domain) {
@@ -1081,7 +1081,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     fun show_hidden_channel_controller(forced_value: EffectType? =  null) {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        val options = mutableListOf<Pair<EffectType, @Composable () -> Unit>>( )
+        val options = mutableListOf<Pair<EffectType, @Composable RowScope.() -> Unit>>( )
 
         for ((ctl_type, icon_id) in OpusLayerInterface.channel_controller_domain) {
             if (opus_manager.is_channel_ctl_visible(ctl_type, cursor.channel)) continue
@@ -1096,7 +1096,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
     fun show_hidden_global_controller(forced_value: EffectType? =  null) {
         val opus_manager = this.get_opus_manager()
-        val options = mutableListOf<Pair<EffectType, @Composable () -> Unit>>( )
+        val options = mutableListOf<Pair<EffectType, @Composable RowScope.() -> Unit>>( )
 
         for ((ctl_type, icon_id) in OpusLayerInterface.global_controller_domain) {
             if (opus_manager.is_global_ctl_visible(ctl_type)) continue
@@ -1290,25 +1290,16 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             return
         }
 
-        this.vm_top.create_dialog { close ->
-            val options = mutableListOf<Pair<Int, @Composable () -> Unit>>()
-            val preset = opus_manager.get_channel_instrument(channel)
-            val instruments = opus_manager.vm_state.get_available_instruments(preset)
-            for ((name, index) in instruments) {
-                options.add(Pair(index, { Text("$index: $name") }))
-            }
-            val current_instrument = (opus_manager.get_channel(channel).lines[line_offset] as OpusLinePercussion).instrument
-            @Composable {
-                Row { DialogSTitle(R.string.dropdown_choose_instrument, modifier = Modifier.weight(1F)) }
-                Row {
-                    UnSortableMenu(Modifier, options, default_value = current_instrument) { value ->
-                        this@ActionTracker.track(TrackedAction.SetPercussionInstrument, listOf(channel, line_offset, value))
-                        opus_manager.percussion_set_instrument(channel, line_offset, value)
-                        close()
-                    }
-                }
-                DialogBar(neutral = close)
-            }
+        val options = mutableListOf<Pair<Int, @Composable RowScope.() -> Unit>>()
+        val preset = opus_manager.get_channel_instrument(channel)
+        val instruments = opus_manager.vm_state.get_available_instruments(preset)
+        for ((name, index) in instruments) {
+            options.add(Pair(index, { Text("$index: $name") }))
+        }
+        val current_instrument = (opus_manager.get_channel(channel).lines[line_offset] as OpusLinePercussion).instrument
+        this.vm_top.unsortable_list_dialog(R.string.dropdown_choose_instrument, options, current_instrument) { value ->
+            this@ActionTracker.track(TrackedAction.SetPercussionInstrument, listOf(channel, line_offset, value))
+            opus_manager.percussion_set_instrument(channel, line_offset, value)
         }
     }
 
@@ -1330,7 +1321,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
         val default = this.get_opus_manager().get_channel_instrument(channel)
         val preset_names =  mutableListOf<Triple<Int, Int, String>>()
-        val options = mutableListOf<Pair<Pair<Int, Int>, @Composable () -> Unit>>()
+        val options = mutableListOf<Pair<Pair<Int, Int>, @Composable RowScope.() -> Unit>>()
         val is_percussion = opus_manager.is_percussion(channel)
         for ((bank, bank_map) in opus_manager.vm_state.preset_names.toSortedMap()) {
             if (is_percussion && bank != 128) continue
@@ -1341,14 +1332,12 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                     Pair(
                         Pair(bank, program),
                         {
-                            Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("${padded_hex(bank)} | ${padded_hex(program)}")
-                                Text(name,
-                                    modifier = Modifier.weight(1F),
-                                    textAlign = TextAlign.Center,
-                                    maxLines = 1
-                                )
-                            }
+                            Text("${padded_hex(bank)} | ${padded_hex(program)}")
+                            Text(name,
+                                modifier = Modifier.weight(1F),
+                                textAlign = TextAlign.Center,
+                                maxLines = 1
+                            )
                         }
                     )
                 )
@@ -1517,7 +1506,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         val cursor = opus_manager.cursor
         val default_instrument = opus_manager.get_percussion_instrument(cursor.channel, cursor.line_offset)
 
-        val options = mutableListOf<Pair<Int, @Composable () -> Unit>>()
+        val options = mutableListOf<Pair<Int, @Composable RowScope.() -> Unit>>()
         // TODO()
         this.dialog_popup_menu(R.string.dropdown_choose_percussion, options, default_instrument, stub_output = value) { value: Int ->
             this.track(TrackedAction.SetPercussionInstrument, listOf(value))
@@ -1723,7 +1712,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
      * wrapper around MainActivity::dialog_popup_menu
      * will subvert popup on replay
      */
-    private fun <T> dialog_popup_menu(title: Int, options: List<Pair<T, @Composable () -> Unit>>, default: T? = null, stub_output: T? = null, callback: (value: T) -> Unit) {
+    private fun <T> dialog_popup_menu(title: Int, options: List<Pair<T, @Composable RowScope.() -> Unit>>, default: T? = null, stub_output: T? = null, callback: (value: T) -> Unit) {
         if (stub_output != null) return callback(stub_output)
 
         this.vm_top.create_dialog { close ->
@@ -2373,7 +2362,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                             value = transpose_numerator,
                             outlined = false,
                             modifier = Modifier
-                                .padding(2.dp)
                                 .weight(1F),
                             minimum = 0,
                             callback = {}
@@ -2383,7 +2371,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                             value = transpose_denominator,
                             outlined = false,
                             modifier = Modifier
-                                .padding(2.dp)
                                 .weight(1F),
                             minimum = 0
                         ) { }
@@ -2392,7 +2379,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                             value = radix,
                             outlined = false,
                             modifier = Modifier
-                                .padding(2.dp)
                                 .weight(1F),
                             minimum = 0,
                             maximum = 36,

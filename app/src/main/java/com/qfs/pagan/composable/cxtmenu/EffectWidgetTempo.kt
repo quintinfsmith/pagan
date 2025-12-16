@@ -2,6 +2,7 @@ package com.qfs.pagan.composable.cxtmenu
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Icon
@@ -22,33 +23,26 @@ import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, event: OpusTempoEvent) {
+fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, event: OpusTempoEvent) {
     val cursor = ui_facade.active_cursor.value ?: return
     val is_initial = cursor.type == CursorMode.Line
     val working_value = remember { mutableFloatStateOf(event.value) }
-    Row(
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.icon_tempo),
-            contentDescription = "",
-            tint = colorResource(R.color.context_menu_background_icon)
-        )
-        FloatInput(
-            value = working_value,
-            precision = 3
-        ) { new_value ->
-            event.value = new_value
-            dispatcher.set_effect_at_cursor(event)
-        }
-        SText(R.string.bpm)
 
-        Spacer(Modifier.weight(1F))
-
-        if (!is_initial) {
-            EffectTransitionButton(event.transition, dispatcher)
-        }
+    Icon(
+        painter = painterResource(R.drawable.icon_tempo),
+        contentDescription = "",
+        tint = colorResource(R.color.context_menu_background_icon)
+    )
+    FloatInput(
+        value = working_value,
+        precision = 3
+    ) { new_value ->
+        event.value = new_value
+        dispatcher.set_effect_at_cursor(event)
     }
+    SText(R.string.bpm)
 
+    Spacer(Modifier.weight(1F))
+
+    EffectTransitionButton(event.transition, dispatcher, is_initial)
 }

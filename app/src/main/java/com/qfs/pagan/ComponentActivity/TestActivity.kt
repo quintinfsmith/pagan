@@ -1,5 +1,6 @@
 package com.qfs.pagan.ComponentActivity
 
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -15,7 +16,7 @@ class TestActivity: PaganComponentActivity() {
     var test_model = TestModel()
 
     @Composable
-    override fun TopBar(modifier: Modifier) {}
+    override fun RowScope.TopBar(modifier: Modifier) {}
 
     @Composable
     override fun Drawer(modifier: Modifier) {

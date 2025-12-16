@@ -1,5 +1,6 @@
 package com.qfs.pagan.composable.cxtmenu
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -134,35 +135,42 @@ fun ContextMenuLinePrimary(vm_state: ViewModelEditorState, dispatcher: ActionTra
         }
     } else {
         Row(Modifier.height(dimensionResource(R.dimen.contextmenu_primary_height))) {
-            ToggleLineControllerButton(Modifier.weight(1F).fillMaxHeight(), dispatcher)
+            ToggleLineControllerButton(
+                Modifier.width(dimensionResource(R.dimen.contextmenu_button_width)),
+                dispatcher
+            )
 
             if (active_line.assigned_offset.value != null) {
                 PercussionSetInstrumentButton(
                     Modifier
                         .fillMaxHeight()
-                        .weight(2F),
+                        .weight(1F),
                     vm_state,
                     dispatcher,
                     cursor.ints[0],
                     true
                 )
             } else {
-                Spacer(Modifier.weight(2F))
+                Spacer(Modifier.weight(1F))
             }
 
-            AdjustLineButton(Modifier.fillMaxHeight().weight(1F), dispatcher)
+            AdjustLineButton(
+                Modifier.width(dimensionResource(R.dimen.contextmenu_button_width)),
+                dispatcher
+            )
 
             if (active_line.ctl_type.value == null) {
                 RemoveLineButton(
-                    Modifier
-                        .fillMaxHeight()
-                        .weight(1F),
+                    Modifier.width(dimensionResource(R.dimen.contextmenu_button_width)),
                     dispatcher,
-                    vm_state.channel_data[active_line.channel.value!!].size.value
+                    vm_state.channel_data[active_line.channel.value!!].size.intValue
                 )
             }
 
-            InsertLineButton(Modifier.fillMaxHeight().weight(1F), dispatcher)
+            InsertLineButton(
+                Modifier.width(dimensionResource(R.dimen.contextmenu_button_width)),
+                dispatcher
+            )
         }
     }
 }
@@ -183,10 +191,10 @@ fun ContextMenuLineSecondary(ui_facade: ViewModelEditorState, dispatcher: Action
 @Composable
 fun ContextMenuLineCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, initial_event: EffectEvent, modifier: Modifier = Modifier) {
     Row(modifier
-        .padding(
-            vertical = 1.dp,
-            horizontal = 12.dp
-        )
+        .fillMaxWidth()
+        .padding(1.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         when (initial_event) {
             is OpusVolumeEvent -> VolumeEventMenu(ui_facade, dispatcher, initial_event)
@@ -206,10 +214,16 @@ fun ContextMenuLineStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
     val y = cursor.ints[0]
     val line = ui_facade.line_data[y]
     Row(
-        modifier = modifier,
+        modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        MuteButton(Modifier.fillMaxHeight(), dispatcher, line)
+        MuteButton(
+            Modifier
+                .fillMaxHeight()
+                .width(dimensionResource(R.dimen.contextmenu_button_width)),
+            dispatcher,
+            line
+        )
         VolumeEventMenu(ui_facade, dispatcher, volume_event)
     }
 }

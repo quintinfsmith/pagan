@@ -32,7 +32,7 @@ import com.qfs.pagan.find_activity
 
 class ComponentActivityAbout: PaganComponentActivity() {
     @Composable
-    override fun TopBar(modifier: Modifier) {
+    override fun RowScope.TopBar(modifier: Modifier) {
         Row {
             Icon(
                 painter = painterResource(R.drawable.baseline_arrow_back_24),

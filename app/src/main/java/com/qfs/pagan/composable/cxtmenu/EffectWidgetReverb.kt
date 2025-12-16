@@ -1,5 +1,6 @@
 package com.qfs.pagan.composable.cxtmenu
 
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.qfs.pagan.ActionTracker
@@ -8,7 +9,7 @@ import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun ReverbEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, event: OpusReverbEvent) {
+fun RowScope.ReverbEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, event: OpusReverbEvent) {
     val cursor = ui_facade.active_cursor.value ?: return
     val is_initial = cursor.type == CursorMode.Line
 

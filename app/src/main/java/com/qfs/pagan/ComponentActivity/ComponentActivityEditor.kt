@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -659,9 +660,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    override fun TopBar(modifier: Modifier) {
-        val ui_facade = this.controller_model.opus_manager.vm_state
-        val dispatcher = this.controller_model.action_interface
+    override fun RowScope.TopBar(modifier: Modifier) {
+        val ui_facade = this@ComponentActivityEditor.controller_model.opus_manager.vm_state
+        val dispatcher = this@ComponentActivityEditor.controller_model.action_interface
         val scope = rememberCoroutineScope()
         val menu_items: MutableList<Pair<Int, () -> Unit>> = mutableListOf(
             Pair(R.string.menu_item_new_project) {
@@ -690,82 +691,78 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
         )
         menu_items.add(
-            Pair(R.string.menu_item_settings) { this.open_settings() }
+            Pair(R.string.menu_item_settings) { this@ComponentActivityEditor.open_settings() }
         )
         menu_items.add(
-            Pair(R.string.menu_item_about) { this.open_about() }
+            Pair(R.string.menu_item_about) { this@ComponentActivityEditor.open_about() }
         )
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            TopBarIcon(
-                icon = R.drawable.icon_hamburger_32,
-                description = R.string.song_configuration,
-                callback = {
-                    scope.launch {
-                        this@ComponentActivityEditor.open_drawer()
+        TopBarIcon(
+            icon = R.drawable.icon_hamburger_32,
+            description = R.string.song_configuration,
+            callback = {
+                scope.launch {
+                    this@ComponentActivityEditor.open_drawer()
+                }
+            }
+        )
+        Text(
+            modifier = Modifier
+                .align(alignment = Alignment.CenterVertically)
+                .fillMaxWidth()
+                .weight(1F)
+                .combinedClickable(
+                    onClick = { dispatcher.set_project_name_and_notes() }
+                ),
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            text = ui_facade.project_name.value ?: stringResource(R.string.untitled_opus)
+        )
+        TopBarIcon(
+            icon = when (this@ComponentActivityEditor.state_model.playback_state_soundfont.value) {
+                PlaybackState.Queued,
+                PlaybackState.NotReady -> R.drawable.baseline_play_disabled_24
+                PlaybackState.Ready -> R.drawable.icon_play
+                PlaybackState.Stopping,
+                PlaybackState.Playing -> R.drawable.icon_pause
+            },
+            description = R.string.menu_item_playpause,
+            callback = {
+                scope.launch {
+                    when (this@ComponentActivityEditor.controller_model.playback_state_soundfont) {
+                        PlaybackState.Queued -> TODO()
+                        PlaybackState.Stopping -> TODO()
+                        PlaybackState.NotReady -> TODO()
+                        PlaybackState.Ready -> { dispatcher.play_opus(this) }
+                        PlaybackState.Playing -> { dispatcher.stop_opus() }
                     }
                 }
-            )
-            Text(
-                modifier = Modifier
-                    .align(alignment = Alignment.CenterVertically)
-                    .fillMaxWidth()
-                    .weight(1F)
-                    .combinedClickable(
-                        onClick = { dispatcher.set_project_name_and_notes() }
-                    ),
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                text = ui_facade.project_name.value ?: stringResource(R.string.untitled_opus)
-            )
+            }
+        )
+        TopBarIcon(
+            icon = R.drawable.icon_undo,
+            description = R.string.menu_item_undo,
+            callback = { dispatcher.apply_undo() }
+        )
+        Box {
+            val expanded = remember { mutableStateOf(false) }
             TopBarIcon(
-                icon = when (this@ComponentActivityEditor.state_model.playback_state_soundfont.value) {
-                    PlaybackState.Queued,
-                    PlaybackState.NotReady -> R.drawable.baseline_play_disabled_24
-                    PlaybackState.Ready -> R.drawable.icon_play
-                    PlaybackState.Stopping,
-                    PlaybackState.Playing -> R.drawable.icon_pause
-                },
+                icon = R.drawable.kebab,
                 description = R.string.menu_item_playpause,
-                callback = {
-                    scope.launch {
-                        when (this@ComponentActivityEditor.controller_model.playback_state_soundfont) {
-                            PlaybackState.Queued -> TODO()
-                            PlaybackState.Stopping -> TODO()
-                            PlaybackState.NotReady -> TODO()
-                            PlaybackState.Ready -> { dispatcher.play_opus(this) }
-                            PlaybackState.Playing -> { dispatcher.stop_opus() }
+                callback = { expanded.value = !expanded.value }
+            )
+            DropdownMenu(
+                expanded = expanded.value,
+                onDismissRequest = { expanded.value = false }
+            ) {
+                for ((_, item) in menu_items.enumerate()) {
+                    DropdownMenuItem(
+                        text = { SText(item.first) },
+                        onClick = {
+                            expanded.value = false
+                            item.second()
                         }
-                    }
-                }
-            )
-            TopBarIcon(
-                icon = R.drawable.icon_undo,
-                description = R.string.menu_item_undo,
-                callback = { dispatcher.apply_undo() }
-            )
-            Box {
-                val expanded = remember { mutableStateOf(false) }
-                TopBarIcon(
-                    icon = R.drawable.kebab,
-                    description = R.string.menu_item_playpause,
-                    callback = { expanded.value = !expanded.value }
-                )
-                DropdownMenu(
-                    expanded = expanded.value,
-                    onDismissRequest = { expanded.value = false }
-                ) {
-                    for ((_, item) in menu_items.enumerate()) {
-                        DropdownMenuItem(
-                            text = { SText(item.first) },
-                            onClick = {
-                                expanded.value = false
-                                item.second()
-                            }
-                        )
-                    }
+                    )
                 }
             }
         }
@@ -1508,26 +1505,33 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             }
                         )
                     } else {
-                        CircularProgressIndicator(
-                            progress = { this@ComponentActivityEditor.state_model.export_progress.value },
-                            modifier = Modifier.combinedClickable(
-                                onClick = {
-                                    this@ComponentActivityEditor.runOnUiThread {
-                                        Toast.makeText(
-                                            this@ComponentActivityEditor,
-                                            "Hold to cancel Export",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
+                        Row(
+                            modifier = Modifier
+                                .weight(1F)
+                                .combinedClickable(
+                                    onClick = {
+                                        this@ComponentActivityEditor.runOnUiThread {
+                                            Toast.makeText(
+                                                this@ComponentActivityEditor,
+                                                "Hold to cancel Export",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    },
+                                    onLongClick = {
+                                        this@ComponentActivityEditor.export_wav_cancel()
                                     }
-                                },
-                                onLongClick = {
-                                    this@ComponentActivityEditor.export_wav_cancel()
-                                }
-                            ),
-                            color = ProgressIndicatorDefaults.linearColor,
-                            trackColor = ProgressIndicatorDefaults.linearTrackColor,
-                            strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
-                        )
+                                ),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            CircularProgressIndicator(
+                                progress = { this@ComponentActivityEditor.state_model.export_progress.value },
+                                color = ProgressIndicatorDefaults.linearColor,
+                                trackColor = ProgressIndicatorDefaults.linearTrackColor,
+                                strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
+                            )
+                        }
                     }
                 }
             }
@@ -1834,8 +1838,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
-    private fun get_exportable_options(): List<Pair<Exportable, @Composable () -> Unit>> {
-        val export_options = mutableListOf<Pair<Exportable, @Composable () -> Unit>>()
+    private fun get_exportable_options(): List<Pair<Exportable, @Composable RowScope.() -> Unit>> {
+        val export_options = mutableListOf<Pair<Exportable, @Composable RowScope.() -> Unit>>()
         val opus_manager = this.controller_model.opus_manager
 
         export_options.add(

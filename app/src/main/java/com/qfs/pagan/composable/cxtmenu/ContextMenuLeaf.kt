@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -16,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.RelativeInputMode
@@ -131,33 +133,33 @@ fun ContextMenuStructureControls(ui_facade: ViewModelEditorState, dispatcher: Ac
             SplitButton(
                 Modifier
                     .fillMaxHeight()
-                    .weight(1F),
+                    .width(dimensionResource(R.dimen.contextmenu_button_width)),
                 dispatcher
             )
             InsertButton(
                 Modifier
                     .fillMaxHeight()
-                    .weight(1F),
+                    .width(dimensionResource(R.dimen.contextmenu_button_width)),
                 dispatcher
             )
             RemoveButton(
                 Modifier
                     .fillMaxHeight()
-                    .weight(1F),
+                    .width(dimensionResource(R.dimen.contextmenu_button_width)),
                 dispatcher,
                 cursor
             )
             DurationButton(
                 Modifier
                     .fillMaxHeight()
-                    .weight(1F),
+                    .width(dimensionResource(R.dimen.contextmenu_button_width)),
                 dispatcher,
                 active_event
             )
             UnsetButton(
                 Modifier
                     .fillMaxHeight()
-                    .weight(1F),
+                    .width(dimensionResource(R.dimen.contextmenu_button_width)),
                 dispatcher,
                 active_line,
                 active_event
@@ -263,7 +265,12 @@ fun ContextMenuSingleSecondary(ui_facade: ViewModelEditorState, dispatcher: Acti
 @Composable
 fun ContextMenuSingleCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier, landscape: Boolean = false) {
     val active_event = ui_facade.active_event.value ?: return
-    Row(modifier = modifier) {
+    Row(modifier
+        .fillMaxWidth()
+        .padding(1.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         when (active_event) {
             is OpusVolumeEvent -> VolumeEventMenu(ui_facade, dispatcher, active_event)
             is OpusTempoEvent -> TempoEventMenu(ui_facade, dispatcher, active_event)

@@ -97,17 +97,13 @@ class ViewModelPagan: ViewModel() {
         )
     }
 
-    fun <T> unsortable_list_dialog(title: Int, options: List<Pair<T, @Composable () -> Unit>>, default_value: T? = null, callback: (T) -> Unit) {
+    fun <T> unsortable_list_dialog(title: Int, options: List<Pair<T, @Composable RowScope.() -> Unit>>, default_value: T? = null, callback: (T) -> Unit) {
         this.create_dialog { close ->
             @Composable {
-                Row {
-                    DialogSTitle(title)
-                }
-                Row {
-                    UnSortableMenu(Modifier, options, default_value) {
-                        close()
-                        callback(it)
-                    }
+                DialogSTitle(title)
+                UnSortableMenu(Modifier.weight(1F), options, default_value) {
+                    close()
+                    callback(it)
                 }
                 DialogBar(neutral = close)
             }
@@ -116,7 +112,7 @@ class ViewModelPagan: ViewModel() {
 
     fun <T> sortable_list_dialog(
         title: Int,
-        default_menu: List<Pair<T, @Composable () -> Unit>>,
+        default_menu: List<Pair<T, @Composable RowScope.() -> Unit>>,
         sort_options: List<Pair<Int, (Int, Int) -> Int>>,
         selected_sort: Int = -1,
         default_value: T? = null,

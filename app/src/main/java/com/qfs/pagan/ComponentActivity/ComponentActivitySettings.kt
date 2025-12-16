@@ -9,10 +9,8 @@ import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -21,15 +19,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -48,10 +42,8 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.integerArrayResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
 import com.qfs.pagan.R
@@ -62,14 +54,11 @@ import com.qfs.pagan.composable.Slider
 import com.qfs.pagan.composable.SortableMenu
 import com.qfs.pagan.composable.SoundFontWarning
 import com.qfs.pagan.composable.button.Button
-import com.qfs.pagan.composable.button.OutlinedButton
 import com.qfs.pagan.enumerate
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 
 class ComponentActivitySettings: PaganComponentActivity() {
-    class ViewModelSettings: ViewModel() {
-    }
     private var _set_soundfont_directory_intent_launcher =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode != RESULT_OK) return@registerForActivityResult
@@ -77,6 +66,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             val uri = result_data.data ?: return@registerForActivityResult
             val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
             this.contentResolver.takePersistableUriPermission(uri, new_flags)
+            this.view_model.configuration.soundfont = null
             this.view_model.configuration.soundfont_directory = uri
             this.view_model.soundfont_directory.value = uri
             this.view_model.save_configuration()
@@ -141,6 +131,30 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 }
 
                 this.update_result()
+            }
+        }
+
+    private var result_launcher_set_project_directory_and_import =
+        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            val result_data = result.data ?: return@registerForActivityResult
+            val uri = result_data.data ?: return@registerForActivityResult
+            val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            this.contentResolver.takePersistableUriPermission(uri, new_flags)
+            this.view_model.configuration.project_directory = uri
+            this.view_model.save_configuration()
+
+            this.view_model.project_manager?.change_project_path(uri, this.intent.data)?.let {
+                this.result_intent.putExtra(EXTRA_ACTIVE_PROJECT, it.toString())
+            }
+            this.view_model.project_directory.value = uri
+
+            this.update_result()
+
+            this.view_model.create_dialog { close ->
+                @Composable {
+                    Text("TODO")
+                }
             }
         }
 
@@ -299,6 +313,21 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 modifier = Modifier.fillMaxWidth(),
                 content = { Text(view_model.soundfont_name.value ?: no_soundfont_text) },
                 onClick = {
+                    if (this@ComponentActivitySettings.view_model.soundfont_directory.value == null) {
+                        this@ComponentActivitySettings.view_model.create_dialog { close ->
+                            @Composable {
+                                DialogSTitle(R.string.settings_need_soundfont_directory)
+                                DialogBar(positive = {
+                                    this@ComponentActivitySettings.result_launcher_set_project_directory_and_import.launch {
+                                        Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also {
+                                            it.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                                        }
+                                    }
+                                })
+                            }
+                        }
+                        return@Button
+                    }
                     val file_list = this@ComponentActivitySettings.get_existing_soundfonts()
                     if (file_list.isEmpty()) {
                         this@ComponentActivitySettings.import_soundfont()
@@ -322,9 +351,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     view_model.create_dialog { close ->
                         @Composable {
                             Column {
-                                Row {
-                                    DialogSTitle(R.string.dialog_select_soundfont, modifier =Modifier.weight(1F))
-                                }
+                                DialogSTitle(R.string.dialog_select_soundfont, modifier = Modifier.weight(1F))
                                 Row {
                                     Button(
                                         content = { SText(R.string.no_soundfont) },

@@ -3,8 +3,10 @@ package com.qfs.pagan.composable.cxtmenu
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -19,8 +21,7 @@ import com.qfs.pagan.R
 import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.button.IconCMenuButton
-import com.qfs.pagan.composable.button.NumberSelectorColumn
-import com.qfs.pagan.composable.button.NumberSelectorRow
+import com.qfs.pagan.composable.button.NumberSelector
 import com.qfs.pagan.composable.button.TextCMenuButton
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
@@ -102,7 +103,7 @@ fun UnsetButton(dispatcher: ActionTracker, active_line: ViewModelEditorState.Lin
 }
 
 @Composable
-fun ContextMenuStructureControls(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
+fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
     val active_event = ui_facade.active_event.value
     val cursor = ui_facade.active_cursor.value ?: return
     val active_line = ui_facade.line_data[cursor.ints[0]]
@@ -113,18 +114,17 @@ fun ContextMenuStructureControls(ui_facade: ViewModelEditorState, dispatcher: Ac
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             SplitButton(dispatcher)
+            CMPadding()
             InsertButton(dispatcher)
+            CMPadding()
             RemoveButton(dispatcher, cursor)
+            CMPadding()
             DurationButton(dispatcher, active_event)
+            CMPadding()
             UnsetButton(dispatcher, active_line, active_event)
         }
     } else {
-        Row(
-            modifier = Modifier
-                .height(dimensionResource(R.dimen.icon_button_height))
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
+        ContextMenuPrimaryRow(modifier) {
             SplitButton(dispatcher)
             CMPadding()
             InsertButton(dispatcher)
@@ -166,7 +166,7 @@ fun UserCopyModeSelect(ui_facade: ViewModelEditorState, dispatcher: ActionTracke
 }
 
 @Composable
-fun ContextMenuSinglePrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, show_relative_input: Boolean, landscape: Boolean) {
+fun ContextMenuSinglePrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, show_relative_input: Boolean, landscape: Boolean) {
     val active_event = ui_facade.active_event.value
     val cursor = ui_facade.active_cursor.value ?: return
 
@@ -176,18 +176,18 @@ fun ContextMenuSinglePrimary(ui_facade: ViewModelEditorState, dispatcher: Action
         is PercussionEvent -> 0
         null -> null
         else -> {
-            ContextMenuStructureControls(ui_facade, dispatcher, landscape)
+            ContextMenuStructureControls(modifier, ui_facade, dispatcher, landscape)
             return
         }
     }
 
     val active_line = ui_facade.line_data[cursor.ints[0]]
     if (active_line.assigned_offset.value != null) {
-        ContextMenuStructureControls(ui_facade, dispatcher, landscape)
+        ContextMenuStructureControls(modifier, ui_facade, dispatcher, landscape)
     } else if (landscape) {
         ContextMenuSinglePrimaryLandscape(ui_facade, dispatcher, show_relative_input, octave)
     } else {
-        ContextMenuSinglePrimaryPortrait(ui_facade, dispatcher, show_relative_input, octave)
+        ContextMenuSinglePrimaryPortrait(modifier, ui_facade, dispatcher, show_relative_input, octave)
     }
 }
 
@@ -201,14 +201,17 @@ fun ContextMenuSinglePrimaryLandscape(ui_facade: ViewModelEditorState, dispatche
                 content = { UserCopyModeSelect(ui_facade, dispatcher) }
             )
         }
-        ContextMenuStructureControls(ui_facade, dispatcher, true)
-        NumberSelectorColumn(8, octave, ui_facade.highlighted_octave.value, false) { dispatcher.set_octave(it) }
+        ContextMenuStructureControls(Modifier, ui_facade, dispatcher, true)
+
+        Column(Modifier.width(dimensionResource(R.dimen.numberselector_column_width))) {
+            NumberSelector(8, octave, ui_facade.highlighted_octave.value, false) { dispatcher.set_octave(it) }
+        }
     }
 }
 
 @Composable
-fun ContextMenuSinglePrimaryPortrait(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, show_relative_input: Boolean, octave: Int?) {
-    Column {
+fun ContextMenuSinglePrimaryPortrait(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, show_relative_input: Boolean, octave: Int?) {
+    Column(modifier) {
         if (show_relative_input) {
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -216,8 +219,10 @@ fun ContextMenuSinglePrimaryPortrait(ui_facade: ViewModelEditorState, dispatcher
                 content = { UserCopyModeSelect(ui_facade, dispatcher) }
             )
         }
-        ContextMenuStructureControls(ui_facade, dispatcher, false)
-        NumberSelectorRow(8, octave, ui_facade.highlighted_octave.value, false) { dispatcher.set_octave(it) }
+        ContextMenuStructureControls(Modifier, ui_facade, dispatcher, false)
+        Row(Modifier.padding(top = dimensionResource(R.dimen.contextmenu_padding))) {
+            NumberSelector(8, octave, ui_facade.highlighted_octave.value, false) { dispatcher.set_octave(it) }
+        }
     }
 }
 
@@ -235,13 +240,7 @@ fun ContextMenuSingleSecondary(ui_facade: ViewModelEditorState, dispatcher: Acti
 @Composable
 fun ContextMenuSingleCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier, landscape: Boolean = false) {
     val active_event = ui_facade.active_event.value ?: return
-    Row(
-        modifier
-            .height(dimensionResource(R.dimen.contextmenu_button_height))
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+    ContextMenuSecondaryRow(modifier) {
         when (active_event) {
             is OpusVolumeEvent -> VolumeEventMenu(ui_facade, dispatcher, active_event)
             is OpusTempoEvent -> TempoEventMenu(ui_facade, dispatcher, active_event)
@@ -257,7 +256,7 @@ fun ContextMenuSingleCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: A
 @Composable
 fun ContextMenuSingleStdSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier, landscape: Boolean = false) {
     val cursor = ui_facade.active_cursor.value ?: return
-    if (ui_facade.line_data[cursor.ints[0]].assigned_offset.value != null) return
+    if (ui_facade.line_data[cursor.ints[0]].assigned_offset.value == null) return
 
     val active_event = ui_facade.active_event.value
     val offset = when (active_event) {
@@ -269,5 +268,7 @@ fun ContextMenuSingleStdSecondary(ui_facade: ViewModelEditorState, dispatcher: A
     }
 
     // Offset Selector
-    NumberSelectorRow(ui_facade.radix.value, offset, ui_facade.highlighted_offset.value, true) { dispatcher.set_offset(it) }
+    Row(modifier) {
+        NumberSelector(ui_facade.radix.value, offset, ui_facade.highlighted_offset.value, true) { dispatcher.set_offset(it) }
+    }
 }

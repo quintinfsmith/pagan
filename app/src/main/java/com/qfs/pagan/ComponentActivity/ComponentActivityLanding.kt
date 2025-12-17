@@ -5,21 +5,26 @@ import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.SoundFontWarning
+import com.qfs.pagan.composable.button.Button
 
 class ComponentActivityLanding: PaganComponentActivity() {
     internal var result_launcher_import_project =
@@ -59,46 +64,61 @@ class ComponentActivityLanding: PaganComponentActivity() {
     @Composable
     fun LayoutMenu() {
         Column( verticalArrangement = Arrangement.Center ) {
-            Row { ButtonRecent() }
-            Row { ButtonNew() }
-            if (this@ComponentActivityLanding.view_model.has_saved_project.value) {
-                Row { ButtonLoad() }
+            if (this@ComponentActivityLanding.view_model.project_manager?.has_backup_saved() == true) {
+                ButtonRecent()
+                Padder()
             }
-            Row { ButtonImport() }
-            Row { ButtonSettings() }
-            Row { ButtonAbout() }
+            ButtonNew()
+            Padder()
+            if (this@ComponentActivityLanding.view_model.has_saved_project.value) {
+                ButtonLoad()
+                Padder()
+            }
+            ButtonImport()
+            Padder()
+            ButtonSettings()
+            Padder()
+            ButtonAbout()
         }
     }
 
     @Composable
     fun LayoutMenuCompact() {
         Column(Modifier.padding(horizontal = 4.dp)) {
-            Row { ButtonRecent() }
+            if (this@ComponentActivityLanding.view_model.project_manager?.has_backup_saved() == true) {
+                ButtonRecent()
+                Padder()
+            }
             Row {
                 ButtonNew(Modifier.weight(1F))
                 if (this@ComponentActivityLanding.view_model.has_saved_project.value) {
-                    ButtonLoad(
-                        Modifier
-                            .padding(start = 8.dp)
-                            .weight(1F)
-                    )
+                    Padder()
+                    ButtonLoad(Modifier.weight(1F))
                 }
             }
-            Row { ButtonImport() }
+            Padder()
+            ButtonImport()
+            Padder()
             Row {
                 ButtonSettings(Modifier.weight(1F))
-                ButtonAbout(
-                    Modifier
-                        .padding(start = 8.dp)
-                        .weight(1F)
-                )
+                Padder()
+                ButtonAbout(Modifier.weight(1F))
             }
         }
     }
 
     @Composable
+    fun RowScope.Padder() {
+        Spacer(Modifier.width(dimensionResource(R.dimen.landing_padding)))
+    }
+    @Composable
+    fun ColumnScope.Padder() {
+        Spacer(Modifier.height(dimensionResource(R.dimen.landing_padding)))
+    }
+
+    @Composable
     fun ButtonRecent(modifier: Modifier = Modifier) {
-        com.qfs.pagan.composable.button.Button(
+        Button(
             modifier = modifier.fillMaxWidth(),
             content = { Text(stringResource(R.string.btn_landing_most_recent)) },
             onClick = {
@@ -113,7 +133,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
     @Composable
     fun ButtonNew(modifier: Modifier = Modifier) {
-        com.qfs.pagan.composable.button.Button(
+        Button(
             modifier = modifier.fillMaxWidth(),
             content = { Text(stringResource(R.string.btn_landing_new)) },
             onClick = {
@@ -124,7 +144,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
     @Composable
     fun ButtonLoad(modifier: Modifier = Modifier) {
-        com.qfs.pagan.composable.button.Button(
+        Button(
             modifier = modifier.fillMaxWidth(),
             content = { Text(stringResource(R.string.btn_landing_load)) },
             onClick = {
@@ -142,7 +162,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
     @Composable
     fun ButtonImport(modifier: Modifier = Modifier) {
-        com.qfs.pagan.composable.button.Button(
+        Button(
             modifier = modifier.fillMaxWidth(),
             content = { Text(stringResource(R.string.btn_landing_import)) },
             onClick = {
@@ -159,7 +179,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
     @Composable
     fun ButtonSettings(modifier: Modifier = Modifier) {
-        com.qfs.pagan.composable.button.Button(
+        Button(
             modifier = modifier.fillMaxWidth(),
             content = { Text(stringResource(R.string.btn_landing_settings)) },
             onClick = {
@@ -172,7 +192,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
     @Composable
     fun ButtonAbout(modifier: Modifier = Modifier) {
-        com.qfs.pagan.composable.button.Button(
+        Button(
             modifier = modifier.fillMaxWidth(),
             content = { Text(stringResource(R.string.btn_landing_about)) },
             onClick = {

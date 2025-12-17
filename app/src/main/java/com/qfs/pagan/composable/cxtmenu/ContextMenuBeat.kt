@@ -61,7 +61,7 @@ fun InsertBeatButton(dispatcher: ActionTracker) {
     )
 }
 @Composable
-fun ContextMenuColumnPrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
+fun ContextMenuColumnPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
     val cursor = ui_facade.active_cursor.value ?: return
     val beat = cursor.ints[0]
     val column_data = ui_facade.column_data[beat]
@@ -69,16 +69,15 @@ fun ContextMenuColumnPrimary(ui_facade: ViewModelEditorState, dispatcher: Action
     if (landscape) {
         Column {
             TagButton(dispatcher, column_data, beat)
+            CMPadding()
             RemoveBeatButton(dispatcher, ui_facade.beat_count.value > 1)
+            CMPadding()
             InsertBeatButton(dispatcher)
+            CMPadding()
             AdjustBeatButton(dispatcher)
         }
     } else {
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        ContextMenuPrimaryRow(modifier) {
             TagButton(dispatcher, column_data, beat)
             CMPadding()
             AdjustBeatButton(dispatcher)

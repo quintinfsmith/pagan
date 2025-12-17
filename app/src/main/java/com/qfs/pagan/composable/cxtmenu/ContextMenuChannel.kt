@@ -2,6 +2,7 @@ package com.qfs.pagan.composable.cxtmenu
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -93,19 +94,19 @@ fun SetPresetButton(modifier: Modifier = Modifier, dispatcher: ActionTracker, ch
 @Composable
 fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
     if (landscape) {
-        Column(modifier.width(dimensionResource(R.dimen.contextmenu_primary_width))) {
+        Column(Modifier.width(dimensionResource(R.dimen.contextmenu_button_width))) {
             RemoveChannelButton(dispatcher)
+            CMPadding()
             AddKitButton(dispatcher)
+            CMPadding()
             AddChannelButton(dispatcher)
+            CMPadding()
             AdjustChannelButton(dispatcher)
-            Spacer(Modifier.weight(1F))
+            CMPadding()
             ToggleEffectsButton(dispatcher)
         }
     } else {
-        Row(
-            modifier
-                .fillMaxWidth()
-        ) {
+        ContextMenuPrimaryRow(modifier) {
             ToggleEffectsButton(dispatcher)
             Spacer(
                 Modifier
@@ -133,15 +134,12 @@ fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
         return
     }
 
-    Row(modifier = modifier.height(dimensionResource(R.dimen.contextmenu_secondary_height))) {
-        MuteChannelButton(
-            dispatcher,
-            active_channel
-        )
+    ContextMenuSecondaryRow(modifier) {
+        MuteChannelButton(dispatcher, active_channel)
         CMPadding()
         SetPresetButton(
             modifier = Modifier
-                .fillMaxSize()
+                .height(dimensionResource(R.dimen.contextmenu_button_height))
                 .weight(1f),
             dispatcher,
             channel_index,

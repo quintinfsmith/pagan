@@ -279,7 +279,6 @@
         <item name="android:background">@drawable/contextmenu_primary</item>
         <item name="android:backgroundTint">@color/main_background</item>
         <item name="android:layout_width">@dimen/contextmenu_primary_width</item>
-        <item name="android:layout_height">@dimen/contextmenu_primary_height</item>
     </style>
 
     <style name="contextmenu_primary_inner">
@@ -295,7 +294,6 @@
         <item name="android:background">@drawable/contextmenu_secondary</item>
         <item name="android:backgroundTint">@color/main_background</item>
         <item name="android:layout_width">@dimen/contextmenu_secondary_width</item>
-        <item name="android:layout_height">@dimen/contextmenu_secondary_height</item>
     </style>
 
     <style name="contextmenu_secondary_inner">

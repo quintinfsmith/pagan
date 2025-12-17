@@ -63,6 +63,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
@@ -714,6 +715,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 .combinedClickable(
                     onClick = { dispatcher.set_project_name_and_notes() }
                 ),
+            overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
             maxLines = 1,
             text = ui_facade.project_name.value ?: stringResource(R.string.untitled_opus)
@@ -769,17 +771,17 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun ContextMenuPrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
+    fun ContextMenuPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
         val cursor = ui_facade.active_cursor.value
         when (cursor?.type) {
-            CursorMode.Line -> ContextMenuLinePrimary(ui_facade, dispatcher, landscape)
-            CursorMode.Column -> ContextMenuColumnPrimary(ui_facade, dispatcher, landscape)
+            CursorMode.Line -> ContextMenuLinePrimary(modifier, ui_facade, dispatcher, landscape)
+            CursorMode.Column -> ContextMenuColumnPrimary(modifier, ui_facade, dispatcher, landscape)
             CursorMode.Single -> {
                 val show_relative_input = this@ComponentActivityEditor.view_model.configuration.relative_mode
-                ContextMenuSinglePrimary(ui_facade, dispatcher, show_relative_input, landscape)
+                ContextMenuSinglePrimary(modifier, ui_facade, dispatcher, show_relative_input, landscape)
             }
-            CursorMode.Range -> ContextMenuRangePrimary(ui_facade, dispatcher, landscape)
-            CursorMode.Channel -> ContextMenuChannelPrimary(Modifier, ui_facade, dispatcher, landscape)
+            CursorMode.Range -> ContextMenuRangePrimary(modifier, ui_facade, dispatcher, landscape)
+            CursorMode.Channel -> ContextMenuChannelPrimary(modifier, ui_facade, dispatcher, landscape)
             CursorMode.Unset,
             null -> Text("TODO")
         }
@@ -790,24 +792,22 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val cursor = ui_facade.active_cursor.value ?: return
         if (cursor.type == CursorMode.Unset) return
 
-        val modifier = modifier.height(dimensionResource(R.dimen.contextmenu_secondary_height))
-        Row {
-            when (cursor.type) {
-                CursorMode.Line -> ContextMenuLineSecondary(ui_facade, dispatcher, modifier)
-                CursorMode.Single -> ContextMenuSingleSecondary(ui_facade, dispatcher, modifier, landscape)
-                CursorMode.Range -> {
-                    ContextMenuRangeSecondary(
-                        ui_facade,
-                        dispatcher,
-                        this@ComponentActivityEditor.controller_model.move_mode.value
-                    )
-                }
-
-                CursorMode.Channel -> ContextMenuChannelSecondary(ui_facade, dispatcher, modifier)
-                CursorMode.Column,
-                CursorMode.Unset -> return
+        when (cursor.type) {
+            CursorMode.Line -> ContextMenuLineSecondary(ui_facade, dispatcher)
+            CursorMode.Single -> ContextMenuSingleSecondary(ui_facade, dispatcher, modifier, landscape)
+            CursorMode.Range -> {
+                ContextMenuRangeSecondary(
+                    ui_facade,
+                    dispatcher,
+                    this@ComponentActivityEditor.controller_model.move_mode.value
+                )
             }
+
+            CursorMode.Channel -> ContextMenuChannelSecondary(ui_facade, dispatcher)
+            CursorMode.Column,
+            CursorMode.Unset -> return
         }
+
     }
 
     @Composable
@@ -1552,9 +1552,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
             AnimatedVisibility(ui_facade.active_cursor.value != null) {
                 CMBoxBottom(Modifier.width(SIZE_M.first)) {
-                    ContextMenuPrimary(ui_facade, view_model.action_interface, false)
+                    ContextMenuPrimary(
+                        Modifier.padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
+                        ui_facade,
+                        view_model.action_interface,
+                        false
+                    )
                     ContextMenuSecondary(
-                        Modifier.padding(top = dimensionResource(R.dimen.contextmenu_padding)),
+                        Modifier.padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
                         ui_facade,
                         view_model.action_interface,
                         false
@@ -1577,9 +1582,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
             AnimatedVisibility(ui_facade.active_cursor.value != null) {
                 CMBoxBottom {
-                    ContextMenuPrimary(ui_facade, view_model.action_interface, false)
+                    ContextMenuPrimary(
+                        Modifier.padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
+                        ui_facade,
+                        view_model.action_interface,
+                        false
+                    )
                     ContextMenuSecondary(
-                        Modifier.padding(top = dimensionResource(R.dimen.contextmenu_padding)),
+                        Modifier.padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
                         ui_facade,
                         view_model.action_interface,
                         false
@@ -1618,7 +1628,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         horizontalArrangement = Arrangement.Center
                     ) {
                         CMBoxBottom(Modifier.width(SIZE_M.first)) {
-                            ContextMenuSecondary(Modifier, ui_facade, view_model.action_interface, true)
+                            ContextMenuSecondary(
+                                Modifier.padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
+                                ui_facade,
+                                view_model.action_interface,
+                                true
+                            )
                         }
                     }
                     Row(
@@ -1627,7 +1642,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         CMBoxEnd {
-                            ContextMenuPrimary(ui_facade, view_model.action_interface, true)
+                            ContextMenuPrimary(Modifier, ui_facade, view_model.action_interface, true)
                         }
                     }
                 }

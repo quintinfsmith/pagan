@@ -3,6 +3,7 @@ package com.qfs.pagan.composable.cxtmenu
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -40,14 +41,15 @@ fun UnsetRangeButton(dispatcher: ActionTracker) {
 }
 
 @Composable
-fun ContextMenuRangePrimary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
+fun ContextMenuRangePrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
     if (landscape) {
         Column {
             UnsetRangeButton(dispatcher)
+            CMPadding()
             AdjustRangeButton(dispatcher)
         }
     } else {
-        Row(Modifier.fillMaxWidth()) {
+        ContextMenuPrimaryRow(modifier) {
             AdjustRangeButton(dispatcher)
             Spacer(modifier = Modifier.fillMaxWidth().weight(1F))
             UnsetRangeButton(dispatcher)

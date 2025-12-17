@@ -318,11 +318,11 @@ class ComponentActivitySettings: PaganComponentActivity() {
                             @Composable {
                                 DialogSTitle(R.string.settings_need_soundfont_directory)
                                 DialogBar(positive = {
-                                    this@ComponentActivitySettings.result_launcher_set_project_directory_and_import.launch {
+                                    this@ComponentActivitySettings.result_launcher_set_project_directory_and_import.launch(
                                         Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also {
                                             it.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                                         }
-                                    }
+                                    )
                                 })
                             }
                         }

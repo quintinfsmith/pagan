@@ -804,9 +804,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
 
                 CursorMode.Channel -> ContextMenuChannelSecondary(ui_facade, dispatcher, modifier)
-
-                CursorMode.Column -> return
-                CursorMode.Unset -> TODO("This shouldn't be reachable")
+                CursorMode.Column,
+                CursorMode.Unset -> return
             }
         }
     }

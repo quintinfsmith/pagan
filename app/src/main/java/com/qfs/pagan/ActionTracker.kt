@@ -18,6 +18,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -1202,17 +1203,21 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                 @Composable {
                     val octave = remember { mutableIntStateOf(0) }
                     val offset = remember { mutableIntStateOf(0) }
-                    Row {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
                         val max_abs = radix - 1
-                        Column {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             SText(R.string.offset_dialog_octaves)
-                            NumberPicker(Modifier, -7 .. 7, octave.value) { i ->
+                            NumberPicker(Modifier, -7 .. 7, octave) { i ->
                                 octave.value = i
                             }
                         }
-                        Column {
+                        Spacer(Modifier.width(dimensionResource(R.dimen.dialog_adjust_inner_space)))
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             SText(R.string.offset_dialog_offset)
-                            NumberPicker(Modifier, 0 - max_abs .. max_abs, offset.value) { i ->
+                            NumberPicker(Modifier, 0 - max_abs .. max_abs, offset) { i ->
                                 offset.value = i
                             }
                         }

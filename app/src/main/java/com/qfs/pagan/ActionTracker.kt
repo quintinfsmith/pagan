@@ -4,11 +4,13 @@ import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
@@ -1670,13 +1672,13 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                 @Composable {
                     val value: MutableState<Int> = remember { mutableIntStateOf(default ?: min_value) }
 
-                    Row { DialogSTitle(title_string_id, modifier = Modifier.weight(1F)) }
-                    Row {
+                    DialogSTitle(title_string_id)
+                    Row() {
                         IntegerInput(
                             value = value,
+                            contentPadding = PaddingValues(dimensionResource(R.dimen.dlg_input_padding)),
                             minimum = min_value,
-                            maximum = max_value,
-                            modifier = Modifier.fillMaxWidth()
+                            maximum = max_value
                         ) { new_value ->
                             close()
                             callback(new_value)
@@ -2395,36 +2397,46 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                 }
                 Column {
                     Row {
-                        SText(R.string.dlg_transpose, Modifier.weight(1F))
-                        SText(R.string.dlg_set_radix, Modifier.weight(1F))
-                    }
-                    Row {
-                        IntegerInput(
-                            value = transpose_numerator,
-                            outlined = false,
-                            modifier = Modifier
-                                .weight(1F),
-                            minimum = 0,
-                            callback = {}
-                        )
-                        Text("/")
-                        IntegerInput(
-                            value = transpose_denominator,
-                            outlined = false,
-                            modifier = Modifier
-                                .weight(1F),
-                            minimum = 0
-                        ) { }
-                        Spacer(modifier = Modifier.weight(1F))
-                        IntegerInput(
-                            value = radix,
-                            outlined = false,
-                            modifier = Modifier
-                                .weight(1F),
-                            minimum = 0,
-                            maximum = 36,
-                            callback = {}
-                        )
+                        Row(
+                            Modifier.weight(1F),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Start
+                        ) {
+                            SText(R.string.dlg_transpose, maxLines=1)
+                            IntegerInput(
+                                value = transpose_numerator,
+                                outlined = false,
+                                contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
+                                modifier = Modifier.width(dimensionResource(R.dimen.transpose_dlg_input_width)),
+                                minimum = 0,
+                                callback = {}
+                            )
+                            Text("/")
+                            IntegerInput(
+                                value = transpose_denominator,
+                                outlined = false,
+                                contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
+                                modifier = Modifier.width(dimensionResource(R.dimen.transpose_dlg_input_width)),
+                                minimum = 0,
+                                callback = {}
+                            )
+                        }
+                        Row(
+                            Modifier.weight(1F),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            IntegerInput(
+                                value = radix,
+                                label = { SText(R.string.dlg_set_radix, maxLines = 1) },
+                                outlined = true,
+                                contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
+                                modifier = Modifier.widthIn(dimensionResource(R.dimen.transpose_dlg_input_width)),
+                                minimum = 0,
+                                maximum = 36,
+                                callback = {}
+                            )
+                        }
                     }
                 }
                 Column(
@@ -2436,11 +2448,15 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         val pair = state.value
                         val numer = remember { mutableIntStateOf(pair.first) }
                         val denom = remember { mutableIntStateOf(pair.second) }
-                        Row {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.End
+                        ) {
                             Text("%02d".format(i))
                             IntegerInput(
                                 value = numer,
                                 modifier = Modifier.weight(1F),
+                                contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
                                 minimum = 0,
                                 callback = { mutable_map[i].value = Pair(numer.value, denom.value) }
                             )
@@ -2448,6 +2464,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                             IntegerInput(
                                 value = denom,
                                 modifier = Modifier.weight(1F),
+                                contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
                                 minimum = 1,
                                 callback = { mutable_map[i].value = Pair(numer.value, denom.value) }
                             )

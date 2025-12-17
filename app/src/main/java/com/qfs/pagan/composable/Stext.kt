@@ -18,10 +18,11 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.PageSize
@@ -47,6 +48,7 @@ import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldLabelScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -58,7 +60,6 @@ import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -78,7 +79,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import com.qfs.pagan.R
-import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.button.SmallButton
 import com.qfs.pagan.composable.button.SmallOutlinedButton
@@ -117,7 +117,7 @@ fun SText(
 }
 
 @Composable
-fun IntegerInput(value: MutableState<Int>, minimum: Int? = null, maximum: Int? = null, modifier: Modifier = Modifier, outlined: Boolean = true, callback: (Int) -> Unit) {
+fun IntegerInput(value: MutableState<Int>, minimum: Int? = null, maximum: Int? = null, modifier: Modifier = Modifier, outlined: Boolean = true, contentPadding: PaddingValues = PaddingValues(0.dp), label: (@Composable TextFieldLabelScope.() -> Unit)? = null, callback: (Int) -> Unit) {
     val state = rememberTextFieldState("${value.value}")
     val input_transformation = object : InputTransformation {
         override fun TextFieldBuffer.transformInput() {
@@ -159,26 +159,39 @@ fun IntegerInput(value: MutableState<Int>, minimum: Int? = null, maximum: Int? =
     }
 
     val focus_change_callback = { focus_state: FocusState ->
-        if (focus_state.hasFocus) {
-            state.edit {
-                this.selection = TextRange(0, this.length)
-            }
+        println("${focus_state.isFocused}, ${focus_state.hasFocus}, ${focus_state.isCaptured}, ${state.text.length}")
+        if (focus_state.isFocused) {
+            //TODO()
+            val text = state.text
+            //state = state.copy(
+            //    selection = TextRange(0, text.length)
+            //)
         }
     }
 
     if (outlined) {
         OutlinedTextField(
             state = state,
+            label = label,
+            contentPadding = contentPadding,
             textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End),
-            modifier = modifier.onFocusChanged(focus_change_callback),
+            modifier = modifier
+                .heightIn(1.dp)
+                .widthIn(1.dp)
+                .onFocusChanged(focus_change_callback),
             keyboardOptions = KeyboardOptions.Companion.Default.copy(keyboardType = KeyboardType.Companion.Number),
             inputTransformation = input_transformation,
         )
     } else {
         TextField(
             state = state,
+            label = label,
+            contentPadding = contentPadding,
             textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End),
-            modifier = modifier.onFocusChanged(focus_change_callback),
+            modifier = modifier
+                .heightIn(1.dp)
+                .widthIn(1.dp)
+                .onFocusChanged(focus_change_callback),
             keyboardOptions = KeyboardOptions.Companion.Default.copy(keyboardType = KeyboardType.Companion.Number),
             inputTransformation = input_transformation,
         )
@@ -256,7 +269,8 @@ fun FloatInput(value: MutableState<Float>, minimum: Float? = null, maximum: Floa
             textStyle = textStyle,
             modifier = modifier,
             keyboardOptions = keyboardOptions,
-            inputTransformation = inputTransformation
+            inputTransformation = inputTransformation,
+            contentPadding = PaddingValues(0.dp)
         )
     } else {
         TextField(
@@ -264,7 +278,8 @@ fun FloatInput(value: MutableState<Float>, minimum: Float? = null, maximum: Floa
             textStyle = textStyle,
             modifier = modifier,
             keyboardOptions = keyboardOptions,
-            inputTransformation = inputTransformation
+            inputTransformation = inputTransformation,
+            contentPadding = PaddingValues(0.dp)
         )
     }
 }
@@ -274,6 +289,7 @@ fun TextInput(modifier: Modifier = Modifier, input: MutableState<String>, maxLin
     val state = rememberTextFieldState(input.value)
     OutlinedTextField(
         state = state,
+        contentPadding = PaddingValues(0.dp),
         textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End),
         modifier = modifier.onFocusChanged { focus_state ->
             if (focus_state.hasFocus) {

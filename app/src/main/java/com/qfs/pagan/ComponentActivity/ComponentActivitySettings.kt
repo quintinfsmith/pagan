@@ -12,6 +12,8 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -303,6 +305,15 @@ class ComponentActivitySettings: PaganComponentActivity() {
     }
 
     @Composable
+    fun RowScope.MenuPadder() {
+        Spacer(Modifier.width(dimensionResource(R.dimen.sf_menu_padding)))
+    }
+    @Composable
+    fun ColumnScope.MenuPadder() {
+        Spacer(Modifier.height(dimensionResource(R.dimen.sf_menu_padding)))
+    }
+
+    @Composable
     fun SettingsSectionA() {
         val view_model = this.view_model
         val no_soundfont_text = stringResource(R.string.no_soundfont)
@@ -351,18 +362,18 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     view_model.create_dialog { close ->
                         @Composable {
                             Column {
-                                DialogSTitle(R.string.dialog_select_soundfont, modifier = Modifier.weight(1F))
+                                DialogSTitle(R.string.dialog_select_soundfont)
                                 Row {
                                     Button(
                                         content = { SText(R.string.no_soundfont) },
-                                        modifier = Modifier
-                                            .weight(1F),
+                                        modifier = Modifier.weight(1F),
                                         onClick = {
                                             view_model.configuration.soundfont = null
                                             view_model.save_configuration()
                                             close()
                                         }
                                     )
+                                    MenuPadder()
                                     Button(
                                         content = { SText(R.string.option_import_soundfont) },
                                         modifier = Modifier.weight(1F),
@@ -372,12 +383,14 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                         }
                                     )
                                 }
-                                SortableMenu(modifier = Modifier.weight(1F), default_menu = soundfonts, sort_options = sort_options, selected_sort = 0) { uri ->
+
+                                SortableMenu(modifier = Modifier.weight(1F), sort_row_padding = PaddingValues(vertical = dimensionResource(R.dimen.sf_menu_padding)), default_menu = soundfonts, sort_options = sort_options, selected_sort = 0) { uri ->
                                     view_model.set_soundfont_uri(uri)
                                     view_model.save_configuration()
                                     this@ComponentActivitySettings.update_result()
                                     close()
                                 }
+
                                 DialogBar(neutral = close)
                             }
                         }

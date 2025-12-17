@@ -305,6 +305,7 @@ fun TextInput(modifier: Modifier = Modifier, input: MutableState<String>, maxLin
 @Composable
 fun <T> SortableMenu(
     modifier: Modifier = Modifier,
+    sort_row_padding: PaddingValues = PaddingValues(0.dp),
     default_menu: List<Pair<T, @Composable RowScope.() -> Unit>>,
     sort_options: List<Pair<Int, (Int, Int) -> Int>>,
     selected_sort: Int = -1,
@@ -333,7 +334,7 @@ fun <T> SortableMenu(
         if (sort_options.isNotEmpty()) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 4.dp)
+                modifier = Modifier.padding(sort_row_padding)
             ) {
                 val expanded = remember { mutableStateOf(false) }
                 SText(
@@ -417,7 +418,7 @@ fun <T> SortableMenu(
 
 @Composable
 fun <T> UnSortableMenu(modifier: Modifier = Modifier, options: List<Pair<T, @Composable RowScope.() -> Unit>>, default_value: T? = null, callback: (T) -> Unit) {
-    SortableMenu(modifier, options, listOf(), default_value = default_value, onClick = callback)
+    SortableMenu(modifier, PaddingValues(0.dp), options, listOf(), default_value = default_value, onClick = callback)
 }
 
 @Composable

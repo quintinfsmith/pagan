@@ -139,10 +139,12 @@
     <dimen name="contextmenu_primary_width">41dp</dimen>
     <dimen name="contextmenu_secondary_width">41dp</dimen>
     <dimen name="dialog_adjust_inner_space">64dp</dimen>
+    <dimen name="drawer_inner_padding">4dp</dimen>
 
     <dimen name="effect_dialog_icon_width">32dp</dimen>
     <dimen name="numberpicker_row_height">41dp</dimen>
     <dimen name="numberpicker_row_width">80dp</dimen>
     <dimen name="numberselector_column_width">41dp</dimen>
     <dimen name="landing_padding">4dp</dimen>
+    <dimen name="sf_menu_padding">4dp</dimen>
 </resources>

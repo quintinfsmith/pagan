@@ -442,6 +442,14 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         }
     }
 
+    fun tap_line(channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
+        this.cursor_select_line(channel, line_offset, ctl_type)
+    }
+
+    fun long_tap_line(channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
+
+    }
+
     fun cursor_clear() {
         // TODO Track
         //this.track(TrackedAction.CursorClear)

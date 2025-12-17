@@ -831,7 +831,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     var working_channel: Int? = 0
                     for (y in 0 until ui_facade.line_count.value) {
                         if (ui_facade.line_data[y].channel.value != working_channel) {
-                            Row(Modifier.height(dimensionResource(R.dimen.channel_gap_size))) { }
+                            Row(
+                                Modifier
+                                    .width(dimensionResource(R.dimen.line_label_width))
+                                    .height(dimensionResource(R.dimen.channel_gap_size))
+                                    .background(color = colorResource(R.color.table_lines))
+                            ) { }
                         }
 
                         working_channel = ui_facade.line_data[y].channel.value
@@ -905,7 +910,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             var working_channel: Int? = 0
                             for (y in 0 until ui_facade.line_count.value) {
                                 if (ui_facade.line_data[y].channel.value != working_channel) {
-                                    Row(Modifier.height(dimensionResource(R.dimen.channel_gap_size))) { }
+                                    Row(
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .height(dimensionResource(R.dimen.channel_gap_size))
+                                            .background(color = colorResource(R.color.table_lines))
+                                    ) { }
                                 }
                                 working_channel = ui_facade.line_data[y].channel.value
 
@@ -1122,11 +1132,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     fun <T: OpusEvent> LeafView(line_data: ViewModelEditorState.LineData, leaf_data: ViewModelEditorState.LeafData, event: T?, radix: Int, modifier: Modifier = Modifier) {
-        val corner_radius = when (event) {
-            is InstrumentEvent -> 12.dp
-            else -> 4.dp
-        }
-
         val channel_colors = this.view_model.configuration.channel_colors
 
         val base_color = line_data.channel.value?.let {
@@ -1164,24 +1169,19 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         Box(
             modifier = modifier
-                .padding(1.dp)
-                .background(
-                    color = Color(leaf_color),
-                    RoundedCornerShape(corner_radius)
-                )
+                .background(color = Color(leaf_color))
                 .then(
                     if (leaf_data.is_selected.value) {
-                        modifier.border(2.dp, colorResource(R.color.selected_primary), RoundedCornerShape(corner_radius))
+                        modifier.border(2.dp, colorResource(R.color.selected_primary))
                     } else if (leaf_data.is_secondary.value) {
                         modifier.border(
                             2.dp,
-                            colorResource(R.color.selected_secondary),
-                            RoundedCornerShape(corner_radius)
+                            colorResource(R.color.selected_secondary)
                         )
                     } else if (!leaf_data.is_valid.value) {
-                        modifier.border(2.dp, colorResource(R.color.leaf_invalid), RoundedCornerShape(corner_radius))
+                        modifier.border(2.dp, colorResource(R.color.leaf_invalid))
                     } else {
-                        modifier
+                        modifier.border(.5.dp, colorResource(R.color.table_lines))
                     }
                 )
                 .fillMaxHeight(),

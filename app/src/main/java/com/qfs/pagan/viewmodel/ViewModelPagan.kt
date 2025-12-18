@@ -101,7 +101,7 @@ class ViewModelPagan: ViewModel() {
         this.create_dialog { close ->
             @Composable {
                 DialogSTitle(title)
-                UnSortableMenu(Modifier.weight(1F), options, default_value) {
+                UnSortableMenu(Modifier, options, default_value) {
                     close()
                     callback(it)
                 }

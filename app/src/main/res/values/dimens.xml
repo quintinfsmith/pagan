@@ -121,9 +121,11 @@
     <dimen name="dialog_menu_line_padding_vertical">8dp</dimen>
     <dimen name="dialog_menu_line_padding_horizontal">4dp</dimen>
 
+
+
     <dimen name="dialog_bar_padding_horizontal">4dp</dimen>
     <dimen name="dialog_bar_padding_vertical">16dp</dimen>
-
+    <dimen name="dialog_width_max">500dp</dimen>
 
 
 
@@ -138,6 +140,7 @@
     <dimen name="contextmenu_primary_width">41dp</dimen>
     <dimen name="contextmenu_secondary_width">41dp</dimen>
     <dimen name="dialog_adjust_inner_space">64dp</dimen>
+    <dimen name="dialog_bar_button_width">120dp</dimen>
     <dimen name="drawer_inner_padding">4dp</dimen>
 
     <dimen name="effect_dialog_icon_width">32dp</dimen>

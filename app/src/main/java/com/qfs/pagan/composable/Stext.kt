@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -20,8 +21,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -35,6 +38,7 @@ import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.TextFieldBuffer
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndSelectAll
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CardElevation
@@ -159,13 +163,9 @@ fun IntegerInput(value: MutableState<Int>, minimum: Int? = null, maximum: Int? =
     }
 
     val focus_change_callback = { focus_state: FocusState ->
-        println("${focus_state.isFocused}, ${focus_state.hasFocus}, ${focus_state.isCaptured}, ${state.text.length}")
         if (focus_state.isFocused) {
-            //TODO()
             val text = state.text
-            //state = state.copy(
-            //    selection = TextRange(0, text.length)
-            //)
+            state.setTextAndSelectAll(text.toString())
         }
     }
 
@@ -387,14 +387,16 @@ fun <T> SortableMenu(
                 }
             }
         }
+
         LazyColumn(
-            state = scroll_state,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.widthIn(0.dp, 400.dp),
+            state = scroll_state
         ) {
             itemsIndexed(sorted_menu) { i, (item, label_content) ->
                 val row_modifier = Modifier
                 Row(
                     modifier = Modifier
+                        .widthIn(0.dp)
                         .then(
                             if (item == default_value) {
                                 default_index = i
@@ -415,7 +417,7 @@ fun <T> SortableMenu(
                             vertical = dimensionResource(R.dimen.dialog_menu_line_padding_vertical),
                              horizontal = dimensionResource(R.dimen.dialog_menu_line_padding_horizontal)
                         )
-                        .fillMaxWidth()
+                        //.fillParentMaxWidth()
                         .combinedClickable(
                             onClick = { onClick(item) },
                             onLongClick = { onLongClick(item) }
@@ -473,12 +475,16 @@ fun DialogCard(
     ProvideContentColorTextStyle(contentColor = colors.contentColor) {
         Box(
             modifier
+                .wrapContentWidth()
                 .then(if (border != null) modifier.border(border) else modifier)
                 .background(color = colors.containerColor, shape),
             contentAlignment = Alignment.Center
         ) {
             Column(
-                modifier = Modifier.padding(dimensionResource(R.dimen.dialog_padding)),
+                modifier = Modifier
+                    .width(IntrinsicSize.Min)
+                    .padding(dimensionResource(R.dimen.dialog_padding)),
+                horizontalAlignment = Alignment.End,
                 content = content
             )
         }
@@ -486,33 +492,41 @@ fun DialogCard(
 }
 
 @Composable
-fun DialogBar(modifier: Modifier = Modifier.fillMaxWidth(), positive: (() -> Unit)? = null, negative: (() -> Unit)? = null, neutral: (() -> Unit)? = null) {
+fun ColumnScope.DialogBar(modifier: Modifier = Modifier, positive: (() -> Unit)? = null, negative: (() -> Unit)? = null, neutral: (() -> Unit)? = null) {
     Row(
         modifier = modifier
-            .padding(
-                top = dimensionResource(R.dimen.dialog_bar_padding_vertical),
-                bottom = 0.dp
-            ),
-        horizontalArrangement = Arrangement.SpaceBetween,
+            .padding(top = dimensionResource(R.dimen.dialog_bar_padding_vertical), bottom = 0.dp),
+        horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically
     ) {
         negative?.let {
             SmallButton(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .widthIn(dimensionResource(R.dimen.dialog_bar_button_width)),
                 onClick = it,
                 content = { SText(R.string.no) }
             )
         }
         neutral?.let {
+            if (negative != null) {
+                Spacer(Modifier.width(12.dp))
+            }
             SmallOutlinedButton(
-                modifier = Modifier.weight(1F),
+                modifier = if (negative == null && positive == null) {
+                    Modifier.width(IntrinsicSize.Max)
+                } else {
+                    Modifier.widthIn(dimensionResource(R.dimen.dialog_bar_button_width))
+                },
                 onClick = it,
                 content = { SText(android.R.string.cancel) }
             )
         }
         positive?.let {
+            if (negative != null || neutral != null) {
+                Spacer(Modifier.width(12.dp))
+            }
             SmallButton(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.widthIn(dimensionResource(R.dimen.dialog_bar_button_width)),
                 onClick = it,
                 content = { SText(android.R.string.ok) }
             )

@@ -1673,16 +1673,14 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                     val value: MutableState<Int> = remember { mutableIntStateOf(default ?: min_value) }
 
                     DialogSTitle(title_string_id)
-                    Row() {
-                        IntegerInput(
-                            value = value,
-                            contentPadding = PaddingValues(dimensionResource(R.dimen.dlg_input_padding)),
-                            minimum = min_value,
-                            maximum = max_value
-                        ) { new_value ->
-                            close()
-                            callback(new_value)
-                        }
+                    IntegerInput(
+                        value = value,
+                        contentPadding = PaddingValues(dimensionResource(R.dimen.dlg_input_padding)),
+                        minimum = min_value,
+                        maximum = max_value
+                    ) { new_value ->
+                        close()
+                        callback(new_value)
                     }
 
                     DialogBar(

@@ -532,7 +532,9 @@ fun ColumnScope.DialogBar(modifier: Modifier = Modifier, positive: (() -> Unit)?
     ) {
         negative?.let {
             SmallButton(
-                modifier = Modifier.widthIn(dimensionResource(R.dimen.dialog_bar_button_width)),
+                modifier = Modifier
+                    .widthIn(max = 240.dp)
+                    .weight(1F),
                 onClick = it,
                 content = { SText(R.string.no) }
             )
@@ -541,26 +543,20 @@ fun ColumnScope.DialogBar(modifier: Modifier = Modifier, positive: (() -> Unit)?
             if (negative != null) {
                 Spacer(Modifier.width(12.dp))
             }
-            SmallOutlinedButton(
-                modifier = if (negative == null && positive == null) {
-                    Modifier.weight(1F)
-                } else {
-                    Modifier.widthIn(dimensionResource(R.dimen.dialog_bar_button_width))
-                },
-                onClick = it,
-                content = { SText(android.R.string.cancel) }
-            )
+            Row(Modifier.widthIn(min = 0.dp, max = 240.dp)) {
+                SmallOutlinedButton(
+                    modifier = Modifier.weight(1F),
+                    onClick = it,
+                    content = { SText(android.R.string.cancel) }
+                )
+            }
         }
         positive?.let {
             if (negative != null || neutral != null) {
                 Spacer(Modifier.width(12.dp))
             }
             SmallButton(
-                modifier = if (negative == null && neutral == null) {
-                    Modifier.weight(1F)
-                } else {
-                    Modifier.widthIn(dimensionResource(R.dimen.dialog_bar_button_width))
-                },
+                modifier = Modifier.weight(1F),
                 onClick = it,
                 content = { SText(android.R.string.ok) }
             )

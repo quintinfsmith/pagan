@@ -410,7 +410,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     }
 
     fun delete() {
-        this.vm_top.create_dialog { close ->
+        this.vm_top.create_small_dialog { close ->
             val project_name = this.get_opus_manager().project_name ?: "Project"
             @Composable {
                 DialogTitle(stringResource(R.string.dlg_delete_title, project_name))
@@ -989,7 +989,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     }
 
     fun set_volume_at_cursor(volume: Float? = null) {
-        this.vm_top.create_dialog { close ->
+        this.vm_top.create_small_dialog { close ->
             @Composable {
                 Text("TODO")
             }
@@ -1209,7 +1209,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         val opus_manager = this.get_opus_manager()
         if (amount == null) {
             val radix = opus_manager.get_radix()
-            this.vm_top.create_dialog { close ->
+            this.vm_top.create_small_dialog { close ->
                 @Composable {
                     val octave = remember { mutableIntStateOf(0) }
                     val offset = remember { mutableIntStateOf(0) }
@@ -1645,7 +1645,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         if (skip) {
             callback()
         } else {
-            this.vm_top.create_dialog { close ->
+            this.vm_top.create_small_dialog { close ->
                 @Composable {
                     Row { DialogTitle(title, modifier = Modifier.weight(1F)) }
                     DialogBar(
@@ -1668,7 +1668,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         if (stub_output != null) {
             callback(stub_output)
         } else {
-            this.vm_top.create_dialog { close ->
+            this.vm_top.create_small_dialog { close ->
                 @Composable {
                     val value: MutableState<Int> = remember { mutableIntStateOf(default ?: min_value) }
 
@@ -1723,7 +1723,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         }
 
         if (stub_output == null) {
-            this.vm_top.create_dialog { close ->
+            this.vm_top.create_small_dialog { close ->
                 @Composable {
                     Row { DialogSTitle(R.string.dialog_save_warning_title, modifier = Modifier.weight(1F)) }
                     DialogBar(

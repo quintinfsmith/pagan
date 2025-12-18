@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
@@ -482,6 +481,38 @@ fun DialogCard(
         ) {
             Column(
                 modifier = Modifier
+                    .padding(dimensionResource(R.dimen.dialog_padding)),
+                horizontalAlignment = Alignment.End,
+                content = content
+            )
+        }
+    }
+}
+
+@Composable
+fun DrawerCard(
+    modifier: Modifier = Modifier.wrapContentWidth(),
+    colors: CardColors = CardColors(
+        containerColor = colorResource(R.color.surface_container),
+        contentColor = colorResource(R.color.on_surface_container),
+        disabledContentColor = Color.Gray,
+        disabledContainerColor = Color.Green,
+    ),
+    elevation: CardElevation = CardDefaults.cardElevation(),
+    shape: Shape = RoundedCornerShape(topStart = 0.dp, bottomStart = 0.dp, topEnd = 4.dp, bottomEnd = 4.dp),
+    border: BorderStroke? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    ProvideContentColorTextStyle(contentColor = colors.contentColor) {
+        Box(
+            modifier
+                .wrapContentWidth()
+                .then(if (border != null) modifier.border(border) else modifier)
+                .background(color = colors.containerColor, shape),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                modifier = Modifier
                     .width(IntrinsicSize.Min)
                     .padding(dimensionResource(R.dimen.dialog_padding)),
                 horizontalAlignment = Alignment.End,
@@ -501,8 +532,7 @@ fun ColumnScope.DialogBar(modifier: Modifier = Modifier, positive: (() -> Unit)?
     ) {
         negative?.let {
             SmallButton(
-                modifier = Modifier
-                    .widthIn(dimensionResource(R.dimen.dialog_bar_button_width)),
+                modifier = Modifier.widthIn(dimensionResource(R.dimen.dialog_bar_button_width)),
                 onClick = it,
                 content = { SText(R.string.no) }
             )
@@ -513,7 +543,7 @@ fun ColumnScope.DialogBar(modifier: Modifier = Modifier, positive: (() -> Unit)?
             }
             SmallOutlinedButton(
                 modifier = if (negative == null && positive == null) {
-                    Modifier.width(IntrinsicSize.Max)
+                    Modifier.weight(1F)
                 } else {
                     Modifier.widthIn(dimensionResource(R.dimen.dialog_bar_button_width))
                 },
@@ -526,7 +556,11 @@ fun ColumnScope.DialogBar(modifier: Modifier = Modifier, positive: (() -> Unit)?
                 Spacer(Modifier.width(12.dp))
             }
             SmallButton(
-                modifier = Modifier.widthIn(dimensionResource(R.dimen.dialog_bar_button_width)),
+                modifier = if (negative == null && neutral == null) {
+                    Modifier.weight(1F)
+                } else {
+                    Modifier.widthIn(dimensionResource(R.dimen.dialog_bar_button_width))
+                },
                 onClick = it,
                 content = { SText(android.R.string.ok) }
             )

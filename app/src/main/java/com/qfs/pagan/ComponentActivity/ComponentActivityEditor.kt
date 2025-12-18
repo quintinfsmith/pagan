@@ -1456,10 +1456,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val state_model = this.state_model
         val scope = rememberCoroutineScope()
 
-        DialogCard(
-            shape = RoundedCornerShape(topStart = 0.dp, bottomStart = 0.dp, topEnd = 4.dp, bottomEnd = 4.dp),
-            modifier = modifier.wrapContentWidth()
-        ) {
+        DrawerCard {
             Row(horizontalArrangement = Arrangement.SpaceBetween) {
                 Column(modifier = Modifier.weight(1F)) {
                     ConfigDrawerTopButton(

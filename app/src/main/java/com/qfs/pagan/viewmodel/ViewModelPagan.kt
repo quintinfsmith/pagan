@@ -11,7 +11,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.ViewModel
+import com.qfs.pagan.ComponentActivity.PaganComponentActivity.Companion.SIZE_L
+import com.qfs.pagan.ComponentActivity.PaganComponentActivity.Companion.SIZE_M
+import com.qfs.pagan.ComponentActivity.PaganComponentActivity.Companion.SIZE_XL
 import com.qfs.pagan.DialogChain
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.composable.DialogBar
@@ -42,6 +46,24 @@ class ViewModelPagan: ViewModel() {
         }
     }
 
+    enum class LayoutSize {
+        SmallPortrait,
+        MediumPortrait,
+        LargePortrait,
+        XLargePortrait,
+        SmallLandscape,
+        MediumLandscape,
+        LargeLandscape,
+        XLargeLandscape
+    }
+
+    enum class DialogSize {
+        Unbounded,
+        Small, // Single purpose. Eg, number input dialogs
+        Medium,
+    }
+
+    val active_layout_size: MutableState<LayoutSize> = mutableStateOf(LayoutSize.SmallPortrait)
     var project_manager: ProjectManager? = null
     var configuration_path: String? = null
     var configuration = PaganConfiguration()
@@ -54,6 +76,24 @@ class ViewModelPagan: ViewModel() {
     val soundfont_directory = mutableStateOf<Uri?>(null)
     val project_directory = mutableStateOf<Uri?>(null)
     val night_mode = mutableStateOf(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+
+    fun set_layout_size(width: Dp, height: Dp) {
+        this.active_layout_size.value = if (width >= height) {
+            if (width >= SIZE_XL.first && height >= SIZE_XL.second) LayoutSize.XLargeLandscape
+            else if (width >= SIZE_L.first && height >= SIZE_L.second) LayoutSize.LargeLandscape
+            else if (width >= SIZE_M.first && height >= SIZE_M.second) LayoutSize.MediumLandscape
+            else LayoutSize.SmallLandscape
+        } else {
+            if (width >= SIZE_XL.second && height >= SIZE_XL.first) LayoutSize.LargePortrait
+             else if (width >= SIZE_L.second && height >= SIZE_L.first) LayoutSize.LargePortrait
+             else if (width >= SIZE_M.second && height >= SIZE_M.first) LayoutSize.MediumPortrait
+             else LayoutSize.SmallPortrait
+        }
+    }
+
+    fun get_layout_size(): LayoutSize {
+        return this.active_layout_size.value
+    }
 
     fun delete_project(uri: Uri) {
         this.project_manager?.delete(uri)
@@ -83,11 +123,16 @@ class ViewModelPagan: ViewModel() {
         this.has_saved_project.value = this.project_manager?.has_projects_saved() ?: false
     }
 
-    fun create_dialog(level: Int = 0, dialog_callback: (() -> Unit) -> (@Composable (ColumnScope.() -> Unit))) {
+    fun create_small_dialog(level: Int = 0, dialog_callback: (() -> Unit) -> (@Composable (ColumnScope.() -> Unit))) {
+        this.create_dialog(level, DialogSize.Small, dialog_callback)
+    }
+
+    fun create_dialog(level: Int = 0, size: DialogSize = DialogSize.Unbounded, dialog_callback: (() -> Unit) -> (@Composable (ColumnScope.() -> Unit))) {
         // Use level to block Dup dialogs. set it to allow for dialogs opened from other dialogs
         if (this.dialog_queue.value?.level == level) return
         this.dialog_queue.value = DialogChain(
             parent = this.dialog_queue.value,
+            size = size,
             dialog = dialog_callback {
                 this.dialog_queue.value?.let {
                     this.dialog_queue.value = it.parent

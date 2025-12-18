@@ -15,14 +15,10 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
@@ -32,14 +28,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.qfs.pagan.DialogChain
@@ -128,6 +122,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                     this@PaganComponentActivity.view_model.night_mode
                 ) {
                     BoxWithConstraints(modifier = Modifier.padding(it)) {
+                        view_model.set_layout_size(this.maxWidth, this.maxHeight)
                         Box(
                             modifier = Modifier
                             .padding(32.dp)
@@ -150,39 +145,46 @@ abstract class PaganComponentActivity: ComponentActivity() {
                         }
                         for (dialog in dialogs.reversed()) {
                             Dialog(onDismissRequest = { view_model.dialog_queue.value = dialog.parent }) {
-                                DialogCard(content = dialog.dialog )
+                                DialogCard(
+                                    // TODO: These are just roughed in. need to put more thought in and check later
+                                    modifier = when (view_model.get_layout_size()) {
+                                        ViewModelPagan.LayoutSize.SmallPortrait,
+                                        ViewModelPagan.LayoutSize.MediumPortrait -> Modifier
+
+                                        ViewModelPagan.LayoutSize.LargePortrait,
+                                        ViewModelPagan.LayoutSize.SmallLandscape,
+                                        ViewModelPagan.LayoutSize.MediumLandscape -> {
+                                            when (dialog.size) {
+                                                ViewModelPagan.DialogSize.Unbounded ->  Modifier
+                                                ViewModelPagan.DialogSize.Small -> Modifier.width(200.dp)
+                                                ViewModelPagan.DialogSize.Medium -> Modifier.width(300.dp)
+                                            }
+                                        }
+
+                                        ViewModelPagan.LayoutSize.XLargePortrait,
+                                        ViewModelPagan.LayoutSize.XLargeLandscape,
+                                        ViewModelPagan.LayoutSize.LargeLandscape -> {
+                                            when (dialog.size) {
+                                                ViewModelPagan.DialogSize.Unbounded -> Modifier
+                                                ViewModelPagan.DialogSize.Small -> Modifier.width(300.dp)
+                                                ViewModelPagan.DialogSize.Medium -> Modifier.width(SIZE_L.second)
+                                            }
+                                        }
+                                    },
+                                    content = dialog.dialog
+                                )
                             }
                         }
                         // -----------------------------------------------
-
-                        if (this.maxWidth >= this.maxHeight) {
-                            if (this.maxWidth >= SIZE_XL.first && this.maxHeight >= SIZE_XL.second) {
-                                println("LANDSCAPE XL")
-                                LayoutXLargeLandscape()
-                            } else if (this.maxWidth >= SIZE_L.first && this.maxHeight >= SIZE_L.second) {
-                                println("LANDSCAPE L")
-                                LayoutLargeLandscape()
-                            } else if (this.maxWidth >= SIZE_M.first && this.maxHeight >= SIZE_M.second) {
-                                println("LANDSCAPE M")
-                                LayoutMediumLandscape()
-                            } else {
-                                println("LANDSCAPE S")
-                                LayoutSmallLandscape()
-                            }
-                        } else {
-                            if (this.maxWidth >= SIZE_XL.second && this.maxHeight >= SIZE_XL.first) {
-                                println("PORTRAIT XL")
-                                LayoutXLargePortrait()
-                            } else if (this.maxWidth >= SIZE_L.second && this.maxHeight >= SIZE_L.first) {
-                                println("PORTRAIT L")
-                                LayoutLargePortrait()
-                            } else if (this.maxWidth >= SIZE_M.second && this.maxHeight >= SIZE_M.first) {
-                                println("PORTRAIT M")
-                                LayoutMediumPortrait()
-                            } else {
-                                println("PORTRAIT S")
-                                LayoutSmallPortrait()
-                            }
+                        when (view_model.get_layout_size()) {
+                            ViewModelPagan.LayoutSize.SmallPortrait -> LayoutSmallPortrait()
+                            ViewModelPagan.LayoutSize.MediumPortrait -> LayoutMediumPortrait()
+                            ViewModelPagan.LayoutSize.LargePortrait -> LayoutLargePortrait()
+                            ViewModelPagan.LayoutSize.XLargePortrait -> LayoutXLargePortrait()
+                            ViewModelPagan.LayoutSize.SmallLandscape -> LayoutSmallLandscape()
+                            ViewModelPagan.LayoutSize.MediumLandscape -> LayoutMediumLandscape()
+                            ViewModelPagan.LayoutSize.LargeLandscape -> LayoutLargeLandscape()
+                            ViewModelPagan.LayoutSize.XLargeLandscape -> LayoutXLargeLandscape()
                         }
                     }
                 }

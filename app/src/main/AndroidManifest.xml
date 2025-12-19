@@ -19,6 +19,7 @@
 
         <activity android:name=".ComponentActivity.ComponentActivityLanding"
             android:exported="true"
+            android:windowSoftInputMode="adjustPan"
             android:label="@string/app_name"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
             android:theme="@style/Theme.Pagan">
@@ -28,20 +29,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-        </activity>
-
-        <activity android:name=".Activity.ActivityEditor"
-            android:exported="true"
-            android:appCategory="audio"
-            android:label="@string/app_name_brief"
-            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
-            android:theme="@style/Theme.Pagan">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="audio/midi" />
-                <data android:mimeType="application/json" />
-            </intent-filter>
         </activity>
         <activity android:name=".ComponentActivity.ComponentActivityEditor"
             android:exported="true"
@@ -61,6 +48,7 @@
         <activity android:name=".ComponentActivity.ComponentActivitySettings"
             android:exported="true"
             android:label="@string/app_name_brief"
+            android:windowSoftInputMode="adjustPan"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
             android:theme="@style/Theme.Pagan">
             <intent-filter>
@@ -68,11 +56,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-
-        <activity android:name=".Activity.ActivitySettings"
-            android:label="@string/app_name"
-            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
-            android:theme="@style/Theme.Pagan"/>
 
         <activity android:name=".ComponentActivity.ComponentActivityAbout"
             android:label="@string/app_name"

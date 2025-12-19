@@ -1,5 +1,6 @@
 package com.qfs.pagan.composable
 
+import android.view.textclassifier.TextSelection
 import androidx.annotation.IntRange
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ScrollState
@@ -40,7 +41,9 @@ import androidx.compose.foundation.text.input.OutputTransformation
 import androidx.compose.foundation.text.input.TextFieldBuffer
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.selectAll
 import androidx.compose.foundation.text.input.setTextAndSelectAll
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
@@ -61,6 +64,7 @@ import androidx.compose.material3.TextFieldLabelPosition
 import androidx.compose.material3.TextFieldLabelScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -68,6 +72,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalFocusManager
@@ -129,24 +134,13 @@ fun SText(
 }
 
 @Composable
-fun IntegerInput(value: MutableState<Int>, minimum: Int? = null, maximum: Int? = null, modifier: Modifier = Modifier, outlined: Boolean = true, contentPadding: PaddingValues = PaddingValues(0.dp), label: (@Composable TextFieldLabelScope.() -> Unit)? = null, callback: (Int) -> Unit) {
-    val state = rememberTextFieldState("${value.value}")
+fun IntegerInput(value: MutableState<Int>, minimum: Int? = null, maximum: Int? = null, modifier: Modifier = Modifier, outlined: Boolean = true, contentPadding: PaddingValues = PaddingValues(0.dp), text_align: TextAlign = TextAlign.End, label: (@Composable TextFieldLabelScope.() -> Unit)? = null, callback: (Int) -> Unit) {
+    val state = rememberTextFieldState(value.value.toString())
+
     val input_transformation = object : InputTransformation {
         override fun TextFieldBuffer.transformInput() {
             var working_string = this.toString()
-            val enter_pressed = this.length > 0 && this.charAt(this.length - 1) == '\n'
-
-            if (enter_pressed) {
-                working_string = working_string.substring(0, this.length - 1)
-            }
-
             if (working_string == "-" && minimum != null && minimum < 0) return
-
-            if (enter_pressed && working_string.isNotEmpty()) {
-                callback(value.value)
-                this.revertAllChanges()
-                return
-            }
 
             var int_value = try {
                 if (working_string.isEmpty()) {
@@ -170,23 +164,31 @@ fun IntegerInput(value: MutableState<Int>, minimum: Int? = null, maximum: Int? =
         }
     }
 
-    val focus_manager = LocalFocusManager.current
+    val original_text = "99"
+    var was_focused = false
     val focus_change_callback = { focus_state: FocusState ->
-        if (focus_state.isFocused) {
+        if (focus_state.hasFocus) {
+            was_focused = true
+            state.clearText()
+        } else if (was_focused) {
+            println("C???????")
+            was_focused = false
             val text = state.text
-            //state.setTextAndSelectAll(text.toString())
-        } else {
-            println("BOOP")
+            Thread.sleep(300)
+            state.edit {
+                this.replace(0, text.length, original_text)
+                this.
+            }
         }
     }
+
 
     if (outlined) {
         OutlinedTextField(
             state = state,
             label = label,
-            lineLimits = TextFieldLineLimits.SingleLine,
-            //contentPadding = contentPadding,
-            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End),
+            contentPadding = contentPadding,
+            textStyle = LocalTextStyle.current.copy(textAlign = text_align),
             modifier = modifier
                 .heightIn(1.dp)
                 .widthIn(1.dp)
@@ -195,22 +197,32 @@ fun IntegerInput(value: MutableState<Int>, minimum: Int? = null, maximum: Int? =
                 keyboardType = KeyboardType.Companion.Number
             ),
             inputTransformation = input_transformation,
+            lineLimits = TextFieldLineLimits.SingleLine,
+            onKeyboardAction = { action ->
+                callback(value.value)
+                action()
+            }
         )
     } else {
         TextField(
             state = state,
             label = label,
-            lineLimits = TextFieldLineLimits.SingleLine,
             contentPadding = contentPadding,
-            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End),
+            textStyle = LocalTextStyle.current.copy(textAlign = text_align),
             modifier = modifier
                 .heightIn(1.dp)
                 .widthIn(1.dp)
                 .onFocusChanged(focus_change_callback),
-            keyboardOptions = KeyboardOptions.Companion.Default.copy(keyboardType = KeyboardType.Companion.Number),
+            keyboardOptions = KeyboardOptions.Companion.Default.copy(
+                keyboardType = KeyboardType.Companion.Number
+            ),
             inputTransformation = input_transformation,
+            lineLimits = TextFieldLineLimits.SingleLine,
+            onKeyboardAction = { action ->
+                callback(value.value)
+                action()
+            }
         )
-
     }
 }
 
@@ -576,7 +588,7 @@ fun DialogCard(
                 modifier = Modifier
                     .wrapContentWidth()
                     .padding(dimensionResource(R.dimen.dialog_padding)),
-                horizontalAlignment = Alignment.End,
+                horizontalAlignment = Alignment.Start,
                 content = content
             )
         }

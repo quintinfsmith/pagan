@@ -5,19 +5,23 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import com.qfs.pagan.ComponentActivity.PaganComponentActivity.Companion.SIZE_L
 import com.qfs.pagan.ComponentActivity.PaganComponentActivity.Companion.SIZE_M
 import com.qfs.pagan.ComponentActivity.PaganComponentActivity.Companion.SIZE_XL
 import com.qfs.pagan.DialogChain
 import com.qfs.pagan.PaganConfiguration
+import com.qfs.pagan.R
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.SortableMenu
@@ -150,7 +154,7 @@ class ViewModelPagan: ViewModel() {
         this.create_medium_dialog { close ->
             @Composable {
                 DialogSTitle(title)
-                UnSortableMenu(Modifier, options, default_value) {
+                UnSortableMenu(Modifier.weight(1F, fill=false), options, default_value) {
                     close()
                     callback(it)
                 }
@@ -171,14 +175,13 @@ class ViewModelPagan: ViewModel() {
     ) {
         this.create_medium_dialog { close ->
             @Composable {
-                Column(
-                    verticalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row { DialogSTitle(title, modifier = Modifier.weight(1F)) }
+                Column(verticalArrangement = Arrangement.SpaceBetween) {
+                    DialogSTitle(title)
                     content?.let { Row(content = it) }
                     SortableMenu(
-                        modifier = Modifier.weight(1F),
+                        modifier = Modifier.weight(1F, fill=false),
                         default_menu = default_menu,
+                        sort_row_padding = PaddingValues(bottom = dimensionResource(R.dimen.dialog_bar_padding_vertical)),
                         sort_options = sort_options,
                         selected_sort = selected_sort,
                         onLongClick = onLongClick,
@@ -191,7 +194,6 @@ class ViewModelPagan: ViewModel() {
                 }
             }
         }
-
     }
 
     internal fun save_configuration() {

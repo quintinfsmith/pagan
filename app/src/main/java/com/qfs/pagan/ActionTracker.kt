@@ -2483,7 +2483,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                                     IntegerInput(
                                         value = numer,
                                         outlined = false,
-                                        modifier = Modifier.widthIn(41.dp),
+                                        modifier = Modifier.width(64.dp),
                                         contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
                                         minimum = 0,
                                         callback = { mutable_map[i].value = Pair(numer.value, denom.value) }
@@ -2491,7 +2491,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                                     IntegerInput(
                                         value = denom,
                                         outlined = false,
-                                        modifier = Modifier.widthIn(41.dp),
+                                        modifier = Modifier.width(64.dp),
                                         contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
                                         minimum = 1,
                                         callback = { mutable_map[i].value = Pair(numer.value, denom.value) }

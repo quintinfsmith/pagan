@@ -858,6 +858,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     )
                 }
             )
+
+
             Row {
                 Column {
                     ShortcutView(dispatcher, scope, scroll_state_h)
@@ -916,7 +918,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 modifier = Modifier
                                     .width(dimensionResource(R.dimen.base_leaf_width))
                                     .combinedClickable(
-                                        onClick = { dispatcher.append_beats(1) },
+                                        onClick = { dispatcher.append_beats() },
                                         onLongClick = { dispatcher.append_beats() }
                                     ),
                                 painter = painterResource(R.drawable.icon_add_channel),

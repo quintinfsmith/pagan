@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.systemBars
@@ -35,9 +36,7 @@ fun ScaffoldWithTopBar(top_app_bar: @Composable RowScope.() -> Unit, force_night
             },
             //bottomBar = { Text("")},
             content = content,
-            modifier = Modifier
-                .fillMaxSize()
-                .safeContentPadding()
+            modifier = Modifier.fillMaxSize()
         )
     }
 }

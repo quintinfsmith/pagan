@@ -25,6 +25,9 @@ import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.SoundFontWarning
 import com.qfs.pagan.composable.button.Button
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlin.concurrent.thread
 
 class ComponentActivityLanding: PaganComponentActivity() {
     internal var result_launcher_import_project =
@@ -137,7 +140,14 @@ class ComponentActivityLanding: PaganComponentActivity() {
             modifier = modifier.fillMaxWidth(),
             content = { Text(stringResource(R.string.btn_landing_new)) },
             onClick = {
-                this@ComponentActivityLanding.startActivity(Intent(this@ComponentActivityLanding, ComponentActivityEditor::class.java))
+                thread {
+                    this@ComponentActivityLanding.startActivity(
+                        Intent(
+                            this@ComponentActivityLanding,
+                            ComponentActivityEditor::class.java
+                        )
+                    )
+                }
             }
         )
     }
@@ -149,11 +159,13 @@ class ComponentActivityLanding: PaganComponentActivity() {
             content = { Text(stringResource(R.string.btn_landing_load)) },
             onClick = {
                 this.load_menu_dialog {
-                    this@ComponentActivityLanding.startActivity(
-                        Intent(this@ComponentActivityLanding, ComponentActivityEditor::class.java).apply {
-                            this.data = it
-                        }
-                    )
+                    thread {
+                        this@ComponentActivityLanding.startActivity(
+                            Intent(this@ComponentActivityLanding, ComponentActivityEditor::class.java).apply {
+                                this.data = it
+                            }
+                        )
+                    }
                 }
             }
         )

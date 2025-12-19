@@ -1456,33 +1456,31 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         DrawerCard {
             Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                Column(modifier = Modifier.weight(1F)) {
-                    ConfigDrawerTopButton(
-                        onClick = { dispatcher.set_tuning_table_and_transpose() },
-                        content = { SText(R.string.label_tuning) }
-                    )
-                }
-                Row {
-                    ConfigDrawerTopButton(
-                        onClick = { dispatcher.insert_percussion_channel() },
-                        content = {
-                            Icon(
-                                painter = painterResource(R.drawable.icon_add_channel_kit),
-                                contentDescription = stringResource(R.string.btn_cfg_add_kit_channel),
-                            )
-                        }
-                    )
-                    DrawerPadder()
-                    ConfigDrawerTopButton(
-                        onClick = { dispatcher.insert_channel() },
-                        content = {
-                            Icon(
-                                painter = painterResource(R.drawable.icon_add_channel),
-                                contentDescription = stringResource(R.string.btn_cfg_add_channel),
-                            )
-                        }
-                    )
-                }
+                ConfigDrawerTopButton(
+                    modifier = Modifier.weight(1F),
+                    onClick = { dispatcher.set_tuning_table_and_transpose() },
+                    content = { SText(R.string.label_tuning) }
+                )
+                DrawerPadder()
+                ConfigDrawerTopButton(
+                    onClick = { dispatcher.insert_percussion_channel() },
+                    content = {
+                        Icon(
+                            painter = painterResource(R.drawable.icon_add_channel_kit),
+                            contentDescription = stringResource(R.string.btn_cfg_add_kit_channel),
+                        )
+                    }
+                )
+                DrawerPadder()
+                ConfigDrawerTopButton(
+                    onClick = { dispatcher.insert_channel() },
+                    content = {
+                        Icon(
+                            painter = painterResource(R.drawable.icon_add_channel),
+                            contentDescription = stringResource(R.string.btn_cfg_add_channel),
+                        )
+                    }
+                )
             }
             DrawerPadder()
             Column(

@@ -3,6 +3,8 @@ package com.qfs.pagan.composable.button
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -29,7 +31,9 @@ fun ConfigDrawerTopButton(modifier: Modifier = Modifier, content: (@Composable R
 @Composable
 fun ConfigDrawerBottomButton(modifier: Modifier = Modifier, icon: Int, description: Int, enabled: Boolean = true, onClick: () -> Unit) {
     Button(
-        modifier = modifier.height(dimensionResource(R.dimen.config_icon_size)),
+        modifier = modifier
+            .widthIn(dimensionResource(R.dimen.config_button_width))
+            .height(dimensionResource(R.dimen.config_icon_size)),
         contentPadding = PaddingValues(
             horizontal = dimensionResource(R.dimen.config_icon_padding_horizontal),
             vertical = dimensionResource(R.dimen.config_icon_padding_vertical)

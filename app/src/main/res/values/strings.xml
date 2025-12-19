@@ -69,11 +69,11 @@
     <string name="dlg_confirm">Yes</string>
     <string name="dlg_decline">No</string>
     <string name="dlg_set_tempo">Set Tempo (BPM)</string>
-    <string name="dlg_set_radix">Radix:</string>
+    <string name="dlg_set_radix">Radix</string>
     <string name="dlg_set_reverb">Set Reverb Wetness (%)</string>
     <string name="dlg_change_name">Change Project Name</string>
     <string name="feedback_project_saved">Project Saved</string>
-    <string name="dlg_transpose">Transpose:</string>
+    <string name="dlg_transpose">Transpose</string>
     <string name="dlg_insert_beats">Insert Beats</string>
     <string name="feedback_import_fail">Corrupt Project File</string>
     <string name="feedback_file_not_found">File not Found</string>

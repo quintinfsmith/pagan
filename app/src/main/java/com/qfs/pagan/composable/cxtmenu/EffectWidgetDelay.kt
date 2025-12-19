@@ -3,6 +3,7 @@ package com.qfs.pagan.composable.cxtmenu
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Slider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableFloatStateOf
@@ -11,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.IntegerInput
@@ -29,6 +31,8 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
 
     IntegerInput(
         value = echo,
+        outlined = false,
+        modifier = Modifier.width(4.dp),
         minimum = 1,
     ) {
         event.echo = it
@@ -37,6 +41,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
 
     IntegerInput(
         value = numerator,
+        outlined = false,
         minimum = 1,
     ) {
         event.numerator = it
@@ -45,6 +50,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
 
     IntegerInput(
         value = denominator,
+        outlined = false,
         minimum = 1,
     ) {
         event.denominator = it

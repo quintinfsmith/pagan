@@ -16,8 +16,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.DrawerState
@@ -111,8 +114,8 @@ abstract class PaganComponentActivity: ComponentActivity() {
 
             ModalNavigationDrawer(
                 modifier = Modifier
-                    .wrapContentWidth()
-                    .safeContentPadding(),
+                    .systemBarsPadding()
+                    .wrapContentWidth(),
                 drawerState = this.drawer_state,
                 gesturesEnabled = this.drawer_gesture_enabled.value,
                 drawerContent = { this.Drawer() }
@@ -157,7 +160,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                             when (dialog.size) {
                                                 ViewModelPagan.DialogSize.Unbounded ->  Modifier
                                                 ViewModelPagan.DialogSize.Small -> Modifier.width(200.dp)
-                                                ViewModelPagan.DialogSize.Medium -> Modifier.width(300.dp)
+                                                ViewModelPagan.DialogSize.Medium -> Modifier.width(400.dp)
                                             }
                                         }
 

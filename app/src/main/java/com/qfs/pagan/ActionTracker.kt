@@ -2,18 +2,26 @@ package com.qfs.pagan
 
 import android.net.Uri
 import android.util.Log
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -22,10 +30,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.qfs.json.JSONBoolean
 import com.qfs.json.JSONInteger
@@ -1671,10 +1681,10 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             this.vm_top.create_small_dialog { close ->
                 @Composable {
                     val value: MutableState<Int> = remember { mutableIntStateOf(default ?: min_value) }
-
                     DialogSTitle(title_string_id)
                     IntegerInput(
                         value = value,
+                        modifier = Modifier.fillMaxWidth(),
                         contentPadding = PaddingValues(dimensionResource(R.dimen.dlg_input_padding)),
                         minimum = min_value,
                         maximum = max_value
@@ -2381,7 +2391,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             return
         }
 
-        this.vm_top.create_dialog { close ->
+        this.vm_top.create_medium_dialog { close ->
             @Composable {
                 val original_radix = opus_manager.get_radix()
                 val transpose_numerator = remember { mutableIntStateOf(opus_manager.transpose.first) }
@@ -2393,14 +2403,17 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         else Pair(i, radix.intValue)
                     )
                 }
-                Column {
-                    Row {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        SText(R.string.dlg_transpose, maxLines=1)
                         Row(
-                            Modifier.weight(1F),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Start
                         ) {
-                            SText(R.string.dlg_transpose, maxLines=1)
                             IntegerInput(
                                 value = transpose_numerator,
                                 outlined = false,
@@ -2419,56 +2432,81 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                                 callback = {}
                             )
                         }
-                        Row(
-                            Modifier.weight(1F),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.End
-                        ) {
-                            IntegerInput(
-                                value = radix,
-                                label = { SText(R.string.dlg_set_radix, maxLines = 1) },
-                                outlined = true,
-                                contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                                modifier = Modifier.widthIn(dimensionResource(R.dimen.transpose_dlg_input_width)),
-                                minimum = 0,
-                                maximum = 36,
-                                callback = {}
-                            )
-                        }
+                    }
+                    Column(
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        SText(R.string.dlg_set_radix, maxLines = 1)
+                        IntegerInput(
+                            value = radix,
+                            outlined = false,
+                            contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
+                            modifier = Modifier.widthIn(dimensionResource(R.dimen.transpose_dlg_input_width)),
+                            minimum = 0,
+                            maximum = 36,
+                            callback = {}
+                        )
                     }
                 }
-                Column(
+                Spacer(
+                    Modifier
+                        .height(1.dp)
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.outline)
+                )
+                FlowRow(
                     modifier = Modifier
-                        .weight(1F)
-                        .verticalScroll(rememberScrollState())
+                        .fillMaxWidth()
+                        .weight(1F, fill = false)
+                        .verticalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.SpaceAround
                 ) {
                     for ((i, state) in mutable_map.enumerate()) {
                         val pair = state.value
                         val numer = remember { mutableIntStateOf(pair.first) }
                         val denom = remember { mutableIntStateOf(pair.second) }
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.End
+                        Box(
+                            Modifier
+                                .padding(vertical = 3.dp)
+                                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(6.dp))
                         ) {
-                            Text("%02d".format(i))
-                            IntegerInput(
-                                value = numer,
-                                modifier = Modifier.weight(1F),
-                                contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                                minimum = 0,
-                                callback = { mutable_map[i].value = Pair(numer.value, denom.value) }
-                            )
-                            Text("/")
-                            IntegerInput(
-                                value = denom,
-                                modifier = Modifier.weight(1F),
-                                contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                                minimum = 1,
-                                callback = { mutable_map[i].value = Pair(numer.value, denom.value) }
-                            )
+                            Row(
+                                modifier = Modifier.padding(6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                Text(
+                                    "%02d".format(i),
+                                    modifier = Modifier.padding(horizontal = 4.dp)
+                                )
+                                Column {
+                                    IntegerInput(
+                                        value = numer,
+                                        outlined = false,
+                                        modifier = Modifier.widthIn(41.dp),
+                                        contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
+                                        minimum = 0,
+                                        callback = { mutable_map[i].value = Pair(numer.value, denom.value) }
+                                    )
+                                    IntegerInput(
+                                        value = denom,
+                                        outlined = false,
+                                        modifier = Modifier.widthIn(41.dp),
+                                        contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
+                                        minimum = 1,
+                                        callback = { mutable_map[i].value = Pair(numer.value, denom.value) }
+                                    )
+                                }
+                            }
                         }
                     }
                 }
+                Spacer(
+                    Modifier
+                        .height(1.dp)
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.outline)
+                )
                 DialogBar(
                     neutral = close,
                     positive = {

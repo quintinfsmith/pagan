@@ -35,7 +35,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.text.input.InputTransformation
+import androidx.compose.foundation.text.input.KeyboardActionHandler
+import androidx.compose.foundation.text.input.OutputTransformation
 import androidx.compose.foundation.text.input.TextFieldBuffer
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndSelectAll
 import androidx.compose.material3.CardColors
@@ -46,11 +50,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.MenuItemColors
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldColors
+import androidx.compose.material3.TextFieldLabelPosition
 import androidx.compose.material3.TextFieldLabelScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -63,6 +70,7 @@ import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -76,6 +84,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.TextUnit
@@ -161,10 +170,13 @@ fun IntegerInput(value: MutableState<Int>, minimum: Int? = null, maximum: Int? =
         }
     }
 
+    val focus_manager = LocalFocusManager.current
     val focus_change_callback = { focus_state: FocusState ->
         if (focus_state.isFocused) {
             val text = state.text
-            state.setTextAndSelectAll(text.toString())
+            //state.setTextAndSelectAll(text.toString())
+        } else {
+            println("BOOP")
         }
     }
 
@@ -172,19 +184,23 @@ fun IntegerInput(value: MutableState<Int>, minimum: Int? = null, maximum: Int? =
         OutlinedTextField(
             state = state,
             label = label,
-            contentPadding = contentPadding,
+            lineLimits = TextFieldLineLimits.SingleLine,
+            //contentPadding = contentPadding,
             textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End),
             modifier = modifier
                 .heightIn(1.dp)
                 .widthIn(1.dp)
                 .onFocusChanged(focus_change_callback),
-            keyboardOptions = KeyboardOptions.Companion.Default.copy(keyboardType = KeyboardType.Companion.Number),
+            keyboardOptions = KeyboardOptions.Default.copy(
+                keyboardType = KeyboardType.Companion.Number
+            ),
             inputTransformation = input_transformation,
         )
     } else {
         TextField(
             state = state,
             label = label,
+            lineLimits = TextFieldLineLimits.SingleLine,
             contentPadding = contentPadding,
             textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End),
             modifier = modifier
@@ -317,6 +333,49 @@ fun TextInput(modifier: Modifier = Modifier, input: MutableState<String>, maxLin
         }
     )
 }
+
+@Composable
+fun InlineInput(
+    state: TextFieldState,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    readOnly: Boolean = false,
+    textStyle: TextStyle = LocalTextStyle.current,
+    placeholder: @Composable (() -> Unit)? = null,
+    isError: Boolean = false,
+    inputTransformation: InputTransformation? = null,
+    outputTransformation: OutputTransformation? = null,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    onKeyboardAction: KeyboardActionHandler? = null,
+    onTextLayout: (Density.(getResult: () -> TextLayoutResult?) -> Unit)? = null,
+    scrollState: ScrollState = rememberScrollState(),
+    shape: Shape = OutlinedTextFieldDefaults.shape,
+    colors: TextFieldColors = OutlinedTextFieldDefaults.colors(),
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    interactionSource: MutableInteractionSource? = null
+){
+
+    OutlinedTextField(
+        state = state,
+        modifier = modifier,
+        enabled = enabled,
+        readOnly = readOnly,
+        textStyle = textStyle,
+        placeholder = placeholder,
+        isError = isError,
+        inputTransformation = inputTransformation,
+        outputTransformation = outputTransformation,
+        keyboardOptions = keyboardOptions,
+        onKeyboardAction = onKeyboardAction,
+        onTextLayout = onTextLayout,
+        scrollState = scrollState,
+        shape = shape,
+        colors = colors,
+        contentPadding = contentPadding,
+        interactionSource = interactionSource
+    )
+}
+
 @Composable
 fun <T> SortableMenu(
     modifier: Modifier = Modifier,
@@ -345,6 +404,7 @@ fun <T> SortableMenu(
     }
 
     val scroll_state = rememberLazyListState(default_index)
+
     Column(modifier = modifier) {
         if (sort_options.isNotEmpty()) {
             Row(
@@ -388,14 +448,14 @@ fun <T> SortableMenu(
         }
 
         LazyColumn(
-            modifier = Modifier.widthIn(0.dp, 400.dp),
+            modifier = Modifier,
             state = scroll_state
         ) {
             itemsIndexed(sorted_menu) { i, (item, label_content) ->
                 val row_modifier = Modifier
                 Row(
-                    modifier = Modifier
-                        .widthIn(0.dp)
+                    modifier = row_modifier
+                        .fillMaxWidth()
                         .then(
                             if (item == default_value) {
                                 default_index = i
@@ -458,38 +518,6 @@ fun DialogSTitle(text: Int, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun DialogCard(
-    modifier: Modifier = Modifier,
-    colors: CardColors = CardColors(
-        containerColor = colorResource(R.color.surface_container),
-        contentColor = colorResource(R.color.on_surface_container),
-        disabledContentColor = Color.Gray,
-        disabledContainerColor = Color.Green,
-    ),
-    elevation: CardElevation = CardDefaults.cardElevation(),
-    shape: Shape = RoundedCornerShape(12.dp),
-    border: BorderStroke? = null,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    ProvideContentColorTextStyle(contentColor = colors.contentColor) {
-        Box(
-            modifier
-                .wrapContentWidth()
-                .then(if (border != null) modifier.border(border) else modifier)
-                .background(color = colors.containerColor, shape),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(dimensionResource(R.dimen.dialog_padding)),
-                horizontalAlignment = Alignment.End,
-                content = content
-            )
-        }
-    }
-}
-
-@Composable
 fun DrawerCard(
     modifier: Modifier = Modifier.wrapContentWidth(),
     colors: CardColors = CardColors(
@@ -523,6 +551,40 @@ fun DrawerCard(
 }
 
 @Composable
+fun DialogCard(
+    modifier: Modifier = Modifier,
+    colors: CardColors = CardColors(
+        containerColor = colorResource(R.color.surface_container),
+        contentColor = colorResource(R.color.on_surface_container),
+        disabledContentColor = Color.Gray,
+        disabledContainerColor = Color.Green,
+    ),
+    elevation: CardElevation = CardDefaults.cardElevation(),
+    shape: Shape = RoundedCornerShape(12.dp),
+    border: BorderStroke? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    ProvideContentColorTextStyle(contentColor = colors.contentColor) {
+        Box(
+            modifier
+                .wrapContentWidth()
+                .then(if (border != null) modifier.border(border) else modifier)
+                .background(color = colors.containerColor, shape),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                modifier = Modifier
+                    .wrapContentWidth()
+                    .padding(dimensionResource(R.dimen.dialog_padding)),
+                horizontalAlignment = Alignment.End,
+                content = content
+            )
+        }
+    }
+}
+
+
+@Composable
 fun ColumnScope.DialogBar(modifier: Modifier = Modifier, positive: (() -> Unit)? = null, negative: (() -> Unit)? = null, neutral: (() -> Unit)? = null) {
     Row(
         modifier = modifier
@@ -532,9 +594,7 @@ fun ColumnScope.DialogBar(modifier: Modifier = Modifier, positive: (() -> Unit)?
     ) {
         negative?.let {
             SmallButton(
-                modifier = Modifier
-                    .widthIn(max = 240.dp)
-                    .weight(1F),
+                modifier = Modifier.weight(1F),
                 onClick = it,
                 content = { SText(R.string.no) }
             )
@@ -543,13 +603,11 @@ fun ColumnScope.DialogBar(modifier: Modifier = Modifier, positive: (() -> Unit)?
             if (negative != null) {
                 Spacer(Modifier.width(12.dp))
             }
-            Row(Modifier.widthIn(min = 0.dp, max = 240.dp)) {
-                SmallOutlinedButton(
-                    modifier = Modifier.weight(1F),
-                    onClick = it,
-                    content = { SText(android.R.string.cancel) }
-                )
-            }
+            SmallOutlinedButton(
+                modifier = Modifier.weight(1F),
+                onClick = it,
+                content = { SText(android.R.string.cancel) }
+            )
         }
         positive?.let {
             if (negative != null || neutral != null) {

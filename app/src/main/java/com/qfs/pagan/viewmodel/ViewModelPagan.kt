@@ -127,6 +127,10 @@ class ViewModelPagan: ViewModel() {
         this.create_dialog(level, DialogSize.Small, dialog_callback)
     }
 
+    fun create_medium_dialog(level: Int = 0, dialog_callback: (() -> Unit) -> (@Composable (ColumnScope.() -> Unit))) {
+        this.create_dialog(level, DialogSize.Medium, dialog_callback)
+    }
+
     fun create_dialog(level: Int = 0, size: DialogSize = DialogSize.Unbounded, dialog_callback: (() -> Unit) -> (@Composable (ColumnScope.() -> Unit))) {
         // Use level to block Dup dialogs. set it to allow for dialogs opened from other dialogs
         if (this.dialog_queue.value?.level == level) return
@@ -143,7 +147,7 @@ class ViewModelPagan: ViewModel() {
     }
 
     fun <T> unsortable_list_dialog(title: Int, options: List<Pair<T, @Composable RowScope.() -> Unit>>, default_value: T? = null, callback: (T) -> Unit) {
-        this.create_dialog { close ->
+        this.create_medium_dialog { close ->
             @Composable {
                 DialogSTitle(title)
                 UnSortableMenu(Modifier, options, default_value) {
@@ -165,7 +169,7 @@ class ViewModelPagan: ViewModel() {
         onLongClick: (T) -> Unit = {},
         onClick: (T) -> Unit
     ) {
-        this.create_dialog { close ->
+        this.create_medium_dialog { close ->
             @Composable {
                 Column(
                     verticalArrangement = Arrangement.SpaceBetween

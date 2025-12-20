@@ -100,11 +100,13 @@ import com.qfs.pagan.composable.cxtmenu.CMBoxEnd
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelPrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuColumnPrimary
+import com.qfs.pagan.composable.cxtmenu.ContextMenuLeafCtlSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuLinePrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuLineSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuRangeSecondary
-import com.qfs.pagan.composable.cxtmenu.ContextMenuSinglePrimary
-import com.qfs.pagan.composable.cxtmenu.ContextMenuSingleSecondary
+import com.qfs.pagan.composable.cxtmenu.ContextMenuLeafPrimary
+import com.qfs.pagan.composable.cxtmenu.ContextMenuLeafSecondary
+import com.qfs.pagan.composable.cxtmenu.ContextMenuLeafStdSecondary
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
@@ -782,7 +784,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             CursorMode.Single -> {
                 @Composable {
                     val show_relative_input = this@ComponentActivityEditor.view_model.configuration.relative_mode
-                    ContextMenuSinglePrimary(modifier, ui_facade, dispatcher, show_relative_input, layout)
+                    ContextMenuLeafPrimary(modifier, ui_facade, dispatcher, show_relative_input, layout)
                 }
             }
             CursorMode.Channel -> {
@@ -803,7 +805,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 @Composable { ContextMenuLineSecondary(ui_facade, dispatcher) }
             }
             CursorMode.Single -> {
-                @Composable { ContextMenuSingleSecondary(ui_facade, dispatcher, modifier, layout) }
+                val cursor = ui_facade.active_cursor.value ?: return null
+                val line_data = ui_facade.line_data[cursor.ints[0]]
+                if (line_data.assigned_offset.value != null) return null
+
+                if (line_data.ctl_type.value == null) {
+                    @Composable { ContextMenuLeafStdSecondary(ui_facade, dispatcher, modifier, layout) }
+                } else {
+                    @Composable { ContextMenuLeafCtlSecondary(ui_facade, dispatcher, modifier, layout) }
+                }
             }
             CursorMode.Range -> {
                 @Composable {
@@ -1681,6 +1691,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 view_model.action_interface,
                 layout
             )
+
             val secondary = this@ComponentActivityEditor.get_context_menu_secondary(
                 Modifier.padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
                 ui_facade,
@@ -1731,16 +1742,20 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         Row(
                             Modifier.weight(1F),
                             horizontalArrangement = Arrangement.Center,
-                            content = { CMBoxBottom(Modifier.width(SIZE_M.first)) { it() } }
+                            content = {
+                                CMBoxBottom(Modifier.width(SIZE_M.first)) { it() }
+                            }
                         )
-                    }
+                    } ?: Spacer(Modifier.weight(1F))
 
                     this@ComponentActivityEditor.get_context_menu_primary(Modifier, ui_facade, view_model.action_interface, layout)?.let {
                         Row(
                             Modifier.fillMaxHeight(),
                             horizontalArrangement = Arrangement.End,
                             verticalAlignment = Alignment.CenterVertically,
-                            content = { CMBoxEnd { it() } }
+                            content = {
+                                CMBoxEnd { it() }
+                            }
                         )
                     }
                 }

@@ -93,6 +93,7 @@ class ViewModelPagan: ViewModel() {
              else if (width >= SIZE_M.second && height >= SIZE_M.first) LayoutSize.MediumPortrait
              else LayoutSize.SmallPortrait
         }
+        println("- - - - - - ${this.active_layout_size} - - - - - - - ")
     }
 
     fun get_layout_size(): LayoutSize {

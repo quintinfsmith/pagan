@@ -164,7 +164,7 @@ fun UserCopyModeSelect(ui_facade: ViewModelEditorState, dispatcher: ActionTracke
 }
 
 @Composable
-fun ContextMenuSinglePrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, show_relative_input: Boolean, layout: ViewModelPagan.LayoutSize) {
+fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, show_relative_input: Boolean, layout: ViewModelPagan.LayoutSize) {
     val active_event = ui_facade.active_event.value
     val cursor = ui_facade.active_cursor.value ?: return
     val active_line = ui_facade.line_data[cursor.ints[0]]
@@ -179,10 +179,9 @@ fun ContextMenuSinglePrimary(modifier: Modifier = Modifier, ui_facade: ViewModel
     }
 
     when (layout) {
-        ViewModelPagan.LayoutSize.SmallLandscape,
-        ViewModelPagan.LayoutSize.MediumLandscape -> {
+        ViewModelPagan.LayoutSize.SmallLandscape -> {
             if (is_percussion) {
-                ContextMenuStructureControls(modifier, ui_facade, dispatcher, false)
+                ContextMenuStructureControls(modifier, ui_facade, dispatcher, true)
             } else {
                 Row {
                     if (show_relative_input) {
@@ -200,11 +199,15 @@ fun ContextMenuSinglePrimary(modifier: Modifier = Modifier, ui_facade: ViewModel
             }
         }
 
-        ViewModelPagan.LayoutSize.LargeLandscape,
-        ViewModelPagan.LayoutSize.XLargeLandscape,
+        ViewModelPagan.LayoutSize.MediumLandscape -> {
+            ContextMenuStructureControls(modifier, ui_facade, dispatcher, true)
+        }
+
         ViewModelPagan.LayoutSize.SmallPortrait,
         ViewModelPagan.LayoutSize.MediumPortrait,
+        ViewModelPagan.LayoutSize.LargeLandscape,
         ViewModelPagan.LayoutSize.LargePortrait,
+        ViewModelPagan.LayoutSize.XLargeLandscape,
         ViewModelPagan.LayoutSize.XLargePortrait -> {
             if (is_percussion) {
                 ContextMenuStructureControls(modifier, ui_facade, dispatcher, false)
@@ -228,20 +231,10 @@ fun ContextMenuSinglePrimary(modifier: Modifier = Modifier, ui_facade: ViewModel
 }
 
 @Composable
-fun ContextMenuSingleSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier, layout: ViewModelPagan.LayoutSize) {
-    val cursor = ui_facade.active_cursor.value ?: return
-    val line_data = ui_facade.line_data[cursor.ints[0]]
-    if (line_data.assigned_offset.value != null) return
-
-
-    if (line_data.ctl_type.value == null) {
-        ContextMenuSingleStdSecondary(ui_facade, dispatcher, modifier, layout)
-    } else {
-        ContextMenuSingleCtlSecondary(ui_facade, dispatcher, modifier, layout)
-    }
+fun ContextMenuLeafSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier, layout: ViewModelPagan.LayoutSize) {
 }
 @Composable
-fun ContextMenuSingleCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier, layout: ViewModelPagan.LayoutSize) {
+fun ContextMenuLeafCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier, layout: ViewModelPagan.LayoutSize) {
     val active_event = ui_facade.active_event.value ?: return
     ContextMenuSecondaryRow(modifier) {
         when (active_event) {
@@ -257,13 +250,14 @@ fun ContextMenuSingleCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: A
 }
 
 @Composable
-fun ContextMenuSingleStdSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier, layout: ViewModelPagan.LayoutSize) {
+fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier, layout: ViewModelPagan.LayoutSize) {
     val cursor = ui_facade.active_cursor.value ?: return
     if (ui_facade.line_data[cursor.ints[0]].assigned_offset.value != null) return
     val active_event = ui_facade.active_event.value
 
     when (layout) {
         ViewModelPagan.LayoutSize.SmallPortrait,
+        ViewModelPagan.LayoutSize.MediumLandscape,
         ViewModelPagan.LayoutSize.MediumPortrait,
         ViewModelPagan.LayoutSize.LargeLandscape,
         ViewModelPagan.LayoutSize.LargePortrait,
@@ -281,8 +275,7 @@ fun ContextMenuSingleStdSecondary(ui_facade: ViewModelEditorState, dispatcher: A
                 NumberSelector(8, octave, ui_facade.highlighted_octave.value, false) { dispatcher.set_octave(it) }
             }
         }
-        ViewModelPagan.LayoutSize.SmallLandscape,
-        ViewModelPagan.LayoutSize.MediumLandscape -> {}
+        ViewModelPagan.LayoutSize.SmallLandscape -> {}
     }
 
     val offset = when (active_event) {

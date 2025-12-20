@@ -1,6 +1,5 @@
 package com.qfs.pagan.composable
 
-import android.view.textclassifier.TextSelection
 import androidx.annotation.IntRange
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ScrollState
@@ -41,10 +40,8 @@ import androidx.compose.foundation.text.input.OutputTransformation
 import androidx.compose.foundation.text.input.TextFieldBuffer
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.selectAll
-import androidx.compose.foundation.text.input.setTextAndSelectAll
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CardElevation
@@ -60,11 +57,9 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldColors
-import androidx.compose.material3.TextFieldLabelPosition
 import androidx.compose.material3.TextFieldLabelScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -72,10 +67,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -134,9 +127,19 @@ fun SText(
 }
 
 @Composable
-fun IntegerInput(value: MutableState<Int>, minimum: Int? = null, maximum: Int? = null, modifier: Modifier = Modifier, outlined: Boolean = true, contentPadding: PaddingValues = PaddingValues(0.dp), text_align: TextAlign = TextAlign.End, label: (@Composable TextFieldLabelScope.() -> Unit)? = null, callback: (Int) -> Unit) {
+fun IntegerInput(
+    value: MutableState<Int>,
+    minimum: Int? = null,
+    maximum: Int? = null, modifier: Modifier = Modifier,
+    outlined: Boolean = true,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    text_align: TextAlign = TextAlign.End,
+    label: (@Composable TextFieldLabelScope.() -> Unit)? = null,
+    on_focus_enter: (() -> Unit)? = null,
+    on_focus_exit: ((Int?) -> Unit)? = null,
+    callback: (Int) -> Unit
+) {
     val state = rememberTextFieldState(value.value.toString())
-
     val input_transformation = object : InputTransformation {
         override fun TextFieldBuffer.transformInput() {
             var working_string = this.toString()
@@ -164,21 +167,16 @@ fun IntegerInput(value: MutableState<Int>, minimum: Int? = null, maximum: Int? =
         }
     }
 
-    val original_text = "99"
-    var was_focused = false
+    // Prevent weird focusing behavior causing on_focus_exit to be called without any initial focus
+    var was_focused = remember { mutableStateOf(false) }
     val focus_change_callback = { focus_state: FocusState ->
-        if (focus_state.hasFocus) {
-            was_focused = true
-            state.clearText()
-        } else if (was_focused) {
-            println("C???????")
-            was_focused = false
-            val text = state.text
-            Thread.sleep(300)
-            state.edit {
-                this.replace(0, text.length, original_text)
-                this.
-            }
+        if (focus_state.isFocused) {
+            was_focused.value = true
+            state.edit { this.selectAll() }
+            on_focus_enter?.let { it() }
+        } else if (was_focused.value) {
+            was_focused.value = false
+            on_focus_exit?.let { it(value.value) }
         }
     }
 
@@ -192,7 +190,7 @@ fun IntegerInput(value: MutableState<Int>, minimum: Int? = null, maximum: Int? =
             modifier = modifier
                 .heightIn(1.dp)
                 .widthIn(1.dp)
-                .onFocusChanged(focus_change_callback),
+                .onFocusChanged { focus_change_callback(it) },
             keyboardOptions = KeyboardOptions.Default.copy(
                 keyboardType = KeyboardType.Companion.Number
             ),
@@ -212,7 +210,7 @@ fun IntegerInput(value: MutableState<Int>, minimum: Int? = null, maximum: Int? =
             modifier = modifier
                 .heightIn(1.dp)
                 .widthIn(1.dp)
-                .onFocusChanged(focus_change_callback),
+                .onFocusChanged { focus_change_callback(it) },
             keyboardOptions = KeyboardOptions.Companion.Default.copy(
                 keyboardType = KeyboardType.Companion.Number
             ),
@@ -224,6 +222,7 @@ fun IntegerInput(value: MutableState<Int>, minimum: Int? = null, maximum: Int? =
             }
         )
     }
+
 }
 
 @Composable

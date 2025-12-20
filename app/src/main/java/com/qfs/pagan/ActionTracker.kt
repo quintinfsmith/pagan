@@ -24,12 +24,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -1680,11 +1684,14 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         } else {
             this.vm_top.create_small_dialog { close ->
                 @Composable {
+                    val focus_requester = remember { FocusRequester() }
                     val value: MutableState<Int> = remember { mutableIntStateOf(default ?: min_value) }
                     DialogSTitle(title_string_id)
                     IntegerInput(
                         value = value,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focus_requester),
                         contentPadding = PaddingValues(dimensionResource(R.dimen.dlg_input_padding)),
                         minimum = min_value,
                         maximum = max_value
@@ -1700,6 +1707,10 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                             callback(value.value)
                         }
                     )
+
+                    LaunchedEffect(Unit) {
+                        focus_requester.requestFocus()
+                    }
                 }
             }
         }

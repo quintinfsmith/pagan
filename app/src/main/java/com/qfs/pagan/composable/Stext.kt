@@ -59,13 +59,16 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldLabelScope
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusState
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -78,6 +81,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -89,6 +93,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import com.qfs.pagan.R
+import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.button.SmallButton
 import com.qfs.pagan.composable.button.SmallOutlinedButton
@@ -211,7 +216,7 @@ fun IntegerInput(
                 .heightIn(1.dp)
                 .widthIn(1.dp)
                 .onFocusChanged { focus_change_callback(it) },
-            keyboardOptions = KeyboardOptions.Companion.Default.copy(
+            keyboardOptions = KeyboardOptions.Default.copy(
                 keyboardType = KeyboardType.Companion.Number
             ),
             inputTransformation = input_transformation,
@@ -742,4 +747,49 @@ fun NumberPicker(modifier: Modifier = Modifier, range: kotlin.ranges.IntRange, d
             )
         }
     }
+}
+
+@Composable
+fun MagicInput(value: MutableState<Int>, minimum: Int? = null, maximum: Int? = null, modifier: Modifier = Modifier, contentPadding: PaddingValues = PaddingValues(vertical = 8.dp), callback: (Int) -> Unit) {
+    val expanded = remember { mutableStateOf(false) }
+    if (expanded.value) {
+        val requester = remember { FocusRequester() }
+        IntegerInput(
+            value = value,
+            text_align = TextAlign.Center,
+            on_focus_enter = {},
+            on_focus_exit = { value ->
+                value?.let { callback(it) }
+                expanded.value = false
+            },
+            contentPadding = contentPadding,
+            modifier = modifier
+                .background(color = MaterialTheme.colorScheme.surfaceBright)
+                .focusRequester(requester),
+            minimum = minimum,
+            maximum = maximum,
+            callback = {
+                callback(it)
+                expanded.value = false
+            }
+        )
+
+        LaunchedEffect(Unit) {
+            requester.requestFocus()
+        }
+    } else {
+        ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onBackground) {
+            Box(
+                modifier = modifier
+                    .border(width = 1.dp, color = MaterialTheme.colorScheme.outline, shape = MagicButtonShape())
+                    .combinedClickable(
+                        onClick = { expanded.value = !expanded.value }
+                    )
+                    .background(color = MaterialTheme.colorScheme.surfaceBright, shape = MagicButtonShape()),
+                contentAlignment = Alignment.Center,
+                content = { Text("${value.value}", modifier = Modifier.padding(contentPadding)) },
+            )
+        }
+    }
+
 }

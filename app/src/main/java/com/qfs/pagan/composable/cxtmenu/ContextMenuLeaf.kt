@@ -3,9 +3,6 @@ package com.qfs.pagan.composable.cxtmenu
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.SegmentedButton
@@ -34,6 +31,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEve
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.viewmodel.ViewModelEditorState
+import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlin.math.abs
 
 @Composable
@@ -166,9 +164,17 @@ fun UserCopyModeSelect(ui_facade: ViewModelEditorState, dispatcher: ActionTracke
 }
 
 @Composable
-fun ContextMenuSinglePrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, show_relative_input: Boolean, landscape: Boolean) {
+fun ContextMenuSinglePrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, show_relative_input: Boolean, layout: ViewModelPagan.LayoutSize) {
     val active_event = ui_facade.active_event.value
     val cursor = ui_facade.active_cursor.value ?: return
+
+    val landscape = when (layout) {
+        ViewModelPagan.LayoutSize.SmallPortrait,
+        ViewModelPagan.LayoutSize.MediumPortrait,
+        ViewModelPagan.LayoutSize.LargePortrait,
+        ViewModelPagan.LayoutSize.XLargePortrait -> false
+        else -> true
+    }
 
     val octave = when (active_event) {
         is AbsoluteNoteEvent -> active_event.note / ui_facade.radix.value
@@ -183,8 +189,8 @@ fun ContextMenuSinglePrimary(modifier: Modifier = Modifier, ui_facade: ViewModel
 
     val active_line = ui_facade.line_data[cursor.ints[0]]
     if (active_line.assigned_offset.value != null) {
-        ContextMenuStructureControls(modifier, ui_facade, dispatcher, landscape)
-    } else if (landscape) {
+        ContextMenuStructureControls(modifier, ui_facade, dispatcher, layout)
+    } else if (layout) {
         ContextMenuSinglePrimaryLandscape(ui_facade, dispatcher, show_relative_input, octave)
     } else {
         ContextMenuSinglePrimaryPortrait(modifier, ui_facade, dispatcher, show_relative_input, octave)
@@ -256,7 +262,7 @@ fun ContextMenuSingleCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: A
 @Composable
 fun ContextMenuSingleStdSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier, landscape: Boolean = false) {
     val cursor = ui_facade.active_cursor.value ?: return
-    if (ui_facade.line_data[cursor.ints[0]].assigned_offset.value == null) return
+    if (ui_facade.line_data[cursor.ints[0]].assigned_offset.value != null) return
 
     val active_event = ui_facade.active_event.value
     val offset = when (active_event) {

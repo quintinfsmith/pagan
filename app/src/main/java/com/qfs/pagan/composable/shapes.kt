@@ -2,7 +2,9 @@ package com.qfs.pagan.composable
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
-
+fun MagicButtonShape(): RoundedCornerShape {
+    return RoundedCornerShape(6.dp)
+}
 fun CMBoxBottomShape(): RoundedCornerShape {
     return RoundedCornerShape(
         topStart = 16.dp,

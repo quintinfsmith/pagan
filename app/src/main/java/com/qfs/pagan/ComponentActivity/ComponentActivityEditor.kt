@@ -126,6 +126,7 @@ import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
+import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.BufferedOutputStream
@@ -771,17 +772,17 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun ContextMenuPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
+    fun ContextMenuPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: ViewModelPagan.LayoutSize) {
         val cursor = ui_facade.active_cursor.value
         when (cursor?.type) {
-            CursorMode.Line -> ContextMenuLinePrimary(modifier, ui_facade, dispatcher, landscape)
-            CursorMode.Column -> ContextMenuColumnPrimary(modifier, ui_facade, dispatcher, landscape)
+            CursorMode.Line -> ContextMenuLinePrimary(modifier, ui_facade, dispatcher, layout)
+            CursorMode.Column -> ContextMenuColumnPrimary(modifier, ui_facade, dispatcher, layout)
             CursorMode.Single -> {
                 val show_relative_input = this@ComponentActivityEditor.view_model.configuration.relative_mode
-                ContextMenuSinglePrimary(modifier, ui_facade, dispatcher, show_relative_input, landscape)
+                ContextMenuSinglePrimary(modifier, ui_facade, dispatcher, show_relative_input, layout)
             }
-            CursorMode.Range -> ContextMenuRangePrimary(modifier, ui_facade, dispatcher, landscape)
-            CursorMode.Channel -> ContextMenuChannelPrimary(modifier, ui_facade, dispatcher, landscape)
+            CursorMode.Range -> ContextMenuRangePrimary(modifier, ui_facade, dispatcher, layout)
+            CursorMode.Channel -> ContextMenuChannelPrimary(modifier, ui_facade, dispatcher, layout)
             CursorMode.Unset,
             null -> Text("TODO")
         }

@@ -1,16 +1,13 @@
 package com.qfs.pagan.composable.cxtmenu
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.viewmodel.ViewModelEditorState
+import com.qfs.pagan.viewmodel.ViewModelPagan
 
 
 @Composable
@@ -61,30 +58,39 @@ fun InsertBeatButton(dispatcher: ActionTracker) {
     )
 }
 @Composable
-fun ContextMenuColumnPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
+fun ContextMenuColumnPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: ViewModelPagan.LayoutSize) {
     val cursor = ui_facade.active_cursor.value ?: return
     val beat = cursor.ints[0]
     val column_data = ui_facade.column_data[beat]
 
-    if (landscape) {
-        Column {
-            TagButton(dispatcher, column_data, beat)
-            CMPadding()
-            RemoveBeatButton(dispatcher, ui_facade.beat_count.value > 1)
-            CMPadding()
-            InsertBeatButton(dispatcher)
-            CMPadding()
-            AdjustBeatButton(dispatcher)
+    when (layout) {
+        ViewModelPagan.LayoutSize.SmallPortrait,
+        ViewModelPagan.LayoutSize.MediumPortrait,
+        ViewModelPagan.LayoutSize.LargePortrait,
+        ViewModelPagan.LayoutSize.XLargePortrait -> {
+            ContextMenuPrimaryRow(modifier) {
+                TagButton(dispatcher, column_data, beat)
+                CMPadding()
+                AdjustBeatButton(dispatcher)
+                CMPadding()
+                RemoveBeatButton(dispatcher, ui_facade.beat_count.value > 1)
+                CMPadding()
+                InsertBeatButton(dispatcher)
+            }
         }
-    } else {
-        ContextMenuPrimaryRow(modifier) {
-            TagButton(dispatcher, column_data, beat)
-            CMPadding()
-            AdjustBeatButton(dispatcher)
-            CMPadding()
-            RemoveBeatButton(dispatcher, ui_facade.beat_count.value > 1)
-            CMPadding()
-            InsertBeatButton(dispatcher)
+        ViewModelPagan.LayoutSize.SmallLandscape,
+        ViewModelPagan.LayoutSize.MediumLandscape,
+        ViewModelPagan.LayoutSize.LargeLandscape,
+        ViewModelPagan.LayoutSize.XLargeLandscape -> {
+            Column {
+                TagButton(dispatcher, column_data, beat)
+                CMPadding()
+                RemoveBeatButton(dispatcher, ui_facade.beat_count.value > 1)
+                CMPadding()
+                InsertBeatButton(dispatcher)
+                CMPadding()
+                AdjustBeatButton(dispatcher)
+            }
         }
     }
 }

@@ -13,10 +13,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 
 @Composable
 fun EffectTransitionButton(transition: EffectTransition, dispatcher: ActionTracker, is_initial: Boolean, modifier: Modifier = Modifier) {
-    if (is_initial) {
-        Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
-        Spacer(modifier.width(dimensionResource(R.dimen.contextmenu_button_width)))
-    } else {
+    if (!is_initial) {
         Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
         IconCMenuButton(
             modifier = modifier

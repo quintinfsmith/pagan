@@ -53,6 +53,7 @@ import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.DropdownMenu
 import com.qfs.pagan.composable.DropdownMenuItem
 import com.qfs.pagan.composable.IntegerInput
+import com.qfs.pagan.composable.MagicInput
 import com.qfs.pagan.composable.NumberPicker
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.Slider
@@ -2415,7 +2416,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                     )
                 }
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 3.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -2425,22 +2426,20 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Start
                         ) {
-                            IntegerInput(
+                            MagicInput(
                                 value = transpose_numerator,
-                                outlined = false,
+                                minimum = 0,
                                 contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
                                 modifier = Modifier.width(dimensionResource(R.dimen.transpose_dlg_input_width)),
-                                minimum = 0,
-                                callback = {}
+                                callback = { }
                             )
-                            Text("/")
-                            IntegerInput(
+                            Text("/", modifier = Modifier.padding(horizontal = 2.dp))
+                            MagicInput(
                                 value = transpose_denominator,
-                                outlined = false,
+                                minimum = 0,
                                 contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
                                 modifier = Modifier.width(dimensionResource(R.dimen.transpose_dlg_input_width)),
-                                minimum = 0,
-                                callback = {}
+                                callback = { }
                             )
                         }
                     }
@@ -2448,14 +2447,13 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         horizontalAlignment = Alignment.End
                     ) {
                         SText(R.string.dlg_set_radix, maxLines = 1)
-                        IntegerInput(
+                        MagicInput(
                             value = radix,
-                            outlined = false,
-                            contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                            modifier = Modifier.widthIn(dimensionResource(R.dimen.transpose_dlg_input_width)),
                             minimum = 0,
                             maximum = 36,
-                            callback = {}
+                            contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
+                            modifier = Modifier.width(dimensionResource(R.dimen.transpose_dlg_input_width)),
+                            callback = { }
                         )
                     }
                 }
@@ -2491,20 +2489,19 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                                     modifier = Modifier.padding(horizontal = 4.dp)
                                 )
                                 Column {
-                                    IntegerInput(
+                                    MagicInput(
                                         value = numer,
-                                        outlined = false,
+                                        minimum = 0,
                                         modifier = Modifier.width(64.dp),
                                         contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                                        minimum = 0,
                                         callback = { mutable_map[i].value = Pair(numer.value, denom.value) }
                                     )
-                                    IntegerInput(
+                                    Spacer(Modifier.height(2.dp))
+                                    MagicInput(
                                         value = denom,
-                                        outlined = false,
+                                        minimum = 0,
                                         modifier = Modifier.width(64.dp),
                                         contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                                        minimum = 1,
                                         callback = { mutable_map[i].value = Pair(numer.value, denom.value) }
                                     )
                                 }

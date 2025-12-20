@@ -1,16 +1,11 @@
 package com.qfs.pagan.composable.cxtmenu
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import com.qfs.pagan.ActionTracker
@@ -25,6 +20,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEve
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.viewmodel.ViewModelEditorState
+import com.qfs.pagan.viewmodel.ViewModelPagan
 
 @Composable
 fun AdjustLineButton(dispatcher: ActionTracker) {
@@ -99,63 +95,72 @@ fun MuteButton(dispatcher: ActionTracker, line: ViewModelEditorState.LineData) {
 }
 
 @Composable
-fun ContextMenuLinePrimary(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
+fun ContextMenuLinePrimary(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, dispatcher: ActionTracker, layout: ViewModelPagan.LayoutSize) {
     val cursor = vm_state.active_cursor.value ?: return
     val active_line = vm_state.line_data[cursor.ints[0]]
 
-    if (landscape) {
-        Column(Modifier.width(dimensionResource(R.dimen.contextmenu_button_width))) {
-            if (active_line.assigned_offset.value != null) {
-                PercussionSetInstrumentButton(
-                    Modifier
-                        .height(dimensionResource(R.dimen.contextmenu_button_height))
-                        .fillMaxWidth(),
-                    vm_state,
-                    dispatcher,
-                    cursor.ints[0],
-                    false
-                )
+    when (layout) {
+        ViewModelPagan.LayoutSize.SmallPortrait,
+        ViewModelPagan.LayoutSize.MediumPortrait,
+        ViewModelPagan.LayoutSize.LargePortrait,
+        ViewModelPagan.LayoutSize.XLargePortrait,
+        ViewModelPagan.LayoutSize.XLargeLandscape -> {
+            ContextMenuPrimaryRow(modifier) {
+                ToggleLineControllerButton(dispatcher)
                 CMPadding()
-            }
 
-            if (active_line.ctl_type.value == null) {
-                RemoveLineButton(dispatcher, vm_state.channel_data[active_line.channel.value!!].size.intValue)
+                if (active_line.assigned_offset.value != null) {
+                    PercussionSetInstrumentButton(
+                        Modifier.weight(1F),
+                        vm_state,
+                        dispatcher,
+                        cursor.ints[0],
+                        true
+                    )
+                    CMPadding()
+                } else {
+                    Spacer(Modifier.weight(1F))
+                }
+
+                AdjustLineButton(dispatcher)
                 CMPadding()
-            }
 
-            InsertLineButton(dispatcher)
-            CMPadding()
-            AdjustLineButton(dispatcher)
-            CMPadding()
-            ToggleLineControllerButton(dispatcher)
+                if (active_line.ctl_type.value == null) {
+                    RemoveLineButton(dispatcher, vm_state.channel_data[active_line.channel.value!!].size.intValue)
+                    CMPadding()
+                }
+
+                InsertLineButton(dispatcher)
+            }
         }
-    } else {
-        ContextMenuPrimaryRow(modifier) {
-            ToggleLineControllerButton(dispatcher)
-            CMPadding()
+        ViewModelPagan.LayoutSize.SmallLandscape,
+        ViewModelPagan.LayoutSize.LargeLandscape,
+        ViewModelPagan.LayoutSize.MediumLandscape -> {
+            Column(Modifier.width(dimensionResource(R.dimen.contextmenu_button_width))) {
+                if (active_line.assigned_offset.value != null) {
+                    PercussionSetInstrumentButton(
+                        Modifier
+                            .height(dimensionResource(R.dimen.contextmenu_button_height))
+                            .fillMaxWidth(),
+                        vm_state,
+                        dispatcher,
+                        cursor.ints[0],
+                        false
+                    )
+                    CMPadding()
+                }
 
-            if (active_line.assigned_offset.value != null) {
-                PercussionSetInstrumentButton(
-                    Modifier.weight(1F),
-                    vm_state,
-                    dispatcher,
-                    cursor.ints[0],
-                    true
-                )
+                if (active_line.ctl_type.value == null) {
+                    RemoveLineButton(dispatcher, vm_state.channel_data[active_line.channel.value!!].size.intValue)
+                    CMPadding()
+                }
+
+                InsertLineButton(dispatcher)
                 CMPadding()
-            } else {
-                Spacer(Modifier.weight(1F))
-            }
-
-            AdjustLineButton(dispatcher)
-            CMPadding()
-
-            if (active_line.ctl_type.value == null) {
-                RemoveLineButton(dispatcher, vm_state.channel_data[active_line.channel.value!!].size.intValue)
+                AdjustLineButton(dispatcher)
                 CMPadding()
+                ToggleLineControllerButton(dispatcher)
             }
-
-            InsertLineButton(dispatcher)
         }
     }
 }

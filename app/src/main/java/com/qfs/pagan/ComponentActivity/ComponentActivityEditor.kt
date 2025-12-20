@@ -102,7 +102,6 @@ import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuColumnPrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuLinePrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuLineSecondary
-import com.qfs.pagan.composable.cxtmenu.ContextMenuRangePrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuRangeSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuSinglePrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuSingleSecondary
@@ -771,45 +770,59 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
-    @Composable
-    fun ContextMenuPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: ViewModelPagan.LayoutSize) {
+    fun get_context_menu_primary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: ViewModelPagan.LayoutSize): (@Composable () -> Unit)? {
         val cursor = ui_facade.active_cursor.value
-        when (cursor?.type) {
-            CursorMode.Line -> ContextMenuLinePrimary(modifier, ui_facade, dispatcher, layout)
-            CursorMode.Column -> ContextMenuColumnPrimary(modifier, ui_facade, dispatcher, layout)
+        return when (cursor?.type) {
+            CursorMode.Line -> {
+                @Composable { ContextMenuLinePrimary(modifier, ui_facade, dispatcher, layout) }
+            }
+            CursorMode.Column -> {
+                @Composable { ContextMenuColumnPrimary(modifier, ui_facade, dispatcher, layout) }
+            }
             CursorMode.Single -> {
-                val show_relative_input = this@ComponentActivityEditor.view_model.configuration.relative_mode
-                ContextMenuSinglePrimary(modifier, ui_facade, dispatcher, show_relative_input, layout)
+                @Composable {
+                    val show_relative_input = this@ComponentActivityEditor.view_model.configuration.relative_mode
+                    ContextMenuSinglePrimary(modifier, ui_facade, dispatcher, show_relative_input, layout)
+                }
             }
-            CursorMode.Range -> ContextMenuRangePrimary(modifier, ui_facade, dispatcher, layout)
-            CursorMode.Channel -> ContextMenuChannelPrimary(modifier, ui_facade, dispatcher, layout)
+            CursorMode.Channel -> {
+                @Composable { ContextMenuChannelPrimary(modifier, ui_facade, dispatcher, layout) }
+            }
+            CursorMode.Range,
             CursorMode.Unset,
-            null -> Text("TODO")
+            null -> null
         }
     }
 
-    @Composable
-    fun ContextMenuSecondary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
-        val cursor = ui_facade.active_cursor.value ?: return
-        if (cursor.type == CursorMode.Unset) return
+    fun get_context_menu_secondary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: ViewModelPagan.LayoutSize): (@Composable () -> Unit)? {
+        val cursor = ui_facade.active_cursor.value ?: return null
+        if (cursor.type == CursorMode.Unset) return null
 
-        when (cursor.type) {
-            CursorMode.Line -> ContextMenuLineSecondary(ui_facade, dispatcher)
-            CursorMode.Single -> ContextMenuSingleSecondary(ui_facade, dispatcher, modifier, landscape)
+        return when (cursor.type) {
+            CursorMode.Line -> {
+                @Composable { ContextMenuLineSecondary(ui_facade, dispatcher) }
+            }
+            CursorMode.Single -> {
+                @Composable { ContextMenuSingleSecondary(ui_facade, dispatcher, modifier, layout) }
+            }
             CursorMode.Range -> {
-                ContextMenuRangeSecondary(
-                    ui_facade,
-                    dispatcher,
-                    this@ComponentActivityEditor.controller_model.move_mode.value
-                )
+                @Composable {
+                    ContextMenuRangeSecondary(
+                        ui_facade,
+                        dispatcher,
+                        this@ComponentActivityEditor.controller_model.move_mode.value
+                    )
+                }
             }
 
-            CursorMode.Channel -> ContextMenuChannelSecondary(ui_facade, dispatcher)
+            CursorMode.Channel -> {
+                @Composable { ContextMenuChannelSecondary(ui_facade, dispatcher) }
+            }
             CursorMode.Column,
-            CursorMode.Unset -> return
+            CursorMode.Unset -> null
         }
-
     }
+
 
     @Composable
     fun MainTable(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, length: MutableState<Int>) {
@@ -1618,6 +1631,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     override fun LayoutLargePortrait() {
         val view_model = this.controller_model
         val ui_facade = this.controller_model.opus_manager.vm_state
+        val layout = this.view_model.get_layout_size()
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.BottomCenter
@@ -1625,20 +1639,24 @@ class ComponentActivityEditor: PaganComponentActivity() {
             Box(Modifier.fillMaxSize()) {
                 MainTable(Modifier, ui_facade, view_model.action_interface,  ui_facade.beat_count)
             }
-            AnimatedVisibility(ui_facade.active_cursor.value != null) {
+
+            val primary = this@ComponentActivityEditor.get_context_menu_primary(
+                Modifier.padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
+                ui_facade,
+                view_model.action_interface,
+                layout
+            )
+            val secondary = this@ComponentActivityEditor.get_context_menu_secondary(
+                Modifier.padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
+                ui_facade,
+                view_model.action_interface,
+                layout
+            )
+
+            AnimatedVisibility(primary != null || secondary != null) {
                 CMBoxBottom(Modifier.width(SIZE_M.first)) {
-                    ContextMenuPrimary(
-                        Modifier.padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
-                        ui_facade,
-                        view_model.action_interface,
-                        false
-                    )
-                    ContextMenuSecondary(
-                        Modifier.padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
-                        ui_facade,
-                        view_model.action_interface,
-                        false
-                    )
+                    primary?.invoke()
+                    secondary?.invoke()
                 }
             }
         }
@@ -1648,6 +1666,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     override fun LayoutMediumPortrait() {
         val view_model = this.controller_model
         val ui_facade = this.controller_model.opus_manager.vm_state
+        val layout = this.view_model.get_layout_size()
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.BottomCenter
@@ -1655,20 +1674,24 @@ class ComponentActivityEditor: PaganComponentActivity() {
             Box(Modifier.fillMaxSize()) {
                 MainTable(Modifier, ui_facade, view_model.action_interface,  ui_facade.beat_count)
             }
-            AnimatedVisibility(ui_facade.active_cursor.value != null) {
+
+            val primary = this@ComponentActivityEditor.get_context_menu_primary(
+                Modifier.padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
+                ui_facade,
+                view_model.action_interface,
+                layout
+            )
+            val secondary = this@ComponentActivityEditor.get_context_menu_secondary(
+                Modifier.padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
+                ui_facade,
+                view_model.action_interface,
+                layout
+            )
+
+            AnimatedVisibility(primary != null || secondary != null) {
                 CMBoxBottom {
-                    ContextMenuPrimary(
-                        Modifier.padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
-                        ui_facade,
-                        view_model.action_interface,
-                        false
-                    )
-                    ContextMenuSecondary(
-                        Modifier.padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
-                        ui_facade,
-                        view_model.action_interface,
-                        false
-                    )
+                    primary?.invoke()
+                    secondary?.invoke()
                 }
             }
         }
@@ -1687,6 +1710,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     override fun LayoutMediumLandscape() {
         val view_model = this.controller_model
         val ui_facade = this.controller_model.opus_manager.vm_state
+        val layout = this.view_model.get_layout_size()
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.BottomCenter
@@ -1698,27 +1722,26 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.Bottom
                 ) {
-                    Row(
-                        Modifier.weight(1F),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        CMBoxBottom(Modifier.width(SIZE_M.first)) {
-                            ContextMenuSecondary(
-                                Modifier.padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
-                                ui_facade,
-                                view_model.action_interface,
-                                true
-                            )
-                        }
+                    this@ComponentActivityEditor.get_context_menu_secondary(
+                        Modifier.padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
+                        ui_facade,
+                        view_model.action_interface,
+                        layout
+                    )?.let {
+                        Row(
+                            Modifier.weight(1F),
+                            horizontalArrangement = Arrangement.Center,
+                            content = { CMBoxBottom(Modifier.width(SIZE_M.first)) { it() } }
+                        )
                     }
-                    Row(
-                        Modifier.fillMaxHeight(),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        CMBoxEnd {
-                            ContextMenuPrimary(Modifier, ui_facade, view_model.action_interface, true)
-                        }
+
+                    this@ComponentActivityEditor.get_context_menu_primary(Modifier, ui_facade, view_model.action_interface, layout)?.let {
+                        Row(
+                            Modifier.fillMaxHeight(),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically,
+                            content = { CMBoxEnd { it() } }
+                        )
                     }
                 }
             }

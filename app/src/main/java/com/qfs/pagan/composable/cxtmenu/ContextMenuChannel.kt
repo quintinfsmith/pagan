@@ -1,11 +1,7 @@
 package com.qfs.pagan.composable.cxtmenu
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
@@ -18,6 +14,7 @@ import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.button.TextCMenuButton
 import com.qfs.pagan.viewmodel.ViewModelEditorState
+import com.qfs.pagan.viewmodel.ViewModelPagan
 
 @Composable
 fun ToggleEffectsButton(dispatcher: ActionTracker) {
@@ -92,34 +89,44 @@ fun SetPresetButton(modifier: Modifier = Modifier, dispatcher: ActionTracker, ch
 }
 
 @Composable
-fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
-    if (landscape) {
-        Column(Modifier.width(dimensionResource(R.dimen.contextmenu_button_width))) {
-            RemoveChannelButton(dispatcher)
-            CMPadding()
-            AddKitButton(dispatcher)
-            CMPadding()
-            AddChannelButton(dispatcher)
-            CMPadding()
-            AdjustChannelButton(dispatcher)
-            CMPadding()
-            ToggleEffectsButton(dispatcher)
+fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: ViewModelPagan.LayoutSize) {
+    when (layout) {
+        ViewModelPagan.LayoutSize.SmallPortrait,
+        ViewModelPagan.LayoutSize.MediumPortrait,
+        ViewModelPagan.LayoutSize.LargePortrait,
+        ViewModelPagan.LayoutSize.XLargePortrait,
+        ViewModelPagan.LayoutSize.LargeLandscape,
+        ViewModelPagan.LayoutSize.XLargeLandscape -> {
+            ContextMenuPrimaryRow(modifier) {
+                ToggleEffectsButton(dispatcher)
+                Spacer(
+                    Modifier
+                        .width(dimensionResource(R.dimen.contextmenu_padding))
+                        .weight(1F)
+                )
+                AdjustChannelButton(dispatcher)
+                CMPadding()
+                RemoveChannelButton(dispatcher)
+                CMPadding()
+                AddKitButton(dispatcher)
+                CMPadding()
+                AddChannelButton(dispatcher)
+            }
         }
-    } else {
-        ContextMenuPrimaryRow(modifier) {
-            ToggleEffectsButton(dispatcher)
-            Spacer(
-                Modifier
-                    .width(dimensionResource(R.dimen.contextmenu_padding))
-                    .weight(1F)
-            )
-            AdjustChannelButton(dispatcher)
-            CMPadding()
-            RemoveChannelButton(dispatcher)
-            CMPadding()
-            AddKitButton(dispatcher)
-            CMPadding()
-            AddChannelButton(dispatcher)
+
+        ViewModelPagan.LayoutSize.SmallLandscape,
+        ViewModelPagan.LayoutSize.MediumLandscape -> {
+            Column(Modifier.width(dimensionResource(R.dimen.contextmenu_button_width))) {
+                RemoveChannelButton(dispatcher)
+                CMPadding()
+                AddKitButton(dispatcher)
+                CMPadding()
+                AddChannelButton(dispatcher)
+                CMPadding()
+                AdjustChannelButton(dispatcher)
+                CMPadding()
+                ToggleEffectsButton(dispatcher)
+            }
         }
     }
 }
@@ -147,4 +154,3 @@ fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
         )
     }
 }
-

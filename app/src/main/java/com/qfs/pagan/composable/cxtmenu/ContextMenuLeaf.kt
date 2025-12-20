@@ -167,84 +167,81 @@ fun UserCopyModeSelect(ui_facade: ViewModelEditorState, dispatcher: ActionTracke
 fun ContextMenuSinglePrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, show_relative_input: Boolean, layout: ViewModelPagan.LayoutSize) {
     val active_event = ui_facade.active_event.value
     val cursor = ui_facade.active_cursor.value ?: return
-
-    val landscape = when (layout) {
-        ViewModelPagan.LayoutSize.SmallPortrait,
-        ViewModelPagan.LayoutSize.MediumPortrait,
-        ViewModelPagan.LayoutSize.LargePortrait,
-        ViewModelPagan.LayoutSize.XLargePortrait -> false
-        else -> true
-    }
+    val active_line = ui_facade.line_data[cursor.ints[0]]
+    val is_percussion = active_line.assigned_offset.value != null
 
     val octave = when (active_event) {
         is AbsoluteNoteEvent -> active_event.note / ui_facade.radix.value
         is RelativeNoteEvent -> abs(active_event.offset) / ui_facade.radix.value
         is PercussionEvent -> 0
-        null -> null
-        else -> {
-            ContextMenuStructureControls(modifier, ui_facade, dispatcher, landscape)
-            return
-        }
+        else -> null
+    //        ContextMenuStructureControls(modifier, ui_facade, dispatcher, landscape)
     }
 
-    val active_line = ui_facade.line_data[cursor.ints[0]]
-    if (active_line.assigned_offset.value != null) {
-        ContextMenuStructureControls(modifier, ui_facade, dispatcher, layout)
-    } else if (layout) {
-        ContextMenuSinglePrimaryLandscape(ui_facade, dispatcher, show_relative_input, octave)
-    } else {
-        ContextMenuSinglePrimaryPortrait(modifier, ui_facade, dispatcher, show_relative_input, octave)
+    when (layout) {
+        ViewModelPagan.LayoutSize.SmallLandscape,
+        ViewModelPagan.LayoutSize.MediumLandscape -> {
+            if (is_percussion) {
+                ContextMenuStructureControls(modifier, ui_facade, dispatcher, false)
+            } else {
+                Row {
+                    if (show_relative_input) {
+                        Column(
+                            verticalArrangement = Arrangement.SpaceBetween,
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            content = { UserCopyModeSelect(ui_facade, dispatcher) }
+                        )
+                    }
+                    ContextMenuStructureControls(Modifier, ui_facade, dispatcher, true)
+                    Column(Modifier.width(dimensionResource(R.dimen.numberselector_column_width))) {
+                        NumberSelector(8, octave, ui_facade.highlighted_octave.value, false) { dispatcher.set_octave(it) }
+                    }
+                }
+            }
+        }
+
+        ViewModelPagan.LayoutSize.LargeLandscape,
+        ViewModelPagan.LayoutSize.XLargeLandscape,
+        ViewModelPagan.LayoutSize.SmallPortrait,
+        ViewModelPagan.LayoutSize.MediumPortrait,
+        ViewModelPagan.LayoutSize.LargePortrait,
+        ViewModelPagan.LayoutSize.XLargePortrait -> {
+            if (is_percussion) {
+                ContextMenuStructureControls(modifier, ui_facade, dispatcher, false)
+            } else {
+                Column(modifier) {
+                    if (show_relative_input) {
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                            content = { UserCopyModeSelect(ui_facade, dispatcher) }
+                        )
+                    }
+                    ContextMenuStructureControls(Modifier, ui_facade, dispatcher, false)
+                    //Row(Modifier.padding(top = dimensionResource(R.dimen.contextmenu_padding))) {
+                    //    NumberSelector(8, octave, ui_facade.highlighted_octave.value, false) { dispatcher.set_octave(it) }
+                    //}
+                }
+            }
+        }
     }
 }
 
 @Composable
-fun ContextMenuSinglePrimaryLandscape(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, show_relative_input: Boolean, octave: Int?) {
-    Row {
-        if (show_relative_input) {
-            Column(
-                verticalArrangement = Arrangement.SpaceBetween,
-                horizontalAlignment = Alignment.CenterHorizontally,
-                content = { UserCopyModeSelect(ui_facade, dispatcher) }
-            )
-        }
-        ContextMenuStructureControls(Modifier, ui_facade, dispatcher, true)
-
-        Column(Modifier.width(dimensionResource(R.dimen.numberselector_column_width))) {
-            NumberSelector(8, octave, ui_facade.highlighted_octave.value, false) { dispatcher.set_octave(it) }
-        }
-    }
-}
-
-@Composable
-fun ContextMenuSinglePrimaryPortrait(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, show_relative_input: Boolean, octave: Int?) {
-    Column(modifier) {
-        if (show_relative_input) {
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-                content = { UserCopyModeSelect(ui_facade, dispatcher) }
-            )
-        }
-        ContextMenuStructureControls(Modifier, ui_facade, dispatcher, false)
-        Row(Modifier.padding(top = dimensionResource(R.dimen.contextmenu_padding))) {
-            NumberSelector(8, octave, ui_facade.highlighted_octave.value, false) { dispatcher.set_octave(it) }
-        }
-    }
-}
-
-@Composable
-fun ContextMenuSingleSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier, landscape: Boolean = false) {
+fun ContextMenuSingleSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier, layout: ViewModelPagan.LayoutSize) {
     val cursor = ui_facade.active_cursor.value ?: return
     val line_data = ui_facade.line_data[cursor.ints[0]]
     if (line_data.assigned_offset.value != null) return
+
+
     if (line_data.ctl_type.value == null) {
-        ContextMenuSingleStdSecondary(ui_facade, dispatcher, modifier, landscape)
+        ContextMenuSingleStdSecondary(ui_facade, dispatcher, modifier, layout)
     } else {
-        ContextMenuSingleCtlSecondary(ui_facade, dispatcher, modifier, landscape)
+        ContextMenuSingleCtlSecondary(ui_facade, dispatcher, modifier, layout)
     }
 }
 @Composable
-fun ContextMenuSingleCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier, landscape: Boolean = false) {
+fun ContextMenuSingleCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier, layout: ViewModelPagan.LayoutSize) {
     val active_event = ui_facade.active_event.value ?: return
     ContextMenuSecondaryRow(modifier) {
         when (active_event) {
@@ -260,11 +257,34 @@ fun ContextMenuSingleCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: A
 }
 
 @Composable
-fun ContextMenuSingleStdSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier, landscape: Boolean = false) {
+fun ContextMenuSingleStdSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier, layout: ViewModelPagan.LayoutSize) {
     val cursor = ui_facade.active_cursor.value ?: return
     if (ui_facade.line_data[cursor.ints[0]].assigned_offset.value != null) return
-
     val active_event = ui_facade.active_event.value
+
+    when (layout) {
+        ViewModelPagan.LayoutSize.SmallPortrait,
+        ViewModelPagan.LayoutSize.MediumPortrait,
+        ViewModelPagan.LayoutSize.LargeLandscape,
+        ViewModelPagan.LayoutSize.LargePortrait,
+        ViewModelPagan.LayoutSize.XLargeLandscape,
+        ViewModelPagan.LayoutSize.XLargePortrait -> {
+            val octave = when (active_event) {
+                is AbsoluteNoteEvent -> active_event.note / ui_facade.radix.value
+                is RelativeNoteEvent -> abs(active_event.offset) / ui_facade.radix.value
+                is PercussionEvent -> 0
+                null -> null
+                else -> throw Exception("Invalid Event Type") // TODO: Specify
+            }
+
+            Row(Modifier.padding(top = dimensionResource(R.dimen.contextmenu_padding))) {
+                NumberSelector(8, octave, ui_facade.highlighted_octave.value, false) { dispatcher.set_octave(it) }
+            }
+        }
+        ViewModelPagan.LayoutSize.SmallLandscape,
+        ViewModelPagan.LayoutSize.MediumLandscape -> {}
+    }
+
     val offset = when (active_event) {
         is AbsoluteNoteEvent -> active_event.note % ui_facade.radix.value
         is RelativeNoteEvent -> abs(active_event.offset) % ui_facade.radix.value
@@ -273,7 +293,6 @@ fun ContextMenuSingleStdSecondary(ui_facade: ViewModelEditorState, dispatcher: A
         else -> throw Exception("Invalid Event Type") // TODO: Specify
     }
 
-    // Offset Selector
     Row(modifier) {
         NumberSelector(ui_facade.radix.value, offset, ui_facade.highlighted_offset.value, true) { dispatcher.set_offset(it) }
     }

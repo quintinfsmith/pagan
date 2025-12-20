@@ -3,14 +3,13 @@ package com.qfs.pagan.composable.cxtmenu
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import com.qfs.pagan.ActionTracker
@@ -21,6 +20,7 @@ import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.viewmodel.ViewModelEditorState
+import com.qfs.pagan.viewmodel.ViewModelPagan
 
 @Composable
 fun AdjustRangeButton(dispatcher: ActionTracker) {
@@ -41,30 +41,48 @@ fun UnsetRangeButton(dispatcher: ActionTracker) {
 }
 
 @Composable
-fun ContextMenuRangePrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
-    if (landscape) {
-        Column {
-            UnsetRangeButton(dispatcher)
-            CMPadding()
-            AdjustRangeButton(dispatcher)
-        }
-    } else {
-        ContextMenuPrimaryRow(modifier) {
-            AdjustRangeButton(dispatcher)
-            Spacer(modifier = Modifier.fillMaxWidth().weight(1F))
-            UnsetRangeButton(dispatcher)
-        }
-    }
-}
+fun ContextMenuRangePrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: ViewModelPagan.LayoutSize) {}
 
 @Composable
 fun ContextMenuRangeSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, move_mode: PaganConfiguration.MoveMode) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(dimensionResource(R.dimen.contextmenu_secondary_button_height)),
-            horizontalArrangement = Arrangement.SpaceAround
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AdjustRangeButton(dispatcher)
+            SingleChoiceSegmentedButtonRow {
+                // TODO: MERGE
+                val options = PaganConfiguration.MoveMode.entries.filter { it != PaganConfiguration.MoveMode.MERGE }
+                for ((i, mode) in options.enumerate()) {
+
+                    SegmentedButton(
+                        shape = SegmentedButtonDefaults.itemShape(
+                            index = i,
+                            count = options.size
+                        ),
+                        onClick = { dispatcher.set_copy_mode(mode) },
+                        selected = mode == move_mode,
+                        label = {
+                            SText(
+                                when (mode) {
+                                    PaganConfiguration.MoveMode.MOVE -> R.string.move_mode_move
+                                    PaganConfiguration.MoveMode.COPY -> R.string.move_mode_copy
+                                    PaganConfiguration.MoveMode.MERGE -> R.string.move_mode_merge
+                                }
+                            )
+                        }
+                    )
+                }
+            }
+            UnsetRangeButton(dispatcher)
+        }
+        Row(
+            Modifier
+                .height(dimensionResource(R.dimen.contextmenu_secondary_button_height))
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
         ) {
             val cursor_mode = ui_facade.active_cursor.value?.type
             SText(
@@ -92,36 +110,6 @@ fun ContextMenuRangeSecondary(ui_facade: ViewModelEditorState, dispatcher: Actio
                     }
                 }
             )
-        }
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceAround
-        ) {
-
-            SingleChoiceSegmentedButtonRow {
-                // TODO: MERGE
-                val options = PaganConfiguration.MoveMode.entries.filter { it != PaganConfiguration.MoveMode.MERGE }
-                for ((i, mode) in options.enumerate()) {
-
-                    SegmentedButton(
-                        shape = SegmentedButtonDefaults.itemShape(
-                            index = i,
-                            count = options.size
-                        ),
-                        onClick = { dispatcher.set_copy_mode(mode) },
-                        selected = mode == move_mode,
-                        label = {
-                            SText(
-                                when (mode) {
-                                    PaganConfiguration.MoveMode.MOVE -> R.string.move_mode_move
-                                    PaganConfiguration.MoveMode.COPY -> R.string.move_mode_copy
-                                    PaganConfiguration.MoveMode.MERGE -> R.string.move_mode_merge
-                                }
-                            )
-                        }
-                    )
-                }
-            }
         }
     }
 }

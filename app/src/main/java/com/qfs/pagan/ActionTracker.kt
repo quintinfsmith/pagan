@@ -1093,49 +1093,63 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
     fun show_hidden_line_controller(forced_value: EffectType? = null) {
         val opus_manager = this.get_opus_manager()
-        val options = mutableListOf<Pair<EffectType, @Composable RowScope.() -> Unit>>( )
         val cursor = opus_manager.cursor
 
+        forced_value?.let {
+            this.track(TrackedAction.ShowLineController, ActionTracker.string_to_ints(it.name))
+            opus_manager.toggle_line_controller_visibility(it, cursor.channel, cursor.line_offset)
+            return
+        }
+
+        val options = mutableListOf<Pair<EffectType, @Composable RowScope.() -> Unit>>( )
         for ((ctl_type, icon_id) in OpusLayerInterface.line_controller_domain) {
             if (opus_manager.is_line_ctl_visible(ctl_type, cursor.channel, cursor.line_offset)) continue
             options.add(this.generate_effect_menu_option(ctl_type, icon_id))
-
         }
 
-        this.dialog_popup_menu(R.string.show_line_controls, options, stub_output = forced_value) { ctl_type: EffectType ->
-            this.track(TrackedAction.ShowLineController, ActionTracker.string_to_ints(ctl_type.name))
-            opus_manager.toggle_line_controller_visibility(ctl_type, cursor.channel, cursor.line_offset)
+        this.dialog_popup_menu(R.string.show_line_controls, options) { ctl_type: EffectType ->
+            this.show_hidden_line_controller(ctl_type)
         }
     }
 
     fun show_hidden_channel_controller(forced_value: EffectType? =  null) {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        val options = mutableListOf<Pair<EffectType, @Composable RowScope.() -> Unit>>( )
 
+        forced_value?.let {
+            this.track(TrackedAction.ShowChannelController, ActionTracker.string_to_ints(it.name))
+            opus_manager.toggle_channel_controller_visibility(it, cursor.channel)
+            return
+        }
+
+        val options = mutableListOf<Pair<EffectType, @Composable RowScope.() -> Unit>>( )
         for ((ctl_type, icon_id) in OpusLayerInterface.channel_controller_domain) {
             if (opus_manager.is_channel_ctl_visible(ctl_type, cursor.channel)) continue
             options.add(this.generate_effect_menu_option(ctl_type, icon_id))
         }
 
-        this.dialog_popup_menu(R.string.show_channel_controls, options, stub_output = forced_value) { ctl_type: EffectType ->
-            this.track(TrackedAction.ShowChannelController, ActionTracker.string_to_ints(ctl_type.name))
-            opus_manager.toggle_channel_controller_visibility(ctl_type, cursor.channel)
+        this.dialog_popup_menu(R.string.show_channel_controls, options) {
+            this.show_hidden_channel_controller(it)
         }
     }
 
     fun show_hidden_global_controller(forced_value: EffectType? =  null) {
         val opus_manager = this.get_opus_manager()
-        val options = mutableListOf<Pair<EffectType, @Composable RowScope.() -> Unit>>( )
 
+        forced_value?.let {
+            this.track(TrackedAction.ShowGlobalController, ActionTracker.string_to_ints(it.name))
+            opus_manager.toggle_global_controller_visibility(it)
+            return
+        }
+
+        val options = mutableListOf<Pair<EffectType, @Composable RowScope.() -> Unit>>( )
         for ((ctl_type, icon_id) in OpusLayerInterface.global_controller_domain) {
             if (opus_manager.is_global_ctl_visible(ctl_type)) continue
             options.add(this.generate_effect_menu_option(ctl_type, icon_id))
         }
 
-        this.dialog_popup_menu(R.string.show_global_controls, options, stub_output = forced_value) { ctl_type: EffectType ->
-            this.track(TrackedAction.ShowGlobalController, ActionTracker.string_to_ints(ctl_type.name))
-            opus_manager.toggle_global_controller_visibility(ctl_type)
+        this.dialog_popup_menu(R.string.show_global_controls, options) {
+            this.show_hidden_global_controller(it)
         }
     }
 
@@ -1780,22 +1794,14 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
         this.vm_top.create_dialog { close ->
             @Composable {
-                Row { DialogSTitle(title, modifier = Modifier.weight(1F)) }
-                Row {
-                    UnSortableMenu(Modifier, options, default) { value ->
-                        close()
-                        callback(value)
-                    }
+                DialogSTitle(title)
+                UnSortableMenu(Modifier, options, default) { value ->
+                    close()
+                    callback(value)
                 }
                 DialogBar(neutral = close)
             }
         }
-        // if (stub_output != null) {
-        //     callback(-1, stub_output)
-        // } else {
-        //     val activity = this.get_activity()
-        //     activity.dialog_popup_menu(title, options, default, callback)
-        // }
     }
 
     private fun dialog_text_popup(title: Int, default: String? = null, stub_output: String? = null, callback: (String) -> Unit) {
@@ -1804,7 +1810,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         this.vm_top.create_dialog { close ->
             @Composable {
                 val value = remember { mutableStateOf(default ?: "") }
-                Row { DialogSTitle(title, modifier = Modifier.weight(1F)) }
+                DialogSTitle(title)
                 Row {
                     TextInput(
                         modifier = Modifier,

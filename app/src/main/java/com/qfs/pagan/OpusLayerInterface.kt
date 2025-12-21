@@ -271,6 +271,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             super.set_line_controller_visibility(type, channel_index, line_offset, false)
             this.vm_state.remove_row(visible_row, 1)
         }
+        this.vm_state.refresh_cursor()
     }
 
     override fun set_channel_controller_visibility(type: EffectType, channel_index: Int, visibility: Boolean) {
@@ -285,6 +286,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             super.set_channel_controller_visibility(type, channel_index, false)
             this.vm_state.remove_row(visible_row, 1)
         }
+        this.vm_state.refresh_cursor()
     }
 
     override fun set_global_controller_visibility(type: EffectType, visibility: Boolean) {
@@ -298,6 +300,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             super.set_global_controller_visibility(type, false)
             this.vm_state.remove_row(visible_row, 1)
         }
+        this.vm_state.refresh_cursor()
     }
 
     override fun set_project_name(new_name: String?) {
@@ -1030,12 +1033,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         super.controller_line_set_initial_event(type, channel, line_offset, event)
     }
 
-    //override fun toggle_channel_controller_visibility(type: ControlEventType, channel_index: Int) {
-    //    this.lock_ui_partial {
-    //        super.toggle_channel_controller_visibility(type, channel_index)
-    //        this._controller_visibility_toggle_callback()
-    //    }
-    //}
 
     override fun recache_line_maps() {
         super.recache_line_maps()
@@ -1141,19 +1138,46 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     }
 
-   // override fun toggle_global_control_visibility(type: ControlEventType) {
-   //     this.lock_ui_partial {
-   //         super.toggle_global_control_visibility(type)
-   //         this._controller_visibility_toggle_callback()
-   //     }
-   // }
+    private fun _update_after_new_controller(channel: Int, line_offset: Int?) {
+        if (this.ui_lock.is_locked()) return
 
-   // override fun toggle_line_controller_visibility(type: ControlEventType, channel_index: Int, line_offset: Int) {
-   //     this.lock_ui_partial {
-   //         super.toggle_line_controller_visibility(type, channel_index, line_offset)
-   //         this._controller_visibility_toggle_callback()
-   //     }
-   // }
+        val working_channel = this.get_channel(channel)
+        val adj_line_offset = line_offset ?: (working_channel.lines.size - 1)
+        val abs_offset = this.get_instrument_line_index(channel, adj_line_offset)
+        val row_index = this.get_actual_line_index(abs_offset)
+        val visible_row = this.get_visible_row_from_ctl_line(row_index) ?: return
+
+        val new_line = if (line_offset == null) {
+            working_channel.lines.last()
+        } else {
+            working_channel.lines[line_offset]
+        }
+
+        this.vm_state.add_row(
+            visible_row,
+            new_line.beats,
+            ViewModelEditorState.LineData(
+                channel,
+                line_offset,
+                null,
+                if (this.is_percussion(channel)) {
+                    (working_channel.lines[adj_line_offset] as OpusLinePercussion).instrument
+                } else {
+                    null
+                },
+                this.channels[channel].lines[adj_line_offset].muted
+            )
+        )
+
+        val controllers = working_channel.lines[adj_line_offset].controllers.get_all()
+        for (i in controllers.indices) {
+            val (type, controller) = controllers[i]
+            if (!controller.visible) continue
+            this._add_controller_to_column_width_map(visible_row + i + 1, controller, channel, adj_line_offset, type)
+        }
+
+        this.vm_state.shift_line_offsets_up(channel, adj_line_offset)
+    }
 
     override fun on_action_blocked(blocker_key: BeatKey, blocker_position: List<Int>) {
         super.on_action_blocked(blocker_key, blocker_position)

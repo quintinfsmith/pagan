@@ -160,10 +160,6 @@ class ViewModelEditorState: ViewModel() {
         this.line_count.value += 1
     }
 
-    fun queue_config_drawer_redraw_export_button() {
-        TODO()
-    }
-
     fun update_line(y: Int, channel: Int?, line_offset: Int?, ctl_type: EffectType?, assigned_offset: Int?, is_mute: Boolean, is_selected: Boolean) {
         this.line_data[y].channel.value = channel
         this.line_data[y].line_offset.value = line_offset
@@ -177,11 +173,11 @@ class ViewModelEditorState: ViewModel() {
         for (i in 0 until count) {
             val line = this.line_data.removeAt(y)
             if (line.channel.value != null && line.line_offset.value != null && line.ctl_type.value == null) {
-                this.channel_data[line.channel.value!!].size.value -= 1
+                this.channel_data[line.channel.value!!].size.intValue -= 1
             }
             this.cell_map.removeAt(y)
         }
-        this.line_count.value -= 1
+        this.line_count.value -= count
     }
 
     // Call after removing std line's row
@@ -196,11 +192,15 @@ class ViewModelEditorState: ViewModel() {
     }
 
     // Call after adding std line's row
-    fun shift_line_offsets_up(channel: Int, line_offset: Int, count: Int = 1) {
-        for (line_data in this.line_data) {
+    fun shift_line_offsets_up(channel: Int, line_offset: Int, initial_y: Int, count: Int = 1) {
+        var offset = 1
+        for (line_data in this.line_data.subList(initial_y + 1, this.line_data.size)) {
+            if (line_data.ctl_type.value == null) break
+            offset++
+        }
+        for (line_data in this.line_data.subList(initial_y + offset, this.line_data.size)) {
             if (line_data.channel.value != channel) continue
             line_data.line_offset.value?.let { check_offset ->
-                if (check_offset <= line_offset) continue
                 line_data.line_offset.value = check_offset + count
             }
         }

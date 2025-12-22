@@ -1533,15 +1533,11 @@ open class OpusLayerBase: Effectable {
         val is_percussion = this.is_percussion(channel)
         when (line) {
             is OpusLine -> {
-                if (is_percussion) {
-                    throw InvalidLineException()
-                }
+                if (is_percussion) throw InvalidLineException()
                 (this.get_channel(channel) as OpusChannel).insert_line(line_offset, line)
             }
             is OpusLinePercussion -> {
-                if (!is_percussion) {
-                    throw InvalidPercussionLineException()
-                }
+                if (!is_percussion) throw InvalidPercussionLineException()
                 (this.get_channel(channel) as OpusPercussionChannel).insert_line(line_offset, line)
             }
             else -> throw UnhandledLineType(line)

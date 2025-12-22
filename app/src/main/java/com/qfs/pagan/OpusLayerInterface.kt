@@ -751,9 +751,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         if (!this.ui_lock.is_locked()) {
             var row_count = 1
             for ((_, controller) in output.controllers.get_all()) {
-                if (controller.visible) {
-                    row_count += 1
-                }
+                if (!controller.visible) continue
+                row_count += 1
             }
 
             this.vm_state.remove_row(abs_line, row_count)
@@ -1041,10 +1040,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     override fun set_transpose(new_transpose: Pair<Int, Int>) {
         super.set_transpose(new_transpose)
-
-        if (!this.ui_lock.is_locked()) {
-            this.vm_state.queue_config_drawer_redraw_export_button()
-        }
     }
 
     override fun set_tuning_map(new_map: Array<Pair<Int, Int>>, mod_events: Boolean) {
@@ -1067,7 +1062,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
         if (!this.ui_lock.is_locked()) {
             this.vm_state.set_radix(this.get_radix())
-            this.vm_state.queue_config_drawer_redraw_export_button()
 
             if (new_map.size != original_map.size && mod_events) {
                 for (i in 0 until this.channels.size) {
@@ -1136,47 +1130,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         if (this.ui_lock.is_locked()) return
         this.vm_state.set_channel_data(channel, this.is_percussion(channel), instrument, this.channels[channel].muted, size = this.channels[channel].lines.size, )
 
-    }
-
-    private fun _update_after_new_controller(channel: Int, line_offset: Int?) {
-        if (this.ui_lock.is_locked()) return
-
-        val working_channel = this.get_channel(channel)
-        val adj_line_offset = line_offset ?: (working_channel.lines.size - 1)
-        val abs_offset = this.get_instrument_line_index(channel, adj_line_offset)
-        val row_index = this.get_actual_line_index(abs_offset)
-        val visible_row = this.get_visible_row_from_ctl_line(row_index) ?: return
-
-        val new_line = if (line_offset == null) {
-            working_channel.lines.last()
-        } else {
-            working_channel.lines[line_offset]
-        }
-
-        this.vm_state.add_row(
-            visible_row,
-            new_line.beats,
-            ViewModelEditorState.LineData(
-                channel,
-                line_offset,
-                null,
-                if (this.is_percussion(channel)) {
-                    (working_channel.lines[adj_line_offset] as OpusLinePercussion).instrument
-                } else {
-                    null
-                },
-                this.channels[channel].lines[adj_line_offset].muted
-            )
-        )
-
-        val controllers = working_channel.lines[adj_line_offset].controllers.get_all()
-        for (i in controllers.indices) {
-            val (type, controller) = controllers[i]
-            if (!controller.visible) continue
-            this._add_controller_to_column_width_map(visible_row + i + 1, controller, channel, adj_line_offset, type)
-        }
-
-        this.vm_state.shift_line_offsets_up(channel, adj_line_offset)
     }
 
     override fun on_action_blocked(blocker_key: BeatKey, blocker_position: List<Int>) {
@@ -1809,13 +1762,15 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         )
 
         val controllers = working_channel.lines[adj_line_offset].controllers.get_all()
-        for (i in controllers.indices) {
-            val (type, controller) = controllers[i]
+
+        var i = 1
+        for ((type, controller) in controllers) {
             if (!controller.visible) continue
-            this._add_controller_to_column_width_map(visible_row + i + 1, controller, channel, adj_line_offset, type)
+            this._add_controller_to_column_width_map(visible_row + i++, controller, channel, adj_line_offset, type)
         }
 
-        this.vm_state.shift_line_offsets_up(channel, adj_line_offset)
+        val y = this.get_visible_row_from_ctl_line(this.get_actual_line_index(this.get_instrument_line_index(channel, adj_line_offset))) ?: return
+        this.vm_state.shift_line_offsets_up(channel, adj_line_offset, y)
     }
 
     private fun _new_column_in_column_width_map(index: Int) {

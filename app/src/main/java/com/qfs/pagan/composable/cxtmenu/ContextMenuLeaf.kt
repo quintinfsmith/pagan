@@ -268,7 +268,7 @@ fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
                 is RelativeNoteEvent -> abs(active_event.offset) / ui_facade.radix.value
                 is PercussionEvent -> 0
                 null -> null
-                else -> throw Exception("Invalid Event Type") // TODO: Specify
+                else -> throw Exception("Invalid Event Type $active_event") // TODO: Specify
             }
 
             Row(Modifier.padding(top = dimensionResource(R.dimen.contextmenu_padding))) {

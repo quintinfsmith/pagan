@@ -205,13 +205,13 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                     CtlLineLevel.Channel -> TODO()
                     CtlLineLevel.Global -> TODO()
                     null -> {
-                        if (opus_manager.marked_range != null) {
+                        if (opus_manager.cursor.range != null) {
                             opus_manager.overwrite_beat_range(
                                 opus_manager.cursor.get_beatkey(),
-                                opus_manager.marked_range!!.first,
-                                opus_manager.marked_range!!.second,
+                                opus_manager.cursor.range!!.first,
+                                opus_manager.cursor.range!!.second,
                             )
-                            opus_manager.marked_range = null
+                            opus_manager.cursor.range = null
                         }
                     }
                 }
@@ -473,13 +473,13 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                     CtlLineLevel.Channel -> TODO()
                     CtlLineLevel.Global -> TODO()
                     null -> {
-                        if (opus_manager.marked_range != null) {
+                        if (opus_manager.cursor.range != null) {
                             opus_manager.move_beat_range(
                                 opus_manager.cursor.get_beatkey(),
-                                opus_manager.marked_range!!.first,
-                                opus_manager.marked_range!!.second,
+                                opus_manager.cursor.range!!.first,
+                                opus_manager.cursor.range!!.second,
                             )
-                            opus_manager.marked_range = null
+                            opus_manager.cursor.range = null
                         }
                     }
                 }
@@ -492,7 +492,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                     CtlLineLevel.Global -> TODO()
                     null -> {
                         val range = opus_manager.cursor.range
-                        opus_manager.marked_range = range
+                        opus_manager.cursor.range = range
                         val beat_key = opus_manager.cursor.range!!.second
                         val position = opus_manager.get_first_position(beat_key)
                         opus_manager.cursor_select(beat_key, position)

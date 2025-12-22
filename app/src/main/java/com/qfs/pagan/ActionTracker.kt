@@ -61,6 +61,7 @@ import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
+import com.qfs.pagan.structure.opusmanager.base.MixedInstrumentException
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
@@ -455,20 +456,66 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         }
     }
 
+    fun tap_leaf(beat: Int, position: List<Int>, channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        val selecting_range = cursor.mode == CursorMode.Range
+
+        if (selecting_range && cursor.ctl_type == ctl_type) {
+            if (ctl_type == null) {
+                this.move_selection_to_beat(BeatKey(channel!!, line_offset!!, beat))
+            } else if (line_offset != null) {
+                this.move_line_ctl_to_beat(BeatKey(channel!!, line_offset, beat))
+            } else if (channel != null) {
+                this.move_channel_ctl_to_beat(channel, beat)
+            } else {
+                this.move_global_ctl_to_beat(beat)
+            }
+        } else if (ctl_type == null) {
+            this.cursor_select(BeatKey(channel!!, line_offset!!, beat), position)
+        } else if (line_offset != null) {
+            this.cursor_select_ctl_at_line(ctl_type, BeatKey(channel!!, line_offset, beat), position)
+        } else if (channel != null) {
+            this.cursor_select_ctl_at_channel(ctl_type, channel, beat, position)
+        } else {
+            this.cursor_select_ctl_at_global(ctl_type, beat, position)
+        }
+    }
+
+    fun long_tap_leaf(beat: Int, position: List<Int>, channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
+        if (ctl_type == null) {
+            this.cursor_select_range_next(BeatKey(channel!!, line_offset!!, beat))
+        } else if (line_offset != null) {
+            this.cursor_select_line_ctl_range_next(ctl_type, BeatKey(channel!!, line_offset, beat))
+        } else if (channel != null) {
+            this.cursor_select_channel_ctl_range_next(ctl_type, channel, beat)
+        } else {
+            this.cursor_select_global_ctl_range_next(ctl_type, beat)
+        }
+    }
+
+
     fun tap_line(channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
+        println("---------_ ${cursor.mode}")
         when (cursor.mode) {
             CursorMode.Range -> {
-                when (cursor.ctl_level) {
-                    CtlLineLevel.Line -> this.repeat_selection_ctl_line(ctl_type!!, channel!!, line_offset!!)
-                    CtlLineLevel.Channel -> this.repeat_selection_ctl_channel(ctl_type!!, channel!!)
-                    CtlLineLevel.Global -> this.repeat_selection_ctl_global(ctl_type!!)
-                    null -> this.repeat_selection_std(channel!!, line_offset!!)
+                try {
+                    if (ctl_type == null) this.repeat_selection_std(channel!!, line_offset!!)
+                    else if (line_offset != null) this.repeat_selection_ctl_line(ctl_type, channel!!, line_offset)
+                    else if (channel != null) this.repeat_selection_ctl_channel(ctl_type, channel)
+                    else this.repeat_selection_ctl_global(ctl_type)
+                } catch (e: Exception) {
+                    this.cursor_select_line(channel, line_offset, ctl_type)
                 }
             }
-            CursorMode.Line -> if (channel == cursor.channel && line_offset == cursor.line_offset && ctl_type == cursor.ctl_type) {
-                this.cursor_select_channel(channel)
+            CursorMode.Line -> {
+                if (channel == cursor.channel && line_offset == cursor.line_offset && ctl_type == cursor.ctl_type) {
+                    this.cursor_select_channel(channel)
+                } else {
+                    this.cursor_select_line(channel, line_offset, ctl_type)
+                }
             }
             CursorMode.Single,
             CursorMode.Column,
@@ -484,11 +531,13 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         val cursor = opus_manager.cursor
         when (cursor.mode) {
             CursorMode.Range -> {
-                when (cursor.ctl_level) {
-                    CtlLineLevel.Line -> this.repeat_selection_ctl_line(ctl_type!!, channel!!, line_offset!!, -1)
-                    CtlLineLevel.Channel -> this.repeat_selection_ctl_channel(ctl_type!!, channel!!, -1)
-                    CtlLineLevel.Global -> this.repeat_selection_ctl_global(ctl_type!!, -1)
-                    null -> this.repeat_selection_std(channel!!, line_offset!!, -1)
+                try {
+                    if (ctl_type == null) this.repeat_selection_std(channel!!, line_offset!!, -1)
+                    else if (line_offset != null) this.repeat_selection_ctl_line(ctl_type, channel!!, line_offset, -1)
+                    else if (channel != null) this.repeat_selection_ctl_channel(ctl_type, channel, -1)
+                    else this.repeat_selection_ctl_global(ctl_type, -1)
+                } catch (e: Exception) {
+                    this.cursor_select_line(channel, line_offset, ctl_type)
                 }
             }
             else -> {
@@ -722,6 +771,8 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             this.dialog_number_input(R.string.repeat_selection, 1, default = default_count) { repeat: Int ->
                 this.repeat_selection_std(channel, line_offset, repeat)
             }
+        } else {
+            throw MixedInstrumentException(first_key, second_key)
         }
     }
 
@@ -734,32 +785,21 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
         if (repeat != null && repeat != -1) {
             this.track(TrackedAction.RepeatSelectionCtlLine, ActionTracker.enum_to_ints(type) + listOf(channel, line_offset, repeat))
-            when (cursor.ctl_level) {
-                CtlLineLevel.Line -> {
-                    if (first != second) {
-                        opus_manager.controller_line_overwrite_range_horizontally(type, channel, line_offset, first, second, repeat)
-                    } else {
-                        opus_manager.controller_line_overwrite_line(type, channel, line_offset, first, repeat)
-                    }
+            if (first != second) {
+                when (cursor.ctl_level!!) {
+                    CtlLineLevel.Line -> opus_manager.controller_line_overwrite_range_horizontally(type, channel, line_offset, first, second, repeat)
+                    CtlLineLevel.Channel -> opus_manager.controller_channel_to_line_overwrite_range_horizontally(type, channel, line_offset, first.channel, first.beat, second.beat, repeat)
+                    CtlLineLevel.Global -> opus_manager.controller_global_to_line_overwrite_range_horizontally(type, channel, line_offset, first.beat, second.beat, repeat)
                 }
-
-                CtlLineLevel.Channel -> {
-                    if (first != second) {
-                        opus_manager.controller_channel_to_line_overwrite_range_horizontally(type, channel, line_offset, first.channel, first.beat, second.beat, repeat)
-                    } else {
-                        opus_manager.controller_channel_to_line_overwrite_line(type, channel, line_offset, first.channel, first.beat, repeat)
-                    }
+            } else {
+                when (cursor.ctl_level!!) {
+                    CtlLineLevel.Line -> opus_manager.controller_line_overwrite_line(type, channel, line_offset, first, repeat)
+                    CtlLineLevel.Channel -> opus_manager.controller_channel_to_line_overwrite_line(type, channel, line_offset, first.channel, first.beat, repeat)
+                    CtlLineLevel.Global -> opus_manager.controller_global_to_line_overwrite_line(type, first.beat, channel, line_offset, repeat)
                 }
-
-                CtlLineLevel.Global -> {
-                    if (first != second) {
-                        opus_manager.controller_global_to_line_overwrite_range_horizontally(type, channel, line_offset, first.beat, second.beat, repeat)
-                    } else {
-                        opus_manager.controller_global_to_line_overwrite_line(type, first.beat, channel, line_offset, repeat)
-                    }
-                }
-                null -> throw UnexpectedBranch()
             }
+
+            return
         }
 
         val default_count = ceil((opus_manager.length.toFloat() - first.beat) / (second.beat - first.beat + 1).toFloat()).toInt()
@@ -852,6 +892,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                 }
                 null -> throw UnexpectedBranch()
             }
+            return
         }
 
         val default_count = ceil((opus_manager.length.toFloat() - first_key.beat) / (second_key.beat - first_key.beat + 1).toFloat()).toInt()

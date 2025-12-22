@@ -61,7 +61,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     /////////////////////////////////////////////
 
     var relative_mode: RelativeInputMode = RelativeInputMode.Absolute
-    var marked_range: Pair<BeatKey, BeatKey>? = null
 
     var temporary_blocker: OpusManagerCursor? = null
 
@@ -1345,7 +1344,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     fun cursor_select_global_ctl_range_next(type: EffectType, beat: Int) {
         if (this.cursor.mode == CursorMode.Range) {
-            this.cursor_select_global_ctl_range(type, this.marked_range!!.first.beat, beat)
+            this.cursor_select_global_ctl_range(type, this.cursor.range!!.first.beat, beat)
         } else {
             this.cursor_select_global_ctl_range(type, beat, beat)
         }
@@ -1364,7 +1363,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     fun cursor_select_channel_ctl_range_next(type: EffectType, channel: Int, beat: Int) {
         if (this.cursor.mode == CursorMode.Range) {
-            this.cursor_select_channel_ctl_range(type, channel, this.marked_range!!.first.beat, beat)
+            this.cursor_select_channel_ctl_range(type, channel, this.cursor.range!!.first.beat, beat)
         } else {
             this.cursor_select_channel_ctl_range(type, channel, beat, beat)
         }
@@ -1385,7 +1384,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     fun cursor_select_line_ctl_range_next(type: EffectType, beat_key: BeatKey) {
         if (this.cursor.mode == CursorMode.Range) {
-            this.cursor_select_line_ctl_range(type, this.marked_range!!.first, beat_key)
+            this.cursor_select_line_ctl_range(type, this.cursor.range!!.first, beat_key)
         } else {
             this.cursor_select_line_ctl_range(type, beat_key, beat_key)
         }

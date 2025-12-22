@@ -2362,208 +2362,209 @@ class EditorTable(context: Context, attrs: AttributeSet): ScrollView(context, at
         this._drag_handle.clear()
         val action_interface = this.get_action_interface()
         val opus_manager = action_interface.get_opus_manager()
-        return if (beat == null) {
-            when (row_type) {
-                RowType.Bottom -> { /* No Defined Behaviour */ }
-                RowType.Top -> opus_manager.force_cursor_select_column(0)
-                RowType.UI -> {
-                    val opus_manager = this.get_activity().get_opus_manager()
-                    val cursor = opus_manager.cursor
-                    if (cursor.is_selecting_range()) {
-                        val (pointer, ctl_level, ctl_type) = line_info!!
-                        when (ctl_level) {
-                            CtlLineLevel.Line -> {
-                                val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
-                                action_interface.repeat_selection_ctl_line(ctl_type!!, channel, line_offset)
-                            }
+        return true
+        // return if (beat == null) {
+        //     when (row_type) {
+        //         RowType.Bottom -> { /* No Defined Behaviour */ }
+        //         RowType.Top -> opus_manager.force_cursor_select_column(0)
+        //         RowType.UI -> {
+        //             val opus_manager = this.get_activity().get_opus_manager()
+        //             val cursor = opus_manager.cursor
+        //             if (cursor.is_selecting_range()) {
+        //                 val (pointer, ctl_level, ctl_type) = line_info!!
+        //                 when (ctl_level) {
+        //                     CtlLineLevel.Line -> {
+        //                         val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+        //                         action_interface.repeat_selection_ctl_line(ctl_type!!, channel, line_offset)
+        //                     }
 
-                            CtlLineLevel.Channel -> {
-                                action_interface.repeat_selection_ctl_channel(ctl_type!!, pointer)
-                            }
+        //                     CtlLineLevel.Channel -> {
+        //                         action_interface.repeat_selection_ctl_channel(ctl_type!!, pointer)
+        //                     }
 
-                            CtlLineLevel.Global -> {
-                                if (cursor.is_selecting_range()) {
-                                    action_interface.repeat_selection_ctl_global(ctl_type!!)
-                                } else {
-                                    action_interface.cursor_select_global_ctl_line(ctl_type!!)
-                                }
-                            }
+        //                     CtlLineLevel.Global -> {
+        //                         if (cursor.is_selecting_range()) {
+        //                             action_interface.repeat_selection_ctl_global(ctl_type!!)
+        //                         } else {
+        //                             action_interface.cursor_select_global_ctl_line(ctl_type!!)
+        //                         }
+        //                     }
 
-                            null -> {
-                                val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
-                                action_interface.repeat_selection_std(channel, line_offset)
-                            }
-                        }
-                    } else {
-                        this.set_dragging()
-                        this.update_cached_line_drag_position()
-                    }
-                }
-            }
-            true
-        } else {
-            when (row_type) {
-                RowType.UI -> {
-                    val (pointer, ctl_line_level, ctl_type) = line_info!!
-                    val cursor = opus_manager.cursor
-                    when (ctl_line_level) {
-                        null -> {
-                            val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
-                            val beat_key = BeatKey(channel, line_offset, beat)
+        //                     null -> {
+        //                         val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+        //                         action_interface.repeat_selection_std(channel, line_offset)
+        //                     }
+        //                 }
+        //             } else {
+        //                 this.set_dragging()
+        //                 this.update_cached_line_drag_position()
+        //             }
+        //         }
+        //     }
+        //     true
+        // } else {
+        //     when (row_type) {
+        //         RowType.UI -> {
+        //             val (pointer, ctl_line_level, ctl_type) = line_info!!
+        //             val cursor = opus_manager.cursor
+        //             when (ctl_line_level) {
+        //                 null -> {
+        //                     val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+        //                     val beat_key = BeatKey(channel, line_offset, beat)
 
-                            if (cursor.is_selecting_range() && cursor.ctl_level == null) {
-                                action_interface.cursor_select_range(opus_manager.cursor.range!!.first, beat_key)
-                            } else {
-                                action_interface.cursor_select_range(beat_key, beat_key)
-                            }
-                        }
+        //                     if (cursor.is_selecting_range() && cursor.ctl_level == null) {
+        //                         action_interface.cursor_select_range(opus_manager.cursor.range!!.first, beat_key)
+        //                     } else {
+        //                         action_interface.cursor_select_range(beat_key, beat_key)
+        //                     }
+        //                 }
 
-                        CtlLineLevel.Line -> {
-                            val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
-                            val beat_key = BeatKey(channel, line_offset, beat)
+        //                 CtlLineLevel.Line -> {
+        //                     val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+        //                     val beat_key = BeatKey(channel, line_offset, beat)
 
-                            if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Line && cursor.range!!.first.channel == beat_key.channel && cursor.range!!.first.line_offset == beat_key.line_offset && ctl_type == cursor.ctl_type) {
-                                action_interface.cursor_select_line_ctl_range(ctl_type!!, cursor.range!!.first, beat_key)
-                            } else {
-                                action_interface.cursor_select_line_ctl_range(ctl_type!!, beat_key, beat_key)
-                            }
-                        }
+        //                     if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Line && cursor.range!!.first.channel == beat_key.channel && cursor.range!!.first.line_offset == beat_key.line_offset && ctl_type == cursor.ctl_type) {
+        //                         action_interface.cursor_select_line_ctl_range(ctl_type!!, cursor.range!!.first, beat_key)
+        //                     } else {
+        //                         action_interface.cursor_select_line_ctl_range(ctl_type!!, beat_key, beat_key)
+        //                     }
+        //                 }
 
-                        CtlLineLevel.Channel -> {
-                            val type = ctl_type!!
-                            val channel = pointer
+        //                 CtlLineLevel.Channel -> {
+        //                     val type = ctl_type!!
+        //                     val channel = pointer
 
-                            if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Channel && cursor.ctl_type == type) {
-                                // Currently, can't select multiple channels in a range
-                                if (channel == cursor.range!!.first.channel) {
-                                    action_interface.cursor_select_channel_ctl_range(type, channel, cursor.range!!.first.beat, beat)
-                                }
-                            } else {
-                                action_interface.cursor_select_channel_ctl_range(type, channel, beat, beat)
-                            }
-                        }
+        //                     if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Channel && cursor.ctl_type == type) {
+        //                         // Currently, can't select multiple channels in a range
+        //                         if (channel == cursor.range!!.first.channel) {
+        //                             action_interface.cursor_select_channel_ctl_range(type, channel, cursor.range!!.first.beat, beat)
+        //                         }
+        //                     } else {
+        //                         action_interface.cursor_select_channel_ctl_range(type, channel, beat, beat)
+        //                     }
+        //                 }
 
-                        CtlLineLevel.Global -> {
-                            if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Global && cursor.ctl_type == ctl_type) {
-                                action_interface.cursor_select_global_ctl_range(ctl_type!!, cursor.range!!.first.beat, beat)
-                            } else {
-                                action_interface.cursor_select_global_ctl_range(ctl_type!!, beat, beat)
-                            }
-                        }
-                    }
-                    true
-                }
-                RowType.Top -> {
-                    if (beat == opus_manager.length) {
-                        action_interface.insert_beat(beat)
-                        true
-                    } else {
-                        false
-                    }
-                }
-                else -> false
-                // RowType.Bottom -> {}
-            }
-        }
+        //                 CtlLineLevel.Global -> {
+        //                     if (cursor.is_selecting_range() && cursor.ctl_level == CtlLineLevel.Global && cursor.ctl_type == ctl_type) {
+        //                         action_interface.cursor_select_global_ctl_range(ctl_type!!, cursor.range!!.first.beat, beat)
+        //                     } else {
+        //                         action_interface.cursor_select_global_ctl_range(ctl_type!!, beat, beat)
+        //                     }
+        //                 }
+        //             }
+        //             true
+        //         }
+        //         RowType.Top -> {
+        //             if (beat == opus_manager.length) {
+        //                 action_interface.insert_beat(beat)
+        //                 true
+        //             } else {
+        //                 false
+        //             }
+        //         }
+        //         else -> false
+        //         // RowType.Bottom -> {}
+        //     }
+        // }
     }
 
     fun on_click(row_type: RowType, line_info: Triple<Int, CtlLineLevel?, EffectType?>?, beat: Int?, position: List<Int>?) {
         val action_interface = this.get_action_interface()
         val opus_manager = action_interface.get_opus_manager()
-        if (beat == null) {
-            when (row_type) {
-                RowType.Top -> this.get_activity().shortcut_dialog()
-                RowType.Bottom -> action_interface.show_hidden_global_controller()
-                RowType.UI -> {
-                    val opus_manager = this.get_activity().get_opus_manager()
-                    val cursor = opus_manager.cursor
-                    val (pointer, ctl_level, ctl_type) = line_info!!
-                    when (ctl_level) {
-                        CtlLineLevel.Line -> {
-                            val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
-                            if (cursor.is_selecting_range()) {
-                                action_interface.repeat_selection_ctl_line(ctl_type!!, channel, line_offset, -1)
-                            } else {
-                                action_interface.cursor_select_line_ctl_line(ctl_type!!, channel, line_offset)
-                            }
-                        }
-                        CtlLineLevel.Channel -> {
-                            if (cursor.is_selecting_range()) {
-                                action_interface.repeat_selection_ctl_channel(ctl_type!!, pointer, -1)
-                            } else {
-                                action_interface.cursor_select_channel_ctl_line(ctl_type!!, pointer)
-                            }
-                        }
-                        CtlLineLevel.Global -> {
-                            if (cursor.is_selecting_range()) {
-                                action_interface.repeat_selection_ctl_global(ctl_type!!, -1)
-                            } else {
-                                action_interface.cursor_select_global_ctl_line(ctl_type!!)
-                            }
-                        }
-                        null -> {
-                            val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
-                            if (cursor.is_selecting_range()) {
-                                action_interface.repeat_selection_std(channel, line_offset, -1)
-                            } else {
-                                action_interface.cursor_select_line_std(channel, line_offset)
-                            }
-                        }
-                    }
-                }
-            }
-        } else if (beat < opus_manager.length) {
-            when (row_type) {
-                RowType.Top -> {
-                    if (beat == opus_manager.length) {
-                        action_interface.insert_beat(beat)
-                    } else {
-                        action_interface.cursor_select_column(beat)
-                    }
-                }
-                RowType.UI -> {
-                    val (pointer, ctl_line_level, ctl_type) = line_info!!
-                    when (ctl_line_level) {
-                        null -> {
-                            val (channel, line_offset) = opus_manager.get_channel_and_line_offset(
-                                pointer
-                            )
-                            this._process_standard_on_click(
-                                BeatKey(channel, line_offset, beat),
-                                position!!
-                            )
-                        }
+        // if (beat == null) {
+        //     when (row_type) {
+        //         RowType.Top -> this.get_activity().shortcut_dialog()
+        //         RowType.Bottom -> action_interface.show_hidden_global_controller()
+        //         RowType.UI -> {
+        //             val opus_manager = this.get_activity().get_opus_manager()
+        //             val cursor = opus_manager.cursor
+        //             val (pointer, ctl_level, ctl_type) = line_info!!
+        //             when (ctl_level) {
+        //                 CtlLineLevel.Line -> {
+        //                     val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+        //                     if (cursor.is_selecting_range()) {
+        //                         action_interface.repeat_selection_ctl_line(ctl_type!!, channel, line_offset, -1)
+        //                     } else {
+        //                         action_interface.cursor_select_line_ctl_line(ctl_type!!, channel, line_offset)
+        //                     }
+        //                 }
+        //                 CtlLineLevel.Channel -> {
+        //                     if (cursor.is_selecting_range()) {
+        //                         action_interface.repeat_selection_ctl_channel(ctl_type!!, pointer, -1)
+        //                     } else {
+        //                         action_interface.cursor_select_channel_ctl_line(ctl_type!!, pointer)
+        //                     }
+        //                 }
+        //                 CtlLineLevel.Global -> {
+        //                     if (cursor.is_selecting_range()) {
+        //                         action_interface.repeat_selection_ctl_global(ctl_type!!, -1)
+        //                     } else {
+        //                         action_interface.cursor_select_global_ctl_line(ctl_type!!)
+        //                     }
+        //                 }
+        //                 null -> {
+        //                     val (channel, line_offset) = opus_manager.get_channel_and_line_offset(pointer)
+        //                     if (cursor.is_selecting_range()) {
+        //                         action_interface.repeat_selection_std(channel, line_offset, -1)
+        //                     } else {
+        //                         action_interface.cursor_select_line_std(channel, line_offset)
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        // } else if (beat < opus_manager.length) {
+        //     when (row_type) {
+        //         RowType.Top -> {
+        //             if (beat == opus_manager.length) {
+        //                 action_interface.insert_beat(beat)
+        //             } else {
+        //                 action_interface.cursor_select_column(beat)
+        //             }
+        //         }
+        //         RowType.UI -> {
+        //             val (pointer, ctl_line_level, ctl_type) = line_info!!
+        //             when (ctl_line_level) {
+        //                 null -> {
+        //                     val (channel, line_offset) = opus_manager.get_channel_and_line_offset(
+        //                         pointer
+        //                     )
+        //                     this._process_standard_on_click(
+        //                         BeatKey(channel, line_offset, beat),
+        //                         position!!
+        //                     )
+        //                 }
 
-                        CtlLineLevel.Line -> {
-                            val (channel, line_offset) = opus_manager.get_channel_and_line_offset(
-                                pointer
-                            )
-                            val beat_key = BeatKey(channel, line_offset, beat)
-                            this._process_ctl_line_on_click(ctl_type!!, beat_key, position!!)
-                        }
+        //                 CtlLineLevel.Line -> {
+        //                     val (channel, line_offset) = opus_manager.get_channel_and_line_offset(
+        //                         pointer
+        //                     )
+        //                     val beat_key = BeatKey(channel, line_offset, beat)
+        //                     this._process_ctl_line_on_click(ctl_type!!, beat_key, position!!)
+        //                 }
 
-                        CtlLineLevel.Channel -> {
-                            this._process_ctl_channel_on_click(
-                                ctl_type!!,
-                                pointer,
-                                beat,
-                                position!!
-                            )
-                        }
+        //                 CtlLineLevel.Channel -> {
+        //                     this._process_ctl_channel_on_click(
+        //                         ctl_type!!,
+        //                         pointer,
+        //                         beat,
+        //                         position!!
+        //                     )
+        //                 }
 
-                        CtlLineLevel.Global -> {
-                            this._process_ctl_global_on_click(ctl_type!!, beat, position!!)
-                        }
-                    }
-                }
-                RowType.Bottom -> { /* No defined behavior */ }
-            }
-        } else {
-            when (row_type) {
-                RowType.Top ->  action_interface.insert_beat(beat)
-                else -> {}
-            }
-        }
+        //                 CtlLineLevel.Global -> {
+        //                     this._process_ctl_global_on_click(ctl_type!!, beat, position!!)
+        //                 }
+        //             }
+        //         }
+        //         RowType.Bottom -> { /* No defined behavior */ }
+        //     }
+        // } else {
+        //     when (row_type) {
+        //         RowType.Top ->  action_interface.insert_beat(beat)
+        //         else -> {}
+        //     }
+        // }
     }
 
     private fun _process_standard_on_click(beat_key: BeatKey, position: List<Int>) {

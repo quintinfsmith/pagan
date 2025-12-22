@@ -1116,33 +1116,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             EffectType.Reverb -> TODO()
                         }
                         Icon(
-                            modifier = modifier
-                                .then(
-                                    if (line_info.is_selected.value) {
-                                        Modifier.border(2.dp, colorResource(R.color.selected_primary))
-                                    } else {
-                                        Modifier
-                                    }
-                                )
-                                .padding(2.dp)
-                                .combinedClickable(
-                                    onClick = {
-                                        if (line_info.line_offset.value != null) {
-                                            dispatcher.cursor_select_line_ctl_line(
-                                                ctl_type,
-                                                line_info.channel.value!!,
-                                                line_info.line_offset.value!!
-                                            )
-                                        } else if (line_info.channel.value != null) {
-                                            dispatcher.cursor_select_channel_ctl_line(
-                                                ctl_type,
-                                                line_info.channel.value!!
-                                            )
-                                        } else {
-                                            dispatcher.cursor_select_global_ctl_line(ctl_type)
-                                        }
-                                    }
-                                ),
+                            modifier = if (line_info.is_selected.value) {
+                                    Modifier.border(2.dp, colorResource(R.color.selected_primary))
+                                } else {
+                                    Modifier
+                                }
+                                .padding(2.dp),
                             painter = painterResource(drawable_id),
                             contentDescription = stringResource(description_id)
                         )
@@ -1386,76 +1365,22 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         .weight(weight)
                         .combinedClickable(
                             onClick = {
-                                val cursor = ui_facade.active_cursor.value
-                                val selecting_range = ui_facade.active_cursor.value?.type == CursorMode.Range
-                                if (line_info.ctl_type.value == null) {
-                                    if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type.value == null) {
-                                        dispatcher.move_selection_to_beat(
-                                            BeatKey(line_info.channel.value!!, line_info.line_offset.value!!, x)
-                                        )
-                                    } else {
-                                        dispatcher.cursor_select(
-                                            BeatKey(line_info.channel.value!!, line_info.line_offset.value!!, x), path
-                                        )
-                                    }
-                                } else if (line_info.line_offset.value != null) {
-                                    if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type.value == line_info.ctl_type.value) {
-                                        dispatcher.move_line_ctl_to_beat(
-                                            BeatKey(
-                                                line_info.channel.value!!,
-                                                line_info.line_offset.value!!,
-                                                x
-                                            )
-                                        )
-                                    } else {
-                                        dispatcher.cursor_select_ctl_at_line(
-                                            line_info.ctl_type.value!!,
-                                            BeatKey(line_info.channel.value!!, line_info.line_offset.value!!, x),
-                                            path
-                                        )
-                                    }
-                                } else if (line_info.channel.value != null) {
-                                    if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type.value == line_info.ctl_type.value) {
-                                        dispatcher.move_channel_ctl_to_beat(line_info.channel.value!!, x)
-                                    } else {
-                                        dispatcher.cursor_select_ctl_at_channel(
-                                            line_info.ctl_type.value!!,
-                                            line_info.channel.value!!,
-                                            x,
-                                            path
-                                        )
-                                    }
-                                } else {
-                                    if (selecting_range && ui_facade.line_data[cursor!!.ints[0]].ctl_type.value == line_info.ctl_type.value) {
-                                        dispatcher.move_global_ctl_to_beat(x)
-                                    } else {
-                                        dispatcher.cursor_select_ctl_at_global(line_info.ctl_type.value!!, x, path)
-                                    }
-                                }
+                                dispatcher.tap_leaf(
+                                    x,
+                                    path,
+                                    line_info.channel.value,
+                                    line_info.line_offset.value,
+                                    line_info.ctl_type.value
+                                )
                             },
                             onLongClick = {
-                                if (line_info.ctl_type.value == null) {
-                                    dispatcher.cursor_select_range_next(
-                                        BeatKey(
-                                            line_info.channel.value!!,
-                                            line_info.line_offset.value!!,
-                                            x
-                                        )
-                                    )
-                                } else if (line_info.line_offset.value != null) {
-                                    dispatcher.cursor_select_line_ctl_range_next(
-                                        line_info.ctl_type.value!!,
-                                        BeatKey(line_info.channel.value!!, line_info.line_offset.value!!, x)
-                                    )
-                                } else if (line_info.channel.value != null) {
-                                    dispatcher.cursor_select_channel_ctl_range_next(
-                                        line_info.ctl_type.value!!,
-                                        line_info.channel.value!!,
-                                        x
-                                    )
-                                } else {
-                                    dispatcher.cursor_select_global_ctl_range_next(line_info.ctl_type.value!!, x)
-                                }
+                                dispatcher.long_tap_leaf(
+                                    x,
+                                    path,
+                                    line_info.channel.value,
+                                    line_info.line_offset.value,
+                                    line_info.ctl_type.value
+                                )
                             }
                         )
                 )

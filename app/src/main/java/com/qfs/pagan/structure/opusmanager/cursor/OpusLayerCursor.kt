@@ -518,6 +518,7 @@ open class OpusLayerCursor: OpusLayerBase() {
     }
 
     override fun controller_line_overwrite_range_horizontally(type: EffectType, channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey, repeat: Int?) {
+        println("ATTEMPTING....")
         this.lock_cursor {
             super.controller_line_overwrite_range_horizontally(type, channel, line_offset, first_key, second_key, repeat)
         }

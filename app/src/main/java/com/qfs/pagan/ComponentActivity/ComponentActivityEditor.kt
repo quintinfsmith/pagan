@@ -101,12 +101,11 @@ import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelPrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuColumnPrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuLeafCtlSecondary
+import com.qfs.pagan.composable.cxtmenu.ContextMenuLeafPrimary
+import com.qfs.pagan.composable.cxtmenu.ContextMenuLeafStdSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuLinePrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuLineSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuRangeSecondary
-import com.qfs.pagan.composable.cxtmenu.ContextMenuLeafPrimary
-import com.qfs.pagan.composable.cxtmenu.ContextMenuLeafSecondary
-import com.qfs.pagan.composable.cxtmenu.ContextMenuLeafStdSecondary
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
@@ -832,7 +831,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
             CursorMode.Unset -> null
         }
     }
-
 
     @Composable
     fun MainTable(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, length: MutableState<Int>) {

@@ -20,7 +20,6 @@ import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.viewmodel.ViewModelEditorState
-import com.qfs.pagan.viewmodel.ViewModelPagan
 
 @Composable
 fun AdjustRangeButton(dispatcher: ActionTracker) {
@@ -39,9 +38,6 @@ fun UnsetRangeButton(dispatcher: ActionTracker) {
         description = R.string.cd_unset
     )
 }
-
-@Composable
-fun ContextMenuRangePrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: ViewModelPagan.LayoutSize) {}
 
 @Composable
 fun ContextMenuRangeSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, move_mode: PaganConfiguration.MoveMode) {

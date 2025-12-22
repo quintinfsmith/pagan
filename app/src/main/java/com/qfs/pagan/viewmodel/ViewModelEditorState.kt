@@ -194,10 +194,12 @@ class ViewModelEditorState: ViewModel() {
     // Call after adding std line's row
     fun shift_line_offsets_up(channel: Int, line_offset: Int, initial_y: Int, count: Int = 1) {
         var offset = 1
+        // we don't want to increment the effects of the working line, so skip over them
         for (line_data in this.line_data.subList(initial_y + 1, this.line_data.size)) {
             if (line_data.ctl_type.value == null) break
             offset++
         }
+
         for (line_data in this.line_data.subList(initial_y + offset, this.line_data.size)) {
             if (line_data.channel.value != channel) continue
             line_data.line_offset.value?.let { check_offset ->

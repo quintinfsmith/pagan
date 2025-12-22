@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -460,10 +461,45 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     }
 
     fun tap_line(channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
-        this.cursor_select_line(channel, line_offset, ctl_type)
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        when (cursor.mode) {
+            CursorMode.Range -> {
+                when (cursor.ctl_level) {
+                    CtlLineLevel.Line -> this.repeat_selection_ctl_line(ctl_type!!, channel!!, line_offset!!)
+                    CtlLineLevel.Channel -> this.repeat_selection_ctl_channel(ctl_type!!, channel!!)
+                    CtlLineLevel.Global -> this.repeat_selection_ctl_global(ctl_type!!)
+                    null -> this.repeat_selection_std(channel!!, line_offset!!)
+                }
+            }
+            CursorMode.Line -> if (channel == cursor.channel && line_offset == cursor.line_offset && ctl_type == cursor.ctl_type) {
+                this.cursor_select_channel(channel)
+            }
+            CursorMode.Single,
+            CursorMode.Column,
+            CursorMode.Channel,
+            CursorMode.Unset -> {
+                this.cursor_select_line(channel, line_offset, ctl_type)
+            }
+        }
     }
 
     fun long_tap_line(channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        when (cursor.mode) {
+            CursorMode.Range -> {
+                when (cursor.ctl_level) {
+                    CtlLineLevel.Line -> this.repeat_selection_ctl_line(ctl_type!!, channel!!, line_offset!!, -1)
+                    CtlLineLevel.Channel -> this.repeat_selection_ctl_channel(ctl_type!!, channel!!, -1)
+                    CtlLineLevel.Global -> this.repeat_selection_ctl_global(ctl_type!!, -1)
+                    null -> this.repeat_selection_std(channel!!, line_offset!!, -1)
+                }
+            }
+            else -> {
+                // TODO
+            }
+        }
 
     }
 
@@ -616,34 +652,42 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     }
 
     fun repeat_selection_std(channel: Int, line_offset: Int, repeat: Int? = null) {
+        TODO()
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-
         val (first_key, second_key) = cursor.get_ordered_range()!!
-        val default_count = ceil((opus_manager.length.toFloat() - first_key.beat) / (second_key.beat - first_key.beat + 1).toFloat()).toInt()
 
         // a value of negative 1 means use default value, where a null would show the dialog
-        val use_repeat = if (repeat == -1) { default_count } else { repeat }
+        if (repeat != null && repeat != -1) {
+            this.track(TrackedAction.RepeatSelectionStd, listOf(channel, line_offset, repeat))
+            try {
+                opus_manager.overwrite_beat_range_horizontally(
+                    channel,
+                    line_offset,
+                    first_key,
+                    second_key,
+                    repeat
+                )
+            } catch (_: MixedInstrumentException) {
+                opus_manager.cursor_select_line(channel, line_offset)
+            } catch (_: InvalidOverwriteCall) {
+                opus_manager.cursor_select_line(channel, line_offset)
+            }
+            return
+        }
+
+        val default_count = ceil((opus_manager.length.toFloat() - first_key.beat) / (second_key.beat - first_key.beat + 1).toFloat()).toInt()
+        if (repeat == -1) {
+            this.repeat_selection_std(channel, line_offset, default_count)
+            return
+        }
 
         if (first_key != second_key) {
-            this.dialog_number_input(R.string.repeat_selection, 1, 999, default_count, use_repeat) { repeat: Int ->
-                this.track(TrackedAction.RepeatSelectionStd, listOf(channel, line_offset, repeat))
-                try {
-                    opus_manager.overwrite_beat_range_horizontally(
-                        channel,
-                        line_offset,
-                        first_key,
-                        second_key,
-                        repeat
-                    )
-                } catch (_: MixedInstrumentException) {
-                    opus_manager.cursor_select_line(channel, line_offset)
-                } catch (_: InvalidOverwriteCall) {
-                    opus_manager.cursor_select_line(channel, line_offset)
-                }
+            this.dialog_number_input(R.string.repeat_selection, 1, default = default_count) { repeat: Int ->
+                this.repeat_selection_std(channel, line_offset, repeat)
             }
         } else if (opus_manager.is_percussion(first_key.channel) == opus_manager.is_percussion(channel)) {
-            this.dialog_number_input(R.string.repeat_selection, 1, 999, default_count, use_repeat) { repeat: Int ->
+            this.dialog_number_input(R.string.repeat_selection, 1, default = default_count) { repeat: Int ->
                 this.track(TrackedAction.RepeatSelectionStd, listOf(channel, line_offset, repeat))
                 try {
                     opus_manager.overwrite_line(channel, line_offset, first_key, repeat)
@@ -652,8 +696,8 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                 }
             }
         } else {
-            this.track(TrackedAction.RepeatSelectionStd, listOf(channel, line_offset, repeat))
-            opus_manager.cursor_select_line(channel, line_offset)
+//            this.track(TrackedAction.RepeatSelectionStd, listOf(channel, line_offset, repeat))
+//            opus_manager.cursor_select_line(channel, line_offset)
         }
     }
     fun cursor_select_channel(channel: Int) {
@@ -1645,16 +1689,27 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             return
         }
 
-        this.vm_top.create_dialog { close ->
+        this.vm_top.create_medium_dialog { close ->
             @Composable {
                 val project_name = remember { mutableStateOf(opus_manager.project_name ?: "") }
                 val project_notes = remember { mutableStateOf(opus_manager.project_notes ?: "") }
-                Row {
-                    TextInput(input = project_name, maxLines = 1) {}
-                }
-                Row {
-                    TextInput(input = project_notes, maxLines = 10) {}
-                }
+                TextInput(
+                    label = { SText(R.string.dlg_project_name) },
+                    input = project_name,
+                    textAlign = TextAlign.Start,
+                    modifier = Modifier.fillMaxWidth(),
+                    lineLimits = TextFieldLineLimits.SingleLine
+                ) {}
+                Spacer(modifier = Modifier.height(3.dp))
+                TextInput(
+                    label = { SText(R.string.dlg_project_notes) },
+                    input = project_notes,
+                    textAlign = TextAlign.Start,
+                    modifier = Modifier.fillMaxWidth()
+                        .weight(1F, fill = false),
+                        //.verticalScroll(rememberScrollState()),
+                    lineLimits = TextFieldLineLimits.Default
+                ) {}
                 DialogBar(
                     neutral = close,
                     positive = {
@@ -1693,39 +1748,35 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
      *  wrapper around MainActivity::dialog_number_input
      *  will subvert the popup on replay
      */
-    private fun dialog_number_input(title_string_id: Int, min_value: Int, max_value: Int, default: Int? = null, stub_output: Int? = null, callback: (value: Int) -> Unit) {
-        if (stub_output != null) {
-            callback(stub_output)
-        } else {
-            this.vm_top.create_small_dialog { close ->
-                @Composable {
-                    val focus_requester = remember { FocusRequester() }
-                    val value: MutableState<Int> = remember { mutableIntStateOf(default ?: min_value) }
-                    DialogSTitle(title_string_id)
-                    IntegerInput(
-                        value = value,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .focusRequester(focus_requester),
-                        contentPadding = PaddingValues(dimensionResource(R.dimen.dlg_input_padding)),
-                        minimum = min_value,
-                        maximum = max_value
-                    ) { new_value ->
+    private fun dialog_number_input(title_string_id: Int, min_value: Int, max_value: Int? = null, default: Int? = null, callback: (value: Int) -> Unit) {
+        this.vm_top.create_small_dialog { close ->
+            @Composable {
+                val focus_requester = remember { FocusRequester() }
+                val value: MutableState<Int> = remember { mutableIntStateOf(default ?: min_value) }
+                DialogSTitle(title_string_id)
+                IntegerInput(
+                    value = value,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focus_requester),
+                    contentPadding = PaddingValues(dimensionResource(R.dimen.dlg_input_padding)),
+                    minimum = min_value,
+                    maximum = max_value
+                ) { new_value ->
+                    close()
+                    callback(new_value)
+                }
+
+                DialogBar(
+                    neutral = close,
+                    positive = {
                         close()
-                        callback(new_value)
+                        callback(value.value)
                     }
+                )
 
-                    DialogBar(
-                        neutral = close,
-                        positive = {
-                            close()
-                            callback(value.value)
-                        }
-                    )
-
-                    LaunchedEffect(Unit) {
-                        focus_requester.requestFocus()
-                    }
+                LaunchedEffect(Unit) {
+                    focus_requester.requestFocus()
                 }
             }
         }

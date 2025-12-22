@@ -241,6 +241,7 @@ fun FloatInput(value: MutableState<Float>, minimum: Float? = null, maximum: Floa
             }
         }
     }
+
     val keyboardOptions = KeyboardOptions.Companion.Default.copy(keyboardType = KeyboardType.Companion.Number)
     val inputTransformation = object : InputTransformation {
         override fun TextFieldBuffer.transformInput() {
@@ -316,12 +317,20 @@ fun FloatInput(value: MutableState<Float>, minimum: Float? = null, maximum: Floa
 }
 
 @Composable
-fun TextInput(modifier: Modifier = Modifier, input: MutableState<String>, maxLines: Int = 1, callback: (String) -> Unit) {
+fun TextInput(
+    modifier: Modifier = Modifier,
+    input: MutableState<String>,
+    textAlign: TextAlign = TextAlign.End,
+    label: (@Composable TextFieldLabelScope.() -> Unit)? = null,
+    lineLimits: TextFieldLineLimits = TextFieldLineLimits.Default,
+    callback: (String) -> Unit
+) {
     val state = rememberTextFieldState(input.value)
     OutlinedTextField(
         state = state,
-        contentPadding = PaddingValues(0.dp),
-        textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End),
+        lineLimits = lineLimits,
+        label = label,
+        textStyle = LocalTextStyle.current.copy(textAlign = textAlign),
         modifier = modifier.onFocusChanged { focus_state ->
             if (focus_state.hasFocus) {
                 state.edit {
@@ -329,22 +338,12 @@ fun TextInput(modifier: Modifier = Modifier, input: MutableState<String>, maxLin
                 }
             }
         },
+        scrollState = rememberScrollState(),
+        onKeyboardAction = { callback(input.value) },
         keyboardOptions = KeyboardOptions.Companion.Default.copy(keyboardType = KeyboardType.Companion.Text),
         inputTransformation = object : InputTransformation {
             override fun TextFieldBuffer.transformInput() {
-                var working_string = this.toString()
-                val enter_pressed = this.length > 0 && this.charAt(this.length - 1) == '\n'
-                if (enter_pressed) {
-                    working_string = working_string.substring(0, this.length - 1)
-                }
-
-                if (enter_pressed && working_string.isNotEmpty()) {
-                    callback(working_string)
-                    this.revertAllChanges()
-                    return
-                }
-
-                input.value = working_string
+                input.value = this.toString()
             }
         }
     )

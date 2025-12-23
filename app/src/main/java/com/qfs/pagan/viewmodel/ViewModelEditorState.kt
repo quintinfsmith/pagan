@@ -88,6 +88,7 @@ class ViewModelEditorState: ViewModel() {
     var selected_leafs: MutableList<LeafData> = mutableListOf()
 
     var blocker_leaf: List<Int>? = null
+    val use_midi_playback: MutableState<Boolean> = mutableStateOf(false)
     val playback_state_soundfont: MutableState<PlaybackState> = mutableStateOf(PlaybackState.NotReady)
     val playback_state_midi: MutableState<PlaybackState> = mutableStateOf(PlaybackState.NotReady)
     val relative_input_mode: MutableState<RelativeInputMode> = mutableStateOf(RelativeInputMode.Absolute)
@@ -107,6 +108,7 @@ class ViewModelEditorState: ViewModel() {
     val preset_names = HashMap<Int, HashMap<Int, String>>()
     val available_instruments = HashMap<Pair<Int, Int>, List<Pair<String, Int>>>()
     val base_leaf_width = mutableStateOf(0F)
+
 
     fun clear() {
         this.project_name.value = null
@@ -133,6 +135,10 @@ class ViewModelEditorState: ViewModel() {
 
         // this.preset_names.clear()
         // this.available_instruments.clear()
+    }
+
+    fun set_use_midi_playback(value: Boolean) {
+        this.use_midi_playback.value = value
     }
 
     /** Only used in full refresh **/

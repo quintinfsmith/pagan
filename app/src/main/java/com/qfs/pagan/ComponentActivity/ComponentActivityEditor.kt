@@ -7,6 +7,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.midi.MidiDeviceInfo
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -21,7 +22,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -75,6 +75,10 @@ import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.lifecycleScope
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
+import com.qfs.apres.MidiController
+import com.qfs.apres.MidiPlayer
+import com.qfs.apres.VirtualMidiOutputDevice
+import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.soundfont2.Riff
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
@@ -82,14 +86,18 @@ import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
 import com.qfs.pagan.CompatibleFileType
 import com.qfs.pagan.Exportable
+import com.qfs.pagan.MidiFeedbackDispatcher
 import com.qfs.pagan.MultiExporterEventHandler
 import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.R
 import com.qfs.pagan.SingleExporterEventHandler
+import com.qfs.pagan.composable.DialogBar
+import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DrawerCard
 import com.qfs.pagan.composable.DropdownMenu
 import com.qfs.pagan.composable.DropdownMenuItem
 import com.qfs.pagan.composable.SText
+import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.composable.button.ConfigDrawerBottomButton
 import com.qfs.pagan.composable.button.ConfigDrawerChannelLeftButton
 import com.qfs.pagan.composable.button.ConfigDrawerChannelRightButton
@@ -109,7 +117,6 @@ import com.qfs.pagan.composable.cxtmenu.ContextMenuLineSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuRangeSecondary
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
-import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
@@ -472,6 +479,43 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
         }
 
+
+    private var _virtual_input_device = MidiPlayer()
+    private lateinit var _midi_interface: MidiController
+    //private var _sample_handle_manager: SampleHandleManager? = null
+    // private var _feedback_sample_manager: SampleHandleManager? = null
+    private var _midi_feedback_dispatcher = MidiFeedbackDispatcher()
+    fun bind_midi_interface() {
+        this._midi_interface = object : MidiController(this, false) {
+            override fun onDeviceAdded(device_info: MidiDeviceInfo) {
+                val that = this@ComponentActivityEditor
+                that.controller_model.midi_devices_connected++
+            }
+            override fun onDeviceRemoved(device_info: MidiDeviceInfo) {
+                val that = this@ComponentActivityEditor
+                that.controller_model.midi_devices_connected--
+                if (device_info == that.controller_model.active_midi_device) {
+                    that.controller_model.active_midi_device = null
+                    that.state_model.set_use_midi_playback(false)
+                }
+            }
+        }
+
+        this._midi_interface.connect_virtual_input_device(this._virtual_input_device)
+
+        // Listens for SongPositionPointer (provided by midi) and scrolls to that beat
+        this._midi_interface.connect_virtual_output_device(object : VirtualMidiOutputDevice {
+            override fun onSongPositionPointer(event: SongPositionPointer) {
+                val that = this@ComponentActivityEditor
+                val opus_manager = that.controller_model.opus_manager
+                if (event.get_beat() >= opus_manager.length) return
+                opus_manager.cursor_select_column(event.get_beat())
+            }
+        })
+
+        this._midi_interface.connect_virtual_input_device(this._midi_feedback_dispatcher)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val action_interface = this.controller_model.action_interface
         this.state_model.base_leaf_width.value = this.resources.getDimension(R.dimen.base_leaf_width)
@@ -479,16 +523,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
         action_interface.attach_top_model(this.view_model)
 
         super.onCreate(savedInstanceState)
-
+        this.bind_midi_interface()
 
         this.onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val that = this@ComponentActivityEditor
                 val opus_manager = that.controller_model.opus_manager
                 val ui_facade = opus_manager.vm_state
-                if (this@ComponentActivityEditor.drawer_state.isOpen) {
-                    this@ComponentActivityEditor.lifecycleScope.launch {
-                        this@ComponentActivityEditor.close_drawer()
+                if (that.drawer_state.isOpen) {
+                    that.lifecycleScope.launch {
+                        that.close_drawer()
                     }
                 } else if (ui_facade.active_cursor.value != null) {
                     action_interface.cursor_clear()
@@ -664,8 +708,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     override fun RowScope.TopBar(modifier: Modifier) {
-        val ui_facade = this@ComponentActivityEditor.controller_model.opus_manager.vm_state
-        val dispatcher = this@ComponentActivityEditor.controller_model.action_interface
+        val vm_controller = this@ComponentActivityEditor.controller_model
+        val vm_top = this@ComponentActivityEditor.view_model
+        val vm_state = vm_controller.opus_manager.vm_state
+        val dispatcher = vm_controller.action_interface
         val scope = rememberCoroutineScope()
         val menu_items: MutableList<Pair<Int, () -> Unit>> = mutableListOf(
             Pair(R.string.menu_item_new_project) {
@@ -674,7 +720,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             }
         )
-        if (this@ComponentActivityEditor.view_model.has_saved_project.value) {
+        if (vm_top.has_saved_project.value) {
             menu_items.add(
                 Pair(R.string.menu_item_load_project) {
                     this@ComponentActivityEditor.load_menu_dialog { uri ->
@@ -693,6 +739,34 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 )
             }
         )
+
+        if (vm_controller.midi_devices_connected > 0) {
+            Pair(R.string.playback_device) {
+                vm_top.create_medium_dialog { close ->
+                    @Composable {
+                        val options = mutableListOf<Pair<MidiDeviceInfo?, @Composable RowScope.() -> Unit>>(
+                            Pair(null) { SText(R.string.device_menu_default_name) }
+                        )
+
+                        for (device_info in this@ComponentActivityEditor._midi_interface.poll_output_devices()) {
+                            options.add(
+                                Pair(device_info) {
+                                    Text(device_info.properties.getString(MidiDeviceInfo.PROPERTY_NAME) ?: stringResource(R.string.unknown_midi_device, device_info.id))
+                                }
+                            )
+                        }
+
+                        DialogSTitle(R.string.playback_device)
+                        UnSortableMenu<MidiDeviceInfo?>(modifier = Modifier, options = options, default_value = vm_controller.active_midi_device) {
+                            vm_controller.active_midi_device = it
+                            vm_state.set_use_midi_playback(it != null)
+                        }
+                        DialogBar(neutral = close)
+                    }
+                }
+            }
+        }
+
         menu_items.add(
             Pair(R.string.menu_item_settings) { this@ComponentActivityEditor.open_settings() }
         )
@@ -720,29 +794,66 @@ class ComponentActivityEditor: PaganComponentActivity() {
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
             maxLines = 1,
-            text = ui_facade.project_name.value ?: stringResource(R.string.untitled_opus)
+            text = vm_state.project_name.value ?: stringResource(R.string.untitled_opus)
         )
-        TopBarIcon(
-            icon = when (this@ComponentActivityEditor.state_model.playback_state_soundfont.value) {
-                PlaybackState.Queued,
-                PlaybackState.NotReady -> R.drawable.baseline_play_disabled_24
-                PlaybackState.Ready -> R.drawable.icon_play
-                PlaybackState.Stopping,
-                PlaybackState.Playing -> R.drawable.icon_pause
-            },
-            description = R.string.menu_item_playpause,
-            callback = {
-                scope.launch {
-                    when (this@ComponentActivityEditor.controller_model.playback_state_soundfont) {
-                        PlaybackState.Queued -> TODO()
-                        PlaybackState.Stopping -> TODO()
-                        PlaybackState.NotReady -> TODO()
-                        PlaybackState.Ready -> { dispatcher.play_opus(this) }
-                        PlaybackState.Playing -> { dispatcher.stop_opus() }
+
+        if (this@ComponentActivityEditor.state_model.use_midi_playback.value) {
+            TopBarIcon(
+                icon = when (this@ComponentActivityEditor.state_model.playback_state_midi.value) {
+                    PlaybackState.Queued,
+                    PlaybackState.NotReady -> R.drawable.baseline_play_disabled_24
+
+                    PlaybackState.Ready -> R.drawable.icon_play
+                    PlaybackState.Stopping,
+                    PlaybackState.Playing -> R.drawable.icon_pause
+                },
+                description = R.string.menu_item_playpause,
+                callback = {
+                    scope.launch {
+                        when (this@ComponentActivityEditor.controller_model.playback_state_midi) {
+                            PlaybackState.Queued -> TODO()
+                            PlaybackState.Stopping -> TODO()
+                            PlaybackState.NotReady -> TODO()
+                            PlaybackState.Ready -> {
+                                dispatcher.play_opus_midi(this)
+                            }
+
+                            PlaybackState.Playing -> {
+                                dispatcher.stop_opus_midi()
+                            }
+                        }
                     }
                 }
-            }
-        )
+            )
+        } else {
+            TopBarIcon(
+                icon = when (this@ComponentActivityEditor.state_model.playback_state_soundfont.value) {
+                    PlaybackState.Queued,
+                    PlaybackState.NotReady -> R.drawable.baseline_play_disabled_24
+
+                    PlaybackState.Ready -> R.drawable.icon_play
+                    PlaybackState.Stopping,
+                    PlaybackState.Playing -> R.drawable.icon_pause
+                },
+                description = R.string.menu_item_playpause,
+                callback = {
+                    scope.launch {
+                        when (this@ComponentActivityEditor.controller_model.playback_state_soundfont) {
+                            PlaybackState.Queued -> TODO()
+                            PlaybackState.Stopping -> TODO()
+                            PlaybackState.NotReady -> TODO()
+                            PlaybackState.Ready -> {
+                                dispatcher.play_opus(this)
+                            }
+
+                            PlaybackState.Playing -> {
+                                dispatcher.stop_opus()
+                            }
+                        }
+                    }
+                }
+            )
+        }
         TopBarIcon(
             icon = R.drawable.icon_undo,
             description = R.string.menu_item_undo,

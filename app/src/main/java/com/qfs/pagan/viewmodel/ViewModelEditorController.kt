@@ -26,6 +26,7 @@ class ViewModelEditorController(): ViewModel() {
     var action_interface = ActionTracker(this)
     var opus_manager = OpusLayerInterface(this)
     var active_midi_device: MidiDeviceInfo? = null
+    var midi_devices_connected: Int = 0
     var audio_interface = AudioInterface()
     var playback_device: PlaybackDevice? = null
     var playback_state_soundfont: PlaybackState = PlaybackState.NotReady

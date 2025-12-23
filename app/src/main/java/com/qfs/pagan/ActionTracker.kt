@@ -2024,6 +2024,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             when (opus_manager.cursor.mode) {
                 CursorMode.Single,
                 CursorMode.Column -> opus_manager.cursor.beat
+
                 CursorMode.Range -> opus_manager.cursor.get_ordered_range()!!.first.beat
 
                 CursorMode.Line,

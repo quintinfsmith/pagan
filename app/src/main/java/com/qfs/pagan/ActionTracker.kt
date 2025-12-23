@@ -70,6 +70,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.viewmodel.ViewModelEditorController
+import com.qfs.pagan.viewmodel.ViewModelEditorState
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.CoroutineScope
 import kotlin.math.ceil
@@ -1069,6 +1070,46 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         //activity.load_project(uri)
     }
 
+    fun <T: EffectEvent> set_initial_effect(type: EffectType, event: T, channel: Int?, line_offset: Int?, lock_cursor: Boolean = false) {
+        // TODO: Track
+        val opus_manager = this.get_opus_manager()
+        val callback = {
+            if (channel == null) {
+                opus_manager.controller_global_set_initial_event(type, event)
+            } else if (line_offset == null) {
+                opus_manager.controller_channel_set_initial_event(type, channel, event)
+            } else {
+                opus_manager.controller_line_set_initial_event(type, channel, line_offset, event)
+            }
+        }
+
+        if (lock_cursor) {
+            opus_manager.lock_cursor(callback)
+        } else {
+            callback()
+        }
+    }
+
+    fun <T: EffectEvent> set_effect(type: EffectType, event: T, channel: Int?, line_offset: Int?, beat: Int, position: List<Int>, lock_cursor: Boolean = false) {
+        // TODO: Track
+        val opus_manager = this.get_opus_manager()
+        val callback = {
+            if (channel == null) {
+                opus_manager.controller_global_set_event(type, beat, position, event)
+            } else if (line_offset == null) {
+                opus_manager.controller_channel_set_event(type, channel, beat, position, event)
+            } else {
+                opus_manager.controller_line_set_event(type, BeatKey(channel, line_offset, beat), position, event)
+            }
+        }
+
+        if (lock_cursor) {
+            opus_manager.lock_cursor(callback)
+        } else {
+            callback()
+        }
+    }
+
     fun <T: EffectEvent> set_effect_at_cursor(event: T) {
         // TODO: Track
         val opus_manager = this.get_opus_manager()
@@ -1919,8 +1960,8 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
      * wrapper around MainActivity::dialog_popup_menu
      * will subvert popup on replay
      */
-    private fun <T> dialog_popup_menu(title: Int, options: List<Pair<T, @Composable RowScope.() -> Unit>>, default: T? = null, callback: (value: T) -> Unit) {
-        this.vm_top.create_dialog { close ->
+    private fun <T> dialog_popup_menu(title: Int, options: List<Pair<T, @Composable RowScope.() -> Unit>>, default: T? = null, dialog_size: ViewModelPagan.DialogSize = ViewModelPagan.DialogSize.Medium, callback: (value: T) -> Unit) {
+        this.vm_top.create_dialog(0, dialog_size) { close ->
             @Composable {
                 DialogSTitle(title)
                 UnSortableMenu(Modifier, options, default) { value ->

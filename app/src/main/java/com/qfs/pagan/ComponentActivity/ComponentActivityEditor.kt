@@ -21,6 +21,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -834,7 +835,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     fun MainTable(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, length: MutableState<Int>) {
-        val window_height =  LocalConfiguration.current.screenHeightDp.dp
+        val window_height =  LocalConfiguration.current.screenHeightDp.dp // FIXME: this disregards orientation
         val line_height = dimensionResource(R.dimen.line_height)
         val ctl_line_height = dimensionResource(R.dimen.ctl_line_height)
         val leaf_width = dimensionResource(R.dimen.base_leaf_width)
@@ -988,11 +989,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         CellView(ui_facade, dispatcher, cell, y, x)
                                     }
                                 }
+                                Spacer(Modifier.height(dimensionResource(R.dimen.line_height)))
                                 Spacer(Modifier.height(window_height / 2))
                             }
                         }
                     }
                 }
+
+
             }
         }
     }
@@ -1115,29 +1119,22 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             EffectType.LowPass -> TODO()
                             EffectType.Reverb -> TODO()
                         }
-                        Icon(
-                            modifier = if (line_info.is_selected.value) {
+                        Box(
+                            Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                modifier = if (line_info.is_selected.value) {
                                     Modifier.border(2.dp, colorResource(R.color.selected_primary))
                                 } else {
                                     Modifier
                                 }
-                                .padding(2.dp),
-                            painter = painterResource(drawable_id),
-                            contentDescription = stringResource(description_id)
-                        )
+                                    .padding(2.dp),
+                                painter = painterResource(drawable_id),
+                                contentDescription = stringResource(description_id)
+                            )
+                        }
                     }
-                    Spacer(
-                        Modifier
-                            .height(dimensionResource(R.dimen.table_line_stroke))
-                            .background(colorResource(R.color.table_lines))
-                            .fillMaxWidth()
-                    )
-                    Spacer(
-                        Modifier
-                            .width(dimensionResource(R.dimen.table_line_stroke))
-                            .background(colorResource(R.color.table_lines))
-                            .fillMaxHeight()
-                    )
                 }
             )
         }

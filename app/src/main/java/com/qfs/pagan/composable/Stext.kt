@@ -81,7 +81,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -93,7 +92,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import com.qfs.pagan.R
-import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.button.SmallButton
 import com.qfs.pagan.composable.button.SmallOutlinedButton
@@ -135,42 +133,138 @@ fun SText(
 fun IntegerInput(
     value: MutableState<Int>,
     minimum: Int? = null,
-    maximum: Int? = null, modifier: Modifier = Modifier,
+    maximum: Int? = null,
+    modifier: Modifier = Modifier,
     outlined: Boolean = true,
     contentPadding: PaddingValues = PaddingValues(0.dp),
     text_align: TextAlign = TextAlign.End,
+    prefix: @Composable (() -> Unit)? = null,
     label: (@Composable TextFieldLabelScope.() -> Unit)? = null,
     on_focus_enter: (() -> Unit)? = null,
     on_focus_exit: ((Int?) -> Unit)? = null,
     callback: (Int) -> Unit
 ) {
-    val state = rememberTextFieldState(value.value.toString())
-    val input_transformation = object : InputTransformation {
-        override fun TextFieldBuffer.transformInput() {
-            var working_string = this.toString()
-            if (working_string == "-" && minimum != null && minimum < 0) return
+    NumberInput(
+        value,
+        minimum,
+        maximum,
+        modifier,
+        outlined,
+        contentPadding,
+        text_align,
+        prefix,
+        label,
+        on_focus_enter,
+        on_focus_exit,
+        object : InputTransformation {
+            override fun TextFieldBuffer.transformInput() {
+                val working_string = this.toString()
+                if (working_string == "-" && minimum != null && minimum < 0) return
 
-            var int_value = try {
-                if (working_string.isEmpty()) {
-                    0
-                } else {
-                    this.toString().toInt()
+                var converted_value = try {
+                    if (working_string.isEmpty()) {
+                        0
+                    } else {
+                        this.toString().toInt()
+                    }
+                } catch (_: Exception) {
+                    this.revertAllChanges()
+                    return
                 }
-            } catch (_: Exception) {
-                this.revertAllChanges()
-                return
-            }
 
-            minimum?.let {
-                int_value = max(it, int_value)
-            }
-            maximum?.let {
-                int_value = min(it, int_value)
-            }
+                minimum?.let {
+                    converted_value = max(it, converted_value)
+                }
+                maximum?.let {
+                    converted_value = min(it, converted_value)
+                }
 
-            value.value = int_value
-        }
-    }
+                value.value = converted_value
+            }
+        },
+        callback
+    )
+}
+
+@Composable
+fun FloatInput(
+    value: MutableState<Float>,
+    precision: Int? = null,
+    minimum: Float? = null,
+    maximum: Float? = null,
+    modifier: Modifier = Modifier,
+    outlined: Boolean = true,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    text_align: TextAlign = TextAlign.End,
+    prefix: @Composable (() -> Unit)? = null,
+    label: (@Composable TextFieldLabelScope.() -> Unit)? = null,
+    on_focus_enter: (() -> Unit)? = null,
+    on_focus_exit: ((Float?) -> Unit)? = null,
+    callback: (Float) -> Unit
+) {
+    NumberInput(
+        value,
+        minimum,
+        maximum,
+        modifier,
+        outlined,
+        contentPadding,
+        text_align,
+        prefix,
+        label,
+        on_focus_enter,
+        on_focus_exit,
+        object : InputTransformation {
+            override fun TextFieldBuffer.transformInput() {
+                val working_string = this.toString()
+                if (working_string == "-" && minimum != null && minimum < 0) return
+
+                var converted_value = try {
+                    if (working_string.isEmpty()) {
+                        0F
+                    } else {
+                        this.toString().toFloat()
+                    }
+                } catch (_: Exception) {
+                    this.revertAllChanges()
+                    return
+                }
+
+                precision?.let {
+                    val p = 10F.pow(it)
+                    converted_value = (converted_value * p).roundToInt().toFloat() / p
+                }
+                minimum?.let {
+                    converted_value = max(it, converted_value)
+                }
+                maximum?.let {
+                    converted_value = min(it, converted_value)
+                }
+
+                value.value = converted_value
+            }
+        },
+        callback
+    )
+}
+
+@Composable
+fun <T: Number> NumberInput(
+    value: MutableState<T>,
+    minimum: T? = null,
+    maximum: T? = null,
+    modifier: Modifier = Modifier,
+    outlined: Boolean = true,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    text_align: TextAlign = TextAlign.End,
+    prefix: @Composable (() -> Unit)? = null,
+    label: (@Composable TextFieldLabelScope.() -> Unit)? = null,
+    on_focus_enter: (() -> Unit)? = null,
+    on_focus_exit: ((T?) -> Unit)? = null,
+    input_transformation: InputTransformation,
+    callback: (T) -> Unit
+) {
+    val state = rememberTextFieldState(value.value.toString())
 
     // Prevent weird focusing behavior causing on_focus_exit to be called without any initial focus
     var was_focused = remember { mutableStateOf(false) }
@@ -185,13 +279,13 @@ fun IntegerInput(
         }
     }
 
-
     if (outlined) {
         OutlinedTextField(
             state = state,
             label = label,
             contentPadding = contentPadding,
             textStyle = LocalTextStyle.current.copy(textAlign = text_align),
+            prefix = prefix,
             modifier = modifier
                 .heightIn(1.dp)
                 .widthIn(1.dp)
@@ -212,6 +306,7 @@ fun IntegerInput(
             label = label,
             contentPadding = contentPadding,
             textStyle = LocalTextStyle.current.copy(textAlign = text_align),
+            prefix = prefix,
             modifier = modifier
                 .heightIn(1.dp)
                 .widthIn(1.dp)
@@ -230,91 +325,6 @@ fun IntegerInput(
 
 }
 
-@Composable
-fun FloatInput(value: MutableState<Float>, minimum: Float? = null, maximum: Float? = null, modifier: Modifier = Modifier, precision: Int? = null, outlined: Boolean = true, callback: (Float) -> Unit) {
-    val state = rememberTextFieldState("${value.value}")
-    val textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End)
-    val modifier = modifier.onFocusChanged { focus_state ->
-        if (focus_state.hasFocus) {
-            state.edit {
-                this.selection = TextRange(0, this.length)
-            }
-        }
-    }
-
-    val keyboardOptions = KeyboardOptions.Companion.Default.copy(keyboardType = KeyboardType.Companion.Number)
-    val inputTransformation = object : InputTransformation {
-        override fun TextFieldBuffer.transformInput() {
-            var working_string = this.toString()
-            val enter_pressed = this.length > 0 && this.charAt(this.length - 1) == '\n'
-
-            if (enter_pressed) {
-                working_string = working_string.substring(0, this.length - 1)
-            }
-
-            if (working_string.last() == '.') {
-                working_string = working_string.substring(0, this.length - 1)
-            }
-
-            if (working_string == "-" && minimum != null && minimum < 0F) {
-                return
-            }
-
-            if (enter_pressed && working_string.isNotEmpty()) {
-                callback(value.value)
-                this.revertAllChanges()
-                return
-            }
-
-            var float_value = try {
-                if (working_string.isEmpty()) {
-                    0F
-                } else {
-                    this.toString().toFloat()
-                }
-            } catch (_: Exception) {
-                this.revertAllChanges()
-                return
-            }
-
-            precision?.let {
-                val p = 10F.pow(it)
-                float_value = (float_value * p).roundToInt().toFloat() / p
-            }
-
-            minimum?.let {
-                float_value = max(it, float_value)
-            }
-            maximum?.let {
-                float_value = min(it, float_value)
-            }
-
-
-
-            value.value = float_value
-        }
-    }
-
-    if (outlined) {
-        OutlinedTextField(
-            state = state,
-            textStyle = textStyle,
-            modifier = modifier,
-            keyboardOptions = keyboardOptions,
-            inputTransformation = inputTransformation,
-            contentPadding = PaddingValues(0.dp)
-        )
-    } else {
-        TextField(
-            state = state,
-            textStyle = textStyle,
-            modifier = modifier,
-            keyboardOptions = keyboardOptions,
-            inputTransformation = inputTransformation,
-            contentPadding = PaddingValues(0.dp)
-        )
-    }
-}
 
 @Composable
 fun TextInput(
@@ -724,6 +734,7 @@ fun NumberPicker(modifier: Modifier = Modifier, range: kotlin.ranges.IntRange, d
                     .background(MaterialTheme.colorScheme.outline)
             )
         }
+
         VerticalPager(
             state = state,
             pageSize = PageSize.Fixed(h),
@@ -749,10 +760,52 @@ fun NumberPicker(modifier: Modifier = Modifier, range: kotlin.ranges.IntRange, d
 }
 
 @Composable
-fun MagicInput(value: MutableState<Int>, minimum: Int? = null, maximum: Int? = null, modifier: Modifier = Modifier, contentPadding: PaddingValues = PaddingValues(vertical = 8.dp), callback: (Int) -> Unit) {
+fun <T> MagicInputInner(modifier: Modifier = Modifier, value: MutableState<T>, contentPadding: PaddingValues = PaddingValues(vertical = 8.dp), prefix: @Composable (() -> Unit)? = null, content: @Composable (Modifier, MutableState<Boolean>, FocusRequester) -> Unit) {
     val expanded = remember { mutableStateOf(false) }
     if (expanded.value) {
         val requester = remember { FocusRequester() }
+        content(modifier, expanded, requester)
+        LaunchedEffect(Unit) {
+            requester.requestFocus()
+        }
+    } else {
+        ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onBackground) {
+            Row(
+                modifier = modifier
+                    .border(width = 1.dp, color = MaterialTheme.colorScheme.outline, shape = MagicButtonShape())
+                    .combinedClickable(
+                        onClick = { expanded.value = !expanded.value }
+                    )
+                    .background(color = MaterialTheme.colorScheme.surfaceBright, shape = MagicButtonShape()),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                prefix?.invoke()
+                Box(
+                    modifier = Modifier.weight(1F),
+                    contentAlignment = Alignment.Center,
+                    content = { Text("${value.value}", modifier = Modifier.padding(contentPadding)) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun MagicInput(
+    value: MutableState<Int>,
+    minimum: Int? = null,
+    maximum: Int? = null,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(vertical = 8.dp),
+    prefix: @Composable (() -> Unit)? = null,
+    callback: (Int) -> Unit
+) {
+    MagicInputInner(
+        modifier,
+        value,
+        contentPadding,
+        prefix = prefix
+    ) { modifier, expanded, requester ->
         IntegerInput(
             value = value,
             text_align = TextAlign.Center,
@@ -763,32 +816,55 @@ fun MagicInput(value: MutableState<Int>, minimum: Int? = null, maximum: Int? = n
             },
             contentPadding = contentPadding,
             modifier = modifier
-                .background(color = MaterialTheme.colorScheme.surfaceBright)
+                .background(color = MaterialTheme.colorScheme.surfaceBright, shape = MagicButtonShape())
                 .focusRequester(requester),
             minimum = minimum,
             maximum = maximum,
+            prefix = prefix,
             callback = {
                 callback(it)
                 expanded.value = false
             }
         )
-
-        LaunchedEffect(Unit) {
-            requester.requestFocus()
-        }
-    } else {
-        ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onBackground) {
-            Box(
-                modifier = modifier
-                    .border(width = 1.dp, color = MaterialTheme.colorScheme.outline, shape = MagicButtonShape())
-                    .combinedClickable(
-                        onClick = { expanded.value = !expanded.value }
-                    )
-                    .background(color = MaterialTheme.colorScheme.surfaceBright, shape = MagicButtonShape()),
-                contentAlignment = Alignment.Center,
-                content = { Text("${value.value}", modifier = Modifier.padding(contentPadding)) },
-            )
-        }
     }
+}
 
+@Composable
+fun MagicInput(
+    value: MutableState<Float>,
+    precision: Int?,
+    minimum: Float? = null,
+    maximum: Float? = null,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(vertical = 8.dp),
+    prefix: @Composable (() -> Unit)? = null,
+    callback: (Float) -> Unit) {
+    MagicInputInner(
+        modifier,
+        value,
+        contentPadding,
+        prefix = prefix
+    ) { modifier, expanded, requester ->
+        FloatInput(
+            value = value,
+            precision = precision,
+            text_align = TextAlign.Center,
+            on_focus_enter = {},
+            on_focus_exit = { value ->
+                value?.let { callback(it) }
+                expanded.value = false
+            },
+            contentPadding = contentPadding,
+            modifier = modifier
+                .background(color = MaterialTheme.colorScheme.surfaceBright, shape = MagicButtonShape())
+                .focusRequester(requester),
+            minimum = minimum,
+            maximum = maximum,
+            prefix = prefix,
+            callback = {
+                callback(it)
+                expanded.value = false
+            }
+        )
+    }
 }

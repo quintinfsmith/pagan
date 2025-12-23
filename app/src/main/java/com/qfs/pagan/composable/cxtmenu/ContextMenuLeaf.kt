@@ -175,7 +175,6 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEd
         is RelativeNoteEvent -> abs(active_event.offset) / ui_facade.radix.value
         is PercussionEvent -> 0
         else -> null
-    //        ContextMenuStructureControls(modifier, ui_facade, dispatcher, landscape)
     }
 
     when (layout) {
@@ -221,9 +220,6 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEd
                         )
                     }
                     ContextMenuStructureControls(Modifier, ui_facade, dispatcher, false)
-                    //Row(Modifier.padding(top = dimensionResource(R.dimen.contextmenu_padding))) {
-                    //    NumberSelector(8, octave, ui_facade.highlighted_octave.value, false) { dispatcher.set_octave(it) }
-                    //}
                 }
             }
         }

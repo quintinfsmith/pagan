@@ -144,6 +144,7 @@
     <dimen name="drawer_inner_padding">4dp</dimen>
 
     <dimen name="effect_dialog_icon_width">32dp</dimen>
+    <dimen name="effect_tempo_input_width">100dp</dimen>
     <dimen name="dlg_input_padding">8dp</dimen>
     <dimen name="numberpicker_row_height">41dp</dimen>
     <dimen name="numberpicker_row_width">80dp</dimen>

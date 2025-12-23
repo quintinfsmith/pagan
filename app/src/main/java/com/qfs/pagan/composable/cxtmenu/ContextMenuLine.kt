@@ -88,9 +88,18 @@ fun MuteButton(dispatcher: ActionTracker, line: ViewModelEditorState.LineData) {
                 dispatcher.line_mute()
             }
         },
-        icon = if (line.is_mute.value) R.drawable.icon_unmute
+        icon = if (!line.is_mute.value) R.drawable.icon_unmute
         else R.drawable.icon_mute,
         description = R.string.cd_line_mute
+    )
+}
+
+@Composable
+fun HideEffectButton(dispatcher: ActionTracker) {
+    IconCMenuButton(
+        onClick = { dispatcher.toggle_controller_visibility() },
+        icon = R.drawable.icon_hide,
+        description = R.string.cd_hide_control_line
     )
 }
 
@@ -137,7 +146,18 @@ fun ContextMenuLinePrimary(modifier: Modifier = Modifier, vm_state: ViewModelEdi
         ViewModelPagan.LayoutSize.LargeLandscape,
         ViewModelPagan.LayoutSize.MediumLandscape -> {
             Column(Modifier.width(dimensionResource(R.dimen.contextmenu_button_width))) {
+                InsertLineButton(dispatcher)
+
+                if (active_line.ctl_type.value == null) {
+                    CMPadding()
+                    RemoveLineButton(dispatcher, vm_state.channel_data[active_line.channel.value!!].size.intValue)
+                }
+
+                CMPadding()
+                AdjustLineButton(dispatcher)
+
                 if (active_line.assigned_offset.value != null) {
+                    CMPadding()
                     PercussionSetInstrumentButton(
                         Modifier
                             .height(dimensionResource(R.dimen.contextmenu_button_height))
@@ -147,19 +167,14 @@ fun ContextMenuLinePrimary(modifier: Modifier = Modifier, vm_state: ViewModelEdi
                         cursor.ints[0],
                         false
                     )
-                    CMPadding()
                 }
 
+                Spacer(Modifier.weight(1F))
                 if (active_line.ctl_type.value == null) {
-                    RemoveLineButton(dispatcher, vm_state.channel_data[active_line.channel.value!!].size.intValue)
-                    CMPadding()
+                    ToggleLineControllerButton(dispatcher)
+                } else {
+                    HideEffectButton(dispatcher)
                 }
-
-                InsertLineButton(dispatcher)
-                CMPadding()
-                AdjustLineButton(dispatcher)
-                CMPadding()
-                ToggleLineControllerButton(dispatcher)
             }
         }
     }

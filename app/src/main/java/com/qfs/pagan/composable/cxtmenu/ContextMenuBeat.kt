@@ -1,6 +1,7 @@
 package com.qfs.pagan.composable.cxtmenu
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.qfs.pagan.ActionTracker
@@ -83,13 +84,13 @@ fun ContextMenuColumnPrimary(modifier: Modifier = Modifier, ui_facade: ViewModel
         ViewModelPagan.LayoutSize.LargeLandscape,
         ViewModelPagan.LayoutSize.XLargeLandscape -> {
             Column {
-                TagButton(dispatcher, column_data, beat)
-                CMPadding()
                 RemoveBeatButton(dispatcher, ui_facade.beat_count.value > 1)
                 CMPadding()
                 InsertBeatButton(dispatcher)
                 CMPadding()
                 AdjustBeatButton(dispatcher)
+                Spacer(Modifier.weight(1F))
+                TagButton(dispatcher, column_data, beat)
             }
         }
     }

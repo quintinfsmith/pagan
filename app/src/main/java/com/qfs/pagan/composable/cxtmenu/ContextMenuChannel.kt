@@ -73,7 +73,7 @@ fun MuteChannelButton(dispatcher: ActionTracker, active_channel: ViewModelEditor
                 dispatcher.channel_mute()
             }
         },
-        icon = if (active_channel.is_mute.value) R.drawable.icon_unmute
+        icon = if (!active_channel.is_mute.value) R.drawable.icon_unmute
         else R.drawable.icon_mute,
         description = R.string.cd_line_mute
     )
@@ -117,14 +117,15 @@ fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, ui_facade: ViewMode
         ViewModelPagan.LayoutSize.SmallLandscape,
         ViewModelPagan.LayoutSize.MediumLandscape -> {
             Column(Modifier.width(dimensionResource(R.dimen.contextmenu_button_width))) {
-                RemoveChannelButton(dispatcher)
+                AddChannelButton(dispatcher)
                 CMPadding()
                 AddKitButton(dispatcher)
                 CMPadding()
-                AddChannelButton(dispatcher)
-                CMPadding()
                 AdjustChannelButton(dispatcher)
                 CMPadding()
+                RemoveChannelButton(dispatcher)
+                Spacer(Modifier.weight(1F))
+
                 ToggleEffectsButton(dispatcher)
             }
         }

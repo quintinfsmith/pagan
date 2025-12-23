@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,7 +39,7 @@ fun CMBoxBottom(modifier: Modifier = Modifier, content: @Composable ColumnScope.
     Box(
         modifier
             .background(
-                colorResource(R.color.surface),
+                MaterialTheme.colorScheme.surface,
                 CMBoxBottomShape()
             ),
         contentAlignment = Alignment.Center
@@ -60,7 +61,7 @@ fun CMBoxEnd(modifier: Modifier = Modifier, content: @Composable ColumnScope.() 
     Box(
         modifier
             .background(
-                colorResource(R.color.surface),
+                MaterialTheme.colorScheme.surface,
                 CMBoxEndShape()
             ),
         contentAlignment = Alignment.Center

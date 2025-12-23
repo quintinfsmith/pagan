@@ -511,19 +511,16 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     override fun <T: EffectEvent> controller_global_set_event(type: EffectType, beat: Int, position: List<Int>, event: T) {
         super.controller_global_set_event(type, beat, position, event)
         this._queue_global_ctl_cell_change(type, beat)
-        this.vm_state.set_active_event(event)
     }
 
     override fun <T: EffectEvent> controller_channel_set_event(type: EffectType, channel: Int, beat: Int, position: List<Int>, event: T) {
         super.controller_channel_set_event(type, channel, beat, position, event)
         this._queue_channel_ctl_cell_change(type, channel, beat)
-        this.vm_state.set_active_event(event)
     }
 
     override fun <T: EffectEvent> controller_line_set_event(type: EffectType, beat_key: BeatKey, position: List<Int>, event: T) {
         super.controller_line_set_event(type, beat_key, position, event)
         this._queue_line_ctl_cell_change(type, beat_key)
-        this.vm_state.set_active_event(event)
     }
 
     override fun <T: InstrumentEvent> set_event(beat_key: BeatKey, position: List<Int>, event: T) {
@@ -535,8 +532,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
         if (this.ui_lock.is_locked()) return
         this._queue_cell_change(beat_key)
-
-        this.vm_state.set_active_event(event)
     }
 
     override fun percussion_set_event(beat_key: BeatKey, position: List<Int>) {

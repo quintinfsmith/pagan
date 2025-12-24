@@ -60,6 +60,16 @@ fun RemoveLineButton(dispatcher: ActionTracker, size: Int) {
         description = R.string.cd_remove_line
     )
 }
+
+@Composable
+fun RemoveEffectButton(dispatcher: ActionTracker) {
+    IconCMenuButton(
+        onClick = { dispatcher.remove_line(1) },
+        onLongClick = { dispatcher.remove_line() },
+        icon = R.drawable.icon_remove_line,
+        description = R.string.cd_remove_line
+    )
+}
 @Composable
 fun PercussionSetInstrumentButton(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, dispatcher: ActionTracker, y: Int, use_name: Boolean) {
     val active_line = vm_state.line_data[y]
@@ -97,7 +107,7 @@ fun MuteButton(dispatcher: ActionTracker, line: ViewModelEditorState.LineData) {
 @Composable
 fun HideEffectButton(dispatcher: ActionTracker) {
     IconCMenuButton(
-        onClick = { dispatcher.toggle_controller_visibility() },
+        onClick = { dispatcher.remove_controller() },
         icon = R.drawable.icon_hide,
         description = R.string.cd_hide_control_line
     )
@@ -107,7 +117,18 @@ fun HideEffectButton(dispatcher: ActionTracker) {
 fun ContextMenuLinePrimary(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, dispatcher: ActionTracker, layout: ViewModelPagan.LayoutSize) {
     val cursor = vm_state.active_cursor.value ?: return
     val active_line = vm_state.line_data[cursor.ints[0]]
+    if (active_line.ctl_type.value == null) {
+        ContextMenuLineStdPrimary(modifier, vm_state, dispatcher, layout)
+    } else {
+        ContextMenuLineCtlPrimary(modifier, vm_state, dispatcher, layout)
+    }
+}
 
+@Composable
+fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, dispatcher: ActionTracker, layout: ViewModelPagan.LayoutSize) {
+    val cursor = vm_state.active_cursor.value ?: return
+    val active_line = vm_state.line_data[cursor.ints[0]]
+    val active_channel = vm_state.channel_data[active_line.channel.value!!]
     when (layout) {
         ViewModelPagan.LayoutSize.SmallPortrait,
         ViewModelPagan.LayoutSize.MediumPortrait,
@@ -134,10 +155,8 @@ fun ContextMenuLinePrimary(modifier: Modifier = Modifier, vm_state: ViewModelEdi
                 AdjustLineButton(dispatcher)
                 CMPadding()
 
-                if (active_line.ctl_type.value == null) {
-                    RemoveLineButton(dispatcher, vm_state.channel_data[active_line.channel.value!!].size.intValue)
-                    CMPadding()
-                }
+                RemoveLineButton(dispatcher, active_channel.size.intValue)
+                CMPadding()
 
                 InsertLineButton(dispatcher)
             }
@@ -148,10 +167,8 @@ fun ContextMenuLinePrimary(modifier: Modifier = Modifier, vm_state: ViewModelEdi
             Column(Modifier.width(dimensionResource(R.dimen.contextmenu_button_width))) {
                 InsertLineButton(dispatcher)
 
-                if (active_line.ctl_type.value == null) {
-                    CMPadding()
-                    RemoveLineButton(dispatcher, vm_state.channel_data[active_line.channel.value!!].size.intValue)
-                }
+                CMPadding()
+                RemoveLineButton(dispatcher, active_channel.size.intValue)
 
                 CMPadding()
                 AdjustLineButton(dispatcher)
@@ -170,11 +187,34 @@ fun ContextMenuLinePrimary(modifier: Modifier = Modifier, vm_state: ViewModelEdi
                 }
 
                 Spacer(Modifier.weight(1F))
-                if (active_line.ctl_type.value == null) {
-                    ToggleLineControllerButton(dispatcher)
-                } else {
-                    HideEffectButton(dispatcher)
-                }
+
+                ToggleLineControllerButton(dispatcher)
+            }
+        }
+    }
+}
+@Composable
+fun ContextMenuLineCtlPrimary(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, dispatcher: ActionTracker, layout: ViewModelPagan.LayoutSize) {
+    val cursor = vm_state.active_cursor.value ?: return
+    when (layout) {
+        ViewModelPagan.LayoutSize.SmallPortrait,
+        ViewModelPagan.LayoutSize.MediumPortrait,
+        ViewModelPagan.LayoutSize.LargePortrait,
+        ViewModelPagan.LayoutSize.XLargePortrait,
+        ViewModelPagan.LayoutSize.XLargeLandscape -> {
+            ContextMenuPrimaryRow(modifier) {
+                HideEffectButton(dispatcher)
+                Spacer(Modifier.weight(1F))
+                RemoveEffectButton(dispatcher)
+            }
+        }
+        ViewModelPagan.LayoutSize.SmallLandscape,
+        ViewModelPagan.LayoutSize.LargeLandscape,
+        ViewModelPagan.LayoutSize.MediumLandscape -> {
+            Column(Modifier.width(dimensionResource(R.dimen.contextmenu_button_width))) {
+                RemoveEffectButton(dispatcher)
+                Spacer(Modifier.weight(1F))
+                HideEffectButton(dispatcher)
             }
         }
     }

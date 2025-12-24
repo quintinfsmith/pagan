@@ -2497,36 +2497,21 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         this.track(TrackedAction.RemoveController)
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        when (cursor.ctl_level) {
+        when (cursor.ctl_level!!) {
             CtlLineLevel.Line -> opus_manager.remove_line_controller(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
             CtlLineLevel.Channel -> opus_manager.remove_channel_controller(cursor.ctl_type!!, cursor.channel)
             CtlLineLevel.Global -> opus_manager.remove_global_controller(cursor.ctl_type!!)
-            null -> {} // pass
         }
     }
 
     fun toggle_controller_visibility() {
         this.track(TrackedAction.ToggleControllerVisibility)
-
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        when (cursor.ctl_level) {
-            CtlLineLevel.Line -> {
-                opus_manager.toggle_line_controller_visibility(
-                    cursor.ctl_type!!,
-                    cursor.channel,
-                    cursor.line_offset
-                )
-            }
-
-            CtlLineLevel.Channel -> {
-                opus_manager.toggle_channel_controller_visibility(cursor.ctl_type!!, cursor.channel)
-            }
-
-            CtlLineLevel.Global -> {
-                opus_manager.toggle_global_controller_visibility(cursor.ctl_type!!)
-            }
-            null -> {} // Pass
+        when (cursor.ctl_level!!) {
+            CtlLineLevel.Line -> opus_manager.toggle_line_controller_visibility(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
+            CtlLineLevel.Channel -> opus_manager.toggle_channel_controller_visibility(cursor.ctl_type!!, cursor.channel)
+            CtlLineLevel.Global -> opus_manager.toggle_global_controller_visibility(cursor.ctl_type!!)
         }
     }
 

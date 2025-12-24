@@ -146,7 +146,6 @@ class ActivityEditor : PaganActivity() {
     private var _notification_channel: NotificationChannel? = null
     private var _active_notification: NotificationCompat.Builder? = null
     // -------------------------------------------------------------------
-
     var active_project: Uri?
         get() = this.editor_view_model.active_project
         set(value) {
@@ -996,13 +995,13 @@ class ActivityEditor : PaganActivity() {
             this.editor_view_model.audio_interface.play_feedback(midi_channel, note, bend, (velocity * 127F).toInt() shl 8)
         } else {
             try {
-                this._midi_feedback_dispatcher.play_note(
-                    midi_channel,
-                    note,
-                    bend,
-                    (velocity * 127F).toInt(),
-                    !opus_manager.is_tuning_standard()
-                )
+              //  this._midi_feedback_dispatcher.play_note(
+              //      midi_channel,
+              //      note,
+              //      bend,
+              //      (velocity * 127F).toInt(),
+              //      !opus_manager.is_tuning_standard()
+              //  )
             } catch (_: VirtualMidiInputDevice.DisconnectedException) {
                 // Feedback shouldn't be necessary here. But i'm sure that'll come back to bite me
             }

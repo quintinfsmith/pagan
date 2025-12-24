@@ -6,6 +6,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.media.midi.MidiDeviceInfo
 import android.net.Uri
@@ -49,6 +50,7 @@ import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -76,7 +78,6 @@ import androidx.lifecycle.lifecycleScope
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
 import com.qfs.apres.MidiController
-import com.qfs.apres.MidiPlayer
 import com.qfs.apres.VirtualMidiOutputDevice
 import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.soundfont2.Riff
@@ -86,8 +87,8 @@ import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
 import com.qfs.pagan.CompatibleFileType
 import com.qfs.pagan.Exportable
-import com.qfs.pagan.MidiFeedbackDispatcher
 import com.qfs.pagan.MultiExporterEventHandler
+import com.qfs.pagan.PaganBroadcastReceiver
 import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.R
 import com.qfs.pagan.SingleExporterEventHandler
@@ -153,6 +154,9 @@ import kotlin.math.abs
 class ComponentActivityEditor: PaganComponentActivity() {
     val controller_model: ViewModelEditorController by this.viewModels()
     val state_model: ViewModelEditorState by this.viewModels()
+
+    private var broadcast_receiver = PaganBroadcastReceiver()
+    private var receiver_intent_filter = IntentFilter("com.qfs.pagan.CANCEL_EXPORT_WAV")
 
     // Notification shiz -------------------------------------------------
     var NOTIFICATION_ID = 0
@@ -480,28 +484,28 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
 
-    private var _virtual_input_device = MidiPlayer()
     private lateinit var _midi_interface: MidiController
     //private var _sample_handle_manager: SampleHandleManager? = null
     // private var _feedback_sample_manager: SampleHandleManager? = null
-    private var _midi_feedback_dispatcher = MidiFeedbackDispatcher()
     fun bind_midi_interface() {
         this._midi_interface = object : MidiController(this, false) {
             override fun onDeviceAdded(device_info: MidiDeviceInfo) {
                 val that = this@ComponentActivityEditor
                 that.controller_model.midi_devices_connected++
+                that.state_model.midi_device_connected.value = true
             }
             override fun onDeviceRemoved(device_info: MidiDeviceInfo) {
                 val that = this@ComponentActivityEditor
                 that.controller_model.midi_devices_connected--
                 if (device_info == that.controller_model.active_midi_device) {
-                    that.controller_model.active_midi_device = null
+                    that.controller_model.set_active_midi_device(null)
+                    that.state_model.playback_state_midi.value = that.controller_model.playback_state_midi
                     that.state_model.set_use_midi_playback(false)
                 }
+                that.state_model.midi_device_connected.value = (that.controller_model.midi_devices_connected != 0)
             }
         }
 
-        this._midi_interface.connect_virtual_input_device(this._virtual_input_device)
 
         // Listens for SongPositionPointer (provided by midi) and scrolls to that beat
         this._midi_interface.connect_virtual_output_device(object : VirtualMidiOutputDevice {
@@ -513,7 +517,28 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
         })
 
-        this._midi_interface.connect_virtual_input_device(this._midi_feedback_dispatcher)
+        this._midi_interface.connect_virtual_input_device(this.controller_model.virtual_midi_device)
+        val output_devices = this._midi_interface.poll_output_devices()
+        this.state_model.midi_device_connected.value = output_devices.isNotEmpty()
+        this.controller_model.midi_devices_connected = output_devices.size
+    }
+
+    fun unbind_midi_interface() {
+        this._midi_interface.disconnect_virtual_input_device(this.controller_model.virtual_midi_device)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        this.registerReceiver(
+            this.broadcast_receiver,
+            this.receiver_intent_filter,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                RECEIVER_NOT_EXPORTED
+            } else {
+                0
+            }
+        )
+
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -522,8 +547,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.controller_model.attach_state_model(this.state_model)
         action_interface.attach_top_model(this.view_model)
 
-        super.onCreate(savedInstanceState)
         this.bind_midi_interface()
+        super.onCreate(savedInstanceState)
 
         this.onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -709,8 +734,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     override fun RowScope.TopBar(modifier: Modifier) {
         val vm_controller = this@ComponentActivityEditor.controller_model
-        val vm_top = this@ComponentActivityEditor.view_model
         val vm_state = vm_controller.opus_manager.vm_state
+        val vm_top = this@ComponentActivityEditor.view_model
         val dispatcher = vm_controller.action_interface
         val scope = rememberCoroutineScope()
         val menu_items: MutableList<Pair<Int, () -> Unit>> = mutableListOf(
@@ -729,6 +754,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             )
         }
+
         menu_items.add(
             Pair(R.string.menu_item_import) {
                 this@ComponentActivityEditor.result_launcher_import.launch(
@@ -740,31 +766,42 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
         )
 
-        if (vm_controller.midi_devices_connected > 0) {
-            Pair(R.string.playback_device) {
-                vm_top.create_medium_dialog { close ->
-                    @Composable {
-                        val options = mutableListOf<Pair<MidiDeviceInfo?, @Composable RowScope.() -> Unit>>(
-                            Pair(null) { SText(R.string.device_menu_default_name) }
-                        )
-
-                        for (device_info in this@ComponentActivityEditor._midi_interface.poll_output_devices()) {
-                            options.add(
-                                Pair(device_info) {
-                                    Text(device_info.properties.getString(MidiDeviceInfo.PROPERTY_NAME) ?: stringResource(R.string.unknown_midi_device, device_info.id))
-                                }
+        if (vm_state.midi_device_connected.value) {
+            menu_items.add(
+                Pair(R.string.playback_device) {
+                    vm_top.create_medium_dialog { close ->
+                        @Composable {
+                            val options = mutableListOf<Pair<MidiDeviceInfo?, @Composable RowScope.() -> Unit>>(
+                                Pair(null) { SText(R.string.device_menu_default_name) }
                             )
-                        }
 
-                        DialogSTitle(R.string.playback_device)
-                        UnSortableMenu<MidiDeviceInfo?>(modifier = Modifier, options = options, default_value = vm_controller.active_midi_device) {
-                            vm_controller.active_midi_device = it
-                            vm_state.set_use_midi_playback(it != null)
+                            for (device_info in this@ComponentActivityEditor._midi_interface.poll_output_devices()) {
+                                options.add(
+                                    Pair(device_info) {
+                                        Text(
+                                            device_info.properties.getString(MidiDeviceInfo.PROPERTY_NAME)
+                                                ?: stringResource(R.string.unknown_midi_device, device_info.id)
+                                        )
+                                    }
+                                )
+                            }
+
+                            DialogSTitle(R.string.playback_device)
+                            UnSortableMenu<MidiDeviceInfo?>(
+                                modifier = Modifier,
+                                options = options,
+                                default_value = vm_controller.active_midi_device
+                            ) {
+                                close()
+                                vm_controller.set_active_midi_device(it)
+                                vm_state.set_use_midi_playback(it != null)
+                                vm_state.playback_state_midi.value = vm_controller.playback_state_midi
+                            }
+                            DialogBar(neutral = close)
                         }
-                        DialogBar(neutral = close)
                     }
                 }
-            }
+            )
         }
 
         menu_items.add(
@@ -815,7 +852,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             PlaybackState.Stopping -> TODO()
                             PlaybackState.NotReady -> TODO()
                             PlaybackState.Ready -> {
-                                dispatcher.play_opus_midi(this)
+                                dispatcher.play_opus_midi()
                             }
 
                             PlaybackState.Playing -> {

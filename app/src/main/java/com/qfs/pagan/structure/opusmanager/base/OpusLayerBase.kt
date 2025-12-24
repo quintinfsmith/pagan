@@ -4832,18 +4832,11 @@ open class OpusLayerBase: Effectable {
         every entry is also ((some number) / 12)
      */
     fun is_tuning_standard(): Boolean {
-        val actuals = List(12) { i: Int ->
-            i.toDouble() / 12.0
-        }
-
-        if (!actuals.contains((this.transpose.first.toDouble() / this.transpose.second.toDouble()) % 1.0)) {
-            return false
-        }
+        val actuals = List(12) { i: Int -> i.toDouble() / 12.0 }
+        if (!actuals.contains((this.transpose.first.toDouble() / this.transpose.second.toDouble()) % 1.0)) return false
 
         for ((numerator, denominator) in this.tuning_map) {
-            if (!actuals.contains(numerator.toDouble() / denominator.toDouble())) {
-                return false
-            }
+            if (!actuals.contains(numerator.toDouble() / denominator.toDouble())) return false
         }
 
         return true

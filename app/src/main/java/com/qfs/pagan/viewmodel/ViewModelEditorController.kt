@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import com.qfs.apres.MidiPlayer
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
@@ -26,6 +27,7 @@ class ViewModelEditorController(): ViewModel() {
     var action_interface = ActionTracker(this)
     var opus_manager = OpusLayerInterface(this)
     var active_midi_device: MidiDeviceInfo? = null
+    var virtual_midi_device = MidiPlayer()
     var midi_devices_connected: Int = 0
     var audio_interface = AudioInterface()
     var playback_device: PlaybackDevice? = null
@@ -37,6 +39,11 @@ class ViewModelEditorController(): ViewModel() {
     var project_exists: MutableState<Boolean> = mutableStateOf(false)
     var active_soundfont_relative_path: String? = null
 
+
+    fun set_active_midi_device(device: MidiDeviceInfo?) {
+        this.active_midi_device = device
+        this.update_playback_state_midi(PlaybackState.Ready)
+    }
 
     fun set_project_exists(value: Boolean) {
         this.project_exists.value = value

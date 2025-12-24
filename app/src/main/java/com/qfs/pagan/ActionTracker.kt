@@ -39,6 +39,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import com.qfs.apres.VirtualMidiInputDevice
 import com.qfs.json.JSONBoolean
 import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
@@ -73,6 +74,8 @@ import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.CoroutineScope
+import java.io.IOException
+import kotlin.concurrent.thread
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
@@ -1194,20 +1197,17 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     }
 
     private fun generate_effect_menu_option(ctl_type: EffectType, icon_id: Int): Pair<EffectType, @Composable RowScope.() -> Unit> {
-        return Pair(
-            ctl_type,
-            {
-                Icon(
-                    modifier = Modifier.width(dimensionResource(R.dimen.effect_dialog_icon_width)),
-                    painter = painterResource(icon_id),
-                    contentDescription = ctl_type.name // TODO: extract string resource
-                )
-                Text(
-                    ctl_type.name,
-                    Modifier.weight(1F)
-                )
-            }
-        )
+        return Pair(ctl_type) {
+            Icon(
+                modifier = Modifier.width(dimensionResource(R.dimen.effect_dialog_icon_width)),
+                painter = painterResource(icon_id),
+                contentDescription = ctl_type.name // TODO: extract string resource
+            )
+            Text(
+                ctl_type.name,
+                Modifier.weight(1F)
+            )
+        }
     }
 
     fun show_hidden_line_controller(forced_value: EffectType? = null) {
@@ -1340,21 +1340,20 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         if (note > 127) return
 
         val audio_interface = this.vm_controller.audio_interface
-        if (audio_interface.has_soundfont()) {
+        if (this.vm_controller.active_midi_device != null) {
+            try {
+                this.vm_controller.virtual_midi_device.play_note(
+                    midi_channel,
+                    note,
+                    bend,
+                    (velocity * 127F).toInt(),
+                    !this.get_opus_manager().is_tuning_standard()
+                )
+            } catch (_: VirtualMidiInputDevice.DisconnectedException) {
+                // Feedback shouldn't be necessary here. But i'm sure that'll come back to bite me
+            }
+        } else if (audio_interface.has_soundfont()) {
             audio_interface.play_feedback(midi_channel, note, bend, (velocity * 127F).toInt() shl 8)
-        } else {
-            TODO()
-            // try {
-            //     // this._midi_feedback_dispatcher.play_note(
-            //     //     midi_channel,
-            //     //     note,
-            //     //     bend,
-            //     //     (velocity * 127F).toInt(),
-            //     //     !opus_manager.is_tuning_standard()
-            //     // )
-            // } catch (_: VirtualMidiInputDevice.DisconnectedException) {
-            //     // Feedback shouldn't be necessary here. But i'm sure that'll come back to bite me
-            // }
         }
     }
 
@@ -2016,6 +2015,47 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
     fun get_opus_manager(): OpusManager {
         return this.vm_controller.opus_manager
+    }
+
+    fun play_opus_midi(loop_playback: Boolean = false) {
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        val start_beat = when (opus_manager.cursor.mode) {
+            CursorMode.Single,
+            CursorMode.Column -> opus_manager.cursor.beat
+
+            CursorMode.Range -> opus_manager.cursor.get_ordered_range()!!.first.beat
+
+            CursorMode.Line,
+            CursorMode.Channel,
+            CursorMode.Unset -> 0
+        }
+
+        val midi = opus_manager.get_midi(start_beat, include_pointers = true)
+
+
+        // if (!this.editor_view_model.update_playback_state_midi(PlaybackState.Playing)) {
+        //     this.restore_midi_playback_state()
+        //     return
+        // }
+
+        thread {
+            try {
+                //this._midi_interface.open_output_device(this.editor_view_model.active_midi_device!!)
+                this.vm_controller.virtual_midi_device.play_midi(midi, loop_playback) {
+                   // this.runOnUiThread {
+                   //     this.playback_stop_midi_output()
+                   // }
+                }
+            } catch (_: IOException) {
+                // this.runOnUiThread {
+                //     this.playback_stop_midi_output()
+                // }
+            }
+        }
+    }
+    fun stop_opus_midi() {
+        this.vm_controller.virtual_midi_device.stop()
     }
 
     fun play_opus(scope: CoroutineScope) {

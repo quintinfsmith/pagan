@@ -7,6 +7,7 @@ abstract class VirtualMidiInputDevice {
     private var midi_controller: MidiController? = null
     fun set_midi_controller(midi_controller: MidiController) {
         this.midi_controller = midi_controller
+        println("SET MIDI CONTROLLER $midi_controller")
     }
 
     fun unset_midi_controller() {
@@ -18,9 +19,12 @@ abstract class VirtualMidiInputDevice {
     }
 
     fun send_event(event: GeneralMIDIEvent) {
+        println("SENDING $event...")
         if (this.is_connected()) {
+            println("CONNECTED")
             this.midi_controller!!.broadcast_event(event)
         } else {
+            println("NO CONNECTED")
             throw DisconnectedException()
         }
 

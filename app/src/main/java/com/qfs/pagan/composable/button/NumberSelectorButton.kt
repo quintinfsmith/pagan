@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -32,8 +33,8 @@ fun NumberSelectorButton(modifier: Modifier = Modifier, index: Int, alternate: B
             .height(dimensionResource(R.dimen.number_selector_button_height))
             .padding(1.dp)
             .background(
-                if (alternate) colorResource(R.color.ns_alt)
-                else colorResource(R.color.ns_default),
+                if (alternate) MaterialTheme.colorScheme.secondary
+                else MaterialTheme.colorScheme.primary,
                 shape
             )
             .then(
@@ -55,8 +56,8 @@ fun NumberSelectorButton(modifier: Modifier = Modifier, index: Int, alternate: B
         Text(
             "$index",
             maxLines = 1,
-            color = if (alternate) colorResource(R.color.ns_alt_text)
-                else colorResource(R.color.ns_default_text)
+            color = if (alternate) MaterialTheme.colorScheme.onSecondary
+                else MaterialTheme.colorScheme.onPrimary
         )
     }
 }

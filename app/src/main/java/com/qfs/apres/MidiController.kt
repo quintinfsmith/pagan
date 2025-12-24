@@ -159,15 +159,18 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
     }
 
     fun broadcast_event(event: GeneralMIDIEvent) {
+        println("Broadcasting...")
         // Rebroadcast to listening devices
         runBlocking {
             this@MidiController.output_mutex.withLock {
                 for (device in this@MidiController.virtual_output_devices.toList()) {
+                    println("R: $device")
                     device.receiveMessage(event)
                 }
 
                 if (!this@MidiController.block_physical_devices) {
                     for (input_port in this@MidiController.connected_input_ports.toList()) {
+                        println("R: $input_port")
                         val bytes = event.as_bytes()
                         try {
                             input_port.send(bytes, 0, bytes.size)
@@ -191,9 +194,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
     }
 
     fun poll_output_devices(): List<MidiDeviceInfo> {
-        if (this.midi_manager == null) {
-            return listOf()
-        }
+        if (this.midi_manager == null) return listOf()
 
         val devices_info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             this.midi_manager!!.getDevicesForTransport(MidiManager.TRANSPORT_MIDI_BYTE_STREAM)
@@ -207,13 +208,12 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
                 output_devices.add(device_info)
             }
         }
+
         return output_devices
     }
 
     fun poll_input_devices(): List<MidiDeviceInfo> {
-        if (this.midi_manager == null) {
-            return listOf()
-        }
+        if (this.midi_manager == null) return listOf()
 
         val devices_info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             this.midi_manager!!.getDevicesForTransport(MidiManager.TRANSPORT_MIDI_BYTE_STREAM)

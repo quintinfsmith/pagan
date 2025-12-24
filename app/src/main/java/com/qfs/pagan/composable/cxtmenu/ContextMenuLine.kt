@@ -64,8 +64,8 @@ fun RemoveLineButton(dispatcher: ActionTracker, size: Int) {
 @Composable
 fun RemoveEffectButton(dispatcher: ActionTracker) {
     IconCMenuButton(
-        onClick = { dispatcher.remove_line(1) },
-        onLongClick = { dispatcher.remove_line() },
+        onClick = { dispatcher.remove_controller() },
+        onLongClick = { dispatcher.remove_controller() },
         icon = R.drawable.icon_remove_line,
         description = R.string.cd_remove_line
     )
@@ -107,7 +107,7 @@ fun MuteButton(dispatcher: ActionTracker, line: ViewModelEditorState.LineData) {
 @Composable
 fun HideEffectButton(dispatcher: ActionTracker) {
     IconCMenuButton(
-        onClick = { dispatcher.remove_controller() },
+        onClick = { dispatcher.toggle_controller_visibility() },
         icon = R.drawable.icon_hide,
         description = R.string.cd_hide_control_line
     )

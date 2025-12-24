@@ -1,13 +1,11 @@
 package com.qfs.pagan.composable.cxtmenu
 
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.Slider
@@ -25,27 +23,29 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
         modifier = Modifier
             .width(dimensionResource(R.dimen.contextmenu_button_width))
             .fillMaxHeight(),
-        contentPadding = PaddingValues(4.dp),
         text = "%02d".format((event.value * 100).roundToInt()),
-        onClick = {},
+        onClick = {
+            dispatcher.dialog_number_input(R.string.dlg_set_velocity, 0, 127, default = (event.value * 100).toInt()) {
+                event.value = it.toFloat() / 100F
+                dispatcher.set_effect_at_cursor(event)
+            }
+        },
         onLongClick = {
             event.value = 1F
             dispatcher.set_effect_at_cursor(event)
         }
     )
-
     CMPadding()
-
     Slider(
-        valueRange = 0F .. 1.27F,
+        modifier = Modifier
+            .weight(1F)
+            .fillMaxHeight(),
         value = event.value,
+        valueRange = 0F .. 1.27F,
         onValueChange = {
             event.value = it
             dispatcher.set_effect_at_cursor(event)
         },
-        modifier = Modifier
-            .weight(1F)
-            .fillMaxHeight()
     )
 
     EffectTransitionButton(event.transition, dispatcher, is_initial)

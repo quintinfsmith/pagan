@@ -25,7 +25,10 @@ fun RowScope.VolumeEventMenu(ui_facade: ViewModelEditorState, dispatcher: Action
             .fillMaxHeight(),
         text = "%02d".format((event.value * 100).roundToInt()),
         onClick = {
-            dispatcher.set_volume_at_cursor()
+            dispatcher.dialog_number_input(R.string.dlg_set_volume, 0, default = (event.value * 100).toInt()) {
+                event.value = it.toFloat() / 100F
+                dispatcher.set_effect_at_cursor(event)
+            }
         },
         onLongClick = {
             event.value = 1F

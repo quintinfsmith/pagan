@@ -45,6 +45,7 @@ import androidx.compose.foundation.text.input.selectAll
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CardElevation
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
@@ -74,6 +75,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextRange
@@ -267,7 +269,7 @@ fun <T: Number> NumberInput(
     val state = rememberTextFieldState(value.value.toString())
 
     // Prevent weird focusing behavior causing on_focus_exit to be called without any initial focus
-    var was_focused = remember { mutableStateOf(false) }
+    val was_focused = remember { mutableStateOf(false) }
     val focus_change_callback = { focus_state: FocusState ->
         if (focus_state.isFocused) {
             was_focused.value = true
@@ -760,7 +762,14 @@ fun NumberPicker(modifier: Modifier = Modifier, range: kotlin.ranges.IntRange, d
 }
 
 @Composable
-fun <T> MagicInputInner(modifier: Modifier = Modifier, value: MutableState<T>, contentPadding: PaddingValues = PaddingValues(vertical = 8.dp), prefix: @Composable (() -> Unit)? = null, content: @Composable (Modifier, MutableState<Boolean>, FocusRequester) -> Unit) {
+fun <T> MagicInputInner(
+    modifier: Modifier = Modifier,
+    value: MutableState<T>,
+    contentPadding: PaddingValues = PaddingValues(vertical = 8.dp),
+    prefix: @Composable (() -> Unit)? = null,
+    background_icon: Int? = null,
+    content: @Composable (Modifier, MutableState<Boolean>, FocusRequester) -> Unit
+) {
     val expanded = remember { mutableStateOf(false) }
     if (expanded.value) {
         val requester = remember { FocusRequester() }
@@ -770,21 +779,31 @@ fun <T> MagicInputInner(modifier: Modifier = Modifier, value: MutableState<T>, c
         }
     } else {
         ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onBackground) {
-            Row(
+            Box (
                 modifier = modifier
                     .border(width = 1.dp, color = MaterialTheme.colorScheme.outline, shape = MagicButtonShape())
                     .combinedClickable(
                         onClick = { expanded.value = !expanded.value }
                     )
                     .background(color = MaterialTheme.colorScheme.surfaceBright, shape = MagicButtonShape()),
-                verticalAlignment = Alignment.CenterVertically
+                contentAlignment = Alignment.Center
             ) {
-                prefix?.invoke()
-                Box(
-                    modifier = Modifier.weight(1F),
-                    contentAlignment = Alignment.Center,
-                    content = { Text("${value.value}", modifier = Modifier.padding(contentPadding)) },
-                )
+                background_icon?.let {
+                    ProvideContentColorTextStyle(MaterialTheme.colorScheme.onSurface.copy(alpha = .2F)) {
+                        Icon(
+                            painter = painterResource(it),
+                            contentDescription = null
+                        )
+                    }
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    prefix?.invoke()
+                    Box(
+                        modifier = Modifier.weight(1F),
+                        contentAlignment = Alignment.Center,
+                        content = { Text("${value.value}", modifier = Modifier.padding(contentPadding)) },
+                    )
+                }
             }
         }
     }
@@ -798,13 +817,15 @@ fun MagicInput(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(vertical = 8.dp),
     prefix: @Composable (() -> Unit)? = null,
+    background_icon: Int? = null,
     callback: (Int) -> Unit
 ) {
     MagicInputInner(
         modifier,
         value,
         contentPadding,
-        prefix = prefix
+        prefix = prefix,
+        background_icon = background_icon
     ) { modifier, expanded, requester ->
         IntegerInput(
             value = value,
@@ -838,12 +859,14 @@ fun MagicInput(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(vertical = 8.dp),
     prefix: @Composable (() -> Unit)? = null,
+    background_icon: Int? = null,
     callback: (Float) -> Unit) {
     MagicInputInner(
         modifier,
         value,
         contentPadding,
-        prefix = prefix
+        prefix = prefix,
+        background_icon = background_icon
     ) { modifier, expanded, requester ->
         FloatInput(
             value = value,

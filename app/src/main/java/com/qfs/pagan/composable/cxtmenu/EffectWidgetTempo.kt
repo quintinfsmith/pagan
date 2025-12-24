@@ -1,27 +1,18 @@
 package com.qfs.pagan.composable.cxtmenu
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
-import com.qfs.pagan.composable.FloatInput
 import com.qfs.pagan.composable.MagicInput
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
@@ -55,13 +46,14 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
         precision = 3,
         modifier = Modifier.width(dimensionResource(R.dimen.effect_tempo_input_width)),
         minimum = 0F,
-        prefix = @Composable {
-            Icon(
-                modifier = Modifier.padding(start = 4.dp),
-                painter = painterResource(R.drawable.icon_tempo),
-                contentDescription = null
-            )
-        },
+        background_icon = R.drawable.icon_tempo,
+        // prefix = @Composable {
+        //     Icon(
+        //         modifier = Modifier.padding(start = 4.dp),
+        //         painter = painterResource(R.drawable.icon_tempo),
+        //         contentDescription = null
+        //     )
+        // },
         callback = { new_value: Float ->
             event.value = new_value
             if (beat != null) {

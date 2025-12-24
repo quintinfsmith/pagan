@@ -71,7 +71,6 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.viewmodel.ViewModelEditorController
-import com.qfs.pagan.viewmodel.ViewModelEditorState
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.CoroutineScope
 import java.io.IOException
@@ -1119,61 +1118,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         opus_manager.set_event_at_cursor(event)
     }
 
-    fun set_volume_at_cursor(volume: Float? = null) {
-        this.vm_top.create_small_dialog { close ->
-            @Composable {
-                Text("TODO")
-            }
-        }
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        when (cursor.mode) {
-            CursorMode.Line -> {
-                val new_event = OpusVolumeEvent(volume ?: 100F)
-                when (cursor.ctl_level) {
-                    null,
-                    CtlLineLevel.Line -> {
-                        opus_manager.controller_line_set_initial_event(
-                            EffectType.Volume,
-                            cursor.channel,
-                            cursor.line_offset,
-                            new_event
-                        )
-                    }
-                    CtlLineLevel.Channel -> {
-                        opus_manager.controller_channel_set_initial_event(
-                            EffectType.Volume,
-                            cursor.channel,
-                            new_event
-                        )
-                    }
-                    CtlLineLevel.Global -> TODO()
-                }
-            }
-
-            CursorMode.Single -> { }
-            else -> throw Exception()
-        }
-        // val main = this.get_activity()
-
-        // val context_menu = main.active_context_menu
-        // if (context_menu !is ContextMenuWithController<*>) return
-
-        // val widget: ControlWidgetVolume = context_menu.get_widget() as ControlWidgetVolume
-
-        // val dlg_default = (widget.get_event().value * 100F).toInt()
-        // val dlg_title = main.getString(R.string.dlg_set_volume)
-        // this.dialog_number_input(dlg_title, widget.min, widget.max, dlg_default, volume) { new_value: Int ->
-        //     this.track(TrackedAction.SetVolumeAtCursor, listOf(new_value))
-        //     val new_event = OpusVolumeEvent(
-        //         new_value.toFloat() / 100F,
-        //         widget.get_event().duration,
-        //         widget.get_event().transition
-        //     )
-        //     widget.set_event(new_event)
-        // }
-    }
-
     fun set_duration(duration: Int? = null) {
         val opus_manager = this.get_opus_manager()
 
@@ -1870,11 +1814,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         }
     }
 
-    /**
-     *  wrapper around MainActivity::dialog_number_input
-     *  will subvert the popup on replay
-     */
-    private fun dialog_number_input(title_string_id: Int, min_value: Int, max_value: Int? = null, default: Int? = null, callback: (value: Int) -> Unit) {
+     fun dialog_number_input(title_string_id: Int, min_value: Int, max_value: Int? = null, default: Int? = null, callback: (value: Int) -> Unit) {
         this.vm_top.create_small_dialog { close ->
             @Composable {
                 val focus_requester = remember { FocusRequester() }

@@ -464,7 +464,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             // No need to update the active_project here. using this intent launcher implies the active_project will be changed in the ucheck
             this.view_model.project_manager?.change_project_path(tree_uri, this.controller_model.active_project)
 
-            TODO()
+            this@ComponentActivityEditor.controller_model.action_interface.save()
         }
 
     internal var result_launcher_settings =
@@ -1634,7 +1634,20 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     description = R.string.btn_cfg_save,
                     onClick = {
                         scope.launch { this@ComponentActivityEditor.close_drawer() }
-                        dispatcher.save()
+                        val configuration = this@ComponentActivityEditor.view_model.configuration
+                        if (configuration.project_directory == null || DocumentFile.fromTreeUri(this@ComponentActivityEditor, configuration.project_directory!!)?.exists() != true) {
+                            this@ComponentActivityEditor._result_launcher_set_project_directory_and_save.launch(
+                                Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also { intent ->
+                                    intent.putExtra(Intent.EXTRA_TITLE, "Pagan Projects")
+                                    intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                                    configuration.project_directory?.let {
+                                        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, it)
+                                    }
+                                }
+                            )
+                        } else {
+                            dispatcher.save()
+                        }
                     }
                 )
                 DrawerPadder()
@@ -1840,19 +1853,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     fun project_save() {
-        val configuration = this.view_model.configuration
-        if (configuration.project_directory == null || DocumentFile.fromTreeUri(this, configuration.project_directory!!)?.exists() != true) {
-            this._result_launcher_set_project_directory_and_save.launch(
-                Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also { intent ->
-                    intent.putExtra(Intent.EXTRA_TITLE, "Pagan Projects")
-                    intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-
-                    configuration.project_directory?.let {
-                        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, it)
-                    }
-                }
-            )
-        }
     }
 
     fun toast(id: Int, length: Int = Toast.LENGTH_SHORT) {

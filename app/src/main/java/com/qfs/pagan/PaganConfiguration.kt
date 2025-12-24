@@ -40,7 +40,7 @@ class PaganConfiguration(
     companion object {
         val DEFAULT_CHANNEL_COLORS = arrayOf(
             0xFF765bd5,
-            0xFFAA0000,
+            0xFFAA8800,
             0xFF006633
         )
         fun from_json(content: JSONHashMap): PaganConfiguration {

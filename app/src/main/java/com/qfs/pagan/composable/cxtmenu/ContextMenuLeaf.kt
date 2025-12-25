@@ -3,6 +3,7 @@ package com.qfs.pagan.composable.cxtmenu
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.SegmentedButton
@@ -117,6 +118,7 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewM
             CMPadding()
             RemoveButton(dispatcher, cursor)
             CMPadding()
+            Spacer(Modifier.weight(1F))
             DurationButton(dispatcher, active_event)
             CMPadding()
             UnsetButton(dispatcher, active_line, active_event)

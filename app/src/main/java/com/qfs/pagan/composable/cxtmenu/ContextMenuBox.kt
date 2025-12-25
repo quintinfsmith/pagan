@@ -16,12 +16,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.CMBoxBottomShape
 import com.qfs.pagan.composable.CMBoxEndShape
+import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 
 
 @Composable
@@ -36,40 +39,44 @@ fun ColumnScope.CMPadding() {
 
 @Composable
 fun CMBoxBottom(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
-    Box(
-        modifier
-            .background(
-                MaterialTheme.colorScheme.surface,
-                CMBoxBottomShape()
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            Modifier.padding(
-                top = dimensionResource(R.dimen.contextmenu_padding),
-                start = dimensionResource(R.dimen.contextmenu_padding),
-                end = dimensionResource(R.dimen.contextmenu_padding),
-                bottom = 0.dp
-            ),
-            content = content
-        )
+    ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onPrimaryContainer) {
+        Box(
+            modifier
+                .background(
+                    MaterialTheme.colorScheme.primaryContainer,
+                    CMBoxBottomShape()
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                Modifier.padding(
+                    top = dimensionResource(R.dimen.contextmenu_padding),
+                    start = dimensionResource(R.dimen.contextmenu_padding),
+                    end = dimensionResource(R.dimen.contextmenu_padding),
+                    bottom = 0.dp
+                ),
+                content = content
+            )
+        }
     }
 }
 
 @Composable
 fun CMBoxEnd(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
-    Box(
-        modifier
-            .background(
-                MaterialTheme.colorScheme.surface,
-                CMBoxEndShape()
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            Modifier.padding(dimensionResource(R.dimen.contextmenu_padding)),
-            content = content
-        )
+    ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onPrimaryContainer) {
+        Box(
+            modifier
+                .background(
+                    MaterialTheme.colorScheme.primaryContainer,
+                    CMBoxEndShape()
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                Modifier.padding(dimensionResource(R.dimen.contextmenu_padding)),
+                content = content
+            )
+        }
     }
 }
 

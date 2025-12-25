@@ -54,15 +54,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
     }
 
     @Composable
-    override fun RowScope.TopBar(modifier: Modifier) {
-        // Row {
-        //     Text(
-        //         modifier = Modifier.weight(1F),
-        //         textAlign = TextAlign.Center,
-        //         text = stringResource(R.string.app_name)
-        //     )
-        // }
-    }
+    override fun RowScope.TopBar() { }
 
     @Composable
     fun LayoutMenu() {

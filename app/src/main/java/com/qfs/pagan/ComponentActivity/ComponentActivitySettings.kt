@@ -56,6 +56,7 @@ import com.qfs.pagan.composable.Slider
 import com.qfs.pagan.composable.SortableMenu
 import com.qfs.pagan.composable.SoundFontWarning
 import com.qfs.pagan.composable.button.Button
+import com.qfs.pagan.composable.button.TopBarIcon
 import com.qfs.pagan.enumerate
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -221,23 +222,17 @@ class ComponentActivitySettings: PaganComponentActivity() {
     override fun Drawer(modifier: Modifier) { }
 
     @Composable
-    override fun RowScope.TopBar(modifier: Modifier) {
-        Row {
-            Icon(
-                painter = painterResource(R.drawable.baseline_arrow_back_24),
-                contentDescription = stringResource(R.string.go_back),
-                modifier = Modifier
-                    .width(dimensionResource(R.dimen.icon_button_width)) // TODO: Dedicated size?
-                    .combinedClickable(
-                        onClick = { this@ComponentActivitySettings.finish() }
-                    )
-            )
-            Text(
-                modifier = Modifier.weight(1F),
-                textAlign = TextAlign.Center,
-                text = stringResource(R.string.settings_fragment_label)
-            )
-        }
+    override fun RowScope.TopBar() {
+        TopBarIcon(
+            icon = R.drawable.baseline_arrow_back_24,
+            description = R.string.go_back,
+            callback = { this@ComponentActivitySettings.finish() }
+        )
+        Text(
+            modifier = Modifier.weight(1F),
+            textAlign = TextAlign.Center,
+            text = stringResource(R.string.settings_fragment_label)
+        )
     }
 
     //fun set_soundfont_directory(uri: Uri) {

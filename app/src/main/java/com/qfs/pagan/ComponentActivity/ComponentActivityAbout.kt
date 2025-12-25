@@ -28,27 +28,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.qfs.pagan.R
+import com.qfs.pagan.composable.button.TopBarIcon
 import com.qfs.pagan.find_activity
 
 class ComponentActivityAbout: PaganComponentActivity() {
     @Composable
-    override fun RowScope.TopBar(modifier: Modifier) {
-        Row {
-            Icon(
-                painter = painterResource(R.drawable.baseline_arrow_back_24),
-                contentDescription = stringResource(R.string.go_back),
-                modifier = Modifier
-                    .width(dimensionResource(R.dimen.icon_button_width)) // TODO: Dedicated size?
-                    .combinedClickable(
-                        onClick = { this@ComponentActivityAbout.finish() }
-                    )
-            )
-            Text(
-                modifier = Modifier.weight(1F),
-                textAlign = TextAlign.Center,
-                text = stringResource(R.string.app_name)
-            )
-        }
+    override fun RowScope.TopBar() {
+        TopBarIcon(
+            icon = R.drawable.baseline_arrow_back_24,
+            description = R.string.go_back,
+            callback = { this@ComponentActivityAbout.finish() }
+        )
+        Text(
+            modifier = Modifier.weight(1F),
+            textAlign = TextAlign.Center,
+            text = stringResource(R.string.app_name)
+        )
     }
 
     @Composable

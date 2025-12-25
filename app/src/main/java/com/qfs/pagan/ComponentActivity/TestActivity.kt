@@ -16,7 +16,7 @@ class TestActivity: PaganComponentActivity() {
     var test_model = TestModel()
 
     @Composable
-    override fun RowScope.TopBar(modifier: Modifier) {}
+    override fun RowScope.TopBar() {}
 
     @Composable
     override fun Drawer(modifier: Modifier) {

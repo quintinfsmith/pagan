@@ -474,15 +474,11 @@ fun <T> SortableMenu(
             }
         }
 
-        LazyColumn(
-            modifier = Modifier,
-            state = scroll_state
-        ) {
+        LazyColumn(state = scroll_state) {
             itemsIndexed(sorted_menu) { i, (item, label_content) ->
                 val row_modifier = Modifier
-                Row(
+                Column(
                     modifier = row_modifier
-                        .fillMaxWidth()
                         .then(
                             if (item == default_value) {
                                 default_index = i
@@ -491,27 +487,35 @@ fun <T> SortableMenu(
                                 row_modifier
                             }
                         )
-                        .then(
-                            if (i % 2 == 0) {
-                                row_modifier.background(Color(0x10000000))
-                            } else {
-                                row_modifier.background(Color(0x10FFFFFF))
-                            }
-                        )
                         .height(dimensionResource(R.dimen.dialog_menu_line_height))
-                        .padding(
-                            vertical = dimensionResource(R.dimen.dialog_menu_line_padding_vertical),
-                             horizontal = dimensionResource(R.dimen.dialog_menu_line_padding_horizontal)
-                        )
-                        //.fillParentMaxWidth()
                         .combinedClickable(
                             onClick = { onClick(item) },
                             onLongClick = { onLongClick(item) }
                         ),
-                    content = label_content,
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                )
+
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .weight(1F)
+                            .padding(
+                                vertical = dimensionResource(R.dimen.dialog_menu_line_padding_vertical),
+                                horizontal = dimensionResource(R.dimen.dialog_menu_line_padding_horizontal)
+                            )
+                            .fillMaxWidth(),
+                        content = label_content,
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    )
+                    if (i < sorted_menu.size - 1) {
+                        Spacer(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(MaterialTheme.colorScheme.outline)
+                        )
+                    }
+                }
             }
         }
     }
@@ -548,8 +552,8 @@ fun DialogSTitle(text: Int, modifier: Modifier = Modifier) {
 fun DrawerCard(
     modifier: Modifier = Modifier.wrapContentWidth(),
     colors: CardColors = CardColors(
-        containerColor = colorResource(R.color.surface_container),
-        contentColor = colorResource(R.color.on_surface_container),
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
         disabledContentColor = Color.Gray,
         disabledContainerColor = Color.Green,
     ),
@@ -581,8 +585,8 @@ fun DrawerCard(
 fun DialogCard(
     modifier: Modifier = Modifier,
     colors: CardColors = CardColors(
-        containerColor = colorResource(R.color.surface_container),
-        contentColor = colorResource(R.color.on_surface_container),
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
         disabledContentColor = Color.Gray,
         disabledContainerColor = Color.Green,
     ),

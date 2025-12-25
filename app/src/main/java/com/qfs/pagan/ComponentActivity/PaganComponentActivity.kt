@@ -10,6 +10,7 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -24,6 +25,8 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
@@ -80,7 +83,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
     @Composable
     abstract fun LayoutSmallLandscape()
     @Composable
-    abstract fun RowScope.TopBar(modifier: Modifier = Modifier)
+    abstract fun RowScope.TopBar()
     @Composable
     abstract fun Drawer(modifier: Modifier = Modifier)
 
@@ -203,6 +206,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
 
     open fun on_config_load() {
         this.view_model.set_project_manager(ProjectManager(this, this.view_model.configuration.project_directory))
+        AppCompatDelegate.setDefaultNightMode(this.view_model.configuration.night_mode)
         this.requestedOrientation = this.view_model.configuration.force_orientation
         this.view_model.requires_soundfont.value = !this.is_soundfont_available()
     }

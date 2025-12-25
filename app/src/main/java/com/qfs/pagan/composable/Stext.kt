@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -777,7 +778,25 @@ fun <T> MagicInputInner(
     val expanded = remember { mutableStateOf(false) }
     if (expanded.value) {
         val requester = remember { FocusRequester() }
-        content(modifier, expanded, requester)
+
+        Box(
+            modifier = modifier
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceBright,
+                    shape = MagicButtonShape()
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            background_icon?.let {
+                ProvideContentColorTextStyle(MaterialTheme.colorScheme.onSurface.copy(alpha = .2F)) {
+                    Icon(
+                        painter = painterResource(it),
+                        contentDescription = null
+                    )
+                }
+            }
+            content(modifier, expanded, requester)
+        }
         LaunchedEffect(Unit) {
             requester.requestFocus()
         }
@@ -803,9 +822,9 @@ fun <T> MagicInputInner(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     prefix?.invoke()
                     Box(
-                        modifier = Modifier.weight(1F),
+                        modifier = Modifier.padding(contentPadding).weight(1F),
                         contentAlignment = Alignment.Center,
-                        content = { Text("${value.value}", modifier = Modifier.padding(contentPadding)) },
+                        content = { Text("${value.value}") }
                     )
                 }
             }
@@ -841,7 +860,8 @@ fun MagicInput(
             },
             contentPadding = contentPadding,
             modifier = modifier
-                .background(color = MaterialTheme.colorScheme.surfaceBright, shape = MagicButtonShape())
+                .fillMaxSize()
+                .background(Color.Transparent)
                 .focusRequester(requester),
             minimum = minimum,
             maximum = maximum,
@@ -883,6 +903,7 @@ fun MagicInput(
             },
             contentPadding = contentPadding,
             modifier = modifier
+                .fillMaxSize()
                 .background(color = MaterialTheme.colorScheme.surfaceBright, shape = MagicButtonShape())
                 .focusRequester(requester),
             minimum = minimum,

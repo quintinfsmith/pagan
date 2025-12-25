@@ -42,7 +42,11 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
         disabledInactiveTickColor = default_colors.disabledInactiveTickColor
     )
 
-    MagicInput(echo, background_icon = R.drawable.icon_echo, modifier = Modifier.width(64.dp)) {
+    MagicInput(
+        echo,
+        background_icon = R.drawable.icon_echo,
+        modifier = Modifier.width(64.dp)
+    ) {
         event.echo = (it - 1)
         dispatcher.set_effect_at_cursor(event)
     }

@@ -19,7 +19,9 @@ class TestActivity: PaganComponentActivity() {
     override fun RowScope.TopBar() {}
 
     @Composable
-    override fun Drawer(modifier: Modifier) {
+    override fun Drawer(modifier: Modifier) { }
+    override fun on_back_press_check(): Boolean {
+        TODO("Not yet implemented")
     }
 
     @Composable

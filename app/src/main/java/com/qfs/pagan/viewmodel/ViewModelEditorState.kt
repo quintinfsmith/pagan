@@ -110,6 +110,8 @@ class ViewModelEditorState: ViewModel() {
     val available_instruments = HashMap<Pair<Int, Int>, List<Pair<String, Int>>>()
     val base_leaf_width = mutableStateOf(0F)
 
+    val has_global_effects_hidden = mutableStateOf(true)
+
 
     fun clear() {
         this.project_name.value = null
@@ -337,7 +339,8 @@ class ViewModelEditorState: ViewModel() {
             this.set_cursor(it)
         }
     }
-    fun set_cursor(cursor: CacheCursor) {
+
+    fun set_cursor(cursor: CacheCursor?) {
         // Deselect old cursor
         while (this.selected_lines.isNotEmpty()) {
             this.selected_lines.removeAt(0).is_selected.value = false
@@ -352,9 +355,11 @@ class ViewModelEditorState: ViewModel() {
         }
 
         this.active_cursor.value = cursor
-        this.populate_selected_leafs(cursor)
-        this.populate_selected_lines(cursor)
-        this.populate_selected_columns(cursor)
+        cursor?.let {
+            this.populate_selected_leafs(cursor)
+            this.populate_selected_lines(cursor)
+            this.populate_selected_columns(cursor)
+        }
     }
 
     private fun populate_selected_leafs(cursor: CacheCursor) {

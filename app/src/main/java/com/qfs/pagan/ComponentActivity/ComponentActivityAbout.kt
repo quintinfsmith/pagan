@@ -49,6 +49,10 @@ class ComponentActivityAbout: PaganComponentActivity() {
     @Composable
     override fun Drawer(modifier: Modifier) { }
 
+    override fun on_back_press_check(): Boolean {
+        return true
+    }
+
     @Composable
     fun FillRow(content: @Composable (RowScope.() -> Unit)) {
         Row(

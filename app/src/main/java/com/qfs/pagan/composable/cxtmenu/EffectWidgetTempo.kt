@@ -2,6 +2,7 @@ package com.qfs.pagan.composable.cxtmenu
 
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
@@ -44,16 +45,11 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
     MagicInput(
         value = working_value,
         precision = 3,
-        modifier = Modifier.width(dimensionResource(R.dimen.effect_tempo_input_width)),
+        modifier = Modifier
+            .fillMaxHeight()
+            .width(dimensionResource(R.dimen.effect_tempo_input_width)),
         minimum = 0F,
         background_icon = R.drawable.icon_tempo,
-        // prefix = @Composable {
-        //     Icon(
-        //         modifier = Modifier.padding(start = 4.dp),
-        //         painter = painterResource(R.drawable.icon_tempo),
-        //         contentDescription = null
-        //     )
-        // },
         callback = { new_value: Float ->
             event.value = new_value
             if (beat != null) {

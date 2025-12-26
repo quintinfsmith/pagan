@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -770,7 +771,7 @@ fun NumberPicker(modifier: Modifier = Modifier, range: kotlin.ranges.IntRange, d
 fun <T> MagicInputInner(
     modifier: Modifier = Modifier,
     value: MutableState<T>,
-    contentPadding: PaddingValues = PaddingValues(vertical = 8.dp),
+    contentPadding: PaddingValues = PaddingValues(vertical = 0.dp),
     prefix: @Composable (() -> Unit)? = null,
     background_icon: Int? = null,
     content: @Composable (Modifier, MutableState<Boolean>, FocusRequester) -> Unit
@@ -790,6 +791,9 @@ fun <T> MagicInputInner(
             background_icon?.let {
                 ProvideContentColorTextStyle(MaterialTheme.colorScheme.onSurface.copy(alpha = .2F)) {
                     Icon(
+                        modifier = Modifier
+                            .padding(contentPadding)
+                            .fillMaxHeight(),
                         painter = painterResource(it),
                         contentDescription = null
                     )
@@ -814,6 +818,9 @@ fun <T> MagicInputInner(
                 background_icon?.let {
                     ProvideContentColorTextStyle(MaterialTheme.colorScheme.onSurface.copy(alpha = .2F)) {
                         Icon(
+                            modifier = Modifier
+                                .padding(contentPadding)
+                                .fillMaxHeight(),
                             painter = painterResource(it),
                             contentDescription = null
                         )
@@ -838,7 +845,7 @@ fun MagicInput(
     minimum: Int? = null,
     maximum: Int? = null,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(vertical = 8.dp),
+    contentPadding: PaddingValues = PaddingValues(vertical = 2.dp),
     prefix: @Composable (() -> Unit)? = null,
     background_icon: Int? = null,
     callback: (Int) -> Unit
@@ -881,7 +888,7 @@ fun MagicInput(
     minimum: Float? = null,
     maximum: Float? = null,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(vertical = 8.dp),
+    contentPadding: PaddingValues = PaddingValues(vertical = 2.dp),
     prefix: @Composable (() -> Unit)? = null,
     background_icon: Int? = null,
     callback: (Float) -> Unit) {
@@ -904,7 +911,7 @@ fun MagicInput(
             contentPadding = contentPadding,
             modifier = modifier
                 .fillMaxSize()
-                .background(color = MaterialTheme.colorScheme.surfaceBright, shape = MagicButtonShape())
+                .background(Color.Transparent)
                 .focusRequester(requester),
             minimum = minimum,
             maximum = maximum,

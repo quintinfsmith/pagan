@@ -54,6 +54,7 @@ import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MonotonicFrameClock
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -144,7 +145,11 @@ import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.io.BufferedOutputStream
 import java.io.BufferedReader
 import java.io.DataOutputStream
@@ -156,6 +161,9 @@ import java.io.InputStreamReader
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.concurrent.thread
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.coroutineContext
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -379,9 +387,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 parcel_file_descriptor.close()
                 tmp_file.delete()
 
-                if (export_event_handler.cancelled) {
-                    break@outer
-                }
+                if (export_event_handler.cancelled) break@outer
             }
         }
     }
@@ -535,6 +541,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this._midi_interface.disconnect_virtual_input_device(this.controller_model.virtual_midi_device)
     }
 
+    override fun on_back_press_check(): Boolean {
+        val active_cursor = this.state_model.active_cursor.value
+        return if (active_cursor != null && active_cursor.type != CursorMode.Unset) {
+            this.controller_model.action_interface.cursor_clear()
+            false
+        } else {
+            true
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         this.registerReceiver(
@@ -546,7 +562,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 0
             }
         )
-
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -557,26 +572,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         this.bind_midi_interface()
         super.onCreate(savedInstanceState)
-
-        this.onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                val that = this@ComponentActivityEditor
-                val opus_manager = that.controller_model.opus_manager
-                val ui_facade = opus_manager.vm_state
-                if (that.drawer_state.isOpen) {
-                    that.lifecycleScope.launch {
-                        that.close_drawer()
-                    }
-                } else if (ui_facade.active_cursor.value != null) {
-                    action_interface.cursor_clear()
-                } else {
-                    action_interface.save_before {
-                        action_interface.save()
-                        that.finish()
-                    }
-                }
-            }
-        })
 
         if (savedInstanceState != null) {
             // TODO: Handle lost state without losing context
@@ -1079,13 +1074,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         onClick = { dispatcher.show_hidden_global_controller() }
                                     )
                             ) {
-                                Icon(
-                                    modifier = Modifier
-                                        .background(color = Color.Transparent, CircleShape)
-                                        .padding(4.dp),
-                                    painter = painterResource(R.drawable.icon_ctl),
-                                    contentDescription = stringResource(R.string.cd_show_effect_controls)
-                                )
+                                if (this@ComponentActivityEditor.state_model.has_global_effects_hidden.value) {
+                                    Icon(
+                                        modifier = Modifier
+                                            .background(color = Color.Transparent, CircleShape)
+                                            .padding(4.dp),
+                                        painter = painterResource(R.drawable.icon_ctl),
+                                        contentDescription = stringResource(R.string.cd_show_effect_controls)
+                                    )
+                                }
                             }
                             Spacer(Modifier.height(bottom_padding))
                         }

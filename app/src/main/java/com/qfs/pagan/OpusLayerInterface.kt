@@ -294,10 +294,24 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             val visible_row = this.get_visible_row_from_ctl_line_global(type)
             val controller = this.get_controller<EffectEvent>(type)
             this._add_controller_to_column_width_map(visible_row, controller, null, null, type)
+
+            val available_controllers = OpusLayerInterface.global_controller_domain.toMutableList()
+            for ((type, controller) in this.controllers.get_all()) {
+                if (!controller.visible) continue
+                for ((i, value) in available_controllers.enumerate()) {
+                    if (type == value.first) {
+                        available_controllers.removeAt(i)
+                        break
+                    }
+                }
+            }
+            this.vm_state.has_global_effects_hidden.value = available_controllers.isNotEmpty()
+
         } else {
             val visible_row = this.get_visible_row_from_ctl_line_global(type)
             super.set_global_controller_visibility(type, false)
             this.vm_state.remove_row(visible_row, 1)
+            this.vm_state.has_global_effects_hidden.value = true
         }
         this.vm_state.refresh_cursor()
     }
@@ -1709,7 +1723,9 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             CursorMode.Channel -> {
                 this.vm_state.set_cursor(ViewModelEditorState.CacheCursor(cursor.mode, cursor.channel))
             }
-            CursorMode.Unset -> { }
+            CursorMode.Unset -> {
+                this.vm_state.set_cursor(null)
+            }
         }
     }
 

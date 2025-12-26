@@ -8,6 +8,7 @@ import android.provider.DocumentsContract.Document.COLUMN_MIME_TYPE
 import android.provider.DocumentsContract.Document.MIME_TYPE_DIR
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatDelegate
@@ -35,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -54,6 +56,7 @@ import com.qfs.pagan.projectmanager.ProjectManager
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.viewmodel.ViewModelPagan
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import kotlin.math.roundToInt
@@ -87,7 +90,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
     @Composable
     abstract fun Drawer(modifier: Modifier = Modifier)
 
-
+    abstract fun on_back_press_check(): Boolean
 
     suspend fun open_drawer() {
         this.drawer_state.open()
@@ -115,7 +118,14 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 this.drawer_gesture_enabled.value = state == DrawerValue.Open
                 true
             }
-
+            val scope = rememberCoroutineScope()
+            BackHandler(enabled = true) {
+                if (this.drawer_state.isOpen) {
+                    scope.launch { this@PaganComponentActivity.close_drawer() }
+                } else if (this.on_back_press_check()) {
+                    this.finish()
+                }
+            }
             ModalNavigationDrawer(
                 modifier = Modifier
                     .systemBarsPadding()

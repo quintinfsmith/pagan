@@ -4,6 +4,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -1841,9 +1842,9 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                     }
                 )
 
-                LaunchedEffect(Unit) {
-                    focus_requester.requestFocus()
-                }
+               LaunchedEffect(Unit) {
+                   focus_requester.requestFocus()
+               }
             }
         }
     }

@@ -56,6 +56,10 @@ class ComponentActivityLanding: PaganComponentActivity() {
     @Composable
     override fun RowScope.TopBar() { }
 
+    override fun on_back_press_check(): Boolean {
+        return true
+    }
+
     @Composable
     fun LayoutMenu() {
         Column( verticalArrangement = Arrangement.Center ) {

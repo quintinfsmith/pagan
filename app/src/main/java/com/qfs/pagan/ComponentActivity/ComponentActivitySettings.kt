@@ -221,6 +221,10 @@ class ComponentActivitySettings: PaganComponentActivity() {
     @Composable
     override fun Drawer(modifier: Modifier) { }
 
+    override fun on_back_press_check(): Boolean {
+        return true
+    }
+
     @Composable
     override fun RowScope.TopBar() {
         TopBarIcon(

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import com.qfs.pagan.ActionTracker
@@ -48,5 +49,7 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
         },
     )
 
-    EffectTransitionButton(event.transition, dispatcher, is_initial)
+    key(ui_facade.active_event.value.hashCode()) {
+        EffectTransitionButton(event, dispatcher, is_initial)
+    }
 }

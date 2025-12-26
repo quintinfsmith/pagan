@@ -1,5 +1,6 @@
 package com.qfs.pagan.viewmodel
 
+import android.location.Location
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.MutableState
@@ -380,7 +381,9 @@ class ViewModelEditorState: ViewModel() {
                 }
             }
             CursorMode.Line -> {
-                val active_line = this.line_data[cursor.ints[0]]
+                val y = cursor.ints[0]
+                if (y >= this.line_count.value) return // This is ok. It just means the line hasn't been added yet
+                val active_line = this.line_data[y]
                 for (x in 0 until this.beat_count.value) {
                     for ((y, line) in this.line_data.enumerate()) {
                         if (line.channel.value != active_line.channel.value) continue
@@ -491,8 +494,10 @@ class ViewModelEditorState: ViewModel() {
                 }
             }
             CursorMode.Line -> {
-                val active_line = this.line_data[cursor.ints[0]]
-                for ((y, line) in this.line_data.enumerate()) {
+                val y = cursor.ints[0]
+                if (y >= this.line_count.value) return // This is ok. It just means the line hasn't been added yet
+                val active_line = this.line_data[y]
+                for ((_, line) in this.line_data.enumerate()) {
                     if (line.channel.value != active_line.channel.value) continue
                     if (line.line_offset.value != active_line.line_offset.value) continue
                     if (active_line.ctl_type.value != null && active_line.ctl_type.value != line.ctl_type.value) continue
@@ -689,7 +694,25 @@ class ViewModelEditorState: ViewModel() {
             this@ViewModelEditorState.scroll_state_x.value.requestScrollToItem(target.first, target.second)
         }
     }
-    fun scroll_to_leaf(beat: Int, offset: Rational) {
+    fun scroll_to_leaf(beat: Int, offset: Rational) { }
 
+    data class LocationQuad(var channel: Int?, var line_offset: Int?, var beat: Int?, var position: List<Int>?)
+
+    fun get_location_ints(): LocationQuad {
+        val cursor = this.active_cursor.value ?: return LocationQuad(null, null, null, null)
+        val (channel, line_offset) = if (cursor.type == CursorMode.Line || cursor.type == CursorMode.Single) {
+            val line_info = this.line_data[cursor.ints[0]]
+            Pair(line_info.channel.value, line_info.line_offset.value)
+        } else {
+            Pair(null, null)
+        }
+
+        val (beat, position) = if (cursor.type == CursorMode.Single) {
+            Pair(cursor.ints[1], cursor.ints.subList(2, cursor.ints.size))
+        } else {
+            Pair(null, null)
+        }
+
+        return LocationQuad(channel, line_offset, beat, position)
     }
 }

@@ -14,6 +14,7 @@ import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
 import com.qfs.pagan.structure.opusmanager.base.OpusPercussionChannel
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.TunedInstrumentEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
@@ -52,6 +53,33 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             Pair(EffectType.Pan, R.drawable.icon_pan),
             Pair(EffectType.Delay, R.drawable.icon_echo)
         )
+
+        fun get_available_transitions(type: EffectType): Set<EffectTransition> {
+            return when (type) {
+                EffectType.Delay,
+                EffectType.Tempo -> {
+                    setOf(
+                        EffectTransition.Instant,
+                        EffectTransition.RInstant
+                    )
+                }
+
+                EffectType.Pan,
+                EffectType.Velocity,
+                EffectType.Volume -> {
+                    setOf(
+                        EffectTransition.Instant,
+                        EffectTransition.RInstant,
+                        EffectTransition.Linear,
+                        EffectTransition.RLinear,
+                    )
+                }
+
+                EffectType.LowPass,
+                EffectType.Reverb -> setOf(EffectTransition.Instant)
+            }
+
+        }
     }
 
     val ui_lock = UILock()
@@ -291,29 +319,33 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     override fun set_global_controller_visibility(type: EffectType, visibility: Boolean) {
         if (visibility) {
             super.set_global_controller_visibility(type, true)
-            val visible_row = this.get_visible_row_from_ctl_line_global(type)
-            val controller = this.get_controller<EffectEvent>(type)
-            this._add_controller_to_column_width_map(visible_row, controller, null, null, type)
-
-            val available_controllers = OpusLayerInterface.global_controller_domain.toMutableList()
-            for ((type, controller) in this.controllers.get_all()) {
-                if (!controller.visible) continue
-                for ((i, value) in available_controllers.enumerate()) {
-                    if (type == value.first) {
-                        available_controllers.removeAt(i)
-                        break
+            if (!this.ui_lock.is_locked()) {
+                val visible_row = this.get_visible_row_from_ctl_line_global(type)
+                val controller = this.get_controller<EffectEvent>(type)
+                this._add_controller_to_column_width_map(visible_row, controller, null, null, type)
+                val available_controllers = OpusLayerInterface.global_controller_domain.toMutableList()
+                for ((type, controller) in this.controllers.get_all()) {
+                    if (!controller.visible) continue
+                    for ((i, value) in available_controllers.enumerate()) {
+                        if (type == value.first) {
+                            available_controllers.removeAt(i)
+                            break
+                        }
                     }
                 }
+                this.vm_state.has_global_effects_hidden.value = available_controllers.isNotEmpty()
+                this.vm_state.refresh_cursor()
             }
-            this.vm_state.has_global_effects_hidden.value = available_controllers.isNotEmpty()
-
         } else {
             val visible_row = this.get_visible_row_from_ctl_line_global(type)
             super.set_global_controller_visibility(type, false)
-            this.vm_state.remove_row(visible_row, 1)
-            this.vm_state.has_global_effects_hidden.value = true
+
+            if (!this.ui_lock.is_locked()) {
+                this.vm_state.remove_row(visible_row, 1)
+                this.vm_state.has_global_effects_hidden.value = true
+                this.vm_state.refresh_cursor()
+            }
         }
-        this.vm_state.refresh_cursor()
     }
 
     override fun set_project_name(new_name: String?) {

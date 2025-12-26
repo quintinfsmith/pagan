@@ -74,6 +74,7 @@ import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.serialization.builtins.PairSerializer
 import java.io.IOException
 import kotlin.concurrent.thread
 import kotlin.math.ceil
@@ -502,7 +503,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     fun tap_line(channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        println("---------_ ${cursor.mode}")
         when (cursor.mode) {
             CursorMode.Range -> {
                 try {
@@ -528,6 +528,45 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                 this.cursor_select_line(channel, line_offset, ctl_type)
             }
         }
+    }
+
+    fun set_effect_transition(event: EffectEvent, transition: EffectTransition? = null) {
+        transition?.let {
+            event.transition = transition
+            this.set_effect_at_cursor(event)
+            return
+        }
+
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        val title = when (cursor.ctl_level) {
+            CtlLineLevel.Line -> R.string.show_line_controls
+            CtlLineLevel.Channel -> R.string.show_channel_controls
+            CtlLineLevel.Global -> R.string.show_global_controls
+            null -> throw UnexpectedBranch()
+        }
+
+        val options = mutableListOf<Pair<EffectTransition, @Composable RowScope.() -> Unit>>()
+        for (transition_option in OpusManager.get_available_transitions(event.event_type)) {
+            options.add(
+                Pair(transition_option) {
+                    SText(
+                        when (transition_option) {
+                            EffectTransition.Instant -> R.string.effect_transition_instant
+                            EffectTransition.Linear -> R.string.effect_transition_linear
+                            EffectTransition.RInstant -> R.string.effect_transition_rinstant
+                            EffectTransition.RLinear -> R.string.effect_transition_rlinear
+                        }
+                    )
+                }
+            )
+        }
+
+        this.dialog_popup_menu(title = title, default = event.transition, options = options) { it ->
+            event.transition = it
+            this.set_effect_at_cursor(event)
+        }
+
     }
 
     fun long_tap_line(channel: Int?, line_offset: Int?, ctl_type: EffectType?) {

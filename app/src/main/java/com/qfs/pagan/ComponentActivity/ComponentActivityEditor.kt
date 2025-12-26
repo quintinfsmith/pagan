@@ -1883,7 +1883,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             horizontalArrangement = Arrangement.End,
                             verticalAlignment = Alignment.CenterVertically,
                             content = {
-                                CMBoxEnd { it() }
+                                CMBoxEnd(Modifier.height(SIZE_M.second)) { it() }
                             }
                         )
                     }

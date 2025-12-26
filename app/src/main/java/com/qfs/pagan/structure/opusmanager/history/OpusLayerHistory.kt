@@ -292,12 +292,13 @@ open class OpusLayerHistory: OpusLayerCursor() {
             this._memory_depth -= 1
             output
         } catch (e: Exception) {
-            this._memory_depth -= 1
-            if (this._memory_depth == 0) {
-                this.lock_cursor {
-                    this.apply_undo()
-                }
-            }
+            println("$e")
+           // this._memory_depth -= 1
+           // if (this._memory_depth == 0) {
+           //     this.lock_cursor {
+           //         this.apply_undo()
+           //     }
+           // }
             throw e
         }
     }

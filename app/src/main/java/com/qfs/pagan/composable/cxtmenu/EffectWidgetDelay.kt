@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -15,6 +16,7 @@ import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.MagicInput
 import com.qfs.pagan.composable.Slider
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.viewmodel.ViewModelEditorState
@@ -27,6 +29,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
     val numerator = remember { mutableIntStateOf(event.numerator) }
     val denominator = remember { mutableIntStateOf(event.denominator) }
     val fade = remember { mutableFloatStateOf(1F - event.fade) }
+    val (channel, line_offset, beat, position) = ui_facade.get_location_ints()
 
     val default_colors = SliderDefaults.colors()
     val colors = SliderColors(
@@ -48,17 +51,29 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
         modifier = Modifier.width(64.dp)
     ) {
         event.echo = (it - 1)
-        dispatcher.set_effect_at_cursor(event)
+        if (beat != null) {
+            dispatcher.set_effect(EffectType.Delay, event, channel, line_offset, beat, position!!)
+        } else {
+            dispatcher.set_initial_effect(EffectType.Delay, event, channel, line_offset)
+        }
     }
     Spacer(Modifier.width(2.dp))
     MagicInput(numerator, background_icon = R.drawable.icon_hz, modifier = Modifier.width(64.dp)) {
         event.numerator = it
-        dispatcher.set_effect_at_cursor(event)
+        if (beat != null) {
+            dispatcher.set_effect(EffectType.Delay, event, channel, line_offset, beat, position!!)
+        } else {
+            dispatcher.set_initial_effect(EffectType.Delay, event, channel, line_offset)
+        }
     }
     Spacer(Modifier.width(2.dp))
     MagicInput(denominator, background_icon = R.drawable.icon_hz, modifier = Modifier.width(64.dp)) {
         event.denominator = it
-        dispatcher.set_effect_at_cursor(event)
+        if (beat != null) {
+            dispatcher.set_effect(EffectType.Delay, event, channel, line_offset, beat, position!!)
+        } else {
+            dispatcher.set_initial_effect(EffectType.Delay, event, channel, line_offset)
+        }
     }
     Spacer(Modifier.width(2.dp))
     Slider(
@@ -69,10 +84,16 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
         onValueChange = {
             event.fade = 1F - it
             fade.floatValue = it
-            dispatcher.set_effect_at_cursor(event)
+            if (beat != null) {
+                dispatcher.set_effect(EffectType.Delay, event, channel, line_offset, beat, position!!)
+            } else {
+                dispatcher.set_initial_effect(EffectType.Delay, event, channel, line_offset)
+            }
         }
     )
 
-    EffectTransitionButton(event.transition, dispatcher, is_initial)
+    key(ui_facade.active_event.value.hashCode()) {
+        EffectTransitionButton(event, dispatcher, is_initial)
+    }
 }
 

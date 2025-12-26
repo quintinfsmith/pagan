@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -27,18 +28,7 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
     val cursor = ui_facade.active_cursor.value ?: return
     val is_initial = cursor.type == CursorMode.Line
     val working_value = remember { mutableFloatStateOf(event.value) }
-    val (channel, line_offset) = if (cursor.type == CursorMode.Line || cursor.type == CursorMode.Single) {
-        val line_info = ui_facade.line_data[cursor.ints[0]]
-        Pair(line_info.channel.value, line_info.line_offset.value)
-    } else {
-        Pair(null, null)
-    }
-
-    val (beat, position) = if (cursor.type == CursorMode.Single) {
-        Pair(cursor.ints[1], cursor.ints.subList(2, cursor.ints.size))
-    } else {
-        Pair(null, null)
-    }
+    val (channel, line_offset, beat, position) = ui_facade.get_location_ints()
 
     Spacer(Modifier.weight(1F))
 
@@ -69,5 +59,7 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
 
     Spacer(Modifier.weight(1F))
 
-    EffectTransitionButton(event.transition, dispatcher, is_initial)
+    key(ui_facade.active_event.value.hashCode()) {
+        EffectTransitionButton(event, dispatcher, is_initial)
+    }
 }

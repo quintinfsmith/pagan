@@ -69,5 +69,7 @@ fun RowScope.PanEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionTra
         }
     }
 
-    EffectTransitionButton(event.transition, dispatcher, is_initial)
+    key(ui_facade.active_event.value.hashCode()) {
+        EffectTransitionButton(event, dispatcher, is_initial)
+    }
 }

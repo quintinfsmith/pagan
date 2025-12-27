@@ -166,13 +166,13 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                     // TODO: These are just roughed in. need to put more thought in and check later
                                     modifier = when (view_model.get_layout_size()) {
                                         ViewModelPagan.LayoutSize.SmallPortrait,
+                                        ViewModelPagan.LayoutSize.SmallLandscape,
                                         ViewModelPagan.LayoutSize.MediumPortrait -> Modifier
 
                                         ViewModelPagan.LayoutSize.LargePortrait,
-                                        ViewModelPagan.LayoutSize.SmallLandscape,
                                         ViewModelPagan.LayoutSize.MediumLandscape -> {
                                             when (dialog.size) {
-                                                ViewModelPagan.DialogSize.Unbounded ->  Modifier
+                                                ViewModelPagan.DialogSize.Unbounded -> Modifier
                                                 ViewModelPagan.DialogSize.Small -> Modifier.width(200.dp)
                                                 ViewModelPagan.DialogSize.Medium -> Modifier.width(400.dp)
                                             }

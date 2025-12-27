@@ -26,6 +26,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -45,6 +47,7 @@ import androidx.compose.ui.res.integerArrayResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
@@ -56,8 +59,10 @@ import com.qfs.pagan.composable.Slider
 import com.qfs.pagan.composable.SortableMenu
 import com.qfs.pagan.composable.SoundFontWarning
 import com.qfs.pagan.composable.button.Button
+import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.button.TopBarIcon
 import com.qfs.pagan.enumerate
+import com.qfs.pagan.viewmodel.ViewModelPagan
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 
@@ -347,7 +352,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     val soundfonts = mutableListOf<Pair<Uri, @Composable RowScope.() -> Unit>>()
                     for (uri in file_list) {
                         val relative_path_segments = uri.pathSegments.last().split("/")
-                        soundfonts.add(Pair(uri, { Text(relative_path_segments.last()) }))
+                        soundfonts.add(Pair(uri, { Text(relative_path_segments.last(), maxLines = 1, overflow = TextOverflow.Ellipsis) }))
                     }
 
                     val sort_options = listOf(
@@ -359,9 +364,8 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     )
 
                     view_model.create_dialog { close ->
-                        @Composable {
-                            Column {
-                                DialogSTitle(R.string.dialog_select_soundfont)
+                        val content = @Composable {
+                            ProvideTextStyle(MaterialTheme.typography.labelLarge) {
                                 Row {
                                     Button(
                                         content = { SText(R.string.no_soundfont) },
@@ -382,22 +386,50 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                         }
                                     )
                                 }
-
-                                SortableMenu(
-                                    modifier = Modifier.weight(1F),
-                                    sort_row_padding = PaddingValues(vertical = dimensionResource(R.dimen.sf_menu_padding)),
-                                    default_menu = soundfonts,
-                                    default_value = this@ComponentActivitySettings.coerce_soundfont_uri(),
-                                    sort_options = sort_options,
-                                    selected_sort = 0
-                                ) { uri ->
-                                    view_model.set_soundfont_uri(uri)
-                                    view_model.save_configuration()
-                                    this@ComponentActivitySettings.update_result()
-                                    close()
+                            }
+                        }
+                        val menu = @Composable { modifier: Modifier ->
+                            SortableMenu(
+                                modifier = modifier,
+                                sort_row_padding = PaddingValues(vertical = dimensionResource(R.dimen.sf_menu_padding)),
+                                default_menu = soundfonts,
+                                default_value = this@ComponentActivitySettings.coerce_soundfont_uri(),
+                                sort_options = sort_options,
+                                selected_sort = 0
+                            ) { uri ->
+                                view_model.set_soundfont_uri(uri)
+                                view_model.save_configuration()
+                                this@ComponentActivitySettings.update_result()
+                                close()
+                            }
+                        }
+                        @Composable {
+                            when (view_model.get_layout_size()) {
+                                ViewModelPagan.LayoutSize.SmallPortrait,
+                                ViewModelPagan.LayoutSize.MediumPortrait,
+                                ViewModelPagan.LayoutSize.LargePortrait,
+                                ViewModelPagan.LayoutSize.XLargePortrait,
+                                ViewModelPagan.LayoutSize.LargeLandscape,
+                                ViewModelPagan.LayoutSize.XLargeLandscape,
+                                ViewModelPagan.LayoutSize.MediumLandscape -> {
+                                    Column {
+                                        DialogSTitle(R.string.dialog_select_soundfont)
+                                        content()
+                                        menu(Modifier.weight(1F))
+                                        DialogBar(neutral = close)
+                                    }
                                 }
+                                ViewModelPagan.LayoutSize.SmallLandscape -> {
+                                    Row {
+                                        Column(Modifier.weight(1F)) {
+                                            DialogSTitle(R.string.dialog_select_soundfont)
+                                            content()
+                                            DialogBar(neutral = close)
+                                        }
+                                        menu(Modifier.weight(1F))
+                                    }
 
-                                DialogBar(neutral = close)
+                                }
                             }
                         }
                     }

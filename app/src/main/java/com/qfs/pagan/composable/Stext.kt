@@ -492,6 +492,7 @@ fun <T> SortableMenu(
                 if (i > 0) {
                     Spacer(Modifier.height(4.dp))
                 }
+
                 ProvideContentColorTextStyle(
                     if (default_index == i) {
                         MaterialTheme.colorScheme.onSecondary

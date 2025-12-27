@@ -186,6 +186,7 @@ class ViewModelPagan: ViewModel() {
                         sort_options = sort_options,
                         selected_sort = selected_sort,
                         onLongClick = onLongClick,
+                        default_value = default_value,
                         onClick = {
                             close()
                             onClick(it)

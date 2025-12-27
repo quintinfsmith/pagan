@@ -425,7 +425,7 @@ fun <T> SortableMenu(
         List(default_menu.size) { i -> default_menu[indices[i]] }
     }
 
-    var default_index = 0
+    var default_index = -1
     for ((i, item) in sorted_menu.enumerate()) {
         if (item.first == default_value) {
             default_index = i
@@ -433,7 +433,7 @@ fun <T> SortableMenu(
         }
     }
 
-    val scroll_state = rememberLazyListState(default_index)
+    val scroll_state = rememberLazyListState()
 
     Column(modifier = modifier) {
         if (sort_options.isNotEmpty()) {
@@ -492,35 +492,45 @@ fun <T> SortableMenu(
                 if (i > 0) {
                     Spacer(Modifier.height(4.dp))
                 }
-                Row(
-                    modifier = row_modifier
-                        .then(
-                            if (item == default_value) {
-                                default_index = i
-                                row_modifier.background(colorResource(R.color.leaf_empty_selected), shape = RoundedCornerShape(8.dp))
-                            } else {
-                                row_modifier.background(MaterialTheme.colorScheme.surfaceContainerHigh, shape = RoundedCornerShape(8.dp))
-                            }
-                        )
-                        .height(dimensionResource(R.dimen.dialog_menu_line_height))
-                        .combinedClickable(
-                            onClick = { onClick(item) },
-                            onLongClick = { onLongClick(item) }
-                        )
-                        .padding(
-                            vertical = dimensionResource(R.dimen.dialog_menu_line_padding_vertical),
-                            horizontal = dimensionResource(R.dimen.dialog_menu_line_padding_horizontal)
-                        )
-                        .fillMaxWidth(),
-                    content = label_content,
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                )
+                ProvideContentColorTextStyle(
+                    if (default_index == i) {
+                        MaterialTheme.colorScheme.onSecondary
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    }
+                ) {
+                    Row(
+                        modifier = row_modifier
+                            .background(
+                                if (default_index == i) {
+                                    MaterialTheme.colorScheme.secondary
+                                } else {
+                                    MaterialTheme.colorScheme.surfaceContainerHigh
+                                },
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .height(dimensionResource(R.dimen.dialog_menu_line_height))
+                            .combinedClickable(
+                                onClick = { onClick(item) },
+                                onLongClick = { onLongClick(item) }
+                            )
+                            .padding(
+                                vertical = dimensionResource(R.dimen.dialog_menu_line_padding_vertical),
+                                horizontal = dimensionResource(R.dimen.dialog_menu_line_padding_horizontal)
+                            )
+                            .fillMaxWidth(),
+                        content = label_content,
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    )
+                }
             }
         }
     }
     LaunchedEffect(rememberCoroutineScope()) {
-        scroll_state.requestScrollToItem(default_index)
+        if (default_index > -1) {
+            scroll_state.requestScrollToItem(default_index)
+        }
     }
 }
 

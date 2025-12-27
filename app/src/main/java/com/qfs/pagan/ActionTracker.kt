@@ -1506,7 +1506,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             return s.uppercase()
         }
 
-        val default = this.get_opus_manager().get_channel_instrument(channel)
+        val default = opus_manager.get_channel_instrument(channel)
         val preset_names =  mutableListOf<Triple<Int, Int, String>>()
         val options = mutableListOf<Pair<Pair<Int, Int>, @Composable RowScope.() -> Unit>>()
         val is_percussion = opus_manager.is_percussion(channel)

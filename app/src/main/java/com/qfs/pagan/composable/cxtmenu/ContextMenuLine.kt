@@ -137,9 +137,9 @@ fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
         ViewModelPagan.LayoutSize.XLargeLandscape -> {
             ContextMenuPrimaryRow(modifier) {
                 ToggleLineControllerButton(dispatcher)
-                CMPadding()
 
                 if (active_line.assigned_offset.value != null) {
+                    CMPadding()
                     PercussionSetInstrumentButton(
                         Modifier.weight(1F),
                         vm_state,
@@ -147,17 +147,14 @@ fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
                         cursor.ints[0],
                         true
                     )
-                    CMPadding()
                 } else {
                     Spacer(Modifier.weight(1F))
+                    AdjustLineButton(dispatcher)
                 }
 
-                AdjustLineButton(dispatcher)
                 CMPadding()
-
                 RemoveLineButton(dispatcher, active_channel.size.intValue)
                 CMPadding()
-
                 InsertLineButton(dispatcher)
             }
         }
@@ -170,9 +167,6 @@ fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
                 CMPadding()
                 RemoveLineButton(dispatcher, active_channel.size.intValue)
 
-                CMPadding()
-                AdjustLineButton(dispatcher)
-
                 if (active_line.assigned_offset.value != null) {
                     CMPadding()
                     PercussionSetInstrumentButton(
@@ -184,6 +178,9 @@ fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
                         cursor.ints[0],
                         false
                     )
+                } else {
+                    CMPadding()
+                    AdjustLineButton(dispatcher)
                 }
 
                 Spacer(Modifier.weight(1F))

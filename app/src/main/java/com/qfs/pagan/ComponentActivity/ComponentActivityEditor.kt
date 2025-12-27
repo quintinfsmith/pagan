@@ -1623,7 +1623,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     Text(
                                         channel_data.active_name.value ?: this@ComponentActivityEditor.get_default_preset_name(channel_data.instrument.value.first, channel_data.instrument.value.second),
                                         textAlign = TextAlign.Center,
-                                        modifier = Modifier.weight(1F)
+                                        modifier = Modifier.weight(1F),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                 }
                             }

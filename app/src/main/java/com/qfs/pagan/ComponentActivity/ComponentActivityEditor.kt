@@ -975,7 +975,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val ctl_line_height = dimensionResource(R.dimen.ctl_line_height)
         val leaf_width = dimensionResource(R.dimen.base_leaf_width)
         val column_widths = Array(ui_facade.beat_count.value) { i ->
-            Array(ui_facade.cell_map.size) { j -> ui_facade.cell_map[j][i].value.weighted_size }.max()
+            Array(ui_facade.line_count.value) { j -> ui_facade.cell_map[j][i].value.weighted_size }.max()
         }
 
         val scope = rememberCoroutineScope()
@@ -1108,7 +1108,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             Column(
                                 Modifier
                                     .verticalScroll(scroll_state_v, overscrollEffect = null)
-                                    .width(leaf_width * column_widths[x])
+                                    .width(leaf_width * width)
                             ) {
                                 var working_channel: Int? = 0
                                 for (y in 0 until ui_facade.line_count.value) {
@@ -1429,8 +1429,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     }
                                 }
                                 Column(
-                                    modifier = Modifier
-                                        .fillMaxHeight(),
+                                    modifier = Modifier.fillMaxHeight(),
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.Center
                                 ) {

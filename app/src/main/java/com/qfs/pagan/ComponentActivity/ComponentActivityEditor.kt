@@ -16,7 +16,6 @@ import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
@@ -38,25 +37,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MonotonicFrameClock
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -64,9 +60,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.toColorLong
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -76,13 +69,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import androidx.lifecycle.lifecycleScope
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
 import com.qfs.apres.MidiController
@@ -127,7 +118,6 @@ import com.qfs.pagan.composable.cxtmenu.ContextMenuLineSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuRangeSecondary
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
-import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
@@ -135,7 +125,6 @@ import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
@@ -146,11 +135,8 @@ import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import org.intellij.lang.annotations.JdkConstants
 import java.io.BufferedOutputStream
 import java.io.BufferedReader
 import java.io.DataOutputStream
@@ -162,9 +148,6 @@ import java.io.InputStreamReader
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.concurrent.thread
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.coroutines.coroutineContext
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -1233,7 +1216,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             )
         }
 
-        ProvideContentColorTextStyle(foreground) {
+        ProvideContentColorTextStyle(foreground, MaterialTheme.typography.labelMedium) {
             HalfBorderBox(
                 modifier
                     .combinedClickable(
@@ -1265,19 +1248,27 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         } else {
                             Pair("${line_info.channel.value}", "${line_info.line_offset.value}")
                         }
-                        Box(
+                        Row(
                             Modifier
                                 .fillMaxSize()
-                                .padding(horizontal = 2.dp)
+                                .padding(vertical = 2.dp, horizontal = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Box(modifier = Modifier.align(Alignment.TopStart)) {
+                            Column(
+                                modifier = Modifier.fillMaxHeight(),
+                                verticalArrangement = Arrangement.Top,
+                                horizontalAlignment = Alignment.End
+                            ) {
                                 Text(label_a, maxLines = 1)
                             }
-                            Box(modifier = Modifier.align(Alignment.BottomEnd)) {
+                            Column(
+                                modifier = Modifier.fillMaxHeight(),
+                                verticalArrangement = Arrangement.Bottom,
+                                horizontalAlignment = Alignment.End
+                            ) {
                                 Text(
                                     text = label_b,
                                     maxLines = 1,
-                                    textAlign = TextAlign.End
                                 )
                             }
                         }
@@ -1296,7 +1287,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                modifier = Modifier.padding(2.dp),
+                                modifier = Modifier.padding(4.dp),
                                 painter = painterResource(drawable_id),
                                 contentDescription = stringResource(description_id)
                             )
@@ -1320,7 +1311,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 MaterialTheme.colorScheme.onSecondary
             )
         }
-        ProvideContentColorTextStyle(foreground) {
+        ProvideContentColorTextStyle(foreground, MaterialTheme.typography.labelMedium) {
             HalfBorderBox(
                 modifier
                     .background(
@@ -1334,15 +1325,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 border_color = MaterialTheme.colorScheme.onPrimaryContainer,
                 content = {
                     Box(
-                        if (column_info.is_tagged.value) {
-                            Modifier.border(
-                                width = 2.dp,
-                                color = foreground,
-                                shape = CircleShape
-                            )
-                        } else {
-                            Modifier
-                        },
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .widthIn(dimensionResource(R.dimen.base_leaf_width) - 6.dp)
+                            .padding(3.dp)
+                            .then(
+                                if (column_info.is_tagged.value) Modifier.border(.5.dp, foreground, RoundedCornerShape(4.dp))
+                                else Modifier
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -1377,17 +1367,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
             HalfBorderBox(
                 modifier = modifier
                     .background(color = leaf_color)
-                    //.then(
-                    //    if (leaf_data.is_selected.value) {
-                    //        modifier.border(2.dp, colorResource(R.color.selected_primary))
-                    //    } else if (leaf_data.is_secondary.value) {
-                    //        modifier.border(2.dp, colorResource(R.color.selected_secondary))
-                    //    } else if (!leaf_data.is_valid.value) {
-                    //        modifier.border(2.dp, colorResource(R.color.leaf_invalid))
-                    //    } else {
-                    //        modifier
-                    //    }
-                    //)
                     .fillMaxHeight(),
                 border_color = MaterialTheme.colorScheme.onBackground,
             ) {
@@ -1402,19 +1381,19 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             Row(horizontalArrangement = Arrangement.Center) {
                                 Column(
                                     modifier = Modifier.fillMaxHeight(),
-                                    verticalArrangement = Arrangement.Bottom
+                                    verticalArrangement = Arrangement.Center
                                 ) {
-                                    Spacer(modifier = Modifier.weight(.30F))
-                                    ProvideTextStyle(TextStyle(fontSize = 14.sp, color = text_color)) {
-                                        Text("$octave", modifier = Modifier.weight(.5F))
+                                    Row(Modifier.padding(top = 14.dp)) {
+                                        ProvideContentColorTextStyle(text_color, MaterialTheme.typography.labelMedium) {
+                                            Text("$octave")
+                                        }
                                     }
-                                    Spacer(modifier = Modifier.weight(.1F))
                                 }
                                 Column(
                                     modifier = Modifier.fillMaxHeight(),
                                     verticalArrangement = Arrangement.Center
                                 ) {
-                                    ProvideTextStyle(TextStyle(fontSize = 20.sp, color = text_color)) {
+                                    ProvideContentColorTextStyle(text_color, MaterialTheme.typography.titleMedium) {
                                         Text("$offset")
                                     }
                                 }
@@ -1433,26 +1412,21 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.Center
                                 ) {
-                                    Row(
-                                        modifier = Modifier.weight(.4F),
-                                        verticalAlignment = Alignment.Bottom
-                                    ) {
-                                        ProvideTextStyle(TextStyle(fontSize = 14.sp)) {
-                                            Text(
-                                                if (event.offset > 0) "+" else "-",
-                                                color = text_color
-                                            )
+                                    ProvideContentColorTextStyle(text_color, MaterialTheme.typography.labelMedium) {
+                                        Row(
+                                            modifier = Modifier.weight(.4F),
+                                            verticalAlignment = Alignment.Bottom
+                                        ) {
+                                            Text(if (event.offset > 0) "+" else "-")
                                         }
-                                    }
-                                    Row(
-                                        modifier = Modifier.weight(.4F),
-                                        verticalAlignment = Alignment.Top
-                                    ) {
-                                        ProvideTextStyle(TextStyle(fontSize = 14.sp)) {
-                                            Text("$octave", color = text_color)
+                                        Row(
+                                            modifier = Modifier.weight(.4F),
+                                            verticalAlignment = Alignment.Top
+                                        ) {
+                                            Text("$octave")
                                         }
+                                        Spacer(modifier = Modifier.weight(.1F))
                                     }
-                                    Spacer(modifier = Modifier.weight(.1F))
                                 }
                                 Column(
                                     modifier = Modifier
@@ -1460,8 +1434,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.Center
                                 ) {
-                                    ProvideTextStyle(TextStyle(fontSize = 20.sp)) {
-                                        Text("$offset", color = text_color)
+                                    ProvideContentColorTextStyle(text_color, MaterialTheme.typography.titleMedium) {
+                                        Text("$offset")
                                     }
                                 }
                             }

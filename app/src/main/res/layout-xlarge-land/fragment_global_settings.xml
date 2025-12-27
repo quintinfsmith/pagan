@@ -60,7 +60,6 @@
 
                         <TextView
                             android:maxWidth="256dp"
-                            android:text="@string/warning_nosoundfont"
                             android:textColor="?attr/soundfont_warning_text"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"/>

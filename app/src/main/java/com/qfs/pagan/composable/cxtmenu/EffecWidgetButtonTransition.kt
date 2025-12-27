@@ -16,24 +16,22 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 @Composable
 fun EffectTransitionButton(event: EffectEvent, dispatcher: ActionTracker, is_initial: Boolean, modifier: Modifier = Modifier) {
     if (!is_initial) {
-        key(event.transition) {
-            val transition = event.transition
-            Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
-            IconCMenuButton(
-                modifier = modifier
-                    .width(dimensionResource(R.dimen.contextmenu_button_width))
-                    .fillMaxHeight(),
-                onClick = {
-                    dispatcher.set_effect_transition(event)
-                },
-                icon = when (transition) {
-                    EffectTransition.Instant -> R.drawable.icon_transition_immediate
-                    EffectTransition.Linear -> R.drawable.icon_transition_linear
-                    EffectTransition.RInstant -> R.drawable.icon_transition_rimmediate
-                    EffectTransition.RLinear -> R.drawable.icon_transition_rlinear
-                },
-                description = R.string.cd_show_effect_controls
-            )
-        }
+        val transition = event.transition
+        Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
+        IconCMenuButton(
+            modifier = modifier
+                .width(dimensionResource(R.dimen.contextmenu_button_width))
+                .fillMaxHeight(),
+            onClick = {
+                dispatcher.set_effect_transition(event)
+            },
+            icon = when (transition) {
+                EffectTransition.Instant -> R.drawable.icon_transition_immediate
+                EffectTransition.Linear -> R.drawable.icon_transition_linear
+                EffectTransition.RInstant -> R.drawable.icon_transition_rimmediate
+                EffectTransition.RLinear -> R.drawable.icon_transition_rlinear
+            },
+            description = R.string.cd_show_effect_controls
+        )
     }
 }

@@ -182,7 +182,6 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
     var result_intent = Intent()
     private fun update_result() {
-        println("---------update ok------------------")
         // RESULT_OK lets the other activities know they need to reload the configuration
         this.setResult(RESULT_OK, this.result_intent)
     }
@@ -250,6 +249,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
         Row(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
+                .padding(8.dp)
                 .width(SIZE_XL.first),
             verticalAlignment = Alignment.Top,
             horizontalArrangement = Arrangement.SpaceBetween,

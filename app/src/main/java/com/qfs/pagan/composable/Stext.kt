@@ -69,6 +69,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.focusRequester
@@ -476,54 +477,51 @@ fun <T> SortableMenu(
             }
         }
 
-        LazyColumn(state = scroll_state) {
+        LazyColumn(
+            state = scroll_state,
+            contentPadding = PaddingValues(4.dp),
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(
+                    MaterialTheme.colorScheme.surfaceContainerLow,
+                    RoundedCornerShape(8.dp)
+                )
+        ) {
             itemsIndexed(sorted_menu) { i, (item, label_content) ->
                 val row_modifier = Modifier
-                Column(
+                if (i > 0) {
+                    Spacer(Modifier.height(4.dp))
+                }
+                Row(
                     modifier = row_modifier
                         .then(
                             if (item == default_value) {
                                 default_index = i
-                                row_modifier.background(colorResource(R.color.leaf_empty_selected))
+                                row_modifier.background(colorResource(R.color.leaf_empty_selected), shape = RoundedCornerShape(8.dp))
                             } else {
-                                row_modifier
+                                row_modifier.background(MaterialTheme.colorScheme.surfaceContainerHigh, shape = RoundedCornerShape(8.dp))
                             }
                         )
                         .height(dimensionResource(R.dimen.dialog_menu_line_height))
                         .combinedClickable(
                             onClick = { onClick(item) },
                             onLongClick = { onLongClick(item) }
-                        ),
-
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .weight(1F)
-                            .padding(
-                                vertical = dimensionResource(R.dimen.dialog_menu_line_padding_vertical),
-                                horizontal = dimensionResource(R.dimen.dialog_menu_line_padding_horizontal)
-                            )
-                            .fillMaxWidth(),
-                        content = label_content,
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    )
-                    if (i < sorted_menu.size - 1) {
-                        Spacer(
-                            Modifier
-                                .fillMaxWidth()
-                                .height(1.dp)
-                                .background(MaterialTheme.colorScheme.outline)
                         )
-                    }
-                }
+                        .padding(
+                            vertical = dimensionResource(R.dimen.dialog_menu_line_padding_vertical),
+                            horizontal = dimensionResource(R.dimen.dialog_menu_line_padding_horizontal)
+                        )
+                        .fillMaxWidth(),
+                    content = label_content,
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                )
             }
         }
     }
-   // rememberCoroutineScope().launch {
-   //     scroll_state.requestScrollToItem(default_index)
-   // }
+    LaunchedEffect(rememberCoroutineScope()) {
+        scroll_state.requestScrollToItem(default_index)
+    }
 }
 
 @Composable
@@ -554,8 +552,8 @@ fun DialogSTitle(text: Int, modifier: Modifier = Modifier) {
 fun DrawerCard(
     modifier: Modifier = Modifier.wrapContentWidth(),
     colors: CardColors = CardColors(
-        containerColor = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        containerColor = MaterialTheme.colorScheme.surface,
         disabledContentColor = Color.Gray,
         disabledContainerColor = Color.Green,
     ),
@@ -568,8 +566,8 @@ fun DrawerCard(
         Box(
             modifier
                 .wrapContentWidth()
-                .then(if (border != null) modifier.border(border) else modifier)
-                .background(color = colors.containerColor, shape),
+                .background(color = colors.containerColor, shape)
+                .then(if (border != null) modifier.border(border) else modifier),
             contentAlignment = Alignment.Center
         ) {
             Column(
@@ -587,8 +585,8 @@ fun DrawerCard(
 fun DialogCard(
     modifier: Modifier = Modifier,
     colors: CardColors = CardColors(
-        containerColor = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface,
         disabledContentColor = Color.Gray,
         disabledContainerColor = Color.Green,
     ),
@@ -621,6 +619,7 @@ fun DialogCard(
 fun ColumnScope.DialogBar(modifier: Modifier = Modifier, positive: (() -> Unit)? = null, negative: (() -> Unit)? = null, neutral: (() -> Unit)? = null) {
     Row(
         modifier = modifier
+            .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(8.dp))
             .padding(top = dimensionResource(R.dimen.dialog_bar_padding_vertical), bottom = 0.dp),
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically
@@ -680,7 +679,7 @@ fun DropdownMenu(
     scrollState: ScrollState = rememberScrollState(),
     properties: PopupProperties = PopupProperties(focusable = true),
     shape: Shape = MenuDefaults.shape,
-    containerColor: Color = colorResource(R.color.surface_container),
+    containerColor: Color = MaterialTheme.colorScheme.primaryContainer,
     tonalElevation: Dp = MenuDefaults.TonalElevation,
     shadowElevation: Dp = MenuDefaults.ShadowElevation,
     border: BorderStroke? = null,
@@ -697,7 +696,9 @@ fun DropdownMenuItem(
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     enabled: Boolean = true,
-    colors: MenuItemColors = MenuDefaults.itemColors(),
+    colors: MenuItemColors = MenuDefaults.itemColors().copy(
+        textColor = MaterialTheme.colorScheme.onPrimaryContainer,
+    ),
     contentPadding: PaddingValues = MenuDefaults.DropdownMenuItemContentPadding,
     interactionSource: MutableInteractionSource? = null,
 ) {

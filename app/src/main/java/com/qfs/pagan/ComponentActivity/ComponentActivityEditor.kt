@@ -100,6 +100,7 @@ import com.qfs.pagan.PaganBroadcastReceiver
 import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.R
 import com.qfs.pagan.SingleExporterEventHandler
+import com.qfs.pagan.TableColorPalette
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DrawerCard
@@ -1007,7 +1008,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             Box(
                 Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surfaceBright)
+                    .background(MaterialTheme.colorScheme.primaryContainer)
                     .height(dimensionResource(R.dimen.line_height)),
                 contentAlignment = Alignment.BottomCenter,
                 content = {
@@ -1015,14 +1016,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         Modifier
                             .fillMaxWidth()
                             .height(dimensionResource(R.dimen.table_line_stroke))
-                            .background(colorResource(R.color.table_lines))
+                            .background(MaterialTheme.colorScheme.onPrimaryContainer)
                     )
                 }
             )
             Box(
                 Modifier
                     .fillMaxHeight()
-                    .background(MaterialTheme.colorScheme.surfaceBright)
+                    .background(MaterialTheme.colorScheme.primaryContainer)
                     .width(dimensionResource(R.dimen.line_label_width)),
                 contentAlignment = Alignment.CenterEnd,
                 content = {
@@ -1030,7 +1031,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         Modifier
                             .fillMaxHeight()
                             .width(dimensionResource(R.dimen.table_line_stroke))
-                            .background(colorResource(R.color.table_lines))
+                            .background(MaterialTheme.colorScheme.onPrimaryContainer)
                     )
                 }
             )
@@ -1048,7 +1049,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         Modifier
                                             .width(dimensionResource(R.dimen.line_label_width))
                                             .height(dimensionResource(R.dimen.channel_gap_size))
-                                            .background(color = colorResource(R.color.table_lines))
+                                            .background(MaterialTheme.colorScheme.onPrimaryContainer)
                                     ) { }
                                 }
 
@@ -1133,7 +1134,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                             Modifier
                                                 .fillMaxWidth()
                                                 .height(dimensionResource(R.dimen.channel_gap_size))
-                                                .background(color = colorResource(R.color.table_lines))
+                                                .background(MaterialTheme.colorScheme.onBackground)
                                         ) { }
                                     }
                                     working_channel = ui_facade.line_data[y].channel.value
@@ -1163,7 +1164,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun ShortcutView(dispatcher: ActionTracker, scope: CoroutineScope, scroll_state: LazyListState) {
         HalfBorderBox(
             Modifier
-                .background(MaterialTheme.colorScheme.surfaceBright, shape = RectangleShape)
+                .background(MaterialTheme.colorScheme.primaryContainer, shape = RectangleShape)
                 .width(dimensionResource(R.dimen.line_label_width))
                 .height(dimensionResource(R.dimen.line_height))
                 .combinedClickable(
@@ -1173,6 +1174,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         scope.launch { scroll_state.scrollToItem(0) }
                     }
                 ),
+            border_color = MaterialTheme.colorScheme.onPrimaryContainer,
             content = {
                 Icon(
                     modifier = Modifier
@@ -1186,7 +1188,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun HalfBorderBox(modifier: Modifier = Modifier, border_width: Dp = dimensionResource(R.dimen.table_line_stroke), content: @Composable BoxScope.() -> Unit) {
+    fun HalfBorderBox(
+        modifier: Modifier = Modifier,
+        border_width: Dp = dimensionResource(R.dimen.table_line_stroke),
+        border_color: Color,
+        content: @Composable BoxScope.() -> Unit) {
         Box(
             modifier,
             contentAlignment = Alignment.BottomEnd,
@@ -1199,13 +1205,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 Spacer(
                     Modifier
                         .height(border_width)
-                        .background(colorResource(R.color.table_lines))
+                        .background(border_color)
                         .fillMaxWidth()
                 )
                 Spacer(
                     Modifier
                         .width(border_width)
-                        .background(colorResource(R.color.table_lines))
+                        .background(border_color)
                         .fillMaxHeight()
                 )
             }
@@ -1237,9 +1243,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     )
                     .background(
                         shape = RectangleShape,
-                        color = MaterialTheme.colorScheme.surfaceBright
+                        color = MaterialTheme.colorScheme.primaryContainer
                     )
                     .fillMaxSize(),
+                border_color = MaterialTheme.colorScheme.onPrimaryContainer,
                 content = {
                     if (ctl_type == null) {
                         val (label_a, label_b) = if (line_info.assigned_offset.value != null) {
@@ -1314,13 +1321,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         }
                     )
                     .background(
-                        color = MaterialTheme.colorScheme.surfaceBright,
+                        color = MaterialTheme.colorScheme.primaryContainer,
                         shape = RectangleShape
                     )
                     .combinedClickable(
                         onClick = { dispatcher.cursor_select_column(x) },
                     )
                     .fillMaxSize(),
+                border_color = MaterialTheme.colorScheme.onPrimaryContainer,
                 content = {
                     Box(
                         Modifier.fillMaxSize(),
@@ -1352,179 +1360,145 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
-    private fun mix_colors(first: Long, second: Long, numer_a: Int, numer_b: Int): Long {
-        val denominator = numer_a + numer_b
-        val alpha = (((first and 0xFF000000) shr 24) * numer_a / denominator) + (((second and 0xFF000000) shr 24) * numer_b / denominator)
-        val red = (((first and 0xFF0000) shr 16) * numer_a / denominator) + (((second and 0xFF0000) shr 16) * numer_b / denominator)
-        val green = (((first and 0xFF00) shr 8) * numer_a / denominator) + (((second and 0xFF00) shr 8) * numer_b / denominator)
-        val blue = ((first and 0xFF) * numer_a / denominator) + ((second and 0xFF) * numer_b / denominator)
-        return (alpha shl 24) + (red shl 16) + (green shl 8) + blue
-    }
-
     @Composable
     fun <T: OpusEvent> LeafView(channel_data: ViewModelEditorState.ChannelData?, line_data: ViewModelEditorState.LineData, leaf_data: ViewModelEditorState.LeafData, event: T?, radix: Int, modifier: Modifier = Modifier) {
-        val channel_colors = this.view_model.configuration.channel_colors
-
-        val base_color = if ((channel_data != null && channel_data.is_mute.value) || line_data.is_mute.value) {
-            0xFFAAAAAA
+        val swatch = if ((channel_data != null && channel_data.is_mute.value) || line_data.is_mute.value) {
+            TableColorPalette.mute_swatch
         } else if (line_data.ctl_type.value != null) {
-            0xFFCB9C10
+            TableColorPalette.ctl_swatch
         } else {
-            channel_colors[line_data.channel.value!! % channel_colors.size]
+            TableColorPalette.get_channel_swatch(line_data.channel.value!!)
         }
 
-        // alternate slight shading
-        val adjusted_base_color = if (line_data.ctl_type.value == null) {
-            if (line_data.line_offset.value!! % 2 == 0) {
-                base_color
-            } else {
-                this.mix_colors(0xFFFFFFFF, base_color, 3, 7)
-            }
-        } else {
-            base_color
-        }
+        val (leaf_color, text_color) = swatch.get(
+            line_data.line_offset.value ?: 0,
+            event != null,
+            leaf_data.is_selected.value,
+            leaf_data.is_secondary.value,
+            leaf_data.is_spillover.value
+        )
 
-        val spill_color = this.mix_colors(0xFF000000, adjusted_base_color, 1, 9)
-        val empty_color = if (line_data.ctl_type.value == null) {
-            this.mix_colors(adjusted_base_color, 0x11FFFFFF, 1, 1)
-        } else {
-            0x11888888
-        }
-
-        val leaf_color = if (leaf_data.is_spillover.value) {
-            spill_color
-        } else {
-            when (event) {
-                is EffectEvent,
-                is InstrumentEvent -> adjusted_base_color
-                else -> empty_color
-            }
-        }
-
-        val avg = (((adjusted_base_color / (256 * 256)) and 0xFF) + ((adjusted_base_color / 256) and 0xFF) + (adjusted_base_color and 0xFF)) / 3
-
-        val text_color = if (avg > 0xAA) {
-            Color(0xFF000000)
-        } else {
-            Color(0xFFFFFFFF)
-        }
-
-        HalfBorderBox(
-            modifier = modifier
-                .background(color = Color(leaf_color))
-                .then(
-                    if (leaf_data.is_selected.value) {
-                        modifier.border(2.dp, colorResource(R.color.selected_primary))
-                    } else if (leaf_data.is_secondary.value) {
-                        modifier.border(2.dp, colorResource(R.color.selected_secondary))
-                    } else if (!leaf_data.is_valid.value) {
-                        modifier.border(2.dp, colorResource(R.color.leaf_invalid))
-                    } else {
-                        modifier
-                    }
-                )
-                .fillMaxHeight(),
-        ) {
-            Box(
-                Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
+        ProvideTextStyle(MaterialTheme.typography.bodySmall) {
+            HalfBorderBox(
+                modifier = modifier
+                    .background(color = leaf_color)
+                    //.then(
+                    //    if (leaf_data.is_selected.value) {
+                    //        modifier.border(2.dp, colorResource(R.color.selected_primary))
+                    //    } else if (leaf_data.is_secondary.value) {
+                    //        modifier.border(2.dp, colorResource(R.color.selected_secondary))
+                    //    } else if (!leaf_data.is_valid.value) {
+                    //        modifier.border(2.dp, colorResource(R.color.leaf_invalid))
+                    //    } else {
+                    //        modifier
+                    //    }
+                    //)
+                    .fillMaxHeight(),
+                border_color = MaterialTheme.colorScheme.onBackground,
             ) {
-                when (event) {
-                    is AbsoluteNoteEvent -> {
-                        val octave = event.note / radix
-                        val offset = event.note % radix
-                        Row(horizontalArrangement = Arrangement.Center) {
-                            Column(
-                                modifier = Modifier.fillMaxHeight(),
-                                verticalArrangement = Arrangement.Bottom
-                            ) {
-                                Spacer(modifier = Modifier.weight(.30F))
-                                ProvideTextStyle(TextStyle(fontSize = 14.sp, color = text_color)) {
-                                    Text("$octave", modifier = Modifier.weight(.5F))
+                Box(
+                    Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    when (event) {
+                        is AbsoluteNoteEvent -> {
+                            val octave = event.note / radix
+                            val offset = event.note % radix
+                            Row(horizontalArrangement = Arrangement.Center) {
+                                Column(
+                                    modifier = Modifier.fillMaxHeight(),
+                                    verticalArrangement = Arrangement.Bottom
+                                ) {
+                                    Spacer(modifier = Modifier.weight(.30F))
+                                    ProvideTextStyle(TextStyle(fontSize = 14.sp, color = text_color)) {
+                                        Text("$octave", modifier = Modifier.weight(.5F))
+                                    }
+                                    Spacer(modifier = Modifier.weight(.1F))
                                 }
-                                Spacer(modifier = Modifier.weight(.1F))
-                            }
-                            Column(
-                                modifier = Modifier.fillMaxHeight(),
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                ProvideTextStyle(TextStyle(fontSize = 20.sp, color = text_color)) {
-                                    Text("$offset")
+                                Column(
+                                    modifier = Modifier.fillMaxHeight(),
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    ProvideTextStyle(TextStyle(fontSize = 20.sp, color = text_color)) {
+                                        Text("$offset")
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    is RelativeNoteEvent -> {
-                        val octave = abs(event.offset) / radix
-                        val offset = abs(event.offset) % radix
-                        Row(
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(
-                                modifier = Modifier.fillMaxHeight(),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
+                        is RelativeNoteEvent -> {
+                            val octave = abs(event.offset) / radix
+                            val offset = abs(event.offset) % radix
+                            Row(
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(
-                                    modifier = Modifier.weight(.4F),
-                                    verticalAlignment = Alignment.Bottom
+                                Column(
+                                    modifier = Modifier.fillMaxHeight(),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
                                 ) {
-                                    ProvideTextStyle(TextStyle(fontSize = 14.sp)) {
-                                        Text(
-                                            if (event.offset > 0) "+" else "-",
-                                            color = text_color
-                                        )
+                                    Row(
+                                        modifier = Modifier.weight(.4F),
+                                        verticalAlignment = Alignment.Bottom
+                                    ) {
+                                        ProvideTextStyle(TextStyle(fontSize = 14.sp)) {
+                                            Text(
+                                                if (event.offset > 0) "+" else "-",
+                                                color = text_color
+                                            )
+                                        }
                                     }
+                                    Row(
+                                        modifier = Modifier.weight(.4F),
+                                        verticalAlignment = Alignment.Top
+                                    ) {
+                                        ProvideTextStyle(TextStyle(fontSize = 14.sp)) {
+                                            Text("$octave", color = text_color)
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.weight(.1F))
                                 }
-                                Row(
-                                    modifier = Modifier.weight(.4F),
-                                    verticalAlignment = Alignment.Top
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxHeight(),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
                                 ) {
-                                    ProvideTextStyle(TextStyle(fontSize = 14.sp)) {
-                                        Text("$octave", color = text_color)
+                                    ProvideTextStyle(TextStyle(fontSize = 20.sp)) {
+                                        Text("$offset", color = text_color)
                                     }
-                                }
-                                Spacer(modifier = Modifier.weight(.1F))
-                            }
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxHeight(),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                ProvideTextStyle(TextStyle(fontSize = 20.sp)) {
-                                    Text("$offset", color = text_color)
                                 }
                             }
                         }
-                    }
 
-                    is PercussionEvent -> SText(R.string.percussion_label, color = text_color)
-                    is OpusVolumeEvent -> Text("${(event.value * 100F).toInt()}%", color = text_color)
-                    is OpusPanEvent -> {
-                        Text(
-                            text = if (event.value < 0) {
-                                "<${(abs(event.value) * 10).roundToInt()}"
-                            } else if (event.value > 0) {
-                                "${(abs(event.value) * 10).roundToInt()}>"
+                        is PercussionEvent -> SText(R.string.percussion_label, color = text_color)
+                        is OpusVolumeEvent -> Text("${(event.value * 100F).toInt()}%", color = text_color)
+                        is OpusPanEvent -> {
+                            Text(
+                                text = if (event.value < 0) {
+                                    "<${(abs(event.value) * 10).roundToInt()}"
+                                } else if (event.value > 0) {
+                                    "${(abs(event.value) * 10).roundToInt()}>"
+                                } else {
+                                    "-0-"
+                                },
+                                color = text_color
+                            )
+                        }
+
+                        is DelayEvent -> Text(
+                            text = if (event.echo == 0 || event.fade == 1F) {
+                                "-"
                             } else {
-                                "-0-"
-                            },
-                            color = text_color
+                                "${event.echo}x${event.numerator}/${event.denominator}"
+                            }
                         )
+
+                        is OpusTempoEvent -> Text("${event.value} BPM", color = text_color)
+                        is OpusVelocityEvent -> Text("${(event.value * 100F).toInt()}%", color = text_color)
+                        null -> {}
                     }
-                    is DelayEvent -> Text(
-                        text = if (event.echo == 0 || event.fade == 1F) {
-                            "-"
-                        } else {
-                            "${event.echo}x${event.numerator}/${event.denominator}"
-                        }
-                    )
-                    is OpusTempoEvent -> Text("${event.value} BPM", color = text_color)
-                    is OpusVelocityEvent -> Text("${(event.value * 100F).toInt()}%", color = text_color)
-                    null -> {}
                 }
             }
         }

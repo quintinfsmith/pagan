@@ -126,24 +126,22 @@ abstract class PaganComponentActivity: ComponentActivity() {
                     this.finish()
                 }
             }
-            ModalNavigationDrawer(
+            ScaffoldWithTopBar(
                 modifier = Modifier
                     .systemBarsPadding()
                     .wrapContentWidth(),
+                top_app_bar = { this.TopBar() },
+                force_night_mode = this@PaganComponentActivity.view_model.night_mode,
                 drawerState = this.drawer_state,
                 gesturesEnabled = this.drawer_gesture_enabled.value,
-                drawerContent = { this.Drawer() }
-            ) {
-                ScaffoldWithTopBar(
-                    top_app_bar = { this.TopBar() },
-                    this@PaganComponentActivity.view_model.night_mode
-                ) {
+                drawerContent = { this.Drawer() },
+                content = {
                     BoxWithConstraints(modifier = Modifier.padding(it)) {
                         view_model.set_layout_size(this.maxWidth, this.maxHeight)
                         Box(
                             modifier = Modifier
-                            .padding(32.dp)
-                            .fillMaxSize()
+                                .padding(32.dp)
+                                .fillMaxSize()
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.rowanleaf_no_padding),
@@ -205,7 +203,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                         }
                     }
                 }
-            }
+            )
         }
     }
 

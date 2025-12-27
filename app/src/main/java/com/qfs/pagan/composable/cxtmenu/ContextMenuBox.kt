@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
@@ -39,11 +40,11 @@ fun ColumnScope.CMPadding() {
 
 @Composable
 fun CMBoxBottom(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
-    ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onPrimaryContainer) {
+    ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onSurface) {
         Box(
             modifier
                 .background(
-                    MaterialTheme.colorScheme.primaryContainer,
+                    MaterialTheme.colorScheme.surface,
                     CMBoxBottomShape()
                 ),
             contentAlignment = Alignment.Center
@@ -63,11 +64,11 @@ fun CMBoxBottom(modifier: Modifier = Modifier, content: @Composable ColumnScope.
 
 @Composable
 fun CMBoxEnd(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
-    ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onPrimaryContainer) {
+    ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onSurface) {
         Box(
             modifier
                 .background(
-                    MaterialTheme.colorScheme.primaryContainer,
+                    MaterialTheme.colorScheme.surface,
                     CMBoxEndShape()
                 ),
             contentAlignment = Alignment.Center

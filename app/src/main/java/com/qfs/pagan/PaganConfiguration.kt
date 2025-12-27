@@ -23,8 +23,7 @@ class PaganConfiguration(
     var soundfont_directory: Uri? = null,
     var night_mode: Int = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM,
     var indent_json: Boolean = false,
-    var note_memory: NoteMemory = NoteMemory.UserInput,
-    var channel_colors: Array<Long> = PaganConfiguration.DEFAULT_CHANNEL_COLORS
+    var note_memory: NoteMemory = NoteMemory.UserInput
 ) {
     enum class NoteMemory {
         UserInput,
@@ -38,11 +37,6 @@ class PaganConfiguration(
     }
 
     companion object {
-        val DEFAULT_CHANNEL_COLORS = arrayOf(
-            0xFF765bd5,
-            0xFFAA8800,
-            0xFF006633
-        )
         fun from_json(content: JSONHashMap): PaganConfiguration {
             return PaganConfiguration(
                 soundfont = content.get_stringn("soundfont2"),
@@ -57,8 +51,7 @@ class PaganConfiguration(
                 soundfont_directory = content.get_stringn("soundfont_directory")?.toUri(),
                 night_mode = content.get_int("night_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM),
                 indent_json = content.get_boolean("indent_json", false),
-                note_memory = NoteMemory.valueOf(content.get_string("note_memory", "UserInput")),
-                channel_colors = PaganConfiguration.DEFAULT_CHANNEL_COLORS
+                note_memory = NoteMemory.valueOf(content.get_string("note_memory", "UserInput"))
             )
         }
 

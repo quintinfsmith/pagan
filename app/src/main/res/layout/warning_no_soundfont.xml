@@ -17,7 +17,6 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/warning_nosoundfont"
             android:textColor="?attr/soundfont_warning_text" />
         <TextView
             android:clickable="true"
@@ -30,7 +29,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/warning_nosoundfont_2"
+            android:text="@string/warning_nosoundfont_c"
             android:textColor="?attr/soundfont_warning_text" />
     </LinearLayout>
 </LinearLayout>

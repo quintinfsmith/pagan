@@ -352,7 +352,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     val soundfonts = mutableListOf<Pair<Uri, @Composable RowScope.() -> Unit>>()
                     for (uri in file_list) {
                         val relative_path_segments = uri.pathSegments.last().split("/")
-                        soundfonts.add(Pair(uri, { Text(relative_path_segments.last(), maxLines = 1, overflow = TextOverflow.Ellipsis) }))
+                        soundfonts.add(Pair(uri, { Text(relative_path_segments.last()) }))
                     }
 
                     val sort_options = listOf(

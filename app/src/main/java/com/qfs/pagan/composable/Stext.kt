@@ -510,7 +510,8 @@ fun <T> SortableMenu(
                                 },
                                 shape = RoundedCornerShape(8.dp)
                             )
-                            .height(dimensionResource(R.dimen.dialog_menu_line_height))
+                            .heightIn(dimensionResource(R.dimen.dialog_menu_line_height))
+                            .weight(1F, fill=false)
                             .combinedClickable(
                                 onClick = { onClick(item) },
                                 onLongClick = { onLongClick(item) }

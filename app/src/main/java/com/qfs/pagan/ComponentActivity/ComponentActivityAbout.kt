@@ -54,9 +54,9 @@ class ComponentActivityAbout: PaganComponentActivity() {
     }
 
     @Composable
-    fun FillRow(content: @Composable (RowScope.() -> Unit)) {
+    fun FillRow(modifier: Modifier = Modifier, content: @Composable (RowScope.() -> Unit)) {
         Row(
-            Modifier.fillMaxWidth(),
+            modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
             content = content
         )
@@ -99,7 +99,7 @@ class ComponentActivityAbout: PaganComponentActivity() {
             Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            FillRow {
+            FillRow(Modifier.padding(bottom = 8.dp)) {
                 Column(
                     modifier = Modifier.clickable {
                         val intent = Intent(Intent.ACTION_VIEW)
@@ -107,15 +107,17 @@ class ComponentActivityAbout: PaganComponentActivity() {
                         context.startActivity(intent)
                     }
                 ) {
-                    FillRow { Text(stringResource(R.string.label_manual)) }
-                    FillRow {
-                        SelectionContainer {
-                            Text(stringResource(R.string.url_manual))
-                        }
+                    Text(
+                        stringResource(R.string.label_manual),
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Start
+                    )
+                    SelectionContainer {
+                        Text(stringResource(R.string.url_manual))
                     }
                 }
             }
-            FillRow {
+            FillRow(Modifier.padding(bottom = 8.dp)) {
                 Column(
                     modifier = Modifier.clickable {
                         val intent = Intent(Intent.ACTION_VIEW)
@@ -131,7 +133,7 @@ class ComponentActivityAbout: PaganComponentActivity() {
                     }
                 }
             }
-            FillRow {
+            FillRow(Modifier.padding(bottom = 8.dp)) {
                 Column(
                     modifier = Modifier.clickable {
                         val intent = Intent(Intent.ACTION_VIEW)
@@ -147,8 +149,8 @@ class ComponentActivityAbout: PaganComponentActivity() {
                     }
                 }
             }
-            FillRow { HorizontalDivider(thickness = 1.dp) }
-            FillRow {
+
+            FillRow(Modifier.padding(bottom = 8.dp)) {
                 Column(
                     modifier = Modifier.clickable {
                         val intent = Intent(Intent.ACTION_SENDTO)

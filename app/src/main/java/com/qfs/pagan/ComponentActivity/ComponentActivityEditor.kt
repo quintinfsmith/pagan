@@ -1221,8 +1221,19 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     fun LineLabelView(modifier: Modifier = Modifier, dispatcher: ActionTracker, line_info: ViewModelEditorState.LineData) {
         val ctl_type = line_info.ctl_type.value
+        val (background, foreground) = if (!line_info.is_selected.value) {
+            Pair(
+                MaterialTheme.colorScheme.primaryContainer,
+                MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        } else {
+            Pair(
+                MaterialTheme.colorScheme.secondary,
+                MaterialTheme.colorScheme.onSecondary
+            )
+        }
 
-        ProvideContentColorTextStyle(MaterialTheme.colorScheme.onPrimaryContainer) {
+        ProvideContentColorTextStyle(foreground) {
             HalfBorderBox(
                 modifier
                     .combinedClickable(
@@ -1243,7 +1254,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     )
                     .background(
                         shape = RectangleShape,
-                        color = MaterialTheme.colorScheme.primaryContainer
+                        color = background
                     )
                     .fillMaxSize(),
                 border_color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -1257,13 +1268,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         Box(
                             Modifier
                                 .fillMaxSize()
-                                .then(
-                                    if (line_info.is_selected.value) {
-                                        Modifier.border(2.dp, colorResource(R.color.selected_primary))
-                                    } else {
-                                        Modifier
-                                    }
-                                )
                                 .padding(horizontal = 2.dp)
                         ) {
                             Box(modifier = Modifier.align(Alignment.TopStart)) {
@@ -1292,12 +1296,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                modifier = if (line_info.is_selected.value) {
-                                    Modifier.border(2.dp, colorResource(R.color.selected_primary))
-                                } else {
-                                    Modifier
-                                }
-                                    .padding(2.dp),
+                                modifier = Modifier.padding(2.dp),
                                 painter = painterResource(drawable_id),
                                 contentDescription = stringResource(description_id)
                             )
@@ -1310,18 +1309,22 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     fun BeatLabelView(modifier: Modifier = Modifier, x: Int, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, column_info: ViewModelEditorState.ColumnData) {
-        ProvideContentColorTextStyle(MaterialTheme.colorScheme.onPrimaryContainer) {
+        val (background, foreground) = if (!column_info.is_selected.value) {
+            Pair(
+                MaterialTheme.colorScheme.primaryContainer,
+                MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        } else {
+            Pair(
+                MaterialTheme.colorScheme.secondary,
+                MaterialTheme.colorScheme.onSecondary
+            )
+        }
+        ProvideContentColorTextStyle(foreground) {
             HalfBorderBox(
                 modifier
-                    .then(
-                        if (column_info.is_selected.value) {
-                            Modifier.border(2.dp, colorResource(R.color.selected_primary))
-                        } else {
-                            Modifier
-                        }
-                    )
                     .background(
-                        color = MaterialTheme.colorScheme.primaryContainer,
+                        color = background,
                         shape = RectangleShape
                     )
                     .combinedClickable(
@@ -1331,29 +1334,21 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 border_color = MaterialTheme.colorScheme.onPrimaryContainer,
                 content = {
                     Box(
-                        Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
                         if (column_info.is_tagged.value) {
-                            Box(
-                                modifier
-                                    .wrapContentSize()
-                                    .padding(2.dp)
-                                    .background(
-                                        color = colorResource(R.color.line_label_text),
-                                        shape = RectangleShape
-                                    ),
-                                content = {
-                                    Text(
-                                        text = "$x",
-                                        color = colorResource(R.color.line_label),
-                                        modifier = Modifier.padding(2.dp),
-                                    )
-                                }
+                            Modifier.border(
+                                width = 2.dp,
+                                color = foreground,
+                                shape = CircleShape
                             )
                         } else {
-                            Text(text = "$x")
-                        }
+                            Modifier
+                        },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "$x",
+                            modifier = Modifier.padding(4.dp)
+                        )
                     }
                 }
             )

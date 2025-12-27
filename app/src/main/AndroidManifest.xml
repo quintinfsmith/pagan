@@ -33,7 +33,7 @@
         <activity android:name=".ComponentActivity.ComponentActivityEditor"
             android:exported="true"
             android:appCategory="audio"
-            android:windowSoftInputMode="adjustResize"
+            android:windowSoftInputMode="adjustPan"
             android:label="@string/app_name_brief"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
             android:theme="@style/Theme.Pagan">

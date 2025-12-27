@@ -858,7 +858,7 @@ fun MagicInput(
     minimum: Int? = null,
     maximum: Int? = null,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(vertical = 2.dp),
+    contentPadding: PaddingValues = PaddingValues(vertical = 8.dp),
     prefix: @Composable (() -> Unit)? = null,
     background_icon: Int? = null,
     callback: (Int) -> Unit
@@ -880,7 +880,6 @@ fun MagicInput(
             },
             contentPadding = contentPadding,
             modifier = modifier
-                .fillMaxSize()
                 .background(Color.Transparent)
                 .focusRequester(requester),
             minimum = minimum,

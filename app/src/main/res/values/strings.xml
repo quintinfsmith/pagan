@@ -60,7 +60,7 @@
     <string name="config_file_not_found">Configuration can\'t be accessed</string>
 
     <string name="label_manual">Manual</string>
-    <string name="label_issues_location">Issues Tracker</string>
+    <string name="label_issues_location">Issue Tracker</string>
     <string name="suggestions_description">Issues or Feature Requests</string>
     <string name="label_source_code">Source</string>
     <string name="feedback_on_copy">Now working on copy</string>

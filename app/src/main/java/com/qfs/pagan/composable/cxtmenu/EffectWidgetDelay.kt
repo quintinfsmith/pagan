@@ -2,6 +2,7 @@ package com.qfs.pagan.composable.cxtmenu
 
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
@@ -48,7 +49,9 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
     MagicInput(
         echo,
         background_icon = R.drawable.icon_echo,
-        modifier = Modifier.width(64.dp)
+        modifier = Modifier
+            .fillMaxHeight()
+            .width(54.dp)
     ) {
         event.echo = (it - 1)
         if (beat != null) {
@@ -58,7 +61,13 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
         }
     }
     Spacer(Modifier.width(2.dp))
-    MagicInput(numerator, background_icon = R.drawable.icon_hz, modifier = Modifier.width(64.dp)) {
+    MagicInput(
+        numerator,
+        background_icon = R.drawable.icon_hz,
+        modifier = Modifier
+            .fillMaxHeight()
+            .width(54.dp)
+    ) {
         event.numerator = it
         if (beat != null) {
             dispatcher.set_effect(EffectType.Delay, event, channel, line_offset, beat, position!!)
@@ -67,7 +76,13 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
         }
     }
     Spacer(Modifier.width(2.dp))
-    MagicInput(denominator, background_icon = R.drawable.icon_hz, modifier = Modifier.width(64.dp)) {
+    MagicInput(
+        denominator,
+        background_icon = R.drawable.icon_hz,
+        modifier = Modifier
+            .fillMaxHeight()
+            .width(54.dp)
+    ) {
         event.denominator = it
         if (beat != null) {
             dispatcher.set_effect(EffectType.Delay, event, channel, line_offset, beat, position!!)

@@ -192,7 +192,6 @@ fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
 }
 @Composable
 fun ContextMenuLineCtlPrimary(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, dispatcher: ActionTracker, layout: ViewModelPagan.LayoutSize) {
-    val cursor = vm_state.active_cursor.value ?: return
     when (layout) {
         ViewModelPagan.LayoutSize.SmallPortrait,
         ViewModelPagan.LayoutSize.MediumPortrait,

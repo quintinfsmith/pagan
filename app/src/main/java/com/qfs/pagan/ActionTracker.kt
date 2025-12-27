@@ -990,37 +990,40 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         this@ActionTracker.cursor_select_column(value.toInt())
                     }
                 )
+
                 if (opus_manager.marked_sections.isNotEmpty()) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.End
                     ) {
                         val expanded = remember { mutableStateOf(false) }
-                        Button(
-                            onClick = { expanded.value = !expanded.value },
-                            content = { SText(R.string.jump_to_section) }
-                        )
-                        DropdownMenu(
-                            onDismissRequest = { expanded.value = false },
-                            expanded = expanded.value
-                        ) {
-                            var section_index = 0
-                            for ((i, tag) in opus_manager.marked_sections.toList().sortedBy { it.first }) {
-                                DropdownMenuItem(
-                                    onClick = {
-                                        close()
-                                        expanded.value = false
-                                        this@ActionTracker.cursor_select_column(i)
-                                    },
-                                    text = {
-                                        if (tag == null) {
-                                            Text(stringResource(R.string.section_spinner_item, i, section_index))
-                                        } else {
-                                            Text("${"%02d".format(i)}: $tag")
+                        Box {
+                            Button(
+                                onClick = { expanded.value = !expanded.value },
+                                content = { SText(R.string.jump_to_section) }
+                            )
+                            DropdownMenu(
+                                onDismissRequest = { expanded.value = false },
+                                expanded = expanded.value
+                            ) {
+                                var section_index = 0
+                                for ((i, tag) in opus_manager.marked_sections.toList().sortedBy { it.first }) {
+                                    DropdownMenuItem(
+                                        onClick = {
+                                            close()
+                                            expanded.value = false
+                                            this@ActionTracker.cursor_select_column(i)
+                                        },
+                                        text = {
+                                            if (tag == null) {
+                                                Text(stringResource(R.string.section_spinner_item, i, section_index))
+                                            } else {
+                                                Text("${"%02d".format(i)}: $tag")
+                                            }
                                         }
-                                    }
-                                )
-                                section_index++
+                                    )
+                                    section_index++
+                                }
                             }
                         }
                     }
@@ -1808,7 +1811,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                     input = project_name,
                     textAlign = TextAlign.Start,
                     modifier = Modifier.fillMaxWidth(),
-                    lineLimits = TextFieldLineLimits.SingleLine
+                    lineLimits = TextFieldLineLimits.Default
                 ) {}
                 Spacer(modifier = Modifier.height(3.dp))
                 TextInput(
@@ -1961,8 +1964,10 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                 DialogSTitle(title)
                 Row {
                     TextInput(
-                        modifier = Modifier,
                         input = value,
+                        textAlign = TextAlign.Start,
+                        modifier = Modifier.fillMaxWidth(),
+                        lineLimits = TextFieldLineLimits.Default,
                         callback = callback
                     )
                 }
@@ -2597,15 +2602,18 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                     )
                 }
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 3.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(6.dp))
+                        .padding(4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column {
-                        SText(R.string.dlg_transpose, maxLines=1)
+                        SText(R.string.dlg_transpose, maxLines = 1)
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Start
+                            horizontalArrangement = Arrangement.Start,
                         ) {
                             MagicInput(
                                 value = transpose_numerator,
@@ -2640,14 +2648,14 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                 }
                 Spacer(
                     Modifier
-                        .height(1.dp)
+                        .height(4.dp)
                         .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.outline)
                 )
                 FlowRow(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1F, fill = false)
+                        .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(6.dp))
                         .verticalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.SpaceAround
                 ) {
@@ -2658,7 +2666,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         Box(
                             Modifier
                                 .padding(vertical = 3.dp)
-                                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(6.dp))
+                                .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(6.dp))
                         ) {
                             Row(
                                 modifier = Modifier.padding(6.dp),
@@ -2692,9 +2700,8 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                 }
                 Spacer(
                     Modifier
-                        .height(1.dp)
+                        .height(4.dp)
                         .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.outline)
                 )
                 DialogBar(
                     neutral = close,

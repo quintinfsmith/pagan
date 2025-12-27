@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.ViewModel
 import com.qfs.pagan.ComponentActivity.PaganComponentActivity.Companion.SIZE_L
 import com.qfs.pagan.ComponentActivity.PaganComponentActivity.Companion.SIZE_M
@@ -27,6 +28,7 @@ import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.SortableMenu
 import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.projectmanager.ProjectManager
+import java.io.FileNotFoundException
 
 class ViewModelPagan: ViewModel() {
     companion object {

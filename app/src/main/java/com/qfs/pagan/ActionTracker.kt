@@ -957,7 +957,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             return
         }
 
-        this.vm_top.create_dialog { close ->
+        this.vm_top.create_medium_dialog { close ->
             @Composable {
                 val slider_position = remember {
                     mutableStateOf(

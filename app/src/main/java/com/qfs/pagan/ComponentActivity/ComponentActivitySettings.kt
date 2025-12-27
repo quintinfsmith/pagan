@@ -383,7 +383,14 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                     )
                                 }
 
-                                SortableMenu(modifier = Modifier.weight(1F), sort_row_padding = PaddingValues(vertical = dimensionResource(R.dimen.sf_menu_padding)), default_menu = soundfonts, sort_options = sort_options, selected_sort = 0) { uri ->
+                                SortableMenu(
+                                    modifier = Modifier.weight(1F),
+                                    sort_row_padding = PaddingValues(vertical = dimensionResource(R.dimen.sf_menu_padding)),
+                                    default_menu = soundfonts,
+                                    default_value = this@ComponentActivitySettings.coerce_soundfont_uri(),
+                                    sort_options = sort_options,
+                                    selected_sort = 0
+                                ) { uri ->
                                     view_model.set_soundfont_uri(uri)
                                     view_model.save_configuration()
                                     this@ComponentActivitySettings.update_result()

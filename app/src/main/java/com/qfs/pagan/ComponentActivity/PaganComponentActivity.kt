@@ -46,6 +46,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.qfs.pagan.DialogChain
+import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.DialogCard
 import com.qfs.pagan.composable.DialogTitle
@@ -57,6 +58,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.launch
+import java.io.FileNotFoundException
 import java.text.SimpleDateFormat
 import java.util.Date
 import kotlin.math.roundToInt
@@ -252,6 +254,14 @@ abstract class PaganComponentActivity: ComponentActivity() {
             }
         }
         return existing_uris
+    }
+    fun coerce_soundfont_uri(): Uri? {
+        val file_path = this.view_model.configuration.soundfont ?: return null
+        var soundfont_file = this.get_soundfont_directory()
+        for (segment in file_path.split("/")) {
+            soundfont_file = soundfont_file.findFile(segment) ?: throw FileNotFoundException()
+        }
+        return soundfont_file.uri
     }
 
     fun get_soundfont_directory(): DocumentFile {

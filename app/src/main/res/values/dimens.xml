@@ -127,9 +127,6 @@
     <dimen name="dialog_bar_padding_vertical">16dp</dimen>
     <dimen name="dialog_width_max">500dp</dimen>
 
-
-
-
     <dimen name="contextmenu_padding">4dp</dimen>
     <dimen name="contextmenu_button_width">54dp</dimen>
     <dimen name="contextmenu_button_height">48dp</dimen>

@@ -934,6 +934,32 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
         return null
     }
 
+    // used to access the cached values. not to calculate new ones
+    fun get_blocked_leafs(beat: Int, position: List<Int>): List<Pair<Pair<Int, List<Int>>, List<Pair<Int, List<Int>>>>> {
+        val output = mutableListOf<Pair<Pair<Int, List<Int>>, List<Pair<Int, List<Int>>>>>()
+        val tree = this.get_tree(beat, position)
+        val mapped_heads = mutableSetOf<Pair<Int, List<Int>>>()
+
+        tree.traverse { subtree, event ->
+            if (subtree.is_leaf()) {
+                val working_path = subtree.get_path()
+                val head = this.get_blocking_position(beat, working_path) ?: return@traverse
+                if (mapped_heads.contains(head)) return@traverse
+                mapped_heads.add(head)
+
+                val working_blocked_leafs = mutableListOf<Pair<Int, List<Int>>>()
+                val blocked_trees = this._cache_blocked_tree_map[head] ?: listOf()
+                for ((blocked_beat, blocked_position, _) in blocked_trees) {
+                    working_blocked_leafs.add(Pair(blocked_beat, blocked_position.toList()))
+                }
+
+                output.add(Pair(head, working_blocked_leafs))
+            }
+        }
+
+        return output
+    }
+
     // Get all blocked positions connected, regardless of if the given position is an event or a blocked tree
     fun get_all_blocked_positions(beat: Int, position: List<Int>): List<Pair<Int, List<Int>>> {
         val original = this.get_blocking_position(beat, position) ?: Pair(beat, position)

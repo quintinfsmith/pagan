@@ -5026,6 +5026,14 @@ open class OpusLayerBase: Effectable {
         return this._cached_row_map[row] ?: throw Exception("Row $row not found.")
     }
 
+    fun get_visible_row_from_pair(channel: Int, line_offset: Int): Int {
+        return this.get_visible_row_from_ctl_line(
+            this.get_actual_line_index(
+                this.get_instrument_line_index(channel, line_offset)
+            )
+        ) ?: -1
+    }
+
     fun get_visible_row_from_ctl_line(line: Int): Int? {
         return this._cached_inv_visible_line_map[line]
     }

@@ -1,6 +1,5 @@
 package com.qfs.pagan.viewmodel
 
-import android.location.Location
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.MutableState
@@ -152,7 +151,6 @@ class ViewModelEditorState: ViewModel() {
         }
     }
 
-    // TODO: This isn't right
     fun update_cell(coordinate: EditorTable.Coordinate, tree: ReducibleTree<out OpusEvent>) {
         this.cell_map[coordinate.y][coordinate.x].value = this.copy_tree_for_cell(tree).value
     }

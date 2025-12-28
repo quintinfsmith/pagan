@@ -354,28 +354,38 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     }
 
     override fun unset(beat_key: BeatKey, position: List<Int>) {
-        super.unset(beat_key, position)
-        this._queue_cell_change(beat_key)
+        this.track_blocked_leafs(beat_key, position) {
+            super.unset(beat_key, position)
+            this._queue_cell_change(beat_key)
+        }
     }
 
     override fun controller_global_unset(type: EffectType, beat: Int, position: List<Int>) {
-        super.controller_global_unset(type, beat, position)
-        this._queue_global_ctl_cell_change(type, beat)
+        this.track_blocked_leafs<EffectEvent>(type, beat, position) {
+            super.controller_global_unset(type, beat, position)
+            this._queue_global_ctl_cell_change(type, beat)
+        }
     }
 
     override fun controller_channel_unset(type: EffectType, channel: Int, beat: Int, position: List<Int>) {
-        super.controller_channel_unset(type, channel, beat, position)
-        this._queue_channel_ctl_cell_change(type, channel, beat)
+        this.track_blocked_leafs<EffectEvent>(type, channel, beat, position) {
+            super.controller_channel_unset(type, channel, beat, position)
+            this._queue_channel_ctl_cell_change(type, channel, beat)
+        }
     }
 
     override fun controller_line_unset(type: EffectType, beat_key: BeatKey, position: List<Int>) {
-        super.controller_line_unset(type, beat_key, position)
-        this._queue_line_ctl_cell_change(type, beat_key)
+        this.track_blocked_leafs<EffectEvent>(type, beat_key, position) {
+            super.controller_line_unset(type, beat_key, position)
+            this._queue_line_ctl_cell_change(type, beat_key)
+        }
     }
 
     override fun replace_tree(beat_key: BeatKey, position: List<Int>?, tree: ReducibleTree<out InstrumentEvent>) {
-        super.replace_tree(beat_key, position, tree)
-        this._queue_cell_change(beat_key)
+        this.track_blocked_leafs(beat_key, position ?: listOf()) {
+            super.replace_tree(beat_key, position, tree)
+            this._queue_cell_change(beat_key)
+        }
     }
 
     override fun _controller_line_copy_range(type: EffectType, beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey, unset_original: Boolean) {
@@ -540,49 +550,129 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     }
 
     override fun <T: EffectEvent> controller_global_replace_tree(type: EffectType, beat: Int, position: List<Int>?, tree: ReducibleTree<T>) {
-        super.controller_global_replace_tree(type, beat, position, tree)
-        this._queue_global_ctl_cell_change(type, beat)
+        this.track_blocked_leafs<EffectEvent>(type, beat, position ?: listOf()) {
+            super.controller_global_replace_tree(type, beat, position, tree)
+            this._queue_global_ctl_cell_change(type, beat)
+        }
     }
 
     override fun <T: EffectEvent> controller_channel_replace_tree(type: EffectType, channel: Int, beat: Int, position: List<Int>?, tree: ReducibleTree<T>) {
-        super.controller_channel_replace_tree(type, channel, beat, position, tree)
-        this._queue_channel_ctl_cell_change(type, channel, beat)
+        this.track_blocked_leafs<EffectEvent>(type, channel, beat, position ?: listOf()) {
+            super.controller_channel_replace_tree(type, channel, beat, position, tree)
+            this._queue_channel_ctl_cell_change(type, channel, beat)
+        }
     }
 
     override fun <T: EffectEvent> controller_line_replace_tree(type: EffectType, beat_key: BeatKey, position: List<Int>?, tree: ReducibleTree<T>) {
-        super.controller_line_replace_tree(type, beat_key, position, tree)
-        this._queue_line_ctl_cell_change(type, beat_key)
+        this.track_blocked_leafs<EffectEvent>(type, beat_key, position ?: listOf()) {
+            super.controller_line_replace_tree(type, beat_key, position, tree)
+            this._queue_line_ctl_cell_change(type, beat_key)
+        }
     }
 
     override fun <T: EffectEvent> controller_global_set_event(type: EffectType, beat: Int, position: List<Int>, event: T) {
-        super.controller_global_set_event(type, beat, position, event)
-        this._queue_global_ctl_cell_change(type, beat)
+        this.track_blocked_leafs<T>(type, beat, position) {
+            super.controller_global_set_event(type, beat, position, event)
+            this._queue_global_ctl_cell_change(type, beat)
+        }
     }
 
     override fun <T: EffectEvent> controller_channel_set_event(type: EffectType, channel: Int, beat: Int, position: List<Int>, event: T) {
-        super.controller_channel_set_event(type, channel, beat, position, event)
-        this._queue_channel_ctl_cell_change(type, channel, beat)
+        this.track_blocked_leafs<T>(type, channel, beat, position) {
+            super.controller_channel_set_event(type, channel, beat, position, event)
+            this._queue_channel_ctl_cell_change(type, channel, beat)
+        }
     }
 
     override fun <T: EffectEvent> controller_line_set_event(type: EffectType, beat_key: BeatKey, position: List<Int>, event: T) {
-        super.controller_line_set_event(type, beat_key, position, event)
-        this._queue_line_ctl_cell_change(type, beat_key)
+        this.track_blocked_leafs<T>(type, beat_key, position) {
+            super.controller_line_set_event(type, beat_key, position, event)
+            this._queue_line_ctl_cell_change(type, beat_key)
+        }
     }
 
     override fun <T: InstrumentEvent> set_event(beat_key: BeatKey, position: List<Int>, event: T) {
-        super.set_event(beat_key, position, event)
+        this.track_blocked_leafs(beat_key, position) {
+            super.set_event(beat_key, position, event)
 
-        if (event is TunedInstrumentEvent) {
-            this.set_relative_mode(event)
+            if (event is TunedInstrumentEvent) {
+                this.set_relative_mode(event)
+            }
+
+            if (this.ui_lock.is_locked()) return@track_blocked_leafs
+            this._queue_cell_change(beat_key)
+        }
+    }
+
+    private fun remap_blocked_leafs(y: Int, original_blocked_leafs: List<Pair<Pair<Int, List<Int>>, List<Pair<Int, List<Int>>>>>, newly_blocked_leafs: List<Pair<Pair<Int, List<Int>>, List<Pair<Int, List<Int>>>>>) {
+        for ((head, overlaps) in original_blocked_leafs) {
+            for ((blocked_beat, blocked_position) in overlaps) {
+                this.vm_state.cell_map[y][blocked_beat].value.get(*blocked_position.toIntArray()).event?.first?.is_spillover?.value = false
+            }
         }
 
-        if (this.ui_lock.is_locked()) return
-        this._queue_cell_change(beat_key)
+        for ((head, overlaps) in newly_blocked_leafs) {
+            for ((blocked_beat, blocked_position) in overlaps) {
+                this.vm_state.cell_map[y][blocked_beat].value.get(*blocked_position.toIntArray()).event?.first?.is_spillover?.value = true
+            }
+        }
+    }
+    private fun track_blocked_leafs(beat_key: BeatKey, position: List<Int>, callback: () -> Unit) {
+        val line = this.channels[beat_key.channel].lines[beat_key.line_offset]
+        val original_blocked_leafs = line.get_blocked_leafs(beat_key.beat, position)
+
+        callback()
+
+        this.remap_blocked_leafs(
+            this.get_visible_row_from_pair(beat_key.channel, beat_key.line_offset),
+            original_blocked_leafs,
+            line.get_blocked_leafs(beat_key.beat, position)
+        )
+    }
+    private fun <T: EffectEvent> track_blocked_leafs(type: EffectType, beat_key: BeatKey, position: List<Int>, callback: () -> Unit) {
+        val line = this.channels[beat_key.channel].lines[beat_key.line_offset].controllers.get<T>(type)
+        val original_blocked_leafs = line.get_blocked_leafs(beat_key.beat, position)
+
+        callback()
+
+        this.remap_blocked_leafs(
+            this.get_visible_row_from_ctl_line_line(type, beat_key.channel, beat_key.line_offset),
+            original_blocked_leafs,
+            line.get_blocked_leafs(beat_key.beat, position)
+        )
+    }
+
+    private fun <T: EffectEvent> track_blocked_leafs(type: EffectType, channel: Int, beat: Int, position: List<Int>, callback: () -> Unit) {
+        val line = this.channels[channel].controllers.get<T>(type)
+        val original_blocked_leafs = line.get_blocked_leafs(beat, position)
+
+        callback()
+
+        this.remap_blocked_leafs(
+            this.get_visible_row_from_ctl_line_channel(type, channel),
+            original_blocked_leafs,
+            line.get_blocked_leafs(beat, position)
+        )
+    }
+
+    private fun <T: EffectEvent> track_blocked_leafs(type: EffectType, beat: Int, position: List<Int>, callback: () -> Unit) {
+        val line = this.controllers.get<T>(type)
+        val original_blocked_leafs = line.get_blocked_leafs(beat, position)
+
+        callback()
+
+        this.remap_blocked_leafs(
+            this.get_visible_row_from_ctl_line_global(type),
+            original_blocked_leafs,
+            line.get_blocked_leafs(beat, position)
+        )
     }
 
     override fun percussion_set_event(beat_key: BeatKey, position: List<Int>) {
-        super.percussion_set_event(beat_key, position)
-        this._queue_cell_change(beat_key)
+        this.track_blocked_leafs(beat_key, position) {
+            super.percussion_set_event(beat_key, position)
+            this._queue_cell_change(beat_key)
+        }
     }
 
     override fun percussion_set_instrument(channel: Int, line_offset: Int, instrument: Int) {
@@ -600,28 +690,39 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     }
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
-        super.split_tree(beat_key, position, splits, move_event_to_end)
-        this._queue_cell_change(beat_key)
+        this.track_blocked_leafs(beat_key, position) {
+            super.split_tree(beat_key, position, splits, move_event_to_end)
+            this._queue_cell_change(beat_key)
+        }
     }
 
     override fun controller_global_split_tree(type: EffectType, beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
-        super.controller_global_split_tree(type, beat, position, splits, move_event_to_end)
-        this._queue_global_ctl_cell_change(type, beat)
+        this.track_blocked_leafs<EffectEvent>(type, beat, position) {
+            super.controller_global_split_tree(type, beat, position, splits, move_event_to_end)
+            this._queue_global_ctl_cell_change(type, beat)
+        }
     }
 
     override fun controller_channel_split_tree(type: EffectType, channel: Int, beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
-        super.controller_channel_split_tree(type, channel, beat, position, splits, move_event_to_end)
-        this._queue_channel_ctl_cell_change(type, channel, beat)
+        this.track_blocked_leafs<EffectEvent>(type, channel, beat, position) {
+            super.controller_channel_split_tree(type, channel, beat, position, splits, move_event_to_end)
+            this._queue_channel_ctl_cell_change(type, channel, beat)
+        }
     }
 
     override fun controller_line_split_tree(type: EffectType, beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
-        super.controller_line_split_tree(type, beat_key, position, splits, move_event_to_end)
-        this._queue_line_ctl_cell_change(type, beat_key)
+        this.track_blocked_leafs<EffectEvent>(type, beat_key, position) {
+            super.controller_line_split_tree(type, beat_key, position, splits, move_event_to_end)
+            this._queue_line_ctl_cell_change(type, beat_key)
+        }
     }
 
     override fun remove(beat_key: BeatKey, position: List<Int>) {
-        super.remove(beat_key, position)
-        this._queue_cell_change(beat_key)
+        // FIXME: This will cause an error
+        this.track_blocked_leafs(beat_key, position) {
+            super.remove(beat_key, position)
+            this._queue_cell_change(beat_key)
+        }
     }
     // override fun remove_one_of_two(beat_key: BeatKey, position: List<Int>) {
     //     super.remove_one_of_two(beat_key, position)
@@ -634,62 +735,84 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     // }
 
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
-        super.insert_after(beat_key, position)
-        this._queue_cell_change(beat_key)
+        this.track_blocked_leafs(beat_key, position) {
+            super.insert_after(beat_key, position)
+            this._queue_cell_change(beat_key)
+        }
     }
 
     override fun controller_global_insert_after(type: EffectType, beat: Int, position: List<Int>) {
-        super.controller_global_insert_after(type, beat, position)
-        this._queue_global_ctl_cell_change(type, beat)
+        this.track_blocked_leafs<EffectEvent>(type, beat, position) {
+            super.controller_global_insert_after(type, beat, position)
+            this._queue_global_ctl_cell_change(type, beat)
+        }
     }
 
     override fun controller_channel_insert_after(type: EffectType, channel: Int, beat: Int, position: List<Int>) {
-        super.controller_channel_insert_after(type, channel, beat, position)
-        this._queue_channel_ctl_cell_change(type, channel, beat)
+        this.track_blocked_leafs<EffectEvent>(type, beat, channel, position) {
+            super.controller_channel_insert_after(type, channel, beat, position)
+            this._queue_channel_ctl_cell_change(type, channel, beat)
+        }
     }
 
     override fun controller_line_insert_after(type: EffectType, beat_key: BeatKey, position: List<Int>) {
-        super.controller_line_insert_after(type, beat_key, position)
-        this._queue_line_ctl_cell_change(type, beat_key)
+        this.track_blocked_leafs<EffectEvent>(type, beat_key, position) {
+            super.controller_line_insert_after(type, beat_key, position)
+            this._queue_line_ctl_cell_change(type, beat_key)
+        }
     }
 
     override fun insert(beat_key: BeatKey, position: List<Int>) {
-        super.insert(beat_key, position)
-        this._queue_cell_change(beat_key)
+        this.track_blocked_leafs(beat_key, position) {
+            super.insert(beat_key, position)
+            this._queue_cell_change(beat_key)
+        }
     }
 
     override fun controller_global_insert(type: EffectType, beat: Int, position: List<Int>) {
-        super.controller_global_insert(type, beat, position)
-        this._queue_global_ctl_cell_change(type, beat)
+        this.track_blocked_leafs<EffectEvent>(type, beat, position) {
+            super.controller_global_insert(type, beat, position)
+            this._queue_global_ctl_cell_change(type, beat)
+        }
     }
 
     override fun controller_channel_insert(type: EffectType, channel: Int, beat: Int, position: List<Int>) {
-        super.controller_channel_insert(type, channel, beat, position)
-        this._queue_channel_ctl_cell_change(type, channel, beat)
+        this.track_blocked_leafs<EffectEvent>(type, beat, channel, position) {
+            super.controller_channel_insert(type, channel, beat, position)
+            this._queue_channel_ctl_cell_change(type, channel, beat)
+        }
     }
 
     override fun controller_line_insert(type: EffectType, beat_key: BeatKey, position: List<Int>) {
-        super.controller_line_insert(type, beat_key, position)
-        this._queue_line_ctl_cell_change(type, beat_key)
-        this.vm_state.refresh_cursor()
+        this.track_blocked_leafs<EffectEvent>(type, beat_key, position) {
+            super.controller_line_insert(type, beat_key, position)
+            this._queue_line_ctl_cell_change(type, beat_key)
+            this.vm_state.refresh_cursor()
+        }
     }
 
     override fun controller_global_remove_standard(type: EffectType, beat: Int, position: List<Int>) {
-        super.controller_global_remove_standard(type, beat, position)
-        this._queue_global_ctl_cell_change(type, beat)
-        this.vm_state.refresh_cursor()
+        this.track_blocked_leafs<EffectEvent>(type, beat, position) {
+            super.controller_global_remove_standard(type, beat, position)
+            this._queue_global_ctl_cell_change(type, beat)
+            this.vm_state.refresh_cursor()
+        }
     }
 
     override fun controller_channel_remove_standard(type: EffectType, channel: Int, beat: Int, position: List<Int>) {
-        super.controller_channel_remove_standard(type, channel, beat, position)
-        this._queue_channel_ctl_cell_change(type, channel, beat)
-        this.vm_state.refresh_cursor()
+        this.track_blocked_leafs<EffectEvent>(type, beat, channel, position) {
+            super.controller_channel_remove_standard(type, channel, beat, position)
+            this._queue_channel_ctl_cell_change(type, channel, beat)
+            this.vm_state.refresh_cursor()
+        }
     }
 
     override fun controller_line_remove_standard(type: EffectType, beat_key: BeatKey, position: List<Int>) {
-        super.controller_line_remove_standard(type, beat_key, position)
-        this._queue_line_ctl_cell_change(type, beat_key)
-        this.vm_state.refresh_cursor()
+        this.track_blocked_leafs<EffectEvent>(type, beat_key, position) {
+            super.controller_line_remove_standard(type, beat_key, position)
+            this._queue_line_ctl_cell_change(type, beat_key)
+            this.vm_state.refresh_cursor()
+        }
     }
 
     private fun get_minimum_percussion_instrument(channel: Int): Int {
@@ -1150,9 +1273,9 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     }
 
     override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
-        super.set_duration(beat_key, position, duration)
-
-        if (!this.ui_lock.is_locked()) {
+        this.track_blocked_leafs(beat_key, position) {
+            super.set_duration(beat_key, position, duration)
+            if (this.ui_lock.is_locked()) return@track_blocked_leafs
             // Needs to be set to trigger potentially queued cell changes from on_overlap()
             this._queue_cell_change(beat_key)
         }

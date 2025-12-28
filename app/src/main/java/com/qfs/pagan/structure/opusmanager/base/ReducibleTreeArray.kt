@@ -937,13 +937,19 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
     // used to access the cached values. not to calculate new ones
     fun get_blocked_leafs(beat: Int, position: List<Int>): List<Pair<Pair<Int, List<Int>>, List<Pair<Int, List<Int>>>>> {
         val output = mutableListOf<Pair<Pair<Int, List<Int>>, List<Pair<Int, List<Int>>>>>()
-        val tree = this.get_tree(beat, position)
-        val mapped_heads = mutableSetOf<Pair<Int, List<Int>>>()
+        if (beat >= this.beat_count()) return output
 
+        var tree = this.get_tree(beat)
+        for (p in position) {
+            if (tree.is_leaf()) break
+            tree = tree[p]
+        }
+
+        val mapped_heads = mutableSetOf<Pair<Int, List<Int>>>()
         tree.traverse { subtree, event ->
             if (subtree.is_leaf()) {
                 val working_path = subtree.get_path()
-                val head = this.get_blocking_position(beat, working_path) ?: return@traverse
+                val head = this.get_blocking_position(beat, working_path) ?: Pair(beat, working_path)
                 if (mapped_heads.contains(head)) return@traverse
                 mapped_heads.add(head)
 

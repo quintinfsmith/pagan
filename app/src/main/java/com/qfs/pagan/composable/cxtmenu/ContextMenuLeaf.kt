@@ -11,6 +11,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -119,7 +120,9 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewM
             RemoveButton(dispatcher, cursor)
             CMPadding()
             Spacer(Modifier.weight(1F))
-            DurationButton(dispatcher, active_event)
+            key(active_event?.duration) {
+                DurationButton(dispatcher, active_event)
+            }
             CMPadding()
             UnsetButton(dispatcher, active_line, active_event)
         }
@@ -131,7 +134,10 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewM
             CMPadding()
             RemoveButton(dispatcher, cursor)
             CMPadding()
-            DurationButton(dispatcher, active_event)
+
+            key(active_event?.duration) {
+                DurationButton(dispatcher, active_event)
+            }
             CMPadding()
             UnsetButton(dispatcher, active_line, active_event)
         }

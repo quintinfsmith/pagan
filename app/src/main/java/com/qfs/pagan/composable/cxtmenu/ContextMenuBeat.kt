@@ -84,9 +84,9 @@ fun ContextMenuColumnPrimary(modifier: Modifier = Modifier, ui_facade: ViewModel
         ViewModelPagan.LayoutSize.LargeLandscape,
         ViewModelPagan.LayoutSize.XLargeLandscape -> {
             Column {
-                RemoveBeatButton(dispatcher, ui_facade.beat_count.value > 1)
-                CMPadding()
                 InsertBeatButton(dispatcher)
+                CMPadding()
+                RemoveBeatButton(dispatcher, ui_facade.beat_count.value > 1)
                 CMPadding()
                 AdjustBeatButton(dispatcher)
                 Spacer(Modifier.weight(1F))

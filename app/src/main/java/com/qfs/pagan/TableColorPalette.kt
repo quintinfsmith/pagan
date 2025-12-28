@@ -8,13 +8,13 @@ class TableColorPalette {
     class Swatch(base: Long, selector_tint: Color = SELECTION_TINT) {
         companion object {
             val ratio_alternate = Rational(1, 4)
-            val ratio_spill = Rational(9, 1)
+            val ratio_spill = Rational(2, 5)
             val ratio_empty = Rational(3, 1)
             val ratio_selected = Rational(3, 1)
             val ratio_secondary = Rational(4, 3)
             val mix_alternate = Color(188,205,184)
             val mix_empty = Color(255, 255, 255, 0x11)
-            val mix_spill = Color(0, 0, 0)
+            val mix_spill = Color(0xAA, 0xAA, 0xAA)
         }
 
         val default = Color(base)

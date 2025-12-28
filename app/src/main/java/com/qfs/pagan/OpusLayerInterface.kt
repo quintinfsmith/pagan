@@ -22,6 +22,7 @@ import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.IncorrectCursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import com.qfs.pagan.structure.opusmanager.history.OpusLayerHistory
+import com.qfs.pagan.structure.rationaltree.InvalidGetCall
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.uibill.UILock
 import com.qfs.pagan.viewmodel.ViewModelEditorController
@@ -130,6 +131,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         if (this.ui_lock.is_locked()) return
         this.vm_state.blocker_leaf = null
     }
+
     private fun _update_facade_blocker_leaf_line_ctl(type: EffectType, beat_key: BeatKey, position: List<Int>) {
         if (this.ui_lock.is_locked()) return
         this.vm_state.blocker_leaf = listOf<Int>(
@@ -604,19 +606,103 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         }
     }
 
+    fun track_blocked_leafs(beat: Int, callback: () -> Unit) {
+        val originals = mutableListOf<List<Pair<Pair<Int, List<Int>>, List<Pair<Int, List<Int>>>>>>()
+
+        for (channel in this.channels) {
+            for (line in channel.lines) {
+                originals.add(line.get_blocked_leafs(beat, listOf()))
+                for ((_, controller) in line.controllers.get_all()) {
+                    if (!controller.visible) continue
+                    originals.add(controller.get_blocked_leafs(beat, listOf()))
+                }
+            }
+
+            for ((_, controller) in channel.controllers.get_all()) {
+                if (!controller.visible) continue
+                originals.add(controller.get_blocked_leafs(beat, listOf()))
+            }
+        }
+
+        for ((_, controller) in this.controllers.get_all()) {
+            if (!controller.visible) continue
+            originals.add(controller.get_blocked_leafs(beat, listOf()))
+        }
+
+        val original_length = this.length
+        callback()
+
+        val newly_blocked_leafs = mutableListOf<List<Pair<Pair<Int, List<Int>>, List<Pair<Int, List<Int>>>>>>()
+        for (channel in this.channels) {
+            for (line in channel.lines) {
+                newly_blocked_leafs.add(line.get_blocked_leafs(beat, listOf()))
+                for ((_, controller) in line.controllers.get_all()) {
+                    if (!controller.visible) continue
+                    newly_blocked_leafs.add(controller.get_blocked_leafs(beat, listOf()))
+                }
+            }
+
+            for ((_, controller) in channel.controllers.get_all()) {
+                if (!controller.visible) continue
+                newly_blocked_leafs.add(controller.get_blocked_leafs(beat, listOf()))
+            }
+        }
+
+        for ((_, controller) in this.controllers.get_all()) {
+            if (!controller.visible) continue
+            newly_blocked_leafs.add(controller.get_blocked_leafs(beat, listOf()))
+        }
+
+        // adjust originals
+        val diff = this.length - original_length
+        println("DIFF: $diff ------------------------")
+        for ((i, entries) in originals.enumerate()) {
+            originals[i] = List(entries.size) { j ->
+                val (head, tail) = entries[j]
+                Pair(
+                    head,
+                    List(tail.size) { k ->
+                        val section = tail[k]
+                        if (section.first < beat) {
+                            section
+                        } else {
+                            Pair(section.first + diff, section.second)
+                        }
+                    }
+                )
+            }
+        }
+
+        for ((i, original_blocked_leafs) in originals.enumerate()) {
+            this.remap_blocked_leafs(
+                i,
+                original_blocked_leafs,
+                newly_blocked_leafs[i]
+            )
+        }
+
+    }
+
     private fun remap_blocked_leafs(y: Int, original_blocked_leafs: List<Pair<Pair<Int, List<Int>>, List<Pair<Int, List<Int>>>>>, newly_blocked_leafs: List<Pair<Pair<Int, List<Int>>, List<Pair<Int, List<Int>>>>>) {
         for ((head, overlaps) in original_blocked_leafs) {
             for ((blocked_beat, blocked_position) in overlaps) {
-                this.vm_state.cell_map[y][blocked_beat].value.get(*blocked_position.toIntArray()).event?.first?.is_spillover?.value = false
+                if (blocked_beat >= this.vm_state.cell_map[y].size) continue
+                try {
+                    this.vm_state.cell_map[y][blocked_beat].value.get(*blocked_position.toIntArray()).event?.first?.is_spillover?.value = false
+                } catch (e: InvalidGetCall) {
+                    // Pass. It's ok if the cell no longer exists here
+                }
             }
         }
 
         for ((head, overlaps) in newly_blocked_leafs) {
             for ((blocked_beat, blocked_position) in overlaps) {
+                if (blocked_beat >= this.length) continue
                 this.vm_state.cell_map[y][blocked_beat].value.get(*blocked_position.toIntArray()).event?.first?.is_spillover?.value = true
             }
         }
     }
+
     private fun track_blocked_leafs(beat_key: BeatKey, position: List<Int>, callback: () -> Unit) {
         val line = this.channels[beat_key.channel].lines[beat_key.line_offset]
         val original_blocked_leafs = line.get_blocked_leafs(beat_key.beat, position)
@@ -629,6 +715,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             line.get_blocked_leafs(beat_key.beat, position)
         )
     }
+
     private fun <T: EffectEvent> track_blocked_leafs(type: EffectType, beat_key: BeatKey, position: List<Int>, callback: () -> Unit) {
         val line = this.channels[beat_key.channel].lines[beat_key.line_offset].controllers.get<T>(type)
         val original_blocked_leafs = line.get_blocked_leafs(beat_key.beat, position)
@@ -979,30 +1066,33 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     }
 
     override fun remove_beat(beat_index: Int, count: Int) {
-        val original_beat_count = this.length
-        super.remove_beat(beat_index, count)
+        this.track_blocked_leafs(beat_index) {
+            val original_beat_count = this.length
+            super.remove_beat(beat_index, count)
 
-        if (!this.ui_lock.is_locked()) {
-            val x = min(beat_index + count - 1, original_beat_count - 1) - (count - 1)
-            for (i in 0 until count) {
-                this.vm_state.remove_column(x)
+            if (!this.ui_lock.is_locked()) {
+                val x = min(beat_index + count - 1, original_beat_count - 1) - (count - 1)
+                for (i in 0 until count) {
+                    this.vm_state.remove_column(x)
+                }
+                this.vm_state.refresh_cursor()
             }
-            this.vm_state.refresh_cursor()
         }
     }
 
     override fun insert_beats(beat_index: Int, count: Int) {
         super.insert_beats(beat_index, count)
 
-        if (!this.ui_lock.is_locked()) {
-            this.vm_state.refresh_cursor()
-        }
+        if (this.ui_lock.is_locked()) return
+        this.vm_state.refresh_cursor()
     }
 
     override fun insert_beat(beat_index: Int, beats_in_column: List<ReducibleTree<OpusEvent>>?) {
-        super.insert_beat(beat_index, beats_in_column)
-        this.ui_add_column(beat_index)
-        if (!this.ui_lock.is_locked()) {
+        this.track_blocked_leafs(beat_index) {
+            super.insert_beat(beat_index, beats_in_column)
+            this.ui_add_column(beat_index)
+
+            if (this.ui_lock.is_locked()) return@track_blocked_leafs
             this.vm_state.refresh_cursor()
         }
     }
@@ -1440,7 +1530,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     }
 
     override fun cursor_select(beat_key: BeatKey, position: List<Int>) {
-        if (this._block_cursor_selection()) return
+        if (!this._block_cursor_selection())
 
         this._unset_temporary_blocker()
         super.cursor_select(beat_key, position)

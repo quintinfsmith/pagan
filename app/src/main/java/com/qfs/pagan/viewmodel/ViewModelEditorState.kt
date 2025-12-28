@@ -422,13 +422,18 @@ class ViewModelEditorState: ViewModel() {
                 }
             }
             CursorMode.Single -> {
-                this.cell_map[cursor.ints[0]][cursor.ints[1]].value.also {
-                    it.traverse { tree, pair ->
-                        if (tree.is_leaf()) {
-                            pair?.first?.let { leaf_data ->
-                                leaf_data.is_selected.value = tree.get_path() == cursor.ints.subList(2, cursor.ints.size)
-                                leaf_data.is_secondary.value = false // TODO
-                                this.selected_leafs.add(leaf_data)
+                val y = cursor.ints[0]
+                val x = cursor.ints[1]
+                if (this.cell_map.size > y && this.cell_map[y].size > x) {
+                    this.cell_map[y][x].value.also {
+                        it.traverse { tree, pair ->
+                            if (tree.is_leaf()) {
+                                pair?.first?.let { leaf_data ->
+                                    leaf_data.is_selected.value =
+                                        tree.get_path() == cursor.ints.subList(2, cursor.ints.size)
+                                    leaf_data.is_secondary.value = false // TODO
+                                    this.selected_leafs.add(leaf_data)
+                                }
                             }
                         }
                     }
@@ -459,22 +464,30 @@ class ViewModelEditorState: ViewModel() {
     private fun populate_selected_columns(cursor: CacheCursor) {
         when (cursor.type) {
             CursorMode.Column -> {
-                this.column_data[cursor.ints[0]].also {
-                    it.is_selected.value = true
-                    this.selected_columns.add(it)
+                val x = cursor.ints[0]
+                if (x < this.column_data.size) {
+                    this.column_data[x].also {
+                        it.is_selected.value = true
+                        this.selected_columns.add(it)
+                    }
                 }
             }
             CursorMode.Single -> {
-                this.column_data[cursor.ints[1]].also {
-                    it.is_selected.value = true
-                    this.selected_columns.add(it)
+                val x = cursor.ints[1]
+                if (x < this.column_data.size) {
+                    this.column_data[x].also {
+                        it.is_selected.value = true
+                        this.selected_columns.add(it)
+                    }
                 }
             }
             CursorMode.Range -> {
                 for (x in min(cursor.ints[1], cursor.ints[3]) .. max(cursor.ints[1], cursor.ints[3])) {
-                    this.column_data[x].also {
-                        it.is_selected.value = true
-                        this.selected_columns.add(it)
+                    if (x < this.column_data.size) {
+                        this.column_data[x].also {
+                            it.is_selected.value = true
+                            this.selected_columns.add(it)
+                        }
                     }
                 }
             }

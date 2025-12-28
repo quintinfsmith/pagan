@@ -2521,9 +2521,8 @@ open class OpusLayerBase: Effectable {
     open fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
         this._catch_blocked_tree_exception(beat_key.channel) {
             val tree = this.get_tree(beat_key, position)
-            if (!tree.has_event()) {
-                throw EventlessTreeException()
-            }
+            if (!tree.has_event()) throw EventlessTreeException()
+
             val new_event = tree.event!!.copy()
             new_event.duration = duration
             this.set_event(beat_key, position, new_event)

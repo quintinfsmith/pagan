@@ -168,6 +168,11 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor_select(beat_key, position)
     }
 
+    override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
+        super.set_duration(beat_key, position, duration)
+        this.cursor_select(beat_key, position)
+    }
+
     override fun swap_lines(channel_index_a: Int, line_offset_a: Int, channel_index_b: Int, line_offset_b: Int) {
         super.swap_lines(channel_index_a, line_offset_a, channel_index_b, line_offset_b)
         this.cursor_select_line(channel_index_b, line_offset_b)

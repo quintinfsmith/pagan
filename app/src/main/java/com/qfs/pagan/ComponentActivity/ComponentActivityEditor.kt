@@ -19,6 +19,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
@@ -46,6 +47,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProgressIndicatorDefaults
@@ -58,7 +60,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.BottomEnd
+import androidx.compose.ui.Alignment.Companion.Center
+import androidx.compose.ui.Alignment.Companion.TopEnd
+import androidx.compose.ui.Alignment.Companion.TopStart
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.dimensionResource
@@ -1458,14 +1465,44 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             )
                         }
 
-                        is DelayEvent -> Text(
-                            text = if (event.echo == 0 || event.fade == 1F) {
-                                "-"
+                        is DelayEvent -> {
+                            if (event.echo == 0 || event.fade == 0F) {
+                                Canvas(modifier = Modifier.fillMaxSize()) {
+                                    drawCircle(
+                                        color = text_color,
+                                        radius = (size.height * .3F),
+                                        center = Offset(size.width / 2F, size.height / 2F)
+                                    )
+                                }
                             } else {
-                                "${event.echo}x${event.numerator}/${event.denominator}"
+                                Box(contentAlignment = Alignment.Center) {
+                                    Canvas(
+                                        modifier = Modifier
+                                            .fillMaxHeight()
+                                            .width(dimensionResource(R.dimen.base_leaf_width))
+                                    ) {
+                                        drawLine(
+                                            start = Offset((.1F * size.width), (.65F * size.height)),
+                                            end = Offset((size.width * .9F), (.35F * size.height)),
+                                            color = text_color,
+                                            strokeWidth = 1F
+                                        )
+                                    }
+                                    Row(horizontalArrangement = Arrangement.Center) {
+                                        Column(
+                                            verticalArrangement = Arrangement.Top,
+                                            modifier = Modifier.fillMaxHeight(),
+                                            content = { Text("${event.numerator}") }
+                                        )
+                                        Column(
+                                            verticalArrangement = Arrangement.Bottom,
+                                            modifier = Modifier.fillMaxHeight(),
+                                            content = { Text("${event.denominator}") }
+                                        )
+                                    }
+                                }
                             }
-                        )
-
+                        }
                         is OpusTempoEvent -> Text("${event.value.roundToInt()}", color = text_color)
                         is OpusVelocityEvent -> Text("${(event.value * 100F).toInt()}%", color = text_color)
                         null -> {}

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
@@ -36,9 +37,9 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
     val colors = SliderColors(
         thumbColor = default_colors.thumbColor,
         activeTrackColor = default_colors.inactiveTrackColor,
-        activeTickColor = default_colors.inactiveTickColor,
+        activeTickColor = default_colors.activeTickColor,
         inactiveTrackColor = default_colors.activeTrackColor,
-        inactiveTickColor = default_colors.activeTickColor,
+        inactiveTickColor = default_colors.inactiveTickColor,
         disabledThumbColor = default_colors.disabledThumbColor,
         disabledActiveTrackColor = default_colors.disabledActiveTrackColor,
         disabledActiveTickColor = default_colors.disabledActiveTickColor,
@@ -76,6 +77,8 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
         }
     }
     Spacer(Modifier.width(2.dp))
+    Text("/")
+    Spacer(Modifier.width(2.dp))
     MagicInput(
         denominator,
         background_icon = R.drawable.icon_hz,
@@ -97,7 +100,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
         colors = colors,
         valueRange = 0F .. 1F,
         onValueChange = {
-            event.fade = 1F - it
+            event.fade = (1F - it)
             fade.floatValue = it
             if (beat != null) {
                 dispatcher.set_effect(EffectType.Delay, event, channel, line_offset, beat, position!!)

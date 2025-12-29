@@ -1473,7 +1473,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 Canvas(modifier = Modifier.fillMaxSize()) {
                                     drawCircle(
                                         color = text_color,
-                                        radius = (size.height * .3F),
+                                        radius = (size.height * .1F),
                                         center = Offset(size.width / 2F, size.height / 2F)
                                     )
                                 }

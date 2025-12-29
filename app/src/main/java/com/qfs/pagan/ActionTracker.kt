@@ -23,10 +23,13 @@ import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SliderColors
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -960,7 +963,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         this.vm_top.create_medium_dialog { close ->
             @Composable {
                 val slider_position = remember {
-                    mutableStateOf(
+                    mutableFloatStateOf(
                         when (opus_manager.cursor.mode) {
                             CursorMode.Column,
                             CursorMode.Single -> {
@@ -981,9 +984,24 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                 Row {
                     DialogTitle(stringResource(R.string.label_shortcut_scrollbar, slider_position.value.toInt()))
                 }
+
+                val default_colors = SliderDefaults.colors()
+                val colors = SliderColors(
+                    thumbColor = default_colors.thumbColor,
+                    activeTrackColor = default_colors.inactiveTrackColor,
+                    activeTickColor = default_colors.activeTickColor,
+                    inactiveTrackColor = default_colors.activeTrackColor,
+                    inactiveTickColor = default_colors.inactiveTickColor,
+                    disabledThumbColor = default_colors.disabledThumbColor,
+                    disabledActiveTrackColor = default_colors.disabledActiveTrackColor,
+                    disabledActiveTickColor = default_colors.disabledActiveTickColor,
+                    disabledInactiveTrackColor = default_colors.disabledInactiveTrackColor,
+                    disabledInactiveTickColor = default_colors.disabledInactiveTickColor
+                )
                 Slider(
                     value = slider_position.value,
                     steps = opus_manager.length,
+                    colors = colors,
                     valueRange = 0F .. (opus_manager.length - 1).toFloat(),
                     onValueChange = { value ->
                         slider_position.value = value

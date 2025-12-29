@@ -662,10 +662,13 @@ class ViewModelEditorState: ViewModel() {
         return this.available_instruments[preset_key] ?: listOf()
     }
 
-    fun get_instrument_name(preset_key: Pair<Int, Int>, offset: Int): String {
+    fun get_instrument_name(preset_key: Pair<Int, Int>, offset: Int): String? {
         val available = this.get_available_instruments(preset_key)
-        return if (available.size <= offset) "TODO"
-            else available[offset].first
+        return if (available.size <= offset) {
+            null
+        } else {
+            available[offset].first
+        }
     }
 
     // TODO: (maybe) cache these values so we don't have to calculate on every scroll

@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import com.qfs.pagan.R
 
 @Composable
@@ -61,7 +62,7 @@ fun TextCMenuButton(
     onLongClick: (() -> Unit) ?= null,
     text: String,
     enabled: Boolean = true,
-    contentPadding: PaddingValues = ContextMenuButtonPadding()
+    contentPadding: PaddingValues = ContextMenuButtonPadding(),
 ) {
     Button(
         enabled = enabled,
@@ -70,6 +71,12 @@ fun TextCMenuButton(
         shape = ContextMenuButtonShape(),
         onClick = onClick,
         onLongClick = onLongClick ?: {},
-        content = { Text(text = text) }
+        content = {
+            Text(
+                text = text,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     )
 }

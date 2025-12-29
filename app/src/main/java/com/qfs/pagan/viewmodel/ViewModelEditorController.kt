@@ -151,8 +151,8 @@ class ViewModelEditorController(): ViewModel() {
     fun update_soundfont_instruments() {
         for ((i, channel) in this.opus_manager.channels.enumerate()) {
             val midi_channel = this.opus_manager.get_midi_channel(i)
-            val (midi_bank, midi_program) = channel.get_instrument()
-            this.audio_interface.update_channel_instrument(midi_channel, midi_bank, midi_program)
+            val (midi_bank, midi_program) = channel.get_preset()
+            this.audio_interface.update_channel_preset(midi_channel, midi_bank, midi_program)
         }
     }
 }

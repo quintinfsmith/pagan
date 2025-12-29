@@ -141,7 +141,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
         this.midi_program = program
     }
 
-    fun get_instrument(): Pair<Int, Int> {
+    fun get_preset(): Pair<Int, Int> {
         return Pair(this.get_midi_bank(), this.midi_program)
     }
 

@@ -525,7 +525,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         for (i in this.opus_manager.channels.indices) {
             val channel = this.opus_manager.get_channel(i)
-            val instrument = channel.get_instrument()
+            val instrument = channel.get_preset()
             val midi_channel =  this.opus_manager.get_midi_channel(i)
             this._sample_handle_manager.select_bank(midi_channel, instrument.first)
             this._sample_handle_manager.change_program(midi_channel, instrument.second)

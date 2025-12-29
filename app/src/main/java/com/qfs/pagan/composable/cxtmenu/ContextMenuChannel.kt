@@ -84,7 +84,11 @@ fun SetPresetButton(modifier: Modifier = Modifier, dispatcher: ActionTracker, ch
     TextCMenuButton(
         modifier = modifier,
         onClick = { dispatcher.set_channel_preset(channel_index) },
-        text = active_channel.active_name.value ?: stringResource(R.string.unavailable_preset, stringArrayResource(R.array.general_midi_presets)[active_channel.instrument.value.second])
+        text = active_channel.active_name.value ?: if (active_channel.instrument.value.second == 128) {
+            stringResource(R.string.unavailable_kit)
+        } else {
+            stringResource(R.string.unavailable_preset, stringArrayResource(R.array.general_midi_presets)[active_channel.instrument.value.second])
+        }
     )
 }
 

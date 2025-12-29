@@ -91,7 +91,7 @@ class AudioInterface {
         this.minimum_instrument_index_cache.clear()
     }
 
-    fun update_channel_instrument(channel: Int, bank: Int, program: Int) {
+    fun update_channel_preset(channel: Int, bank: Int, program: Int) {
         this.feedback_revolver.sample_handle_manager?.let {
             it.select_bank(channel, bank)
             it.change_program(channel, program)

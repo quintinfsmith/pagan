@@ -280,6 +280,8 @@
     <string name="last_modified">Last Modified</string>
     <string name="unsorted">Unsorted</string>
     <string name="unavailable_preset">Unavailable %s</string>
+    <string name="unavailable_kit">Unavailable Kit</string>
+    <string name="gm_kit">Percussion</string>
 
     <string-array name="general_midi_presets">
         <item>Grand Acoustic Piano</item>

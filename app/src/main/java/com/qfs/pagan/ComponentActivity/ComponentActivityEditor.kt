@@ -47,7 +47,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProgressIndicatorDefaults
@@ -60,10 +59,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.BottomEnd
-import androidx.compose.ui.Alignment.Companion.Center
-import androidx.compose.ui.Alignment.Companion.TopEnd
-import androidx.compose.ui.Alignment.Companion.TopStart
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -71,12 +66,10 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -144,7 +137,6 @@ import com.qfs.pagan.viewmodel.ViewModelEditorState
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.intellij.lang.annotations.JdkConstants
 import java.io.BufferedOutputStream
 import java.io.BufferedReader
 import java.io.DataOutputStream
@@ -1883,8 +1875,19 @@ class ComponentActivityEditor: PaganComponentActivity() {
     override fun LayoutSmallLandscape() = LayoutMediumLandscape()
 
     private fun get_default_preset_name(bank: Int, program: Int): String {
-        val preset_names = this.resources.getStringArray(R.array.general_midi_presets)
-        return this.resources.getString(R.string.unavailable_preset, preset_names[program])
+        return if (this.controller_model.active_midi_device != null) {
+            if (bank == 128) {
+                this.resources.getString(R.string.gm_kit)
+            } else {
+                val preset_names = this.resources.getStringArray(R.array.general_midi_presets)
+                preset_names[program]
+            }
+        } else if (bank == 128) {
+            this.resources.getString(R.string.unavailable_kit)
+        } else {
+            val preset_names = this.resources.getStringArray(R.array.general_midi_presets)
+            this.resources.getString(R.string.unavailable_preset, preset_names[program])
+        }
     }
 
     fun toast(id: Int, length: Int = Toast.LENGTH_SHORT) {

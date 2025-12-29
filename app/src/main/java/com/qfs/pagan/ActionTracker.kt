@@ -3,8 +3,6 @@ package com.qfs.pagan
 import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,6 +37,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -66,20 +65,17 @@ import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
-import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.MixedInstrumentException
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.InvalidCursorState
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.serialization.builtins.PairSerializer
 import java.io.IOException
 import kotlin.concurrent.thread
 import kotlin.math.ceil
@@ -1118,7 +1114,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
         for ((c, channel) in opus_manager.channels.enumerate()) {
             if (!opus_manager.is_percussion(c)) continue
-            val i = this.vm_controller.audio_interface.get_minimum_instrument_index(channel.get_instrument())
+            val i = this.vm_controller.audio_interface.get_minimum_instrument_index(channel.get_preset())
             for (l in 0 until opus_manager.get_channel(c).size) {
                 opus_manager.percussion_set_instrument(c, l, max(0, i - 27))
             }
@@ -1524,15 +1520,28 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         }
 
         val options = mutableListOf<Pair<Int, @Composable RowScope.() -> Unit>>()
-        val preset = opus_manager.get_channel_instrument(channel)
-        val instruments = opus_manager.vm_state.get_available_instruments(preset)
-        for ((name, index) in instruments) {
-            options.add(Pair(index, { Text("$index: $name") }))
+
+        if (this.vm_controller.audio_interface == null && this.vm_controller.audio_interface.soundfont != null) {
+            val preset = opus_manager.get_channel_instrument(channel)
+            val instruments = opus_manager.vm_state.get_available_instruments(preset)
+            for ((name, index) in instruments) {
+                options.add(Pair(index, { Text("$index: $name") }))
+            }
+        } else {
+            for (i in 0 .. 60) {
+                options.add(
+                    Pair(i, { Text("$i: ${stringArrayResource(R.array.midi_drums)[i]}")})
+                )
+            }
         }
+
+
         val current_instrument = (opus_manager.get_channel(channel).lines[line_offset] as OpusLinePercussion).instrument
 
-        this.vm_top.unsortable_list_dialog(R.string.dropdown_choose_instrument, options, current_instrument) {
-            this.set_percussion_instrument(channel, line_offset, it)
+        if (options.isNotEmpty()) {
+            this.vm_top.unsortable_list_dialog(R.string.dropdown_choose_instrument, options, current_instrument) {
+                this.set_percussion_instrument(channel, line_offset, it)
+            }
         }
     }
 
@@ -1557,9 +1566,22 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         val preset_names =  mutableListOf<Triple<Int, Int, String>>()
         val options = mutableListOf<Pair<Pair<Int, Int>, @Composable RowScope.() -> Unit>>()
         val is_percussion = opus_manager.is_percussion(channel)
-        for ((bank, bank_map) in opus_manager.vm_state.preset_names.toSortedMap()) {
+
+        val pre_option = if (this.vm_controller.audio_interface.soundfont == null || this.vm_controller.active_midi_device != null) {
+            val std_hashmap = HashMap<Int, String?>()
+            for (i in 0 until 128) std_hashmap[i] = null
+            sortedMapOf<Int, HashMap<Int, String?>>(
+                0 to std_hashmap,
+                128 to hashMapOf(0 to null)
+            )
+        } else {
+            opus_manager.vm_state.preset_names.toSortedMap()
+        }
+
+        for ((bank, bank_map) in pre_option) {
             if (is_percussion && bank != 128) continue
             if (!this.vm_top.configuration.allow_std_percussion && !is_percussion && bank == 128) continue
+
             for ((program, name) in bank_map.toSortedMap()) {
                 preset_names.add(Triple(bank, program, name))
                 options.add(
@@ -1567,7 +1589,12 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         Pair(bank, program),
                         {
                             Text("${padded_hex(bank)} | ${padded_hex(program)}")
-                            Text(name,
+                            Text(
+                                name ?: if (bank == 128) {
+                                    stringResource(R.string.gm_kit)
+                                } else {
+                                    stringArrayResource(R.array.general_midi_presets)[program]
+                                },
                                 modifier = Modifier.weight(1F),
                                 textAlign = TextAlign.Center,
                                 maxLines = 1
@@ -1592,86 +1619,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             default_value = default,
             onClick = { this.set_channel_preset(channel, it) }
         )
-
-        // val activity = this.get_activity()
-        // val supported_instrument_names = activity.get_supported_preset_names()
-        // val sorted_keys = supported_instrument_names.keys.toList().sortedBy {
-        //     it.first + (it.second * 128)
-        // }
-
-        // val opus_manager = this.get_opus_manager()
-        // val is_percussion = opus_manager.is_percussion(channel)
-        // val default_position = opus_manager.get_channel_instrument(channel)
-
-        // val current_instrument_supported = sorted_keys.contains(default_position)
-
-        // for (key in sorted_keys) {
-        //     val name = supported_instrument_names[key]
-        //     if (is_percussion) {
-        //         if (key.first == 128) {
-        //             options.add(Triple(key, null, "${padded_hex(key.second)}] $name"))
-        //         }
-        //     } else if (key.first != 128) {
-        //         val pairstring = if (key.first == 0) {
-        //             padded_hex(key.second)
-        //         } else {
-        //             "${padded_hex(key.second)}.${padded_hex(key.first)}"
-        //         }
-        //         options.add(Triple(key, null, "$pairstring) $name"))
-        //     } else if (activity.configuration.allow_std_percussion) {
-        //         options.add(Triple(key, null, "${padded_hex(key.second)}] $name"))
-        //     }
-        // }
-
-        // // Separated KIts and tuned instruments. Kits are always bank 128, but the other instruments are defined by program with variants using the bank
-        // options.sortBy { (key, _) ->
-        //     if (key.first == 128) {
-        //         (key.first * 128) + key.second
-        //     } else {
-        //         (key.second * 128) + key.first
-        //     }
-        // }
-
-        // if (is_percussion) {
-        //     val use_menu_dialog = options.isNotEmpty() && (!current_instrument_supported || options.size > 1)
-
-        //     if (use_menu_dialog) {
-        //         this.dialog_popup_menu(activity.getString(R.string.dropdown_choose_instrument), options, default = default_position, stub_output = instrument) { _: Int, instrument: Pair<Int, Int> ->
-        //             this.track(
-        //                 TrackedAction.SetChannelInstrument,
-        //                 listOf(channel, instrument.first, instrument.second)
-        //             )
-        //             opus_manager.channel_set_instrument(channel, instrument)
-        //         }
-        //     } else {
-        //         this.dialog_number_input(activity.getString(R.string.dropdown_choose_instrument), 0, 127, default_position.second, stub_output = instrument?.second) { program: Int ->
-        //             this.track(
-        //                 TrackedAction.SetChannelInstrument,
-        //                 listOf(channel, instrument?.first ?: 1, program)
-        //             )
-        //             opus_manager.channel_set_instrument(channel, Pair(instrument?.first ?: 1, program))
-        //         }
-        //     }
-        // } else if (options.size > 1 || !current_instrument_supported) {
-        //     this.dialog_popup_menu(activity.getString(R.string.dropdown_choose_instrument), options, default = default_position, stub_output = instrument) { _: Int, instrument: Pair<Int, Int> ->
-        //         this.track(
-        //             TrackedAction.SetChannelInstrument,
-        //             listOf(channel, instrument.first, instrument.second)
-        //         )
-        //         opus_manager.channel_set_instrument(channel, instrument)
-
-
-        //         val radix = opus_manager.get_radix()
-        //         thread {
-        //             activity.play_event(channel, (radix * 3))
-        //             Thread.sleep(200)
-        //             activity.play_event(channel, (radix * 3) + (radix / 2))
-        //             Thread.sleep(200)
-        //             activity.play_event(channel, (radix * 4))
-        //             Thread.sleep(200)
-        //         }
-        //     }
-        // }
     }
 
     fun insert_percussion_channel(index: Int? = null) {

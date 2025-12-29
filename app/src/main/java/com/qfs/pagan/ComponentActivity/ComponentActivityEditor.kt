@@ -53,6 +53,7 @@ import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -945,10 +946,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 val line_data = ui_facade.line_data[cursor.ints[0]]
                 if (line_data.assigned_offset.value != null) return null
 
-                if (line_data.ctl_type.value == null) {
-                    @Composable { ContextMenuLeafStdSecondary(ui_facade, dispatcher, modifier, layout) }
-                } else {
-                    @Composable { ContextMenuLeafCtlSecondary(ui_facade, dispatcher, modifier, layout) }
+                @Composable {
+                    key(ui_facade.active_event.value.hashCode()) {
+                        if (line_data.ctl_type.value == null) {
+                            ContextMenuLeafStdSecondary(ui_facade, dispatcher, modifier, layout)
+                        } else {
+                            ContextMenuLeafCtlSecondary(ui_facade, dispatcher, modifier, layout)
+                        }
+                    }
                 }
             }
             CursorMode.Range -> {
@@ -1363,7 +1368,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             leaf_data.is_spillover.value
         )
 
-        ProvideTextStyle(MaterialTheme.typography.bodySmall) {
+        ProvideContentColorTextStyle(text_color, MaterialTheme.typography.bodySmall) {
             HalfBorderBox(
                 modifier = modifier
                     .background(color = leaf_color)
@@ -1384,16 +1389,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     verticalArrangement = Arrangement.Center
                                 ) {
                                     Row(Modifier.padding(top = 14.dp)) {
-                                        ProvideContentColorTextStyle(text_color, MaterialTheme.typography.labelMedium) {
-                                            Text("$octave")
-                                        }
+                                        Text("$octave")
                                     }
                                 }
                                 Column(
                                     modifier = Modifier.fillMaxHeight(),
                                     verticalArrangement = Arrangement.Center
                                 ) {
-                                    ProvideContentColorTextStyle(text_color, MaterialTheme.typography.titleMedium) {
+                                    ProvideTextStyle(MaterialTheme.typography.titleMedium) {
                                         Text("$offset")
                                     }
                                 }
@@ -1412,7 +1415,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.Center
                                 ) {
-                                    ProvideContentColorTextStyle(text_color, MaterialTheme.typography.labelMedium) {
+                                    ProvideTextStyle(MaterialTheme.typography.labelMedium) {
                                         Row(
                                             modifier = Modifier.weight(.4F),
                                             verticalAlignment = Alignment.Bottom
@@ -1433,7 +1436,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.Center
                                 ) {
-                                    ProvideContentColorTextStyle(text_color, MaterialTheme.typography.titleMedium) {
+                                    ProvideTextStyle(MaterialTheme.typography.titleMedium) {
                                         Text("$offset")
                                     }
                                 }
@@ -1463,7 +1466,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             }
                         )
 
-                        is OpusTempoEvent -> Text("${event.value} BPM", color = text_color)
+                        is OpusTempoEvent -> Text("${event.value.roundToInt()}", color = text_color)
                         is OpusVelocityEvent -> Text("${(event.value * 100F).toInt()}%", color = text_color)
                         null -> {}
                     }

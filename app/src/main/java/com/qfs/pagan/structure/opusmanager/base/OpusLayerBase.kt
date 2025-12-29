@@ -2529,6 +2529,38 @@ open class OpusLayerBase: Effectable {
         }
     }
 
+    open fun set_duration(type: EffectType, beat_key: BeatKey, position: List<Int>, duration: Int) {
+        this._catch_blocked_tree_exception(beat_key.channel) {
+            val tree = this.get_line_ctl_tree_copy<EffectEvent>(type, beat_key, position)
+            if (!tree.has_event()) throw EventlessTreeException()
+
+            val new_event = tree.event!!.copy()
+            new_event.duration = duration
+            this.controller_line_set_event(type, beat_key, position, new_event)
+        }
+    }
+
+    open fun set_duration(type: EffectType, channel: Int, beat: Int, position: List<Int>, duration: Int) {
+        this._catch_blocked_tree_exception(channel) {
+            val tree = this.get_channel_ctl_tree_copy<EffectEvent>(type, channel, beat, position)
+            if (!tree.has_event()) throw EventlessTreeException()
+
+            val new_event = tree.event!!.copy()
+            new_event.duration = duration
+            this.controller_channel_set_event(type, channel, beat, position, new_event)
+        }
+    }
+
+    open fun set_duration(type: EffectType, beat: Int, position: List<Int>, duration: Int) {
+        this._catch_global_ctl_blocked_tree_exception(type) {
+            val tree = this.get_global_ctl_tree_copy<EffectEvent>(type, beat, position)
+            if (!tree.has_event()) throw EventlessTreeException()
+
+            val new_event = tree.event!!.copy()
+            new_event.duration = duration
+            this.controller_global_set_event(type, beat, position, new_event)
+        }
+    }
     /**
      * Remove tree @ [beat_key]/[position] if it's not a top-level tree
      */
@@ -3397,16 +3429,16 @@ open class OpusLayerBase: Effectable {
         this.get_channel(channel).set_midi_program(program)
     }
 
-    fun <T: EffectEvent> controller_global_get_actual_position(ctl_type: EffectType, beat: Int, position: List<Int>): Pair<Int, List<Int>> {
-        return this.get_controller<T>(ctl_type).get_blocking_position(beat, position) ?: Pair(beat, position)
+    fun controller_global_get_actual_position(ctl_type: EffectType, beat: Int, position: List<Int>): Pair<Int, List<Int>> {
+        return this.get_controller<EffectEvent>(ctl_type).get_blocking_position(beat, position) ?: Pair(beat, position)
     }
 
-    fun <T: EffectEvent> controller_channel_get_actual_position(ctl_type: EffectType, channel: Int, beat: Int, position: List<Int>): Pair<Int, List<Int>> {
-        return this.get_all_channels()[channel].get_controller<T>(ctl_type).get_blocking_position(beat, position) ?: Pair(beat, position)
+    fun controller_channel_get_actual_position(ctl_type: EffectType, channel: Int, beat: Int, position: List<Int>): Pair<Int, List<Int>> {
+        return this.get_all_channels()[channel].get_controller<EffectEvent>(ctl_type).get_blocking_position(beat, position) ?: Pair(beat, position)
     }
 
-    fun <T: EffectEvent> controller_line_get_actual_position(ctl_type: EffectType, beat_key: BeatKey, position: List<Int>): Pair<BeatKey, List<Int>> {
-        val output = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].get_controller<T>(ctl_type).get_blocking_position(beat_key.beat, position)
+    fun controller_line_get_actual_position(ctl_type: EffectType, beat_key: BeatKey, position: List<Int>): Pair<BeatKey, List<Int>> {
+        val output = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].get_controller<EffectEvent>(ctl_type).get_blocking_position(beat_key.beat, position)
         return if (output == null) {
             Pair(beat_key, position)
         } else {

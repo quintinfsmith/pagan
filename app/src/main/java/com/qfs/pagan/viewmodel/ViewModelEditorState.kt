@@ -330,7 +330,7 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun <T: OpusEvent> set_active_event(event: T? = null) {
-        this.active_event.value = event
+        this.active_event.value = event?.copy()
     }
 
     fun refresh_cursor() {

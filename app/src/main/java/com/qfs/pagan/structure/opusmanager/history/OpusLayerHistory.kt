@@ -611,14 +611,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
                     )
                 }
 
-                HistoryToken.SET_EVENT_DURATION -> {
-                    this.set_duration(
-                        current_node.args[0] as BeatKey,
-                        checked_cast<List<Int>>(current_node.args[1]),
-                        current_node.args[2] as Int
-                    )
-                }
-
                 HistoryToken.SWAP_LINES -> {
                     this.swap_lines(
                         current_node.args[0] as Int,
@@ -1480,12 +1472,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
     override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
         this._remember {
-            val tree = this.get_tree(beat_key, position)
-            if (tree.has_event()) {
-                val event = tree.get_event()
-                this.push_to_history_stack(HistoryToken.SET_EVENT_DURATION, listOf(beat_key, position, event!!.duration))
-            }
-
             super.set_duration(beat_key, position, duration)
         }
     }

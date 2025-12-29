@@ -107,8 +107,6 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
         }
     )
 
-    key(ui_facade.active_event.value.hashCode()) {
-        EffectTransitionButton(event, dispatcher, is_initial)
-    }
+    EffectTransitionButton(event, dispatcher, is_initial)
 }
 

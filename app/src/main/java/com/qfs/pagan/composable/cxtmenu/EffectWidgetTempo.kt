@@ -9,6 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -27,6 +28,7 @@ import com.qfs.pagan.viewmodel.ViewModelEditorState
 fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, event: OpusTempoEvent) {
     val cursor = ui_facade.active_cursor.value ?: return
     val is_initial = cursor.type == CursorMode.Line
+    val working_event = remember { mutableStateOf(event) }
     val working_value = remember { mutableFloatStateOf(event.value) }
     val (channel, line_offset, beat, position) = ui_facade.get_location_ints()
 
@@ -42,6 +44,7 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
         background_icon = R.drawable.icon_tempo,
         callback = { new_value: Float ->
             event.value = new_value
+            working_event.value = event
             if (beat != null) {
                 dispatcher.set_effect(EffectType.Tempo, event, channel, line_offset, beat, position!!, lock_cursor = true)
             } else {
@@ -59,7 +62,5 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
 
     Spacer(Modifier.weight(1F))
 
-    key(ui_facade.active_event.value.hashCode()) {
-        EffectTransitionButton(event, dispatcher, is_initial)
-    }
+    EffectTransitionButton(event, dispatcher, is_initial)
 }

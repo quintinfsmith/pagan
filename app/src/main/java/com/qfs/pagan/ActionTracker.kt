@@ -63,6 +63,7 @@ import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
+import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.MixedInstrumentException
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
@@ -71,6 +72,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import com.qfs.pagan.structure.opusmanager.cursor.InvalidCursorState
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.CoroutineScope
@@ -533,7 +535,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     fun set_effect_transition(event: EffectEvent, transition: EffectTransition? = null) {
         transition?.let {
             event.transition = transition
-            this.set_effect_at_cursor(event)
+            this.set_effect_at_cursor(event.copy())
             return
         }
 
@@ -563,10 +565,8 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         }
 
         this.dialog_popup_menu(title = title, default = event.transition, options = options) { it ->
-            event.transition = it
-            this.set_effect_at_cursor(event)
+            this.set_effect_transition(event, it)
         }
-
     }
 
     fun long_tap_line(channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
@@ -602,7 +602,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         val opus_manager = this.vm_controller.opus_manager
         opus_manager.cursor_select(beat_key, position)
 
-        val tree = opus_manager.get_tree()
+        val tree = opus_manager.get_tree() ?: return
         if (tree.has_event()) {
             val note = if (opus_manager.is_percussion(beat_key.channel)) {
                 opus_manager.get_percussion_instrument(beat_key.channel, beat_key.line_offset)
@@ -1165,18 +1165,44 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         val opus_manager = this.get_opus_manager()
 
         val cursor = opus_manager.cursor
-        val (beat_key, position) = opus_manager.get_actual_position(
-            cursor.get_beatkey(),
-            cursor.get_position()
-        )
 
         duration?.let {
             this.track(TrackedAction.SetDuration, listOf(it))
-            opus_manager.set_duration(beat_key, position, max(1, it))
+            if (cursor.mode != CursorMode.Single) throw InvalidCursorState()
+            when (cursor.ctl_level) {
+                CtlLineLevel.Line -> {
+                    val (beat_key, position) = opus_manager.controller_line_get_actual_position(
+                        cursor.ctl_type!!,
+                        cursor.get_beatkey(),
+                        cursor.get_position()
+                    )
+                    opus_manager.set_duration(cursor.ctl_type!!, beat_key, position, duration)
+                }
+                CtlLineLevel.Channel -> {
+                    val (beat, position) = opus_manager.controller_channel_get_actual_position(
+                        cursor.ctl_type!!,
+                        cursor.channel,
+                        cursor.beat,
+                        cursor.get_position()
+                    )
+                    opus_manager.set_duration(cursor.ctl_type!!, cursor.channel, beat, position, duration)
+                }
+                CtlLineLevel.Global -> {
+                    val (beat, position) = opus_manager.controller_global_get_actual_position(cursor.ctl_type!!, cursor.beat, cursor.get_position())
+                    opus_manager.set_duration(cursor.ctl_type!!, beat, position, duration)
+                }
+                null -> {
+                    val (beat_key, position) = opus_manager.get_actual_position(
+                        cursor.get_beatkey(),
+                        cursor.get_position()
+                    )
+                    opus_manager.set_duration(beat_key, position, max(1, it))
+                }
+            }
             return
         }
 
-        val event_duration = opus_manager.get_tree(beat_key, position).get_event()?.duration ?: return
+        val event_duration = opus_manager.get_event_at_cursor()?.duration ?: 1
 
         this.dialog_number_input(R.string.dlg_duration, 1, default = event_duration) {
             this.set_duration(it)

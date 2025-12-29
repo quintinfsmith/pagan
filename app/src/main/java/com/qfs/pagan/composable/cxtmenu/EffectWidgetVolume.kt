@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import com.qfs.pagan.ActionTracker
@@ -20,6 +22,7 @@ import kotlin.math.roundToInt
 fun RowScope.VolumeEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, event: OpusVolumeEvent) {
     val cursor = ui_facade.active_cursor.value ?: return
     val is_initial = cursor.type == CursorMode.Line
+    val working_value = remember { mutableStateOf(event.value) }
     TextCMenuButton(
         modifier = Modifier
             .width(dimensionResource(R.dimen.contextmenu_button_width))
@@ -32,6 +35,7 @@ fun RowScope.VolumeEventMenu(ui_facade: ViewModelEditorState, dispatcher: Action
             }
         },
         onLongClick = {
+            working_value.value = 1F
             event.value = 1F
             dispatcher.set_effect_at_cursor(event)
         }
@@ -41,15 +45,14 @@ fun RowScope.VolumeEventMenu(ui_facade: ViewModelEditorState, dispatcher: Action
         modifier = Modifier
             .weight(1F)
             .fillMaxHeight(),
-        value = event.value,
+        value = working_value.value,
         valueRange = 0F .. 1.27F,
         onValueChange = {
             event.value = it
+            working_value.value = it
             dispatcher.set_effect_at_cursor(event)
         },
     )
 
-    key(ui_facade.active_event.value.hashCode()) {
-        EffectTransitionButton(event, dispatcher, is_initial)
-    }
+    EffectTransitionButton(event, dispatcher, is_initial)
 }

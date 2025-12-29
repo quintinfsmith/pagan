@@ -133,7 +133,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             override fun single(opus_manager: OpusLayerInterface, ctrl_pressed: Boolean) {
                 var repeat = this.get_buffer_value(1, maximum=64)
                 if (repeat > 0) {
-                    val tree = opus_manager.get_tree()
+                    val tree = opus_manager.get_tree() ?: return
                     if (tree.parent == null) {
                         try {
                             opus_manager.split_tree_at_cursor(repeat + 1)
@@ -321,7 +321,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             override fun single(opus_manager: OpusLayerInterface, ctrl_pressed: Boolean) {
                 val repeat = this.get_buffer_value(1, maximum=64, minimum=0)
                 if (repeat > 0) {
-                    val tree = opus_manager.get_tree()
+                    val tree = opus_manager.get_tree() ?: return
                     if (tree.parent == null) {
                         try {
                             opus_manager.split_tree_at_cursor(repeat + 1, true)
@@ -522,11 +522,9 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             }
 
             override fun single(opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
-                    return
-                }
+                if (opus_manager.is_percussion(opus_manager.cursor.channel)) return
                 
-                val tree = opus_manager.get_tree()
+                val tree = opus_manager.get_tree() ?: return
 
                 if (tree.has_event()) {
                     val event = tree.get_event()
@@ -581,7 +579,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                 try {
                     opus_manager.convert_event_to_absolute(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
                 } catch (e: NoteOutOfRange) {
-                    val tree = opus_manager.get_tree()
+                    val tree = opus_manager.get_tree() ?: return
                     val event = tree.get_event()!! as RelativeNoteEvent
                     opus_manager.set_event_at_cursor(
                         AbsoluteNoteEvent(

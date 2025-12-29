@@ -23,4 +23,11 @@ abstract class EffectEvent(duration: Int = 1, var transition: EffectTransition =
     override fun equals(other: Any?): Boolean {
         return super.equals(other) && other is EffectEvent && other.transition == this.transition
     }
+
+    override fun hashCode(): Int {
+        var result = super.hashCode()
+        result = 31 * result + this.transition.hashCode()
+        result = 31 * result + this.event_type.hashCode()
+        return result
+    }
 }

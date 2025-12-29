@@ -15,8 +15,8 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 
 @Composable
 fun EffectTransitionButton(event: EffectEvent, dispatcher: ActionTracker, is_initial: Boolean, modifier: Modifier = Modifier) {
+    val transition = event.transition
     if (!is_initial) {
-        val transition = event.transition
         Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
         IconCMenuButton(
             modifier = modifier

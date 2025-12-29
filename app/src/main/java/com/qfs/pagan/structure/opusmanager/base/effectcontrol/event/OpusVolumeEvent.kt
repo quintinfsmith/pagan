@@ -16,4 +16,10 @@ class OpusVolumeEvent(value: Float, duration: Int = 1, transition: EffectTransit
     override fun copy(): OpusVolumeEvent {
         return OpusVolumeEvent(this.value, this.duration, this.transition)
     }
+
+    override fun hashCode(): Int {
+        var result = super.hashCode()
+        result = 31 * result + this.event_type.hashCode()
+        return result
+    }
 }

@@ -816,19 +816,22 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
         )
 
-        Text(
-            modifier = Modifier
-                .align(alignment = Alignment.CenterVertically)
-                .fillMaxWidth()
-                .weight(1F)
-                .combinedClickable(
-                    onClick = { dispatcher.set_project_name_and_notes() }
-                ),
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-            text = vm_state.project_name.value ?: stringResource(R.string.untitled_opus)
-        )
+        Row(
+            modifier = Modifier.weight(1F),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                modifier = Modifier
+                    .combinedClickable(
+                        onClick = {dispatcher.set_project_name_and_notes() }
+                    ),
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                text = vm_state.project_name.value ?: stringResource(R.string.untitled_opus)
+            )
+        }
 
         if (this@ComponentActivityEditor.state_model.use_midi_playback.value) {
             TopBarIcon(

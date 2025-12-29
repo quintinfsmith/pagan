@@ -69,16 +69,17 @@ fun RemoveButton(dispatcher: ActionTracker, cursor: ViewModelEditorState.CacheCu
 fun DurationButton(dispatcher: ActionTracker, descriptor: ViewModelEditorState.EventDescriptor?, active_event: OpusEvent?) {
     TextCMenuButton(
         modifier = Modifier.width(dimensionResource(R.dimen.contextmenu_button_width)),
-        enabled = active_event != null,
+        enabled = when (descriptor) {
+            ViewModelEditorState.EventDescriptor.Selected,
+            ViewModelEditorState.EventDescriptor.Tail -> true
+            else -> false
+        },
         onClick = { dispatcher.set_duration() },
         onLongClick = { dispatcher.set_duration(1) },
         text = when (descriptor) {
             ViewModelEditorState.EventDescriptor.Selected,
-            ViewModelEditorState.EventDescriptor.Tail -> {
-                "x${active_event?.duration ?: 1}"
-            } else -> {
-                ""
-            }
+            ViewModelEditorState.EventDescriptor.Tail -> "x${active_event?.duration ?: 1}"
+            else -> ""
         }
     )
 }

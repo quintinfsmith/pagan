@@ -121,7 +121,14 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewM
             CMPadding()
             Spacer(Modifier.weight(1F))
             key(active_event?.duration) {
-                DurationButton(dispatcher, active_event)
+                DurationButton(
+                    dispatcher,
+                    if (ui_facade.active_event_descriptor.value == ViewModelEditorState.EventDescriptor.Selected) {
+                        active_event
+                    } else {
+                        null
+                    }
+                )
             }
             CMPadding()
             UnsetButton(dispatcher, active_line, active_event)
@@ -136,7 +143,14 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewM
             CMPadding()
 
             key(active_event?.duration) {
-                DurationButton(dispatcher, active_event)
+                DurationButton(
+                    dispatcher,
+                    if (ui_facade.active_event_descriptor.value == ViewModelEditorState.EventDescriptor.Selected) {
+                        active_event
+                    } else {
+                        null
+                    }
+                )
             }
             CMPadding()
             UnsetButton(dispatcher, active_line, active_event)

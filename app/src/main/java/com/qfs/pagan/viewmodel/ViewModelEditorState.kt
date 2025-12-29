@@ -28,6 +28,10 @@ class ViewModelEditorState: ViewModel() {
         Primary,
         Secondary
     }
+    enum class EventDescriptor {
+        Selected,
+        Backup
+    }
 
     class LineData(channel: Int?, line_offset: Int?, ctl_type: EffectType?, assigned_offset: Int? = null, is_mute: Boolean, is_selected: Boolean = false) {
         val channel = mutableStateOf(channel)
@@ -81,6 +85,7 @@ class ViewModelEditorState: ViewModel() {
     var radix: MutableState<Int> = mutableIntStateOf(12)
 
     var active_event: MutableState<OpusEvent?> = mutableStateOf(null)
+    var active_event_descriptor: MutableState<EventDescriptor?> = mutableStateOf(null)
     var active_cursor: MutableState<CacheCursor?> = mutableStateOf(null)
     // selected_* are used to quickly unset is_selected when cursor is changed
     var selected_columns: MutableList<ColumnData> = mutableListOf()
@@ -117,6 +122,7 @@ class ViewModelEditorState: ViewModel() {
         this.project_name.value = null
         this.beat_count.value = 0
         this.active_event.value = null
+        this.active_event_descriptor.value = null
         this.active_cursor.value = null
         this.radix.value = 12
         this.line_count.value = 0
@@ -329,8 +335,9 @@ class ViewModelEditorState: ViewModel() {
         this.project_name.value = name
     }
 
-    fun <T: OpusEvent> set_active_event(event: T? = null) {
+    fun <T: OpusEvent> set_active_event(event: T? = null, descriptor: EventDescriptor? = null) {
         this.active_event.value = event?.copy()
+        this.active_event_descriptor.value = if (event == null) null else descriptor
     }
 
     fun refresh_cursor() {

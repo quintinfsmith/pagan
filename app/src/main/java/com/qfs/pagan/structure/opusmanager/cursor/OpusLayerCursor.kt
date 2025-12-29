@@ -2468,6 +2468,37 @@ open class OpusLayerCursor: OpusLayerBase() {
     }
 
     fun get_event_at_cursor(): OpusEvent? {
-        return this.get_tree()?.get_event()
+        if (this.cursor.mode != CursorMode.Single) return null
+        return when (this.cursor.ctl_level) {
+            null -> {
+                val (actual_beat_key, actual_position) = this.get_actual_position(this.cursor.get_beatkey(), this.cursor.get_position())
+                this.get_tree(actual_beat_key, actual_position).event
+            }
+            CtlLineLevel.Line -> {
+                val (actual_beat_key, actual_position) = this.controller_line_get_actual_position(
+                    this.cursor.ctl_type!!,
+                    this.cursor.get_beatkey(),
+                    this.cursor.get_position()
+                )
+                this.get_line_ctl_tree<EffectEvent>(this.cursor.ctl_type!!, actual_beat_key, actual_position).event
+            }
+            CtlLineLevel.Channel -> {
+                val (actual_beat, actual_position) = this.controller_channel_get_actual_position(
+                    this.cursor.ctl_type!!,
+                    this.cursor.channel,
+                    this.cursor.beat,
+                    this.cursor.get_position()
+                )
+                this.get_channel_ctl_tree<EffectEvent>(this.cursor.ctl_type!!, this.cursor.channel, actual_beat, actual_position).event
+            }
+            CtlLineLevel.Global -> {
+                val (actual_beat, actual_position) = this.controller_global_get_actual_position(
+                    this.cursor.ctl_type!!,
+                    this.cursor.beat,
+                    this.cursor.get_position()
+                )
+                this.get_global_ctl_tree_copy<EffectEvent>(this.cursor.ctl_type!!, actual_beat, actual_position).event
+            }
+        }
     }
 }

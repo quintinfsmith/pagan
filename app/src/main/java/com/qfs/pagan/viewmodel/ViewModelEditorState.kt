@@ -30,6 +30,7 @@ class ViewModelEditorState: ViewModel() {
     }
     enum class EventDescriptor {
         Selected,
+        Tail,
         Backup
     }
 

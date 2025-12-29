@@ -66,13 +66,20 @@ fun RemoveButton(dispatcher: ActionTracker, cursor: ViewModelEditorState.CacheCu
 }
 
 @Composable
-fun DurationButton(dispatcher: ActionTracker, active_event: OpusEvent?) {
+fun DurationButton(dispatcher: ActionTracker, descriptor: ViewModelEditorState.EventDescriptor?, active_event: OpusEvent?) {
     TextCMenuButton(
         modifier = Modifier.width(dimensionResource(R.dimen.contextmenu_button_width)),
         enabled = active_event != null,
         onClick = { dispatcher.set_duration() },
         onLongClick = { dispatcher.set_duration(1) },
-        text = if (active_event == null) "" else "x${active_event.duration}"
+        text = when (descriptor) {
+            ViewModelEditorState.EventDescriptor.Selected,
+            ViewModelEditorState.EventDescriptor.Tail -> {
+                "x${active_event?.duration ?: 1}"
+            } else -> {
+                ""
+            }
+        }
     )
 }
 
@@ -123,11 +130,8 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewM
             key(active_event?.duration) {
                 DurationButton(
                     dispatcher,
-                    if (ui_facade.active_event_descriptor.value == ViewModelEditorState.EventDescriptor.Selected) {
-                        active_event
-                    } else {
-                        null
-                    }
+                    ui_facade.active_event_descriptor.value,
+                    active_event,
                 )
             }
             CMPadding()
@@ -145,11 +149,8 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewM
             key(active_event?.duration) {
                 DurationButton(
                     dispatcher,
-                    if (ui_facade.active_event_descriptor.value == ViewModelEditorState.EventDescriptor.Selected) {
-                        active_event
-                    } else {
-                        null
-                    }
+                    ui_facade.active_event_descriptor.value,
+                    active_event,
                 )
             }
             CMPadding()

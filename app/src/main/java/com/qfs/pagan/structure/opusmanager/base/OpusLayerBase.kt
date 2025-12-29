@@ -575,7 +575,7 @@ open class OpusLayerBase: Effectable {
      * Get the midi instrument current used by Channel [channel]
      */
     fun get_channel_instrument(channel: Int): Pair<Int, Int> {
-        return this.get_channel(channel).get_instrument()
+        return this.get_channel(channel).get_preset()
     }
 
     /**

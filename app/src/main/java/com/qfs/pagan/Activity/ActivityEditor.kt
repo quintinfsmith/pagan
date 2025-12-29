@@ -36,7 +36,6 @@ import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.NumberPicker
-import android.widget.ProgressBar
 import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.TextView
@@ -68,8 +67,6 @@ import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.soundfont2.Riff
 import com.qfs.apres.soundfont2.SoundFont
-import com.qfs.apres.soundfontplayer.SampleHandleManager
-import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.json.JSONHashMap
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.CompatibleFileType
@@ -78,7 +75,6 @@ import com.qfs.pagan.DrawerChannelMenu.ChannelOptionRecycler
 import com.qfs.pagan.EditorTable
 import com.qfs.pagan.HexEditText
 import com.qfs.pagan.MidiFeedbackDispatcher
-import com.qfs.pagan.MultiExporterEventHandler
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.PaganBroadcastReceiver
 import com.qfs.pagan.PaganConfiguration
@@ -91,19 +87,15 @@ import com.qfs.pagan.databinding.ActivityEditorBinding
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.numberinput.RangedFloatInput
 import com.qfs.pagan.numberinput.RangedIntegerInput
-import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
-import java.io.BufferedOutputStream
 import java.io.BufferedReader
-import java.io.DataOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
-import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStreamReader
 import java.time.LocalDateTime
@@ -939,7 +931,7 @@ class ActivityEditor : PaganActivity() {
         val (midi_bank, midi_program) = instrument
         this._midi_interface.broadcast_event(BankSelect(midi_channel, midi_bank))
         this._midi_interface.broadcast_event(ProgramChange(midi_channel, midi_program))
-        this.editor_view_model.audio_interface.update_channel_instrument(midi_channel, midi_bank, midi_program)
+        this.editor_view_model.audio_interface.update_channel_preset(midi_channel, midi_bank, midi_program)
     }
 
     // Update peripheral device instruments, ie feedback device and midi devices
@@ -949,16 +941,16 @@ class ActivityEditor : PaganActivity() {
         if (index == null) {
             for ((i, channel) in opus_manager.channels.enumerate()) {
                 val midi_channel = opus_manager.get_midi_channel(i)
-                val (midi_bank, midi_program) = channel.get_instrument()
+                val (midi_bank, midi_program) = channel.get_preset()
                 this._midi_interface.broadcast_event(BankSelect(midi_channel, midi_bank))
                 this._midi_interface.broadcast_event(ProgramChange(midi_channel, midi_program))
-                this.editor_view_model.audio_interface.update_channel_instrument(midi_channel, midi_bank, midi_program)
+                this.editor_view_model.audio_interface.update_channel_preset(midi_channel, midi_bank, midi_program)
             }
         } else {
             val opus_channel = opus_manager.get_channel(index)
             this.update_channel_instrument(
                 opus_manager.get_midi_channel(index),
-                opus_channel.get_instrument()
+                opus_channel.get_preset()
             )
         }
     }
@@ -1941,7 +1933,7 @@ class ActivityEditor : PaganActivity() {
 
             // Need to prematurely update the channel instrument to find the lowest possible instrument
             this.update_channel_instruments(c)
-            val i = this.editor_view_model.audio_interface.get_minimum_instrument_index(channel.get_instrument())
+            val i = this.editor_view_model.audio_interface.get_minimum_instrument_index(channel.get_preset())
             for (l in 0 until opus_manager.get_channel(c).size) {
                 opus_manager.percussion_set_instrument(c, l, max(0, i - 27))
             }

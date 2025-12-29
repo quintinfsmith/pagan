@@ -3,8 +3,6 @@ package com.qfs.pagan
 import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -63,20 +61,17 @@ import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
-import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.MixedInstrumentException
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.InvalidCursorState
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.serialization.builtins.PairSerializer
 import java.io.IOException
 import kotlin.concurrent.thread
 import kotlin.math.ceil
@@ -1100,7 +1095,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
         for ((c, channel) in opus_manager.channels.enumerate()) {
             if (!opus_manager.is_percussion(c)) continue
-            val i = this.vm_controller.audio_interface.get_minimum_instrument_index(channel.get_instrument())
+            val i = this.vm_controller.audio_interface.get_minimum_instrument_index(channel.get_preset())
             for (l in 0 until opus_manager.get_channel(c).size) {
                 opus_manager.percussion_set_instrument(c, l, max(0, i - 27))
             }

@@ -540,12 +540,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        val title = when (cursor.ctl_level) {
-            CtlLineLevel.Line -> R.string.show_line_controls
-            CtlLineLevel.Channel -> R.string.show_channel_controls
-            CtlLineLevel.Global -> R.string.show_global_controls
-            null -> throw UnexpectedBranch()
-        }
+        val title = R.string.dialog_transition
 
         val options = mutableListOf<Pair<EffectTransition, @Composable RowScope.() -> Unit>>()
         for (transition_option in OpusManager.get_available_transitions(event.event_type)) {

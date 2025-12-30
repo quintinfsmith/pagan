@@ -6,6 +6,8 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.qfs.apres.MidiPlayer
+import com.qfs.apres.event.BankSelect
+import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
@@ -39,10 +41,16 @@ class ViewModelEditorController(): ViewModel() {
     var project_exists: MutableState<Boolean> = mutableStateOf(false)
     var active_soundfont_relative_path: String? = null
 
+    fun update_channel_preset(channel: Int, bank: Int, program: Int) {
+        this.audio_interface.update_channel_preset(channel, bank, program)
+        this.virtual_midi_device.send_event(BankSelect(channel, bank))
+        this.virtual_midi_device.send_event(ProgramChange(channel, program))
+    }
 
     fun set_active_midi_device(device: MidiDeviceInfo?) {
         this.active_midi_device = device
         this.update_playback_state_midi(PlaybackState.Ready)
+        this.update_midi_instruments()
     }
 
     fun set_project_exists(value: Boolean) {
@@ -155,4 +163,14 @@ class ViewModelEditorController(): ViewModel() {
             this.audio_interface.update_channel_preset(midi_channel, midi_bank, midi_program)
         }
     }
+
+    fun update_midi_instruments() {
+        for ((i, channel) in this.opus_manager.channels.enumerate()) {
+            val midi_channel = this.opus_manager.get_midi_channel(i)
+            val (midi_bank, midi_program) = channel.get_preset()
+            this.virtual_midi_device.send_event(BankSelect(midi_channel, midi_bank))
+            this.virtual_midi_device.send_event(ProgramChange(midi_channel, midi_program))
+        }
+    }
+
 }

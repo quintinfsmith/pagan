@@ -130,7 +130,6 @@ class ViewModelEditorState: ViewModel() {
         this.line_count.value = 0
         this.channel_count.value = 0
         this.blocker_leaf = null
-        this.soundfont_active.value = false
 
         this.highlighted_octave.value = null
         this.highlighted_offset.value = null

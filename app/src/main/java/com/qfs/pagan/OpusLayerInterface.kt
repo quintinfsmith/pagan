@@ -902,7 +902,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
         val preset = this.get_channel(notify_index).get_preset()
 
-        this.vm_controller.audio_interface.update_channel_preset(
+        this.vm_controller.update_channel_preset(
             this.get_midi_channel(notify_index),
             preset.first,
             preset.second
@@ -969,7 +969,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
         for ((i, channel) in this.channels.enumerate()) {
             val instrument = channel.get_preset()
-            this.vm_controller.audio_interface.update_channel_preset(
+            this.vm_controller.update_channel_preset(
                 this.get_midi_channel(i),
                 instrument.first,
                 instrument.second
@@ -1148,7 +1148,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     override fun channel_set_preset(channel: Int, instrument: Pair<Int, Int>) {
         super.channel_set_preset(channel, instrument)
 
-        this.vm_controller.audio_interface.update_channel_preset(
+        this.vm_controller.update_channel_preset(
             this.get_midi_channel(channel),
             instrument.first,
             instrument.second

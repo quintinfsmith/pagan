@@ -282,6 +282,8 @@
     <string name="unavailable_preset">Unavailable %s</string>
     <string name="unavailable_kit">Unavailable Kit</string>
     <string name="gm_kit">Percussion</string>
+    <string name="cd_sort_options">Sort Options</string>
+    <string name="cd_fade">Amount to fade per echo</string>
 
     <string-array name="general_midi_presets">
         <item>Grand Acoustic Piano</item>

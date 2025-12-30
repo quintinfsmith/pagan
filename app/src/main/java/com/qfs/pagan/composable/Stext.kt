@@ -48,6 +48,7 @@ import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CardElevation
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
@@ -98,6 +99,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import com.qfs.pagan.R
+import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.button.SmallButton
 import com.qfs.pagan.composable.button.SmallOutlinedButton
@@ -415,7 +417,7 @@ fun <T> SortableMenu(
     sort_options: List<Pair<Int, (Int, Int) -> Int>>,
     selected_sort: Int = -1,
     default_value: T? = null,
-    title_content: @Composable (() -> Unit)? = null,
+    title_content: @Composable (RowScope.() -> Unit)? = null,
     onLongClick: (T) -> Unit = {},
     onClick: (T) -> Unit
 ) {
@@ -440,23 +442,25 @@ fun <T> SortableMenu(
     Column(modifier = modifier) {
         if (sort_options.isNotEmpty()) {
             Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(sort_row_padding)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(sort_row_padding)
             ) {
                 val expanded = remember { mutableStateOf(false) }
 
-                title_content?.let { it() }
-                Spacer(Modifier.weight(1F))
+                title_content?.let { it() } ?: Spacer(Modifier.weight(1F))
 
                 Box {
-                    SmallButton(
+                    Button(
                         onClick = { expanded.value = !expanded.value },
+                        contentPadding = PaddingValues(8.dp),
                         content = {
-                            if (selected_sort == -1) {
-                                SText(R.string.unsorted)
-                            } else {
-                                SText(sort_options[active_sort_option.value].first)
-                            }
+                            Icon(
+                                painter = painterResource(R.drawable.icon_sort),
+                                contentDescription = stringResource(R.string.cd_sort_options)
+                            )
                         }
                     )
                     DropdownMenu(
@@ -849,7 +853,9 @@ fun <T> MagicInputInner(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     prefix?.invoke()
                     Box(
-                        modifier = Modifier.padding(contentPadding).weight(1F),
+                        modifier = Modifier
+                            .padding(contentPadding)
+                            .weight(1F),
                         contentAlignment = Alignment.Center,
                         content = { Text("${value.value}") }
                     )

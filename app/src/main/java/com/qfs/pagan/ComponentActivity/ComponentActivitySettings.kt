@@ -9,6 +9,7 @@ import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -42,6 +44,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.integerArrayResource
 import androidx.compose.ui.res.painterResource
@@ -58,6 +61,7 @@ import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.Slider
 import com.qfs.pagan.composable.SortableMenu
 import com.qfs.pagan.composable.SoundFontWarning
+import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.button.TopBarIcon
@@ -350,54 +354,59 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     }
 
                     val soundfonts = mutableListOf<Pair<Uri, @Composable RowScope.() -> Unit>>()
-                    for (uri in file_list) {
+                    for (uri in file_list.sortedBy { it.pathSegments.last().split("/").last().lowercase() }) {
                         val relative_path_segments = uri.pathSegments.last().split("/")
                         soundfonts.add(Pair(uri, { Text(relative_path_segments.last()) }))
                     }
 
-                    val sort_options = listOf(
-                        Pair(R.string.sort_option_abc) { a: Int, b: Int ->
-                            val file_name_a = file_list[a].pathSegments.last().split("/").last().lowercase()
-                            val file_name_b = file_list[b].pathSegments.last().split("/").last().lowercase()
-                            file_name_a.compareTo(file_name_b)
-                        }
-                    )
-
                     view_model.create_dialog { close ->
                         @Composable {
                             Column {
-                                SortableMenu(
-                                    modifier = Modifier.weight(1F),
-                                    title_content = {
-                                        ProvideTextStyle(MaterialTheme.typography.labelLarge) {
-                                            // DialogSTitle(R.string.dialog_select_soundfont)
-                                            Button(
-                                                content = {SText(R.string.no_soundfont) },
-                                                modifier = Modifier.weight(1F),
-                                                onClick = {
-                                                    view_model.configuration.soundfont = null
-                                                    view_model.soundfont_name.value = null
-                                                    view_model.save_configuration()
-                                                    this@ComponentActivitySettings.update_result()
-                                                    close()
-                                                }
+                                Row(
+                                    horizontalArrangement = Arrangement.End,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    DialogSTitle(R.string.dialog_select_soundfont)
+                                    Spacer(modifier = Modifier.weight(1F))
+                                    Button(
+                                        contentPadding = PaddingValues(8.dp),
+                                        content = {
+                                            Icon(
+                                                painter = painterResource(R.drawable.icon_import),
+                                                contentDescription = stringResource(R.string.option_import_soundfont)
                                             )
-                                            MenuPadder()
-                                            Button(
-                                                content = { SText(R.string.option_import_soundfont) },
-                                                modifier = Modifier.weight(1F),
-                                                onClick = {
-                                                    close()
-                                                    this@ComponentActivitySettings.import_soundfont()
-                                                }
-                                            )
+                                        },
+                                        shape = CircleShape,
+                                        onClick = {
+                                            close()
+                                            this@ComponentActivitySettings.import_soundfont()
                                         }
-                                    },
-                                    sort_row_padding = PaddingValues(vertical = dimensionResource(R.dimen.sf_menu_padding)),
-                                    default_menu = soundfonts,
-                                    default_value = this@ComponentActivitySettings.coerce_soundfont_uri(),
-                                    sort_options = sort_options,
-                                    selected_sort = 0
+                                    )
+                                    MenuPadder()
+                                    Button(
+                                        contentPadding = PaddingValues(8.dp),
+                                        content = {
+                                            Icon(
+                                                painter = painterResource(R.drawable.no_soundfont),
+                                                contentDescription = stringResource(R.string.no_soundfont)
+                                            )
+                                        },
+                                        shape = CircleShape,
+                                        onClick = {
+                                            view_model.configuration.soundfont = null
+                                            view_model.soundfont_name.value = null
+                                            view_model.save_configuration()
+                                            this@ComponentActivitySettings.update_result()
+                                            close()
+                                        }
+                                    )
+                                    MenuPadder()
+                                }
+                                MenuPadder()
+                                UnSortableMenu(
+                                    modifier = Modifier.weight(1F),
+                                    options = soundfonts,
+                                    default_value = this@ComponentActivitySettings.coerce_soundfont_uri()
                                 ) { uri ->
                                     view_model.set_soundfont_uri(uri)
                                     view_model.save_configuration()

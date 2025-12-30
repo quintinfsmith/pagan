@@ -76,16 +76,16 @@ fun Button(
             modifier = modifier
                 .clip(shape)
                 //.padding(vertical = 2.dp, horizontal = 1.dp)
-                .then(if (border != null) modifier.border(border, shape) else modifier)
+                .then(if (border != null) Modifier.border(border, shape) else Modifier)
                 .then(
                     if (enabled) {
-                        modifier.combinedClickable(
+                        Modifier.combinedClickable(
                             onClick = onClick,
                             onLongClick = onLongClick,
                         )
                         .background(color = colors.containerColor, shape)
                     } else {
-                        modifier.background(color = colors.disabledContentColor, shape)
+                        Modifier.background(color = colors.disabledContentColor, shape)
                     }
                 )
                 .minimumInteractiveComponentSize()

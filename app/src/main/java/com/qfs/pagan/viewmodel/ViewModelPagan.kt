@@ -178,10 +178,12 @@ class ViewModelPagan: ViewModel() {
         this.create_medium_dialog { close ->
             @Composable {
                 Column(verticalArrangement = Arrangement.SpaceBetween) {
-                    DialogSTitle(title)
-                    content?.let { Row(content = it) }
                     SortableMenu(
                         modifier = Modifier.weight(1F, fill=false),
+                        title_content = {
+                            DialogSTitle(title)
+                            content?.let { Row(content = it) }
+                        },
                         default_menu = default_menu,
                         sort_row_padding = PaddingValues(bottom = dimensionResource(R.dimen.dialog_bar_padding_vertical)),
                         sort_options = sort_options,

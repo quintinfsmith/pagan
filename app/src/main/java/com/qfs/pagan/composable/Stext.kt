@@ -64,6 +64,7 @@ import androidx.compose.material3.TextFieldLabelScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -414,14 +415,15 @@ fun <T> SortableMenu(
     sort_options: List<Pair<Int, (Int, Int) -> Int>>,
     selected_sort: Int = -1,
     default_value: T? = null,
+    title_content: @Composable (() -> Unit)? = null,
     onLongClick: (T) -> Unit = {},
     onClick: (T) -> Unit
 ) {
-    val active_sort_option = remember { mutableStateOf(selected_sort) }
-    val sorted_menu = if (sort_options.isEmpty() || active_sort_option.value == -1) {
+    val active_sort_option = remember { mutableIntStateOf(selected_sort) }
+    val sorted_menu = if (sort_options.isEmpty() || active_sort_option.intValue == -1) {
         default_menu
     } else {
-        val indices = default_menu.indices.sortedWith(sort_options[active_sort_option.value].second)
+        val indices = default_menu.indices.sortedWith(sort_options[active_sort_option.intValue].second)
         List(default_menu.size) { i -> default_menu[indices[i]] }
     }
 
@@ -442,15 +444,13 @@ fun <T> SortableMenu(
                 modifier = Modifier.padding(sort_row_padding)
             ) {
                 val expanded = remember { mutableStateOf(false) }
-                SText(
-                    R.string.sorting_by,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.weight(1F)
-                )
-                Box(modifier = Modifier.weight(1F)) {
+
+                title_content?.let { it() }
+                Spacer(Modifier.weight(1F))
+
+                Box {
                     SmallButton(
                         onClick = { expanded.value = !expanded.value },
-                        modifier = Modifier.fillMaxWidth(),
                         content = {
                             if (selected_sort == -1) {
                                 SText(R.string.unsorted)
@@ -477,9 +477,8 @@ fun <T> SortableMenu(
             }
         }
 
-        LazyColumn(
-            state = scroll_state,
-            contentPadding = PaddingValues(4.dp),
+        Box(
+            contentAlignment = Alignment.Center,
             modifier = Modifier
                 .clip(RoundedCornerShape(8.dp))
                 .background(
@@ -487,44 +486,51 @@ fun <T> SortableMenu(
                     RoundedCornerShape(8.dp)
                 )
         ) {
-            itemsIndexed(sorted_menu) { i, (item, label_content) ->
-                val row_modifier = Modifier
-                if (i > 0) {
-                    Spacer(Modifier.height(4.dp))
-                }
-
-                ProvideContentColorTextStyle(
-                    if (default_index == i) {
-                        MaterialTheme.colorScheme.onSecondary
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
+            LazyColumn(
+                state = scroll_state,
+                contentPadding = PaddingValues(0.dp),
+                modifier = Modifier
+                    .padding(4.dp)
+                    .clip(RoundedCornerShape(8.dp))
+            ) {
+                itemsIndexed(sorted_menu) { i, (item, label_content) ->
+                    val row_modifier = Modifier
+                    if (i > 0) {
+                        Spacer(Modifier.height(4.dp))
                     }
-                ) {
-                    Row(
-                        modifier = row_modifier
-                            .background(
-                                if (default_index == i) {
-                                    MaterialTheme.colorScheme.secondary
-                                } else {
-                                    MaterialTheme.colorScheme.surfaceContainerHigh
-                                },
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            .heightIn(dimensionResource(R.dimen.dialog_menu_line_height))
-                            .weight(1F, fill=false)
-                            .combinedClickable(
-                                onClick = { onClick(item) },
-                                onLongClick = { onLongClick(item) }
-                            )
-                            .padding(
-                                vertical = dimensionResource(R.dimen.dialog_menu_line_padding_vertical),
-                                horizontal = dimensionResource(R.dimen.dialog_menu_line_padding_horizontal)
-                            )
-                            .fillMaxWidth(),
-                        content = label_content,
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    )
+
+                    ProvideContentColorTextStyle(
+                        if (default_index == i) {
+                            MaterialTheme.colorScheme.onSecondary
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        }
+                    ) {
+                        Row(
+                            modifier = row_modifier
+                                .background(
+                                    if (default_index == i) {
+                                        MaterialTheme.colorScheme.secondary
+                                    } else {
+                                        MaterialTheme.colorScheme.surfaceContainerHigh
+                                    },
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                .heightIn(dimensionResource(R.dimen.dialog_menu_line_height))
+                                .combinedClickable(
+                                    onClick = { onClick(item) },
+                                    onLongClick = { onLongClick(item) }
+                                )
+                                .padding(
+                                    vertical = dimensionResource(R.dimen.dialog_menu_line_padding_vertical),
+                                    horizontal = dimensionResource(R.dimen.dialog_menu_line_padding_horizontal)
+                                )
+                                .fillMaxWidth(),
+                            content = label_content,
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        )
+                    }
                 }
             }
         }
@@ -631,8 +637,9 @@ fun DialogCard(
 fun ColumnScope.DialogBar(modifier: Modifier = Modifier, positive: (() -> Unit)? = null, negative: (() -> Unit)? = null, neutral: (() -> Unit)? = null) {
     Row(
         modifier = modifier
-            .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(8.dp))
-            .padding(top = dimensionResource(R.dimen.dialog_bar_padding_vertical), bottom = 0.dp),
+            .padding(
+                top = dimensionResource(R.dimen.dialog_bar_padding_vertical)
+            ),
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically
     ) {

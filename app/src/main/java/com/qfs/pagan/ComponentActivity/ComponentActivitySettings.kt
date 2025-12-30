@@ -364,74 +364,47 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     )
 
                     view_model.create_dialog { close ->
-                        val content = @Composable {
-                            ProvideTextStyle(MaterialTheme.typography.labelLarge) {
-                                Row {
-                                    Button(
-                                        content = { SText(R.string.no_soundfont) },
-                                        modifier = Modifier.weight(1F),
-                                        onClick = {
-                                            view_model.configuration.soundfont = null
-                                            view_model.soundfont_name.value = null
-                                            view_model.save_configuration()
-                                            this@ComponentActivitySettings.update_result()
-                                            close()
-                                        }
-                                    )
-                                    MenuPadder()
-                                    Button(
-                                        content = { SText(R.string.option_import_soundfont) },
-                                        modifier = Modifier.weight(1F),
-                                        onClick = {
-                                            close()
-                                            this@ComponentActivitySettings.import_soundfont()
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                        val menu = @Composable { modifier: Modifier ->
-                            SortableMenu(
-                                modifier = modifier,
-                                sort_row_padding = PaddingValues(vertical = dimensionResource(R.dimen.sf_menu_padding)),
-                                default_menu = soundfonts,
-                                default_value = this@ComponentActivitySettings.coerce_soundfont_uri(),
-                                sort_options = sort_options,
-                                selected_sort = 0
-                            ) { uri ->
-                                view_model.set_soundfont_uri(uri)
-                                view_model.save_configuration()
-                                this@ComponentActivitySettings.update_result()
-                                close()
-                            }
-                        }
                         @Composable {
-                            when (view_model.get_layout_size()) {
-                                ViewModelPagan.LayoutSize.SmallPortrait,
-                                ViewModelPagan.LayoutSize.MediumPortrait,
-                                ViewModelPagan.LayoutSize.LargePortrait,
-                                ViewModelPagan.LayoutSize.XLargePortrait,
-                                ViewModelPagan.LayoutSize.LargeLandscape,
-                                ViewModelPagan.LayoutSize.XLargeLandscape,
-                                ViewModelPagan.LayoutSize.MediumLandscape -> {
-                                    Column {
-                                        DialogSTitle(R.string.dialog_select_soundfont)
-                                        content()
-                                        menu(Modifier.weight(1F))
-                                        DialogBar(neutral = close)
-                                    }
-                                }
-                                ViewModelPagan.LayoutSize.SmallLandscape -> {
-                                    Row {
-                                        Column(Modifier.weight(1F)) {
-                                            DialogSTitle(R.string.dialog_select_soundfont)
-                                            content()
-                                            DialogBar(neutral = close)
+                            Column {
+                                SortableMenu(
+                                    modifier = Modifier.weight(1F),
+                                    title_content = {
+                                        ProvideTextStyle(MaterialTheme.typography.labelLarge) {
+                                            // DialogSTitle(R.string.dialog_select_soundfont)
+                                            Button(
+                                                content = {SText(R.string.no_soundfont) },
+                                                modifier = Modifier.weight(1F),
+                                                onClick = {
+                                                    view_model.configuration.soundfont = null
+                                                    view_model.soundfont_name.value = null
+                                                    view_model.save_configuration()
+                                                    this@ComponentActivitySettings.update_result()
+                                                    close()
+                                                }
+                                            )
+                                            MenuPadder()
+                                            Button(
+                                                content = { SText(R.string.option_import_soundfont) },
+                                                modifier = Modifier.weight(1F),
+                                                onClick = {
+                                                    close()
+                                                    this@ComponentActivitySettings.import_soundfont()
+                                                }
+                                            )
                                         }
-                                        menu(Modifier.weight(1F))
-                                    }
-
+                                    },
+                                    sort_row_padding = PaddingValues(vertical = dimensionResource(R.dimen.sf_menu_padding)),
+                                    default_menu = soundfonts,
+                                    default_value = this@ComponentActivitySettings.coerce_soundfont_uri(),
+                                    sort_options = sort_options,
+                                    selected_sort = 0
+                                ) { uri ->
+                                    view_model.set_soundfont_uri(uri)
+                                    view_model.save_configuration()
+                                    this@ComponentActivitySettings.update_result()
+                                    close()
                                 }
+                                DialogBar(neutral = close)
                             }
                         }
                     }

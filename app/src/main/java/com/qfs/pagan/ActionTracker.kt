@@ -2689,11 +2689,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         }
                     }
                 }
-                Spacer(
-                    Modifier
-                        .height(4.dp)
-                        .fillMaxWidth()
-                )
                 DialogBar(
                     neutral = close,
                     positive = {

@@ -48,7 +48,6 @@ import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CardElevation
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
@@ -78,7 +77,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -444,18 +442,20 @@ fun <T> SortableMenu(
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(sort_row_padding)
+                modifier = Modifier.padding(sort_row_padding)
             ) {
                 val expanded = remember { mutableStateOf(false) }
 
-                title_content?.let { it() } ?: Spacer(Modifier.weight(1F))
+                title_content?.let { it() }
+                Spacer(Modifier.weight(1F))
 
                 Box {
                     Button(
+                        modifier = Modifier
+                            .height(32.dp)
+                            .width(32.dp),
                         onClick = { expanded.value = !expanded.value },
-                        contentPadding = PaddingValues(8.dp),
+                        contentPadding = PaddingValues(4.dp),
                         content = {
                             Icon(
                                 painter = painterResource(R.drawable.icon_sort),
@@ -478,6 +478,7 @@ fun <T> SortableMenu(
                         }
                     }
                 }
+
             }
         }
 

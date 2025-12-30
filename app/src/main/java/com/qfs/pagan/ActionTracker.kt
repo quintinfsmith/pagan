@@ -2588,10 +2588,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                     )
                 }
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(6.dp))
-                        .padding(4.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -2637,48 +2634,54 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         .height(4.dp)
                         .fillMaxWidth()
                 )
-                FlowRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
+                Box(
+                    Modifier
                         .weight(1F, fill = false)
-                        .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(6.dp))
-                        .verticalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.SpaceAround
+                        .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(6.dp)),
+                    contentAlignment = Alignment.Center
                 ) {
-                    for ((i, state) in mutable_map.enumerate()) {
-                        val pair = state.value
-                        val numer = remember { mutableIntStateOf(pair.first) }
-                        val denom = remember { mutableIntStateOf(pair.second) }
-                        Box(
-                            Modifier
-                                .padding(vertical = 3.dp)
-                                .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(6.dp))
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween,
+                    FlowRow(
+                        modifier = Modifier
+                            .padding(6.dp)
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.SpaceAround
+                    ) {
+                        for ((i, state) in mutable_map.enumerate()) {
+                            val pair = state.value
+                            val numer = remember { mutableIntStateOf(pair.first) }
+                            val denom = remember { mutableIntStateOf(pair.second) }
+                            Box(
+                                Modifier
+                                    .padding(vertical = 3.dp)
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(6.dp))
                             ) {
-                                Text(
-                                    "%02d".format(i),
-                                    modifier = Modifier.padding(horizontal = 4.dp)
-                                )
-                                Column {
-                                    MagicInput(
-                                        value = numer,
-                                        minimum = 0,
-                                        modifier = Modifier.width(64.dp),
-                                        contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                                        callback = { mutable_map[i].value = Pair(numer.value, denom.value) }
+                                Row(
+                                    modifier = Modifier.padding(6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                ) {
+                                    Text(
+                                        "%02d".format(i),
+                                        modifier = Modifier.padding(horizontal = 4.dp)
                                     )
-                                    Spacer(Modifier.height(2.dp))
-                                    MagicInput(
-                                        value = denom,
-                                        minimum = 0,
-                                        modifier = Modifier.width(64.dp),
-                                        contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                                        callback = { mutable_map[i].value = Pair(numer.value, denom.value) }
-                                    )
+                                    Column {
+                                        MagicInput(
+                                            value = numer,
+                                            minimum = 0,
+                                            modifier = Modifier.width(64.dp),
+                                            contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
+                                            callback = { mutable_map[i].value = Pair(numer.value, denom.value) }
+                                        )
+                                        Spacer(Modifier.height(2.dp))
+                                        MagicInput(
+                                            value = denom,
+                                            minimum = 0,
+                                            modifier = Modifier.width(64.dp),
+                                            contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
+                                            callback = { mutable_map[i].value = Pair(numer.value, denom.value) }
+                                        )
+                                    }
                                 }
                             }
                         }

@@ -14,8 +14,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
-import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.ViewModel
 import com.qfs.pagan.ComponentActivity.PaganComponentActivity.Companion.SIZE_L
 import com.qfs.pagan.ComponentActivity.PaganComponentActivity.Companion.SIZE_M
@@ -28,7 +26,6 @@ import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.SortableMenu
 import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.projectmanager.ProjectManager
-import java.io.FileNotFoundException
 
 class ViewModelPagan: ViewModel() {
     companion object {
@@ -185,7 +182,9 @@ class ViewModelPagan: ViewModel() {
                             content?.let { Row(content = it) }
                         },
                         default_menu = default_menu,
-                        sort_row_padding = PaddingValues(bottom = dimensionResource(R.dimen.dialog_bar_padding_vertical)),
+                        sort_row_padding = PaddingValues(
+                            bottom = dimensionResource(R.dimen.dialog_bar_padding_vertical),
+                        ),
                         sort_options = sort_options,
                         selected_sort = selected_sort,
                         onLongClick = onLongClick,

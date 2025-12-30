@@ -68,8 +68,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
             dispatcher.set_initial_effect(EffectType.Delay, event, channel, line_offset)
         }
     }
-    Spacer(Modifier.width(2.dp))
-    Spacer(Modifier.weight(1F))
+    Spacer(Modifier.width(2.dp).weight(1F))
     MagicInput(
         numerator,
         background_icon = R.drawable.icon_hz,

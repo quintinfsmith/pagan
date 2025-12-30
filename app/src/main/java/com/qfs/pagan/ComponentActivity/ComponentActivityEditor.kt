@@ -1170,13 +1170,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 ),
             border_color = MaterialTheme.colorScheme.onPrimaryContainer,
             content = {
-                Icon(
-                    modifier = Modifier
-                        .padding(4.dp)
-                        .fillMaxSize(),
-                    painter = painterResource(R.drawable.icon_shortcut),
-                    contentDescription = stringResource(R.string.jump_to_section)
-                )
+                Box(
+                    Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        modifier = Modifier.padding(7.dp),
+                        painter = painterResource(R.drawable.icon_shortcut),
+                        contentDescription = stringResource(R.string.jump_to_section)
+                    )
+                }
             }
         )
     }
@@ -1366,13 +1369,24 @@ class ComponentActivityEditor: PaganComponentActivity() {
             TableColorPalette.get_channel_swatch(line_data.channel.value!!)
         }
 
-        val (leaf_color, text_color) = swatch.get(
-            line_data.line_offset.value ?: 0,
-            event != null,
-            leaf_data.is_selected.value,
-            leaf_data.is_secondary.value,
-            leaf_data.is_spillover.value
-        )
+        val (leaf_color, text_color) = if (event == null && !leaf_data.is_spillover.value) {
+            Pair(
+                TableColorPalette.get_line_color(
+                    line_data.line_offset.value ?: 0,
+                    leaf_data.is_selected.value,
+                    leaf_data.is_secondary.value,
+                    line_data.ctl_type.value != null
+                ),
+                Color(0xFFFF00FF)
+            )
+        } else {
+            swatch.get(
+                line_data.line_offset.value ?: 0,
+                leaf_data.is_selected.value,
+                leaf_data.is_secondary.value,
+                leaf_data.is_spillover.value
+            )
+        }
 
         ProvideContentColorTextStyle(text_color, MaterialTheme.typography.bodySmall) {
             HalfBorderBox(

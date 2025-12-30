@@ -200,9 +200,7 @@ class ActivityEditor : PaganActivity() {
 
     // Check if the soundfont was removed
     fun soundfont_file_check() {
-        if (this.configuration.soundfont == null) {
-            return
-        }
+        if (this.configuration.soundfont == null) return
 
         if (this.get_soundfont_uri() == null) {
             this.disable_soundfont()
@@ -1063,7 +1061,8 @@ class ActivityEditor : PaganActivity() {
         }
 
         try {
-            this.editor_view_model.set_soundfont(SoundFont(this, soundfont_file.uri))
+            val soundfont = SoundFont(this, soundfont_file.uri)
+            this.editor_view_model.set_soundfont(soundfont)
         } catch (_: Riff.InvalidRiff) {
             // Possible if user puts the sf2 in their files manually
             this.feedback_msg(this.getString(R.string.invalid_soundfont))
@@ -1098,10 +1097,10 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun disable_soundfont() {
-        if (!this.editor_view_model.update_playback_state_soundfont(PlaybackState.NotReady)) return
+        // TODO: Check this logic
+        //if (!this.editor_view_model.update_playback_state_soundfont(PlaybackState.NotReady)) return
         this.editor_view_model.unset_soundfont()
-        //this.view_model_ui_state.clear_preset_names()
-        this.view_model_ui_state.clear_instrument_names()
+        this.view_model_ui_state.unset_soundfont()
     }
 
     fun get_ui_facade(): ViewModelEditorState {

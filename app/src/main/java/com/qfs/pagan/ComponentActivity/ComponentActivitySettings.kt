@@ -372,7 +372,9 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                         modifier = Modifier.weight(1F),
                                         onClick = {
                                             view_model.configuration.soundfont = null
+                                            view_model.soundfont_name.value = null
                                             view_model.save_configuration()
+                                            this@ComponentActivitySettings.update_result()
                                             close()
                                         }
                                     )

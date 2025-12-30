@@ -984,10 +984,10 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                 val default_colors = SliderDefaults.colors()
                 val colors = SliderColors(
                     thumbColor = default_colors.thumbColor,
-                    activeTrackColor = default_colors.inactiveTrackColor,
-                    activeTickColor = default_colors.activeTickColor,
-                    inactiveTrackColor = default_colors.activeTrackColor,
-                    inactiveTickColor = default_colors.inactiveTickColor,
+                    activeTrackColor = default_colors.activeTrackColor,
+                    activeTickColor = default_colors.inactiveTickColor,
+                    inactiveTrackColor = default_colors.inactiveTrackColor,
+                    inactiveTickColor = default_colors.activeTickColor,
                     disabledThumbColor = default_colors.disabledThumbColor,
                     disabledActiveTrackColor = default_colors.disabledActiveTrackColor,
                     disabledActiveTickColor = default_colors.disabledActiveTickColor,

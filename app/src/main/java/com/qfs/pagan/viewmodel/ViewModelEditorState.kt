@@ -117,6 +117,7 @@ class ViewModelEditorState: ViewModel() {
     val base_leaf_width = mutableStateOf(0F)
 
     val has_global_effects_hidden = mutableStateOf(true)
+    val soundfont_active = mutableStateOf(false)
 
 
     fun clear() {
@@ -129,6 +130,7 @@ class ViewModelEditorState: ViewModel() {
         this.line_count.value = 0
         this.channel_count.value = 0
         this.blocker_leaf = null
+        this.soundfont_active.value = false
 
         this.highlighted_octave.value = null
         this.highlighted_offset.value = null
@@ -595,6 +597,7 @@ class ViewModelEditorState: ViewModel() {
 
     fun clear_instrument_names() {
         this.available_instruments.clear()
+        this.preset_names.clear()
     }
 
     fun set_is_buffering(value: Boolean) {
@@ -736,5 +739,14 @@ class ViewModelEditorState: ViewModel() {
         }
 
         return LocationQuad(channel, line_offset, beat, position)
+    }
+
+    fun enable_soundfont() {
+        this.soundfont_active.value = true
+    }
+
+    fun unset_soundfont() {
+        this.soundfont_active.value = false
+        this.clear_instrument_names()
     }
 }

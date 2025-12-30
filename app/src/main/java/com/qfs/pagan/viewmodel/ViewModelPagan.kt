@@ -95,7 +95,6 @@ class ViewModelPagan: ViewModel() {
              else if (width >= SIZE_M.second && height >= SIZE_M.first) LayoutSize.MediumPortrait
              else LayoutSize.SmallPortrait
         }
-        println("- - - - - - ${this.active_layout_size} - - - - - - - ")
     }
 
     fun get_layout_size(): LayoutSize {
@@ -110,7 +109,7 @@ class ViewModelPagan: ViewModel() {
     fun load_config(path: String) {
         this.configuration_path = path
         this.configuration = try {
-            PaganConfiguration.Companion.from_path(this.configuration_path!!)
+            PaganConfiguration.from_path(this.configuration_path!!)
         } catch (e: Exception) {
             this.configuration
         }

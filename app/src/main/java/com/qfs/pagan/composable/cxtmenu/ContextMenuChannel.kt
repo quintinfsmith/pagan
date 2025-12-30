@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringArrayResource
@@ -80,14 +81,20 @@ fun MuteChannelButton(dispatcher: ActionTracker, active_channel: ViewModelEditor
 }
 
 @Composable
-fun SetPresetButton(modifier: Modifier = Modifier, dispatcher: ActionTracker, channel_index: Int, active_channel: ViewModelEditorState.ChannelData) {
+fun SetPresetButton(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, channel_index: Int, active_channel: ViewModelEditorState.ChannelData) {
     TextCMenuButton(
         modifier = modifier,
         onClick = { dispatcher.set_channel_preset(channel_index) },
         text = active_channel.active_name.value ?: if (active_channel.instrument.value.second == 128) {
-            stringResource(R.string.unavailable_kit)
-        } else {
+            if (ui_facade.soundfont_active.value) {
+                stringResource(R.string.unavailable_kit)
+            } else {
+                stringResource(R.string.gm_kit)
+            }
+        } else if (ui_facade.soundfont_active.value) {
             stringResource(R.string.unavailable_preset, stringArrayResource(R.array.general_midi_presets)[active_channel.instrument.value.second])
+        } else {
+            stringArrayResource(R.array.general_midi_presets)[active_channel.instrument.value.second]
         }
     )
 }
@@ -153,6 +160,7 @@ fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
             modifier = Modifier
                 .height(dimensionResource(R.dimen.contextmenu_button_height))
                 .weight(1f),
+            ui_facade,
             dispatcher,
             channel_index,
             active_channel

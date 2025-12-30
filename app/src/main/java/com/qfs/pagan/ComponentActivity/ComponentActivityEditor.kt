@@ -574,6 +574,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     override fun on_config_load() {
         super.on_config_load()
+
         this.set_soundfont()
     }
 
@@ -581,6 +582,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val file_path = this.view_model.configuration.soundfont
         if (file_path == null) {
             this.controller_model.unset_soundfont()
+            this.state_model.unset_soundfont()
             return
         }
 
@@ -597,9 +599,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
         if (!soundfont_file.exists()) throw FileNotFoundException()
 
         try {
-            this.controller_model.set_soundfont(SoundFont(this, soundfont_file.uri))
+            val soundfont = SoundFont(this, soundfont_file.uri)
+            this.controller_model.set_soundfont(soundfont)
             this.controller_model.playback_device?.activity = this
             this.controller_model.active_soundfont_relative_path = file_path
+            this.state_model.enable_soundfont()
         } catch (_: Riff.InvalidRiff) {
             // Possible if user puts the sf2 in their files manually
             //this.feedback_msg(this.getString(R.string.invalid_soundfont))
@@ -853,7 +857,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     }
                 }
             )
-        } else {
+        } else if (this@ComponentActivityEditor.state_model.soundfont_active.value) {
             TopBarIcon(
                 icon = when (this@ComponentActivityEditor.state_model.playback_state_soundfont.value) {
                     PlaybackState.Queued,
@@ -1875,7 +1879,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     override fun LayoutSmallLandscape() = LayoutMediumLandscape()
 
     private fun get_default_preset_name(bank: Int, program: Int): String {
-        return if (this.controller_model.active_midi_device != null) {
+        return if (this.controller_model.active_midi_device != null || this.controller_model.audio_interface.soundfont == null) {
             if (bank == 128) {
                 this.resources.getString(R.string.gm_kit)
             } else {

@@ -53,11 +53,22 @@ fun ScaffoldWithTopBar(
         ) {
             Scaffold(
                 topBar = {
+                    val (foreground, background) = if (is_night_mode) {
+                        Pair(
+                            MaterialTheme.colorScheme.onSurface,
+                            MaterialTheme.colorScheme.surface,
+                        )
+                    } else {
+                        Pair(
+                            MaterialTheme.colorScheme.onPrimary,
+                            MaterialTheme.colorScheme.primary,
+                        )
+                    }
                     ProvideContentColorTextStyle(
-                        contentColor = MaterialTheme.colorScheme.onPrimary
+                        contentColor = foreground
                     ) {
                         Row(
-                            modifier = Modifier.background(color = MaterialTheme.colorScheme.primary),
+                            modifier = Modifier.background(color = background),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween,
                             content = top_app_bar

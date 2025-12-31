@@ -24,9 +24,9 @@ import com.qfs.pagan.R
 fun NumberSelectorButton(modifier: Modifier = Modifier, index: Int, alternate: Boolean, selected: Boolean, highlighted: Boolean, callback: (Int) -> Unit) {
     val shape = RoundedCornerShape(12.dp)
     val (background, foreground) = if (selected) {
-        Pair(MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary)
+        Pair(MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer)
     } else if (alternate) {
-        Pair(MaterialTheme.colorScheme.primaryFixed, MaterialTheme.colorScheme.onPrimaryFixed)
+        Pair(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
     } else {
         Pair(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary)
     }

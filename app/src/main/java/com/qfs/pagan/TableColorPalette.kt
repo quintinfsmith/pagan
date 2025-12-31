@@ -1,124 +1,157 @@
 package com.qfs.pagan
 
 import androidx.compose.ui.graphics.Color
-import com.qfs.pagan.structure.Rational
 
 class TableColorPalette {
-    class Swatch(base: Long, selector_tint: Color = SELECTION_TINT) {
-        companion object {
-            val ratio_alternate = Rational(1, 4)
-            val ratio_spill = Rational(2, 5)
-            val ratio_selected = Rational(3, 1)
-            val ratio_secondary = Rational(4, 3)
-            val mix_alternate = Color(188,205,184)
-            val mix_spill = Color(0xAA, 0xAA, 0xAA)
-        }
-
-        val default = Color(base)
-        val alternate = TableColorPalette.mix_colors(mix_alternate, this.default, ratio_alternate)
-        val default_spill = TableColorPalette.mix_colors(mix_spill, this.default, ratio_spill)
-        val default_selected = TableColorPalette.mix_colors(selector_tint, this.default, ratio_selected)
-        val default_spill_selected = TableColorPalette.mix_colors(selector_tint, this.default_spill, ratio_selected)
-        val default_secondary = TableColorPalette.mix_colors(selector_tint, this.default, ratio_secondary)
-        val default_spill_secondary = TableColorPalette.mix_colors(selector_tint, this.default_spill, ratio_secondary)
-
-        val alternate_spill = TableColorPalette.mix_colors(mix_spill, this.alternate, ratio_spill)
-        val alternate_selected = TableColorPalette.mix_colors(selector_tint, this.alternate, ratio_selected)
-        val alternate_spill_selected = TableColorPalette.mix_colors(selector_tint, this.alternate_spill, ratio_selected)
-        val alternate_secondary = TableColorPalette.mix_colors(selector_tint, this.alternate, ratio_secondary)
-        val alternate_spill_secondary = TableColorPalette.mix_colors(selector_tint, this.alternate_spill, ratio_secondary)
-
-        val text = if (((this.default.red + this.default.green + this.default.blue) / 3) > 0xAA) {
-            Color(0xFF000000)
-        } else {
-            Color(0xFFFFFFFF)
-        }
-        val text_selected = if (((this.default_selected.red + this.default_selected.green + this.default_selected.blue) / 3) > 0xAA) {
-            Color(0xFF000000)
-        } else {
-            Color(0xFFFFFFFF)
-        }
-        val text_secondary = if (((this.default_secondary.red + this.default_secondary.green + this.default_secondary.blue) / 3) > 0xAA) {
-            Color(0xFF000000)
-        } else {
-            Color(0xFFFFFFFF)
-        }
-
-        fun get(line: Int, selected: Boolean, secondary: Boolean, spill: Boolean): Pair<Color, Color> {
-            return if (selected) {
-                Pair(
-                    if (line % 2 == 0) {
-                        if (spill) this.default_spill_selected
-                        else this.default_selected
-                    } else {
-                        if (spill) this.alternate_spill_selected
-                        else this.alternate_selected
-                    },
-                    this.text_selected
-                )
-            } else if (secondary) {
-                Pair(
-                    if (line % 2 == 0) {
-                        if (spill) this.default_spill_secondary
-                        else this.default_secondary
-                    } else {
-                        if (spill) this.alternate_spill_secondary
-                        else this.alternate_secondary
-                    },
-                    this.text_secondary
-                )
-            } else {
-                Pair(
-                    if (line % 2 == 0) {
-                        if (spill) this.default_spill
-                        else this.default
-                    } else {
-                        if (spill) this.alternate_spill
-                        else this.alternate
-                    },
-                    this.text
-                )
-            }
-        }
+    enum class LeafState {
+        Active,
+        Spill,
+        Empty
+    }
+    enum class LeafSelection {
+        Primary,
+        Secondary,
+        Unselected
     }
 
     companion object {
-        val SELECTION_TINT = Color(0xFF0D66B3)
-        val SECONDARY_TINT = Color(0xE24D88B6)
-        fun mix_colors(first: Color, second: Color, ratio: Rational): Color {
-            val denominator = ratio.numerator + ratio.denominator
-            val alpha = (first.alpha * ratio.numerator / denominator) + (second.alpha * ratio.denominator / denominator)
-            val red = (first.red * ratio.numerator / denominator) + (second.red * ratio.denominator / denominator)
-            val blue = (first.blue * ratio.numerator / denominator) + (second.blue * ratio.denominator / denominator)
-            val green = (first.green * ratio.numerator / denominator) + (second.green * ratio.denominator / denominator)
-            return Color(red, green, blue, alpha)
-        }
-
         val DEFAULT_CHANNEL_COLORS = arrayOf(
-            0xFF765bd5,
-            0xFF9250a8,
+            Color(0xFF765bd5),
+            Color(0xFF9250a8)
         )
+        val BASE_SELECT = Color(0xFF0064FF)
 
-        val channel_swatches: Array<Swatch> = Array(DEFAULT_CHANNEL_COLORS.size) { Swatch(DEFAULT_CHANNEL_COLORS[it]) }
+        val channel_swatches = Array<Array<Color>>(this.DEFAULT_CHANNEL_COLORS.size) {
+            MaterialColorCalculator.get(this.DEFAULT_CHANNEL_COLORS[it])
+        }
 
-        val line_colors = arrayOf(Color(0x11FFFFFF), Color(0x33AAAAAA))
-        val ctl_line_colors = arrayOf(Color(0x22000000))
-        val ctl_swatch = Swatch(0xFFBBAA00)
-        val mute_swatch = Swatch(0xFFAAAAAA)
+        val mute_swatch = MaterialColorCalculator.get(Color(0xFFFFFFFF))
+        val selected_swatch = MaterialColorCalculator.get(this.BASE_SELECT)
+        //.val selected_swatch = arrayOf<Color>(
+        //.    Color(0xFF0091FF), // Empty
+        //.    Color(0xFF2499E1), // Empty Secondary
+        //.    Color(0xFF2636b2), // Active
+        //.    Color(0xFF4f5bbc), // Active Secondary
+        //.    Color(0xFF385AF3), // Spill
+        //.    Color(0xFF3147A8), // Spill Secondary
+        //.)
+        val ctl_swatch = MaterialColorCalculator.get(Color(0xFFFFD500))
 
-        fun get_line_color(line_offset: Int, selected: Boolean, secondary: Boolean, ctl_line: Boolean): Color {
-            return if (selected) {
-                SELECTION_TINT
-            } else if (secondary) {
-                SECONDARY_TINT
-            } else  if (ctl_line) {
-                this.ctl_line_colors[line_offset % this.ctl_line_colors.size]
-            } else {
-                this.line_colors[line_offset % this.line_colors.size]
+        fun get_text(input: Color): Color {
+            val avg = (input.red + input.green + input.blue) / 3F
+            return if (avg > .5F) Color(0xFF000000)
+                else  Color(0xFFFFFFFF)
+        }
+
+
+        fun get_ctl_color(active: LeafState, selected: LeafSelection, dark_mode: Boolean = false): Pair<Color, Color> {
+            var background = when (selected) {
+                LeafSelection.Primary -> {
+                    val i = if (dark_mode) {
+                        when (active) {
+                            LeafState.Spill,
+                            LeafState.Active -> 9
+                            LeafState.Empty -> 11
+                        }
+                    } else {
+                        when (active) {
+                            LeafState.Spill,
+                            LeafState.Active -> 6
+                            LeafState.Empty -> 10
+                        }
+                    }
+                    this.selected_swatch[i]
+                }
+                LeafSelection.Secondary -> {
+                    val i = if (dark_mode) {
+                        when (active) {
+                            LeafState.Spill,
+                            LeafState.Active -> 8
+                            LeafState.Empty -> 10
+                        }
+                    } else {
+                        when (active) {
+                            LeafState.Spill,
+                            LeafState.Active -> 7
+                            LeafState.Empty -> 11
+                        }
+                    }
+                    this.selected_swatch[i]
+                }
+                LeafSelection.Unselected -> {
+                    val i = if (dark_mode) {
+                        when (active) {
+                            LeafState.Active -> 6
+                            LeafState.Spill -> 5
+                            LeafState.Empty -> 0
+                        }
+                    } else {
+                        when (active) {
+                            LeafState.Active -> 5
+                            LeafState.Spill -> 6
+                            LeafState.Empty -> 11
+                        }
+                    }
+                    this.ctl_swatch[i]
+                }
             }
+
+            if (active == LeafState.Empty && dark_mode) {
+                background = background.copy(alpha = .5F)
+            }
+
+            return Pair(background, this.get_text(background))
         }
-        fun get_channel_swatch(channel: Int): Swatch {
-            return this.channel_swatches[channel % this.channel_swatches.size]
+
+        fun get_mute_color(active: LeafState, selected: LeafSelection, dark_mode: Boolean = false): Pair<Color, Color> {
+            return Pair(Color(0xFFFF0000), Color(0xFF00FFFF))
         }
+
+        fun get_std_color(channel: Int, line_offset: Int, active: LeafState, selected: LeafSelection, dark_mode: Boolean = false): Pair<Color, Color> {
+            var background = when (selected) {
+                LeafSelection.Primary -> {
+                    val i = when (active) {
+                        LeafState.Spill,
+                        LeafState.Active -> 6
+                        LeafState.Empty -> 9
+                    }
+                    this.selected_swatch[i]
+                }
+                LeafSelection.Secondary -> {
+                    val i = when (active) {
+                        LeafState.Spill,
+                        LeafState.Active -> 7
+                        LeafState.Empty -> 10
+                    }
+                    this.selected_swatch[i]
+                }
+                LeafSelection.Unselected -> {
+                    val i = if (dark_mode) {
+                        when (active) {
+                            LeafState.Active -> 5
+                            LeafState.Spill -> 4
+                            LeafState.Empty -> 1
+                        }
+                    } else {
+                        when (active) {
+                            LeafState.Active -> 5
+                            LeafState.Spill -> 7
+                            LeafState.Empty -> 11
+                        }
+                    }
+                    this.ctl_swatch[i]
+
+                    val swatch = this.channel_swatches[channel % this.channel_swatches.size]
+                    swatch[i + (line_offset % 2)]
+                }
+            }
+
+            if (active == LeafState.Empty && dark_mode) {
+                background = background.copy(alpha = .5F)
+            }
+
+            return Pair(background, this.get_text(background))
+        }
+
     }
 }

@@ -44,6 +44,7 @@ import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.selectAll
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CardElevation
@@ -57,6 +58,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldColors
@@ -98,6 +100,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.Button
+import com.qfs.pagan.composable.button.OutlinedButton
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.button.SmallButton
 import com.qfs.pagan.composable.button.SmallOutlinedButton
@@ -452,10 +455,14 @@ fun <T> SortableMenu(
                 Box {
                     Button(
                         modifier = Modifier
-                            .height(32.dp)
-                            .width(32.dp),
+                            .height(36.dp)
+                            .width(36.dp),
+                        colors = ButtonDefaults.buttonColors().copy(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
                         onClick = { expanded.value = !expanded.value },
-                        contentPadding = PaddingValues(4.dp),
+                        contentPadding = PaddingValues(6.dp),
                         content = {
                             Icon(
                                 painter = painterResource(R.drawable.icon_sort),
@@ -482,14 +489,9 @@ fun <T> SortableMenu(
             }
         }
 
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .background(
-                    MaterialTheme.colorScheme.surfaceContainerLow,
-                    RoundedCornerShape(8.dp)
-                )
+        Surface(
+            modifier = Modifier.clip(RoundedCornerShape(8.dp)),
+            tonalElevation = 2.dp
         ) {
             LazyColumn(
                 state = scroll_state,
@@ -506,20 +508,19 @@ fun <T> SortableMenu(
 
                     ProvideContentColorTextStyle(
                         if (default_index == i) {
-                            MaterialTheme.colorScheme.onSecondary
+                            MaterialTheme.colorScheme.onTertiary
                         } else {
                             MaterialTheme.colorScheme.onSurface
                         }
                     ) {
                         Row(
                             modifier = row_modifier
-                                .background(
+                                .then(
                                     if (default_index == i) {
-                                        MaterialTheme.colorScheme.secondary
+                                        Modifier.background(MaterialTheme.colorScheme.tertiary, RoundedCornerShape(8.dp))
                                     } else {
-                                        MaterialTheme.colorScheme.surfaceContainerHigh
-                                    },
-                                    shape = RoundedCornerShape(8.dp)
+                                        Modifier
+                                    }
                                 )
                                 .heightIn(dimensionResource(R.dimen.dialog_menu_line_height))
                                 .combinedClickable(
@@ -586,12 +587,13 @@ fun DrawerCard(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     ProvideContentColorTextStyle(contentColor = colors.contentColor) {
-        Box(
-            modifier
+        Surface(
+            modifier = modifier
                 .wrapContentWidth()
-                .background(color = colors.containerColor, shape)
                 .then(if (border != null) modifier.border(border) else modifier),
-            contentAlignment = Alignment.Center
+            color = colors.containerColor,
+            contentColor =  colors.contentColor,
+            shape = shape
         ) {
             Column(
                 modifier = Modifier
@@ -619,12 +621,11 @@ fun DialogCard(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     ProvideContentColorTextStyle(contentColor = colors.contentColor) {
-        Box(
-            modifier
+        Surface(
+            modifier = modifier
                 .wrapContentWidth()
-                .then(if (border != null) modifier.border(border) else modifier)
-                .background(color = colors.containerColor, shape),
-            contentAlignment = Alignment.Center
+                .then(if (border != null) modifier.border(border) else modifier),
+            shape = shape
         ) {
             Column(
                 modifier = Modifier
@@ -643,14 +644,16 @@ fun ColumnScope.DialogBar(modifier: Modifier = Modifier, positive: (() -> Unit)?
     Row(
         modifier = modifier
             .padding(
-                top = dimensionResource(R.dimen.dialog_bar_padding_vertical)
+                vertical = dimensionResource(R.dimen.dialog_bar_padding_vertical)
             ),
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically
     ) {
         negative?.let {
             SmallButton(
-                modifier = Modifier.weight(1F),
+                modifier = Modifier
+                    .height(dimensionResource(R.dimen.dialog_bar_button_height))
+                    .weight(1F),
                 onClick = it,
                 content = { SText(R.string.no) }
             )
@@ -660,9 +663,12 @@ fun ColumnScope.DialogBar(modifier: Modifier = Modifier, positive: (() -> Unit)?
                 Spacer(Modifier.width(12.dp))
             }
             SmallOutlinedButton(
-                modifier = Modifier.weight(1F),
+                modifier = Modifier
+                    .height(dimensionResource(R.dimen.dialog_bar_button_height))
+                    .weight(1F),
                 onClick = it,
-                content = { SText(android.R.string.cancel) }
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface),
+                content = { SText(android.R.string.cancel, maxLines = 1) }
             )
         }
         positive?.let {
@@ -670,7 +676,9 @@ fun ColumnScope.DialogBar(modifier: Modifier = Modifier, positive: (() -> Unit)?
                 Spacer(Modifier.width(12.dp))
             }
             SmallButton(
-                modifier = Modifier.weight(1F),
+                modifier = Modifier
+                    .height(dimensionResource(R.dimen.dialog_bar_button_height))
+                    .weight(1F),
                 onClick = it,
                 content = { SText(android.R.string.ok) }
             )
@@ -703,13 +711,28 @@ fun DropdownMenu(
     scrollState: ScrollState = rememberScrollState(),
     properties: PopupProperties = PopupProperties(focusable = true),
     shape: Shape = MenuDefaults.shape,
-    containerColor: Color = MaterialTheme.colorScheme.primaryContainer,
+    containerColor: Color = MaterialTheme.colorScheme.surface,
     tonalElevation: Dp = MenuDefaults.TonalElevation,
     shadowElevation: Dp = MenuDefaults.ShadowElevation,
     border: BorderStroke? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    OriginalDropdownMenu(expanded, onDismissRequest, modifier, offset, scrollState, properties, shape, containerColor, tonalElevation, shadowElevation, border, content)
+    ProvideContentColorTextStyle(MaterialTheme.colorScheme.onSurface) {
+        OriginalDropdownMenu(
+            expanded,
+            onDismissRequest,
+            modifier,
+            offset,
+            scrollState,
+            properties,
+            shape,
+            containerColor,
+            tonalElevation,
+            shadowElevation,
+            border,
+            content
+        )
+    }
 }
 
 @Composable

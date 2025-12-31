@@ -37,7 +37,9 @@ fun OutlinedButton(
     onLongClick: () -> Unit = {},
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    border: BorderStroke = ButtonDefaults.outlinedButtonBorder(),
 
+    outerPadding: PaddingValues = PaddingValues(0.dp),
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
     content: @Composable RowScope.() -> Unit
 ) {
@@ -48,7 +50,8 @@ fun OutlinedButton(
         enabled = enabled,
         colors = ButtonDefaults.outlinedButtonColors(),
         shape = ButtonDefaults.outlinedShape,
-        border = ButtonDefaults.outlinedButtonBorder(),
+        border = border,
+        outerPadding = outerPadding,
         contentPadding = contentPadding,
         content = content
     )
@@ -65,6 +68,7 @@ fun Button(
     colors: ButtonColors = ButtonDefaults.buttonColors(),
     border: BorderStroke? = null,
 
+    outerPadding: PaddingValues = PaddingValues(0.dp),
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
     content: @Composable RowScope.() -> Unit
 ) {
@@ -74,8 +78,8 @@ fun Button(
     ProvideContentColorTextStyle(contentColor = colors.contentColor, textStyle = TextStyle.Default) {
         Box(
             modifier = modifier
+                .padding(outerPadding)
                 .clip(shape)
-                //.padding(vertical = 2.dp, horizontal = 1.dp)
                 .then(if (border != null) Modifier.border(border, shape) else Modifier)
                 .then(
                     if (enabled) {
@@ -88,7 +92,7 @@ fun Button(
                         Modifier.background(color = colors.disabledContentColor, shape)
                     }
                 )
-                .minimumInteractiveComponentSize()
+                //.minimumInteractiveComponentSize()
                 .semantics { role = Role.Button },
             contentAlignment = Alignment.Center,
         ) {
@@ -127,11 +131,12 @@ fun SmallButton(
     colors: ButtonColors = ButtonDefaults.buttonColors(),
     border: BorderStroke? = null,
 
+    outerPadding: PaddingValues = PaddingValues(0.dp),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     content: @Composable RowScope.() -> Unit
 ) {
     ProvideTextStyle(MaterialTheme.typography.bodySmall) {
-        Button(onClick, onLongClick, modifier, enabled, shape, colors, border, contentPadding, content)
+        Button(onClick, onLongClick, modifier, enabled, shape, colors, border, outerPadding, contentPadding, content)
     }
 }
 
@@ -141,11 +146,21 @@ fun SmallOutlinedButton(
     onLongClick: () -> Unit = {},
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-
+    border: BorderStroke = ButtonDefaults.outlinedButtonBorder(),
+    outerPadding: PaddingValues = PaddingValues(0.dp),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     content: @Composable RowScope.() -> Unit
 ) {
     ProvideTextStyle(MaterialTheme.typography.bodySmall) {
-        OutlinedButton(onClick, onLongClick, modifier, enabled, contentPadding, content)
+        OutlinedButton(
+            onClick = onClick,
+            onLongClick = onLongClick,
+            modifier = modifier,
+            enabled = enabled,
+            border = border,
+            outerPadding = outerPadding,
+            contentPadding = contentPadding,
+            content = content
+        )
     }
 }

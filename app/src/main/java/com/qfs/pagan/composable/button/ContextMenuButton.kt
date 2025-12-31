@@ -66,7 +66,8 @@ fun TextCMenuButton(
 ) {
     Button(
         enabled = enabled,
-        modifier = modifier,
+        modifier = modifier
+            .height(dimensionResource(R.dimen.contextmenu_button_height)),
         contentPadding = contentPadding,
         shape = ContextMenuButtonShape(),
         onClick = onClick,

@@ -2,6 +2,7 @@ package com.qfs.pagan
 
 import android.net.Uri
 import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -2634,11 +2636,12 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         .height(4.dp)
                         .fillMaxWidth()
                 )
-                Box(
-                    Modifier
-                        .weight(1F, fill = false)
-                        .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(6.dp)),
-                    contentAlignment = Alignment.Center
+                Surface(
+                    modifier = Modifier.weight(1F, fill = false),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface),
+                    shape = RoundedCornerShape(6.dp),
+                    tonalElevation = 1.dp
+
                 ) {
                     FlowRow(
                         modifier = Modifier
@@ -2651,10 +2654,10 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                             val pair = state.value
                             val numer = remember { mutableIntStateOf(pair.first) }
                             val denom = remember { mutableIntStateOf(pair.second) }
-                            Box(
-                                Modifier
-                                    .padding(vertical = 3.dp)
-                                    .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(6.dp))
+                            Surface(
+                                Modifier.padding(vertical = 3.dp),
+                                shape = RoundedCornerShape(6.dp),
+                                tonalElevation = 2.dp
                             ) {
                                 Row(
                                     modifier = Modifier.padding(6.dp),

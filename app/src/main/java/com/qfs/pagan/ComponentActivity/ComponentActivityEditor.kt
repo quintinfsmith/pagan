@@ -18,11 +18,13 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -36,6 +38,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -63,6 +66,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -70,6 +74,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -1002,7 +1007,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             Box(
                 Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
                     .height(dimensionResource(R.dimen.line_height)),
                 contentAlignment = Alignment.BottomCenter,
                 content = {
@@ -1010,14 +1015,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         Modifier
                             .fillMaxWidth()
                             .height(dimensionResource(R.dimen.table_line_stroke))
-                            .background(MaterialTheme.colorScheme.onPrimaryContainer)
+                            .background(MaterialTheme.colorScheme.onSurfaceVariant)
                     )
                 }
             )
             Box(
                 Modifier
                     .fillMaxHeight()
-                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
                     .width(dimensionResource(R.dimen.line_label_width)),
                 contentAlignment = Alignment.CenterEnd,
                 content = {
@@ -1025,14 +1030,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         Modifier
                             .fillMaxHeight()
                             .width(dimensionResource(R.dimen.table_line_stroke))
-                            .background(MaterialTheme.colorScheme.onPrimaryContainer)
+                            .background(MaterialTheme.colorScheme.onSurfaceVariant)
                     )
                 }
             )
 
 
             Row {
-                ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onPrimaryContainer) {
+                ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onSurfaceVariant) {
                     Column {
                         ShortcutView(dispatcher, scope, scroll_state_h)
                         Column(Modifier.verticalScroll(scroll_state_v, overscrollEffect = null)) {
@@ -1043,7 +1048,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         Modifier
                                             .width(dimensionResource(R.dimen.line_label_width))
                                             .height(dimensionResource(R.dimen.channel_gap_size))
-                                            .background(MaterialTheme.colorScheme.onPrimaryContainer)
+                                            .background(MaterialTheme.colorScheme.onSurfaceVariant)
                                     ) { }
                                 }
 
@@ -1055,12 +1060,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 }
 
                                 Row(
-                                    Modifier
+                                    modifier = Modifier
                                         .height(use_height)
-                                        .width(dimensionResource(R.dimen.line_label_width))
-                                ) {
-                                    LineLabelView(modifier = Modifier.fillMaxSize(), dispatcher, ui_facade.line_data[y])
-                                }
+                                        .width(dimensionResource(R.dimen.line_label_width)),
+                                    content = { LineLabelView(modifier = Modifier.fillMaxSize(), dispatcher, ui_facade.line_data[y]) }
+                                )
                             }
                             Row(
                                 Modifier
@@ -1090,7 +1094,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 ) {
                     itemsIndexed(column_widths + listOf(1)) { x, width ->
                         if (x == column_widths.size) {
-                            ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onPrimaryContainer) {
+                            ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onSurfaceVariant) {
                                 Icon(
                                     modifier = Modifier
                                         .width(dimensionResource(R.dimen.base_leaf_width))
@@ -1158,7 +1162,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun ShortcutView(dispatcher: ActionTracker, scope: CoroutineScope, scroll_state: LazyListState) {
         HalfBorderBox(
             Modifier
-                .background(MaterialTheme.colorScheme.primaryContainer, shape = RectangleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant, shape = RectangleShape)
                 .width(dimensionResource(R.dimen.line_label_width))
                 .height(dimensionResource(R.dimen.line_height))
                 .combinedClickable(
@@ -1168,7 +1172,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         scope.launch { scroll_state.scrollToItem(0) }
                     }
                 ),
-            border_color = MaterialTheme.colorScheme.onPrimaryContainer,
+            border_color = MaterialTheme.colorScheme.onSurfaceVariant,
             content = {
                 Box(
                     Modifier.fillMaxSize(),
@@ -1220,13 +1224,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val ctl_type = line_info.ctl_type.value
         val (background, foreground) = if (!line_info.is_selected.value) {
             Pair(
-                MaterialTheme.colorScheme.primaryContainer,
-                MaterialTheme.colorScheme.onPrimaryContainer
+                MaterialTheme.colorScheme.surfaceVariant,
+                MaterialTheme.colorScheme.onSurfaceVariant
             )
         } else {
             Pair(
-                MaterialTheme.colorScheme.secondary,
-                MaterialTheme.colorScheme.onSecondary
+                MaterialTheme.colorScheme.tertiary,
+                MaterialTheme.colorScheme.onTertiary
             )
         }
 
@@ -1254,7 +1258,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         color = background
                     )
                     .fillMaxSize(),
-                border_color = MaterialTheme.colorScheme.onPrimaryContainer,
+                border_color = MaterialTheme.colorScheme.onSurfaceVariant,
                 content = {
                     if (ctl_type == null) {
                         val (label_a, label_b) = if (line_info.assigned_offset.value != null) {
@@ -1316,13 +1320,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun BeatLabelView(modifier: Modifier = Modifier, x: Int, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, column_info: ViewModelEditorState.ColumnData) {
         val (background, foreground) = if (!column_info.is_selected.value) {
             Pair(
-                MaterialTheme.colorScheme.primaryContainer,
-                MaterialTheme.colorScheme.onPrimaryContainer
+                MaterialTheme.colorScheme.surfaceVariant,
+                MaterialTheme.colorScheme.onSurfaceVariant
             )
         } else {
             Pair(
-                MaterialTheme.colorScheme.secondary,
-                MaterialTheme.colorScheme.onSecondary
+                MaterialTheme.colorScheme.tertiary,
+                MaterialTheme.colorScheme.onTertiary
             )
         }
         ProvideContentColorTextStyle(foreground, MaterialTheme.typography.labelMedium) {
@@ -1336,7 +1340,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         onClick = { dispatcher.cursor_select_column(x) },
                     )
                     .fillMaxSize(),
-                border_color = MaterialTheme.colorScheme.onPrimaryContainer,
+                border_color = MaterialTheme.colorScheme.onSurfaceVariant,
                 content = {
                     Box(
                         modifier = Modifier
@@ -1361,32 +1365,29 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     fun <T: OpusEvent> LeafView(channel_data: ViewModelEditorState.ChannelData?, line_data: ViewModelEditorState.LineData, leaf_data: ViewModelEditorState.LeafData, event: T?, radix: Int, modifier: Modifier = Modifier) {
-        val swatch = if ((channel_data != null && channel_data.is_mute.value) || line_data.is_mute.value) {
-            TableColorPalette.mute_swatch
+        val leaf_state = if (leaf_data.is_spillover.value) TableColorPalette.LeafState.Spill
+            else if (event != null) TableColorPalette.LeafState.Active
+            else TableColorPalette.LeafState.Empty
+        val leaf_selection = if (leaf_data.is_selected.value) TableColorPalette.LeafSelection.Primary
+            else if (leaf_data.is_secondary.value) TableColorPalette.LeafSelection.Secondary
+            else TableColorPalette.LeafSelection.Unselected
+
+        val dark_mode = this@ComponentActivityEditor.view_model.night_mode.value == AppCompatDelegate.MODE_NIGHT_YES || isSystemInDarkTheme()
+        val (leaf_color, text_color) = if (line_data.is_mute.value || channel_data.is_mute.value) {
+            TableColorPalette.get_mute_color(leaf_state, leaf_selection, dark_mode)
         } else if (line_data.ctl_type.value != null) {
-            TableColorPalette.ctl_swatch
-        } else {
-            TableColorPalette.get_channel_swatch(line_data.channel.value!!)
+                TableColorPalette.get_ctl_color(leaf_state, leaf_selection, dark_mode)
+            } else {
+                TableColorPalette.get_std_color(
+                    line_data.channel.value ?: 0,
+                    line_data.line_offset.value ?: 0,
+                    leaf_state,
+                    leaf_selection,
+                    dark_mode
+                )
+            }
         }
 
-        val (leaf_color, text_color) = if (event == null && !leaf_data.is_spillover.value) {
-            Pair(
-                TableColorPalette.get_line_color(
-                    line_data.line_offset.value ?: 0,
-                    leaf_data.is_selected.value,
-                    leaf_data.is_secondary.value,
-                    line_data.ctl_type.value != null
-                ),
-                Color(0xFFFF00FF)
-            )
-        } else {
-            swatch.get(
-                line_data.line_offset.value ?: 0,
-                leaf_data.is_selected.value,
-                leaf_data.is_secondary.value,
-                leaf_data.is_spillover.value
-            )
-        }
 
         ProvideContentColorTextStyle(text_color, MaterialTheme.typography.bodySmall) {
             HalfBorderBox(
@@ -1396,7 +1397,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 border_color = MaterialTheme.colorScheme.onBackground,
             ) {
                 Box(
-                    Modifier.fillMaxWidth(),
+                    Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     when (event) {

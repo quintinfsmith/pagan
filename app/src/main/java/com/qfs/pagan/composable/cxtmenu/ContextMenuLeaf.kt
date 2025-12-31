@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.SegmentedButton
@@ -66,7 +67,11 @@ fun RemoveButton(dispatcher: ActionTracker, cursor: ViewModelEditorState.CacheCu
 }
 
 @Composable
-fun DurationButton(dispatcher: ActionTracker, descriptor: ViewModelEditorState.EventDescriptor?, active_event: OpusEvent?) {
+fun DurationButton(
+    dispatcher: ActionTracker,
+    descriptor: ViewModelEditorState.EventDescriptor?,
+    active_event: OpusEvent?
+) {
     TextCMenuButton(
         modifier = Modifier.width(dimensionResource(R.dimen.contextmenu_button_width)),
         enabled = when (descriptor) {

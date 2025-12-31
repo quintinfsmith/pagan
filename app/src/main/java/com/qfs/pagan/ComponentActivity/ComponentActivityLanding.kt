@@ -15,10 +15,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -88,20 +92,36 @@ class ComponentActivityLanding: PaganComponentActivity() {
                 ButtonRecent()
                 Padder()
             }
-            Row {
+            if (!this@ComponentActivityLanding.view_model.has_saved_project.value) {
                 ButtonNew(Modifier.weight(1F))
-                if (this@ComponentActivityLanding.view_model.has_saved_project.value) {
+            } else {
+                val corner_radius = 32.dp
+                Row {
+                    ButtonNew(
+                        Modifier.weight(1F),
+                        RoundedCornerShape(corner_radius, 0.dp, 0.dp, corner_radius)
+                    )
                     Padder()
-                    ButtonLoad(Modifier.weight(1F))
+                    ButtonLoad(
+                        Modifier.weight(1F),
+                        RoundedCornerShape(0.dp, corner_radius, corner_radius, 0.dp)
+                    )
                 }
             }
             Padder()
             ButtonImport()
             Padder()
             Row {
-                ButtonSettings(Modifier.weight(1F))
+                val corner_radius = 32.dp
+                ButtonSettings(
+                    Modifier.weight(1F),
+                    RoundedCornerShape(corner_radius, 0.dp, 0.dp, corner_radius)
+                )
                 Padder()
-                ButtonAbout(Modifier.weight(1F))
+                ButtonAbout(
+                    Modifier.weight(1F),
+                    RoundedCornerShape(0.dp, corner_radius, corner_radius, 0.dp)
+                )
             }
         }
     }
@@ -118,7 +138,9 @@ class ComponentActivityLanding: PaganComponentActivity() {
     @Composable
     fun ButtonRecent(modifier: Modifier = Modifier) {
         Button(
-            modifier = modifier.fillMaxWidth(),
+            modifier = modifier
+                .height(dimensionResource(R.dimen.landing_button_height))
+                .fillMaxWidth(),
             content = { Text(stringResource(R.string.btn_landing_most_recent)) },
             onClick = {
                 this@ComponentActivityLanding.startActivity(
@@ -131,10 +153,16 @@ class ComponentActivityLanding: PaganComponentActivity() {
     }
 
     @Composable
-    fun ButtonNew(modifier: Modifier = Modifier) {
+    fun ButtonNew(
+        modifier: Modifier = Modifier,
+        shape: Shape = ButtonDefaults.shape
+    ) {
         Button(
-            modifier = modifier.fillMaxWidth(),
+            modifier = modifier
+                .height(dimensionResource(R.dimen.landing_button_height))
+                .fillMaxWidth(),
             content = { Text(stringResource(R.string.btn_landing_new)) },
+            shape = shape,
             onClick = {
                 thread {
                     this@ComponentActivityLanding.startActivity(
@@ -149,19 +177,23 @@ class ComponentActivityLanding: PaganComponentActivity() {
     }
 
     @Composable
-    fun ButtonLoad(modifier: Modifier = Modifier) {
+    fun ButtonLoad(
+        modifier: Modifier = Modifier,
+        shape: Shape = ButtonDefaults.shape
+    ) {
         Button(
-            modifier = modifier.fillMaxWidth(),
+            modifier = modifier
+                .height(dimensionResource(R.dimen.landing_button_height))
+                .fillMaxWidth(),
             content = { Text(stringResource(R.string.btn_landing_load)) },
+            shape = shape,
             onClick = {
                 this.load_menu_dialog {
-                    thread {
-                        this@ComponentActivityLanding.startActivity(
-                            Intent(this@ComponentActivityLanding, ComponentActivityEditor::class.java).apply {
-                                this.data = it
-                            }
-                        )
-                    }
+                    this@ComponentActivityLanding.startActivity(
+                        Intent(this@ComponentActivityLanding, ComponentActivityEditor::class.java).apply {
+                            this.data = it
+                        }
+                    )
                 }
             }
         )
@@ -171,7 +203,9 @@ class ComponentActivityLanding: PaganComponentActivity() {
     @Composable
     fun ButtonImport(modifier: Modifier = Modifier) {
         Button(
-            modifier = modifier.fillMaxWidth(),
+            modifier = modifier
+                .height(dimensionResource(R.dimen.landing_button_height))
+                .fillMaxWidth(),
             content = { Text(stringResource(R.string.btn_landing_import)) },
             onClick = {
                 this.result_launcher_import_project.launch(
@@ -186,9 +220,15 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
 
     @Composable
-    fun ButtonSettings(modifier: Modifier = Modifier) {
+    fun ButtonSettings(
+        modifier: Modifier = Modifier,
+        shape: Shape = ButtonDefaults.shape
+    ) {
         Button(
-            modifier = modifier.fillMaxWidth(),
+            modifier = modifier
+                .height(dimensionResource(R.dimen.landing_button_height))
+                .fillMaxWidth(),
+            shape = shape,
             content = { Text(stringResource(R.string.btn_landing_settings)) },
             onClick = {
                 this@ComponentActivityLanding.result_launcher_settings.launch(
@@ -199,9 +239,15 @@ class ComponentActivityLanding: PaganComponentActivity() {
     }
 
     @Composable
-    fun ButtonAbout(modifier: Modifier = Modifier) {
+    fun ButtonAbout(
+        modifier: Modifier = Modifier,
+        shape: Shape = ButtonDefaults.shape
+    ) {
         Button(
-            modifier = modifier.fillMaxWidth(),
+            modifier = modifier
+                .height(dimensionResource(R.dimen.landing_button_height))
+                .fillMaxWidth(),
+            shape = shape,
             content = { Text(stringResource(R.string.btn_landing_about)) },
             onClick = {
                 this@ComponentActivityLanding.startActivity(Intent(this@ComponentActivityLanding, ComponentActivityAbout::class.java))

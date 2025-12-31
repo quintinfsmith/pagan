@@ -369,6 +369,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                     DialogSTitle(R.string.dialog_select_soundfont)
                                     Spacer(modifier = Modifier.weight(1F))
                                     Button(
+                                        modifier = Modifier.height(dimensionResource(R.dimen.sf_menu_icon_height)),
                                         contentPadding = PaddingValues(8.dp),
                                         content = {
                                             Icon(
@@ -384,6 +385,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                     )
                                     MenuPadder()
                                     Button(
+                                        modifier = Modifier.height(dimensionResource(R.dimen.sf_menu_icon_height)),
                                         contentPadding = PaddingValues(8.dp),
                                         content = {
                                             Icon(

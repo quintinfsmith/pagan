@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,44 +41,32 @@ fun ColumnScope.CMPadding() {
 
 @Composable
 fun CMBoxBottom(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
-    ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onSurface) {
-        Box(
-            modifier
-                .background(
-                    MaterialTheme.colorScheme.surface,
-                    CMBoxBottomShape()
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                Modifier.padding(
-                    top = dimensionResource(R.dimen.contextmenu_padding),
-                    start = dimensionResource(R.dimen.contextmenu_padding),
-                    end = dimensionResource(R.dimen.contextmenu_padding),
-                    bottom = 0.dp
-                ),
-                content = content
-            )
-        }
+    Surface(
+        modifier = modifier,
+        shape = CMBoxBottomShape()
+    ) {
+        Column(
+            Modifier.padding(
+                top = dimensionResource(R.dimen.contextmenu_padding),
+                start = dimensionResource(R.dimen.contextmenu_padding),
+                end = dimensionResource(R.dimen.contextmenu_padding),
+                bottom = 0.dp
+            ),
+            content = content
+        )
     }
 }
 
 @Composable
 fun CMBoxEnd(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
-    ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onSurface) {
-        Box(
-            modifier
-                .background(
-                    MaterialTheme.colorScheme.surface,
-                    CMBoxEndShape()
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                Modifier.padding(dimensionResource(R.dimen.contextmenu_padding)),
-                content = content
-            )
-        }
+    Surface(
+        modifier = modifier,
+        shape = CMBoxEndShape()
+    ) {
+        Column(
+            Modifier.padding(dimensionResource(R.dimen.contextmenu_padding)),
+            content = content
+        )
     }
 }
 

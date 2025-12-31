@@ -38,7 +38,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -66,7 +65,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -74,7 +72,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -921,6 +918,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     fun get_context_menu_primary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: ViewModelPagan.LayoutSize): (@Composable () -> Unit)? {
+        if (ui_facade.playback_state_midi.value == PlaybackState.Playing || ui_facade.playback_state_soundfont.value == PlaybackState.Playing) return null
+
         val cursor = ui_facade.active_cursor.value
         return when (cursor?.type) {
             CursorMode.Line -> {
@@ -945,6 +944,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     fun get_context_menu_secondary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: ViewModelPagan.LayoutSize): (@Composable () -> Unit)? {
+        if (ui_facade.playback_state_midi.value == PlaybackState.Playing || ui_facade.playback_state_soundfont.value == PlaybackState.Playing) return null
         val cursor = ui_facade.active_cursor.value ?: return null
         if (cursor.type == CursorMode.Unset) return null
 
@@ -1373,20 +1373,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
             else TableColorPalette.LeafSelection.Unselected
 
         val dark_mode = this@ComponentActivityEditor.view_model.night_mode.value == AppCompatDelegate.MODE_NIGHT_YES || isSystemInDarkTheme()
-        val (leaf_color, text_color) = if (line_data.is_mute.value || channel_data.is_mute.value) {
-            TableColorPalette.get_mute_color(leaf_state, leaf_selection, dark_mode)
-        } else if (line_data.ctl_type.value != null) {
-                TableColorPalette.get_ctl_color(leaf_state, leaf_selection, dark_mode)
-            } else {
-                TableColorPalette.get_std_color(
-                    line_data.channel.value ?: 0,
-                    line_data.line_offset.value ?: 0,
-                    leaf_state,
-                    leaf_selection,
-                    dark_mode
-                )
-            }
-        }
+        val (leaf_color, text_color) = TableColorPalette.get_color(
+            leaf_state,
+            leaf_selection,
+            line_data.ctl_type.value != null,
+            line_data.is_mute.value || channel_data?.is_mute?.value == true,
+            dark_mode
+        )
 
 
         ProvideContentColorTextStyle(text_color, MaterialTheme.typography.bodySmall) {

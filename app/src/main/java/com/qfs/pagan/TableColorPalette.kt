@@ -15,27 +15,51 @@ class TableColorPalette {
     }
 
     companion object {
-        val DEFAULT_CHANNEL_COLORS = arrayOf(
-            Color(0xFF765bd5),
-            Color(0xFF9250a8)
-        )
-        val BASE_SELECT = Color(0xFF0064FF)
+        val LEAF_COLOR = Color(0xFF765bd5)
+        val LEAF_COLOR_SPILL = Color(0xFF5944a3)
+        val LEAF_COLOR_SELECTED = Color(0xFF2636b2)
+        val LEAF_COLOR_SECONDARY = Color(0xFF4F5BBC)
+        val LEAF_COLOR_INVALID = Color(0xFFe51C3A)
+        val LEAF_COLOR_INVALID_SELECTED = Color(0xFF890E21)
 
-        val channel_swatches = Array<Array<Color>>(this.DEFAULT_CHANNEL_COLORS.size) {
-            MaterialColorCalculator.get(this.DEFAULT_CHANNEL_COLORS[it])
-        }
+        val EFFECT_COLOR = Color(0xFFCB9C10)
+        val EFFECT_COLOR_SPILL = Color(0xFF886E20)
+        val EFFECT_COLOR_SELECTED = Color(0xFF095660)
+        val EFFECT_COLOR_SECONDARY = Color(0xFF567B80)
 
-        val mute_swatch = MaterialColorCalculator.get(Color(0xFFFFFFFF))
-        val selected_swatch = MaterialColorCalculator.get(this.BASE_SELECT)
-        //.val selected_swatch = arrayOf<Color>(
-        //.    Color(0xFF0091FF), // Empty
-        //.    Color(0xFF2499E1), // Empty Secondary
-        //.    Color(0xFF2636b2), // Active
-        //.    Color(0xFF4f5bbc), // Active Secondary
-        //.    Color(0xFF385AF3), // Spill
-        //.    Color(0xFF3147A8), // Spill Secondary
-        //.)
-        val ctl_swatch = MaterialColorCalculator.get(Color(0xFFFFD500))
+        val LINE_COLOR = Color(0xFFEFEFEF)
+        val LINE_COLOR_NIGHT = Color(0xFF232323)
+        val LINE_SELECTED = Color(0xFF5BA1D6)
+        val LINE_COLOR_SECONDARY = Color(0x995Ba1D6)
+
+        val MUTED_LEAF_COLOR = Color(0xFF6E6E6E)
+        val MUTED_LEAF_SPILL = Color(0xFF53533)
+        val MUTED_LEAF_SELECTED = Color(0xFF444444)
+        val MUTED_LEAF_SECONDARY = Color(0xFF626262)
+        val MUTED_LINE_SELECTED = Color(0xFF999999)
+        val MUTED_LINE_COLOR = Color(0xFF454545)
+        val MUTED_SECONDARY = Color(0xFF929292)
+
+        val MUTED_LEAF_COLOR_NIGHT = Color(0xFF7E7E7E)
+        val MUTED_LEAF_SPILL_NIGHT = Color(0xFF7e7e7e)
+        val MUTED_LEAF_SELECTED_NIGHT = Color(0xFFA9A9A9)
+        val MUTED_LEAF_SECONDARY_NIGHT = Color(0xFF929292)
+        val MUTED_LINE_SELECTED_NIGHT = Color(0xFFA9a9a9)
+        val MUTED_LINE_COLOR_NIGHT = Color(0xFF454545)
+        val MUTED_SECONDARY_NIGHT = Color(0xFF929292)
+
+
+        //<color name="ctl_leaf_text">#FF000000</color>
+        //<color name="ctl_leaf_selected_text">#FFFFFF</color>
+        // <color name="leaf_text">#000000</color>
+        // <color name="leaf_selected_text">#FFFFFF</color>
+        // <color name="leaf_secondary_text">#000000</color>
+        // <color name="leaf_invalid">#E51C3A</color>
+        // <color name="leaf_invalid_text">#FFFFFF</color>
+        // <color name="leaf_invalid_selected_text">#A27E7E</color>
+
+
+
 
         fun get_text(input: Color): Color {
             val avg = (input.red + input.green + input.blue) / 3F
@@ -43,115 +67,121 @@ class TableColorPalette {
                 else  Color(0xFFFFFFFF)
         }
 
-
-        fun get_ctl_color(active: LeafState, selected: LeafSelection, dark_mode: Boolean = false): Pair<Color, Color> {
-            var background = when (selected) {
-                LeafSelection.Primary -> {
-                    val i = if (dark_mode) {
-                        when (active) {
-                            LeafState.Spill,
-                            LeafState.Active -> 9
-                            LeafState.Empty -> 11
+        fun get_color(
+            active: LeafState,
+            selected: LeafSelection,
+            is_effect_line: Boolean,
+            is_muted: Boolean,
+            dark_mode: Boolean = false
+        ): Pair<Color, Color> {
+            val background = if (is_muted) {
+                if (dark_mode) {
+                    when (active) {
+                        LeafState.Active,
+                        LeafState.Spill -> {
+                            when (selected) {
+                                LeafSelection.Primary -> this.MUTED_LEAF_SELECTED_NIGHT
+                                LeafSelection.Secondary -> this.MUTED_LEAF_SECONDARY_NIGHT
+                                LeafSelection.Unselected -> this.MUTED_LEAF_COLOR_NIGHT
+                            }
                         }
-                    } else {
-                        when (active) {
-                            LeafState.Spill,
-                            LeafState.Active -> 6
-                            LeafState.Empty -> 10
+                        LeafState.Empty -> {
+                            when (selected) {
+                                LeafSelection.Primary -> this.MUTED_LINE_SELECTED_NIGHT
+                                LeafSelection.Secondary -> this.MUTED_LINE_SELECTED_NIGHT
+                                LeafSelection.Unselected -> this.MUTED_LINE_COLOR_NIGHT
+                            }
                         }
                     }
-                    this.selected_swatch[i]
+                } else {
+                    when (active) {
+                        LeafState.Active,
+                        LeafState.Spill -> {
+                            when (selected) {
+                                LeafSelection.Primary -> this.MUTED_LEAF_SELECTED
+                                LeafSelection.Secondary -> this.MUTED_LEAF_SECONDARY
+                                LeafSelection.Unselected -> this.MUTED_LEAF_COLOR
+                            }
+                        }
+                        LeafState.Empty -> {
+                            when (selected) {
+                                LeafSelection.Primary -> this.MUTED_LINE_SELECTED
+                                LeafSelection.Secondary -> this.MUTED_LINE_SELECTED // TODO?
+                                LeafSelection.Unselected -> this.MUTED_LINE_COLOR
+                            }
+                        }
+                    }
                 }
-                LeafSelection.Secondary -> {
-                    val i = if (dark_mode) {
-                        when (active) {
-                            LeafState.Spill,
-                            LeafState.Active -> 8
-                            LeafState.Empty -> 10
-                        }
-                    } else {
-                        when (active) {
-                            LeafState.Spill,
-                            LeafState.Active -> 7
-                            LeafState.Empty -> 11
+            } else if (is_effect_line) {
+                when (active) {
+                    LeafState.Active -> {
+                        when (selected) {
+                            LeafSelection.Primary -> this.EFFECT_COLOR_SELECTED
+                            LeafSelection.Secondary -> this.EFFECT_COLOR_SECONDARY
+                            LeafSelection.Unselected -> this.EFFECT_COLOR
                         }
                     }
-                    this.selected_swatch[i]
+                    LeafState.Spill -> {
+                        when (selected) {
+                            LeafSelection.Primary -> this.EFFECT_COLOR_SELECTED
+                            LeafSelection.Secondary -> this.EFFECT_COLOR_SECONDARY
+                            LeafSelection.Unselected -> this.EFFECT_COLOR_SPILL
+                        }
+                    }
+                    LeafState.Empty -> {
+                        if (dark_mode) {
+                            when (selected) {
+                                LeafSelection.Primary -> this.LINE_SELECTED
+                                LeafSelection.Secondary -> this.LINE_COLOR_SECONDARY
+                                LeafSelection.Unselected -> this.LINE_COLOR_NIGHT
+                            }
+                        } else {
+                            when (selected) {
+                                LeafSelection.Primary -> this.LINE_SELECTED
+                                LeafSelection.Secondary -> this.LINE_COLOR_SECONDARY
+                                LeafSelection.Unselected -> this.LINE_COLOR
+                            }
+                        }
+                    }
                 }
-                LeafSelection.Unselected -> {
-                    val i = if (dark_mode) {
-                        when (active) {
-                            LeafState.Active -> 6
-                            LeafState.Spill -> 5
-                            LeafState.Empty -> 0
-                        }
-                    } else {
-                        when (active) {
-                            LeafState.Active -> 5
-                            LeafState.Spill -> 6
-                            LeafState.Empty -> 11
+            } else {
+                when (active) {
+                    LeafState.Active -> {
+                        when (selected) {
+                            LeafSelection.Primary -> this.LEAF_COLOR_SELECTED
+                            LeafSelection.Secondary -> this.LEAF_COLOR_SECONDARY
+                            LeafSelection.Unselected -> this.LEAF_COLOR
                         }
                     }
-                    this.ctl_swatch[i]
+                    LeafState.Spill -> {
+                        when (selected) {
+                            LeafSelection.Primary -> this.LEAF_COLOR_SELECTED
+                            LeafSelection.Secondary -> this.LEAF_COLOR_SECONDARY
+                            LeafSelection.Unselected -> this.LEAF_COLOR_SPILL
+                        }
+                    }
+                    LeafState.Empty -> {
+                        if (dark_mode) {
+                            when (selected) {
+                                LeafSelection.Primary -> this.LINE_SELECTED
+                                LeafSelection.Secondary -> this.LINE_COLOR_SECONDARY
+                                LeafSelection.Unselected -> this.LINE_COLOR_NIGHT
+                            }
+                        } else {
+                            when (selected) {
+                                LeafSelection.Primary -> this.LINE_SELECTED
+                                LeafSelection.Secondary -> this.LINE_COLOR_SECONDARY
+                                LeafSelection.Unselected -> this.LINE_COLOR
+                            }
+                        }
+                    }
                 }
             }
 
-            if (active == LeafState.Empty && dark_mode) {
-                background = background.copy(alpha = .5F)
-            }
-
-            return Pair(background, this.get_text(background))
+            return Pair(
+                background,
+                this.get_text(background)
+            )
         }
-
-        fun get_mute_color(active: LeafState, selected: LeafSelection, dark_mode: Boolean = false): Pair<Color, Color> {
-            return Pair(Color(0xFFFF0000), Color(0xFF00FFFF))
-        }
-
-        fun get_std_color(channel: Int, line_offset: Int, active: LeafState, selected: LeafSelection, dark_mode: Boolean = false): Pair<Color, Color> {
-            var background = when (selected) {
-                LeafSelection.Primary -> {
-                    val i = when (active) {
-                        LeafState.Spill,
-                        LeafState.Active -> 6
-                        LeafState.Empty -> 9
-                    }
-                    this.selected_swatch[i]
-                }
-                LeafSelection.Secondary -> {
-                    val i = when (active) {
-                        LeafState.Spill,
-                        LeafState.Active -> 7
-                        LeafState.Empty -> 10
-                    }
-                    this.selected_swatch[i]
-                }
-                LeafSelection.Unselected -> {
-                    val i = if (dark_mode) {
-                        when (active) {
-                            LeafState.Active -> 5
-                            LeafState.Spill -> 4
-                            LeafState.Empty -> 1
-                        }
-                    } else {
-                        when (active) {
-                            LeafState.Active -> 5
-                            LeafState.Spill -> 7
-                            LeafState.Empty -> 11
-                        }
-                    }
-                    this.ctl_swatch[i]
-
-                    val swatch = this.channel_swatches[channel % this.channel_swatches.size]
-                    swatch[i + (line_offset % 2)]
-                }
-            }
-
-            if (active == LeafState.Empty && dark_mode) {
-                background = background.copy(alpha = .5F)
-            }
-
-            return Pair(background, this.get_text(background))
-        }
-
     }
 }

@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 
@@ -33,52 +34,45 @@ import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 fun ScaffoldWithTopBar(
     modifier: Modifier = Modifier,
     top_app_bar: @Composable RowScope.() -> Unit,
-    force_night_mode: MutableState<Int>,
     content: @Composable (PaddingValues) -> Unit,
+    night_mode: Boolean,
     drawerState: DrawerState,
     gesturesEnabled: Boolean,
     drawerContent: @Composable () -> Unit
 ) {
-    val is_night_mode = when (force_night_mode.value) {
-        AppCompatDelegate.MODE_NIGHT_YES -> true
-        AppCompatDelegate.MODE_NIGHT_NO -> false
-        else -> isSystemInDarkTheme()
-    }
-    PaganTheme(is_night_mode) {
-        ModalNavigationDrawer(
-            modifier = modifier,
-            drawerState = drawerState,
-            gesturesEnabled = gesturesEnabled,
-            drawerContent = drawerContent,
-        ) {
-            Scaffold(
-                topBar = {
-                    val (foreground, background) = if (is_night_mode) {
-                        Pair(
-                            MaterialTheme.colorScheme.onSurface,
-                            MaterialTheme.colorScheme.surface,
-                        )
-                    } else {
-                        Pair(
-                            MaterialTheme.colorScheme.onPrimary,
-                            MaterialTheme.colorScheme.primary,
-                        )
-                    }
-                    ProvideContentColorTextStyle(
-                        contentColor = foreground
-                    ) {
-                        Row(
-                            modifier = Modifier.background(color = background),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            content = top_app_bar
-                        )
-                    }
-                },
-                //bottomBar = { Text("")},
-                content = content,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
+    ModalNavigationDrawer(
+        modifier = modifier,
+        drawerState = drawerState,
+        gesturesEnabled = gesturesEnabled,
+        drawerContent = drawerContent,
+    ) {
+        Scaffold(
+            topBar = {
+                val (foreground, background) = if (night_mode) {
+                    Pair(
+                        MaterialTheme.colorScheme.onSurface,
+                        MaterialTheme.colorScheme.surface,
+                    )
+                } else {
+                    Pair(
+                        MaterialTheme.colorScheme.onPrimary,
+                        MaterialTheme.colorScheme.primary,
+                    )
+                }
+                ProvideContentColorTextStyle(
+                    contentColor = foreground
+                ) {
+                    Row(
+                        modifier = Modifier.background(color = background),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        content = top_app_bar
+                    )
+                }
+            },
+            //bottomBar = { Text("")},
+            content = content,
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }

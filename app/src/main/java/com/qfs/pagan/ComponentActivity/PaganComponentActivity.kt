@@ -8,11 +8,15 @@ import android.provider.DocumentsContract.Document.COLUMN_MIME_TYPE
 import android.provider.DocumentsContract.Document.MIME_TYPE_DIR
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -44,6 +48,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -56,6 +61,7 @@ import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.DialogCard
 import com.qfs.pagan.composable.DialogTitle
+import com.qfs.pagan.composable.PaganTheme
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.ScaffoldWithTopBar
 import com.qfs.pagan.composable.button.Button
@@ -126,7 +132,17 @@ abstract class PaganComponentActivity: ComponentActivity() {
         view_model.load_config("${this.applicationContext.filesDir}/pagan.cfg")
         this.on_config_load()
 
-        this.setContent {
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(
+                scrim = 0x000000,
+            ),
+            navigationBarStyle = SystemBarStyle.light(
+                scrim = 0x000000,
+                darkScrim = 0x000000
+            )
+        )
+
+        setContent {
             this.drawer_state = rememberDrawerState(DrawerValue.Closed) { state ->
                 this.drawer_gesture_enabled.value = state == DrawerValue.Open
                 true
@@ -139,94 +155,106 @@ abstract class PaganComponentActivity: ComponentActivity() {
                     this.finish()
                 }
             }
-            ScaffoldWithTopBar(
-                modifier = Modifier
-                    .systemBarsPadding()
-                    .wrapContentWidth(),
-                top_app_bar = { this.TopBar() },
-                force_night_mode = this@PaganComponentActivity.view_model.night_mode,
-                drawerState = this.drawer_state,
-                gesturesEnabled = this.drawer_gesture_enabled.value,
-                drawerContent = { this.Drawer() },
-                content = {
-                    BoxWithConstraints(modifier = Modifier.padding(it)) {
-                        view_model.set_layout_size(this.maxWidth, this.maxHeight)
-                        Box(
-                            modifier = Modifier
-                                .padding(32.dp)
-                                .fillMaxSize()
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.rowanleaf_no_padding),
-                                tint = colorResource(R.color.main_background_etching),
-                                contentDescription = "",
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        }
+            val is_night_mode = when (this.view_model.night_mode.value) {
+                AppCompatDelegate.MODE_NIGHT_YES -> true
+                AppCompatDelegate.MODE_NIGHT_NO -> false
+                else -> isSystemInDarkTheme()
+            }
 
-                        // Popup Dialogs --------------------------------
-                        var current_dialog = view_model.dialog_queue.value
-                        val dialogs = mutableListOf<DialogChain>()
-                        while (current_dialog != null) {
-                            dialogs.add(current_dialog)
-                            current_dialog = current_dialog.parent
-                        }
-                        for (dialog in dialogs.reversed()) {
-                            Dialog(onDismissRequest = { view_model.dialog_queue.value = dialog.parent }) {
-                                DialogCard(
-                                    // TODO: These are just roughed in. need to put more thought in and check later
-                                    modifier = when (view_model.get_layout_size()) {
-                                        ViewModelPagan.LayoutSize.SmallPortrait,
-                                        ViewModelPagan.LayoutSize.SmallLandscape,
-                                        ViewModelPagan.LayoutSize.MediumPortrait -> Modifier
+            PaganTheme(is_night_mode) {
+                Box(
+                    Modifier
+                        .background(MaterialTheme.colorScheme.scrim)
+                        .systemBarsPadding()
+                ) {
+                    ScaffoldWithTopBar(
+                        modifier = Modifier.wrapContentWidth(),
+                        top_app_bar = { this.TopBar() },
+                        drawerState = this@PaganComponentActivity.drawer_state,
+                        gesturesEnabled = this@PaganComponentActivity.drawer_gesture_enabled.value,
+                        night_mode = is_night_mode,
+                        drawerContent = { this@PaganComponentActivity.Drawer() },
+                        content = {
+                            BoxWithConstraints(modifier = Modifier.padding(it)) {
+                                view_model.set_layout_size(this.maxWidth, this.maxHeight)
+                                Box(
+                                    modifier = Modifier
+                                        .padding(32.dp)
+                                        .fillMaxSize()
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.rowanleaf_no_padding),
+                                        tint = colorResource(R.color.main_background_etching),
+                                        contentDescription = "",
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
 
-                                        ViewModelPagan.LayoutSize.LargePortrait,
-                                        ViewModelPagan.LayoutSize.MediumLandscape -> {
-                                            when (dialog.size) {
-                                                ViewModelPagan.DialogSize.Unbounded -> Modifier
-                                                ViewModelPagan.DialogSize.Small -> Modifier.width(200.dp)
-                                                ViewModelPagan.DialogSize.Medium -> Modifier.width(400.dp)
-                                            }
-                                        }
+                                // Popup Dialogs --------------------------------
+                                var current_dialog = view_model.dialog_queue.value
+                                val dialogs = mutableListOf<DialogChain>()
+                                while (current_dialog != null) {
+                                    dialogs.add(current_dialog)
+                                    current_dialog = current_dialog.parent
+                                }
+                                for (dialog in dialogs.reversed()) {
+                                    Dialog(onDismissRequest = { view_model.dialog_queue.value = dialog.parent }) {
+                                        DialogCard(
+                                            // TODO: These are just roughed in. need to put more thought in and check later
+                                            modifier = when (view_model.get_layout_size()) {
+                                                ViewModelPagan.LayoutSize.SmallPortrait,
+                                                ViewModelPagan.LayoutSize.SmallLandscape,
+                                                ViewModelPagan.LayoutSize.MediumPortrait -> Modifier
 
-                                        ViewModelPagan.LayoutSize.XLargePortrait,
-                                        ViewModelPagan.LayoutSize.XLargeLandscape,
-                                        ViewModelPagan.LayoutSize.LargeLandscape -> {
-                                            when (dialog.size) {
-                                                ViewModelPagan.DialogSize.Unbounded -> Modifier
-                                                ViewModelPagan.DialogSize.Small -> Modifier.width(300.dp)
-                                                ViewModelPagan.DialogSize.Medium -> Modifier.width(SIZE_L.second)
-                                            }
-                                        }
-                                    },
-                                    content = dialog.dialog
-                                )
+                                                ViewModelPagan.LayoutSize.LargePortrait,
+                                                ViewModelPagan.LayoutSize.MediumLandscape -> {
+                                                    when (dialog.size) {
+                                                        ViewModelPagan.DialogSize.Unbounded -> Modifier
+                                                        ViewModelPagan.DialogSize.Small -> Modifier.width(200.dp)
+                                                        ViewModelPagan.DialogSize.Medium -> Modifier.width(400.dp)
+                                                    }
+                                                }
+
+                                                ViewModelPagan.LayoutSize.XLargePortrait,
+                                                ViewModelPagan.LayoutSize.XLargeLandscape,
+                                                ViewModelPagan.LayoutSize.LargeLandscape -> {
+                                                    when (dialog.size) {
+                                                        ViewModelPagan.DialogSize.Unbounded -> Modifier
+                                                        ViewModelPagan.DialogSize.Small -> Modifier.width(300.dp)
+                                                        ViewModelPagan.DialogSize.Medium -> Modifier.width(SIZE_L.second)
+                                                    }
+                                                }
+                                            },
+                                            content = dialog.dialog
+                                        )
+                                    }
+                                }
+                                // -----------------------------------------------
+                                when (view_model.get_layout_size()) {
+                                    ViewModelPagan.LayoutSize.SmallPortrait -> LayoutSmallPortrait()
+                                    ViewModelPagan.LayoutSize.MediumPortrait -> LayoutMediumPortrait()
+                                    ViewModelPagan.LayoutSize.LargePortrait -> LayoutLargePortrait()
+                                    ViewModelPagan.LayoutSize.XLargePortrait -> LayoutXLargePortrait()
+                                    ViewModelPagan.LayoutSize.SmallLandscape -> LayoutSmallLandscape()
+                                    ViewModelPagan.LayoutSize.MediumLandscape -> LayoutMediumLandscape()
+                                    ViewModelPagan.LayoutSize.LargeLandscape -> LayoutLargeLandscape()
+                                    ViewModelPagan.LayoutSize.XLargeLandscape -> LayoutXLargeLandscape()
+                                }
+
+
+                                if (this@PaganComponentActivity.view_model.loading_spinner_visible.value) {
+                                    Box(
+                                        Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator(modifier = Modifier.width(128.dp))
+                                    }
+                                }
                             }
                         }
-                        // -----------------------------------------------
-                        when (view_model.get_layout_size()) {
-                            ViewModelPagan.LayoutSize.SmallPortrait -> LayoutSmallPortrait()
-                            ViewModelPagan.LayoutSize.MediumPortrait -> LayoutMediumPortrait()
-                            ViewModelPagan.LayoutSize.LargePortrait -> LayoutLargePortrait()
-                            ViewModelPagan.LayoutSize.XLargePortrait -> LayoutXLargePortrait()
-                            ViewModelPagan.LayoutSize.SmallLandscape -> LayoutSmallLandscape()
-                            ViewModelPagan.LayoutSize.MediumLandscape -> LayoutMediumLandscape()
-                            ViewModelPagan.LayoutSize.LargeLandscape -> LayoutLargeLandscape()
-                            ViewModelPagan.LayoutSize.XLargeLandscape -> LayoutXLargeLandscape()
-                        }
-
-
-                        if (this@PaganComponentActivity.view_model.loading_spinner_visible.value) {
-                            Box(
-                                Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator(modifier = Modifier.width(128.dp))
-                            }
-                        }
-                    }
+                    )
                 }
-            )
+            }
         }
     }
 

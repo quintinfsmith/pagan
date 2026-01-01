@@ -118,9 +118,11 @@
 
 
 
+    <dimen name="topbar_height">54dp</dimen>
     <dimen name="topbar_icon_height">32dp</dimen>
+    <dimen name="topbar_icon_width">32dp</dimen>
     <dimen name="topbar_icon_padding_v">4dp</dimen>
-    <dimen name="topbar_icon_padding_h">12dp</dimen>
+    <dimen name="topbar_icon_padding_h">16dp</dimen>
     <dimen name="dialog_padding">16dp</dimen>
     <dimen name="dialog_menu_line_height">41dp</dimen>
     <dimen name="dialog_menu_line_padding_vertical">5dp</dimen>

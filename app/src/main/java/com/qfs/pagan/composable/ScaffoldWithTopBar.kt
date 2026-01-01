@@ -27,7 +27,9 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
+import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 
 @Composable
@@ -53,7 +55,9 @@ fun ScaffoldWithTopBar(
                     contentColor = foreground
                 ) {
                     Row(
-                        modifier = Modifier.background(color = background),
+                        modifier = Modifier
+                            .height(dimensionResource(R.dimen.topbar_height))
+                            .background(color = background),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,
                         content = top_app_bar

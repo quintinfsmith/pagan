@@ -807,7 +807,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         TopBarIcon(
             icon = R.drawable.icon_hamburger_32,
             description = R.string.song_configuration,
-            callback = {
+            onClick = {
                 scope.launch {
                     this@ComponentActivityEditor.open_drawer()
                 }
@@ -842,7 +842,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     PlaybackState.Playing -> R.drawable.icon_pause
                 },
                 description = R.string.menu_item_playpause,
-                callback = {
+                onClick = {
                     scope.launch {
                         when (this@ComponentActivityEditor.controller_model.playback_state_midi) {
                             PlaybackState.Queued -> TODO()
@@ -870,7 +870,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     PlaybackState.Playing -> R.drawable.icon_pause
                 },
                 description = R.string.menu_item_playpause,
-                callback = {
+                onClick = {
                     scope.launch {
                         when (this@ComponentActivityEditor.controller_model.playback_state_soundfont) {
                             PlaybackState.Queued -> TODO()
@@ -891,14 +891,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
         TopBarIcon(
             icon = R.drawable.icon_undo,
             description = R.string.menu_item_undo,
-            callback = { dispatcher.apply_undo() }
+            onClick = { dispatcher.apply_undo() }
         )
         Box {
             val expanded = remember { mutableStateOf(false) }
             TopBarIcon(
                 icon = R.drawable.kebab,
                 description = R.string.menu_item_playpause,
-                callback = { expanded.value = !expanded.value }
+                onClick = { expanded.value = !expanded.value }
             )
             DropdownMenu(
                 expanded = expanded.value,

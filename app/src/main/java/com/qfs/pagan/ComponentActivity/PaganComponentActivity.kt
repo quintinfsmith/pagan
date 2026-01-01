@@ -12,6 +12,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -28,16 +29,21 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -107,6 +113,11 @@ abstract class PaganComponentActivity: ComponentActivity() {
 
     init {
         System.loadLibrary("pagan")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        this.view_model.hide_loading_spinner()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -202,6 +213,16 @@ abstract class PaganComponentActivity: ComponentActivity() {
                             ViewModelPagan.LayoutSize.MediumLandscape -> LayoutMediumLandscape()
                             ViewModelPagan.LayoutSize.LargeLandscape -> LayoutLargeLandscape()
                             ViewModelPagan.LayoutSize.XLargeLandscape -> LayoutXLargeLandscape()
+                        }
+
+
+                        if (this@PaganComponentActivity.view_model.loading_spinner_visible.value) {
+                            Box(
+                                Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.width(128.dp))
+                            }
                         }
                     }
                 }

@@ -1921,6 +1921,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     fun load_project(uri: Uri) {
+        this.view_model.show_loading_spinner()
         val input_stream = this.contentResolver.openInputStream(uri)
         val reader = BufferedReader(InputStreamReader(input_stream))
         val content = reader.readText().toByteArray(Charsets.UTF_8)
@@ -1931,6 +1932,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.controller_model.opus_manager.load(content) {
             this.controller_model.active_project = uri
             this.controller_model.project_exists.value = true
+            this.view_model.hide_loading_spinner()
         }
     }
 

@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
@@ -92,8 +93,9 @@ class ComponentActivityLanding: PaganComponentActivity() {
                 ButtonRecent()
                 Padder()
             }
+
             if (!this@ComponentActivityLanding.view_model.has_saved_project.value) {
-                ButtonNew(Modifier.weight(1F))
+                ButtonNew()
             } else {
                 val corner_radius = 32.dp
                 Row {
@@ -164,14 +166,14 @@ class ComponentActivityLanding: PaganComponentActivity() {
             content = { Text(stringResource(R.string.btn_landing_new)) },
             shape = shape,
             onClick = {
-                thread {
-                    this@ComponentActivityLanding.startActivity(
-                        Intent(
-                            this@ComponentActivityLanding,
-                            ComponentActivityEditor::class.java
-                        )
+
+                this@ComponentActivityLanding.view_model.show_loading_spinner()
+                this@ComponentActivityLanding.startActivity(
+                    Intent(
+                        this@ComponentActivityLanding,
+                        ComponentActivityEditor::class.java
                     )
-                }
+                )
             }
         )
     }
@@ -189,6 +191,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
             shape = shape,
             onClick = {
                 this.load_menu_dialog {
+                    this@ComponentActivityLanding.view_model.show_loading_spinner()
                     this@ComponentActivityLanding.startActivity(
                         Intent(this@ComponentActivityLanding, ComponentActivityEditor::class.java).apply {
                             this.data = it

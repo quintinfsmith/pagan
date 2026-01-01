@@ -1,5 +1,6 @@
 package com.qfs.pagan.composable
 
+import android.view.WindowManager
 import androidx.annotation.IntRange
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ScrollState
@@ -79,6 +80,8 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -824,10 +827,13 @@ fun <T> MagicInputInner(
     background_icon: Int? = null,
     content: @Composable (Modifier, MutableState<Boolean>, FocusRequester) -> Unit
 ) {
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
+    val screenWidth = configuration.screenWidthDp.dp
+
     val expanded = remember { mutableStateOf(false) }
     if (expanded.value) {
         val requester = remember { FocusRequester() }
-
         Box(
             modifier = modifier
                 .background(

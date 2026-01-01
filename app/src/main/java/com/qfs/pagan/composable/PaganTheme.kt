@@ -1,12 +1,14 @@
 package com.qfs.pagan.composable
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import com.qfs.pagan.Color.*
 
@@ -70,4 +72,27 @@ fun PaganTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable 
         typography = Typography(),
         colorScheme = if (darkTheme) dark_color_scheme else light_color_scheme
     )
+}
+
+@Composable
+fun ColorScheme.is_light(): Boolean {
+    return this.background.luminance() > 0.5
+}
+
+@Composable
+fun ColorScheme.top_bar_container_color(): Color {
+    return if (this.is_light()) {
+        this.primary
+    } else {
+        this.surface
+    }
+}
+
+@Composable
+fun ColorScheme.top_bar_content_color(): Color {
+    return if (this.is_light()) {
+        this.onPrimary
+    } else {
+        this.onSurface
+    }
 }

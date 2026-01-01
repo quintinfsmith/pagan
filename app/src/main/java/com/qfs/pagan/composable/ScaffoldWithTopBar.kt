@@ -35,7 +35,6 @@ fun ScaffoldWithTopBar(
     modifier: Modifier = Modifier,
     top_app_bar: @Composable RowScope.() -> Unit,
     content: @Composable (PaddingValues) -> Unit,
-    night_mode: Boolean,
     drawerState: DrawerState,
     gesturesEnabled: Boolean,
     drawerContent: @Composable () -> Unit
@@ -48,17 +47,8 @@ fun ScaffoldWithTopBar(
     ) {
         Scaffold(
             topBar = {
-                val (foreground, background) = if (night_mode) {
-                    Pair(
-                        MaterialTheme.colorScheme.onSurface,
-                        MaterialTheme.colorScheme.surface,
-                    )
-                } else {
-                    Pair(
-                        MaterialTheme.colorScheme.onPrimary,
-                        MaterialTheme.colorScheme.primary,
-                    )
-                }
+                val background = MaterialTheme.colorScheme.top_bar_container_color()
+                val foreground = MaterialTheme.colorScheme.top_bar_content_color()
                 ProvideContentColorTextStyle(
                     contentColor = foreground
                 ) {

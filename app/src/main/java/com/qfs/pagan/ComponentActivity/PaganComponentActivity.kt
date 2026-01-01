@@ -172,7 +172,6 @@ abstract class PaganComponentActivity: ComponentActivity() {
                         top_app_bar = { this.TopBar() },
                         drawerState = this@PaganComponentActivity.drawer_state,
                         gesturesEnabled = this@PaganComponentActivity.drawer_gesture_enabled.value,
-                        night_mode = is_night_mode,
                         drawerContent = { this@PaganComponentActivity.Drawer() },
                         content = {
                             BoxWithConstraints(modifier = Modifier.padding(it)) {

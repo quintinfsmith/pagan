@@ -718,24 +718,22 @@ fun DropdownMenu(
     tonalElevation: Dp = MenuDefaults.TonalElevation,
     shadowElevation: Dp = MenuDefaults.ShadowElevation,
     border: BorderStroke? = null,
-    content: @Composable ColumnScope.() -> Unit,
+    content: @Composable (ColumnScope.() -> Unit),
 ) {
-    ProvideContentColorTextStyle(MaterialTheme.colorScheme.onSurface) {
-        OriginalDropdownMenu(
-            expanded,
-            onDismissRequest,
-            modifier,
-            offset,
-            scrollState,
-            properties,
-            shape,
-            containerColor,
-            tonalElevation,
-            shadowElevation,
-            border,
-            content
-        )
-    }
+    OriginalDropdownMenu(
+        expanded,
+        onDismissRequest,
+        modifier,
+        offset,
+        scrollState,
+        properties,
+        shape,
+        containerColor,
+        tonalElevation,
+        shadowElevation,
+        border,
+        content
+    )
 }
 
 @Composable
@@ -747,7 +745,7 @@ fun DropdownMenuItem(
     trailingIcon: @Composable (() -> Unit)? = null,
     enabled: Boolean = true,
     colors: MenuItemColors = MenuDefaults.itemColors().copy(
-        textColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        textColor = MaterialTheme.colorScheme.onSurface,
     ),
     contentPadding: PaddingValues = MenuDefaults.DropdownMenuItemContentPadding,
     interactionSource: MutableInteractionSource? = null,

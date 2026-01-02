@@ -48,6 +48,9 @@ class ViewModelEditorController(): ViewModel() {
     }
 
     fun set_active_midi_device(device: MidiDeviceInfo?) {
+        this.playback_device?.kill()
+        this.virtual_midi_device.stop()
+
         this.active_midi_device = device
         this.update_playback_state_midi(PlaybackState.Ready)
         this.update_midi_instruments()

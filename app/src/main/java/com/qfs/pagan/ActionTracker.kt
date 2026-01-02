@@ -1991,13 +1991,21 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
     }
 
     fun play_opus_midi(loop_playback: Boolean = false) {
+        if (this.vm_controller.active_midi_device == null) return
         val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        val start_beat = when (opus_manager.cursor.mode) {
-            CursorMode.Single,
-            CursorMode.Column -> opus_manager.cursor.beat
+        this.vm_controller.update_playback_state_midi(PlaybackState.Queued)
+        opus_manager.vm_state.playback_state_midi.value = this.vm_controller.playback_state_midi
 
-            CursorMode.Range -> opus_manager.cursor.get_ordered_range()!!.first.beat
+        val cursor = opus_manager.cursor
+        val start_beat = when (cursor.mode) {
+            CursorMode.Single,
+            CursorMode.Column -> if (cursor.beat == opus_manager.length - 1) {
+                0
+            } else {
+                cursor.beat
+            }
+
+            CursorMode.Range -> cursor.get_ordered_range()!!.first.beat
 
             CursorMode.Line,
             CursorMode.Channel,
@@ -2006,45 +2014,52 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
         val midi = opus_manager.get_midi(start_beat, include_pointers = true)
 
-
-        // if (!this.editor_view_model.update_playback_state_midi(PlaybackState.Playing)) {
-        //     this.restore_midi_playback_state()
-        //     return
-        // }
+        if (!this.vm_controller.update_playback_state_midi(PlaybackState.Playing)) return
+        opus_manager.vm_state.playback_state_midi.value = this.vm_controller.playback_state_midi
 
         thread {
             try {
                 //this._midi_interface.open_output_device(this.editor_view_model.active_midi_device!!)
                 this.vm_controller.virtual_midi_device.play_midi(midi, loop_playback) {
-                   // this.runOnUiThread {
-                   //     this.playback_stop_midi_output()
-                   // }
+                    this.stop_opus_midi()
                 }
+                opus_manager.vm_state.looping_playback.value = loop_playback
             } catch (_: IOException) {
-                // this.runOnUiThread {
-                //     this.playback_stop_midi_output()
-                // }
+                this.stop_opus_midi()
             }
         }
     }
+
     fun stop_opus_midi() {
+        this.vm_controller.update_playback_state_midi(PlaybackState.Stopping)
         this.vm_controller.virtual_midi_device.stop()
+        this.vm_controller.update_playback_state_midi(PlaybackState.Ready)
+        this.get_opus_manager().vm_state.playback_state_midi.value = this.vm_controller.playback_state_midi
     }
 
-    fun play_opus(scope: CoroutineScope) {
+    fun play_opus(scope: CoroutineScope, loop_playback: Boolean = false) {
         val opus_manager = this.get_opus_manager()
-        this.vm_controller.playback_device?.play_opus(
-            when (opus_manager.cursor.mode) {
-                CursorMode.Single,
-                CursorMode.Column -> opus_manager.cursor.beat
+        this.vm_controller.playback_device?.let {
+            it.play_opus(
+                when (opus_manager.cursor.mode) {
+                    CursorMode.Single,
+                    CursorMode.Column -> if (opus_manager.cursor.beat == opus_manager.length - 1) {
+                        0
+                    } else {
+                        opus_manager.cursor.beat
+                    }
 
-                CursorMode.Range -> opus_manager.cursor.get_ordered_range()!!.first.beat
 
-                CursorMode.Line,
-                CursorMode.Channel,
-                CursorMode.Unset -> 0
-            }
-        )
+                    CursorMode.Range -> opus_manager.cursor.get_ordered_range()!!.first.beat
+
+                    CursorMode.Line,
+                    CursorMode.Channel,
+                    CursorMode.Unset -> 0
+                },
+                loop_playback
+            )
+            opus_manager.vm_state.looping_playback.value = loop_playback
+        }
     }
     fun stop_opus() {
         this.vm_controller.playback_device?.kill()

@@ -159,18 +159,15 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
     }
 
     fun broadcast_event(event: GeneralMIDIEvent) {
-        println("Broadcasting...")
         // Rebroadcast to listening devices
         runBlocking {
             this@MidiController.output_mutex.withLock {
                 for (device in this@MidiController.virtual_output_devices.toList()) {
-                    println("R: $device")
                     device.receiveMessage(event)
                 }
 
                 if (!this@MidiController.block_physical_devices) {
                     for (input_port in this@MidiController.connected_input_ports.toList()) {
-                        println("R: $input_port")
                         val bytes = event.as_bytes()
                         try {
                             input_port.send(bytes, 0, bytes.size)

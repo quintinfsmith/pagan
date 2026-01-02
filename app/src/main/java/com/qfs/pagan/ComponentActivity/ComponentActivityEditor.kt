@@ -119,6 +119,7 @@ import com.qfs.pagan.composable.cxtmenu.ContextMenuLeafStdSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuLinePrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuLineSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuRangeSecondary
+import com.qfs.pagan.composable.is_light
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
@@ -498,6 +499,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 val that = this@ComponentActivityEditor
                 that.controller_model.midi_devices_connected--
                 if (device_info == that.controller_model.active_midi_device) {
+                    this.close_device(device_info)
                     that.controller_model.set_active_midi_device(null)
                     that.state_model.playback_state_midi.value = that.controller_model.playback_state_midi
                     that.state_model.set_use_midi_playback(false)
@@ -784,10 +786,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 modifier = Modifier,
                                 options = options,
                                 default_value = vm_controller.active_midi_device
-                            ) {
+                            ) { device ->
                                 close()
-                                vm_controller.set_active_midi_device(it)
-                                vm_state.set_use_midi_playback(it != null)
+                                vm_controller.set_active_midi_device(device)
+
+                                device?.let {
+                                    this@ComponentActivityEditor._midi_interface.open_output_device(it)
+                                }
+                                vm_state.set_use_midi_playback(device != null)
                                 vm_state.playback_state_midi.value = vm_controller.playback_state_midi
                             }
                             DialogBar(neutral = close)
@@ -822,7 +828,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
             Text(
                 modifier = Modifier
                     .combinedClickable(
-                        onClick = {dispatcher.set_project_name_and_notes() }
+                        onClick = {
+                            dispatcher.set_project_name_and_notes()
+                        }
                     ),
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
@@ -839,7 +847,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                     PlaybackState.Ready -> R.drawable.icon_play
                     PlaybackState.Stopping,
-                    PlaybackState.Playing -> R.drawable.icon_pause
+                    PlaybackState.Playing -> if (this@ComponentActivityEditor.state_model.looping_playback.value) {
+                        R.drawable.icon_pause_loop
+                    } else {
+                        R.drawable.icon_pause
+                    }
                 },
                 description = R.string.menu_item_playpause,
                 onClick = {
@@ -867,7 +879,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                     PlaybackState.Ready -> R.drawable.icon_play
                     PlaybackState.Stopping,
-                    PlaybackState.Playing -> R.drawable.icon_pause
+                    PlaybackState.Playing -> if (this@ComponentActivityEditor.state_model.looping_playback.value) {
+                        R.drawable.icon_pause_loop
+                    } else {
+                        R.drawable.icon_pause
+                    }
                 },
                 description = R.string.menu_item_playpause,
                 onClick = {
@@ -877,8 +893,22 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             PlaybackState.Stopping -> TODO()
                             PlaybackState.NotReady -> TODO()
                             PlaybackState.Ready -> {
-                                dispatcher.play_opus(this)
+                                dispatcher.play_opus(this, false)
                             }
+
+                            PlaybackState.Playing -> {
+                                dispatcher.stop_opus()
+                            }
+                        }
+                    }
+                },
+                onLongClick = {
+                    scope.launch {
+                        when (this@ComponentActivityEditor.controller_model.playback_state_soundfont) {
+                            PlaybackState.Queued -> TODO()
+                            PlaybackState.Stopping -> TODO()
+                            PlaybackState.NotReady -> TODO()
+                            PlaybackState.Ready -> { dispatcher.play_opus(this, true) }
 
                             PlaybackState.Playing -> {
                                 dispatcher.stop_opus()
@@ -1372,13 +1402,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
             else if (leaf_data.is_secondary.value) TableColorPalette.LeafSelection.Secondary
             else TableColorPalette.LeafSelection.Unselected
 
-        val dark_mode = this@ComponentActivityEditor.view_model.night_mode.value == AppCompatDelegate.MODE_NIGHT_YES || isSystemInDarkTheme()
         val (leaf_color, text_color) = TableColorPalette.get_color(
             leaf_state,
             leaf_selection,
             line_data.ctl_type.value != null,
             line_data.is_mute.value || channel_data?.is_mute?.value == true,
-            dark_mode
+            !MaterialTheme.colorScheme.is_light()
         )
 
 

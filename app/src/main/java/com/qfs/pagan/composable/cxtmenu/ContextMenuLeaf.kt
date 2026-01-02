@@ -1,6 +1,7 @@
 package com.qfs.pagan.composable.cxtmenu
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,13 +13,17 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ComposeCompilerApi
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.RelativeInputMode
+import com.qfs.pagan.composable.DropdownMenu
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.button.NumberSelector
@@ -36,6 +41,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEv
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlin.math.abs
+import kotlin.math.exp
 
 @Composable
 fun SplitButton(dispatcher: ActionTracker) {
@@ -116,7 +122,64 @@ fun UnsetButton(dispatcher: ActionTracker, active_line: ViewModelEditorState.Lin
 }
 
 @Composable
-fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
+fun RelativeModeButton(dispatcher: ActionTracker, ui_facade: ViewModelEditorState) {
+    val expanded = remember { mutableStateOf(false) }
+    Box {
+        DropdownMenu(
+            expanded = expanded.value,
+            onDismissRequest = { expanded.value = false}
+        ) {
+            SingleChoiceSegmentedButtonRow {
+                SegmentedButton(
+                    modifier = Modifier.weight(1F),
+                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3),
+                    onClick = {
+                        dispatcher.set_relative_mode(RelativeInputMode.Negative)
+                        expanded.value = false
+                    },
+                    selected = ui_facade.relative_input_mode.value == RelativeInputMode.Negative,
+                    label = { Text("-") }
+                )
+                SegmentedButton(
+                    modifier = Modifier.weight(1F),
+                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 3),
+                    onClick = {
+                        dispatcher.set_relative_mode(RelativeInputMode.Absolute)
+                        expanded.value = false
+                    },
+                    selected = ui_facade.relative_input_mode.value == RelativeInputMode.Absolute,
+                    label = { SText(R.string.absolute_label) }
+                )
+                SegmentedButton(
+                    modifier = Modifier.weight(1F),
+                    shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3),
+                    onClick = {
+                        dispatcher.set_relative_mode(RelativeInputMode.Positive)
+                        expanded.value = false
+                    },
+                    selected = ui_facade.relative_input_mode.value == RelativeInputMode.Positive,
+                    label = { Text("+") }
+                )
+            }
+        }
+        TextCMenuButton(
+            modifier = Modifier.width(dimensionResource(R.dimen.contextmenu_button_width)),
+            text = when (ui_facade.relative_input_mode.value) {
+                RelativeInputMode.Absolute -> "|n|"
+                RelativeInputMode.Positive -> "+"
+                RelativeInputMode.Negative -> "-"
+            },
+            onClick = { expanded.value = !expanded.value }
+        )
+    }
+}
+
+@Composable
+fun RelativeModeSelect(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
+}
+
+@Composable
+fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, show_relative_input: Boolean, landscape: Boolean) {
     val active_event = ui_facade.active_event.value
     val cursor = ui_facade.active_cursor.value ?: return
     val active_line = ui_facade.line_data[cursor.ints[0]]
@@ -132,7 +195,12 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewM
             CMPadding()
             RemoveButton(dispatcher, cursor)
             CMPadding()
-            Spacer(Modifier.weight(1F))
+            if (show_relative_input) {
+                RelativeModeButton(dispatcher, ui_facade)
+                CMPadding()
+            } else {
+                Spacer(Modifier.weight(1F))
+            }
             key(active_event?.duration) {
                 DurationButton(
                     dispatcher,
@@ -152,6 +220,11 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewM
             RemoveButton(dispatcher, cursor)
             CMPadding()
 
+            if (show_relative_input) {
+                RelativeModeButton(dispatcher, ui_facade)
+                CMPadding()
+            }
+
             key(active_event?.duration) {
                 DurationButton(
                     dispatcher,
@@ -165,32 +238,6 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewM
     }
 }
 
-@Composable
-fun UserCopyModeSelect(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
-    SingleChoiceSegmentedButtonRow {
-        SegmentedButton(
-            modifier = Modifier.weight(1F),
-            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3),
-            onClick = { dispatcher.set_relative_mode(RelativeInputMode.Negative) },
-            selected = ui_facade.relative_input_mode.value == RelativeInputMode.Negative,
-            label = { Text("-") }
-        )
-        SegmentedButton(
-            modifier = Modifier.weight(1F),
-            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 3),
-            onClick = { dispatcher.set_relative_mode(RelativeInputMode.Absolute) },
-            selected = ui_facade.relative_input_mode.value == RelativeInputMode.Absolute,
-            label = { SText(R.string.absolute_label) }
-        )
-        SegmentedButton(
-            modifier = Modifier.weight(1F),
-            shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3),
-            onClick = { dispatcher.set_relative_mode(RelativeInputMode.Positive) },
-            selected = ui_facade.relative_input_mode.value == RelativeInputMode.Positive,
-            label = { Text("+") }
-        )
-    }
-}
 
 @Composable
 fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, show_relative_input: Boolean, layout: ViewModelPagan.LayoutSize) {
@@ -209,17 +256,10 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEd
     when (layout) {
         ViewModelPagan.LayoutSize.SmallLandscape -> {
             if (is_percussion) {
-                ContextMenuStructureControls(modifier, ui_facade, dispatcher, true)
+                ContextMenuStructureControls(modifier, ui_facade, dispatcher, show_relative_input, true)
             } else {
                 Row {
-                    if (show_relative_input) {
-                        Column(
-                            verticalArrangement = Arrangement.SpaceBetween,
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            content = { UserCopyModeSelect(ui_facade, dispatcher) }
-                        )
-                    }
-                    ContextMenuStructureControls(Modifier, ui_facade, dispatcher, true)
+                    ContextMenuStructureControls(Modifier, ui_facade, dispatcher, show_relative_input, true)
                     Column(Modifier.width(dimensionResource(R.dimen.numberselector_column_width))) {
                         NumberSelector(8, octave, ui_facade.highlighted_octave.value, false) { dispatcher.set_octave(it) }
                     }
@@ -228,7 +268,7 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEd
         }
 
         ViewModelPagan.LayoutSize.MediumLandscape -> {
-            ContextMenuStructureControls(modifier, ui_facade, dispatcher, true)
+            ContextMenuStructureControls(modifier, ui_facade, dispatcher, show_relative_input, true)
         }
 
         ViewModelPagan.LayoutSize.SmallPortrait,
@@ -238,17 +278,10 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEd
         ViewModelPagan.LayoutSize.XLargeLandscape,
         ViewModelPagan.LayoutSize.XLargePortrait -> {
             if (is_percussion) {
-                ContextMenuStructureControls(modifier, ui_facade, dispatcher, false)
+                ContextMenuStructureControls(modifier, ui_facade, dispatcher, show_relative_input, false)
             } else {
                 Column(modifier) {
-                    if (show_relative_input) {
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                            content = { UserCopyModeSelect(ui_facade, dispatcher) }
-                        )
-                    }
-                    ContextMenuStructureControls(Modifier, ui_facade, dispatcher, false)
+                    ContextMenuStructureControls(Modifier, ui_facade, dispatcher, show_relative_input, false)
                 }
             }
         }

@@ -1,5 +1,6 @@
 package com.qfs.pagan
 import com.qfs.json.JSONHashMap
+import com.qfs.pagan.composable.cxtmenu.RelativeModeSelect
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
@@ -1896,16 +1897,30 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     }
 
     fun set_relative_mode(mode: RelativeInputMode) {
+        val original_mode = this.relative_mode
         this.relative_mode = mode
         try {
             when (mode) {
                 RelativeInputMode.Absolute -> this.convert_event_to_absolute()
-                RelativeInputMode.Positive -> this.convert_event_to_relative()
+                RelativeInputMode.Positive,
                 RelativeInputMode.Negative -> this.convert_event_to_relative()
             }
         } catch (e: NonEventConversion) {
             // pass
         }
+
+        if (this.cursor.mode == CursorMode.Single && this.cursor.ctl_level == null) {
+            this.get_event_at_cursor()?.let { event ->
+                if (event is RelativeNoteEvent) {
+                    if ((mode == RelativeInputMode.Negative && original_mode == RelativeInputMode.Positive) || (mode == RelativeInputMode.Positive && original_mode == RelativeInputMode.Negative)) {
+                        val event_copy = event.copy()
+                        event_copy.offset = event.offset * -1
+                        this.set_event_at_cursor(event_copy)
+                    }
+                }
+            }
+        }
+
         this.vm_state.set_relative_mode(this.relative_mode)
     }
 

@@ -2670,7 +2670,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface),
                     shape = RoundedCornerShape(6.dp),
                     tonalElevation = 1.dp
-
                 ) {
                     key(radix.value) {
                         FlowRow(

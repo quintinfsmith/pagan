@@ -29,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -2602,7 +2603,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                 val transpose_numerator = remember { mutableIntStateOf(opus_manager.transpose.first) }
                 val transpose_denominator = remember { mutableIntStateOf(opus_manager.transpose.second) }
                 val radix = remember { mutableIntStateOf(original_radix) }
-                val mutable_map = Array(radix.intValue) { i ->
+                val mutable_map = MutableList(radix.intValue) { i ->
                     mutableStateOf(
                         if (radix.intValue == original_radix) opus_manager.tuning_map[i]
                         else Pair(i, radix.intValue)
@@ -2646,7 +2647,16 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                             maximum = 36,
                             contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
                             modifier = Modifier.width(dimensionResource(R.dimen.transpose_dlg_input_width)),
-                            callback = { }
+                            callback = {
+                                mutable_map.clear()
+                                for (i in 0 until it) {
+                                    mutable_map.add(
+                                        mutableStateOf(
+                                            Pair(i, radix.intValue)
+                                        )
+                                    )
+                                }
+                            }
                         )
                     }
                 }
@@ -2662,47 +2672,49 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                     tonalElevation = 1.dp
 
                 ) {
-                    FlowRow(
-                        modifier = Modifier
-                            .padding(6.dp)
-                            .fillMaxWidth()
-                            .verticalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.SpaceAround
-                    ) {
-                        for ((i, state) in mutable_map.enumerate()) {
-                            val pair = state.value
-                            val numer = remember { mutableIntStateOf(pair.first) }
-                            val denom = remember { mutableIntStateOf(pair.second) }
-                            Surface(
-                                Modifier.padding(vertical = 3.dp),
-                                shape = RoundedCornerShape(6.dp),
-                                tonalElevation = 2.dp
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(6.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween,
+                    key(radix.value) {
+                        FlowRow(
+                            modifier = Modifier
+                                .padding(6.dp)
+                                .fillMaxWidth()
+                                .verticalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.SpaceAround
+                        ) {
+                            for ((i, state) in mutable_map.enumerate()) {
+                                val pair = state.value
+                                val numer = remember { mutableIntStateOf(pair.first) }
+                                val denom = remember { mutableIntStateOf(pair.second) }
+                                Surface(
+                                    Modifier.padding(vertical = 3.dp),
+                                    shape = RoundedCornerShape(6.dp),
+                                    tonalElevation = 2.dp
                                 ) {
-                                    Text(
-                                        "%02d".format(i),
-                                        modifier = Modifier.padding(horizontal = 4.dp)
-                                    )
-                                    Column {
-                                        MagicInput(
-                                            value = numer,
-                                            minimum = 0,
-                                            modifier = Modifier.width(64.dp),
-                                            contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                                            callback = { mutable_map[i].value = Pair(numer.value, denom.value) }
+                                    Row(
+                                        modifier = Modifier.padding(6.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                    ) {
+                                        Text(
+                                            "%02d".format(i),
+                                            modifier = Modifier.padding(horizontal = 4.dp)
                                         )
-                                        Spacer(Modifier.height(2.dp))
-                                        MagicInput(
-                                            value = denom,
-                                            minimum = 0,
-                                            modifier = Modifier.width(64.dp),
-                                            contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                                            callback = { mutable_map[i].value = Pair(numer.value, denom.value) }
-                                        )
+                                        Column {
+                                            MagicInput(
+                                                value = numer,
+                                                minimum = 0,
+                                                modifier = Modifier.width(64.dp),
+                                                contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
+                                                callback = { mutable_map[i].value = Pair(numer.value, denom.value) }
+                                            )
+                                            Spacer(Modifier.height(2.dp))
+                                            MagicInput(
+                                                value = denom,
+                                                minimum = 0,
+                                                modifier = Modifier.width(64.dp),
+                                                contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
+                                                callback = { mutable_map[i].value = Pair(numer.value, denom.value) }
+                                            )
+                                        }
                                     }
                                 }
                             }

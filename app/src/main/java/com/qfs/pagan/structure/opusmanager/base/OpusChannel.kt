@@ -71,18 +71,14 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
     }
 
     fun insert_line(index: Int, line: T) {
-        if (line.beats.size != this._beat_count) {
-            throw LineSizeMismatch(line.beats.size, this._beat_count)
-        }
+        if (line.beats.size != this._beat_count) throw LineSizeMismatch(line.beats.size, this._beat_count)
 
         this.lines.add(index, line)
         this.size += 1
     }
 
     fun remove_line(index: Int? = null): T {
-        if (this.lines.size == 1) {
-            throw LastLineException()
-        }
+        if (this.lines.size == 1) throw LastLineException()
 
         return if (index == null) {
             this.size -= 1

@@ -535,6 +535,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     }
 
     private fun remap_blocked_leafs(y: Int, original_blocked_leafs: List<Pair<Pair<Int, List<Int>>, List<Pair<Int, List<Int>>>>>, newly_blocked_leafs: List<Pair<Pair<Int, List<Int>>, List<Pair<Int, List<Int>>>>>) {
+        if (this.ui_lock.is_locked()) return
         for ((head, overlaps) in original_blocked_leafs) {
             for ((blocked_beat, blocked_position) in overlaps) {
                 if (blocked_beat >= this.vm_state.cell_map[y].size) continue
@@ -1039,6 +1040,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             this.ui_add_column(x)
         }
         this.vm_state.set_relative_mode(this.relative_mode)
+        this.vm_state.ready.value = true
     }
 
     private fun ui_add_column(beat_index: Int) {

@@ -18,13 +18,11 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -77,6 +75,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import androidx.test.core.app.ActivityScenario.launch
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
 import com.qfs.apres.MidiController
@@ -139,7 +138,11 @@ import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.io.BufferedOutputStream
 import java.io.BufferedReader
 import java.io.DataOutputStream
@@ -151,6 +154,7 @@ import java.io.InputStreamReader
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.concurrent.thread
+import kotlin.coroutines.coroutineContext
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -480,7 +484,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
     internal var result_launcher_import = this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode != RESULT_OK) return@registerForActivityResult
             result.data?.data?.also { uri ->
-                this.handle_uri(uri)
+                thread {
+                    this.handle_uri(uri)
+                }
             }
         }
 
@@ -553,26 +559,28 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val action_interface = this.controller_model.action_interface
+        val dispatcher = this.controller_model.action_interface
         this.state_model.base_leaf_width.value = this.resources.getDimension(R.dimen.base_leaf_width)
         this.controller_model.attach_state_model(this.state_model)
-        action_interface.attach_top_model(this.view_model)
+        dispatcher.attach_top_model(this.view_model)
 
         this.bind_midi_interface()
         super.onCreate(savedInstanceState)
 
-        if (savedInstanceState != null) {
-            // TODO: Handle lost state without losing context
-            // if the activity is forgotten, the opus_manager is be uninitialized
-            action_interface.load_from_bkp()
-        } else if (this.intent.getBooleanExtra("load_backup", false)) {
-            action_interface.load_from_bkp()
-        } else if (this.intent.data == null) {
-            action_interface.new_project()
-        } else if (this.view_model.project_manager?.contains(this.intent.data!!) == true) {
-            this.load_project(this.intent.data!!)
-        } else {
-            this.handle_uri(this.intent.data!!)
+        thread {
+            if (savedInstanceState != null) {
+                // TODO: Handle lost state without losing context
+                // if the activity is forgotten, the opus_manager is be uninitialized
+                dispatcher.load_from_bkp()
+            } else if (this.intent.getBooleanExtra("load_backup", false)) {
+                dispatcher.load_from_bkp()
+            } else if (this.intent.data == null) {
+                dispatcher.new_project()
+            } else if (this.view_model.project_manager?.contains(this.intent.data!!) == true) {
+                this@ComponentActivityEditor.load_project(this@ComponentActivityEditor.intent.data!!)
+            } else {
+                this.handle_uri(this.intent.data!!)
+            }
         }
     }
 
@@ -704,6 +712,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 inner_callback(uri)
                 null
             } catch (e: Exception) {
+                throw e
                 when (type) {
                     CompatibleFileType.Midi1 -> this.getString(R.string.feedback_midi_fail)
                     CompatibleFileType.Pagan -> this.getString(R.string.feedback_import_fail)
@@ -727,9 +736,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    override fun RowScope.TopBar() {
+    fun RowScope.ActiveTopBar() {
         val vm_controller = this@ComponentActivityEditor.controller_model
         val vm_state = vm_controller.opus_manager.vm_state
+
         val vm_top = this@ComponentActivityEditor.view_model
         val dispatcher = vm_controller.action_interface
         val scope = rememberCoroutineScope()
@@ -744,7 +754,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
             menu_items.add(
                 Pair(R.string.menu_item_load_project) {
                     this@ComponentActivityEditor.load_menu_dialog { uri ->
-                        this@ComponentActivityEditor.load_project(uri)
+                        thread {
+                            this@ComponentActivityEditor.load_project(uri)
+                        }
                     }
                 }
             )
@@ -946,6 +958,20 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
         }
     }
+    @Composable
+    fun RowScope.LoadingTopBar() { }
+
+    @Composable
+    override fun RowScope.TopBar() {
+        val vm_controller = this@ComponentActivityEditor.controller_model
+        val vm_state = vm_controller.opus_manager.vm_state
+
+        if (!vm_state.ready.value) {
+            LoadingTopBar()
+        } else {
+            ActiveTopBar()
+        }
+    }
 
     fun get_context_menu_primary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: ViewModelPagan.LayoutSize): (@Composable () -> Unit)? {
         if (ui_facade.playback_state_midi.value == PlaybackState.Playing || ui_facade.playback_state_soundfont.value == PlaybackState.Playing) return null
@@ -1015,6 +1041,41 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
+
+    @Composable
+    fun BoxScope.MainTableBackground() {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .height(dimensionResource(R.dimen.line_height)),
+            contentAlignment = Alignment.BottomCenter,
+            content = {
+                Spacer(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(dimensionResource(R.dimen.table_line_stroke))
+                        .background(MaterialTheme.colorScheme.onSurfaceVariant)
+                )
+            }
+        )
+        Box(
+            Modifier
+                .fillMaxHeight()
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .width(dimensionResource(R.dimen.line_label_width)),
+            contentAlignment = Alignment.CenterEnd,
+            content = {
+                Spacer(
+                    Modifier
+                        .fillMaxHeight()
+                        .width(dimensionResource(R.dimen.table_line_stroke))
+                        .background(MaterialTheme.colorScheme.onSurfaceVariant)
+                )
+            }
+        )
+    }
+
     @Composable
     fun MainTable(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, length: MutableState<Int>, layout: ViewModelPagan.LayoutSize) {
         val line_height = dimensionResource(R.dimen.line_height)
@@ -1034,38 +1095,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             modifier,
             contentAlignment = Alignment.TopStart
         ) {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .height(dimensionResource(R.dimen.line_height)),
-                contentAlignment = Alignment.BottomCenter,
-                content = {
-                    Spacer(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(dimensionResource(R.dimen.table_line_stroke))
-                            .background(MaterialTheme.colorScheme.onSurfaceVariant)
-                    )
-                }
-            )
-            Box(
-                Modifier
-                    .fillMaxHeight()
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .width(dimensionResource(R.dimen.line_label_width)),
-                contentAlignment = Alignment.CenterEnd,
-                content = {
-                    Spacer(
-                        Modifier
-                            .fillMaxHeight()
-                            .width(dimensionResource(R.dimen.table_line_stroke))
-                            .background(MaterialTheme.colorScheme.onSurfaceVariant)
-                    )
-                }
-            )
-
-
+            MainTableBackground()
             Row {
                 ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onSurfaceVariant) {
                     Column {
@@ -1620,7 +1650,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 )
                 DrawerPadder()
                 ConfigDrawerTopButton(
-                    onClick = { dispatcher.insert_percussion_channel() },
+                    onClick = {
+                        thread {
+                            dispatcher.insert_percussion_channel()
+                        }
+                    },
                     content = {
                         Icon(
                             painter = painterResource(R.drawable.icon_add_channel_kit),
@@ -1630,7 +1664,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 )
                 DrawerPadder()
                 ConfigDrawerTopButton(
-                    onClick = { dispatcher.insert_channel() },
+                    onClick = {
+                        thread { dispatcher.insert_channel(-1) }
+                    },
                     content = {
                         Icon(
                             painter = painterResource(R.drawable.icon_add_channel),
@@ -1687,7 +1723,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     }
                 }
             }
-
+            DrawerPadder()
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -1787,6 +1823,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
     override fun LayoutLargePortrait() {
         val view_model = this.controller_model
         val ui_facade = this.controller_model.opus_manager.vm_state
+
+        if (!ui_facade.ready.value) {
+            LoadingSpinnerPlaceHolder()
+            return
+        }
+
+
         val layout = this.view_model.get_layout_size()
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -1822,6 +1865,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
     override fun LayoutMediumPortrait() {
         val view_model = this.controller_model
         val ui_facade = this.controller_model.opus_manager.vm_state
+        if (!ui_facade.ready.value) {
+            LoadingSpinnerPlaceHolder()
+            return
+        }
+
         val layout = this.view_model.get_layout_size()
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -1867,6 +1915,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
     override fun LayoutMediumLandscape() {
         val view_model = this.controller_model
         val ui_facade = this.controller_model.opus_manager.vm_state
+
+        if (!ui_facade.ready.value) {
+            LoadingSpinnerPlaceHolder()
+            return
+        }
+
         val layout = this.view_model.get_layout_size()
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -1915,6 +1969,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     override fun LayoutSmallLandscape() = LayoutMediumLandscape()
 
+    @Composable
+    fun LoadingSpinnerPlaceHolder() {
+        Box(contentAlignment = Alignment.TopStart) {
+            MainTableBackground()
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center ) {
+                CircularProgressIndicator(modifier = Modifier.width(128.dp))
+            }
+        }
+    }
+
     private fun get_default_preset_name(bank: Int, program: Int): String {
         return if (this.controller_model.active_midi_device != null || this.controller_model.audio_interface.soundfont == null) {
             if (bank == 128) {
@@ -1950,18 +2014,19 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     fun load_project(uri: Uri) {
+        this.controller_model.opus_manager.vm_state.ready.value = false
         this.view_model.show_loading_spinner()
-        val input_stream = this.contentResolver.openInputStream(uri)
+        val input_stream = this@ComponentActivityEditor.contentResolver.openInputStream(uri)
         val reader = BufferedReader(InputStreamReader(input_stream))
         val content = reader.readText().toByteArray(Charsets.UTF_8)
 
         reader.close()
         input_stream?.close()
 
-        this.controller_model.opus_manager.load(content) {
-            this.controller_model.active_project = uri
-            this.controller_model.project_exists.value = true
-            this.view_model.hide_loading_spinner()
+        this@ComponentActivityEditor.controller_model.opus_manager.load(content) {
+            this@ComponentActivityEditor.controller_model.active_project = uri
+            this@ComponentActivityEditor.controller_model.project_exists.value = true
+            this@ComponentActivityEditor.view_model.hide_loading_spinner()
         }
     }
 

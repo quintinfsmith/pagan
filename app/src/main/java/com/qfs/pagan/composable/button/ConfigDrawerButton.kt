@@ -19,6 +19,7 @@ import com.qfs.pagan.R
 fun ConfigDrawerTopButton(modifier: Modifier = Modifier, content: (@Composable RowScope.() -> Unit), onClick: () -> Unit) {
     Button(
         modifier = modifier.height(dimensionResource(R.dimen.config_icon_size)),
+        shape = RoundedCornerShape(12.dp),
         contentPadding = PaddingValues(horizontal = dimensionResource(R.dimen.config_icon_padding_horizontal)),
         onClick = onClick,
         content = content,
@@ -31,6 +32,7 @@ fun ConfigDrawerBottomButton(modifier: Modifier = Modifier, icon: Int, descripti
         modifier = modifier
             .widthIn(dimensionResource(R.dimen.config_button_width))
             .height(dimensionResource(R.dimen.config_icon_size)),
+        shape = RoundedCornerShape(12.dp),
         contentPadding = PaddingValues(
             horizontal = dimensionResource(R.dimen.config_icon_padding_horizontal),
             vertical = dimensionResource(R.dimen.config_icon_padding_vertical)

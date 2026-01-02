@@ -68,16 +68,18 @@ class ViewModelEditorState: ViewModel() {
             this.is_mute.value = is_mute
             this.is_selected.value = is_selected
             this.active_name.value = name
-            this.size.value = size
+            this.size.intValue = size
         }
     }
+
     class CacheCursor(var type: CursorMode, vararg ints: Int) {
         var ints = ints.toList()
     }
 
-    var project_name: MutableState<String?> = mutableStateOf(null)
-    var beat_count: MutableState<Int> = mutableIntStateOf(0)
-    var line_count: MutableState<Int> = mutableIntStateOf(0)
+    val ready = mutableStateOf(false)
+    val project_name: MutableState<String?> = mutableStateOf(null)
+    val beat_count: MutableState<Int> = mutableIntStateOf(0)
+    val line_count: MutableState<Int> = mutableIntStateOf(0)
     var channel_count: MutableState<Int> = mutableIntStateOf(0)
     val line_data: MutableList<LineData> = mutableListOf()
     val column_data: MutableList<ColumnData> = mutableListOf()
@@ -122,6 +124,7 @@ class ViewModelEditorState: ViewModel() {
 
 
     fun clear() {
+        this.ready.value = false
         this.project_name.value = null
         this.beat_count.value = 0
         this.active_event.value = null

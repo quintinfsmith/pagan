@@ -51,9 +51,7 @@ fun ScaffoldWithTopBar(
             topBar = {
                 val background = MaterialTheme.colorScheme.top_bar_container_color()
                 val foreground = MaterialTheme.colorScheme.top_bar_content_color()
-                ProvideContentColorTextStyle(
-                    contentColor = foreground
-                ) {
+                ProvideContentColorTextStyle(contentColor = foreground) {
                     Row(
                         modifier = Modifier
                             .height(dimensionResource(R.dimen.topbar_height))

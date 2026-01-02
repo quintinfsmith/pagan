@@ -167,7 +167,6 @@ class ComponentActivityLanding: PaganComponentActivity() {
             shape = shape,
             onClick = {
 
-                this@ComponentActivityLanding.view_model.show_loading_spinner()
                 this@ComponentActivityLanding.startActivity(
                     Intent(
                         this@ComponentActivityLanding,
@@ -191,7 +190,6 @@ class ComponentActivityLanding: PaganComponentActivity() {
             shape = shape,
             onClick = {
                 this.load_menu_dialog {
-                    this@ComponentActivityLanding.view_model.show_loading_spinner()
                     this@ComponentActivityLanding.startActivity(
                         Intent(this@ComponentActivityLanding, ComponentActivityEditor::class.java).apply {
                             this.data = it

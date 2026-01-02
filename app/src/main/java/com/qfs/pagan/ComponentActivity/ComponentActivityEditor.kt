@@ -482,7 +482,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
     internal var result_launcher_import = this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            if (result.resultCode != RESULT_OK) {
+                this@ComponentActivityEditor.state_model.ready.value = true
+                return@registerForActivityResult
+            }
             result.data?.data?.also { uri ->
                 thread {
                     this.handle_uri(uri)
@@ -764,6 +767,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         menu_items.add(
             Pair(R.string.menu_item_import) {
+                vm_state.ready.value = false
                 this@ComponentActivityEditor.result_launcher_import.launch(
                     Intent().apply {
                         this.setAction(Intent.ACTION_GET_CONTENT)
@@ -2015,7 +2019,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     fun load_project(uri: Uri) {
         this.controller_model.opus_manager.vm_state.ready.value = false
-        this.view_model.show_loading_spinner()
         val input_stream = this@ComponentActivityEditor.contentResolver.openInputStream(uri)
         val reader = BufferedReader(InputStreamReader(input_stream))
         val content = reader.readText().toByteArray(Charsets.UTF_8)
@@ -2026,7 +2029,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this@ComponentActivityEditor.controller_model.opus_manager.load(content) {
             this@ComponentActivityEditor.controller_model.active_project = uri
             this@ComponentActivityEditor.controller_model.project_exists.value = true
-            this@ComponentActivityEditor.view_model.hide_loading_spinner()
         }
     }
 

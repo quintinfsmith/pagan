@@ -123,7 +123,6 @@ abstract class PaganComponentActivity: ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        this.view_model.hide_loading_spinner()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -240,15 +239,6 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                     ViewModelPagan.LayoutSize.XLargeLandscape -> LayoutXLargeLandscape()
                                 }
 
-
-                                if (this@PaganComponentActivity.view_model.loading_spinner_visible.value) {
-                                    Box(
-                                        Modifier.fillMaxSize(),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        CircularProgressIndicator(modifier = Modifier.width(128.dp))
-                                    }
-                                }
                             }
                         }
                     )

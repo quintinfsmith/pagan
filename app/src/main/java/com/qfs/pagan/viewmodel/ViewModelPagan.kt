@@ -79,7 +79,6 @@ class ViewModelPagan: ViewModel() {
     val soundfont_directory = mutableStateOf<Uri?>(null)
     val project_directory = mutableStateOf<Uri?>(null)
     val night_mode = mutableStateOf(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-    val loading_spinner_visible = mutableStateOf(false)
 
     fun set_layout_size(width: Dp, height: Dp) {
         this.active_layout_size.value = if (width >= height) {
@@ -215,12 +214,4 @@ class ViewModelPagan: ViewModel() {
         this.configuration.soundfont = this.coerce_relative_soundfont_path(uri)
         this.soundfont_name.value = this.configuration.soundfont
     }
-
-    fun show_loading_spinner() {
-        this.loading_spinner_visible.value = true
-    }
-    fun hide_loading_spinner() {
-        this.loading_spinner_visible.value = false
-    }
-
 }

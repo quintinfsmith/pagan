@@ -487,9 +487,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 return@registerForActivityResult
             }
             result.data?.data?.also { uri ->
-                thread {
-                    this.handle_uri(uri)
-                }
+                thread { this.handle_uri(uri) }
             }
         }
 
@@ -594,6 +592,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     fun set_soundfont() {
+        // Ensure playback is stopped
+        this.controller_model.action_interface.stop_opus_midi()
+        this.controller_model.action_interface.stop_opus()
+
         val file_path = this.view_model.configuration.soundfont
         if (file_path == null) {
             this.controller_model.unset_soundfont()

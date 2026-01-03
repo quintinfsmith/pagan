@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.EditorTable
@@ -717,12 +718,56 @@ class ViewModelEditorState: ViewModel() {
             return
         }
 
+
         // TODO: Animate when not playing
         CoroutineScope(Dispatchers.Default).launch {
             this@ViewModelEditorState.scroll_state_x.value.requestScrollToItem(target.first, target.second)
         }
     }
-    fun scroll_to_leaf(beat: Int, offset: Rational) { }
+
+    fun scroll_to_leaf(beat: Int, offset: Rational, width: Rational) {
+        val beat_width = Array(this.line_count.value) { j -> this.cell_map[j][beat].value.weighted_size }.max()
+        val offset_px = (beat_width * offset.toFloat() * this.base_leaf_width.value)
+
+        val state = this.scroll_state_x.value
+        val last_visible_beat = state.layoutInfo.visibleItemsInfo.last().index
+        val first_visible_beat = state.firstVisibleItemIndex
+        if (first_visible_beat == beat && last_visible_beat == beat) return
+
+        if (first_visible_beat < beat && last_visible_beat > beat) {
+            println("AAA")
+            return
+        } else if (first_visible_beat > beat || (first_visible_beat == beat && state.firstVisibleItemScrollOffset < 0)) {
+            println("BBB")
+            // TODO: Animate when not playing
+            CoroutineScope(Dispatchers.Default).launch {
+                this@ViewModelEditorState.scroll_state_x.value.requestScrollToItem(beat, offset_px.toInt())
+            }
+        } else {
+            val negative_offset = (beat_width * (Rational(1,1) - (offset + width)).toFloat() * this.base_leaf_width.value)
+            var working_offset = state.layoutInfo.viewportSize.width
+            var working_index = beat - 1
+            val beat_width_px = (beat_width * this.base_leaf_width.value).toInt()
+            println("$beat --- $working_offset, $beat_width_px")
+            while (working_offset > beat_width_px) {
+                val working_beat_width = Array(this.line_count.value) { j -> this.cell_map[j][working_index].value.weighted_size }.max()
+                working_offset -= (working_beat_width * this.base_leaf_width.value).toInt()
+                working_index -= 1
+            }
+
+            println("CCC, ${state.layoutInfo.viewportSize.width} -- $working_index, $working_offset")
+            CoroutineScope(Dispatchers.Default).launch {
+                if (working_index > -1) {
+                    this@ViewModelEditorState.scroll_state_x.value.requestScrollToItem(
+                        working_index,
+                        working_offset
+                    )
+                } else {
+                    this@ViewModelEditorState.scroll_state_x.value.requestScrollToItem(0)
+                }
+            }
+        }
+    }
 
     data class LocationQuad(var channel: Int?, var line_offset: Int?, var beat: Int?, var position: List<Int>?)
 

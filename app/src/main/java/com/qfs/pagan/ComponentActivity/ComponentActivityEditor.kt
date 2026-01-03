@@ -1184,7 +1184,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 x = x,
                                 ui_facade = ui_facade,
                                 dispatcher = dispatcher,
-                                column_info = ui_facade.column_data[x]
+                                column_info = ui_facade.column_data[x],
+                                column_width = (leaf_width * width)
                             )
                             Column(
                                 Modifier
@@ -1383,7 +1384,30 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun BeatLabelView(modifier: Modifier = Modifier, x: Int, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, column_info: ViewModelEditorState.ColumnData) {
+    fun BeatLabelView(
+        modifier: Modifier = Modifier,
+        x: Int,
+        ui_facade: ViewModelEditorState,
+        dispatcher: ActionTracker,
+        column_info: ViewModelEditorState.ColumnData,
+        column_width: Dp // Necessary for floating label
+    ) {
+        // val scroll_state = this.state_model.scroll_state_x.value
+
+        // // Keep the column number of huge columns on screen
+        // if (column_width > viewable_width) {
+        //     if (offset <= scroll_x && offset + column_width >= scroll_x + viewable_width) {
+        //         (scroll_x + ((viewable_width - bounds.width()) / 2))
+        //     } else if (offset <= scroll_x) {
+        //         offset + column_width - ((viewable_width + bounds.width()) / 2)
+        //     } else {
+        //         offset + ((viewable_width - bounds.width()) / 2)
+        //     }
+        // } else {
+        //     offset + ((column_width - bounds.width()) / 2)
+        // }
+
+
         val (background, foreground) = if (!column_info.is_selected.value) {
             Pair(
                 MaterialTheme.colorScheme.surfaceVariant,
@@ -1395,6 +1419,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 MaterialTheme.colorScheme.onTertiary
             )
         }
+
         ProvideContentColorTextStyle(foreground, MaterialTheme.typography.labelMedium) {
             HalfBorderBox(
                 modifier

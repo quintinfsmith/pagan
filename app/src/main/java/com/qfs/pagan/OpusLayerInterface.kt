@@ -1321,6 +1321,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             this.set_relative_mode(current_tree.get_event()!! as TunedInstrumentEvent)
         }
 
+        if (this.ui_lock.is_locked()) return
+
         this._queue_cursor_update(this.cursor)
         val (working_event, descriptor) = if (current_tree.event != null) {
             Pair(current_tree.event!!, ViewModelEditorState.EventDescriptor.Selected)
@@ -1334,8 +1336,19 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             }
         }
 
+        //
+        var tree = this.get_tree(beat_key)
+        val width = Rational(1, 1)
+        var offset = Rational(0, 1)
+        for (p in position) {
+            width.denominator *= tree.size
+            offset += Rational(p, width.denominator)
+            tree = tree[p]
+        }
+        //
+
         this.vm_state.set_active_event(working_event, descriptor)
-        this.vm_state.scroll_to_leaf(beat_key.beat, current_tree.get_rational_position(position))
+        this.vm_state.scroll_to_leaf(beat_key.beat, offset, width)
     }
 
     override fun cursor_select_ctl_at_line(ctl_type: EffectType, beat_key: BeatKey, position: List<Int>) {

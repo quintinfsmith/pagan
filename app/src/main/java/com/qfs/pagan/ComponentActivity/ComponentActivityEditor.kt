@@ -63,6 +63,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -70,6 +71,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.offset
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -1911,7 +1913,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
 
             val primary = this@ComponentActivityEditor.get_context_menu_primary(
-                Modifier.padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
+                Modifier
+                    .layout { measurable, constraints ->
+                        val placeable = measurable.measure(constraints)
+                        this@ComponentActivityEditor.state_model.table_side_padding.value = 0
+                        layout(placeable.width, placeable.height) {
+                            placeable.place(0,0)
+                        }
+                    }
+                    .padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
                 ui_facade,
                 view_model.action_interface,
                 layout
@@ -1984,7 +1994,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         layout
                     )?.let {
                         Row(
-                            Modifier.fillMaxHeight(),
+                            Modifier
+                                .layout { measurable, constraints ->
+                                    val placeable = measurable.measure(constraints)
+                                    this@ComponentActivityEditor.state_model.table_side_padding.value = placeable.width
+                                    println("${placeable.width} | ${placeable.measuredWidth}")
+                                    layout(placeable.width, placeable.height) {
+                                        placeable.place(0,0)
+                                    }
+                                }
+                                .fillMaxHeight(),
                             horizontalArrangement = Arrangement.End,
                             verticalAlignment = Alignment.CenterVertically,
                             content = {

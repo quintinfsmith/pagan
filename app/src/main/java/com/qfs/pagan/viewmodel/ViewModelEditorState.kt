@@ -5,7 +5,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.EditorTable
@@ -122,6 +121,7 @@ class ViewModelEditorState: ViewModel() {
 
     val has_global_effects_hidden = mutableStateOf(true)
     val soundfont_active = mutableStateOf(false)
+    val table_side_padding = mutableStateOf(0)
 
 
     fun clear() {
@@ -725,45 +725,60 @@ class ViewModelEditorState: ViewModel() {
         }
     }
 
+    private fun get_beat_width(beat: Int): Int {
+        return Array(this.line_count.value) { j -> this.cell_map[j][beat].value.weighted_size }.max()
+    }
+
     fun scroll_to_leaf(beat: Int, offset: Rational, width: Rational) {
-        val beat_width = Array(this.line_count.value) { j -> this.cell_map[j][beat].value.weighted_size }.max()
+        val beat_width = this.get_beat_width(beat)
         val offset_px = (beat_width * offset.toFloat() * this.base_leaf_width.value)
 
         val state = this.scroll_state_x.value
         val last_visible_beat = state.layoutInfo.visibleItemsInfo.last().index
-        val first_visible_beat = state.firstVisibleItemIndex
+        val first_visible_beat_width = if (state.firstVisibleItemIndex == beat) {
+            beat_width
+        } else {
+            this.get_beat_width(state.firstVisibleItemIndex)
+        } * this.base_leaf_width.value
+
+        val (first_visible_beat, first_visible_offset) = if (state.firstVisibleItemScrollOffset > first_visible_beat_width) {
+            Pair(state.firstVisibleItemIndex + 1, (state.firstVisibleItemScrollOffset - first_visible_beat_width).toInt())
+        } else {
+            Pair(state.firstVisibleItemIndex, state.firstVisibleItemScrollOffset)
+        }
+
         if (first_visible_beat == beat && last_visible_beat == beat) return
 
+        val end_offset = beat_width * (offset + width).toFloat() * this.base_leaf_width.value
+
         if (first_visible_beat < beat && last_visible_beat > beat) {
-            println("AAA")
             return
-        } else if (first_visible_beat > beat || (first_visible_beat == beat && state.firstVisibleItemScrollOffset < 0)) {
-            println("BBB")
-            // TODO: Animate when not playing
+        } else if (first_visible_beat > beat || first_visible_beat == beat && first_visible_offset > offset_px.toInt()) {
             CoroutineScope(Dispatchers.Default).launch {
-                this@ViewModelEditorState.scroll_state_x.value.requestScrollToItem(beat, offset_px.toInt())
+                state.requestScrollToItem(beat, offset_px.toInt())
             }
-        } else {
-            val negative_offset = (beat_width * (Rational(1,1) - (offset + width)).toFloat() * this.base_leaf_width.value)
-            var working_offset = state.layoutInfo.viewportSize.width
-            var working_index = beat - 1
+        } else if (last_visible_beat < beat || (last_visible_beat == beat && state.layoutInfo.visibleItemsInfo.last().offset + end_offset > state.layoutInfo.viewportSize.width - this.table_side_padding.value)) {
+            println("--- ${this.table_side_padding.value} ---")
+            var working_offset = state.layoutInfo.viewportSize.width - this.table_side_padding.value
+            var working_index = beat
             val beat_width_px = (beat_width * this.base_leaf_width.value).toInt()
-            println("$beat --- $working_offset, $beat_width_px")
-            while (working_offset > beat_width_px) {
+
+            while (working_index >= 0) {
                 val working_beat_width = Array(this.line_count.value) { j -> this.cell_map[j][working_index].value.weighted_size }.max()
-                working_offset -= (working_beat_width * this.base_leaf_width.value).toInt()
+                val subtracter = (working_beat_width * this.base_leaf_width.value).toInt()
+                if (working_offset - subtracter < beat_width_px) break
+                working_offset -= subtracter
                 working_index -= 1
             }
 
-            println("CCC, ${state.layoutInfo.viewportSize.width} -- $working_index, $working_offset")
             CoroutineScope(Dispatchers.Default).launch {
                 if (working_index > -1) {
-                    this@ViewModelEditorState.scroll_state_x.value.requestScrollToItem(
+                    state.requestScrollToItem(
                         working_index,
-                        working_offset
+                        0 - working_offset + end_offset.toInt()
                     )
                 } else {
-                    this@ViewModelEditorState.scroll_state_x.value.requestScrollToItem(0)
+                    state.requestScrollToItem(0)
                 }
             }
         }

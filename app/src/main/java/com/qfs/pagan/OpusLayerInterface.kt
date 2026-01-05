@@ -872,7 +872,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
             this.vm_state.add_row(
                 ctl_row++,
-                line.beats,
+                line,
                 ViewModelEditorState.LineData(
                     channel,
                     j,
@@ -996,6 +996,11 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.vm_state.clear()
         this.vm_state.set_project_name(this.project_name)
         this.vm_state.set_radix(this.get_radix())
+
+        for (x in 0 until this.length) {
+            this.vm_state.add_column(x, this.is_beat_tagged(x))
+        }
+
         var i = 0
         for ((c, channel) in this.channels.enumerate()) {
             this.vm_state.add_channel(c, this.is_percussion(c), channel.get_preset(), channel.muted)
@@ -1007,14 +1012,14 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 }
                 this.vm_state.add_row(
                     i++,
-                    line.beats,
+                    line,
                     ViewModelEditorState.LineData(c, l, null, instrument, line.muted)
                 )
                 for ((type, controller) in line.controllers.get_all()) {
                     if (!controller.visible) continue
                     this.vm_state.add_row(
                         i++,
-                        controller.beats,
+                        controller,
                         ViewModelEditorState.LineData(c, l, type, null, line.muted)
                     )
                 }
@@ -1023,7 +1028,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 if (!controller.visible) continue
                 this.vm_state.add_row(
                     i++,
-                    controller.beats,
+                    controller,
                     ViewModelEditorState.LineData(c, null, type, null, channel.muted)
                 )
             }
@@ -1032,13 +1037,9 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             if (!controller.visible) continue
             this.vm_state.add_row(
                 i++,
-                controller.beats,
+                controller,
                 ViewModelEditorState.LineData(null, null, type, null, false)
             )
-        }
-        this.vm_state.empty_cells()
-        for (x in 0 until this.length) {
-            this.ui_add_column(x)
         }
         this.vm_state.set_relative_mode(this.relative_mode)
         this.vm_state.ready.value = true
@@ -1822,7 +1823,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         val line = channel.lines[line_offset ?: (channel.lines.size - 1)]
         this.vm_state.add_row(
             y,
-            controller_line.beats,
+            controller_line,
             ViewModelEditorState.LineData(channel_index, line_offset, ctl_type, null, line.muted)
         )
     }
@@ -1844,7 +1845,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
         this.vm_state.add_row(
             visible_row,
-            new_line.beats,
+            new_line,
             ViewModelEditorState.LineData(
                 channel,
                 line_offset,

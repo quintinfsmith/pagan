@@ -13,6 +13,7 @@ import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
+import com.qfs.pagan.structure.opusmanager.base.ReducibleTreeArray
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
@@ -157,13 +158,6 @@ class ViewModelEditorState: ViewModel() {
         this.use_midi_playback.value = value
     }
 
-    /** Only used in full refresh **/
-    fun empty_cells() {
-        for (line in this.cell_map) {
-            line.clear()
-        }
-    }
-
     fun update_cell(coordinate: EditorTable.Coordinate, tree: ReducibleTree<out OpusEvent>) {
         this.cell_map[coordinate.y][coordinate.x].value = this.copy_tree_for_cell(tree).value
     }
@@ -172,22 +166,46 @@ class ViewModelEditorState: ViewModel() {
         this.column_data[column].is_tagged.value = is_tagged
     }
 
-    fun add_row(y: Int, cells: List<ReducibleTree<out OpusEvent>>, new_line_data: LineData) {
+    fun add_row(y: Int, cells: ReducibleTreeArray<*>, new_line_data: LineData) {
         this.line_data.add(y, new_line_data)
         if (new_line_data.channel.value != null && new_line_data.line_offset.value != null && new_line_data.ctl_type.value == null) {
-            this.channel_data[new_line_data.channel.value!!].size.value += 1
+            this.channel_data[new_line_data.channel.value!!].size.intValue += 1
         }
-        this.cell_map.add(y, MutableList(cells.size) { i -> this.copy_tree_for_cell(cells[i]) })
+        this.cell_map.add(y, MutableList(cells.beats.size) { i -> this.copy_tree_for_cell(cells.beats[i]) })
         this.line_count.value += 1
+
+        // Update spillover
+        var working_beat = 0
+        var working_position = cells.get_first_position(0)
+        if (cells.get_tree(working_beat, working_position).has_event()) {
+            cells.get_proceding_event_position(working_beat, working_position)?.let {
+                working_beat = it.first
+                working_position = it.second
+            } ?: return
+        }
+
+        while (true) {
+            for ((blocked_beat, blocked_position) in cells.get_all_blocked_positions(working_beat, working_position)) {
+                if (blocked_position == working_position && blocked_beat == working_beat) continue
+                this.cell_map[y][blocked_beat].value.get(*blocked_position.toIntArray()).event!!.first.is_spillover.value = true
+            }
+
+            cells.get_proceding_event_position(working_beat, working_position)?.let {
+                working_beat = it.first
+                working_position = it.second
+            } ?: break
+        }
     }
 
     fun update_line(y: Int, channel: Int?, line_offset: Int?, ctl_type: EffectType?, assigned_offset: Int?, is_mute: Boolean, is_selected: Boolean) {
-        this.line_data[y].channel.value = channel
-        this.line_data[y].line_offset.value = line_offset
-        this.line_data[y].ctl_type.value = ctl_type
-        this.line_data[y].assigned_offset.value = assigned_offset
-        this.line_data[y].is_mute.value = is_mute
-        this.line_data[y].is_selected.value = is_selected
+        this.line_data[y].let {
+            it.channel.value = channel
+            it.line_offset.value = line_offset
+            it.ctl_type.value = ctl_type
+            it.assigned_offset.value = assigned_offset
+            it.is_mute.value = is_mute
+            it.is_selected.value = is_selected
+        }
     }
 
     fun remove_row(y: Int, count: Int) {
@@ -262,10 +280,12 @@ class ViewModelEditorState: ViewModel() {
         this.channel_data.removeAt(channel)
     }
 
-    fun add_column(column: Int, is_tagged: Boolean, new_cells: List<ReducibleTree<out OpusEvent>>) {
+    fun add_column(column: Int, is_tagged: Boolean, new_cells: List<ReducibleTree<out OpusEvent>>? = null) {
         this.column_data.add(column, ColumnData(is_tagged))
-        for ((y, line) in this.cell_map.enumerate()) {
-            line.add(column, this.copy_tree_for_cell(new_cells[y]))
+        new_cells?.let {
+            for ((y, line) in this.cell_map.enumerate()) {
+                line.add(column, this.copy_tree_for_cell(new_cells[y]))
+            }
         }
         this.beat_count.value += 1
     }
@@ -758,7 +778,6 @@ class ViewModelEditorState: ViewModel() {
                 state.requestScrollToItem(beat, offset_px.toInt())
             }
         } else if (last_visible_beat < beat || (last_visible_beat == beat && state.layoutInfo.visibleItemsInfo.last().offset + end_offset > state.layoutInfo.viewportSize.width - this.table_side_padding.value)) {
-            println("--- ${this.table_side_padding.value} ---")
             var working_offset = state.layoutInfo.viewportSize.width - this.table_side_padding.value
             var working_index = beat
             val beat_width_px = (beat_width * this.base_leaf_width.value).toInt()

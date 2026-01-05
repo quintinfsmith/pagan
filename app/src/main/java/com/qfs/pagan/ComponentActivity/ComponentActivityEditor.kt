@@ -72,6 +72,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.offset
+import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -1430,7 +1431,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         shape = RectangleShape
                     )
                     .combinedClickable(
-                        onClick = { dispatcher.cursor_select_column(x) },
+                        onClick = {
+                            dispatcher.cursor_select_column(x)
+                        },
                     )
                     .fillMaxSize(),
                 border_color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1446,10 +1449,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "$x",
-                            modifier = Modifier.padding(4.dp)
-                        )
+                        Text( text = "$x", modifier = Modifier.padding(4.dp) )
                     }
                 }
             )
@@ -1495,16 +1495,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     verticalArrangement = Arrangement.Center
                                 ) {
                                     Row(Modifier.padding(top = 14.dp)) {
-                                        Text("$octave")
+                                        Text("$octave", fontSize = 14.sp)
                                     }
                                 }
                                 Column(
                                     modifier = Modifier.fillMaxHeight(),
                                     verticalArrangement = Arrangement.Center
                                 ) {
-                                    ProvideTextStyle(MaterialTheme.typography.titleMedium) {
-                                        Text("$offset")
-                                    }
+                                    Text("$offset", fontSize = 20.sp)
                                 }
                             }
                         }
@@ -2023,8 +2021,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun LoadingSpinnerPlaceHolder() {
         Box(contentAlignment = Alignment.TopStart) {
             MainTableBackground()
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center ) {
-                CircularProgressIndicator(modifier = Modifier.width(128.dp))
+            Box(
+                Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator( )
             }
         }
     }

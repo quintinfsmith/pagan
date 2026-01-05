@@ -2105,6 +2105,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
         )
     }
 
+    override fun on_crash() {
+        // if (this.is_debug_on()) {
+        //     this.save_actions()
+        // }
+        this.save_to_backup()
+    }
+
     fun export_wav() {
         this._result_launcher_export_wav.launch(
             Intent(Intent.ACTION_CREATE_DOCUMENT).also {

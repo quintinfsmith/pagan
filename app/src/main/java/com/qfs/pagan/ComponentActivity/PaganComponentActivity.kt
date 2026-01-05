@@ -1,11 +1,13 @@
 package com.qfs.pagan.ComponentActivity
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.DocumentsContract
 import android.provider.DocumentsContract.Document.COLUMN_DOCUMENT_ID
 import android.provider.DocumentsContract.Document.COLUMN_MIME_TYPE
 import android.provider.DocumentsContract.Document.MIME_TYPE_DIR
+import android.util.Log
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -70,6 +72,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.launch
+import java.io.File
 import java.io.FileNotFoundException
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -125,8 +128,34 @@ abstract class PaganComponentActivity: ComponentActivity() {
         super.onResume()
     }
 
+    open fun on_crash() { }
+
+    /**
+     * Save text file in storage of a crash report.
+     * To be copied and saved somewhere accessible on reload.
+     */
+    fun bkp_crash_report(e: Throwable) {
+        val file = File("${this.dataDir}/bkp_crashreport.log")
+        file.writeText(e.stackTraceToString())
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
+            Log.d("pagandebug", "$paramThrowable")
+            this.bkp_crash_report(paramThrowable)
+            this.on_crash()
+
+            val ctx = this.applicationContext
+            val pm = ctx.packageManager
+            val intent = pm.getLaunchIntentForPackage(ctx.packageName) ?: return@setDefaultUncaughtExceptionHandler
+            ctx.startActivity(
+                Intent.makeRestartActivityTask(intent.component)
+            )
+            Runtime.getRuntime().exit(0)
+        }
+
         val view_model = this.view_model
         view_model.load_config("${this.applicationContext.filesDir}/pagan.cfg")
         this.on_config_load()

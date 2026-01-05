@@ -1,5 +1,6 @@
 package com.qfs.pagan.ComponentActivity
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContracts
@@ -28,13 +29,36 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
+import com.qfs.pagan.composable.DialogBar
+import com.qfs.pagan.composable.DialogSTitle
+import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.SoundFontWarning
 import com.qfs.pagan.composable.button.Button
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import kotlin.concurrent.thread
 
 class ComponentActivityLanding: PaganComponentActivity() {
+    private var result_launcher_save_crash_report =
+        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            val file = File("${this.dataDir}/bkp_crashreport.log")
+            if (result.resultCode != RESULT_OK) {
+                file.delete()
+                return@registerForActivityResult
+            }
+
+            val uri = result.data?.data ?: return@registerForActivityResult
+            val content = file.readText()
+            this.applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
+                FileOutputStream(it.fileDescriptor).write(content.toByteArray())
+                file.delete()
+            }
+        }
+
     internal var result_launcher_import_project =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
@@ -56,6 +80,28 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val file = File("${this.dataDir}/bkp_crashreport.log")
+        if (file.isFile) {
+            this.view_model.create_medium_dialog { close ->
+                @Composable {
+                    DialogSTitle(R.string.crash_report_save)
+                    SText(
+                        R.string.crash_report_desc,
+                        modifier = Modifier.padding(vertical = 24.dp)
+                    )
+                    DialogBar(
+                        negative = {
+                            file.delete()
+                            close()
+                        },
+                        positive = {
+                            this@ComponentActivityLanding.export_crash_report()
+                            close()
+                        }
+                    )
+                }
+            }
+        }
     }
 
     @Composable
@@ -390,6 +436,37 @@ class ComponentActivityLanding: PaganComponentActivity() {
             }
             LayoutMenuCompact()
         }
+    }
+
+    fun check_for_crash_report() {
+        val file = File("${this.dataDir}/bkp_crashreport.log")
+        if (file.isFile) {
+            AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
+                .setTitle(R.string.crash_report_save)
+                .setMessage(R.string.crash_report_desc)
+                .setCancelable(true)
+                .setPositiveButton(this.getString(R.string.dlg_confirm)) { dialog, _ ->
+                    this.export_crash_report()
+                    dialog.dismiss()
+                }
+                .setNegativeButton(this.getString(R.string.dlg_decline)) { dialog, _ ->
+                    file.delete()
+                    dialog.dismiss()
+                }
+                .show()
+        }
+    }
+
+    fun export_crash_report() {
+        val now = LocalDateTime.now()
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+        this.result_launcher_save_crash_report.launch(
+            Intent(Intent.ACTION_CREATE_DOCUMENT).also { intent ->
+                intent.addCategory(Intent.CATEGORY_OPENABLE)
+                intent.type = "text/plain"
+                intent.putExtra(Intent.EXTRA_TITLE, "pagan.cr-${now.format(formatter)}.log")
+            }
+        )
     }
 
 }

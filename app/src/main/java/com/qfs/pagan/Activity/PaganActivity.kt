@@ -243,6 +243,7 @@ open class PaganActivity: AppCompatActivity() {
     fun is_debug_on(): Boolean {
         return this.packageName.contains("pagandev")
     }
+
     open fun on_crash() { }
 
     /**

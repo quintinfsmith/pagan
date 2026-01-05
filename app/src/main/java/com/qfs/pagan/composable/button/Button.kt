@@ -75,7 +75,7 @@ fun Button(
    // val containerColor = colors.containerColor(enabled)
    // val shadowElevation = elevation?.shadowElevation(enabled)?.value ?: 0.dp
    // val contentColor = colors.contentColor(enabled)
-    ProvideContentColorTextStyle(contentColor = colors.contentColor, textStyle = TextStyle.Default) {
+    ProvideContentColorTextStyle(contentColor = colors.contentColor, textStyle = MaterialTheme.typography.labelLarge) {
         Box(
             modifier = modifier
                 .padding(outerPadding)

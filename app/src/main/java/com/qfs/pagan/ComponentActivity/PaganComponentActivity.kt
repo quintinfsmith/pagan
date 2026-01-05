@@ -17,6 +17,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -25,7 +26,11 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
@@ -34,6 +39,7 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerState
@@ -41,6 +47,7 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -52,8 +59,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
@@ -67,6 +76,7 @@ import com.qfs.pagan.composable.PaganTheme
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.ScaffoldWithTopBar
 import com.qfs.pagan.composable.button.Button
+import com.qfs.pagan.composable.button.OutlinedButton
 import com.qfs.pagan.projectmanager.ProjectManager
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
@@ -345,16 +355,26 @@ abstract class PaganComponentActivity: ComponentActivity() {
     }
 
     private fun create_project_card_dialog(title: String, uri: Uri) {
-        this.view_model.create_dialog(level = 1) { close ->
+        this.view_model.create_medium_dialog(level = 1) { close ->
             @Composable {
                 Column {
-                    Row { ProjectCard(uri) }
-                    Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                        androidx.compose.material3.OutlinedButton(
+                    ProjectCard(modifier = Modifier.fillMaxWidth(), uri = uri)
+                    Spacer(Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier
+                            .height(dimensionResource(R.dimen.dialog_bar_button_height))
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        OutlinedButton(
+                            modifier = Modifier.fillMaxHeight(),
                             onClick = close,
                             content = { SText(android.R.string.cancel) }
                         )
+                        Spacer(Modifier.width(4.dp))
                         Button(
+                            modifier = Modifier.fillMaxHeight(),
                             onClick = {
                                 close()
                                 this@PaganComponentActivity.view_model.create_dialog { close_subdialog ->
@@ -380,13 +400,17 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                     }
                                 }
                             },
-                            content = { SText(R.string.delete_project) }
+                            content = {
+                                Icon(
+                                    painter = painterResource(R.drawable.icon_trash),
+                                    contentDescription = stringResource(R.string.delete_project)
+                                )
+                            }
                         )
+                        Spacer(Modifier.width(4.dp))
                         Button(
-                            onClick = {
-                                close()
-                                TODO()
-                            },
+                            modifier = Modifier.fillMaxHeight(),
+                            onClick = close,
                             content = { SText(R.string.details_load_project) }
                         )
                     }
@@ -437,33 +461,73 @@ abstract class PaganComponentActivity: ComponentActivity() {
     }
 
     @Composable
-    fun ProjectCard(uri: Uri) {
+    fun ProjectCard(modifier: Modifier = Modifier, uri: Uri) {
         val other_project = this.view_model.project_manager?.open_project(uri) ?: return
         val document_file = DocumentFile.fromSingleUri(this@PaganComponentActivity, uri) ?: return
         val time = Date(document_file.lastModified())
         val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
         val initial_tempo = other_project.get_global_controller<OpusTempoEvent>(EffectType.Tempo).initial_event.value
 
-        Column {
-            Row {
+        val padding = 8.dp
+        Column(modifier) {
+            ProvideTextStyle(MaterialTheme.typography.titleLarge) {
                 if (other_project.project_name == null) {
                     SText(R.string.untitled_opus)
                 } else {
                     Text(other_project.project_name!!)
                 }
             }
-            Row {
-                SText(R.string.last_modified)
-                Text(formatter.format(time))
+            Spacer(Modifier.height(padding))
+
+            ProvideTextStyle(MaterialTheme.typography.labelLarge) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    SText(R.string.last_modified)
+                    Spacer(Modifier.width(padding))
+                    Text(formatter.format(time))
+                }
             }
-            Row {
-                Text(stringResource(R.string.project_info_beat_count, other_project.length))
-                Text(stringResource(R.string.project_info_channel_count, other_project.channels.size))
-                Text(stringResource(R.string.project_info_tempo, initial_tempo.roundToInt()))
+            Spacer(Modifier.height(padding))
+            ProvideTextStyle(MaterialTheme.typography.labelLarge) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(stringResource(R.string.project_info_beat_count, other_project.length))
+                    Spacer(Modifier.width(padding))
+                    Text(stringResource(R.string.project_info_channel_count, other_project.channels.size))
+                    Spacer(Modifier.width(padding))
+                    Text(stringResource(R.string.project_info_tempo, initial_tempo.roundToInt()))
+                }
             }
 
-            other_project.project_notes?.let {
-                Row { Text(it) }
+            Spacer(Modifier.height(padding))
+
+            ProvideTextStyle(MaterialTheme.typography.bodyLarge) {
+                Row(
+                    Modifier
+                        .border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            shape = RoundedCornerShape(4.dp)
+                        )
+                ) {
+                    Text(
+                        modifier = Modifier
+                            .padding(6.dp)
+                            .fillMaxWidth(),
+                        text = if (other_project.project_notes != null) {
+                            other_project.project_notes!!
+                        } else {
+                            stringResource(R.string.no_project_notes)
+                        }
+                    )
+                }
+
             }
         }
     }

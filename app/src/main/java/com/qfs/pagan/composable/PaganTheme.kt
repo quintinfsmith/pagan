@@ -69,7 +69,20 @@ fun PaganTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable 
 
     MaterialTheme(
         content = content,
-        typography = Typography(),
+        // typography = Typography(
+        //     bodyMedium = TextStyle(
+        //         fontFamily = fontFamily, fontWeight = FontWeight.Normal, fontSize = 12.sp/*...*/
+        //     ),
+        //     bodyLarge = TextStyle(
+        //         fontFamily = fontFamily,
+        //         fontWeight = FontWeight.Bold,
+        //         letterSpacing = 2.sp,
+        //         /*...*/
+        //     ),
+        //     headlineMedium = TextStyle(
+        //         fontFamily = fontFamily, fontWeight = FontWeight.SemiBold/*...*/
+        //     )
+        // ),
         colorScheme = if (darkTheme) dark_color_scheme else light_color_scheme
     )
 }

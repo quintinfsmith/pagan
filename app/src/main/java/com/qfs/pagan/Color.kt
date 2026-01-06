@@ -1,7 +1,7 @@
 package com.qfs.pagan.Color
 
 import androidx.compose.ui.graphics.Color
-val Primary = Color(0xFF3E2818)
+val Primary = Color(0xFF372D40)
 val OnPrimary = Color(0xFFFFFFFF)
 val PrimaryContainer = Color(0xFFE6CCB9)
 val OnPrimaryContainer = Color(0xFF332114)

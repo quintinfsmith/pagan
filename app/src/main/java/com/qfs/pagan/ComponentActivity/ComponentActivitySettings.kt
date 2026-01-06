@@ -9,7 +9,9 @@ import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -51,6 +53,8 @@ import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
+import com.qfs.pagan.composable.DropdownMenu
+import com.qfs.pagan.composable.DropdownMenuItem
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.Slider
 import com.qfs.pagan.composable.SoundFontWarning
@@ -464,30 +468,29 @@ class ComponentActivitySettings: PaganComponentActivity() {
     @Composable
     fun SettingsSectionB() {
         val options_orientation = listOf(
-            Pair(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE, R.string.settings_orientation_landscape),
-            Pair(ActivityInfo.SCREEN_ORIENTATION_USER, R.string.settings_orientation_system),
-            Pair(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT, R.string.settings_orientation_portrait)
+            Triple(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE, R.string.settings_orientation_landscape, R.drawable.icon_landscape),
+            Triple(ActivityInfo.SCREEN_ORIENTATION_USER, R.string.settings_orientation_system, R.drawable.icon_orientation_system),
+            Triple(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT, R.string.settings_orientation_portrait, R.drawable.icon_portrait)
         )
         val options_nightmode = listOf(
-            Pair(AppCompatDelegate.MODE_NIGHT_YES, R.string.settings_night_mode_yes),
-            Pair(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM, R.string.settings_night_mode_system),
-            Pair(AppCompatDelegate.MODE_NIGHT_NO, R.string.settings_night_mode_no)
+            Triple(AppCompatDelegate.MODE_NIGHT_YES, R.string.settings_night_mode_yes, R.drawable.icon_night_mode),
+            Triple(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM, R.string.settings_night_mode_system, R.drawable.icon_night_mode_system),
+            Triple(AppCompatDelegate.MODE_NIGHT_NO, R.string.settings_night_mode_no, R.drawable.icon_day_mode)
         )
 
+        val playback_expanded = remember { mutableStateOf(false) }
         val options_playback = integerArrayResource(R.array.sample_rates)
-
-        val view_model = this@ComponentActivitySettings.view_model
-
-        var initial_index = options_playback.size - 1
-        for ((i, rate) in options_playback.enumerate().reversed()) {
-            initial_index = i
-            if (view_model.configuration.sample_rate >= rate) {
-                break
-            }
+        val active_playback_option = remember {
+            mutableStateOf(
+                if (options_playback.contains(this.view_model.configuration.sample_rate)) {
+                    options_playback.indexOf(this.view_model.configuration.sample_rate)
+                } else {
+                    options_playback.size - 1
+                }
+            )
         }
 
-        var slider_position by remember { mutableFloatStateOf(initial_index.toFloat() / (options_playback.size - 1).toFloat()) }
-        var slider_option_index by remember { mutableIntStateOf(initial_index) }
+        val view_model = this@ComponentActivitySettings.view_model
 
         var clip_same_line_release by remember { mutableStateOf(view_model.configuration.clip_same_line_release) }
         var relative_mode by remember { mutableStateOf(view_model.configuration.relative_mode) }
@@ -524,25 +527,30 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 verticalAlignment = Alignment.Bottom
             ) {
                 Text(stringResource(R.string.label_settings_playback_quality))
-                Text("${options_playback[slider_option_index]}Hz")
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Slider(
-                    modifier = Modifier.weight(1F),
-                    steps = options_playback.size,
-                    valueRange = 0F .. 1F,
-                    value = slider_position,
-                    onValueChange = {
-                        slider_position = it
-                        slider_option_index = (it * (options_playback.size - 1).toFloat()).toInt()
-                        view_model.configuration.sample_rate = options_playback[slider_option_index]
-                        view_model.save_configuration()
-                        this@ComponentActivitySettings.update_result()
+                Box(contentAlignment = Alignment.Center) {
+                    Button(
+                        content = { Text("${options_playback[active_playback_option.value]} hz") },
+                        onClick = { playback_expanded.value = !playback_expanded.value }
+                    )
+                    DropdownMenu(
+                        expanded = playback_expanded.value,
+                        onDismissRequest = { playback_expanded.value = false }
+                    ) {
+                        for ((i, rate) in options_playback.enumerate()) {
+                            DropdownMenuItem(
+                                text = { Text("$rate hz") },
+                                onClick = {
+                                    active_playback_option.value = i
+                                    view_model.configuration.sample_rate = options_playback[i]
+                                    view_model.save_configuration()
+                                    this@ComponentActivitySettings.update_result()
+                                    playback_expanded.value = false
+                                }
+                            )
+
+                        }
                     }
-                )
+                }
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -563,6 +571,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     }
                 )
             }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -630,7 +639,10 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
                 Text(stringResource(R.string.settings_screen_orientation))
                 SingleChoiceSegmentedButtonRow(modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                    options_orientation.forEachIndexed { index, (mode, resource) ->
+                    options_orientation.forEachIndexed { index, (mode, label_resource, icon_resource) ->
+                        if (index != 0) {
+                            Spacer(Modifier.width(2.dp))
+                        }
                         SegmentedButton(
                             shape = SegmentedButtonDefaults.itemShape(
                                 index = index,
@@ -644,7 +656,13 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                 this@ComponentActivitySettings.update_result()
                             },
                             selected = index == selected_orientation_index,
-                            label = { Text(stringResource(resource)) }
+                            icon = {
+                                Icon(
+                                    painter = painterResource(icon_resource),
+                                    contentDescription = stringResource(label_resource)
+                                )
+                           },
+                            label = { Text(stringResource(label_resource)) }
                         )
                     }
                 }
@@ -658,7 +676,10 @@ class ComponentActivitySettings: PaganComponentActivity() {
             ) {
                 Text(stringResource(R.string.settings_night_mode))
                 SingleChoiceSegmentedButtonRow(modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                    options_nightmode.forEachIndexed { index, (mode, resource) ->
+                    options_nightmode.forEachIndexed { index, (mode, label_resource, icon_resource) ->
+                        if (index != 0) {
+                            Spacer(Modifier.width(2.dp))
+                        }
                         SegmentedButton(
                             shape = SegmentedButtonDefaults.itemShape(
                                 index = index,
@@ -672,7 +693,13 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                 this@ComponentActivitySettings.update_result()
                             },
                             selected = index == selected_night_mode_index,
-                            label = { Text(stringResource(resource)) }
+                            icon = {
+                                Icon(
+                                    painter = painterResource(icon_resource),
+                                    contentDescription = stringResource(label_resource)
+                                )
+                            },
+                            label = { Text(stringResource( label_resource)) }
                         )
                     }
                 }

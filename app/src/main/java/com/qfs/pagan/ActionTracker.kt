@@ -974,8 +974,11 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                     )
                 }
 
-                Row {
-                    DialogTitle(stringResource(R.string.label_shortcut_scrollbar, slider_position.value.toInt()))
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    DialogTitle(stringResource(R.string.label_shortcut_scrollbar, slider_position.floatValue.toInt(), opus_manager.length - 1))
                 }
 
                 val default_colors = SliderDefaults.colors()
@@ -1003,9 +1006,9 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                 )
 
                 if (opus_manager.marked_sections.isNotEmpty()) {
-                    Row(
+                    Box(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
+                        contentAlignment = Alignment.Center
                     ) {
                         val expanded = remember { mutableStateOf(false) }
                         Box {

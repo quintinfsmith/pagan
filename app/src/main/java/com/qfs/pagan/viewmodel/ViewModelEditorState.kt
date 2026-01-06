@@ -690,12 +690,10 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun get_instrument_name(preset_key: Pair<Int, Int>, offset: Int): String? {
-        val available = this.get_available_instruments(preset_key)
-        return if (available.size <= offset) {
-            null
-        } else {
-            available[offset].first
+        for ((name, index) in this.get_available_instruments(preset_key)) {
+            if (index == offset) return name
         }
+        return null
     }
 
     // TODO: (maybe) cache these values so we don't have to calculate on every scroll

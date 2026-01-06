@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.IconCMenuButton
@@ -85,10 +86,14 @@ fun PercussionSetInstrumentButton(modifier: Modifier = Modifier, vm_state: ViewM
     TextCMenuButton(
         modifier = modifier,
         onClick = { dispatcher.set_percussion_instrument(active_line.channel.value!!, active_line.line_offset.value!!) },
-        text = label ?: if (active_channel.instrument.value.second == 128) {
-            stringArrayResource(R.array.midi_drums)[active_channel.instrument.value.first]
+        text = label ?: if (active_channel.instrument.value.first == 128) {
+            if (vm_state.soundfont_active.value && !vm_state.use_midi_playback.value) {
+                stringResource(R.string.unavailable_preset, stringArrayResource(R.array.midi_drums)[assigned_offset])
+            } else {
+                stringArrayResource(R.array.midi_drums)[assigned_offset]
+            }
         } else {
-            "${stringArrayResource(R.array.general_midi_presets)[active_channel.instrument.value.first]} @${active_line.line_offset.value!!}"
+            "${stringArrayResource(R.array.general_midi_presets)[active_channel.instrument.value.first]} @${assigned_offset}"
         }
     )
 }

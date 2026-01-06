@@ -947,7 +947,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         Box {
             val expanded = remember { mutableStateOf(false) }
             TopBarIcon(
-                icon = R.drawable.kebab,
+                icon = R.drawable.icon_kebab,
                 description = R.string.menu_item_playpause,
                 onClick = { expanded.value = !expanded.value }
             )
@@ -968,7 +968,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
     @Composable
-    fun RowScope.LoadingTopBar() { }
+    fun RowScope.LoadingTopBar() {
+        Box(Modifier.fillMaxSize()) {}
+    }
 
     @Composable
     override fun RowScope.TopBar() {

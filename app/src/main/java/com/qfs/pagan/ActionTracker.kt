@@ -1394,7 +1394,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         }
 
         val radix = opus_manager.get_radix()
-        this.vm_top.create_small_dialog { close ->
+        this.vm_top.create_medium_dialog { close ->
             @Composable {
                 val octave = remember { mutableIntStateOf(0) }
                 val offset = remember { mutableIntStateOf(0) }

@@ -24,8 +24,8 @@ import com.qfs.pagan.R
 fun NumberSelectorButton(modifier: Modifier = Modifier, index: Int, alternate: Boolean, selected: Boolean, highlighted: Boolean, callback: (Int) -> Unit) {
     val shape = RoundedCornerShape(12.dp)
     val (background, foreground) = if (selected) {
-        Pair(MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer)
-    } else if (alternate) {
+        Pair(MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.onTertiary)
+    } else if (!alternate) {
         Pair(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
     } else {
         Pair(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary)
@@ -35,13 +35,6 @@ fun NumberSelectorButton(modifier: Modifier = Modifier, index: Int, alternate: B
         modifier = modifier
             .height(dimensionResource(R.dimen.number_selector_button_height))
             .padding(1.dp)
-            .then(
-                if (alternate) {
-                    Modifier.border(.5.dp, foreground, shape)
-                } else {
-                    Modifier
-                }
-            )
             .background(background, shape)
             .padding(0.dp)
             .combinedClickable(

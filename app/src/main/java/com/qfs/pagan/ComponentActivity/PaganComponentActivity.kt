@@ -128,6 +128,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
     val view_model: ViewModelPagan by this.viewModels()
     lateinit var drawer_state: DrawerState
     val drawer_gesture_enabled = mutableStateOf(false)
+    var debug_mode = false
 
     init {
         System.loadLibrary("pagan")
@@ -149,20 +150,23 @@ abstract class PaganComponentActivity: ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        this.debug_mode = this.packageName == "com.qfs.pagandev"
         super.onCreate(savedInstanceState)
 
-        Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
-            Log.d("pagandebug", "$paramThrowable")
-            this.bkp_crash_report(paramThrowable)
-            this.on_crash()
+        if (!this.debug_mode) {
+            Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
+                Log.d("pagandebug", "$paramThrowable")
+                this.bkp_crash_report(paramThrowable)
+                this.on_crash()
 
-            val ctx = this.applicationContext
-            val pm = ctx.packageManager
-            val intent = pm.getLaunchIntentForPackage(ctx.packageName) ?: return@setDefaultUncaughtExceptionHandler
-            ctx.startActivity(
-                Intent.makeRestartActivityTask(intent.component)
-            )
-            Runtime.getRuntime().exit(0)
+                val ctx = this.applicationContext
+                val pm = ctx.packageManager
+                val intent = pm.getLaunchIntentForPackage(ctx.packageName) ?: return@setDefaultUncaughtExceptionHandler
+                ctx.startActivity(
+                    Intent.makeRestartActivityTask(intent.component)
+                )
+                Runtime.getRuntime().exit(0)
+            }
         }
 
         val view_model = this.view_model

@@ -162,6 +162,18 @@ class ViewModelEditorState: ViewModel() {
         this.cell_map[coordinate.y][coordinate.x].value = this.copy_tree_for_cell(tree).value
     }
 
+    fun update_tree(coordinate: EditorTable.Coordinate, position: List<Int>, tree: ReducibleTree<out OpusEvent>) {
+        if (position.isEmpty()) {
+            this.cell_map[coordinate.y][coordinate.x].value = this.copy_tree_for_cell(tree).value
+        } else {
+            var working_tree = this.cell_map[coordinate.y][coordinate.x].value
+            for (p in position.subList(0, position.size - 1)) {
+                working_tree = working_tree[p]
+            }
+            working_tree[position.last()] = this.copy_tree_for_cell(tree).value
+        }
+    }
+
     fun update_column(column: Int, is_tagged: Boolean) {
         this.column_data[column].is_tagged.value = is_tagged
     }

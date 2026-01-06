@@ -1210,6 +1210,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     working_channel = ui_facade.line_data[y].channel.value
 
                                     val cell = ui_facade.cell_map[y][x]
+
                                     Row(
                                         Modifier
                                             .height(
@@ -1459,7 +1460,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun <T: OpusEvent> LeafView(channel_data: ViewModelEditorState.ChannelData?, line_data: ViewModelEditorState.LineData, leaf_data: ViewModelEditorState.LeafData, event: T?, radix: Int, modifier: Modifier = Modifier) {
+    fun <T: OpusEvent> LeafView(channel_data: ViewModelEditorState.ChannelData?, line_data: ViewModelEditorState.LineData, leaf: ReducibleTree<Pair<ViewModelEditorState.LeafData, T?>>, radix: Int, modifier: Modifier = Modifier) {
+        val leaf_data = leaf.event!!.first
+        val event = leaf.event!!.second
         val leaf_state = if (leaf_data.is_spillover.value) TableColorPalette.LeafState.Spill
             else if (event != null) TableColorPalette.LeafState.Active
             else TableColorPalette.LeafState.Empty
@@ -1617,11 +1620,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
-    private fun <T> get_leaf_list(tree: ReducibleTree<T>): List<Triple<List<Int>, T?,Float>> {
-        val output = mutableListOf<Triple<List<Int>, T?, Float>>()
-        tree.weighted_traverse { tree, event, path, weight ->
-            if (tree.is_leaf()) {
-                output.add(Triple(path, event, weight))
+    private fun <T> get_leaf_list(tree: ReducibleTree<T>): List<Triple<List<Int>, ReducibleTree<T>,Float>> {
+        val output = mutableListOf<Triple<List<Int>, ReducibleTree<T>, Float>>()
+        tree.weighted_traverse { subtree, event, path, weight ->
+            if (subtree.is_leaf()) {
+                output.add(Triple(path, subtree, weight))
             }
         }
         return output
@@ -1631,12 +1634,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun CellView(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, cell: MutableState<ReducibleTree<Pair<ViewModelEditorState.LeafData, OpusEvent?>>>, y: Int, x: Int, modifier: Modifier = Modifier) {
         val line_info = ui_facade.line_data[y]
         Row(modifier.fillMaxSize()) {
-            for ((path, event, weight) in this@ComponentActivityEditor.get_leaf_list(cell.value)) {
+            for ((path, leaf, weight) in this@ComponentActivityEditor.get_leaf_list(cell.value)) {
                 this@ComponentActivityEditor.LeafView(
                     line_info.channel.value?.let { ui_facade.channel_data[it] },
                     line_info,
-                    event!!.first,
-                    event.second,
+                    leaf,
                     ui_facade.radix.value,
                     Modifier
                         .weight(weight)

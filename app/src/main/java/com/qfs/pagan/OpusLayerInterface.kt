@@ -205,6 +205,28 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.vm_state.refresh_cursor()
     }
 
+    private fun _update_tree(beat_key: BeatKey, position: List<Int>) {
+        if (this.ui_lock.is_locked()) return
+        val tree = this.get_tree_copy(beat_key, position)
+        this.vm_state.update_tree(
+            EditorTable.Coordinate(
+                y = this.get_visible_row_from_ctl_line(
+                    this.get_actual_line_index(
+                        this.get_instrument_line_index(
+                            beat_key.channel,
+                            beat_key.line_offset
+                        )
+                    )
+                )!!,
+                x = beat_key.beat
+            ),
+            position,
+            tree
+        )
+        this.vm_state.refresh_cursor()
+
+    }
+
     private fun _queue_global_ctl_cell_change(type: EffectType, beat: Int) {
         if (this.ui_lock.is_locked()) return
 
@@ -391,7 +413,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     override fun unset(beat_key: BeatKey, position: List<Int>) {
         this.track_blocked_leafs(beat_key, position) {
             super.unset(beat_key, position)
-            this._queue_cell_change(beat_key)
+            this._update_tree(beat_key, position)
             this.check_update_active_event(beat_key, position)
         }
     }
@@ -424,7 +446,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.exception_catcher {
             this.track_blocked_leafs(beat_key, position ?: listOf()) {
                 super.replace_tree(beat_key, position, tree)
-                this._queue_cell_change(beat_key)
+                this._update_tree(beat_key, position ?: listOf())
                 this.check_update_active_event(beat_key, position ?: listOf())
             }
         }
@@ -502,7 +524,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 }
 
                 if (this.ui_lock.is_locked()) return@track_blocked_leafs
-                this._queue_cell_change(beat_key)
+                this._update_tree(beat_key, position)
                 this.check_update_active_event(beat_key, position)
             }
         }
@@ -610,7 +632,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         val original_blocked_leafs = line.get_blocked_leafs(beat_key.beat, position)
 
         callback()
-
+        println("$original_blocked_leafs")
         this.remap_blocked_leafs(
             this.get_visible_row_from_pair(beat_key.channel, beat_key.line_offset),
             original_blocked_leafs,

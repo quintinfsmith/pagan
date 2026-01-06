@@ -48,7 +48,7 @@
     <dimen name="landing_button_space_h">6dp</dimen>
     <dimen name="config_icon_corner">10dp</dimen>
 
-    <dimen name="config_icon_size">48dp</dimen>
+    <dimen name="config_icon_size">41dp</dimen>
     <dimen name="config_icon_padding_vertical">8dp</dimen>
     <dimen name="config_icon_padding_horizontal">16dp</dimen>
 

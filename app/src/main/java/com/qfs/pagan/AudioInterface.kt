@@ -4,6 +4,7 @@ import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfont2.Preset
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
+import kotlin.concurrent.thread
 import kotlin.math.max
 import kotlin.math.min
 
@@ -37,7 +38,12 @@ class AudioInterface {
                 velocity = velocity
             )
 
-            this.devices[this.current_index]?.new_event(event, duration)
+
+            this.devices[this.current_index]?.let {
+                thread {
+                    it.new_event(event, duration)
+                }
+            }
             this.current_index = (this.current_index + 1) % this.size
         }
 
@@ -105,7 +111,7 @@ class AudioInterface {
     }
 
     fun connect_feedback_device() {
-        val buffer_size = this.sample_rate / 4
+        val buffer_size = this.sample_rate / 10
         this.feedback_revolver.set_handle_manager(
             SampleHandleManager(
                 this.soundfont!!,

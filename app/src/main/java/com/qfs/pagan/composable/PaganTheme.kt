@@ -9,8 +9,12 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import com.qfs.pagan.Color.*
+import com.qfs.pagan.R
 
 @Composable
 fun PaganTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
@@ -67,22 +71,33 @@ fun PaganTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable 
     )
 
 
+    val default = Typography()
+    val font = FontFamily(
+        //Font(R.font.fira_sans, FontWeight.Light),
+        Font(R.font.fira_sans, FontWeight.Normal),
+        //Font(R.font.fira_sans, FontWeight.Normal, FontStyle.Italic),
+        //Font(R.font.fira_sans, FontWeight.Medium),
+        //Font(R.font.fira_sans, FontWeight.Bold),
+    )
     MaterialTheme(
         content = content,
-        // typography = Typography(
-        //     bodyMedium = TextStyle(
-        //         fontFamily = fontFamily, fontWeight = FontWeight.Normal, fontSize = 12.sp/*...*/
-        //     ),
-        //     bodyLarge = TextStyle(
-        //         fontFamily = fontFamily,
-        //         fontWeight = FontWeight.Bold,
-        //         letterSpacing = 2.sp,
-        //         /*...*/
-        //     ),
-        //     headlineMedium = TextStyle(
-        //         fontFamily = fontFamily, fontWeight = FontWeight.SemiBold/*...*/
-        //     )
-        // ),
+        typography = default.copy(
+            displayLarge = default.displayLarge.copy(fontFamily = font),
+            displayMedium = default.displayMedium.copy(fontFamily = font),
+            displaySmall = default.displaySmall.copy(fontFamily = font),
+            headlineLarge = default.headlineLarge.copy(fontFamily = font),
+            headlineMedium = default.headlineMedium.copy(fontFamily = font),
+            headlineSmall = default.headlineSmall.copy(fontFamily = font),
+            titleLarge = default.titleLarge.copy(fontFamily = font),
+            titleMedium = default.titleMedium.copy(fontFamily = font),
+            titleSmall = default.titleSmall.copy(fontFamily = font),
+            bodyLarge = default.bodyLarge.copy(fontFamily = font),
+            bodyMedium = default.bodyMedium.copy(fontFamily = font),
+            bodySmall = default.bodySmall.copy(fontFamily = font),
+            labelLarge = default.labelLarge.copy(fontFamily = font),
+            labelMedium = default.labelMedium.copy(fontFamily = font),
+            labelSmall = default.labelSmall.copy(fontFamily = font)
+        ),
         colorScheme = if (darkTheme) dark_color_scheme else light_color_scheme
     )
 }

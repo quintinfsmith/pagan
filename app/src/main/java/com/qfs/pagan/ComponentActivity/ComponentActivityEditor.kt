@@ -1474,7 +1474,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         )
 
 
-        ProvideContentColorTextStyle(text_color, MaterialTheme.typography.bodySmall) {
+        ProvideContentColorTextStyle(contentColor = text_color) {
             HalfBorderBox(
                 modifier = modifier
                     .background(color = leaf_color)
@@ -1489,20 +1489,19 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         is AbsoluteNoteEvent -> {
                             val octave = event.note / radix
                             val offset = event.note % radix
-                            Row(horizontalArrangement = Arrangement.Center) {
-                                Column(
-                                    modifier = Modifier.fillMaxHeight(),
-                                    verticalArrangement = Arrangement.Center
-                                ) {
-                                    Row(Modifier.padding(top = 14.dp)) {
-                                        Text("$octave", fontSize = 14.sp)
+                            Row(
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.Bottom
+                            ) {
+                                Column(verticalArrangement = Arrangement.Bottom) {
+                                    ProvideTextStyle(MaterialTheme.typography.labelLarge) {
+                                        Text("$octave")
                                     }
                                 }
-                                Column(
-                                    modifier = Modifier.fillMaxHeight(),
-                                    verticalArrangement = Arrangement.Center
-                                ) {
-                                    Text("$offset", fontSize = 20.sp)
+                                Column(verticalArrangement = Arrangement.Center) {
+                                    ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+                                        Text("$offset")
+                                    }
                                 }
                             }
                         }
@@ -1514,40 +1513,43 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 horizontalArrangement = Arrangement.Center,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Column(
-                                    modifier = Modifier.fillMaxHeight(),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.Center
+                                Box(
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    ProvideTextStyle(MaterialTheme.typography.labelMedium) {
-                                        Row(
-                                            modifier = Modifier.weight(.4F),
-                                            verticalAlignment = Alignment.Bottom
-                                        ) {
-                                            Text(if (event.offset > 0) "+" else "-")
-                                        }
-                                        Row(
-                                            modifier = Modifier.weight(.4F),
-                                            verticalAlignment = Alignment.Top
-                                        ) {
-                                            Text("$octave")
-                                        }
-                                        Spacer(modifier = Modifier.weight(.1F))
+                                    ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+                                        Text(
+                                            text = if (event.offset > 0) "+" else "-",
+                                            modifier = Modifier
+                                                .padding(bottom = 16.dp)
+                                                .align(Alignment.Center)
+                                        )
+                                    }
+                                    ProvideTextStyle(MaterialTheme.typography.labelLarge) {
+                                        Text(
+                                            text = "$octave",
+                                            modifier = Modifier
+                                                .padding(top = 12.dp)
+                                                .align(Alignment.Center)
+                                        )
                                     }
                                 }
-                                Column(
-                                    modifier = Modifier.fillMaxHeight(),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.Center
-                                ) {
-                                    ProvideTextStyle(MaterialTheme.typography.titleMedium) {
+                                Spacer(modifier = Modifier.width(1.dp))
+                                ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
                                         Text("$offset")
                                     }
                                 }
                             }
                         }
 
-                        is PercussionEvent -> SText(R.string.percussion_label, color = text_color)
+                        is PercussionEvent -> Icon(
+                            modifier = Modifier.padding(8.dp),
+                            painter = painterResource(R.drawable.percussion_indicator),
+                            contentDescription = ""
+                        )
                         is OpusVolumeEvent -> Text("${(event.value * 100F).toInt()}%", color = text_color)
                         is OpusPanEvent -> {
                             Text(
@@ -1585,21 +1587,25 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                             strokeWidth = 1F
                                         )
                                     }
-                                    Row(horizontalArrangement = Arrangement.Center) {
-                                        Column(
-                                            verticalArrangement = Arrangement.Top,
-                                            modifier = Modifier.fillMaxHeight(),
-                                            content = { Text("${event.numerator}") }
-                                        )
-                                        Column(
-                                            verticalArrangement = Arrangement.Bottom,
-                                            modifier = Modifier.fillMaxHeight(),
-                                            content = { Text("${event.denominator}") }
-                                        )
+                                    ProvideTextStyle(MaterialTheme.typography.labelMedium) {
+                                        Row(horizontalArrangement = Arrangement.Center) {
+                                            Column(
+                                                verticalArrangement = Arrangement.Top,
+                                                modifier = Modifier.fillMaxHeight(),
+                                                content = { Text("${event.numerator}") }
+                                            )
+                                            Spacer(Modifier.width(3.dp))
+                                            Column(
+                                                verticalArrangement = Arrangement.Bottom,
+                                                modifier = Modifier.fillMaxHeight(),
+                                                content = { Text("${event.denominator}") }
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
+
                         is OpusTempoEvent -> Text("${event.value.roundToInt()}", color = text_color)
                         is OpusVelocityEvent -> Text("${(event.value * 100F).toInt()}%", color = text_color)
                         null -> {}
@@ -1675,11 +1681,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
         DrawerCard {
             Row(horizontalArrangement = Arrangement.SpaceBetween) {
                 ConfigDrawerTopButton(
-                    modifier = Modifier.weight(1F),
                     onClick = { dispatcher.set_tuning_table_and_transpose() },
                     content = { SText(R.string.label_tuning) }
                 )
-                DrawerPadder()
+                Spacer(Modifier.weight(1F))
                 ConfigDrawerTopButton(
                     onClick = {
                         thread {

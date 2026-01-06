@@ -63,8 +63,8 @@ class TableColorPalette {
 
         fun get_text(input: Color): Color {
             val avg = (input.red + input.green + input.blue) / 3F
-            return if (avg > .5F) Color(0xFF000000)
-                else  Color(0xFFFFFFFF)
+            return if (avg > .4F) Color(0xFF000000)
+            else  Color(0xFFFFFFFF)
         }
 
         fun get_color(

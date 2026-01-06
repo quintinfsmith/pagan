@@ -86,7 +86,6 @@ import kotlin.math.floor
 import kotlin.math.max
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
-
 /**
  * Handle all (or as much of as possible) of the logic between a user action and the OpusManager.
  * This class is meant for recording and playing back UI tests and eventually debugging so
@@ -1502,9 +1501,9 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             opus_manager.unset()
         } else {
             opus_manager.set_percussion_event_at_cursor()
-            // TODO:
-        //  val event_note = opus_manager.get_percussion_instrument(beat_key.channel, beat_key.line_offset)
-        //   this.get_activity().play_event(beat_key.channel, event_note)
+
+            val event_note = opus_manager.get_percussion_instrument(beat_key.channel, beat_key.line_offset)
+            this.play_event(beat_key.channel, event_note, .65F)
         }
     }
 
@@ -1514,12 +1513,13 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         instrument?.let {
             this.track(TrackedAction.SetPercussionInstrument, listOf(channel, line_offset, it))
             opus_manager.percussion_set_instrument(channel, line_offset, it)
+            this.play_event(channel, it, .65F)
             return
         }
 
         val options = mutableListOf<Pair<Int, @Composable RowScope.() -> Unit>>()
 
-        if (this.vm_controller.audio_interface == null && this.vm_controller.audio_interface.soundfont != null) {
+        if (this.vm_controller.active_midi_device == null && this.vm_controller.audio_interface.soundfont != null) {
             val preset = opus_manager.get_channel_instrument(channel)
             val instruments = opus_manager.vm_state.get_available_instruments(preset)
             for ((name, index) in instruments) {
@@ -1549,6 +1549,13 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         instrument?.let {
             this.track(TrackedAction.SetChannelPreset, listOf(channel, instrument.first, instrument.second))
             opus_manager.channel_set_preset(channel, instrument)
+
+            val radix = opus_manager.get_radix()
+            this.play_event(channel, (3 * radix))
+            Thread.sleep(200)
+            this.play_event(channel, (3 * radix) + (4 * radix / 12))
+            Thread.sleep(200)
+            this.play_event(channel, (3 * radix) + (7 * radix / 12))
             return
         }
 

@@ -71,14 +71,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.offset
-import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import androidx.test.core.app.ActivityScenario.launch
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
 import com.qfs.apres.MidiController
@@ -125,7 +122,6 @@ import com.qfs.pagan.composable.is_light
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
-import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
@@ -141,11 +137,7 @@ import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import java.io.BufferedOutputStream
 import java.io.BufferedReader
 import java.io.DataOutputStream
@@ -157,7 +149,6 @@ import java.io.InputStreamReader
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.concurrent.thread
-import kotlin.coroutines.coroutineContext
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -1093,7 +1084,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val ctl_line_height = dimensionResource(R.dimen.ctl_line_height)
         val leaf_width = dimensionResource(R.dimen.base_leaf_width)
         val column_widths = Array(ui_facade.beat_count.value) { i ->
-            Array(ui_facade.line_count.value) { j -> ui_facade.cell_map[j][i].value.weighted_size }.max()
+            Array(ui_facade.line_count.value) { j -> ui_facade.cell_map[j][i].value.top_weight.value }.max()
         }
 
         val scope = rememberCoroutineScope()
@@ -1460,9 +1451,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun <T: OpusEvent> LeafView(channel_data: ViewModelEditorState.ChannelData?, line_data: ViewModelEditorState.LineData, leaf: ReducibleTree<Pair<ViewModelEditorState.LeafData, T?>>, radix: Int, modifier: Modifier = Modifier) {
-        val leaf_data = leaf.event!!.first
-        val event = leaf.event!!.second
+    fun LeafView(channel_data: ViewModelEditorState.ChannelData?, line_data: ViewModelEditorState.LineData, leaf_data: ViewModelEditorState.LeafData, radix: Int, modifier: Modifier = Modifier) {
+        val event = leaf_data.event
         val leaf_state = if (leaf_data.is_spillover.value) TableColorPalette.LeafState.Spill
             else if (event != null) TableColorPalette.LeafState.Active
             else TableColorPalette.LeafState.Empty
@@ -1631,17 +1621,17 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun CellView(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, cell: MutableState<ReducibleTree<Pair<ViewModelEditorState.LeafData, OpusEvent?>>>, y: Int, x: Int, modifier: Modifier = Modifier) {
+    fun CellView(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, cell: MutableState<ViewModelEditorState.TreeData>, y: Int, x: Int, modifier: Modifier = Modifier) {
         val line_info = ui_facade.line_data[y]
         Row(modifier.fillMaxSize()) {
-            for ((path, leaf, weight) in this@ComponentActivityEditor.get_leaf_list(cell.value)) {
+            for ((path, leaf_data) in cell.value.leafs) {
                 this@ComponentActivityEditor.LeafView(
                     line_info.channel.value?.let { ui_facade.channel_data[it] },
                     line_info,
-                    leaf,
+                    leaf_data.value,
                     ui_facade.radix.value,
                     Modifier
-                        .weight(weight)
+                        .weight(leaf_data.value.weight.value)
                         .combinedClickable(
                             onClick = {
                                 dispatcher.tap_leaf(

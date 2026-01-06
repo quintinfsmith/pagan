@@ -3,6 +3,7 @@ package com.qfs.pagan.viewmodel
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -49,7 +50,9 @@ class ViewModelEditorState: ViewModel() {
         val is_selected = mutableStateOf(is_selected)
     }
 
-    class LeafData(is_selected: Boolean = false, is_secondary: Boolean = false, is_valid: Boolean = true, is_spillover: Boolean = false) {
+    class LeafData(event: OpusEvent? = null, is_selected: Boolean = false, is_secondary: Boolean = false, is_valid: Boolean = true, is_spillover: Boolean = false, weight: Float = 1F) {
+        val weight = mutableFloatStateOf(weight)
+        val event = mutableStateOf(event)
         val is_selected = mutableStateOf(is_selected)
         val is_secondary = mutableStateOf(is_secondary)
         val is_valid = mutableStateOf(is_valid)
@@ -73,6 +76,54 @@ class ViewModelEditorState: ViewModel() {
         }
     }
 
+    class TreeData(tree: ReducibleTree<out OpusEvent>) {
+        class LeafNotFound(path: List<Int>): Exception("Leaf $path not found")
+        val top_weight: MutableState<Int> = mutableIntStateOf(tree.weighted_size)
+        val leafs: MutableList<Pair<List<Int>, MutableState<LeafData>>> = mutableListOf()
+        init {
+            tree.weighted_traverse { subtree, event, path, weight ->
+                if (subtree.is_leaf()) {
+                    this.set_leaf(path, event, weight)
+                }
+            }
+        }
+
+        fun get_leaf(path: List<Int>): MutableState<LeafData> {
+            for ((leaf_path, leaf_data) in this.leafs) {
+                if (leaf_path == path) return leaf_data
+            }
+            throw LeafNotFound(path)
+        }
+
+        fun set_leaf(path: List<Int>, event: OpusEvent?, weight: Float) {
+            for (i in 0 until this.leafs.size) {
+                if (this.leafs[i].first == path) {
+                    this.leafs[i].second.value.event.value = event
+                    this.leafs[i].second.value.weight.value = weight
+                    return
+                }
+            }
+
+            this.leafs.add(Pair(path, mutableStateOf(LeafData(event = event, weight = weight))))
+        }
+
+        fun sort_leafs() {
+            // TODO
+        }
+
+        fun remove_leafs(path: List<Int>) {
+            var i = 0
+            while (i < this.leafs.size) {
+                if (this.leafs[i].first.size >= path.size && this.leafs[i].first.subList(0, path.size) == path) {
+                    this.leafs.removeAt(i)
+                } else {
+                    i++
+                }
+            }
+        }
+
+    }
+
     class CacheCursor(var type: CursorMode, vararg ints: Int) {
         var ints = ints.toList()
     }
@@ -84,7 +135,7 @@ class ViewModelEditorState: ViewModel() {
     var channel_count: MutableState<Int> = mutableIntStateOf(0)
     val line_data: MutableList<LineData> = mutableListOf()
     val column_data: MutableList<ColumnData> = mutableListOf()
-    val cell_map = mutableListOf<MutableList<MutableState<ReducibleTree<Pair<LeafData, OpusEvent?>>>>>()
+    val cell_map = mutableListOf<MutableList<MutableState<TreeData>>>()
     val channel_data: MutableList<ChannelData> = mutableListOf()
     var radix: MutableState<Int> = mutableIntStateOf(12)
 
@@ -159,19 +210,18 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun update_cell(coordinate: EditorTable.Coordinate, tree: ReducibleTree<out OpusEvent>) {
-        this.cell_map[coordinate.y][coordinate.x].value = this.copy_tree_for_cell(tree).value
+        this.cell_map[coordinate.y][coordinate.x].value = TreeData(tree)
     }
 
     fun update_tree(coordinate: EditorTable.Coordinate, position: List<Int>, tree: ReducibleTree<out OpusEvent>) {
-        if (position.isEmpty()) {
-            this.cell_map[coordinate.y][coordinate.x].value = this.copy_tree_for_cell(tree).value
-        } else {
-            var working_tree = this.cell_map[coordinate.y][coordinate.x].value
-            for (p in position.subList(0, position.size - 1)) {
-                working_tree = working_tree[p]
+        val cell = this.cell_map[coordinate.y][coordinate.x].value
+        cell.remove_leafs(position)
+        tree.weighted_traverse { subtree, event, path, weight ->
+            if (subtree.is_leaf()) {
+                cell.set_leaf(path, event, weight)
             }
-            working_tree[position.last()] = this.copy_tree_for_cell(tree).value
         }
+        cell.top_weight.value = tree.get_root().weighted_size
     }
 
     fun update_column(column: Int, is_tagged: Boolean) {
@@ -183,7 +233,7 @@ class ViewModelEditorState: ViewModel() {
         if (new_line_data.channel.value != null && new_line_data.line_offset.value != null && new_line_data.ctl_type.value == null) {
             this.channel_data[new_line_data.channel.value!!].size.intValue += 1
         }
-        this.cell_map.add(y, MutableList(cells.beats.size) { i -> this.copy_tree_for_cell(cells.beats[i]) })
+        this.cell_map.add(y, MutableList(cells.beats.size) { i -> mutableStateOf(TreeData(cells.beats[i])) })
         this.line_count.value += 1
 
         // Update spillover
@@ -199,7 +249,7 @@ class ViewModelEditorState: ViewModel() {
         while (true) {
             for ((blocked_beat, blocked_position) in cells.get_all_blocked_positions(working_beat, working_position)) {
                 if (blocked_position == working_position && blocked_beat == working_beat) continue
-                this.cell_map[y][blocked_beat].value.get(*blocked_position.toIntArray()).event!!.first.is_spillover.value = true
+                this.cell_map[y][blocked_beat].value.get_leaf(blocked_position).value.is_spillover.value = true
             }
 
             cells.get_proceding_event_position(working_beat, working_position)?.let {
@@ -296,18 +346,10 @@ class ViewModelEditorState: ViewModel() {
         this.column_data.add(column, ColumnData(is_tagged))
         new_cells?.let {
             for ((y, line) in this.cell_map.enumerate()) {
-                line.add(column, this.copy_tree_for_cell(new_cells[y]))
+                line.add(column, mutableStateOf(TreeData(new_cells[y])))
             }
         }
         this.beat_count.value += 1
-    }
-
-    private fun copy_tree_for_cell(tree: ReducibleTree<out OpusEvent>): MutableState<ReducibleTree<Pair<LeafData, OpusEvent?>>> {
-        val new_tree = tree.copy { event ->
-            Pair(LeafData(), event?.copy())
-        }
-
-        return mutableStateOf(new_tree)
     }
 
     fun remove_column(column: Int) {
@@ -316,10 +358,6 @@ class ViewModelEditorState: ViewModel() {
             line.removeAt(column)
         }
         this.beat_count.value -= 1
-    }
-
-    fun queue_force_scroll(y: Int, x: Int, offset: Rational, offset_width: Rational, force: Boolean) {
-        TODO()
     }
 
     fun move_channel(channel_index: Int, new_channel_index: Int) {
@@ -411,15 +449,11 @@ class ViewModelEditorState: ViewModel() {
         when (cursor.type) {
             CursorMode.Column -> {
                 for (y in 0 until this.line_count.value) {
-                    this.cell_map[y][cursor.ints[0]].value.also {
-                        it.traverse { tree, pair ->
-                            if (tree.is_leaf()) {
-                                pair?.first?.let { leaf_data ->
-                                    leaf_data.is_selected.value = false
-                                    leaf_data.is_secondary.value = true
-                                    this.selected_leafs.add(leaf_data)
-                                }
-                            }
+                    this.cell_map[y][cursor.ints[0]].value.let {
+                        for ((_, leaf_data) in it.leafs) {
+                            leaf_data.value.is_selected.value = false
+                            leaf_data.value.is_secondary.value = true
+                            this.selected_leafs.add(leaf_data.value)
                         }
                     }
                 }
@@ -434,15 +468,11 @@ class ViewModelEditorState: ViewModel() {
                         if (line.line_offset.value != active_line.line_offset.value) continue
                         if (active_line.ctl_type.value != null && active_line.ctl_type.value != line.ctl_type.value) continue
 
-                        this.cell_map[y][x].value.also {
-                            it.traverse { tree, pair ->
-                                if (tree.is_leaf()) {
-                                    pair?.first?.let { leaf_data ->
-                                        leaf_data.is_selected.value = false
-                                        leaf_data.is_secondary.value = true
-                                        this.selected_leafs.add(leaf_data)
-                                    }
-                                }
+                        this.cell_map[y][x].value.let {
+                            for ((_, leaf_data) in it.leafs) {
+                                leaf_data.value.is_selected.value = false
+                                leaf_data.value.is_secondary.value = true
+                                this.selected_leafs.add(leaf_data.value)
                             }
                         }
                     }
@@ -454,14 +484,10 @@ class ViewModelEditorState: ViewModel() {
                         if (line.channel.value != cursor.ints[0]) continue
 
                         this.cell_map[y][x].value.also {
-                            it.traverse { tree, pair ->
-                                if (tree.is_leaf()) {
-                                    pair?.first?.let { leaf_data ->
-                                        leaf_data.is_selected.value = false
-                                        leaf_data.is_secondary.value = true
-                                        this.selected_leafs.add(leaf_data)
-                                    }
-                                }
+                            for ((_, leaf_data) in it.leafs) {
+                                leaf_data.value.is_selected.value = false
+                                leaf_data.value.is_secondary.value = true
+                                this.selected_leafs.add(leaf_data.value)
                             }
                         }
                     }
@@ -472,15 +498,10 @@ class ViewModelEditorState: ViewModel() {
                 val x = cursor.ints[1]
                 if (this.cell_map.size > y && this.cell_map[y].size > x) {
                     this.cell_map[y][x].value.also {
-                        it.traverse { tree, pair ->
-                            if (tree.is_leaf()) {
-                                pair?.first?.let { leaf_data ->
-                                    leaf_data.is_selected.value =
-                                        tree.get_path() == cursor.ints.subList(2, cursor.ints.size)
-                                    leaf_data.is_secondary.value = false // TODO
-                                    this.selected_leafs.add(leaf_data)
-                                }
-                            }
+                        for ((leaf_path, leaf_data) in it.leafs) {
+                            leaf_data.value.is_selected.value = leaf_path == cursor.ints.subList(2, cursor.ints.size)
+                            leaf_data.value.is_secondary.value = false // TODO
+                            this.selected_leafs.add(leaf_data.value)
                         }
                     }
                 }
@@ -489,15 +510,11 @@ class ViewModelEditorState: ViewModel() {
                 for (y in min(cursor.ints[0], cursor.ints[2]) .. max(cursor.ints[0], cursor.ints[2])) {
                     for (x in min(cursor.ints[1], cursor.ints[3]) .. max(cursor.ints[1], cursor.ints[3])) {
                         this.cell_map[y][x].value.also {
-                            it.traverse { tree, pair ->
-                                if (tree.is_leaf()) {
-                                    val is_selected = x == cursor.ints[0] && y == cursor.ints[1]
-                                    pair?.first?.let { leaf_data ->
-                                        leaf_data.is_selected.value = is_selected
-                                        leaf_data.is_secondary.value = !is_selected
-                                        this.selected_leafs.add(leaf_data)
-                                    }
-                                }
+                            for ((_, leaf_data) in it.leafs) {
+                                val is_selected = x == cursor.ints[0] && y == cursor.ints[1]
+                                leaf_data.value.is_selected.value = is_selected
+                                leaf_data.value.is_secondary.value = !is_selected
+                                this.selected_leafs.add(leaf_data.value)
                             }
                         }
                     }
@@ -714,7 +731,7 @@ class ViewModelEditorState: ViewModel() {
         var working_value = leaf
         for (i in 0 until this.beat_count.value) {
             if (working_value == 0) break
-            working_value -= Array(this.cell_map.size) { j -> this.cell_map[j][i].value.weighted_size }.max()
+            working_value -= Array(this.cell_map.size) { j -> this.cell_map[j][i].value.top_weight.value }.max()
             output = i
             if (working_value < 0) break
         }
@@ -742,7 +759,7 @@ class ViewModelEditorState: ViewModel() {
         } else if (state.firstVisibleItemIndex >= beat) {
             Pair(beat, 0)
         } else if (state.layoutInfo.visibleItemsInfo.last().index <= beat) {
-            val beat_width = Array(this.line_count.value) { this.cell_map[it][beat].value.weighted_size }.max()
+            val beat_width = Array(this.line_count.value) { this.cell_map[it][beat].value.top_weight.value }.max()
             Pair(beat, (0 - state.layoutInfo.viewportSize.width + (beat_width * this.base_leaf_width.value)).toInt())
         } else {
             return
@@ -756,7 +773,7 @@ class ViewModelEditorState: ViewModel() {
     }
 
     private fun get_beat_width(beat: Int): Int {
-        return Array(this.line_count.value) { j -> this.cell_map[j][beat].value.weighted_size }.max()
+        return Array(this.line_count.value) { j -> this.cell_map[j][beat].value.top_weight.value }.max()
     }
 
     fun scroll_to_leaf(beat: Int, offset: Rational, width: Rational) {
@@ -793,7 +810,7 @@ class ViewModelEditorState: ViewModel() {
             val beat_width_px = (beat_width * this.base_leaf_width.value).toInt()
 
             while (working_index >= 0) {
-                val working_beat_width = Array(this.line_count.value) { j -> this.cell_map[j][working_index].value.weighted_size }.max()
+                val working_beat_width = Array(this.line_count.value) { j -> this.cell_map[j][working_index].value.top_weight.value }.max()
                 val subtracter = (working_beat_width * this.base_leaf_width.value).toInt()
                 if (working_offset - subtracter < beat_width_px) break
                 working_offset -= subtracter

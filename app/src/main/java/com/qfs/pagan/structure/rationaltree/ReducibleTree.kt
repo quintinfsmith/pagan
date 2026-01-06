@@ -924,4 +924,12 @@ class ReducibleTree<T> {
 
         return output
     }
+
+    fun get_root(): ReducibleTree<T> {
+        var working_tree = this
+        while (working_tree.parent != null) {
+            working_tree = working_tree.parent!!
+        }
+        return working_tree
+    }
 }

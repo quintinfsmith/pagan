@@ -63,6 +63,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -150,6 +151,8 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.concurrent.thread
 import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 class ComponentActivityEditor: PaganComponentActivity() {
@@ -1443,7 +1446,29 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text( text = "$x", modifier = Modifier.padding(4.dp) )
+                        Text(
+                            text = "$x",
+                            modifier = Modifier
+                                .padding(4.dp)
+                                .graphicsLayer {
+                                    val width_px = column_width.toPx()
+                                    val viewport_width = ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width
+                                    translationX = if (width_px >= viewport_width) {
+                                        if (ui_facade.scroll_state_x.value.firstVisibleItemIndex == x) {
+                                            min(
+                                                ((viewport_width - width_px) / 2F) + ui_facade.scroll_state_x.value.firstVisibleItemScrollOffset.toFloat(),
+                                                ((width_px - viewport_width) / 2F),
+                                            )
+                                        } else if (ui_facade.scroll_state_x.value.layoutInfo.visibleItemsInfo.last().index == x) {
+                                            (viewport_width - width_px) / 2F
+                                        } else {
+                                            0F
+                                        }
+                                    } else {
+                                        0F
+                                    }
+                                }
+                        )
                     }
                 }
             )

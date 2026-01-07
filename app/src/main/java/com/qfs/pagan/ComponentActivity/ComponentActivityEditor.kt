@@ -23,6 +23,9 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -36,6 +39,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -72,6 +76,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.core.app.ActivityCompat
@@ -153,8 +158,6 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.concurrent.thread
 import kotlin.math.abs
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.roundToInt
 
 class ComponentActivityEditor: PaganComponentActivity() {
@@ -1053,21 +1056,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun BoxScope.MainTableBackground() {
         Box(
             Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .height(dimensionResource(R.dimen.line_height)),
-            contentAlignment = Alignment.BottomCenter,
-            content = {
-                Spacer(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(dimensionResource(R.dimen.table_line_stroke))
-                        .background(MaterialTheme.colorScheme.onSurfaceVariant)
-                )
-            }
-        )
-        Box(
-            Modifier
                 .fillMaxHeight()
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .width(dimensionResource(R.dimen.line_label_width)),
@@ -1081,6 +1069,46 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 )
             }
         )
+
+        Row {
+            Box(
+                Modifier
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .width(dimensionResource(R.dimen.line_label_width))
+                    .height(dimensionResource(R.dimen.line_height)),
+                contentAlignment = Alignment.BottomEnd,
+                content = {
+                    Spacer(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(dimensionResource(R.dimen.table_line_stroke))
+                            .background(MaterialTheme.colorScheme.onSurfaceVariant)
+                    )
+                    Spacer(
+                        Modifier
+                            .fillMaxHeight()
+                            .width(dimensionResource(R.dimen.table_line_stroke))
+                            .background(MaterialTheme.colorScheme.onSurfaceVariant)
+                    )
+                }
+            )
+            Box(
+                Modifier
+                    .weight(1F)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .height(dimensionResource(R.dimen.line_height)),
+                contentAlignment = Alignment.BottomCenter,
+                content = {
+                    Spacer(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(dimensionResource(R.dimen.table_line_stroke))
+                            .background(MaterialTheme.colorScheme.onSurfaceVariant)
+                    )
+                }
+            )
+        }
+
     }
 
     @Composable
@@ -1128,9 +1156,42 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                                 Row(
                                     modifier = Modifier
+                                        .then(
+                                            // Make std lines draggable
+                                            if (ui_facade.line_data[y].ctl_type.value == null) {
+                                                Modifier
+                                                    .draggable(
+                                                        onDragStarted = { state_model.start_dragging(y) },
+                                                        onDragStopped = { state_model.stop_dragging() },
+                                                        orientation = Orientation.Vertical,
+                                                        state = rememberDraggableState { delta ->
+                                                            state_model.dragging_offset.value += delta
+                                                        }
+                                                    )
+                                            } else {
+                                                Modifier
+                                            }
+                                        )
+                                        .zIndex(
+                                            if (state_model.line_data[y].is_dragging.value) 2F
+                                            else 0F
+                                        )
+                                        .offset {
+                                            IntOffset(
+                                                0,
+                                                if (state_model.line_data[y].is_dragging.value) state_model.dragging_offset.value.roundToInt()
+                                                else 0
+                                            )
+                                        }
                                         .height(use_height)
                                         .width(dimensionResource(R.dimen.line_label_width)),
-                                    content = { LineLabelView(modifier = Modifier.fillMaxSize(), dispatcher, ui_facade.line_data[y]) }
+                                    content = {
+                                        LineLabelView(
+                                            modifier = Modifier.fillMaxSize(),
+                                            dispatcher,
+                                            ui_facade.line_data[y]
+                                        )
+                                    }
                                 )
                             }
                             Row(
@@ -1209,6 +1270,17 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                                     Row(
                                         Modifier
+                                            .zIndex(
+                                                if (state_model.line_data[y].is_dragging.value) 2F
+                                                else 0F
+                                            )
+                                            .offset {
+                                                IntOffset(
+                                                    0,
+                                                    if (state_model.line_data[y].is_dragging.value) state_model.dragging_offset.value.roundToInt()
+                                                    else 0
+                                                )
+                                            }
                                             .height(
                                                 if (ui_facade.line_data[y].ctl_type.value != null) ctl_line_height
                                                 else line_height

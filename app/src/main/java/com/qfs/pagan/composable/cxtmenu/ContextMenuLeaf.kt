@@ -237,7 +237,13 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEd
     when (layout) {
         ViewModelPagan.LayoutSize.SmallLandscape -> {
             if (is_percussion) {
-                ContextMenuStructureControls(modifier, ui_facade, dispatcher, show_relative_input, true)
+                ContextMenuStructureControls(
+                    modifier,
+                    ui_facade,
+                    dispatcher,
+                    show_relative_input = false,
+                    landscape = true
+                )
             } else {
                 Row {
                     ContextMenuStructureControls(Modifier, ui_facade, dispatcher, show_relative_input, true)
@@ -249,7 +255,7 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEd
         }
 
         ViewModelPagan.LayoutSize.MediumLandscape -> {
-            ContextMenuStructureControls(modifier, ui_facade, dispatcher, show_relative_input, true)
+            ContextMenuStructureControls(modifier, ui_facade, dispatcher, show_relative_input && ! is_percussion, true)
         }
 
         ViewModelPagan.LayoutSize.SmallPortrait,
@@ -259,7 +265,10 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEd
         ViewModelPagan.LayoutSize.XLargeLandscape,
         ViewModelPagan.LayoutSize.XLargePortrait -> {
             if (is_percussion) {
-                ContextMenuStructureControls(modifier, ui_facade, dispatcher, show_relative_input, false)
+                ContextMenuStructureControls(modifier, ui_facade, dispatcher,
+                    show_relative_input = false,
+                    landscape = false
+                )
             } else {
                 Column(modifier) {
                     ContextMenuStructureControls(Modifier, ui_facade, dispatcher, show_relative_input, false)

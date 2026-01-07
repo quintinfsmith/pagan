@@ -1,5 +1,6 @@
 package com.qfs.pagan.composable
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -12,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -42,15 +44,19 @@ fun <T> RadioMenu(
             Button(
                 colors = ButtonDefaults.buttonColors().copy(
                     containerColor = if (active.value == item) {
-                        MaterialTheme.colorScheme.tertiary
-                    } else {
                         ButtonDefaults.buttonColors().containerColor
+                    } else {
+                        Color(0x00000000)
                     },
                     contentColor = if (active.value == item) {
-                        MaterialTheme.colorScheme.onTertiary
-                    } else {
                         ButtonDefaults.buttonColors().contentColor
+                    } else {
+                        ButtonDefaults.buttonColors().containerColor
                     }
+                ),
+                border = BorderStroke(
+                    width = 2.dp,
+                    color = ButtonDefaults.buttonColors().containerColor
                 ),
                 onClick = {
                     active.value = item

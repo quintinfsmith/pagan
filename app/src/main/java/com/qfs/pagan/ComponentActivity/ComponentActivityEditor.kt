@@ -48,6 +48,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.ProvideTextStyle
@@ -72,6 +73,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -1392,6 +1394,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         column_info: ViewModelEditorState.ColumnData,
         column_width: Dp // Necessary for floating label
     ) {
+        val line_height = dimensionResource(R.dimen.line_height)
         // val scroll_state = this.state_model.scroll_state_x.value
 
         // // Keep the column number of huge columns on screen
@@ -1435,8 +1438,60 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     .fillMaxSize(),
                 border_color = MaterialTheme.colorScheme.onSurfaceVariant,
                 content = {
+                    if (state_model.wide_beat.value == x) {
+                        LinearProgressIndicator(
+                            modifier = Modifier
+                                .width(ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width.dp / 4)
+                                .graphicsLayer {
+                                    val width_px = column_width.toPx()
+                                    val scroll_offset = ui_facade.scroll_state_x.value.firstVisibleItemScrollOffset.toFloat()
+                                    val viewport_width = ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width
+                                    val floating_position = (width_px / -2F) + (viewport_width / 4) + scroll_offset
+                                    translationX = floating_position
+                                },
+                            color = if (column_info.is_selected.value) {
+                                MaterialTheme.colorScheme.onTertiary
+                            } else {
+                                MaterialTheme.colorScheme.onSurface
+                            },
+                            trackColor = if (column_info.is_selected.value) {
+                                MaterialTheme.colorScheme.tertiaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.surfaceContainerHigh
+                            },
+                            progress = { state_model.wide_beat_progress.value },
+                        )
+                    }
                     Box(
                         modifier = Modifier
+                            .graphicsLayer {
+                                val width_px = column_width.toPx()
+                                val viewport_width = ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width
+                                translationX = if (width_px >= viewport_width) {
+                                    if (ui_facade.scroll_state_x.value.firstVisibleItemIndex == x) {
+                                        val scroll_offset = ui_facade.scroll_state_x.value.firstVisibleItemScrollOffset.toFloat()
+                                        val floating_position = ((viewport_width - width_px) / 2F) + scroll_offset
+                                        val end_position = ((width_px - viewport_width) / 2F)
+                                        if (floating_position < end_position) {
+                                            state_model.wide_beat.value = x
+                                            state_model.wide_beat_progress.value = scroll_offset / (width_px - viewport_width).toFloat()
+                                            floating_position
+                                        } else {
+                                            state_model.wide_beat.value = null
+                                            end_position
+                                        }
+                                    } else if (ui_facade.scroll_state_x.value.layoutInfo.visibleItemsInfo.last().index == x) {
+                                        state_model.wide_beat.value = null
+                                        state_model.wide_beat.value = null
+                                        (viewport_width - width_px) / 2F
+                                    } else {
+                                        state_model.wide_beat.value = null
+                                        0F
+                                    }
+                                } else {
+                                    0F
+                                }
+                            }
                             .fillMaxHeight()
                             .widthIn(dimensionResource(R.dimen.base_leaf_width) - 6.dp)
                             .padding(3.dp)
@@ -1444,32 +1499,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 if (column_info.is_tagged.value) Modifier.border(.5.dp, foreground, RoundedCornerShape(4.dp))
                                 else Modifier
                             ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "$x",
-                            modifier = Modifier
-                                .padding(4.dp)
-                                .graphicsLayer {
-                                    val width_px = column_width.toPx()
-                                    val viewport_width = ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width
-                                    translationX = if (width_px >= viewport_width) {
-                                        if (ui_facade.scroll_state_x.value.firstVisibleItemIndex == x) {
-                                            min(
-                                                ((viewport_width - width_px) / 2F) + ui_facade.scroll_state_x.value.firstVisibleItemScrollOffset.toFloat(),
-                                                ((width_px - viewport_width) / 2F),
-                                            )
-                                        } else if (ui_facade.scroll_state_x.value.layoutInfo.visibleItemsInfo.last().index == x) {
-                                            (viewport_width - width_px) / 2F
-                                        } else {
-                                            0F
-                                        }
-                                    } else {
-                                        0F
-                                    }
-                                }
-                        )
-                    }
+                        contentAlignment = Alignment.Center,
+                        content = {
+                            Text(text = "$x", modifier = Modifier.padding(4.dp))
+                        }
+                    )
                 }
             )
         }

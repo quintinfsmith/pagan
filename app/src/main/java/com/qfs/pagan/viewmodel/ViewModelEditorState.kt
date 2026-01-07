@@ -192,6 +192,8 @@ class ViewModelEditorState: ViewModel() {
     val has_global_effects_hidden = mutableStateOf(true)
     val soundfont_active = mutableStateOf(false)
     val table_side_padding = mutableStateOf(0)
+    val wide_beat: MutableState<Int?> = mutableStateOf(null)
+    val wide_beat_progress: MutableState<Float> = mutableStateOf(0F)
 
 
     fun clear() {

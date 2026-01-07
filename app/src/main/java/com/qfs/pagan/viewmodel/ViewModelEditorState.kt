@@ -52,7 +52,7 @@ class ViewModelEditorState: ViewModel() {
 
     class LeafData(event: OpusEvent? = null, is_selected: Boolean = false, is_secondary: Boolean = false, is_valid: Boolean = true, is_spillover: Boolean = false, weight: Float = 1F) {
         val weight = mutableFloatStateOf(weight)
-        val event = mutableStateOf(event)
+        val event = mutableStateOf(event?.copy())
         val is_selected = mutableStateOf(is_selected)
         val is_secondary = mutableStateOf(is_secondary)
         val is_valid = mutableStateOf(is_valid)
@@ -86,6 +86,7 @@ class ViewModelEditorState: ViewModel() {
                     this.set_leaf(path, event, weight)
                 }
             }
+            this.sort_leafs()
         }
 
         fun get_leaf(path: List<Int>): MutableState<LeafData> {
@@ -99,7 +100,7 @@ class ViewModelEditorState: ViewModel() {
             for (i in 0 until this.leafs.size) {
                 if (this.leafs[i].first == path) {
                     this.leafs[i].second.value.event.value = event
-                    this.leafs[i].second.value.weight.value = weight
+                    this.leafs[i].second.value.weight.floatValue = weight
                     return
                 }
             }
@@ -108,10 +109,27 @@ class ViewModelEditorState: ViewModel() {
         }
 
         fun sort_leafs() {
+            this.leafs.sortWith { (path_a, _), (path_b, _) ->
+                if (path_a == path_b) return@sortWith 0
+
+                for (i in 0 until min(path_a.size, path_b.size)) {
+                    if (path_a[i] < path_b[i]) {
+                        return@sortWith -1
+                    } else if (path_a[i] > path_b[i]) {
+                        return@sortWith 1
+                    }
+                }
+
+                if (path_a.size < path_b.size) {
+                    -1
+                } else {
+                    1
+                }
+            }
             // TODO
         }
 
-        fun remove_leafs(path: List<Int>) {
+        fun remove_branch(path: List<Int>) {
             var i = 0
             while (i < this.leafs.size) {
                 if (this.leafs[i].first.size >= path.size && this.leafs[i].first.subList(0, path.size) == path) {
@@ -213,14 +231,26 @@ class ViewModelEditorState: ViewModel() {
         this.cell_map[coordinate.y][coordinate.x].value = TreeData(tree)
     }
 
-    fun update_tree(coordinate: EditorTable.Coordinate, position: List<Int>, tree: ReducibleTree<out OpusEvent>) {
+    fun remove_branch(coordinate: EditorTable.Coordinate, position: List<Int>) {
         val cell = this.cell_map[coordinate.y][coordinate.x].value
-        cell.remove_leafs(position)
-        tree.weighted_traverse { subtree, event, path, weight ->
+        cell.remove_branch(position)
+    }
+
+    fun update_tree(coordinate: EditorTable.Coordinate, position: List<Int>, tree: ReducibleTree<out OpusEvent>, clear_branches: Boolean = false) {
+        // NOTE: tree needs to be the ACTUAL tree in order to recalc the weights
+        val cell = this.cell_map[coordinate.y][coordinate.x].value
+        if (clear_branches) {
+            cell.remove_branch(position)
+        }
+
+        val input_weight = tree.get_weight()
+        tree.weighted_traverse(input_weight) { subtree, event, path, weight ->
             if (subtree.is_leaf()) {
-                cell.set_leaf(path, event, weight)
+                println("WWW: $weight, ${position + path}")
+                cell.set_leaf(position + path, event, weight)
             }
         }
+        cell.sort_leafs()
         cell.top_weight.value = tree.get_root().weighted_size
     }
 

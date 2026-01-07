@@ -805,6 +805,17 @@ class ReducibleTree<T> {
         callback(this, this.event)
     }
 
+    fun get_weight(): Float {
+        val path = this.get_path()
+        var working_tree = this.get_root()
+        var weight = 1F
+        for (p in path) {
+            weight /= working_tree.size.toFloat()
+            working_tree = working_tree[p]
+        }
+        return weight
+    }
+
     fun weighted_traverse(input_weight: Float = 1F, input_path: List<Int> = listOf(), callback: (ReducibleTree<T>, T?, List<Int>, Float) -> Unit) {
         if (! this.is_leaf()) {
             val new_weight = input_weight / this.size.toFloat()

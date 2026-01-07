@@ -942,7 +942,12 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
         var tree = this.get_tree(beat)
         for (p in position) {
             if (tree.is_leaf()) break
-            tree = tree[p]
+            try {
+                tree = tree[p]
+            } catch (e: InvalidGetCall) {
+                // It's possible that the leat got removed
+                break
+            }
         }
 
         val mapped_heads = mutableSetOf<Pair<Int, List<Int>>>()

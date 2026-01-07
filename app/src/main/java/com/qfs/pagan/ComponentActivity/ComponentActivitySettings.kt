@@ -55,6 +55,7 @@ import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DropdownMenu
 import com.qfs.pagan.composable.DropdownMenuItem
+import com.qfs.pagan.composable.RadioMenu
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.Slider
 import com.qfs.pagan.composable.SoundFontWarning
@@ -467,15 +468,51 @@ class ComponentActivitySettings: PaganComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun SettingsSectionB() {
-        val options_orientation = listOf(
-            Triple(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE, R.string.settings_orientation_landscape, R.drawable.icon_landscape),
-            Triple(ActivityInfo.SCREEN_ORIENTATION_USER, R.string.settings_orientation_system, R.drawable.icon_orientation_system),
-            Triple(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT, R.string.settings_orientation_portrait, R.drawable.icon_portrait)
+        val options_orientation: List<Pair<Int, @Composable RowScope.() -> Unit>> = listOf(
+            Pair(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) @Composable {
+                Icon(
+                    modifier = Modifier.height(dimensionResource(R.dimen.settings_radio_height)),
+                    painter = painterResource(R.drawable.icon_landscape),
+                    contentDescription = stringResource(R.string.settings_orientation_landscape),
+                )
+            },
+            Pair(ActivityInfo.SCREEN_ORIENTATION_USER) @Composable {
+                Icon(
+                    modifier = Modifier.height(dimensionResource(R.dimen.settings_radio_height)),
+                    painter = painterResource(R.drawable.icon_orientation_system),
+                    contentDescription = stringResource(R.string.settings_orientation_system),
+                )
+            },
+            Pair(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) @Composable {
+                Icon(
+                    modifier = Modifier.height(dimensionResource(R.dimen.settings_radio_height)),
+                    painter = painterResource(R.drawable.icon_portrait),
+                    contentDescription = stringResource(R.string.settings_orientation_portrait),
+                )
+            }
         )
-        val options_nightmode = listOf(
-            Triple(AppCompatDelegate.MODE_NIGHT_YES, R.string.settings_night_mode_yes, R.drawable.icon_night_mode),
-            Triple(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM, R.string.settings_night_mode_system, R.drawable.icon_night_mode_system),
-            Triple(AppCompatDelegate.MODE_NIGHT_NO, R.string.settings_night_mode_no, R.drawable.icon_day_mode)
+        val options_nightmode: List<Pair<Int, @Composable RowScope.() -> Unit>> = listOf(
+            Pair(AppCompatDelegate.MODE_NIGHT_YES) @Composable {
+                Icon(
+                    modifier = Modifier.height(dimensionResource(R.dimen.settings_radio_height)),
+                    painter = painterResource(R.drawable.icon_night_mode),
+                    contentDescription = stringResource(R.string.settings_night_mode_yes),
+                )
+            },
+            Pair(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM) @Composable {
+                Icon(
+                    modifier = Modifier.height(dimensionResource(R.dimen.settings_radio_height)),
+                    painter = painterResource(R.drawable.icon_night_mode_system),
+                    contentDescription = stringResource(R.string.settings_night_mode_system)
+                )
+            },
+            Pair(AppCompatDelegate.MODE_NIGHT_NO) @Composable {
+                Icon(
+                    modifier = Modifier.height(dimensionResource(R.dimen.settings_radio_height)),
+                    painter = painterResource(R.drawable.icon_day_mode),
+                    contentDescription = stringResource(R.string.settings_night_mode_no)
+                )
+            }
         )
 
         val playback_expanded = remember { mutableStateOf(false) }
@@ -496,24 +533,6 @@ class ComponentActivitySettings: PaganComponentActivity() {
         var relative_mode by remember { mutableStateOf(view_model.configuration.relative_mode) }
         var use_preferred_soundfont by remember { mutableStateOf(view_model.configuration.use_preferred_soundfont) }
         var allow_std_percussion by remember { mutableStateOf(view_model.configuration.allow_std_percussion) }
-
-        var selected_orientation_index by remember {
-            for (i in options_orientation.indices) {
-                if (options_orientation[i].first == view_model.configuration.force_orientation) {
-                    return@remember mutableIntStateOf(i)
-                }
-            }
-            mutableIntStateOf(1)
-        }
-
-        var selected_night_mode_index by remember {
-            for (i in options_nightmode.indices) {
-                if (options_nightmode[i].first == view_model.configuration.night_mode) {
-                    return@remember mutableIntStateOf(i)
-                }
-            }
-            mutableIntStateOf(1)
-        }
 
         Column(Modifier.padding(horizontal = 0.dp, vertical = 12.dp)) {
             Spacer(
@@ -638,34 +657,16 @@ class ComponentActivitySettings: PaganComponentActivity() {
             ) {
 
                 Text(stringResource(R.string.settings_screen_orientation))
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                    options_orientation.forEachIndexed { index, (mode, label_resource, icon_resource) ->
-                        if (index != 0) {
-                            Spacer(Modifier.width(2.dp))
-                        }
-                        SegmentedButton(
-                            shape = SegmentedButtonDefaults.itemShape(
-                                index = index,
-                                count = options_orientation.size
-                            ),
-                            onClick = {
-                                this@ComponentActivitySettings.requestedOrientation = mode
-                                view_model.configuration.force_orientation = mode
-                                selected_orientation_index = index
-                                view_model.save_configuration()
-                                this@ComponentActivitySettings.update_result()
-                            },
-                            selected = index == selected_orientation_index,
-                            icon = {
-                                Icon(
-                                    painter = painterResource(icon_resource),
-                                    contentDescription = stringResource(label_resource)
-                                )
-                           },
-                            label = { Text(stringResource(label_resource)) }
-                        )
+                RadioMenu(
+                    options = options_orientation,
+                    active = remember { mutableStateOf(view_model.configuration.force_orientation) },
+                    callback = { mode ->
+                        this@ComponentActivitySettings.requestedOrientation = mode
+                        view_model.configuration.force_orientation = mode
+                        view_model.save_configuration()
+                        this@ComponentActivitySettings.update_result()
                     }
-                }
+                )
             }
 
             Column(
@@ -675,34 +676,16 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(stringResource(R.string.settings_night_mode))
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                    options_nightmode.forEachIndexed { index, (mode, label_resource, icon_resource) ->
-                        if (index != 0) {
-                            Spacer(Modifier.width(2.dp))
-                        }
-                        SegmentedButton(
-                            shape = SegmentedButtonDefaults.itemShape(
-                                index = index,
-                                count = options_nightmode.size
-                            ),
-                            onClick = {
-                                selected_night_mode_index = index
-                                view_model.configuration.night_mode = mode
-                                view_model.night_mode.value = mode
-                                view_model.save_configuration()
-                                this@ComponentActivitySettings.update_result()
-                            },
-                            selected = index == selected_night_mode_index,
-                            icon = {
-                                Icon(
-                                    painter = painterResource(icon_resource),
-                                    contentDescription = stringResource(label_resource)
-                                )
-                            },
-                            label = { Text(stringResource( label_resource)) }
-                        )
+                RadioMenu(
+                    options = options_nightmode,
+                    active = remember { mutableStateOf(view_model.configuration.night_mode) },
+                    callback = { mode ->
+                        view_model.configuration.night_mode = mode
+                        view_model.night_mode.value = mode
+                        view_model.save_configuration()
+                        this@ComponentActivitySettings.update_result()
                     }
-                }
+                )
             }
         }
     }

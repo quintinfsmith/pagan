@@ -183,10 +183,27 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             beat_key.beat,
         ) + position
     }
-
-    private fun _update_tree(beat_key: BeatKey, position: List<Int>) {
+    private fun _vm_state_remove_branch(beat_key: BeatKey, position: List<Int>) {
         if (this.ui_lock.is_locked()) return
-        val tree = this.get_tree_copy(beat_key, position)
+        this.vm_state.remove_branch(
+            EditorTable.Coordinate(
+                y = this.get_visible_row_from_ctl_line(
+                    this.get_actual_line_index(
+                        this.get_instrument_line_index(
+                            beat_key.channel,
+                            beat_key.line_offset
+                        )
+                    )
+                )!!,
+                x = beat_key.beat
+            ),
+            position
+        )
+    }
+
+    private fun _update_tree(beat_key: BeatKey, position: List<Int>, clear_branches: Boolean = false) {
+        if (this.ui_lock.is_locked()) return
+        val tree = this.get_tree(beat_key, position)
         this.vm_state.update_tree(
             EditorTable.Coordinate(
                 y = this.get_visible_row_from_ctl_line(
@@ -200,7 +217,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 x = beat_key.beat
             ),
             position,
-            tree
+            tree,
+            clear_branches
         )
         this.vm_state.refresh_cursor()
 
@@ -391,7 +409,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     override fun unset(beat_key: BeatKey, position: List<Int>) {
         this.track_blocked_leafs(beat_key, position) {
             super.unset(beat_key, position)
-            this._update_tree(beat_key, position)
+            this._update_tree(beat_key, position, clear_branches = true)
             this.check_update_active_event(beat_key, position)
         }
     }
@@ -424,7 +442,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.exception_catcher {
             this.track_blocked_leafs(beat_key, position ?: listOf()) {
                 super.replace_tree(beat_key, position, tree)
-                this._update_tree(beat_key, position ?: listOf())
+                this._update_tree(beat_key, position ?: listOf(), clear_branches = true)
                 this.check_update_active_event(beat_key, position ?: listOf())
             }
         }
@@ -600,7 +618,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         for ((head, overlaps) in newly_blocked_leafs) {
             for ((blocked_beat, blocked_position) in overlaps) {
                 if (blocked_beat >= this.length) continue
-                this.vm_state.cell_map[y][blocked_beat].value.get_leaf(blocked_position).value.is_spillover.value = false
+                this.vm_state.cell_map[y][blocked_beat].value.get_leaf(blocked_position).value.is_spillover.value = true
             }
         }
     }
@@ -610,6 +628,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         val original_blocked_leafs = line.get_blocked_leafs(beat_key.beat, position)
 
         callback()
+
         this.remap_blocked_leafs(
             this.get_visible_row_from_pair(beat_key.channel, beat_key.line_offset),
             original_blocked_leafs,
@@ -684,7 +703,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.exception_catcher {
             this.track_blocked_leafs(beat_key, position) {
                 super.split_tree(beat_key, position, splits, move_event_to_end)
-                this._update_tree(beat_key, position)
+                this._update_tree(beat_key, position, clear_branches = true)
             }
         }
     }
@@ -714,7 +733,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.exception_catcher {
             this.track_blocked_leafs(beat_key, position) {
                 super.remove(beat_key, position)
-                this._update_tree(beat_key, position.subList(0, position.size - 1))
+                this._update_tree(beat_key, position.subList(0, position.size - 1), true)
             }
         }
     }
@@ -1235,7 +1254,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             super.set_duration(beat_key, position, duration)
             if (this.ui_lock.is_locked()) return@track_blocked_leafs
             // Needs to be set to trigger potentially queued cell changes from on_overlap()
-            this._update_tree(beat_key, position.subList(0, position.size))
+            //this._update_tree(beat_key, position.subList(0, position.size))
         }
     }
 

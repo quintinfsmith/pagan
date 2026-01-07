@@ -24,6 +24,7 @@ import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.composable.DropdownMenu
+import com.qfs.pagan.composable.RadioMenu
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.button.NumberSelector
@@ -129,38 +130,18 @@ fun RelativeModeButton(dispatcher: ActionTracker, ui_facade: ViewModelEditorStat
             expanded = expanded.value,
             onDismissRequest = { expanded.value = false}
         ) {
-            SingleChoiceSegmentedButtonRow {
-                SegmentedButton(
-                    modifier = Modifier.weight(1F),
-                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3),
-                    onClick = {
-                        dispatcher.set_relative_mode(RelativeInputMode.Negative)
-                        expanded.value = false
-                    },
-                    selected = ui_facade.relative_input_mode.value == RelativeInputMode.Negative,
-                    label = { Text("-") }
-                )
-                SegmentedButton(
-                    modifier = Modifier.weight(1F),
-                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 3),
-                    onClick = {
-                        dispatcher.set_relative_mode(RelativeInputMode.Absolute)
-                        expanded.value = false
-                    },
-                    selected = ui_facade.relative_input_mode.value == RelativeInputMode.Absolute,
-                    label = { SText(R.string.absolute_label) }
-                )
-                SegmentedButton(
-                    modifier = Modifier.weight(1F),
-                    shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3),
-                    onClick = {
-                        dispatcher.set_relative_mode(RelativeInputMode.Positive)
-                        expanded.value = false
-                    },
-                    selected = ui_facade.relative_input_mode.value == RelativeInputMode.Positive,
-                    label = { Text("+") }
-                )
-            }
+            RadioMenu(
+                options = listOf(
+                    Pair(RelativeInputMode.Negative) { Text("-") },
+                    Pair(RelativeInputMode.Absolute) { SText(R.string.absolute_label) },
+                    Pair(RelativeInputMode.Positive) { Text("+") }
+                ),
+                active = remember { mutableStateOf(ui_facade.relative_input_mode.value) },
+                callback = {
+                    dispatcher.set_relative_mode(it)
+                    expanded.value = false
+                }
+            )
         }
         TextCMenuButton(
             modifier = Modifier.width(dimensionResource(R.dimen.contextmenu_button_width)),

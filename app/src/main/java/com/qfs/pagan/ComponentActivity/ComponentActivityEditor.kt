@@ -1452,10 +1452,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     fun LeafView(channel_data: ViewModelEditorState.ChannelData?, line_data: ViewModelEditorState.LineData, leaf_data: ViewModelEditorState.LeafData, radix: Int, modifier: Modifier = Modifier) {
-        val event = leaf_data.event
+        val event = leaf_data.event.value
         val leaf_state = if (leaf_data.is_spillover.value) TableColorPalette.LeafState.Spill
             else if (event != null) TableColorPalette.LeafState.Active
             else TableColorPalette.LeafState.Empty
+
         val leaf_selection = if (leaf_data.is_selected.value) TableColorPalette.LeafSelection.Primary
             else if (leaf_data.is_secondary.value) TableColorPalette.LeafSelection.Secondary
             else TableColorPalette.LeafSelection.Unselected
@@ -1467,8 +1468,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
             line_data.is_mute.value || channel_data?.is_mute?.value == true,
             !MaterialTheme.colorScheme.is_light()
         )
-
-
         ProvideContentColorTextStyle(contentColor = text_color) {
             HalfBorderBox(
                 modifier = modifier
@@ -1545,6 +1544,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             painter = painterResource(R.drawable.percussion_indicator),
                             contentDescription = ""
                         )
+
                         is OpusVolumeEvent -> Text("${(event.value * 100F).toInt()}%", color = text_color)
                         is OpusPanEvent -> {
                             Text(
@@ -1623,36 +1623,38 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     fun CellView(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, cell: MutableState<ViewModelEditorState.TreeData>, y: Int, x: Int, modifier: Modifier = Modifier) {
         val line_info = ui_facade.line_data[y]
-        Row(modifier.fillMaxSize()) {
-            for ((path, leaf_data) in cell.value.leafs) {
-                this@ComponentActivityEditor.LeafView(
-                    line_info.channel.value?.let { ui_facade.channel_data[it] },
-                    line_info,
-                    leaf_data.value,
-                    ui_facade.radix.value,
-                    Modifier
-                        .weight(leaf_data.value.weight.value)
-                        .combinedClickable(
-                            onClick = {
-                                dispatcher.tap_leaf(
-                                    x,
-                                    path,
-                                    line_info.channel.value,
-                                    line_info.line_offset.value,
-                                    line_info.ctl_type.value
-                                )
-                            },
-                            onLongClick = {
-                                dispatcher.long_tap_leaf(
-                                    x,
-                                    path,
-                                    line_info.channel.value,
-                                    line_info.line_offset.value,
-                                    line_info.ctl_type.value
-                                )
-                            }
-                        )
-                )
+        key(cell.value.top_weight.value) {
+            Row(modifier.fillMaxSize()) {
+                for ((path, leaf_data) in cell.value.leafs) {
+                    this@ComponentActivityEditor.LeafView(
+                        line_info.channel.value?.let { ui_facade.channel_data[it] },
+                        line_info,
+                        leaf_data.value,
+                        ui_facade.radix.value,
+                        Modifier
+                            .weight(leaf_data.value.weight.floatValue)
+                            .combinedClickable(
+                                onClick = {
+                                    dispatcher.tap_leaf(
+                                        x,
+                                        path,
+                                        line_info.channel.value,
+                                        line_info.line_offset.value,
+                                        line_info.ctl_type.value
+                                    )
+                                },
+                                onLongClick = {
+                                    dispatcher.long_tap_leaf(
+                                        x,
+                                        path,
+                                        line_info.channel.value,
+                                        line_info.line_offset.value,
+                                        line_info.ctl_type.value
+                                    )
+                                }
+                            )
+                    )
+                }
             }
         }
     }

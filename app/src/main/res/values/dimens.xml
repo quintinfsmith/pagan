@@ -160,6 +160,7 @@
     <dimen name="sf_menu_padding">4dp</dimen>
     <dimen name="sf_menu_icon_height">41dp</dimen>
 
+    <dimen name="settings_radio_height">32dp</dimen>
     <dimen name="transpose_dlg_input_width">64dp</dimen>
     <dimen name="transpose_dlg_input_height">41dp</dimen>
     <dimen name="transpose_dlg_input_padding">8dp</dimen>

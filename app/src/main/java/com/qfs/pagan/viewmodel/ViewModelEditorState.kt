@@ -197,14 +197,20 @@ class ViewModelEditorState: ViewModel() {
     val wide_beat_progress: MutableState<Float> = mutableStateOf(0F)
 
     val dragging_line: MutableState<Int?> = mutableStateOf(null)
+    val dragging_initial_offset: MutableState<Float> = mutableStateOf(0F)
     val dragging_first_line: MutableState<Int?> = mutableStateOf(null)
     val dragging_offset: MutableState<Float> = mutableStateOf(0F)
     val dragging_height: Pair<MutableState<Int>, MutableState<Int>> = Pair(mutableStateOf(0), mutableStateOf(0))
+    val dragging_line_map: HashMap<ClosedFloatingPointRange<Float>, IntRange> = HashMap()
 
-    fun start_dragging(y: Int) {
+    fun start_dragging(y: Int, initial_offset: Float, line_map: HashMap<ClosedFloatingPointRange<Float>, IntRange>) {
         this.dragging_line.value = y
+        this.dragging_initial_offset.value = initial_offset
         this.dragging_height.first.value = 0
         this.dragging_height.second.value = 0
+        for ((key, value) in line_map) {
+            this.dragging_line_map[key] = value
+        }
         val main_line_index = this.dragging_line.value ?: return
         val main_line = this.line_data[main_line_index]
         val is_channel_selected = this.active_cursor.value?.type == CursorMode.Channel && this.active_cursor.value?.ints[0] == main_line.channel.value
@@ -227,13 +233,35 @@ class ViewModelEditorState: ViewModel() {
 
     fun stop_dragging() {
         this.dragging_height.first.value = 0
+        this.dragging_line_map.clear()
         this.dragging_height.second.value = 0
         this.dragging_line.value = null
         this.dragging_first_line.value = null
         this.dragging_offset.value = 0F
+        this.dragging_initial_offset.value = 0F
         for (line in this.line_data) {
             line.is_dragging.value = false
         }
+    }
+
+    fun calculate_dragged_to_line(): Int? {
+        val y = this.dragging_line.value ?: return null
+        val dragged_offset = this.dragging_initial_offset.value + this.dragging_offset.value
+        var adjusted_y = -1F
+        for ((range, line_range) in this.dragging_line_map) {
+            if (line_range.contains(y)) {
+                adjusted_y = range.start + dragged_offset
+                break
+            }
+        }
+
+        for ((range, line_range) in this.dragging_line_map) {
+            if (range.contains(adjusted_y)) {
+                return line_range.start
+            }
+        }
+
+        return null
     }
 
     fun clear() {

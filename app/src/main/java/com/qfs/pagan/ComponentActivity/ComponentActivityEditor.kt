@@ -158,6 +158,8 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.concurrent.thread
 import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 class ComponentActivityEditor: PaganComponentActivity() {
@@ -1143,8 +1145,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         Modifier
                                             .width(dimensionResource(R.dimen.line_label_width))
                                             .height(dimensionResource(R.dimen.channel_gap_size))
-                                            .background(MaterialTheme.colorScheme.onSurfaceVariant)
-                                    ) { }
+                                            .background(MaterialTheme.colorScheme.onSurfaceVariant),
+                                        content = {}
+                                    )
                                 }
 
                                 working_channel = ui_facade.line_data[y].channel.value
@@ -1161,11 +1164,21 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                             if (ui_facade.line_data[y].ctl_type.value == null) {
                                                 Modifier
                                                     .draggable(
-                                                        onDragStarted = { state_model.start_dragging(y) },
-                                                        onDragStopped = { state_model.stop_dragging() },
+                                                        onDragStarted = { offset ->
+                                                            ui_facade.start_dragging(
+                                                                y,
+                                                                offset.y,
+                                                                this@ComponentActivityEditor.build_dragging_line_map(y)
+                                                            )
+                                                        },
+                                                        onDragStopped = {
+                                                            val new_y = ui_facade.calculate_dragged_to_line()
+
+                                                            ui_facade.stop_dragging()
+                                                        },
                                                         orientation = Orientation.Vertical,
                                                         state = rememberDraggableState { delta ->
-                                                            state_model.dragging_offset.value += delta
+                                                            ui_facade.dragging_offset.value += delta
                                                         }
                                                     )
                                             } else {
@@ -1173,7 +1186,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                             }
                                         )
                                         .zIndex(
-                                            if (state_model.line_data[y].is_dragging.value) 2F
+                                            if (ui_facade.line_data[y].is_dragging.value) 2F
                                             else 0F
                                         )
                                         .offset {
@@ -2424,7 +2437,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
             val std_line_count = this.state_model.dragging_height.first.value
             val ctl_line_count = this.state_model.dragging_height.second.value
             if (this.state_model.dragging_first_line.value!! + std_line_count + ctl_line_count <= y) {
-                0 - ((std_line_count * line_height) + (ctl_line_count * ctl_line_height)).toInt()
+                // Shift lower lines up, but leave a gap the size of a ctl_line
+                0 - ((std_line_count * line_height) + (ctl_line_count * ctl_line_height)).toInt() + ctl_line_height.toInt()
             } else {
                 0
             }
@@ -2432,4 +2446,56 @@ class ComponentActivityEditor: PaganComponentActivity() {
             0
         }
     }
+
+    fun build_dragging_line_map(active_line: Int): HashMap<ClosedFloatingPointRange<Float>, IntRange> {
+        val output = HashMap<ClosedFloatingPointRange<Float>, IntRange>()
+        val line_height = this.resources.getDimension(R.dimen.line_height)
+        val ctl_line_height = this.resources.getDimension(R.dimen.ctl_line_height)
+        val gap_height = this.resources.getDimension(R.dimen.channel_gap_size)
+
+        val active_line_data = this.state_model.line_data[active_line]
+
+        val selecting_channel = this.state_model.active_cursor.value?.type == CursorMode.Channel && this.state_model.active_cursor.value?.ints[0] == active_line_data.channel.value
+
+        var selection_range_start = this.state_model.line_count.value + 1
+        var selection_range_end = -1
+        for (y in 0 until this.state_model.line_count.value) {
+            val check_line = this.state_model.line_data[y]
+            if (active_line_data.channel.value == check_line.channel.value && (selecting_channel || active_line_data.line_offset.value == check_line.line_offset.value)) {
+                selection_range_end = max(selection_range_end, y)
+                selection_range_start = min(selection_range_start, y)
+            }
+        }
+
+        val selection = selection_range_start .. selection_range_end
+        var selection_added = false
+        var running_y = 0F
+        var previous_channel: Int? = 0
+        for (y in 0 until this.state_model.line_count.value) {
+            val line = this.state_model.line_data[y]
+            if (line.channel.value != previous_channel) {
+                running_y += gap_height
+            }
+
+            if (selection.contains(y)) {
+                if (selection_added) continue
+                selection_added = true
+                output[running_y .. (running_y + ctl_line_height)] = selection
+                running_y += ctl_line_height
+            } else {
+                val working_line_height = if (line.ctl_type.value == null) {
+                    line_height
+                } else {
+                    ctl_line_height
+                }
+                output[running_y .. (running_y + working_line_height)] = y .. y
+                running_y += working_line_height
+            }
+
+            previous_channel = line.channel.value
+        }
+
+        return output
+    }
+
 }

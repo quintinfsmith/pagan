@@ -43,9 +43,6 @@ import kotlin.math.roundToInt
 fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, event: DelayEvent) {
     val cursor = ui_facade.active_cursor.value ?: return
     val is_initial = cursor.type == CursorMode.Line
-    val echo = remember { mutableIntStateOf(event.echo + 1) }
-    val numerator = remember { mutableIntStateOf(event.numerator) }
-    val denominator = remember { mutableIntStateOf(event.denominator) }
     val fade = remember { mutableFloatStateOf(event.fade) }
     val (channel, line_offset, beat, position) = ui_facade.get_location_ints()
 
@@ -56,7 +53,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
     )
 
     MagicInput(
-        echo,
+        event.echo + 1,
         background_icon = R.drawable.icon_echo,
         modifier = Modifier
             .fillMaxHeight()
@@ -71,7 +68,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
     }
     Spacer(Modifier.width(2.dp).weight(1F))
     MagicInput(
-        numerator,
+        event.numerator,
         background_icon = R.drawable.icon_hz,
         modifier = Modifier
             .fillMaxHeight()
@@ -88,7 +85,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
     Text("/")
     Spacer(Modifier.width(2.dp))
     MagicInput(
-        denominator,
+        event.denominator,
         background_icon = R.drawable.icon_hz,
         modifier = Modifier
             .fillMaxHeight()

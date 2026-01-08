@@ -29,13 +29,12 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
     val cursor = ui_facade.active_cursor.value ?: return
     val is_initial = cursor.type == CursorMode.Line
     val working_event = remember { mutableStateOf(event) }
-    val working_value = remember { mutableFloatStateOf(event.value) }
     val (channel, line_offset, beat, position) = ui_facade.get_location_ints()
 
     Spacer(Modifier.weight(1F))
 
     MagicInput(
-        value = working_value,
+        value = event.value,
         precision = 3,
         modifier = Modifier
             .fillMaxHeight()

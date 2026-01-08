@@ -1864,7 +1864,8 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         this.vm_top.create_small_dialog { close ->
             @Composable {
                 val focus_requester = remember { FocusRequester() }
-                val value: MutableState<Int> = remember { mutableIntStateOf(default ?: min_value) }
+                val value = remember { mutableStateOf(default ?: min_value) }
+
                 DialogSTitle(title_string_id)
                 IntegerInput(
                     value = value,
@@ -2631,19 +2632,19 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                             horizontalArrangement = Arrangement.Start,
                         ) {
                             MagicInput(
-                                value = transpose_numerator,
+                                value = opus_manager.transpose.first,
                                 minimum = 0,
                                 contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
                                 modifier = Modifier.width(dimensionResource(R.dimen.transpose_dlg_input_width)),
-                                callback = { }
+                                callback = { transpose_numerator.value = it }
                             )
                             Text("/", modifier = Modifier.padding(horizontal = 2.dp))
                             MagicInput(
-                                value = transpose_denominator,
+                                value = opus_manager.transpose.second,
                                 minimum = 0,
                                 contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
                                 modifier = Modifier.width(dimensionResource(R.dimen.transpose_dlg_input_width)),
-                                callback = { }
+                                callback = { transpose_denominator.value = it }
                             )
                         }
                     }
@@ -2652,17 +2653,18 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                     ) {
                         SText(R.string.dlg_set_radix, maxLines = 1)
                         MagicInput(
-                            value = radix,
+                            value = original_radix,
                             minimum = 0,
                             maximum = 36,
                             contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
                             modifier = Modifier.width(dimensionResource(R.dimen.transpose_dlg_input_width)),
                             callback = {
+                                radix.value = it
                                 mutable_map.clear()
                                 for (i in 0 until it) {
                                     mutable_map.add(
                                         mutableStateOf(
-                                            Pair(i, radix.intValue)
+                                            Pair(i, it)
                                         )
                                     )
                                 }
@@ -2709,19 +2711,25 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                                         )
                                         Column {
                                             MagicInput(
-                                                value = numer,
+                                                value = pair.first,
                                                 minimum = 0,
                                                 modifier = Modifier.width(64.dp),
                                                 contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                                                callback = { mutable_map[i].value = Pair(numer.value, denom.value) }
+                                                callback = {
+                                                    numer.value = it
+                                                    mutable_map[i].value = Pair(numer.value, denom.value)
+                                                }
                                             )
                                             Spacer(Modifier.height(2.dp))
                                             MagicInput(
-                                                value = denom,
+                                                value = pair.second,
                                                 minimum = 0,
                                                 modifier = Modifier.width(64.dp),
                                                 contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                                                callback = { mutable_map[i].value = Pair(numer.value, denom.value) }
+                                                callback = {
+                                                    denom.value = it
+                                                    mutable_map[i].value = Pair(numer.value, denom.value)
+                                                }
                                             )
                                         }
                                     }

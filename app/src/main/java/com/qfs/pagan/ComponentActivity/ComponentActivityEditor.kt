@@ -1179,8 +1179,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         .offset {
                                             IntOffset(
                                                 0,
-                                                if (state_model.line_data[y].is_dragging.value) state_model.dragging_offset.value.roundToInt()
-                                                else 0
+                                                this@ComponentActivityEditor.get_dragged_offset(y)
                                             )
                                         }
                                         .height(use_height)
@@ -1275,11 +1274,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                 else 0F
                                             )
                                             .offset {
-                                                IntOffset(
-                                                    0,
-                                                    if (state_model.line_data[y].is_dragging.value) state_model.dragging_offset.value.roundToInt()
-                                                    else 0
-                                                )
+                                                IntOffset(0, this@ComponentActivityEditor.get_dragged_offset(y))
                                             }
                                             .height(
                                                 if (ui_facade.line_data[y].ctl_type.value != null) ctl_line_height
@@ -1466,23 +1461,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
         column_info: ViewModelEditorState.ColumnData,
         column_width: Dp // Necessary for floating label
     ) {
-        val line_height = dimensionResource(R.dimen.line_height)
-        // val scroll_state = this.state_model.scroll_state_x.value
-
-        // // Keep the column number of huge columns on screen
-        // if (column_width > viewable_width) {
-        //     if (offset <= scroll_x && offset + column_width >= scroll_x + viewable_width) {
-        //         (scroll_x + ((viewable_width - bounds.width()) / 2))
-        //     } else if (offset <= scroll_x) {
-        //         offset + column_width - ((viewable_width + bounds.width()) / 2)
-        //     } else {
-        //         offset + ((viewable_width - bounds.width()) / 2)
-        //     }
-        // } else {
-        //     offset + ((column_width - bounds.width()) / 2)
-        // }
-
-
         val (background, foreground) = if (!column_info.is_selected.value) {
             Pair(
                 MaterialTheme.colorScheme.surfaceVariant,
@@ -2435,5 +2413,23 @@ class ComponentActivityEditor: PaganComponentActivity() {
             this.controller_model.opus_manager,
             this.controller_model.active_project
         )
+    }
+
+    fun get_dragged_offset(y: Int): Int {
+        val line_height = this.resources.getDimension(R.dimen.line_height)
+        val ctl_line_height = this.resources.getDimension(R.dimen.ctl_line_height)
+        return if (this.state_model.line_data[y].is_dragging.value) {
+            this.state_model.dragging_offset.value.roundToInt()
+        } else if (this.state_model.dragging_first_line.value != null) {
+            val std_line_count = this.state_model.dragging_height.first.value
+            val ctl_line_count = this.state_model.dragging_height.second.value
+            if (this.state_model.dragging_first_line.value!! + std_line_count + ctl_line_count <= y) {
+                0 - ((std_line_count * line_height) + (ctl_line_count * ctl_line_height)).toInt()
+            } else {
+                0
+            }
+        } else {
+            0
+        }
     }
 }

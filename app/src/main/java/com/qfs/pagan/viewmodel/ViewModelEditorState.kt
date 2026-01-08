@@ -197,6 +197,7 @@ class ViewModelEditorState: ViewModel() {
     val wide_beat_progress: MutableState<Float> = mutableStateOf(0F)
 
     val dragging_line: MutableState<Int?> = mutableStateOf(null)
+    val dragging_first_line: MutableState<Int?> = mutableStateOf(null)
     val dragging_offset: MutableState<Float> = mutableStateOf(0F)
     val dragging_height: Pair<MutableState<Int>, MutableState<Int>> = Pair(mutableStateOf(0), mutableStateOf(0))
 
@@ -208,20 +209,27 @@ class ViewModelEditorState: ViewModel() {
         val main_line = this.line_data[main_line_index]
         val is_channel_selected = this.active_cursor.value?.type == CursorMode.Channel && this.active_cursor.value?.ints[0] == main_line.channel.value
 
-        for (line in this.line_data) {
+        for ((i, line) in this.line_data.enumerate()) {
             if (main_line.channel.value != line.channel.value) continue
-            line.is_dragging.value = main_line.line_offset.value == line.line_offset.value || is_channel_selected
-            if (line.ctl_type.value == null) {
-                dragging_height.second.value += 1
-            } else {
-                dragging_height.first.value += 1
+            if (line.line_offset.value == main_line.line_offset.value || is_channel_selected) {
+                line.is_dragging.value = true
+                if (dragging_first_line.value == null) {
+                    dragging_first_line.value = i
+                }
+                if (line.ctl_type.value != null) {
+                    dragging_height.second.value += 1
+                } else {
+                    dragging_height.first.value += 1
+                }
             }
         }
     }
+
     fun stop_dragging() {
         this.dragging_height.first.value = 0
         this.dragging_height.second.value = 0
         this.dragging_line.value = null
+        this.dragging_first_line.value = null
         this.dragging_offset.value = 0F
         for (line in this.line_data) {
             line.is_dragging.value = false

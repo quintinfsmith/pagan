@@ -1,6 +1,5 @@
 package com.qfs.pagan.composable
 
-import android.view.WindowManager
 import androidx.annotation.IntRange
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ScrollState
@@ -18,7 +17,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -45,6 +43,7 @@ import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.selectAll
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
@@ -61,12 +60,12 @@ import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldLabelScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -80,8 +79,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.layout.layout
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -100,15 +97,16 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.PopupProperties
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.Button
-import com.qfs.pagan.composable.button.OutlinedButton
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.button.SmallButton
 import com.qfs.pagan.composable.button.SmallOutlinedButton
 import com.qfs.pagan.enumerate
 import kotlinx.coroutines.launch
+import kotlin.math.exp
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -147,7 +145,6 @@ fun IntegerInput(
     minimum: Int? = null,
     maximum: Int? = null,
     modifier: Modifier = Modifier,
-    outlined: Boolean = true,
     contentPadding: PaddingValues = PaddingValues(0.dp),
     text_align: TextAlign = TextAlign.End,
     prefix: @Composable (() -> Unit)? = null,
@@ -161,7 +158,6 @@ fun IntegerInput(
         minimum,
         maximum,
         modifier,
-        outlined,
         contentPadding,
         text_align,
         prefix,
@@ -205,7 +201,6 @@ fun FloatInput(
     minimum: Float? = null,
     maximum: Float? = null,
     modifier: Modifier = Modifier,
-    outlined: Boolean = true,
     contentPadding: PaddingValues = PaddingValues(0.dp),
     text_align: TextAlign = TextAlign.End,
     prefix: @Composable (() -> Unit)? = null,
@@ -219,7 +214,6 @@ fun FloatInput(
         minimum,
         maximum,
         modifier,
-        outlined,
         contentPadding,
         text_align,
         prefix,
@@ -266,7 +260,6 @@ fun <T: Number> NumberInput(
     minimum: T? = null,
     maximum: T? = null,
     modifier: Modifier = Modifier,
-    outlined: Boolean = true,
     contentPadding: PaddingValues = PaddingValues(0.dp),
     text_align: TextAlign = TextAlign.End,
     prefix: @Composable (() -> Unit)? = null,
@@ -291,50 +284,26 @@ fun <T: Number> NumberInput(
         }
     }
 
-    if (outlined) {
-        OutlinedTextField(
-            state = state,
-            label = label,
-            contentPadding = contentPadding,
-            textStyle = LocalTextStyle.current.copy(textAlign = text_align),
-            prefix = prefix,
-            modifier = modifier
-                .heightIn(1.dp)
-                .widthIn(1.dp)
-                .onFocusChanged { focus_change_callback(it) },
-            keyboardOptions = KeyboardOptions.Default.copy(
-                keyboardType = KeyboardType.Companion.Number
-            ),
-            inputTransformation = input_transformation,
-            lineLimits = TextFieldLineLimits.SingleLine,
-            onKeyboardAction = { action ->
-                callback(value.value)
-                action()
-            }
-        )
-    } else {
-        TextField(
-            state = state,
-            label = label,
-            contentPadding = contentPadding,
-            textStyle = LocalTextStyle.current.copy(textAlign = text_align),
-            prefix = prefix,
-            modifier = modifier
-                .heightIn(1.dp)
-                .widthIn(1.dp)
-                .onFocusChanged { focus_change_callback(it) },
-            keyboardOptions = KeyboardOptions.Default.copy(
-                keyboardType = KeyboardType.Companion.Number
-            ),
-            inputTransformation = input_transformation,
-            lineLimits = TextFieldLineLimits.SingleLine,
-            onKeyboardAction = { action ->
-                callback(value.value)
-                action()
-            }
-        )
-    }
-
+    OutlinedTextField(
+        state = state,
+        label = label,
+        contentPadding = contentPadding,
+        textStyle = LocalTextStyle.current.copy(textAlign = text_align),
+        prefix = prefix,
+        modifier = modifier
+            .heightIn(1.dp)
+            .widthIn(1.dp)
+            .onFocusChanged { focus_change_callback(it) },
+        keyboardOptions = KeyboardOptions.Default.copy(
+            keyboardType = KeyboardType.Companion.Number
+        ),
+        inputTransformation = input_transformation,
+        lineLimits = TextFieldLineLimits.SingleLine,
+        onKeyboardAction = { action ->
+            callback(value.value)
+            action()
+        }
+    )
 }
 
 
@@ -825,118 +794,86 @@ fun <T> MagicInputInner(
     background_icon: Int? = null,
     content: @Composable (Modifier, MutableState<Boolean>, FocusRequester) -> Unit
 ) {
-    val configuration = LocalConfiguration.current
-    val screenHeight = configuration.screenHeightDp.dp
-    val screenWidth = configuration.screenWidthDp.dp
-
-    val expanded = remember { mutableStateOf(false) }
-    if (expanded.value) {
-        val requester = remember { FocusRequester() }
-        Box(
-            modifier = modifier
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceBright,
-                    shape = MagicButtonShape()
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            background_icon?.let {
-                ProvideContentColorTextStyle(MaterialTheme.colorScheme.onSurface.copy(alpha = .2F)) {
-                    Icon(
-                        modifier = Modifier
-                            .padding(contentPadding)
-                            .fillMaxHeight(),
-                        painter = painterResource(it),
-                        contentDescription = null
-                    )
-                }
-            }
-            content(modifier, expanded, requester)
-        }
-        LaunchedEffect(Unit) {
-            requester.requestFocus()
-        }
-    } else {
-        ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onBackground) {
-            Box (
-                modifier = modifier
-                    .border(width = 1.dp, color = MaterialTheme.colorScheme.outline, shape = MagicButtonShape())
-                    .combinedClickable(
-                        onClick = { expanded.value = !expanded.value }
-                    )
-                    .background(color = MaterialTheme.colorScheme.surfaceBright, shape = MagicButtonShape()),
-                contentAlignment = Alignment.Center
-            ) {
-                background_icon?.let {
-                    ProvideContentColorTextStyle(MaterialTheme.colorScheme.onSurface.copy(alpha = .2F)) {
-                        Icon(
-                            modifier = Modifier
-                                .padding(contentPadding)
-                                .fillMaxHeight(),
-                            painter = painterResource(it),
-                            contentDescription = null
-                        )
-                    }
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    prefix?.invoke()
-                    Box(
-                        modifier = Modifier
-                            .padding(contentPadding)
-                            .weight(1F),
-                        contentAlignment = Alignment.Center,
-                        content = { Text("${value.value}") }
-                    )
-                }
-            }
-        }
-    }
 }
 
 @Composable
 fun MagicInput(
-    value: MutableState<Int>,
+    value: Int,
     minimum: Int? = null,
     maximum: Int? = null,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(vertical = 8.dp),
     prefix: @Composable (() -> Unit)? = null,
     background_icon: Int? = null,
+    content: @Composable (() -> Unit) = {},
     callback: (Int) -> Unit
 ) {
-    MagicInputInner(
-        modifier,
-        value,
-        contentPadding,
-        prefix = prefix,
-        background_icon = background_icon
-    ) { modifier, expanded, requester ->
-        IntegerInput(
-            value = value,
-            text_align = TextAlign.Center,
-            on_focus_enter = {},
-            on_focus_exit = { value ->
-                value?.let { callback(it) }
+    val expanded = remember { mutableStateOf(false) }
+    val label_value = remember { mutableIntStateOf(value) }
+    val backup_value = remember { mutableIntStateOf(value) }
+    if (expanded.value) {
+        Dialog(
+            onDismissRequest = {
                 expanded.value = false
-            },
-            contentPadding = contentPadding,
-            modifier = modifier
-                .background(Color.Transparent)
-                .focusRequester(requester),
-            minimum = minimum,
-            maximum = maximum,
-            prefix = prefix,
-            callback = {
-                callback(it)
-                expanded.value = false
+                label_value.value = backup_value.value
             }
-        )
+        ) {
+            Box(
+                modifier = Modifier
+                    .background(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = RoundedCornerShape(12.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                val requester = remember { FocusRequester() }
+                IntegerInput(
+                    value = label_value,
+                    text_align = TextAlign.Center,
+                    on_focus_enter = {},
+                    on_focus_exit = { value -> expanded.value = false },
+                    contentPadding = contentPadding,
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .focusRequester(requester),
+                    minimum = minimum,
+                    maximum = maximum,
+                    prefix = prefix,
+                    callback = {
+                        label_value.value = it
+                        backup_value.value = it
+                        callback(it)
+                        expanded.value = false
+                    }
+                )
+
+                LaunchedEffect(Unit) {
+                    requester.requestFocus()
+                }
+            }
+        }
     }
+    Button(
+        colors = ButtonDefaults.buttonColors().copy(
+            containerColor = if (expanded.value) {
+                MaterialTheme.colorScheme.tertiary
+            } else {
+                MaterialTheme.colorScheme.primary
+            },
+            contentColor = if (expanded.value) {
+                MaterialTheme.colorScheme.onTertiary
+            } else {
+                MaterialTheme.colorScheme.onPrimary
+            }
+        ),
+        onClick = { expanded.value = !expanded.value },
+        content = { Text("${label_value.value}") }
+    )
 }
 
 @Composable
 fun MagicInput(
-    value: MutableState<Float>,
+    value: Float,
     precision: Int?,
     minimum: Float? = null,
     maximum: Float? = null,
@@ -944,35 +881,58 @@ fun MagicInput(
     contentPadding: PaddingValues = PaddingValues(vertical = 2.dp),
     prefix: @Composable (() -> Unit)? = null,
     background_icon: Int? = null,
-    callback: (Float) -> Unit) {
-    MagicInputInner(
-        modifier,
-        value,
-        contentPadding,
-        prefix = prefix,
-        background_icon = background_icon
-    ) { modifier, expanded, requester ->
-        FloatInput(
-            value = value,
-            precision = precision,
-            text_align = TextAlign.Center,
-            on_focus_enter = {},
-            on_focus_exit = { value ->
-                value?.let { callback(it) }
+    callback: (Float) -> Unit
+) {
+    val expanded = remember { mutableStateOf(false) }
+    val label_value = remember { mutableFloatStateOf(value) }
+    val backup_value = remember { mutableFloatStateOf(value) }
+
+    if (expanded.value) {
+        Dialog(
+            onDismissRequest = {
                 expanded.value = false
-            },
-            contentPadding = contentPadding,
-            modifier = modifier
-                .fillMaxSize()
-                .background(Color.Transparent)
-                .focusRequester(requester),
-            minimum = minimum,
-            maximum = maximum,
-            prefix = prefix,
-            callback = {
-                callback(it)
-                expanded.value = false
+                label_value.value = backup_value.value
             }
-        )
+        ) {
+            Box(
+                modifier = Modifier
+                    .background(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = RoundedCornerShape(12.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                val requester = remember { FocusRequester() }
+                FloatInput(
+                    value = label_value,
+                    precision = precision,
+                    text_align = TextAlign.Center,
+                    on_focus_enter = {},
+                    on_focus_exit = { value -> expanded.value = false },
+                    contentPadding = contentPadding,
+                    modifier = modifier
+                        .padding(12.dp)
+                        .focusRequester(requester),
+                    minimum = minimum,
+                    maximum = maximum,
+                    prefix = prefix,
+                    callback = {
+                        backup_value.value = it
+                        label_value.value = it
+                        callback(it)
+                        expanded.value = false
+                    }
+                )
+
+                LaunchedEffect(Unit) {
+                    requester.requestFocus()
+                }
+            }
+        }
     }
+
+    Button(
+        onClick = { expanded.value = !expanded.value },
+        content = { Text("${label_value.value}") }
+    )
 }

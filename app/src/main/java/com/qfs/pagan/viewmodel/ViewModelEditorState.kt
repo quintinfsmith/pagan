@@ -201,16 +201,14 @@ class ViewModelEditorState: ViewModel() {
     val dragging_first_line: MutableState<Int?> = mutableStateOf(null)
     val dragging_offset: MutableState<Float> = mutableStateOf(0F)
     val dragging_height: Pair<MutableState<Int>, MutableState<Int>> = Pair(mutableStateOf(0), mutableStateOf(0))
-    val dragging_line_map: HashMap<ClosedFloatingPointRange<Float>, IntRange> = HashMap()
+    val dragging_line_map = mutableListOf<Triple<ClosedFloatingPointRange<Float>, IntRange, Boolean>>()
 
-    fun start_dragging(y: Int, initial_offset: Float, line_map: HashMap<ClosedFloatingPointRange<Float>, IntRange>) {
+    fun start_dragging(y: Int, initial_offset: Float, line_map: List<Triple<ClosedFloatingPointRange<Float>, IntRange, Boolean>>) {
         this.dragging_line.value = y
         this.dragging_initial_offset.value = initial_offset
         this.dragging_height.first.value = 0
         this.dragging_height.second.value = 0
-        for ((key, value) in line_map) {
-            this.dragging_line_map[key] = value
-        }
+        this.dragging_line_map += line_map
         val main_line_index = this.dragging_line.value ?: return
         val main_line = this.line_data[main_line_index]
         val is_channel_selected = this.active_cursor.value?.type == CursorMode.Channel && this.active_cursor.value?.ints[0] == main_line.channel.value
@@ -244,20 +242,28 @@ class ViewModelEditorState: ViewModel() {
         }
     }
 
-    fun calculate_dragged_to_line(): Int? {
+    fun calculate_dragged_to_line(): Pair<Int, Boolean>? {
         val y = this.dragging_line.value ?: return null
         val dragged_offset = this.dragging_initial_offset.value + this.dragging_offset.value
         var adjusted_y = -1F
-        for ((range, line_range) in this.dragging_line_map) {
+        val sorted_pairs = this.dragging_line_map.toList().sortedBy { it.first.start }
+        for ((range, line_range, is_bottom) in sorted_pairs) {
             if (line_range.contains(y)) {
                 adjusted_y = range.start + dragged_offset
                 break
             }
         }
 
-        for ((range, line_range) in this.dragging_line_map) {
+        for ((range, line_range, is_bottom) in sorted_pairs) {
             if (range.contains(adjusted_y)) {
-                return line_range.start
+                return Pair(
+                    if (is_bottom) {
+                        line_range.last + 1
+                    } else {
+                        line_range.start
+                    },
+                    is_bottom
+                )
             }
         }
 

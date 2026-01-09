@@ -1094,6 +1094,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     )
                 }
             )
+
             Box(
                 Modifier
                     .weight(1F)
@@ -1127,12 +1128,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val scroll_state_h = ui_facade.scroll_state_x.value
         val bottom_padding = 128.dp // Arbitrary, safe height
         val end_padding = 128.dp // Also Arbitrary, safe width
-
         Box(
             modifier,
             contentAlignment = Alignment.TopStart
         ) {
             MainTableBackground()
+            val (dragging_to_y, is_after) = ui_facade.calculate_dragged_to_line() ?: Pair(null, false)
             Row {
                 ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onSurfaceVariant) {
                     Column {
@@ -1141,12 +1142,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             var working_channel: Int? = 0
                             for (y in 0 until ui_facade.line_count.value) {
                                 if (ui_facade.line_data[y].channel.value != working_channel) {
-                                    Row(
+                                    Spacer(
                                         Modifier
                                             .width(dimensionResource(R.dimen.line_label_width))
                                             .height(dimensionResource(R.dimen.channel_gap_size))
-                                            .background(MaterialTheme.colorScheme.onSurfaceVariant),
-                                        content = {}
+                                            .background(MaterialTheme.colorScheme.onSurfaceVariant)
                                     )
                                 }
 
@@ -1157,7 +1157,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     line_height
                                 }
 
-                                Row(
+                                Column(
                                     modifier = Modifier
                                         .then(
                                             // Make std lines draggable
@@ -1172,8 +1172,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                             )
                                                         },
                                                         onDragStopped = {
-                                                            val new_y = ui_facade.calculate_dragged_to_line()
-
                                                             ui_facade.stop_dragging()
                                                         },
                                                         orientation = Orientation.Vertical,
@@ -1192,12 +1190,20 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         .offset {
                                             IntOffset(
                                                 0,
-                                                this@ComponentActivityEditor.get_dragged_offset(y)
+                                                this@ComponentActivityEditor.get_dragged_offset(y, dragging_to_y)
                                             )
                                         }
                                         .height(use_height)
                                         .width(dimensionResource(R.dimen.line_label_width)),
                                     content = {
+                                        if ((ui_facade.dragging_first_line.value == y && !is_after) || dragging_to_y == y) {
+                                            Spacer(
+                                                Modifier
+                                                    .background(Color.Yellow)
+                                                    .height(1.dp)
+                                                    .fillMaxWidth()
+                                            )
+                                        }
                                         LineLabelView(
                                             modifier = Modifier.fillMaxSize(),
                                             dispatcher,
@@ -1280,20 +1286,31 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                                     val cell = ui_facade.cell_map[y][x]
 
-                                    Row(
+                                    Column(
                                         Modifier
                                             .zIndex(
                                                 if (state_model.line_data[y].is_dragging.value) 2F
                                                 else 0F
                                             )
                                             .offset {
-                                                IntOffset(0, this@ComponentActivityEditor.get_dragged_offset(y))
+                                                IntOffset(
+                                                    0,
+                                                    this@ComponentActivityEditor.get_dragged_offset(y, dragging_to_y)
+                                                )
                                             }
                                             .height(
                                                 if (ui_facade.line_data[y].ctl_type.value != null) ctl_line_height
                                                 else line_height
                                             )
                                     ) {
+                                        if ((ui_facade.dragging_first_line.value == y && !is_after) || dragging_to_y == y) {
+                                            Spacer(
+                                                Modifier
+                                                    .background(Color.Yellow)
+                                                    .height(1.dp)
+                                                    .fillMaxWidth()
+                                            )
+                                        }
                                         CellView(ui_facade, dispatcher, cell, y, x)
                                     }
                                 }
@@ -2428,27 +2445,34 @@ class ComponentActivityEditor: PaganComponentActivity() {
         )
     }
 
-    fun get_dragged_offset(y: Int): Int {
+    fun get_dragged_offset(y: Int, target_line: Int?): Int {
         val line_height = this.resources.getDimension(R.dimen.line_height)
         val ctl_line_height = this.resources.getDimension(R.dimen.ctl_line_height)
         return if (this.state_model.line_data[y].is_dragging.value) {
             this.state_model.dragging_offset.value.roundToInt()
-        } else if (this.state_model.dragging_first_line.value != null) {
+        } else  {
             val std_line_count = this.state_model.dragging_height.first.value
             val ctl_line_count = this.state_model.dragging_height.second.value
-            if (this.state_model.dragging_first_line.value!! + std_line_count + ctl_line_count <= y) {
-                // Shift lower lines up, but leave a gap the size of a ctl_line
-                0 - ((std_line_count * line_height) + (ctl_line_count * ctl_line_height)).toInt() + ctl_line_height.toInt()
-            } else {
-                0
+            var output = 0
+
+            target_line?.let {
+                if (it <= y) {
+                    output += ctl_line_height.toInt()
+                }
             }
-        } else {
-            0
+
+            this.state_model.dragging_first_line.value?.let {
+                if (it + std_line_count + ctl_line_count <= y) {
+                    // Shift lower lines up, but leave a gap the size of a ctl_line
+                    output -= ((std_line_count * line_height) + (ctl_line_count * ctl_line_height)).toInt()
+                }
+            }
+            output
         }
     }
 
-    fun build_dragging_line_map(active_line: Int): HashMap<ClosedFloatingPointRange<Float>, IntRange> {
-        val output = HashMap<ClosedFloatingPointRange<Float>, IntRange>()
+    fun build_dragging_line_map(active_line: Int): List<Triple<ClosedFloatingPointRange<Float>, IntRange, Boolean>> {
+        val output = mutableListOf<Triple<ClosedFloatingPointRange<Float>, IntRange, Boolean>>()
         val line_height = this.resources.getDimension(R.dimen.line_height)
         val ctl_line_height = this.resources.getDimension(R.dimen.ctl_line_height)
         val gap_height = this.resources.getDimension(R.dimen.channel_gap_size)
@@ -2480,7 +2504,21 @@ class ComponentActivityEditor: PaganComponentActivity() {
             if (selection.contains(y)) {
                 if (selection_added) continue
                 selection_added = true
-                output[running_y .. (running_y + ctl_line_height)] = selection
+                output.add(
+                    Triple(
+                        running_y .. (running_y + (ctl_line_height/ 2F)),
+                        selection,
+                        false
+                    )
+                )
+                output.add(
+                    Triple(
+                        running_y + (ctl_line_height / 2F) .. (running_y + ctl_line_height),
+                        selection,
+                        true
+                    )
+                )
+
                 running_y += ctl_line_height
             } else {
                 val working_line_height = if (line.ctl_type.value == null) {
@@ -2488,7 +2526,20 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 } else {
                     ctl_line_height
                 }
-                output[running_y .. (running_y + working_line_height)] = y .. y
+                output.add(
+                    Triple(
+                        running_y .. (running_y + (working_line_height / 2F)),
+                        y .. y,
+                        false
+                    )
+                )
+                output.add(
+                    Triple(
+                        running_y + (working_line_height / 2F) .. (running_y + working_line_height),
+                        y .. y,
+                        true
+                    )
+                )
                 running_y += working_line_height
             }
 

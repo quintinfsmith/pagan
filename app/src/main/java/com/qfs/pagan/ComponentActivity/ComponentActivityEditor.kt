@@ -26,6 +26,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -1188,7 +1189,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                                                             val abs_line_offset = ui_facade.dragging_abs_offset.value ?: return@rememberDraggableState
                                                             // Handle drag-scrolling
-                                                            val relative_y = (abs_line_offset - ui_facade.dragging_offset.value) + scroll_state_v.value
+                                                            val relative_y = (abs_line_offset - scroll_state_v.value) + ui_facade.dragging_offset.value
                                                             val viewport_height = scroll_state_v.viewportSize.toFloat()
 
                                                             val div = 4F
@@ -1196,22 +1197,20 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                             val max_scroll_speed = 50
 
                                                             val downscroll_y_position = active_zone_height * (div - 1F)
-                                                            println("-- $abs_line_offset, ${ui_facade.dragging_offset.value}, ${scroll_state_v.value}")
-                                                            println("       $viewport_height | $relative_y  || ${ui_facade.dragging_initial_offset.value}")
                                                             val factor: Float = if (relative_y < active_zone_height) {
-                                                                println("A")
                                                                 -1F * ((active_zone_height - relative_y) / active_zone_height).pow(2F)
                                                             } else if (relative_y > downscroll_y_position) {
-                                                                println("B")
                                                                 ((active_zone_height - (relative_y - downscroll_y_position)) / active_zone_height).pow(2F)
                                                             } else {
-                                                                println("C")
                                                                 return@rememberDraggableState
                                                             }
 
-                                                           // scope.launch {
-                                                           //     scroll_state.scrollBy(max_scroll_speed * factor)
-                                                           // }
+
+                                                            ui_facade.dragging_offset.value += max_scroll_speed * factor
+
+                                                            scope.launch {
+                                                                scroll_state_v.scrollBy(max_scroll_speed * factor)
+                                                            }
                                                         }
                                                     )
                                             } else {
@@ -2485,24 +2484,26 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val ctl_line_height = this.resources.getDimension(R.dimen.ctl_line_height)
         return if (this.state_model.line_data[y].is_dragging.value) {
             this.state_model.dragging_offset.value.roundToInt()
-        } else  {
+        } else if (this.state_model.line_data[y].channel.value != null) {
             val std_line_count = this.state_model.dragging_height.first.value
             val ctl_line_count = this.state_model.dragging_height.second.value
             var output = 0
 
-            target_line?.let {
-                if (it <= y) {
-                    output += ctl_line_height.toInt()
-                }
-            }
 
             this.state_model.dragging_first_line.value?.let {
+                target_line?.let {
+                    if (target_line <= y) {
+                        output += ctl_line_height.toInt()
+                    }
+                }
                 if (it + std_line_count + ctl_line_count <= y) {
                     // Shift lower lines up, but leave a gap the size of a ctl_line
                     output -= ((std_line_count * line_height) + (ctl_line_count * ctl_line_height)).toInt()
                 }
             }
             output
+        } else {
+            0
         }
     }
 
@@ -2532,6 +2533,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
         var previous_channel: Int? = 0
         for (y in 0 until this.state_model.line_count.value) {
             val line = this.state_model.line_data[y]
+            if (line.channel.value == null) break
+
             if (line.channel.value != previous_channel) {
                 running_y += gap_height
             }

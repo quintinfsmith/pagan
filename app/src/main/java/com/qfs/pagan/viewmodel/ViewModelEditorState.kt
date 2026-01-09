@@ -197,6 +197,7 @@ class ViewModelEditorState: ViewModel() {
     val wide_beat_progress: MutableState<Float> = mutableStateOf(0F)
 
     val dragging_line: MutableState<Int?> = mutableStateOf(null)
+    val dragging_abs_offset: MutableState<Float?> = mutableStateOf(null)
     val dragging_initial_offset: MutableState<Float> = mutableStateOf(0F)
     val dragging_first_line: MutableState<Int?> = mutableStateOf(null)
     val dragging_offset: MutableState<Float> = mutableStateOf(0F)
@@ -230,6 +231,7 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun stop_dragging() {
+        this.dragging_abs_offset.value = null
         this.dragging_height.first.value = 0
         this.dragging_line_map.clear()
         this.dragging_height.second.value = 0

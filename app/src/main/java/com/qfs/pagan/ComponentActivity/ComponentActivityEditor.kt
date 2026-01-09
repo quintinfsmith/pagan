@@ -70,6 +70,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -160,6 +162,7 @@ import kotlin.concurrent.thread
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.pow
 import kotlin.math.roundToInt
 
 class ComponentActivityEditor: PaganComponentActivity() {
@@ -1163,6 +1166,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                             // Make std lines draggable
                                             if (ui_facade.line_data[y].ctl_type.value == null) {
                                                 Modifier
+                                                    .onPlaced { coordinates ->
+                                                        if (y == ui_facade.dragging_line.value && ui_facade.dragging_abs_offset.value == null) {
+                                                            ui_facade.dragging_abs_offset.value = coordinates.positionInParent().y
+                                                        }
+                                                    }
                                                     .draggable(
                                                         onDragStarted = { offset ->
                                                             ui_facade.start_dragging(
@@ -1177,6 +1185,33 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                         orientation = Orientation.Vertical,
                                                         state = rememberDraggableState { delta ->
                                                             ui_facade.dragging_offset.value += delta
+
+                                                            val abs_line_offset = ui_facade.dragging_abs_offset.value ?: return@rememberDraggableState
+                                                            // Handle drag-scrolling
+                                                            val relative_y = (abs_line_offset - ui_facade.dragging_offset.value) + scroll_state_v.value
+                                                            val viewport_height = scroll_state_v.viewportSize.toFloat()
+
+                                                            val div = 4F
+                                                            val active_zone_height = viewport_height / div
+                                                            val max_scroll_speed = 50
+
+                                                            val downscroll_y_position = active_zone_height * (div - 1F)
+                                                            println("-- $abs_line_offset, ${ui_facade.dragging_offset.value}, ${scroll_state_v.value}")
+                                                            println("       $viewport_height | $relative_y  || ${ui_facade.dragging_initial_offset.value}")
+                                                            val factor: Float = if (relative_y < active_zone_height) {
+                                                                println("A")
+                                                                -1F * ((active_zone_height - relative_y) / active_zone_height).pow(2F)
+                                                            } else if (relative_y > downscroll_y_position) {
+                                                                println("B")
+                                                                ((active_zone_height - (relative_y - downscroll_y_position)) / active_zone_height).pow(2F)
+                                                            } else {
+                                                                println("C")
+                                                                return@rememberDraggableState
+                                                            }
+
+                                                           // scope.launch {
+                                                           //     scroll_state.scrollBy(max_scroll_speed * factor)
+                                                           // }
                                                         }
                                                     )
                                             } else {

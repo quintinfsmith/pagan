@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -32,19 +33,23 @@ fun SoundFontWarning(in_settings: Boolean = false) {
     val url = stringResource(R.string.url_fluid)
     val context = LocalContext.current.find_activity() ?: return
 
-    ProvideContentColorTextStyle(contentColor = Color.Black) {
+    ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onTertiary) {
         Column(
             Modifier
-                .background(colorResource(R.color.blue_sky), shape = RoundedCornerShape(24.dp))
-                .border(4.dp, colorResource(R.color.blue_dark), shape = RoundedCornerShape(24.dp))
-                .padding(16.dp)
+                .background(MaterialTheme.colorScheme.tertiary, shape = RoundedCornerShape(24.dp))
+                .border(4.dp, MaterialTheme.colorScheme.tertiaryContainer, shape = RoundedCornerShape(24.dp))
+                .padding(16.dp),
+
         ) {
-            ProvideTextStyle(MaterialTheme.typography.titleSmall) {
-                SText(R.string.warning_nosoundfont_a)
+            ProvideTextStyle(MaterialTheme.typography.headlineSmall) {
+                SText(
+                    string_id = R.string.warning_nosoundfont_a,
+                    textAlign = TextAlign.Center
+                )
             }
 
             Column(Modifier.padding(top = 8.dp)) {
-                ProvideTextStyle(MaterialTheme.typography.bodySmall) {
+                ProvideTextStyle(MaterialTheme.typography.titleSmall) {
                     SText(R.string.warning_nosoundfont_b)
                 }
 
@@ -54,7 +59,6 @@ fun SoundFontWarning(in_settings: Boolean = false) {
                         textAlign = TextAlign.Center,
                         modifier = Modifier
                             .padding(top = 2.dp)
-                            .fillMaxWidth()
                             .clickable {
                                 val intent = Intent(Intent.ACTION_VIEW)
                                 intent.data = url.toUri()
@@ -63,6 +67,7 @@ fun SoundFontWarning(in_settings: Boolean = false) {
                     )
                 }
             }
+
             if (!in_settings) {
                 Row(
                     Modifier.padding(top = 8.dp),

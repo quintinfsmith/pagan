@@ -22,9 +22,9 @@
     <string name="cd_unset">Unset this subdivision</string>
     <string name="url_fluid">https://archive.org/download/fluidr3-gm-gs/FluidR3_GM_GS.sf2</string>
     <string name="warning_nosoundfont_a">A soundfont is needed for playback.</string>
-    <string name="warning_nosoundfont_b">FluidR3 soundfont can be found here:</string>
+    <string name="warning_nosoundfont_b">Download Fluidr3_GM_GS.sf2 here:</string>
     <string name="fluid_download">Download Fluid3 Soundfont</string>
-    <string name="warning_nosoundfont_c">You can import and select soundfonts from the settings menu</string>
+    <string name="warning_nosoundfont_c">You can import and select soundfonts from the settings menu.</string>
     <string name="url_git">https://github.com/quintinfsmith/pagan</string>
     <string name="url_issues">https://github.com/quintinfsmith/pagan/issues</string>
     <string name="url_manual">https://burnsomni.net/manual/pagan</string>

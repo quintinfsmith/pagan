@@ -391,9 +391,33 @@ class ComponentActivityLanding: PaganComponentActivity() {
     }
 
     @Composable
-    override fun LayoutXLargeLandscape() = LayoutMediumLandscape()
+    override fun LayoutXLargeLandscape() = LayoutLargeLandscape()
     @Composable
-    override fun LayoutLargeLandscape() = LayoutMediumLandscape()
+    override fun LayoutLargeLandscape() {
+        Row (
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier.width(SIZE_M.first),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween,
+            ) {
+                if (this@ComponentActivityLanding.view_model.requires_soundfont.value) {
+                    Row(Modifier
+                        .padding(8.dp)
+                        .fillMaxWidth()
+                    ) {
+                        SoundFontWarning()
+                    }
+                }
+                Row(Modifier.fillMaxWidth()) {
+                    LayoutMenuCompact()
+                }
+            }
+        }
+    }
 
     @Composable
     override fun LayoutMediumLandscape() {

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -44,19 +45,23 @@ fun <T> RadioMenu(
             Button(
                 colors = ButtonDefaults.buttonColors().copy(
                     containerColor = if (active.value == item) {
-                        ButtonDefaults.buttonColors().containerColor
+                        SwitchDefaults.colors().checkedTrackColor
                     } else {
-                        Color(0x00000000)
+                        SwitchDefaults.colors().uncheckedTrackColor
                     },
                     contentColor = if (active.value == item) {
-                        ButtonDefaults.buttonColors().contentColor
+                        SwitchDefaults.colors().checkedThumbColor
                     } else {
-                        ButtonDefaults.buttonColors().containerColor
+                        SwitchDefaults.colors().uncheckedThumbColor
                     }
                 ),
                 border = BorderStroke(
                     width = 2.dp,
-                    color = ButtonDefaults.buttonColors().containerColor
+                    color = if (active.value == item) {
+                        SwitchDefaults.colors().checkedBorderColor
+                    } else {
+                        SwitchDefaults.colors().uncheckedBorderColor
+                    }
                 ),
                 onClick = {
                     active.value = item

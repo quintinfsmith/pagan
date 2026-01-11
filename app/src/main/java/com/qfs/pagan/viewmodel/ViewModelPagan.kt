@@ -81,16 +81,17 @@ class ViewModelPagan: ViewModel() {
     val night_mode = mutableStateOf(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
 
     fun set_layout_size(width: Dp, height: Dp) {
+        println("LAYOUT SIZE: $width, $height")
         this.active_layout_size.value = if (width >= height) {
             if (width >= SIZE_XL.first && height >= SIZE_XL.second) LayoutSize.XLargeLandscape
             else if (width >= SIZE_L.first && height >= SIZE_L.second) LayoutSize.LargeLandscape
             else if (width >= SIZE_M.first && height >= SIZE_M.second) LayoutSize.MediumLandscape
             else LayoutSize.SmallLandscape
         } else {
-            if (width >= SIZE_XL.second && height >= SIZE_XL.first) LayoutSize.LargePortrait
-             else if (width >= SIZE_L.second && height >= SIZE_L.first) LayoutSize.LargePortrait
-             else if (width >= SIZE_M.second && height >= SIZE_M.first) LayoutSize.MediumPortrait
-             else LayoutSize.SmallPortrait
+            if (height >= SIZE_XL.first && width >= SIZE_XL.second) LayoutSize.XLargePortrait
+            else if (height >= SIZE_L.first && width >= SIZE_L.second) LayoutSize.LargePortrait
+            else if (height >= SIZE_M.first && width >= SIZE_M.second) LayoutSize.MediumPortrait
+            else LayoutSize.SmallPortrait
         }
     }
 

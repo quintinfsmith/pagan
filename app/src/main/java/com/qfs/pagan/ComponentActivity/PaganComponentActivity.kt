@@ -89,6 +89,7 @@ import kotlin.math.roundToInt
 
 abstract class PaganComponentActivity: ComponentActivity() {
     companion object {
+        // Sizes in Portrait
         val SIZE_XL = Pair(960.dp, 720.dp)
         val SIZE_L = Pair(640.dp, 480.dp)
         val SIZE_M = Pair(470.dp, 320.dp)
@@ -270,6 +271,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                     }
                                 }
                                 // -----------------------------------------------
+                                println(" --- ${view_model.get_layout_size()} ---")
                                 when (view_model.get_layout_size()) {
                                     ViewModelPagan.LayoutSize.SmallPortrait -> LayoutSmallPortrait()
                                     ViewModelPagan.LayoutSize.MediumPortrait -> LayoutMediumPortrait()

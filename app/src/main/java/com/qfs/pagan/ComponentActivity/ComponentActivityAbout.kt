@@ -3,7 +3,9 @@ package com.qfs.pagan.ComponentActivity
 import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -14,22 +16,27 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.qfs.pagan.R
+import com.qfs.pagan.composable.MenuPadder
+import com.qfs.pagan.composable.SText
+import com.qfs.pagan.composable.SettingsColumn
 import com.qfs.pagan.composable.button.TopBarIcon
 import com.qfs.pagan.find_activity
 
 class ComponentActivityAbout: PaganComponentActivity() {
-    @Composable
-    override fun RowScope.TopBar() {
+    override val top_bar_wrapper: @Composable RowScope.() -> Unit = {
         TopBarIcon(
             icon = R.drawable.baseline_arrow_back_24,
             description = R.string.go_back,
@@ -65,187 +72,167 @@ class ComponentActivityAbout: PaganComponentActivity() {
         val bytes = ByteArray(stream.available())
         stream.read(bytes)
         stream.close()
-
         Column {
-            FillRow {
+            ProvideTextStyle(MaterialTheme.typography.bodyLarge) {
                 SelectionContainer {
-                    Text(stringResource(R.string.fira_sans_license_blurb))
-                }
-            }
-            FillRow { HorizontalDivider(thickness = 1.dp) }
-            FillRow {
-                SelectionContainer {
-                    Text(
-                        bytes.toString(charset = Charsets.UTF_8),
-                        textAlign = TextAlign.Center
+                    SText(
+                        string_id = R.string.fira_sans_license_blurb,
+                        modifier = Modifier.padding(12.dp)
                     )
                 }
+            }
+
+            HorizontalDivider(thickness = 1.dp)
+
+            SelectionContainer {
+                Text(
+                    bytes.toString(charset = Charsets.UTF_8),
+                    modifier = Modifier.padding(top = 12.dp),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
+
+    @Composable
+    fun UrlManual(modifier: Modifier = Modifier) {
+        val context = LocalContext.current
+        val url_manual = stringResource(R.string.url_manual)
+        SettingsColumn(
+            modifier = modifier
+                .clickable {
+                    val intent = Intent(Intent.ACTION_VIEW)
+                    intent.data = url_manual.toUri()
+                    context.startActivity(intent)
+                }
+        ) {
+            ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+                SText(
+                    string_id = R.string.label_manual,
+                    textAlign = TextAlign.Start
+                )
+            }
+                SelectionContainer {
+                    Text(stringResource(R.string.url_manual))
+                }
+        }
+    }
+
+    @Composable
+    fun UrlSource(modifier: Modifier = Modifier) {
+        val context = LocalContext.current
+        val url_source = stringResource(R.string.url_git)
+        SettingsColumn(
+            modifier = modifier
+                .clickable {
+                    val intent = Intent(Intent.ACTION_VIEW)
+                    intent.data = url_source.toUri()
+                    context.startActivity(intent)
+                }
+        ) {
+            ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+                Text(stringResource(R.string.label_source_code))
+            }
+            SelectionContainer {
+                Text(stringResource(R.string.url_git))
+            }
+        }
+    }
+    @Composable
+    fun UrlIssueTracker(modifier: Modifier = Modifier) {
+        val context = LocalContext.current
+        val url_issues = stringResource(R.string.url_issues)
+        SettingsColumn(
+            modifier = modifier
+                .clickable {
+                    val intent = Intent(Intent.ACTION_VIEW)
+                    intent.data = url_issues.toUri()
+                    context.startActivity(intent)
+                }
+        ) {
+            ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+                Text(stringResource(R.string.label_issues_location))
+            }
+            SelectionContainer {
+                Text(stringResource(R.string.url_issues))
+            }
+        }
+    }
+
+    @Composable
+    fun SupportEmail(modifier: Modifier = Modifier) {
+        val support_email = stringResource(R.string.support_email)
+        SettingsColumn(
+            modifier = modifier
+                .clickable {
+                    val intent = Intent(Intent.ACTION_SENDTO)
+                    intent.data = "mailto:".toUri()
+                    intent.putExtra(Intent.EXTRA_EMAIL, support_email)
+                }
+        ) {
+            ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+                Text(stringResource(R.string.suggestions_description))
+            }
+            SelectionContainer {
+                Text(support_email)
             }
         }
     }
 
     @Composable
     fun SectionUrls() {
-        val context = LocalContext.current.find_activity() ?: return
-        val url_manual = stringResource(R.string.url_manual)
-        val url_source = stringResource(R.string.url_git)
-        val url_issues = stringResource(R.string.url_issues)
-        val support_email = stringResource(R.string.support_email)
-        Column(
+        FlowRow(
             Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.Center
         ) {
-            FillRow(Modifier.padding(bottom = 8.dp)) {
-                Column(
-                    modifier = Modifier.clickable {
-                        val intent = Intent(Intent.ACTION_VIEW)
-                        intent.data = url_manual.toUri()
-                        context.startActivity(intent)
-                    }
-                ) {
-                    Text(
-                        stringResource(R.string.label_manual),
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Start
-                    )
-                    SelectionContainer {
-                        Text(stringResource(R.string.url_manual))
-                    }
-                }
+            Box(Modifier.padding(bottom = 12.dp)) {
+                UrlManual()
             }
-            FillRow(Modifier.padding(bottom = 8.dp)) {
-                Column(
-                    modifier = Modifier.clickable {
-                        val intent = Intent(Intent.ACTION_VIEW)
-                        intent.data = url_source.toUri()
-                        context.startActivity(intent)
-                    }
-                ) {
-                    FillRow { Text(stringResource(R.string.label_source_code)) }
-                    FillRow {
-                        SelectionContainer {
-                            Text(stringResource(R.string.url_git))
-                        }
-                    }
-                }
+            MenuPadder()
+            Box(Modifier.padding(bottom = 12.dp)) {
+                UrlSource()
             }
-            FillRow(Modifier.padding(bottom = 8.dp)) {
-                Column(
-                    modifier = Modifier.clickable {
-                        val intent = Intent(Intent.ACTION_VIEW)
-                        intent.data = url_issues.toUri()
-                        context.startActivity(intent)
-                    }
-                ) {
-                    FillRow { Text(stringResource(R.string.label_issues_location)) }
-                    FillRow {
-                        SelectionContainer {
-                            Text(stringResource(R.string.url_issues))
-                        }
-                    }
-                }
+            MenuPadder()
+            Box(Modifier.padding(bottom = 12.dp)) {
+                UrlIssueTracker()
             }
-
-            FillRow(Modifier.padding(bottom = 8.dp)) {
-                Column(
-                    modifier = Modifier.clickable {
-                        val intent = Intent(Intent.ACTION_SENDTO)
-                        intent.data = "mailto:".toUri()
-                        intent.putExtra(Intent.EXTRA_EMAIL, support_email)
-                    }
-                ) {
-                    FillRow { Text(stringResource(R.string.suggestions_description)) }
-                    FillRow {
-                        SelectionContainer {
-                            Text(support_email)
-                        }
-                    }
-                }
+            MenuPadder()
+            Box(Modifier.padding(bottom = 12.dp)) {
+                SupportEmail()
             }
-        }
-
-    }
-
-    @Composable
-    override fun LayoutXLargePortrait() = LayoutLargePortrait()
-
-    @Composable
-    override fun LayoutLargePortrait() {
-        FillRow {
-            Column(Modifier
-                .padding(8.dp)
-                .fillMaxWidth()
-                .weight(1F)) { }
-            Column(
-                Modifier
-                    .verticalScroll(rememberScrollState())
-                    .width(SIZE_L.second)
-                    .weight(1F)
-                    .fillMaxHeight(),
-                verticalArrangement = Arrangement.Top,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                FillRow { SectionUrls() }
-                FillRow { HorizontalDivider(thickness = 1.dp) }
-                FillRow { SectionLicense() }
-            }
-            Column(Modifier
-                .fillMaxWidth()
-                .weight(1F)) { }
         }
     }
 
     @Composable
-    override fun LayoutMediumPortrait() {
+    fun Layout(modifier: Modifier = Modifier) {
         Column(
-            Modifier
-                .verticalScroll(rememberScrollState())
-                .padding(8.dp)
-                .fillMaxHeight(),
+            modifier
+                .padding(dimensionResource(R.dimen.about_padding))
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            FillRow { SectionUrls() }
-            FillRow { HorizontalDivider(thickness = 1.dp) }
-            FillRow { SectionLicense() }
+            SectionUrls()
+            HorizontalDivider(thickness = 1.dp)
+            SectionLicense()
         }
     }
 
     @Composable
-    override fun LayoutSmallPortrait() = LayoutMediumPortrait()
-
+    override fun LayoutXLargePortrait(modifier: Modifier) = Layout(modifier)
     @Composable
-    override fun LayoutXLargeLandscape() = LayoutLargeLandscape()
-
+    override fun LayoutXLargeLandscape(modifier: Modifier) = Layout(modifier)
     @Composable
-    override fun LayoutLargeLandscape() {
-        FillRow {
-            Column(Modifier
-                .padding(8.dp)
-                .fillMaxWidth()
-                .weight(1F)) { }
-            Column(
-                Modifier
-                    .verticalScroll(rememberScrollState())
-                    .width(SIZE_L.first)
-                    .weight(1F)
-                    .fillMaxHeight(),
-                verticalArrangement = Arrangement.Top,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                FillRow { SectionUrls() }
-                FillRow { HorizontalDivider(thickness = 1.dp) }
-                FillRow { SectionLicense() }
-            }
-            Column(Modifier
-                .fillMaxWidth()
-                .weight(1F)) { }
-        }
-    }
-
+    override fun LayoutLargePortrait(modifier: Modifier) = Layout(modifier)
     @Composable
-    override fun LayoutMediumLandscape() = LayoutMediumPortrait()
-
+    override fun LayoutLargeLandscape(modifier: Modifier) = Layout(modifier)
     @Composable
-    override fun LayoutSmallLandscape() = LayoutMediumPortrait()
+    override fun LayoutMediumPortrait(modifier: Modifier) = Layout(modifier)
+    @Composable
+    override fun LayoutMediumLandscape(modifier: Modifier) = Layout(modifier)
+    @Composable
+    override fun LayoutSmallPortrait(modifier: Modifier) = Layout(modifier)
+    @Composable
+    override fun LayoutSmallLandscape(modifier: Modifier) = Layout(modifier)
 }

@@ -35,7 +35,7 @@ import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 @Composable
 fun ScaffoldWithTopBar(
     modifier: Modifier = Modifier,
-    top_app_bar: @Composable RowScope.() -> Unit,
+    top_app_bar: (@Composable RowScope.() -> Unit)?,
     content: @Composable (PaddingValues) -> Unit,
     drawerState: DrawerState,
     gesturesEnabled: Boolean,
@@ -51,15 +51,18 @@ fun ScaffoldWithTopBar(
             topBar = {
                 val background = MaterialTheme.colorScheme.top_bar_container_color()
                 val foreground = MaterialTheme.colorScheme.top_bar_content_color()
-                ProvideContentColorTextStyle(contentColor = foreground) {
-                    Row(
-                        modifier = Modifier
-                            .height(dimensionResource(R.dimen.topbar_height))
-                            .background(color = background),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        content = top_app_bar
-                    )
+                top_app_bar?.let {
+                    println("TOP BAR EXIST? $it")
+                    ProvideContentColorTextStyle(contentColor = foreground) {
+                        Row(
+                            modifier = Modifier
+                                .height(dimensionResource(R.dimen.topbar_height))
+                                .background(color = background),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            content = top_app_bar
+                        )
+                    }
                 }
             },
             //bottomBar = { Text("")},

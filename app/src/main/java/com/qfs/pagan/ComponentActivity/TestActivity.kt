@@ -16,36 +16,34 @@ class TestActivity: PaganComponentActivity() {
     var test_model = TestModel()
 
     @Composable
-    override fun RowScope.TopBar() {}
-
-    @Composable
     override fun Drawer(modifier: Modifier) { }
     override fun on_back_press_check(): Boolean {
         TODO("Not yet implemented")
     }
 
     @Composable
-    fun Layout() {
+    fun Layout(modifier: Modifier = Modifier) {
         Button(onClick = {
             test_model.t.text = "Toast"
         }) {
             Text(test_model.t.text)
         }
     }
+
     @Composable
-    override fun LayoutXLargePortrait() = Layout()
+    override fun LayoutXLargePortrait(modifier: Modifier) = Layout(modifier)
     @Composable
-    override fun LayoutLargePortrait() = Layout()
+    override fun LayoutLargePortrait(modifier: Modifier) = Layout(modifier)
     @Composable
-    override fun LayoutMediumPortrait() = Layout()
+    override fun LayoutMediumPortrait(modifier: Modifier) = Layout(modifier)
     @Composable
-    override fun LayoutSmallPortrait() = Layout()
+    override fun LayoutSmallPortrait(modifier: Modifier) = Layout(modifier)
     @Composable
-    override fun LayoutXLargeLandscape() = Layout()
+    override fun LayoutXLargeLandscape(modifier: Modifier) = Layout(modifier)
     @Composable
-    override fun LayoutLargeLandscape() = Layout()
+    override fun LayoutLargeLandscape(modifier: Modifier) = Layout(modifier)
     @Composable
-    override fun LayoutMediumLandscape() = Layout()
+    override fun LayoutMediumLandscape(modifier: Modifier) = Layout(modifier)
     @Composable
-    override fun LayoutSmallLandscape() = Layout()
+    override fun LayoutSmallLandscape(modifier: Modifier) = Layout(modifier)
 }

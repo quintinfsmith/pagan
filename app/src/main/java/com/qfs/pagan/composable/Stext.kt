@@ -10,6 +10,7 @@ import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -936,3 +937,82 @@ fun MagicInput(
         content = { Text("${label_value.value}") }
     )
 }
+
+@Composable
+fun SettingsBoxWrapper(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    Box(
+        modifier
+            .background(
+                MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(12.dp)
+            ),
+        contentAlignment = Alignment.Center,
+        content = {
+            ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onSurface) {
+                content()
+            }
+        }
+    )
+}
+
+@Composable
+fun SettingsColumn(
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(12.dp),
+    horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
+    verticalArrangement: Arrangement.Vertical = Arrangement.Center,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    SettingsBoxWrapper(modifier) {
+        Column(
+            modifier.padding(contentPadding),
+            horizontalAlignment = horizontalAlignment,
+            verticalArrangement = verticalArrangement,
+            content = { content() }
+        )
+    }
+}
+
+@Composable
+fun SettingsBox(
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(12.dp),
+    contentAlignment: Alignment = Alignment.TopCenter,
+    content: @Composable BoxScope.() -> Unit
+) {
+    SettingsBoxWrapper {
+        Box(
+            modifier.padding(contentPadding),
+            contentAlignment = contentAlignment,
+            content = { content() }
+        )
+    }
+}
+
+@Composable
+fun SettingsRow(
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(12.dp),
+    horizontalArrangement: Arrangement.Horizontal = Arrangement.Center,
+    verticalAlignment: Alignment.Vertical = Alignment.CenterVertically,
+    content: @Composable RowScope.() -> Unit
+) {
+    SettingsBoxWrapper {
+        Row(
+            modifier.padding(contentPadding),
+            horizontalArrangement = horizontalArrangement,
+            verticalAlignment = verticalAlignment,
+            content = { content() }
+        )
+    }
+}
+
+@Composable
+fun MenuPadder() {
+    Spacer(
+        Modifier
+            .width(dimensionResource(R.dimen.sf_menu_padding))
+            .height(dimensionResource(R.dimen.sf_menu_padding))
+    )
+}
+

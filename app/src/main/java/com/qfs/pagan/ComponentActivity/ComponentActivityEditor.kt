@@ -744,6 +744,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     override fun onDestroy() {
+        this.save_to_backup()
         this.controller_model.playback_device?.activity = null
         super.onDestroy()
     }
@@ -977,8 +978,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         Box(Modifier.fillMaxSize()) {}
     }
 
-    @Composable
-    override fun RowScope.TopBar() {
+    override val top_bar_wrapper: @Composable (RowScope.() -> Unit) = {
         val vm_controller = this@ComponentActivityEditor.controller_model
         val vm_state = vm_controller.opus_manager.vm_state
 
@@ -2022,10 +2022,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    override fun LayoutXLargePortrait() = LayoutLargePortrait()
+    override fun LayoutXLargePortrait(modifier: Modifier) = LayoutLargePortrait(modifier)
 
     @Composable
-    override fun LayoutLargePortrait() {
+    override fun LayoutLargePortrait(modifier: Modifier) {
         val view_model = this.controller_model
         val ui_facade = this.controller_model.opus_manager.vm_state
 
@@ -2067,7 +2067,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    override fun LayoutMediumPortrait() {
+    override fun LayoutMediumPortrait(modifier: Modifier) {
         val view_model = this.controller_model
         val ui_facade = this.controller_model.opus_manager.vm_state
         if (!ui_facade.ready.value) {
@@ -2116,16 +2116,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    override fun LayoutSmallPortrait() = LayoutMediumPortrait()
+    override fun LayoutSmallPortrait(modifier: Modifier) = LayoutMediumPortrait(modifier)
 
     @Composable
-    override fun LayoutXLargeLandscape() = LayoutMediumPortrait()
+    override fun LayoutXLargeLandscape(modifier: Modifier) = LayoutMediumPortrait(modifier)
 
     @Composable
-    override fun LayoutLargeLandscape() = LayoutMediumPortrait()
+    override fun LayoutLargeLandscape(modifier: Modifier) = LayoutMediumPortrait(modifier)
 
     @Composable
-    override fun LayoutMediumLandscape() {
+    override fun LayoutMediumLandscape(modifier: Modifier) {
         val view_model = this.controller_model
         val ui_facade = this.controller_model.opus_manager.vm_state
 
@@ -2189,7 +2189,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    override fun LayoutSmallLandscape() = LayoutMediumLandscape()
+    override fun LayoutSmallLandscape(modifier: Modifier) = LayoutMediumLandscape(modifier)
 
     @Composable
     fun LoadingSpinnerPlaceHolder() {

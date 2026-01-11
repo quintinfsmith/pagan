@@ -2,11 +2,16 @@ package com.qfs.pagan.ComponentActivity
 
 import android.app.AlertDialog
 import android.content.Intent
+import android.graphics.Paint
 import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -16,22 +21,30 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.SText
+import com.qfs.pagan.composable.SettingsColumn
+import com.qfs.pagan.composable.SettingsRow
 import com.qfs.pagan.composable.SoundFontWarning
 import com.qfs.pagan.composable.button.Button
 import kotlinx.coroutines.CoroutineScope
@@ -77,35 +90,36 @@ class ComponentActivityLanding: PaganComponentActivity() {
             this.reload_config()
         }
 
+    override fun onResume() {
+        super.onResume()
+        this.reload_config()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val file = File("${this.dataDir}/bkp_crashreport.log")
-        if (file.isFile) {
-            this.view_model.create_medium_dialog { close ->
-                @Composable {
-                    DialogSTitle(R.string.crash_report_save)
-                    SText(
-                        R.string.crash_report_desc,
-                        modifier = Modifier.padding(vertical = 24.dp)
-                    )
-                    DialogBar(
-                        negative = {
-                            file.delete()
-                            close()
-                        },
-                        positive = {
-                            this@ComponentActivityLanding.export_crash_report()
-                            close()
-                        }
-                    )
-                }
+        if (!file.isFile) return
+
+        this.view_model.create_medium_dialog { close ->
+            @Composable {
+                DialogSTitle(R.string.crash_report_save)
+                SText(
+                    R.string.crash_report_desc,
+                    modifier = Modifier.padding(vertical = 24.dp)
+                )
+                DialogBar(
+                    negative = {
+                        file.delete()
+                        close()
+                    },
+                    positive = {
+                        this@ComponentActivityLanding.export_crash_report()
+                        close()
+                    }
+                )
             }
         }
     }
-
-    @Composable
-    override fun RowScope.TopBar() { }
 
     override fun on_back_press_check(): Boolean {
         return true
@@ -163,7 +177,6 @@ class ComponentActivityLanding: PaganComponentActivity() {
                 val corner_radius = 32.dp
                 ButtonSettings(
                     Modifier.weight(1F),
-                    RoundedCornerShape(corner_radius, 0.dp, 0.dp, corner_radius)
                 )
                 Padder()
                 ButtonAbout(
@@ -175,21 +188,23 @@ class ComponentActivityLanding: PaganComponentActivity() {
     }
 
     @Composable
-    fun RowScope.Padder() {
-        Spacer(Modifier.width(dimensionResource(R.dimen.landing_padding)))
+    fun RowScope.Padder(factor: Float = 1F) {
+        Spacer(Modifier.width(dimensionResource(R.dimen.landing_padding) * factor))
     }
     @Composable
-    fun ColumnScope.Padder() {
-        Spacer(Modifier.height(dimensionResource(R.dimen.landing_padding)))
+    fun ColumnScope.Padder(factor: Float = 1F) {
+        Spacer(Modifier.height(dimensionResource(R.dimen.landing_padding) * factor))
     }
 
     @Composable
-    fun ButtonRecent(modifier: Modifier = Modifier) {
+    fun ButtonRecent(
+        modifier: Modifier = Modifier,
+        shape: Shape = ButtonDefaults.shape
+    ) {
         Button(
-            modifier = modifier
-                .height(dimensionResource(R.dimen.landing_button_height))
-                .fillMaxWidth(),
+            modifier = modifier.height(dimensionResource(R.dimen.landing_button_height)),
             content = { Text(stringResource(R.string.btn_landing_most_recent)) },
+            shape = shape,
             onClick = {
                 this@ComponentActivityLanding.startActivity(
                     Intent(this, ComponentActivityEditor::class.java).apply {
@@ -206,9 +221,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
         shape: Shape = ButtonDefaults.shape
     ) {
         Button(
-            modifier = modifier
-                .height(dimensionResource(R.dimen.landing_button_height))
-                .fillMaxWidth(),
+            modifier = modifier.height(dimensionResource(R.dimen.landing_button_height)),
             content = { Text(stringResource(R.string.btn_landing_new)) },
             shape = shape,
             onClick = {
@@ -229,9 +242,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
         shape: Shape = ButtonDefaults.shape
     ) {
         Button(
-            modifier = modifier
-                .height(dimensionResource(R.dimen.landing_button_height))
-                .fillMaxWidth(),
+            modifier = modifier.height(dimensionResource(R.dimen.landing_button_height)),
             content = { Text(stringResource(R.string.btn_landing_load)) },
             shape = shape,
             onClick = {
@@ -248,12 +259,33 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
 
     @Composable
-    fun ButtonImport(modifier: Modifier = Modifier) {
+    fun SmallIconButton(
+        modifier: Modifier = Modifier,
+        contentPadding: PaddingValues = PaddingValues(0.dp),
+        onClick: () -> Unit, content: @Composable RowScope.() -> Unit
+    ) {
         Button(
             modifier = modifier
-                .height(dimensionResource(R.dimen.landing_button_height))
-                .fillMaxWidth(),
-            content = { Text(stringResource(R.string.btn_landing_import)) },
+                .height(41.dp)
+                .width(41.dp),
+            onClick = onClick,
+            contentPadding = contentPadding,
+            shape = CircleShape,
+            content = content
+        )
+    }
+
+    @Composable
+    fun ButtonImport(modifier: Modifier = Modifier) {
+        SmallIconButton(
+            modifier = modifier,
+            contentPadding = PaddingValues(8.dp),
+            content =  {
+                Icon(
+                    painter = painterResource(R.drawable.icon_import),
+                    contentDescription = stringResource(R.string.btn_landing_import)
+                )
+            },
             onClick = {
                 this.result_launcher_import_project.launch(
                     Intent().apply {
@@ -265,24 +297,28 @@ class ComponentActivityLanding: PaganComponentActivity() {
         )
     }
 
-
     @Composable
-    fun ButtonSettings(
-        modifier: Modifier = Modifier,
-        shape: Shape = ButtonDefaults.shape
-    ) {
-        Button(
-            modifier = modifier
-                .height(dimensionResource(R.dimen.landing_button_height))
-                .fillMaxWidth(),
-            shape = shape,
-            content = { Text(stringResource(R.string.btn_landing_settings)) },
+    fun ButtonSettings(modifier: Modifier = Modifier) {
+        SmallIconButton(
+            modifier = modifier,
             onClick = {
                 this@ComponentActivityLanding.result_launcher_settings.launch(
                     Intent(this@ComponentActivityLanding, ComponentActivitySettings::class.java)
                 )
+            },
+            content =  {
+                Icon(
+                    painter = painterResource(R.drawable.icon_settings),
+                    contentDescription = stringResource(R.string.btn_landing_settings)
+                )
             }
         )
+
+        // Button(
+        //     modifier = modifier,
+        //     //.height(dimensionResource(R.dimen.landing_button_height)),
+        //     //content = { Text(stringResource(R.string.btn_landing_settings)) },
+        // )
     }
 
     @Composable
@@ -290,175 +326,216 @@ class ComponentActivityLanding: PaganComponentActivity() {
         modifier: Modifier = Modifier,
         shape: Shape = ButtonDefaults.shape
     ) {
-        Button(
-            modifier = modifier
-                .height(dimensionResource(R.dimen.landing_button_height))
-                .fillMaxWidth(),
-            shape = shape,
-            content = { Text(stringResource(R.string.btn_landing_about)) },
+        SmallIconButton(
+            modifier = modifier,
             onClick = {
-                this@ComponentActivityLanding.startActivity(Intent(this@ComponentActivityLanding, ComponentActivityAbout::class.java))
+                this@ComponentActivityLanding.startActivity(
+                    Intent(this@ComponentActivityLanding, ComponentActivityAbout::class.java)
+                )
+            },
+            content =  {
+                Icon(
+                    painter = painterResource(R.drawable.icon_about),
+                    contentDescription = stringResource(R.string.btn_landing_about)
+                )
             }
         )
-    }
-
-    @Composable
-    override fun LayoutXLargePortrait() {
-        Row(
-            modifier = Modifier
-                .padding(8.dp)
-                .fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceAround,
-        ) {
-            Column(
-                modifier = Modifier.width(SIZE_L.first),
-                verticalArrangement = Arrangement.Center
-            ) {
-                if (this@ComponentActivityLanding.view_model.requires_soundfont.value) {
-                    Row(modifier = Modifier.padding(8.dp)) { SoundFontWarning() }
-                }
-                Row { LayoutMenu() }
-            }
-        }
     }
 
     @Composable
     override fun Drawer(modifier: Modifier) { }
 
     @Composable
-    override fun LayoutLargePortrait() {
-        Row(
-            modifier = Modifier
-                .padding(8.dp)
-                .fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceAround,
+    override fun LayoutXLargePortrait(modifier: Modifier) = LayoutLargePortrait(modifier)
+
+    @Composable
+    override fun LayoutXLargeLandscape(modifier: Modifier) = LayoutLargeLandscape(modifier)
+
+    @Composable
+    override fun LayoutLargePortrait(modifier: Modifier) {
+        val has_backup = this.view_model.project_manager?.has_backup_saved() == true
+        val has_saved_project = this.view_model.has_saved_project.value
+        Box(
+            modifier = modifier.padding(dimensionResource(R.dimen.landing_padding)),
+            contentAlignment = Alignment.Center
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxHeight()
-                    .width(SIZE_M.first),
-                verticalArrangement = Arrangement.Center
-            ) {
-                if (this@ComponentActivityLanding.view_model.requires_soundfont.value) {
-                    Row(modifier = Modifier.padding(8.dp)) { SoundFontWarning() }
-                }
-                Row { LayoutMenu() }
-            }
-        }
-    }
-
-    @Composable
-    override fun LayoutMediumPortrait() {
-        Row(
-            modifier = Modifier
-                .padding(8.dp)
-                .fillMaxSize(),
-
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceAround,
-        ) {
-            Column(
-                modifier = Modifier.width(SIZE_M.first),
-                verticalArrangement = Arrangement.Center
-            ) {
-                if (this@ComponentActivityLanding.view_model.requires_soundfont.value) {
-                    Row(modifier = Modifier.padding(8.dp)) { SoundFontWarning() }
-                }
-                Row { LayoutMenu() }
-            }
-        }
-    }
-
-    @Composable
-    override fun LayoutSmallPortrait() {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceAround,
-        ) {
-            Column(
-                modifier = Modifier.width(SIZE_S.first),
-                verticalArrangement = Arrangement.Center
-            ) {
-                if (this@ComponentActivityLanding.view_model.requires_soundfont.value) {
-                    Row(modifier = Modifier.padding(8.dp)) { SoundFontWarning() }
-                }
-                Row { LayoutMenuCompact() }
-            }
-        }
-    }
-
-    @Composable
-    override fun LayoutXLargeLandscape() = LayoutLargeLandscape()
-    @Composable
-    override fun LayoutLargeLandscape() {
-        Row (
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                modifier = Modifier.width(SIZE_M.first),
+                    .height(SIZE_M.first)
+                    .width(SIZE_L.second),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween,
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
-                if (this@ComponentActivityLanding.view_model.requires_soundfont.value) {
-                    Row(Modifier
-                        .padding(8.dp)
-                        .fillMaxWidth()
-                    ) {
-                        SoundFontWarning()
-                    }
-                }
-                Row(Modifier.fillMaxWidth()) {
-                    LayoutMenuCompact()
-                }
-            }
-        }
-    }
 
-    @Composable
-    override fun LayoutMediumLandscape() {
-        Row (
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                modifier = Modifier.width(SIZE_M.first),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween,
-            ) {
                 if (this@ComponentActivityLanding.view_model.requires_soundfont.value) {
-                    Row(Modifier
-                        .padding(8.dp)
-                        .fillMaxWidth()
-                    ) {
-                        SoundFontWarning()
-                    }
-                }
-                Row(Modifier.fillMaxWidth()) {
-                    LayoutMenuCompact()
-                }
-            }
-        }
-    }
-
-    @Composable
-    override fun LayoutSmallLandscape() {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-       ) {
-            if (this@ComponentActivityLanding.view_model.requires_soundfont.value) {
-                Row(Modifier.padding(8.dp)) {
                     SoundFontWarning()
+                } else {
+                    Spacer(Modifier.height(41.dp))
+                }
+
+                Column(
+                    Modifier.width(SIZE_M.second),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (has_backup) {
+                        ButtonRecent(Modifier.fillMaxWidth())
+                        Padder()
+                    }
+                    ButtonNew(Modifier.fillMaxWidth())
+                    if (has_saved_project) {
+                        Padder()
+                        ButtonLoad(Modifier.fillMaxWidth())
+                    }
+                }
+
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    LayoutSmallIconLinks()
                 }
             }
-            LayoutMenuCompact()
+        }
+
+    }
+
+    @Composable
+    override fun LayoutLargeLandscape(modifier: Modifier) = LayoutLargePortrait(modifier)
+
+    @Composable
+    override fun LayoutMediumPortrait(modifier: Modifier) = LayoutSmallPortrait(modifier)
+
+    @Composable
+    override fun LayoutMediumLandscape(modifier: Modifier) = LayoutSmallLandscape(modifier)
+
+    @Composable
+    override fun LayoutSmallPortrait(modifier: Modifier) {
+        val has_backup = this.view_model.project_manager?.has_backup_saved() == true
+        val has_saved_project = this.view_model.has_saved_project.value
+        Column(
+            modifier = modifier
+                .padding(dimensionResource(R.dimen.landing_padding))
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+
+            if (this@ComponentActivityLanding.view_model.requires_soundfont.value) {
+                SoundFontWarning()
+            } else {
+                Spacer(Modifier)
+            }
+
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                if (has_backup) {
+                    ButtonRecent()
+                    Padder()
+                }
+                ButtonNew()
+                if (has_saved_project) {
+                    Padder()
+                    ButtonLoad()
+                }
+            }
+
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                LayoutSmallIconLinks()
+            }
+        }
+    }
+
+    @Composable
+    override fun LayoutSmallLandscape(modifier: Modifier) {
+        if (this.view_model.requires_soundfont.value) {
+            this.LayoutSmallLandscapeNeedsSF(modifier)
+        } else {
+            this.LayoutSmallLandscapeNormal(modifier)
+        }
+    }
+
+    @Composable
+    fun LayoutSmallLandscapeNeedsSF(modifier: Modifier = Modifier) {
+        val has_backup = this.view_model.project_manager?.has_backup_saved() == true
+        val has_saved_project = this.view_model.has_saved_project.value
+        val button_shape = RoundedCornerShape(50F, 0F, 0F, 50F)
+        Row(
+            modifier.padding(dimensionResource(R.dimen.landing_padding)),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(
+                Modifier.weight(1F),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                SoundFontWarning()
+            }
+            Column(
+                Modifier.fillMaxHeight(),
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Spacer(Modifier)
+                Column(horizontalAlignment = Alignment.End) {
+                    if (has_backup) {
+                        ButtonRecent(shape = button_shape)
+                        Padder()
+                    }
+                    ButtonNew(shape = button_shape)
+                    if (has_saved_project) {
+                        Padder()
+                        ButtonLoad(shape = button_shape)
+                    }
+                }
+
+                LayoutSmallIconLinks()
+            }
+        }
+    }
+
+    @Composable
+    fun LayoutSmallLandscapeNormal(modifier: Modifier = Modifier) {
+        val has_backup = this.view_model.project_manager?.has_backup_saved() == true
+        val has_saved_project = this.view_model.has_saved_project.value
+
+        Box(
+            modifier.padding(dimensionResource(R.dimen.landing_padding))
+        ) {
+            Column(
+                Modifier.align(Alignment.Center),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                if (has_backup) {
+                    ButtonRecent()
+                    Padder()
+                }
+                ButtonNew()
+                if (has_saved_project) {
+                    Padder()
+                    ButtonLoad()
+                }
+            }
+
+            Box(Modifier.align(Alignment.BottomEnd)) {
+                LayoutSmallIconLinks()
+            }
+        }
+    }
+
+    @Composable
+    fun LayoutSmallIconLinks() {
+        SettingsRow(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            ButtonImport()
+            Padder(2F)
+            ButtonSettings()
+            Padder(2F)
+            ButtonAbout()
         }
     }
 

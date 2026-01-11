@@ -97,25 +97,25 @@ abstract class PaganComponentActivity: ComponentActivity() {
     }
 
     @Composable
-    abstract fun LayoutXLargePortrait()
+    abstract fun LayoutXLargePortrait(modifier: Modifier = Modifier)
     @Composable
-    abstract fun LayoutLargePortrait()
+    abstract fun LayoutLargePortrait(modifier: Modifier = Modifier)
     @Composable
-    abstract fun LayoutMediumPortrait()
+    abstract fun LayoutMediumPortrait(modifier: Modifier = Modifier)
     @Composable
-    abstract fun LayoutSmallPortrait()
+    abstract fun LayoutSmallPortrait(modifier: Modifier = Modifier)
     @Composable
-    abstract fun LayoutXLargeLandscape()
+    abstract fun LayoutXLargeLandscape(modifier: Modifier = Modifier)
     @Composable
-    abstract fun LayoutLargeLandscape()
+    abstract fun LayoutLargeLandscape(modifier: Modifier = Modifier)
     @Composable
-    abstract fun LayoutMediumLandscape()
+    abstract fun LayoutMediumLandscape(modifier: Modifier = Modifier)
     @Composable
-    abstract fun LayoutSmallLandscape()
-    @Composable
-    abstract fun RowScope.TopBar()
+    abstract fun LayoutSmallLandscape(modifier: Modifier = Modifier)
     @Composable
     abstract fun Drawer(modifier: Modifier = Modifier)
+
+    open val top_bar_wrapper: (@Composable RowScope.() -> Unit)? = null
 
     abstract fun on_back_press_check(): Boolean
 
@@ -211,7 +211,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 ) {
                     ScaffoldWithTopBar(
                         modifier = Modifier.wrapContentWidth(),
-                        top_app_bar = { this.TopBar() },
+                        top_app_bar = this@PaganComponentActivity.top_bar_wrapper,
                         drawerState = this@PaganComponentActivity.drawer_state,
                         gesturesEnabled = this@PaganComponentActivity.drawer_gesture_enabled.value,
                         drawerContent = { this@PaganComponentActivity.Drawer() },
@@ -272,17 +272,17 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                 }
                                 // -----------------------------------------------
                                 println(" --- ${view_model.get_layout_size()} ---")
+                                val modifier = Modifier.fillMaxSize()
                                 when (view_model.get_layout_size()) {
-                                    ViewModelPagan.LayoutSize.SmallPortrait -> LayoutSmallPortrait()
-                                    ViewModelPagan.LayoutSize.MediumPortrait -> LayoutMediumPortrait()
-                                    ViewModelPagan.LayoutSize.LargePortrait -> LayoutLargePortrait()
-                                    ViewModelPagan.LayoutSize.XLargePortrait -> LayoutXLargePortrait()
-                                    ViewModelPagan.LayoutSize.SmallLandscape -> LayoutSmallLandscape()
-                                    ViewModelPagan.LayoutSize.MediumLandscape -> LayoutMediumLandscape()
-                                    ViewModelPagan.LayoutSize.LargeLandscape -> LayoutLargeLandscape()
-                                    ViewModelPagan.LayoutSize.XLargeLandscape -> LayoutXLargeLandscape()
+                                    ViewModelPagan.LayoutSize.SmallPortrait -> LayoutSmallPortrait(modifier)
+                                    ViewModelPagan.LayoutSize.MediumPortrait -> LayoutMediumPortrait(modifier)
+                                    ViewModelPagan.LayoutSize.LargePortrait -> LayoutLargePortrait(modifier)
+                                    ViewModelPagan.LayoutSize.XLargePortrait -> LayoutXLargePortrait(modifier)
+                                    ViewModelPagan.LayoutSize.SmallLandscape -> LayoutSmallLandscape(modifier)
+                                    ViewModelPagan.LayoutSize.MediumLandscape -> LayoutMediumLandscape(modifier)
+                                    ViewModelPagan.LayoutSize.LargeLandscape -> LayoutLargeLandscape(modifier)
+                                    ViewModelPagan.LayoutSize.XLargeLandscape -> LayoutXLargeLandscape(modifier)
                                 }
-
                             }
                         }
                     )

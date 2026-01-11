@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -33,7 +32,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
-import androidx.compose.material3.ShortNavigationBarArrangement
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
@@ -61,6 +59,9 @@ import com.qfs.pagan.composable.DropdownMenu
 import com.qfs.pagan.composable.DropdownMenuItem
 import com.qfs.pagan.composable.RadioMenu
 import com.qfs.pagan.composable.SText
+import com.qfs.pagan.composable.MenuPadder
+import com.qfs.pagan.composable.SettingsColumn
+import com.qfs.pagan.composable.SettingsRow
 import com.qfs.pagan.composable.SoundFontWarning
 import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.composable.button.Button
@@ -71,6 +72,19 @@ import java.io.FileInputStream
 import java.io.FileNotFoundException
 
 class ComponentActivitySettings: PaganComponentActivity() {
+    override val top_bar_wrapper: @Composable (RowScope.() -> Unit)? = {
+        TopBarIcon(
+            icon = R.drawable.baseline_arrow_back_24,
+            description = R.string.go_back,
+            onClick = { this@ComponentActivitySettings.finish() }
+        )
+        Text(
+            modifier = Modifier.weight(1F),
+            textAlign = TextAlign.Center,
+            text = stringResource(R.string.settings_fragment_label)
+        )
+    }
+
     val options_orientation: List<Pair<Int, @Composable RowScope.() -> Unit>> = listOf(
         Pair(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) @Composable {
             Icon(
@@ -276,97 +290,15 @@ class ComponentActivitySettings: PaganComponentActivity() {
         return true
     }
 
-    @Composable
-    override fun RowScope.TopBar() {
-        TopBarIcon(
-            icon = R.drawable.baseline_arrow_back_24,
-            description = R.string.go_back,
-            onClick = { this@ComponentActivitySettings.finish() }
-        )
-        Text(
-            modifier = Modifier.weight(1F),
-            textAlign = TextAlign.Center,
-            text = stringResource(R.string.settings_fragment_label)
-        )
-    }
-
     //fun set_soundfont_directory(uri: Uri) {
     //    this.view_model.configuration.soundfont_directory = uri
     //    this.save_configuration()
     //    this.ucheck_move_soundfonts()
     //}
 
-    @Composable
-    fun SettingsBoxWrapper(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-        Box(
-            modifier
-                .background(
-                    MaterialTheme.colorScheme.surface,
-                    shape = RoundedCornerShape(12.dp)
-                ),
-            contentAlignment = Alignment.Center,
-            content = {
-                ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onSurface) {
-                    content()
-                }
-            }
-        )
-    }
 
     @Composable
-    fun SettingsColumn(
-        modifier: Modifier = Modifier,
-        contentPadding: PaddingValues = PaddingValues(12.dp),
-        horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
-        verticalArrangement: Arrangement.Vertical = Arrangement.Center,
-        content: @Composable ColumnScope.() -> Unit
-    ) {
-        SettingsBoxWrapper(modifier) {
-            Column(
-                modifier.padding(contentPadding),
-                horizontalAlignment = horizontalAlignment,
-                verticalArrangement = verticalArrangement,
-                content = { content() }
-            )
-        }
-    }
-
-    @Composable
-    fun SettingsBox(
-        modifier: Modifier = Modifier,
-        contentPadding: PaddingValues = PaddingValues(12.dp),
-        contentAlignment: Alignment = Alignment.TopCenter,
-        content: @Composable BoxScope.() -> Unit
-    ) {
-        SettingsBoxWrapper {
-            Box(
-                modifier.padding(contentPadding),
-                contentAlignment = contentAlignment,
-                content = { content() }
-            )
-        }
-    }
-
-    @Composable
-    fun SettingsRow(
-        modifier: Modifier = Modifier,
-        contentPadding: PaddingValues = PaddingValues(12.dp),
-        horizontalArrangement: Arrangement.Horizontal = Arrangement.Center,
-        verticalAlignment: Alignment.Vertical = Alignment.CenterVertically,
-        content: @Composable RowScope.() -> Unit
-    ) {
-        SettingsBoxWrapper {
-            Row(
-                modifier.padding(contentPadding),
-                horizontalArrangement = horizontalArrangement,
-                verticalAlignment = verticalAlignment,
-                content = { content() }
-            )
-        }
-    }
-
-    @Composable
-    override fun LayoutXLargePortrait() {
+    override fun LayoutXLargePortrait(modifier: Modifier) {
         Column(
             modifier = Modifier
                 .padding(dimensionResource(R.dimen.sf_menu_padding))
@@ -399,7 +331,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
     }
 
     @Composable
-    override fun LayoutXLargeLandscape() {
+    override fun LayoutXLargeLandscape(modifier: Modifier) {
         Row(
             modifier = Modifier
                 .padding(dimensionResource(R.dimen.sf_menu_padding))
@@ -435,7 +367,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
     }
 
     @Composable
-    override fun LayoutLargePortrait() {
+    override fun LayoutLargePortrait(modifier: Modifier) {
         Column(
             modifier = Modifier
                 .padding(dimensionResource(R.dimen.sf_menu_padding))
@@ -466,10 +398,10 @@ class ComponentActivitySettings: PaganComponentActivity() {
     }
 
     @Composable
-    override fun LayoutLargeLandscape() = LayoutXLargeLandscape()
+    override fun LayoutLargeLandscape(modifier: Modifier) = LayoutXLargeLandscape(modifier)
 
     @Composable
-    override fun LayoutMediumPortrait() {
+    override fun LayoutMediumPortrait(modifier: Modifier) {
         Column(
             modifier = Modifier
                 .padding(dimensionResource(R.dimen.sf_menu_padding))
@@ -495,53 +427,13 @@ class ComponentActivitySettings: PaganComponentActivity() {
     }
 
     @Composable
-    override fun LayoutMediumLandscape() = LayoutXLargePortrait()
+    override fun LayoutMediumLandscape(modifier: Modifier) = LayoutXLargePortrait(modifier)
 
     @Composable
-    override fun LayoutSmallPortrait() = LayoutMediumPortrait()
+    override fun LayoutSmallPortrait(modifier: Modifier) = LayoutMediumPortrait(modifier)
 
     @Composable
-    override fun LayoutSmallLandscape() = LayoutMediumPortrait()
-
-    @Composable
-    fun LayoutStandardPortrait() {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(dimensionResource(R.dimen.sf_menu_padding))
-        ) {
-            SettingsSectionA()
-            SettingsSectionB()
-
-            OptionNightMode(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        horizontal = 0.dp,
-                        vertical = 12.dp
-                    )
-            )
-
-            OptionOrientation(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        horizontal = 0.dp,
-                        vertical = 12.dp
-                    )
-            )
-        }
-    }
-
-    @Composable
-    fun MenuPadder() {
-        Spacer(
-            Modifier
-                .width(dimensionResource(R.dimen.sf_menu_padding))
-                .height(dimensionResource(R.dimen.sf_menu_padding))
-        )
-    }
+    override fun LayoutSmallLandscape(modifier: Modifier) = LayoutMediumPortrait(modifier)
 
     fun show_soundfont_menu() {
         val file_list = this.get_existing_soundfonts()

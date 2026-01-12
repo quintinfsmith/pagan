@@ -1506,7 +1506,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             opus_manager.set_percussion_event_at_cursor()
 
             val event_note = opus_manager.get_percussion_instrument(beat_key.channel, beat_key.line_offset)
-            this.play_event(beat_key.channel, event_note, .65F)
+            this.play_event(beat_key.channel, event_note)
         }
     }
 
@@ -1516,7 +1516,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         instrument?.let {
             this.track(TrackedAction.SetPercussionInstrument, listOf(channel, line_offset, it))
             opus_manager.percussion_set_instrument(channel, line_offset, it)
-            this.play_event(channel, it, .65F)
+            this.play_event(channel, it)
             return
         }
 

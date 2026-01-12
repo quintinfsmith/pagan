@@ -1576,6 +1576,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             progress = { state_model.wide_beat_progress.value },
                         )
                     }
+
                     Box(
                         modifier = Modifier
                             .graphicsLayer {

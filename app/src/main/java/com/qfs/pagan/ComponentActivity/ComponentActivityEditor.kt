@@ -1122,7 +1122,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     fun MainTable(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, length: MutableState<Int>, layout: ViewModelPagan.LayoutSize) {
-
         val line_height = dimensionResource(R.dimen.line_height)
         val ctl_line_height = dimensionResource(R.dimen.ctl_line_height)
         val leaf_width = dimensionResource(R.dimen.base_leaf_width)
@@ -1239,7 +1238,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         .offset {
                                             IntOffset(
                                                 0,
-                                                this@ComponentActivityEditor.get_dragged_offset(y, dragging_to_y)
+                                                this@ComponentActivityEditor.get_dragged_offset(y, dragging_to_y, is_after)
                                             )
                                         }
                                         .height(use_height)
@@ -1344,7 +1343,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                             .offset {
                                                 IntOffset(
                                                     0,
-                                                    this@ComponentActivityEditor.get_dragged_offset(y, dragging_to_y)
+                                                    this@ComponentActivityEditor.get_dragged_offset(y, dragging_to_y, is_after)
                                                 )
                                             }
                                             .height(
@@ -2497,9 +2496,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
         )
     }
 
-    fun get_dragged_offset(y: Int, target_line: Int?): Int {
+    fun get_dragged_offset(y: Int, target_line: Int?, is_after: Boolean): Int {
         val line_height = this.resources.getDimension(R.dimen.line_height)
         val ctl_line_height = this.resources.getDimension(R.dimen.ctl_line_height)
+        val drag_gap_height = ctl_line_height
         return if (this.state_model.line_data[y].is_dragging.value) {
             this.state_model.dragging_offset.value.roundToInt()
         } else if (this.state_model.line_data[y].channel.value != null) {
@@ -2507,14 +2507,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
             val ctl_line_count = this.state_model.dragging_height.second.value
             var output = 0
 
-
             this.state_model.dragging_first_line.value?.let {
                 target_line?.let {
-                    if (target_line <= y) {
-                        output += ctl_line_height.toInt()
+                    if (target_line <= y || (!is_after && target_line == y + 1)) {
+                        output += drag_gap_height.toInt()
                     }
                 }
-                if (it + std_line_count + ctl_line_count <= y) {
+
+                val check_line = it + std_line_count + ctl_line_count
+                if (check_line <= y || (!is_after && check_line == y + 1)) {
                     // Shift lower lines up, but leave a gap the size of a ctl_line
                     output -= ((std_line_count * line_height) + (ctl_line_count * ctl_line_height)).toInt()
                 }

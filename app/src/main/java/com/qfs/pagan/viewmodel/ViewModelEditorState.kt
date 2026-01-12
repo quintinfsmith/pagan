@@ -357,6 +357,7 @@ class ViewModelEditorState: ViewModel() {
         while (true) {
             for ((blocked_beat, blocked_position) in cells.get_all_blocked_positions(working_beat, working_position)) {
                 if (blocked_position == working_position && blocked_beat == working_beat) continue
+                if (blocked_beat >= this.cell_map[y].size) continue
                 this.cell_map[y][blocked_beat].value.get_leaf(blocked_position).value.is_spillover.value = true
             }
 

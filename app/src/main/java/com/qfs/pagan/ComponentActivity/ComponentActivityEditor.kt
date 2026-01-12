@@ -1555,7 +1555,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     if (state_model.wide_beat.value == x) {
                         LinearProgressIndicator(
                             modifier = Modifier
-                                .width(ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width.dp / 4)
+                                .width(ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width.dp / 5)
                                 .graphicsLayer {
                                     val width_px = column_width.toPx()
                                     val scroll_offset = ui_facade.scroll_state_x.value.firstVisibleItemScrollOffset.toFloat()
@@ -2021,8 +2021,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
+
     @Composable
     override fun LayoutXLargePortrait(modifier: Modifier) = LayoutLargePortrait(modifier)
+
+    @Composable
+    override fun LayoutXLargeLandscape(modifier: Modifier) = LayoutLargePortrait(modifier)
 
     @Composable
     override fun LayoutLargePortrait(modifier: Modifier) {
@@ -2034,31 +2038,31 @@ class ComponentActivityEditor: PaganComponentActivity() {
             return
         }
 
-
-        val layout = this.view_model.get_layout_size()
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.BottomCenter
         ) {
             Box(Modifier.fillMaxSize()) {
-                MainTable(Modifier, ui_facade, view_model.action_interface,  ui_facade.beat_count, layout)
+                MainTable(Modifier, ui_facade, view_model.action_interface,  ui_facade.beat_count, ViewModelPagan.LayoutSize.LargePortrait)
             }
 
             val primary = this@ComponentActivityEditor.get_context_menu_primary(
                 Modifier.padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
                 ui_facade,
                 view_model.action_interface,
-                layout
+                ViewModelPagan.LayoutSize.LargePortrait
             )
             val secondary = this@ComponentActivityEditor.get_context_menu_secondary(
                 Modifier.padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
                 ui_facade,
                 view_model.action_interface,
-                layout
+                ViewModelPagan.LayoutSize.LargePortrait
             )
 
             AnimatedVisibility(primary != null || secondary != null) {
-                CMBoxBottom(Modifier.width(SIZE_M.first)) {
+                CMBoxBottom(
+                    Modifier.width(SIZE_M.first)
+                ) {
                     primary?.invoke()
                     secondary?.invoke()
                 }
@@ -2067,7 +2071,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    override fun LayoutMediumPortrait(modifier: Modifier) {
+    override fun LayoutLargeLandscape(modifier: Modifier) = LayoutLargePortrait(modifier)
+
+    @Composable
+    override fun LayoutMediumPortrait(modifier: Modifier) = LayoutSmallPortrait(modifier)
+
+    @Composable
+    override fun LayoutMediumLandscape(modifier: Modifier) = LayoutSmallLandscape(modifier)
+
+    @Composable
+    override fun LayoutSmallPortrait(modifier: Modifier) {
         val view_model = this.controller_model
         val ui_facade = this.controller_model.opus_manager.vm_state
         if (!ui_facade.ready.value) {
@@ -2116,16 +2129,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    override fun LayoutSmallPortrait(modifier: Modifier) = LayoutMediumPortrait(modifier)
-
-    @Composable
-    override fun LayoutXLargeLandscape(modifier: Modifier) = LayoutMediumPortrait(modifier)
-
-    @Composable
-    override fun LayoutLargeLandscape(modifier: Modifier) = LayoutMediumPortrait(modifier)
-
-    @Composable
-    override fun LayoutMediumLandscape(modifier: Modifier) {
+    override fun LayoutSmallLandscape(modifier: Modifier) {
         val view_model = this.controller_model
         val ui_facade = this.controller_model.opus_manager.vm_state
 
@@ -2187,9 +2191,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
         }
     }
-
-    @Composable
-    override fun LayoutSmallLandscape(modifier: Modifier) = LayoutMediumLandscape(modifier)
 
     @Composable
     fun LoadingSpinnerPlaceHolder() {

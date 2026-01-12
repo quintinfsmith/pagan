@@ -217,8 +217,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 x = beat_key.beat
             ),
             position,
-            tree,
-            clear_branches
+            tree
         )
         this.vm_state.refresh_cursor()
 
@@ -609,6 +608,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 if (blocked_beat >= this.vm_state.cell_map[y].size) continue
                 try {
                     this.vm_state.cell_map[y][blocked_beat].value.get_leaf(blocked_position).value.is_spillover.value = false
+                } catch (_: ViewModelEditorState.TreeData.LeafNotFound) {
+                    // Pass. It's ok if the cell no longer exists here
                 } catch (_: InvalidGetCall) {
                     // Pass. It's ok if the cell no longer exists here
                 }

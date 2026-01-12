@@ -1120,6 +1120,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     fun MainTable(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, length: MutableState<Int>, layout: ViewModelPagan.LayoutSize) {
+
         val line_height = dimensionResource(R.dimen.line_height)
         val ctl_line_height = dimensionResource(R.dimen.ctl_line_height)
         val leaf_width = dimensionResource(R.dimen.base_leaf_width)
@@ -1130,7 +1131,17 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val scope = rememberCoroutineScope()
         val scroll_state_v = ui_facade.scroll_state_y.value
         val scroll_state_h = ui_facade.scroll_state_x.value
-        val bottom_padding = 128.dp // Arbitrary, safe height
+        val bottom_padding = when (layout) {
+            ViewModelPagan.LayoutSize.SmallPortrait -> SIZE_S.first
+            ViewModelPagan.LayoutSize.MediumPortrait -> SIZE_M.first
+            ViewModelPagan.LayoutSize.LargePortrait -> SIZE_L.first
+            ViewModelPagan.LayoutSize.XLargePortrait -> SIZE_XL.first
+            ViewModelPagan.LayoutSize.SmallLandscape -> SIZE_S.second
+            ViewModelPagan.LayoutSize.MediumLandscape -> SIZE_M.second
+            ViewModelPagan.LayoutSize.LargeLandscape -> SIZE_L.second
+            ViewModelPagan.LayoutSize.XLargeLandscape -> SIZE_XL.second
+        } / 2
+
         val end_padding = 128.dp // Also Arbitrary, safe width
         Box(
             modifier,
@@ -1642,6 +1653,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             line_data.is_mute.value || channel_data?.is_mute?.value == true,
             !MaterialTheme.colorScheme.is_light()
         )
+
         ProvideContentColorTextStyle(contentColor = text_color) {
             HalfBorderBox(
                 modifier = modifier
@@ -1797,7 +1809,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     fun CellView(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, cell: MutableState<ViewModelEditorState.TreeData>, y: Int, x: Int, modifier: Modifier = Modifier) {
         val line_info = ui_facade.line_data[y]
-        key(cell.value.top_weight.value) {
+        key(cell.value.key.value) {
             Row(modifier.fillMaxSize()) {
                 for ((path, leaf_data) in cell.value.leafs) {
                     this@ComponentActivityEditor.LeafView(

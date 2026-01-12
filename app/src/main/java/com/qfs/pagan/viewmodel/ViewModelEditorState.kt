@@ -79,6 +79,7 @@ class ViewModelEditorState: ViewModel() {
 
     class TreeData(tree: ReducibleTree<out OpusEvent>) {
         class LeafNotFound(path: List<Int>): Exception("Leaf $path not found")
+        var key: MutableState<Long> = mutableStateOf(System.currentTimeMillis())
         val top_weight: MutableState<Int> = mutableIntStateOf(tree.weighted_size)
         val leafs: MutableList<Pair<List<Int>, MutableState<LeafData>>> = mutableListOf()
         init {
@@ -98,8 +99,10 @@ class ViewModelEditorState: ViewModel() {
         }
 
         fun set_leaf(path: List<Int>, event: OpusEvent?, weight: Float) {
+            println("SETTING: $path, $event")
             for (i in 0 until this.leafs.size) {
                 if (this.leafs[i].first == path) {
+                    println("SET EXISTING")
                     this.leafs[i].second.value.event.value = event
                     this.leafs[i].second.value.weight.floatValue = weight
                     return
@@ -107,6 +110,7 @@ class ViewModelEditorState: ViewModel() {
             }
 
             this.leafs.add(Pair(path, mutableStateOf(LeafData(event = event, weight = weight))))
+            this.key.value = System.currentTimeMillis()
         }
 
         fun sort_leafs() {
@@ -127,6 +131,7 @@ class ViewModelEditorState: ViewModel() {
                     1
                 }
             }
+            this.key.value = System.currentTimeMillis()
             // TODO
         }
 
@@ -139,6 +144,7 @@ class ViewModelEditorState: ViewModel() {
                     i++
                 }
             }
+            this.key.value = System.currentTimeMillis()
         }
 
     }
@@ -314,20 +320,30 @@ class ViewModelEditorState: ViewModel() {
         cell.remove_branch(position)
     }
 
-    fun update_tree(coordinate: EditorTable.Coordinate, position: List<Int>, tree: ReducibleTree<out OpusEvent>, clear_branches: Boolean = false) {
+    fun update_tree(coordinate: EditorTable.Coordinate, position: List<Int>, tree: ReducibleTree<out OpusEvent>) {
         // NOTE: tree needs to be the ACTUAL tree in order to recalc the weights
         val cell = this.cell_map[coordinate.y][coordinate.x].value
-        if (clear_branches) {
-            cell.remove_branch(position)
-        }
+        val no_prune_paths = mutableSetOf<List<Int>>()
 
         val input_weight = tree.get_weight()
         tree.weighted_traverse(input_weight) { subtree, event, path, weight ->
             if (subtree.is_leaf()) {
-                println("WWW: $weight, ${position + path}")
                 cell.set_leaf(position + path, event, weight)
+                no_prune_paths.add(position + path)
             }
         }
+
+        var i = 0
+        while (i < cell.leafs.size) {
+            val check_path = cell.leafs[i].first
+            if (no_prune_paths.contains(cell.leafs[i].first) || check_path.size < position.size || check_path.subList(0, position.size) != position) {
+                i++
+            } else {
+                println("PRUNE: $check_path ($position)")
+                cell.leafs.removeAt(i)
+            }
+        }
+
         cell.sort_leafs()
         cell.top_weight.value = tree.get_root().weighted_size
     }

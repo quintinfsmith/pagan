@@ -991,6 +991,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     fun get_context_menu_primary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: ViewModelPagan.LayoutSize): (@Composable () -> Unit)? {
         if (ui_facade.playback_state_midi.value == PlaybackState.Playing || ui_facade.playback_state_soundfont.value == PlaybackState.Playing) return null
+        if (ui_facade.dragging_line.value != null) return null
 
         val cursor = ui_facade.active_cursor.value
         return when (cursor?.type) {
@@ -1017,6 +1018,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     fun get_context_menu_secondary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: ViewModelPagan.LayoutSize): (@Composable () -> Unit)? {
         if (ui_facade.playback_state_midi.value == PlaybackState.Playing || ui_facade.playback_state_soundfont.value == PlaybackState.Playing) return null
+        if (ui_facade.dragging_line.value != null) return null
         val cursor = ui_facade.active_cursor.value ?: return null
         if (cursor.type == CursorMode.Unset) return null
 
@@ -1216,11 +1218,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                                 return@rememberDraggableState
                                                             }
 
+                                                            val scroll_diff = max(0F, min(scroll_state_v.maxValue.toFloat(), (max_scroll_speed * factor) + scroll_state_v.value)) - max(0F, min(scroll_state_v.maxValue, scroll_state_v.value).toFloat())
 
-                                                            ui_facade.dragging_offset.value += max_scroll_speed * factor
-
-                                                            scope.launch {
-                                                                scroll_state_v.scrollBy(max_scroll_speed * factor)
+                                                            if (scroll_diff != 0F) {
+                                                                ui_facade.dragging_offset.value += scroll_diff
+                                                                scope.launch {
+                                                                    scroll_state_v.scrollBy(scroll_diff)
+                                                                }
                                                             }
                                                         }
                                                     )

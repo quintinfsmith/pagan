@@ -99,10 +99,8 @@ class ViewModelEditorState: ViewModel() {
         }
 
         fun set_leaf(path: List<Int>, event: OpusEvent?, weight: Float) {
-            println("SETTING: $path, $event")
             for (i in 0 until this.leafs.size) {
                 if (this.leafs[i].first == path) {
-                    println("SET EXISTING")
                     this.leafs[i].second.value.event.value = event
                     this.leafs[i].second.value.weight.floatValue = weight
                     return

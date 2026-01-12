@@ -271,7 +271,6 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                     }
                                 }
                                 // -----------------------------------------------
-                                println(" --- ${view_model.get_layout_size()} ---")
                                 val modifier = Modifier.fillMaxSize()
                                 when (view_model.get_layout_size()) {
                                     ViewModelPagan.LayoutSize.SmallPortrait -> LayoutSmallPortrait(modifier)

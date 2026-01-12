@@ -1865,19 +1865,21 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             @Composable {
                 val focus_requester = remember { FocusRequester() }
                 val value = remember { mutableStateOf(default ?: min_value) }
-
-                DialogSTitle(title_string_id)
-                IntegerInput(
-                    value = value,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(focus_requester),
-                    contentPadding = PaddingValues(dimensionResource(R.dimen.dlg_input_padding)),
-                    minimum = min_value,
-                    maximum = max_value
-                ) { new_value ->
-                    close()
-                    callback(new_value)
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    IntegerInput(
+                        value = value,
+                        label = { SText(title_string_id) },
+                        modifier = Modifier.focusRequester(focus_requester),
+                        contentPadding = PaddingValues(dimensionResource(R.dimen.dlg_input_padding)),
+                        minimum = min_value,
+                        maximum = max_value
+                    ) { new_value ->
+                        close()
+                        callback(new_value)
+                    }
                 }
 
                 DialogBar(

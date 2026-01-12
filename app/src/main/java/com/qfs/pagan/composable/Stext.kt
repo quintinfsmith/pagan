@@ -80,6 +80,9 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -146,7 +149,7 @@ fun IntegerInput(
     minimum: Int? = null,
     maximum: Int? = null,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(0.dp),
+    contentPadding: PaddingValues = PaddingValues(12.dp),
     text_align: TextAlign = TextAlign.End,
     prefix: @Composable (() -> Unit)? = null,
     label: (@Composable TextFieldLabelScope.() -> Unit)? = null,
@@ -202,7 +205,7 @@ fun FloatInput(
     minimum: Float? = null,
     maximum: Float? = null,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(0.dp),
+    contentPadding: PaddingValues = PaddingValues(12.dp),
     text_align: TextAlign = TextAlign.End,
     prefix: @Composable (() -> Unit)? = null,
     label: (@Composable TextFieldLabelScope.() -> Unit)? = null,
@@ -292,6 +295,15 @@ fun <T: Number> NumberInput(
         textStyle = LocalTextStyle.current.copy(textAlign = text_align),
         prefix = prefix,
         modifier = modifier
+            .onKeyEvent { event ->
+                when (event.key) {
+                    Key.Enter -> {
+                        callback(value.value)
+                        false
+                    }
+                    else -> true
+                }
+            }
             .heightIn(1.dp)
             .widthIn(1.dp)
             .onFocusChanged { focus_change_callback(it) },
@@ -323,13 +335,23 @@ fun TextInput(
         lineLimits = lineLimits,
         label = label,
         textStyle = LocalTextStyle.current.copy(textAlign = textAlign),
-        modifier = modifier.onFocusChanged { focus_state ->
-            if (focus_state.hasFocus) {
-                state.edit {
-                    this.selection = TextRange(0, this.length)
+        modifier = modifier
+            .onKeyEvent { event ->
+                when (event.key) {
+                    Key.Enter -> {
+                        callback(input.value)
+                        false
+                    }
+                    else -> true
                 }
             }
-        },
+            .onFocusChanged { focus_state ->
+                if (focus_state.hasFocus) {
+                    state.edit {
+                        this.selection = TextRange(0, this.length)
+                    }
+                }
+            },
         scrollState = rememberScrollState(),
         onKeyboardAction = { callback(input.value) },
         keyboardOptions = KeyboardOptions.Companion.Default.copy(keyboardType = KeyboardType.Companion.Text),

@@ -36,9 +36,7 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
     MagicInput(
         value = event.value,
         precision = 3,
-        modifier = Modifier
-            .fillMaxHeight()
-            .width(dimensionResource(R.dimen.effect_tempo_input_width)),
+        modifier = Modifier.width(dimensionResource(R.dimen.effect_tempo_input_width)),
         minimum = 0F,
         background_icon = R.drawable.icon_tempo,
         callback = { new_value: Float ->

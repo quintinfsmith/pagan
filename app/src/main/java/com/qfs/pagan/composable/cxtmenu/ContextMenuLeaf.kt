@@ -5,19 +5,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.ComposeCompilerApi
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import com.qfs.pagan.ActionTracker
@@ -42,7 +36,8 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEv
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlin.math.abs
-import kotlin.math.exp
+import kotlin.math.ceil
+import kotlin.math.max
 
 @Composable
 fun SplitButton(dispatcher: ActionTracker) {
@@ -248,7 +243,7 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEd
                 Row {
                     ContextMenuStructureControls(Modifier, ui_facade, dispatcher, show_relative_input, true)
                     Column(Modifier.width(dimensionResource(R.dimen.numberselector_column_width))) {
-                        NumberSelector(8, octave, ui_facade.highlighted_octave.value, false) { dispatcher.set_octave(it) }
+                        NumberSelector(7 downTo 0, octave, ui_facade.highlighted_octave.value, false) { dispatcher.set_octave(it) }
                     }
                 }
             }
@@ -320,7 +315,7 @@ fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
             }
 
             Row(Modifier.padding(top = dimensionResource(R.dimen.contextmenu_padding))) {
-                NumberSelector(8, octave, ui_facade.highlighted_octave.value, false) { dispatcher.set_octave(it) }
+                NumberSelector(0 until 8, octave, ui_facade.highlighted_octave.value, false) { dispatcher.set_octave(it) }
             }
         }
         ViewModelPagan.LayoutSize.SmallLandscape -> {}
@@ -334,7 +329,18 @@ fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
         else -> throw Exception("Invalid Event Type") // TODO: Specify
     }
 
-    Row(modifier) {
-        NumberSelector(ui_facade.radix.value, offset, ui_facade.highlighted_offset.value, true) { dispatcher.set_offset(it) }
+    Column {
+        var count = ceil(ui_facade.radix.value.toFloat() / 12F).toInt()
+        for (i in count - 1 downTo 0) {
+            Row(modifier) {
+                NumberSelector(
+                    progression = i until ui_facade.radix.value step count,
+                    selected = offset,
+                    highlighted = ui_facade.highlighted_offset.value,
+                    alternate = true,
+                    callback = { dispatcher.set_offset(it) }
+                )
+            }
+        }
     }
 }

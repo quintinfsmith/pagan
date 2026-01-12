@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -61,11 +60,18 @@ fun NumberSelectorButton(modifier: Modifier = Modifier, index: Int, alternate: B
         }
     }
 }
+
 @Composable
-fun NumberSelectorInner(modifier: Modifier, size: Int, selected: Int?, highlighted: Int?, alternate: Boolean, callback: (Int) -> Unit) {
-    for (i in 0 until size) {
+fun RowScope.NumberSelector(
+    progression: IntProgression,
+    selected: Int?,
+    highlighted: Int?,
+    alternate: Boolean,
+    callback: (Int) -> Unit
+) {
+    for (i in progression) {
         NumberSelectorButton(
-            modifier = modifier,
+            modifier = Modifier.weight(1F),
             index = i,
             selected = selected == i,
             highlighted = highlighted == i,
@@ -76,10 +82,21 @@ fun NumberSelectorInner(modifier: Modifier, size: Int, selected: Int?, highlight
 }
 
 @Composable
-fun RowScope.NumberSelector(size: Int, selected: Int?, highlighted: Int?, alternate: Boolean, callback: (Int) -> Unit) {
-    NumberSelectorInner(Modifier.weight(1F), size, selected, highlighted, alternate, callback)
-}
-@Composable
-fun ColumnScope.NumberSelector(size: Int, selected: Int?, highlighted: Int?, alternate: Boolean, callback: (Int) -> Unit) {
-    NumberSelectorInner(Modifier.fillMaxWidth().weight(1F), size, selected, highlighted, alternate, callback)
+fun ColumnScope.NumberSelector(
+    progression: IntProgression,
+    selected: Int?,
+    highlighted: Int?,
+    alternate: Boolean,
+    callback: (Int) -> Unit
+) {
+    for (i in progression) {
+        NumberSelectorButton(
+            modifier = Modifier.weight(1F),
+            index = i,
+            selected = selected == i,
+            highlighted = highlighted == i,
+            alternate = alternate,
+            callback = callback
+        )
+    }
 }

@@ -1155,28 +1155,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     Column {
                         ShortcutView(dispatcher, scope, scroll_state_h)
                         Column(Modifier.verticalScroll(scroll_state_v, overscrollEffect = null)) {
-                            var working_channel: Int? = 0
                             for (y in 0 until ui_facade.line_count.value) {
-                                if (ui_facade.line_data[y].channel.value != working_channel) {
-                                    Spacer(
-                                        Modifier
-                                            .zIndex(
-                                                if (state_model.line_data[y].is_dragging.value) 2F
-                                                else 0F
-                                            )
-                                            .offset {
-                                                IntOffset(
-                                                    0,
-                                                    this@ComponentActivityEditor.get_channel_gap_dragged_offset(y, dragging_to_y, is_after)
-                                                )
-                                            }
-                                            .width(dimensionResource(R.dimen.line_label_width))
-                                            .height(dimensionResource(R.dimen.channel_gap_size))
-                                            .background(MaterialTheme.colorScheme.onSurfaceVariant)
-                                    )
-                                }
-
-                                working_channel = ui_facade.line_data[y].channel.value
                                 val use_height = if (ui_facade.line_data[y].ctl_type.value != null) {
                                     ctl_line_height
                                 } else {
@@ -1204,7 +1183,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                                 val from_line = ui_facade.line_data[ui_facade.dragging_line.value!!]
                                                                 val to_line = ui_facade.line_data[it]
                                                                 if (ui_facade.is_dragging_channel()) {
-                                                                    println("$it, ${to_line.channel.value}")
                                                                     dispatcher.move_channel(
                                                                         from_line.channel.value!!,
                                                                         to_line.channel.value!!,
@@ -1278,6 +1256,25 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         )
                                     }
                                 )
+                                if ((y == ui_facade.line_data.size - 1 || ui_facade.line_data[y].channel.value != ui_facade.line_data[y + 1].channel.value) && ui_facade.line_data[y].channel.value != null) {
+                                    Spacer(
+                                        Modifier
+                                            .zIndex(
+                                                if (state_model.line_data[y].is_dragging.value) 2F
+                                                else 0F
+                                            )
+                                            .offset {
+                                                IntOffset(
+                                                    0,
+                                                    this@ComponentActivityEditor.get_channel_gap_dragged_offset(y, dragging_to_y, is_after)
+                                                )
+                                            }
+                                            .width(dimensionResource(R.dimen.line_label_width))
+                                            .height(dimensionResource(R.dimen.channel_gap_size))
+                                            .background(MaterialTheme.colorScheme.onSurfaceVariant)
+                                    )
+                                }
+
                             }
                             Row(
                                 Modifier
@@ -1339,30 +1336,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     .verticalScroll(scroll_state_v, overscrollEffect = null)
                                     .width(leaf_width * width)
                             ) {
-                                var working_channel: Int? = 0
                                 for (y in 0 until ui_facade.line_count.value) {
-                                    if (ui_facade.line_data[y].channel.value != working_channel) {
-                                        Row(
-                                            Modifier
-                                                .zIndex(
-                                                    if (state_model.line_data[y].is_dragging.value) 2F
-                                                    else 0F
-                                                )
-                                                .offset {
-                                                    IntOffset(
-                                                        0,
-                                                        this@ComponentActivityEditor.get_channel_gap_dragged_offset(y, dragging_to_y, is_after)
-                                                    )
-                                                }
-                                                .fillMaxWidth()
-                                                .height(dimensionResource(R.dimen.channel_gap_size))
-                                                .background(MaterialTheme.colorScheme.onBackground)
-                                        ) { }
-                                    }
-                                    working_channel = ui_facade.line_data[y].channel.value
-
                                     val cell = ui_facade.cell_map[y][x]
-
                                     Column(
                                         Modifier
                                             .zIndex(
@@ -1382,6 +1357,26 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     ) {
                                         CellView(ui_facade, dispatcher, cell, y, x)
                                     }
+
+                                    if ((y == ui_facade.line_data.size - 1 || ui_facade.line_data[y].channel.value != ui_facade.line_data[y + 1].channel.value) && ui_facade.line_data[y].channel.value != null) {
+                                        Row(
+                                            Modifier
+                                                .zIndex(
+                                                    if (state_model.line_data[y].is_dragging.value) 2F
+                                                    else 0F
+                                                )
+                                                .offset {
+                                                    IntOffset(
+                                                        0,
+                                                        this@ComponentActivityEditor.get_channel_gap_dragged_offset(y, dragging_to_y, is_after)
+                                                    )
+                                                }
+                                                .fillMaxWidth()
+                                                .height(dimensionResource(R.dimen.channel_gap_size))
+                                                .background(MaterialTheme.colorScheme.onBackground)
+                                        ) { }
+                                    }
+
                                 }
                                 Spacer(Modifier.height(dimensionResource(R.dimen.line_height)))
                                 Spacer(Modifier.height(bottom_padding))
@@ -1837,7 +1832,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
             Row(modifier.fillMaxSize()) {
                 for ((path, leaf_data) in cell.value.leafs) {
                     this@ComponentActivityEditor.LeafView(
-                        line_info.channel.value?.let { ui_facade.channel_data[it] },
+                        line_info.channel.value?.let {
+                            ui_facade.channel_data[it]
+                        },
                         line_info,
                         leaf_data.value,
                         ui_facade.radix.value,
@@ -2555,7 +2552,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     fun get_channel_gap_dragged_offset(y: Int, target_line: Int?, is_after: Boolean): Int {
-        if (this.state_model.is_dragging_channel()) return this.get_dragged_offset(y - 1, target_line, is_after)
+        if (this.state_model.is_dragging_channel()) return this.get_dragged_offset(y, target_line, is_after)
 
         val line_height = this.resources.getDimension(R.dimen.line_height)
         val ctl_line_height = this.resources.getDimension(R.dimen.ctl_line_height)

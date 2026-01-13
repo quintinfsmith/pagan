@@ -264,10 +264,14 @@ class ViewModelEditorState: ViewModel() {
         var adjusted_y = -1F
         val sorted_pairs = this.dragging_line_map.toList().sortedBy { it.first.start }
 
-        for ((range, line_range, _) in sorted_pairs) {
-            if (line_range.contains(y)) {
-                adjusted_y = range.start + dragged_offset
-                break
+        if (y > sorted_pairs.last().second.last) {
+            adjusted_y = sorted_pairs.last().first.start + dragged_offset
+        } else {
+            for ((range, line_range, _) in sorted_pairs) {
+                if (line_range.contains(y)) {
+                    adjusted_y = range.start + dragged_offset
+                    break
+                }
             }
         }
 
@@ -283,6 +287,7 @@ class ViewModelEditorState: ViewModel() {
                 )
             }
         }
+
 
         return null
     }
@@ -510,30 +515,45 @@ class ViewModelEditorState: ViewModel() {
             if (to_index > -1 && from_index > -1) break
         }
 
-        // ... Then move the lines ...
-        if (from_index > to_index) {
-            while (from_index < this.line_data.size && this.line_data[from_index].channel.value != channel_index) {
-                this.cell_map.add(to_index, this.cell_map.removeAt(from_index))
-                this.line_data.add(to_index++, this.line_data.removeAt(from_index))
-            }
-        } else if (to_index > from_index) {
-            while (this.line_data[from_index].channel.value == channel_index) {
-                this.cell_map.add(to_index - 1, this.cell_map.removeAt(from_index) )
-                this.line_data.add(to_index++ - 1, this.line_data.removeAt(from_index))
+        if (to_index == -1) {
+            to_index = this.line_data.size
+            for (y in this.line_data.indices.reversed()) {
+                if (this.line_data[y].channel.value != null) break
+                to_index = y
             }
         }
 
+        // ... Then move the lines ...
+        if (from_index > to_index) {
+            var i = 0
+            while (i + from_index < this.line_data.size && this.line_data[i + from_index].channel.value == channel_index) {
+                this.cell_map.add(to_index + i, this.cell_map.removeAt(from_index + i))
+                this.line_data.add(to_index + i, this.line_data.removeAt(from_index + i))
+                i++
+            }
+        } else if (to_index > from_index) {
+            if (this.line_data[from_index].channel.value != this.line_data[to_index - 1].channel.value) {
+                while (this.line_data[from_index].channel.value == channel_index) {
+                    this.cell_map.add(to_index - 1, this.cell_map.removeAt(from_index))
+                    this.line_data.add(to_index - 1, this.line_data.removeAt(from_index))
+                }
+            }
+        }
+
+        if (new_channel_index < channel_index) {
+            this.channel_data.add(new_channel_index, this.channel_data.removeAt(channel_index))
+        } else {
+            this.channel_data.add(new_channel_index - 1, this.channel_data.removeAt(channel_index))
+        }
+
         // ... Finally update the channels
-        var working_channel = -1
-        var c = -1
+        val channel_map = mutableListOf<Int>()
         for (line in this.line_data) {
             if (line.channel.value == null) continue
-            if (line.channel.value != working_channel) {
-                c++
+            if (channel_map.isEmpty() || channel_map.last() != line.channel.value!!) {
+                channel_map.add(line.channel.value!!)
             }
-            println("CONVERT ${line.channel.value} -> $c")
-            working_channel = line.channel.value!!
-            line.channel.value = c
+            line.channel.value = channel_map.size - 1
         }
     }
 

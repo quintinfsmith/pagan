@@ -210,11 +210,6 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     override fun move_channel(channel_index: Int, new_channel_index: Int) {
         super.move_channel(channel_index, new_channel_index)
-        this.cursor_select_channel(if (channel_index < new_channel_index) {
-            new_channel_index - 1
-        } else {
-            new_channel_index
-        })
     }
 
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?, is_percussion: Boolean) {
@@ -791,6 +786,8 @@ open class OpusLayerCursor: OpusLayerBase() {
     open fun cursor_select_channel(channel: Int) {
         println("SELC: $channel")
         if (this._block_cursor_selection()) return
+        println("....")
+
         this.cursor.select_channel(channel)
     }
     open fun cursor_select_line(channel: Int, line_offset: Int) {

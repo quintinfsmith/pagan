@@ -2537,18 +2537,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         // Spacers get treated like lines when dragging channels
         return if (!is_dragging_channel && is_spacer) {
-            if (target_line <= y) {
-                if (y < first_line) {
-                    gap_size
-                } else {
-                    0
-                }
+            if (target_line <= y && y < first_line) {
+                gap_size
+            } else if (target_line > y && y >= first_line) {
+                0 - gap_size
             } else {
-                if (y < first_line) {
-                    0
-                } else {
-                    0 - gap_size
-                }
+                0
             }
         } else {
             if ((first_line until check_line).contains(target_line)) {

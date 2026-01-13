@@ -1160,6 +1160,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 if (ui_facade.line_data[y].channel.value != working_channel) {
                                     Spacer(
                                         Modifier
+                                            .zIndex(
+                                                if (state_model.line_data[y].is_dragging.value) 2F
+                                                else 0F
+                                            )
+                                            .offset {
+                                                IntOffset(
+                                                    0,
+                                                    this@ComponentActivityEditor.get_channel_gap_dragged_offset(y, dragging_to_y, is_after)
+                                                )
+                                            }
                                             .width(dimensionResource(R.dimen.line_label_width))
                                             .height(dimensionResource(R.dimen.channel_gap_size))
                                             .background(MaterialTheme.colorScheme.onSurfaceVariant)
@@ -1186,13 +1196,30 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                     }
                                                     .draggable(
                                                         onDragStarted = { offset ->
-                                                            ui_facade.start_dragging(
-                                                                y,
-                                                                offset.y,
-                                                                this@ComponentActivityEditor.build_dragging_line_map(y)
-                                                            )
+                                                            ui_facade.start_dragging(y, offset.y)
+                                                            ui_facade.update_line_map(this@ComponentActivityEditor.build_dragging_line_map(y))
                                                         },
                                                         onDragStopped = {
+                                                            dragging_to_y?.let {
+                                                                val from_line = ui_facade.line_data[ui_facade.dragging_line.value!!]
+                                                                val to_line = ui_facade.line_data[it]
+                                                                if (ui_facade.is_dragging_channel()) {
+                                                                    println("$it, ${to_line.channel.value}")
+                                                                    dispatcher.move_channel(
+                                                                        from_line.channel.value!!,
+                                                                        to_line.channel.value!!,
+                                                                        !is_after
+                                                                    )
+                                                                } else {
+                                                                    dispatcher.move_line(
+                                                                        from_line.channel.value!!,
+                                                                        from_line.line_offset.value!!,
+                                                                        to_line.channel.value!!,
+                                                                        to_line.line_offset.value!!,
+                                                                        !is_after
+                                                                    )
+                                                                }
+                                                            }
                                                             ui_facade.stop_dragging()
                                                         },
                                                         orientation = Orientation.Vertical,
@@ -1244,14 +1271,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         .height(use_height)
                                         .width(dimensionResource(R.dimen.line_label_width)),
                                     content = {
-                                        if ((ui_facade.dragging_first_line.value == y && !is_after) || dragging_to_y == y) {
-                                            Spacer(
-                                                Modifier
-                                                    .background(Color.Yellow)
-                                                    .height(1.dp)
-                                                    .fillMaxWidth()
-                                            )
-                                        }
                                         LineLabelView(
                                             modifier = Modifier.fillMaxSize(),
                                             dispatcher,
@@ -1325,6 +1344,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     if (ui_facade.line_data[y].channel.value != working_channel) {
                                         Row(
                                             Modifier
+                                                .zIndex(
+                                                    if (state_model.line_data[y].is_dragging.value) 2F
+                                                    else 0F
+                                                )
+                                                .offset {
+                                                    IntOffset(
+                                                        0,
+                                                        this@ComponentActivityEditor.get_channel_gap_dragged_offset(y, dragging_to_y, is_after)
+                                                    )
+                                                }
                                                 .fillMaxWidth()
                                                 .height(dimensionResource(R.dimen.channel_gap_size))
                                                 .background(MaterialTheme.colorScheme.onBackground)
@@ -1351,14 +1380,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                 else line_height
                                             )
                                     ) {
-                                        if ((ui_facade.dragging_first_line.value == y && !is_after) || dragging_to_y == y) {
-                                            Spacer(
-                                                Modifier
-                                                    .background(Color.Yellow)
-                                                    .height(1.dp)
-                                                    .fillMaxWidth()
-                                            )
-                                        }
                                         CellView(ui_facade, dispatcher, cell, y, x)
                                     }
                                 }
@@ -2499,111 +2520,122 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun get_dragged_offset(y: Int, target_line: Int?, is_after: Boolean): Int {
         val line_height = this.resources.getDimension(R.dimen.line_height)
         val ctl_line_height = this.resources.getDimension(R.dimen.ctl_line_height)
-        val drag_gap_height = ctl_line_height
+
         return if (this.state_model.line_data[y].is_dragging.value) {
             this.state_model.dragging_offset.value.roundToInt()
-        } else if (this.state_model.line_data[y].channel.value != null) {
+        } else if (target_line == null || this.state_model.line_data[y].channel.value == null) {
+            0
+        } else {
             val std_line_count = this.state_model.dragging_height.first.value
             val ctl_line_count = this.state_model.dragging_height.second.value
-            var output = 0
 
-            this.state_model.dragging_first_line.value?.let {
-                target_line?.let {
-                    if (target_line <= y || (!is_after && target_line == y + 1)) {
-                        output += drag_gap_height.toInt()
-                    }
-                }
+            val first_line = this.state_model.dragging_first_line.value!!
+            val check_line = first_line + std_line_count + ctl_line_count
 
-                val check_line = it + std_line_count + ctl_line_count
-                if (check_line <= y || (!is_after && check_line == y + 1)) {
-                    // Shift lower lines up, but leave a gap the size of a ctl_line
-                    output -= ((std_line_count * line_height) + (ctl_line_count * ctl_line_height)).toInt()
-                }
+            val gap_size = if (this.state_model.is_dragging_channel()) {
+                (this.resources.getDimension(R.dimen.channel_gap_size) + (std_line_count * line_height) + (ctl_line_count * ctl_line_height)).toInt()
+            } else {
+                ((std_line_count * line_height) + (ctl_line_count * ctl_line_height)).toInt()
             }
-            output
+
+            if ((first_line until check_line).contains(target_line)) {
+                0
+            } else if (y >= check_line) {
+                if (target_line > y || (y == target_line && is_after)) {
+                    0 - gap_size
+                } else {
+                    0
+                }
+            } else if ((y == target_line && !is_after) || (y > target_line)) {
+                gap_size
+            } else {
+                0
+            }
+        }
+    }
+
+    fun get_channel_gap_dragged_offset(y: Int, target_line: Int?, is_after: Boolean): Int {
+        if (this.state_model.is_dragging_channel()) return this.get_dragged_offset(y - 1, target_line, is_after)
+
+        val line_height = this.resources.getDimension(R.dimen.line_height)
+        val ctl_line_height = this.resources.getDimension(R.dimen.ctl_line_height)
+        if (target_line == null || this.state_model.line_data[y].channel.value == null)  return 0
+
+        val std_line_count = this.state_model.dragging_height.first.value
+        val ctl_line_count = this.state_model.dragging_height.second.value
+
+        val first_line = this.state_model.dragging_first_line.value!!
+        val check_line = first_line + std_line_count + ctl_line_count
+
+        val gap_size = ((std_line_count * line_height) + (ctl_line_count * ctl_line_height)).toInt()
+
+        return if ((first_line until check_line).contains(target_line)) {
+            0
+        } else if (y >= check_line) {
+            if (target_line >= y) {
+                0 - gap_size
+            } else {
+                0
+            }
+        } else if (y > target_line) {
+            gap_size
         } else {
             0
         }
     }
 
     fun build_dragging_line_map(active_line: Int): List<Triple<ClosedFloatingPointRange<Float>, IntRange, Boolean>> {
-        val output = mutableListOf<Triple<ClosedFloatingPointRange<Float>, IntRange, Boolean>>()
         val line_height = this.resources.getDimension(R.dimen.line_height)
         val ctl_line_height = this.resources.getDimension(R.dimen.ctl_line_height)
         val gap_height = this.resources.getDimension(R.dimen.channel_gap_size)
+        val is_dragging_channel = this.state_model.is_dragging_channel()
 
-        val active_line_data = this.state_model.line_data[active_line]
-
-        val selecting_channel = this.state_model.active_cursor.value?.type == CursorMode.Channel && this.state_model.active_cursor.value?.ints[0] == active_line_data.channel.value
-
-        var selection_range_start = this.state_model.line_count.value + 1
-        var selection_range_end = -1
+        val output = mutableListOf<Triple<ClosedFloatingPointRange<Float>, IntRange, Boolean>>()
+        var start_line: Int = 0
+        var end_line: Int = 0
+        var start_position = 0F
+        var running_position = 0f
+        var working_channel: Int = 0
+        var working_line_offset: Int = 0
         for (y in 0 until this.state_model.line_count.value) {
-            val check_line = this.state_model.line_data[y]
-            if (active_line_data.channel.value == check_line.channel.value && (selecting_channel || active_line_data.line_offset.value == check_line.line_offset.value)) {
-                selection_range_end = max(selection_range_end, y)
-                selection_range_start = min(selection_range_start, y)
-            }
-        }
+            val working_line = this.state_model.line_data[y]
 
-        val selection = selection_range_start .. selection_range_end
-        var selection_added = false
-        var running_y = 0F
-        var previous_channel: Int? = 0
-        for (y in 0 until this.state_model.line_count.value) {
-            val line = this.state_model.line_data[y]
-            if (line.channel.value == null) break
-
-            if (line.channel.value != previous_channel) {
-                running_y += gap_height
-            }
-
-            if (selection.contains(y)) {
-                if (selection_added) continue
-                selection_added = true
-                output.add(
-                    Triple(
-                        running_y .. (running_y + (ctl_line_height/ 2F)),
-                        selection,
-                        false
-                    )
-                )
-                output.add(
-                    Triple(
-                        running_y + (ctl_line_height / 2F) .. (running_y + ctl_line_height),
-                        selection,
-                        true
-                    )
-                )
-
-                running_y += ctl_line_height
+            val current_delta = if (working_line.ctl_type.value == null) {
+                line_height
             } else {
-                val working_line_height = if (line.ctl_type.value == null) {
-                    line_height
-                } else {
-                    ctl_line_height
-                }
+                ctl_line_height
+            }
+
+            if (working_line.channel.value != working_channel || (!is_dragging_channel && working_line_offset != working_line.line_offset.value)) {
+                val diff = (running_position - start_position) / 2F
                 output.add(
                     Triple(
-                        running_y .. (running_y + (working_line_height / 2F)),
-                        y .. y,
+                        start_position .. (running_position - diff),
+                        start_line .. end_line,
                         false
                     )
                 )
                 output.add(
                     Triple(
-                        running_y + (working_line_height / 2F) .. (running_y + working_line_height),
-                        y .. y,
+                        (start_position + diff) .. running_position,
+                        start_line .. end_line,
                         true
                     )
                 )
-                running_y += working_line_height
+
+                start_position = running_position
+                start_line = y
+                running_position += gap_height
             }
 
-            previous_channel = line.channel.value
+            end_line = y
+            running_position += current_delta
+            working_line.line_offset.value?.let { working_line_offset = it }
+            working_channel = working_line.channel.value ?: break
         }
 
         return output
     }
+
 
 }

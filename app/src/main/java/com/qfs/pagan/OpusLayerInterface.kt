@@ -1238,9 +1238,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     override fun move_channel(channel_index: Int, new_channel_index: Int) {
         super.move_channel(channel_index, new_channel_index)
-        if (!this.ui_lock.is_locked()) {
-            this.vm_state.move_channel(channel_index, new_channel_index)
-        }
+        if (this.ui_lock.is_locked()) return
+        this.vm_state.move_channel(channel_index, new_channel_index)
     }
 
     override fun clear() {

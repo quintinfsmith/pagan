@@ -208,19 +208,29 @@ class ViewModelEditorState: ViewModel() {
     val dragging_height: Pair<MutableState<Int>, MutableState<Int>> = Pair(mutableStateOf(0), mutableStateOf(0))
     val dragging_line_map = mutableListOf<Triple<ClosedFloatingPointRange<Float>, IntRange, Boolean>>()
 
-    fun start_dragging(y: Int, initial_offset: Float, line_map: List<Triple<ClosedFloatingPointRange<Float>, IntRange, Boolean>>) {
+    fun is_dragging_channel(): Boolean {
+        val main_line_index = this.dragging_line.value ?: return false
+        val main_line = this.line_data[main_line_index]
+        return this.active_cursor.value?.type == CursorMode.Channel && this.active_cursor.value?.ints[0] == main_line.channel.value
+    }
+
+    fun update_line_map(line_map: List<Triple<ClosedFloatingPointRange<Float>, IntRange, Boolean>>) {
+        this.dragging_line_map.clear()
+        this.dragging_line_map += line_map
+    }
+
+    fun start_dragging(y: Int, initial_offset: Float) {
         this.dragging_line.value = y
         this.dragging_initial_offset.value = initial_offset
         this.dragging_height.first.value = 0
         this.dragging_height.second.value = 0
-        this.dragging_line_map += line_map
         val main_line_index = this.dragging_line.value ?: return
         val main_line = this.line_data[main_line_index]
-        val is_channel_selected = this.active_cursor.value?.type == CursorMode.Channel && this.active_cursor.value?.ints[0] == main_line.channel.value
+        val is_dragging_channel = this.is_dragging_channel()
 
         for ((i, line) in this.line_data.enumerate()) {
             if (main_line.channel.value != line.channel.value) continue
-            if (line.line_offset.value == main_line.line_offset.value || is_channel_selected) {
+            if (line.line_offset.value == main_line.line_offset.value || is_dragging_channel) {
                 line.is_dragging.value = true
                 if (dragging_first_line.value == null) {
                     dragging_first_line.value = i
@@ -253,7 +263,8 @@ class ViewModelEditorState: ViewModel() {
         val dragged_offset = this.dragging_initial_offset.value + this.dragging_offset.value
         var adjusted_y = -1F
         val sorted_pairs = this.dragging_line_map.toList().sortedBy { it.first.start }
-        for ((range, line_range, is_bottom) in sorted_pairs) {
+
+        for ((range, line_range, _) in sorted_pairs) {
             if (line_range.contains(y)) {
                 adjusted_y = range.start + dragged_offset
                 break
@@ -264,9 +275,9 @@ class ViewModelEditorState: ViewModel() {
             if (range.contains(adjusted_y)) {
                 return Pair(
                     if (is_bottom) {
-                        line_range.last + 1
+                        line_range.last
                     } else {
-                        line_range.start
+                        line_range.first
                     },
                     is_bottom
                 )
@@ -337,7 +348,6 @@ class ViewModelEditorState: ViewModel() {
             if (no_prune_paths.contains(cell.leafs[i].first) || check_path.size < position.size || check_path.subList(0, position.size) != position) {
                 i++
             } else {
-                println("PRUNE: $check_path ($position)")
                 cell.leafs.removeAt(i)
             }
         }
@@ -507,8 +517,8 @@ class ViewModelEditorState: ViewModel() {
                 this.line_data.add(to_index++, this.line_data.removeAt(from_index))
             }
         } else if (to_index > from_index) {
-            while (true) {
-                this.cell_map.add(to_index - 1, this.cell_map.removeAt(from_index))
+            while (this.line_data[from_index].channel.value == channel_index) {
+                this.cell_map.add(to_index - 1, this.cell_map.removeAt(from_index) )
                 this.line_data.add(to_index++ - 1, this.line_data.removeAt(from_index))
             }
         }
@@ -519,9 +529,10 @@ class ViewModelEditorState: ViewModel() {
         for (line in this.line_data) {
             if (line.channel.value == null) continue
             if (line.channel.value != working_channel) {
-                working_channel++
                 c++
             }
+            println("CONVERT ${line.channel.value} -> $c")
+            working_channel = line.channel.value!!
             line.channel.value = c
         }
     }

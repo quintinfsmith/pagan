@@ -263,17 +263,20 @@ class ViewModelEditorState: ViewModel() {
         val dragged_offset = this.dragging_initial_offset.value + this.dragging_offset.value
         var adjusted_y = -1F
         val sorted_pairs = this.dragging_line_map.toList().sortedBy { it.first.start }
-
         if (y > sorted_pairs.last().second.last) {
             adjusted_y = sorted_pairs.last().first.start + dragged_offset
         } else {
             for ((range, line_range, _) in sorted_pairs) {
                 if (line_range.contains(y)) {
                     adjusted_y = range.start + dragged_offset
+                    println("$adjusted_y")
                     break
                 }
             }
         }
+
+        if (adjusted_y < sorted_pairs.first().first.start) return Pair(sorted_pairs.first().second.first, false)
+        if (adjusted_y > sorted_pairs.last().first.endInclusive) return Pair(sorted_pairs.last().second.last, true)
 
         for ((range, line_range, is_bottom) in sorted_pairs) {
             if (range.contains(adjusted_y)) {
@@ -287,7 +290,6 @@ class ViewModelEditorState: ViewModel() {
                 )
             }
         }
-
 
         return null
     }

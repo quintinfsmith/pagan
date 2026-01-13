@@ -928,9 +928,11 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     }
 
     override fun swap_lines(channel_index_a: Int, line_offset_a: Int, channel_index_b: Int, line_offset_b: Int) {
+        // FIXME: if swap_lines fails, then the state gets fucked.
+        val y_a = this.get_instrument_line_index(channel_index_a, line_offset_a)
+        val y_b = this.get_instrument_line_index(channel_index_b, line_offset_b)
+
         if (!this.ui_lock.is_locked()) {
-            val y_a = this.get_instrument_line_index(channel_index_a, line_offset_a)
-            val y_b = this.get_instrument_line_index(channel_index_b, line_offset_b)
             this.vm_state.swap_line_cells(y_a, y_b)
         }
 

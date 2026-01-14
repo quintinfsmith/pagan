@@ -269,7 +269,6 @@ class ViewModelEditorState: ViewModel() {
             for ((range, line_range, _) in sorted_pairs) {
                 if (line_range.contains(y)) {
                     adjusted_y = range.start + dragged_offset
-                    println("$adjusted_y")
                     break
                 }
             }

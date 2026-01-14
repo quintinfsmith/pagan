@@ -24,14 +24,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.calculateCentroid
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -82,6 +83,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.ViewConfiguration
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
@@ -140,6 +142,9 @@ import com.qfs.pagan.composable.cxtmenu.ContextMenuLeafStdSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuLinePrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuLineSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuRangeSecondary
+import com.qfs.pagan.composable.cxtmenu.dragging_scroll
+import com.qfs.pagan.composable.cxtmenu.long_press
+import com.qfs.pagan.composable.cxtmenu.long_press_draggable
 import com.qfs.pagan.composable.is_light
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
@@ -1158,7 +1163,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
             ViewModelPagan.LayoutSize.LargeLandscape -> SIZE_L.second
             ViewModelPagan.LayoutSize.XLargeLandscape -> SIZE_XL.second
         } / 2
-
         val end_padding = 128.dp // Also Arbitrary, safe width
         Box(
             modifier,
@@ -1174,12 +1178,49 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             TableLine(MaterialTheme.colorScheme.onSurfaceVariant)
                         }
 
-                        Column(Modifier.verticalScroll(scroll_state_v, overscrollEffect = null)) {
+                        Column(
+                            Modifier
+                                .verticalScroll(
+                                    scroll_state_v,
+                                    enabled = false,
+                                    overscrollEffect = null
+                                )
+                        ) {
                             for (y in 0 until ui_facade.line_count.value) {
                                 val use_height = if (ui_facade.line_data[y].ctl_type.value != null) {
                                     ctl_line_height
                                 } else {
                                     line_height
+                                }
+                                val draggable_state = rememberDraggableState { delta ->
+                                    ui_facade.dragging_offset.value += delta
+
+                                    val abs_line_offset = ui_facade.dragging_abs_offset.value ?: return@rememberDraggableState
+                                    // Handle drag-scrolling
+                                    val relative_y = (abs_line_offset - scroll_state_v.value) + ui_facade.dragging_offset.value
+                                    val viewport_height = scroll_state_v.viewportSize.toFloat()
+
+                                    val div = 4F
+                                    val active_zone_height = viewport_height / div
+                                    val max_scroll_speed = 50
+
+                                    val downscroll_y_position = active_zone_height * (div - 1F)
+                                    val factor: Float = if (relative_y < active_zone_height) {
+                                        -1F * ((active_zone_height - relative_y) / active_zone_height).pow(2F)
+                                    } else if (relative_y > downscroll_y_position) {
+                                        ((active_zone_height - (relative_y - downscroll_y_position)) / active_zone_height).pow(2F)
+                                    } else {
+                                        return@rememberDraggableState
+                                    }
+
+                                    val scroll_diff = max(0F, min(scroll_state_v.maxValue.toFloat(), (max_scroll_speed * factor) + scroll_state_v.value)) - max(0F, min(scroll_state_v.maxValue, scroll_state_v.value).toFloat())
+
+                                    if (scroll_diff != 0F) {
+                                        ui_facade.dragging_offset.value += scroll_diff
+                                        scope.launch {
+                                            scroll_state_v.scrollBy(scroll_diff)
+                                        }
+                                    }
                                 }
                                 Column(
                                     modifier = this@ComponentActivityEditor.get_drag_offset_modifier(y, dragging_to_y, is_after)
@@ -1215,36 +1256,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                             ui_facade.stop_dragging()
                                                         },
                                                         orientation = Orientation.Vertical,
-                                                        state = rememberDraggableState { delta ->
-                                                            ui_facade.dragging_offset.value += delta
-
-                                                            val abs_line_offset = ui_facade.dragging_abs_offset.value ?: return@rememberDraggableState
-                                                            // Handle drag-scrolling
-                                                            val relative_y = (abs_line_offset - scroll_state_v.value) + ui_facade.dragging_offset.value
-                                                            val viewport_height = scroll_state_v.viewportSize.toFloat()
-
-                                                            val div = 4F
-                                                            val active_zone_height = viewport_height / div
-                                                            val max_scroll_speed = 50
-
-                                                            val downscroll_y_position = active_zone_height * (div - 1F)
-                                                            val factor: Float = if (relative_y < active_zone_height) {
-                                                                -1F * ((active_zone_height - relative_y) / active_zone_height).pow(2F)
-                                                            } else if (relative_y > downscroll_y_position) {
-                                                                ((active_zone_height - (relative_y - downscroll_y_position)) / active_zone_height).pow(2F)
-                                                            } else {
-                                                                return@rememberDraggableState
-                                                            }
-
-                                                            val scroll_diff = max(0F, min(scroll_state_v.maxValue.toFloat(), (max_scroll_speed * factor) + scroll_state_v.value)) - max(0F, min(scroll_state_v.maxValue, scroll_state_v.value).toFloat())
-
-                                                            if (scroll_diff != 0F) {
-                                                                ui_facade.dragging_offset.value += scroll_diff
-                                                                scope.launch {
-                                                                    scroll_state_v.scrollBy(scroll_diff)
-                                                                }
-                                                            }
-                                                        }
+                                                        state = draggable_state,
                                                     )
                                                     .onPlaced { coordinates ->
                                                         if (y == ui_facade.dragging_line.value && ui_facade.dragging_abs_offset.value == null) {
@@ -1633,6 +1645,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 val width_px = column_width.toPx()
                                 val viewport_width = ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width
                                 translationX = if (width_px >= viewport_width) {
+                                    val visible_items = ui_facade.scroll_state_x.value.layoutInfo.visibleItemsInfo
                                     if (ui_facade.scroll_state_x.value.firstVisibleItemIndex == x) {
                                         val scroll_offset = ui_facade.scroll_state_x.value.firstVisibleItemScrollOffset.toFloat()
                                         val floating_position = ((viewport_width - width_px) / 2F) + scroll_offset
@@ -1645,7 +1658,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                             state_model.wide_beat.value = null
                                             end_position
                                         }
-                                    } else if (ui_facade.scroll_state_x.value.layoutInfo.visibleItemsInfo.last().index == x) {
+                                    } else if (visible_items.isNotEmpty() && visible_items.last().index == x) {
                                         state_model.wide_beat.value = null
                                         state_model.wide_beat.value = null
                                         (viewport_width - width_px) / 2F
@@ -1847,9 +1860,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             Row(modifier.fillMaxSize()) {
                 for ((path, leaf_data) in cell.value.leafs) {
                     this@ComponentActivityEditor.LeafView(
-                        line_info.channel.value?.let {
-                            ui_facade.channel_data[it]
-                        },
+                        line_info.channel.value?.let { ui_facade.channel_data[it] },
                         line_info,
                         leaf_data.value,
                         ui_facade.radix.value,
@@ -1896,7 +1907,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val dispatcher = this.controller_model.action_interface
         val state_model = this.state_model
         val scope = rememberCoroutineScope()
-
+        val context = LocalContext.current
         DrawerCard {
             Row(horizontalArrangement = Arrangement.SpaceBetween) {
                 ConfigDrawerTopButton(
@@ -1931,9 +1942,17 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 )
             }
             DrawerPadder()
+            val scroll_state = rememberScrollState()
+            val is_dragging = remember { mutableStateOf(false) }
+            val interaction_source = remember { MutableInteractionSource() }
+
             Column(
                 Modifier
-                    .verticalScroll(rememberScrollState())
+                    .dragging_scroll(
+                        is_dragging,
+                        scroll_state,
+                        interaction_source
+                    )
                     .weight(1F)
             ) {
                 for (i in 0 until state_model.channel_count.value) {
@@ -1943,17 +1962,24 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     }
                     Row {
                         ConfigDrawerChannelLeftButton(
-                            modifier = Modifier.weight(1F),
+                            modifier = Modifier
+                                .weight(1F),
                             onClick = { dispatcher.set_channel_preset(i) },
                             content = {
                                 Row(
-                                    Modifier.weight(1F),
+                                    Modifier
+                                        .long_press(
+                                            onPress = { is_dragging.value = true },
+                                            onRelease = { is_dragging.value = false }
+                                        )
+                                        .weight(1F),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(
                                         text = if (channel_data.percussion.value) "!%02d:".format(i)
                                         else "%02d:".format(i),
-                                        modifier = Modifier.padding(vertical = 0.dp, horizontal = 12.dp)
+                                        modifier = Modifier
+                                            .padding(vertical = 0.dp, horizontal = 12.dp)
                                     )
                                     Text(
                                         channel_data.active_name.value ?: this@ComponentActivityEditor.get_default_preset_name(channel_data.instrument.value.first, channel_data.instrument.value.second),
@@ -2224,7 +2250,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 .layout { measurable, constraints ->
                                     val placeable = measurable.measure(constraints)
                                     this@ComponentActivityEditor.state_model.table_side_padding.value = placeable.width
-                                    println("${placeable.width} | ${placeable.measuredWidth}")
                                     layout(placeable.width, placeable.height) {
                                         placeable.place(0,0)
                                     }

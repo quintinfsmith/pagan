@@ -296,7 +296,11 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                     val beat_key = it.get_beatkey()
                     val position = it.get_position()
                     val y = this.get_visible_row_from_pair(beat_key.channel, beat_key.line_offset)
-                    this.vm_state.cell_map[y][beat_key.beat].value.get_leaf(position).value.is_valid.value = false
+                    try {
+                        this.vm_state.cell_map[y][beat_key.beat].value.get_leaf(position).value.is_valid.value = false
+                    } catch (e: ViewModelEditorState.TreeData.LeafNotFound) {
+                        // pass
+                    }
                     this.cursor_apply(it)
                 }
             }
@@ -710,23 +714,30 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     }
 
     override fun controller_global_split_tree(type: EffectType, beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
-        this.track_blocked_leafs<EffectEvent>(type, beat, position) {
-            super.controller_global_split_tree(type, beat, position, splits, move_event_to_end)
-            this._queue_global_ctl_cell_change(type, beat)
+        this.exception_catcher {
+            this.track_blocked_leafs<EffectEvent>(type, beat, position) {
+                super.controller_global_split_tree(type, beat, position, splits, move_event_to_end)
+                this._queue_global_ctl_cell_change(type, beat)
+            }
         }
     }
 
     override fun controller_channel_split_tree(type: EffectType, channel: Int, beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
-        this.track_blocked_leafs<EffectEvent>(type, channel, beat, position) {
-            super.controller_channel_split_tree(type, channel, beat, position, splits, move_event_to_end)
-            this._queue_channel_ctl_cell_change(type, channel, beat)
+
+        this.exception_catcher {
+            this.track_blocked_leafs<EffectEvent>(type, channel, beat, position) {
+                super.controller_channel_split_tree(type, channel, beat, position, splits, move_event_to_end)
+                this._queue_channel_ctl_cell_change(type, channel, beat)
+            }
         }
     }
 
     override fun controller_line_split_tree(type: EffectType, beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
-        this.track_blocked_leafs<EffectEvent>(type, beat_key, position) {
-            super.controller_line_split_tree(type, beat_key, position, splits, move_event_to_end)
-            this._queue_line_ctl_cell_change(type, beat_key)
+        this.exception_catcher {
+            this.track_blocked_leafs<EffectEvent>(type, beat_key, position) {
+                super.controller_line_split_tree(type, beat_key, position, splits, move_event_to_end)
+                this._queue_line_ctl_cell_change(type, beat_key)
+            }
         }
     }
 

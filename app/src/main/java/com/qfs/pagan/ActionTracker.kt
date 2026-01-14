@@ -565,7 +565,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         }
     }
 
-    fun long_tap_line(channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
+    fun long_tap_line(channel: Int?, line_offset: Int?, ctl_type: EffectType?, fallback: () -> Unit = {}) {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         when (cursor.mode) {
@@ -579,9 +579,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                     this.cursor_select_line(channel, line_offset, ctl_type)
                 }
             }
-            else -> {
-                // TODO
-            }
+            else -> fallback()
         }
 
     }

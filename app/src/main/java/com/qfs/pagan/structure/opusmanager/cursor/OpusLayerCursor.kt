@@ -922,42 +922,20 @@ open class OpusLayerCursor: OpusLayerBase() {
             CtlLineLevel.Global -> {
                 val working_tree = this.get_global_ctl_tree<EffectEvent>(cursor.ctl_type!!, cursor.beat).copy()
                 val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, cursor.get_position(), count)
-
                 this.repeat_controller_global_remove(cursor.ctl_type!!, cursor.beat, cursor.get_position(), real_count)
-
-                this.cursor_select_ctl_at_global(
-                    cursor.ctl_type!!,
-                    cursor.beat,
-                    this.get_first_position_global_ctl(cursor.ctl_type!!, cursor.beat, cursor_position)
-                )
             }
 
             CtlLineLevel.Channel -> {
                 val working_tree = this.get_channel_ctl_tree<EffectEvent>(cursor.ctl_type!!, cursor.channel, cursor.beat).copy()
                 val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, cursor.get_position(), count)
-
                 this.repeat_controller_channel_remove(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.get_position(), real_count)
-
-                this.cursor_select_ctl_at_channel(
-                    cursor.ctl_type!!,
-                    cursor.channel,
-                    cursor.beat,
-                    this.get_first_position_channel_ctl(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor_position)
-                )
             }
 
             CtlLineLevel.Line -> {
                 val beat_key = cursor.get_beatkey()
                 val working_tree = this.get_line_ctl_tree<EffectEvent>(cursor.ctl_type!!, beat_key).copy()
                 val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, cursor.get_position(), count)
-
                 this.repeat_controller_line_remove(cursor.ctl_type!!, beat_key, cursor.get_position(), real_count)
-
-                this.cursor_select_ctl_at_line(
-                    cursor.ctl_type!!,
-                    beat_key,
-                    this.get_first_position_line_ctl(cursor.ctl_type!!, beat_key, cursor_position)
-                )
             }
         }
     }

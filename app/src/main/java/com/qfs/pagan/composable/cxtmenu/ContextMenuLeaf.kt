@@ -278,7 +278,7 @@ fun ContextMenuLeafSecondary(ui_facade: ViewModelEditorState, dispatcher: Action
 }
 @Composable
 fun ContextMenuLeafCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier, layout: ViewModelPagan.LayoutSize) {
-    val active_event = ui_facade.active_event.value ?: return
+    val active_event = ui_facade.active_event.value?.copy() ?: return
     ContextMenuSecondaryRow(modifier) {
         when (active_event) {
             is OpusVolumeEvent -> VolumeEventMenu(ui_facade, dispatcher, active_event)

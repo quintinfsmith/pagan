@@ -24,6 +24,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.gestures.scrollBy
@@ -60,6 +65,7 @@ import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -70,9 +76,14 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerEvent
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.ViewConfiguration
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -149,6 +160,7 @@ import com.qfs.pagan.viewmodel.ViewModelEditorState
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import java.io.BufferedOutputStream
 import java.io.BufferedReader
 import java.io.DataOutputStream
@@ -1122,12 +1134,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     fun MainTable(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, length: MutableState<Int>, layout: ViewModelPagan.LayoutSize) {
+        val table_stroke_width = dimensionResource(R.dimen.table_line_stroke)
         val line_height = dimensionResource(R.dimen.line_height)
         val ctl_line_height = dimensionResource(R.dimen.ctl_line_height)
         val leaf_width = dimensionResource(R.dimen.base_leaf_width)
+        val line_label_width = dimensionResource(R.dimen.line_label_width)
         val column_widths = Array(ui_facade.beat_count.value) { i ->
             Array(ui_facade.line_count.value) { j -> ui_facade.cell_map[j][i].value.top_weight.value }.max()
         }
+
+        val channel_gap_height = dimensionResource(R.dimen.channel_gap_size)
 
         val scope = rememberCoroutineScope()
         val scroll_state_v = ui_facade.scroll_state_y.value
@@ -1150,11 +1166,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
         ) {
             MainTableBackground()
             val (dragging_to_y, is_after) = ui_facade.calculate_dragged_to_line() ?: Pair(null, false)
-            println("$dragging_to_y")
             Row {
                 ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onSurfaceVariant) {
-                    Column {
-                        ShortcutView(dispatcher, scope, scroll_state_h)
+                    Column(Modifier.width(line_label_width)) {
+                        Column(Modifier.height(line_height)) {
+                            ShortcutView(Modifier.weight(1F), dispatcher, scope, scroll_state_h)
+                            TableLine(MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+
                         Column(Modifier.verticalScroll(scroll_state_v, overscrollEffect = null)) {
                             for (y in 0 until ui_facade.line_count.value) {
                                 val use_height = if (ui_facade.line_data[y].ctl_type.value != null) {
@@ -1162,18 +1181,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 } else {
                                     line_height
                                 }
-
                                 Column(
-                                    modifier = Modifier
+                                    modifier = this@ComponentActivityEditor.get_drag_offset_modifier(y, dragging_to_y, is_after)
                                         .then(
                                             // Make std lines draggable
                                             if (ui_facade.line_data[y].ctl_type.value == null) {
                                                 Modifier
-                                                    .onPlaced { coordinates ->
-                                                        if (y == ui_facade.dragging_line.value && ui_facade.dragging_abs_offset.value == null) {
-                                                            ui_facade.dragging_abs_offset.value = coordinates.positionInParent().y
-                                                        }
-                                                    }
                                                     .draggable(
                                                         onDragStarted = { offset ->
                                                             ui_facade.start_dragging(y, offset.y)
@@ -1233,45 +1246,33 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                             }
                                                         }
                                                     )
+                                                    .onPlaced { coordinates ->
+                                                        if (y == ui_facade.dragging_line.value && ui_facade.dragging_abs_offset.value == null) {
+                                                            ui_facade.dragging_abs_offset.value = coordinates.positionInParent().y
+                                                        }
+                                                    }
                                             } else {
                                                 Modifier
                                             }
                                         )
-                                        .zIndex(
-                                            if (ui_facade.line_data[y].is_dragging.value) 2F
-                                            else 0F
-                                        )
-                                        .offset {
-                                            IntOffset(
-                                                0,
-                                                this@ComponentActivityEditor.get_dragged_offset(y, dragging_to_y, is_after)
-                                            )
-                                        }
-                                        .height(use_height)
-                                        .width(dimensionResource(R.dimen.line_label_width)),
+                                        .height(use_height),
                                     content = {
                                         LineLabelView(
-                                            modifier = Modifier.fillMaxSize(),
+                                            modifier = Modifier
+                                                .weight(1F)
+                                                .fillMaxWidth(),
                                             dispatcher,
                                             ui_facade.line_data[y]
                                         )
+                                        TableLine(MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
                                 )
+
                                 if ((y == ui_facade.line_data.size - 1 || ui_facade.line_data[y].channel.value != ui_facade.line_data[y + 1].channel.value) && ui_facade.line_data[y].channel.value != null) {
                                     Spacer(
-                                        Modifier
-                                            .zIndex(
-                                                if (state_model.line_data[y].is_dragging.value) 2F
-                                                else 0F
-                                            )
-                                            .offset {
-                                                IntOffset(
-                                                    0,
-                                                    this@ComponentActivityEditor.get_channel_gap_dragged_offset(y, dragging_to_y, is_after)
-                                                )
-                                            }
+                                        modifier = this@ComponentActivityEditor.get_drag_offset_modifier(y, dragging_to_y, is_after, true)
                                             .width(dimensionResource(R.dimen.line_label_width))
-                                            .height(dimensionResource(R.dimen.channel_gap_size))
+                                            .height(channel_gap_height)
                                             .background(MaterialTheme.colorScheme.onSurfaceVariant)
                                     )
                                 }
@@ -1298,6 +1299,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         }
                     }
                 }
+
                 LazyRow(
                     state = scroll_state_h,
                     contentPadding = PaddingValues(end = end_padding),
@@ -1322,16 +1324,24 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         }
 
                         Column {
-                            BeatLabelView(
-                                modifier = Modifier
+                            Column(
+                                Modifier
                                     .width(leaf_width * width)
                                     .height(line_height),
-                                x = x,
-                                ui_facade = ui_facade,
-                                dispatcher = dispatcher,
-                                column_info = ui_facade.column_data[x],
-                                column_width = (leaf_width * width)
-                            )
+                            ) {
+                                BeatLabelView(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .weight(1F),
+                                    x = x,
+                                    ui_facade = ui_facade,
+                                    dispatcher = dispatcher,
+                                    column_info = ui_facade.column_data[x],
+                                    column_width = (leaf_width * width)
+                                )
+                                TableLine(MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+
                             Column(
                                 Modifier
                                     .verticalScroll(scroll_state_v, overscrollEffect = null)
@@ -1340,47 +1350,26 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 for (y in 0 until ui_facade.line_count.value) {
                                     val cell = ui_facade.cell_map[y][x]
                                     Column(
-                                        Modifier
-                                            .zIndex(
-                                                if (state_model.line_data[y].is_dragging.value) 2F
-                                                else 0F
-                                            )
-                                            .offset {
-                                                IntOffset(
-                                                    0,
-                                                    this@ComponentActivityEditor.get_dragged_offset(y, dragging_to_y, is_after)
-                                                )
-                                            }
+                                        this@ComponentActivityEditor.get_drag_offset_modifier(y, dragging_to_y, is_after)
                                             .height(
                                                 if (ui_facade.line_data[y].ctl_type.value != null) ctl_line_height
                                                 else line_height
                                             )
                                     ) {
-                                        CellView(ui_facade, dispatcher, cell, y, x)
+                                        CellView(ui_facade, dispatcher, cell, y, x, Modifier.weight(1F))
+                                        TableLine(MaterialTheme.colorScheme.onBackground)
                                     }
 
                                     if ((y == ui_facade.line_data.size - 1 || ui_facade.line_data[y].channel.value != ui_facade.line_data[y + 1].channel.value) && ui_facade.line_data[y].channel.value != null) {
                                         Row(
-                                            Modifier
-                                                .zIndex(
-                                                    if (state_model.line_data[y].is_dragging.value) 2F
-                                                    else 0F
-                                                )
-                                                .offset {
-                                                    IntOffset(
-                                                        0,
-                                                        this@ComponentActivityEditor.get_channel_gap_dragged_offset(y, dragging_to_y, is_after)
-                                                    )
-                                                }
+                                            this@ComponentActivityEditor.get_drag_offset_modifier(y, dragging_to_y, is_after, is_channel_gap = true)
                                                 .fillMaxWidth()
-                                                .height(dimensionResource(R.dimen.channel_gap_size))
+                                                .height(channel_gap_height)
                                                 .background(MaterialTheme.colorScheme.onBackground)
                                         ) { }
                                     }
-
                                 }
-                                Spacer(Modifier.height(dimensionResource(R.dimen.line_height)))
-                                Spacer(Modifier.height(bottom_padding))
+                                Spacer(Modifier.height(line_height + bottom_padding))
                             }
                         }
                     }
@@ -1390,12 +1379,45 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun ShortcutView(dispatcher: ActionTracker, scope: CoroutineScope, scroll_state: LazyListState) {
-        HalfBorderBox(
+    fun RowScope.TableLine(color: Color) {
+        Spacer(
             Modifier
+                .background(color = color)
+                .fillMaxHeight()
+                .width(dimensionResource(R.dimen.table_line_stroke))
+        )
+    }
+
+    @Composable
+    fun ColumnScope.TableLine(color: Color) {
+        Spacer(
+            Modifier
+                .background(color = color)
+                .fillMaxWidth()
+                .height(dimensionResource(R.dimen.table_line_stroke))
+        )
+    }
+
+    fun get_drag_offset_modifier(y: Int, dragging_to_y: Int?, is_after: Boolean, is_channel_gap: Boolean = false): Modifier {
+        return Modifier
+            .zIndex(
+                if (state_model.line_data[y].is_dragging.value) 2F
+                else 0F
+            )
+            .offset {
+                IntOffset(
+                    0,
+                    this@ComponentActivityEditor.get_dragged_offset(y, dragging_to_y, is_after, is_channel_gap)
+                )
+            }
+
+    }
+
+    @Composable
+    fun ShortcutView(modifier: Modifier, dispatcher: ActionTracker, scope: CoroutineScope, scroll_state: LazyListState) {
+        HalfBorderBox(
+            modifier
                 .background(MaterialTheme.colorScheme.surfaceVariant, shape = RectangleShape)
-                .width(dimensionResource(R.dimen.line_label_width))
-                .height(dimensionResource(R.dimen.line_height))
                 .combinedClickable(
                     onClick = { dispatcher.cursor_select_column() },
                     onLongClick = {
@@ -1436,12 +1458,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 )
                 Spacer(
                     Modifier
-                        .height(border_width)
-                        .background(border_color)
-                        .fillMaxWidth()
-                )
-                Spacer(
-                    Modifier
                         .width(border_width)
                         .background(border_color)
                         .fillMaxHeight()
@@ -1451,7 +1467,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun LineLabelView(modifier: Modifier = Modifier, dispatcher: ActionTracker, line_info: ViewModelEditorState.LineData) {
+    fun LineLabelView(
+        modifier: Modifier = Modifier,
+        dispatcher: ActionTracker,
+        line_info: ViewModelEditorState.LineData
+    ) {
         val ctl_type = line_info.ctl_type.value
         val (background, foreground) = if (!line_info.is_selected.value) {
             Pair(
@@ -1480,15 +1500,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             dispatcher.long_tap_line(
                                 line_info.channel.value,
                                 line_info.line_offset.value,
-                                line_info.ctl_type.value
+                                line_info.ctl_type.value,
                             )
                         }
                     )
                     .background(
                         shape = RectangleShape,
                         color = background
-                    )
-                    .fillMaxSize(),
+                    ),
                 border_color = MaterialTheme.colorScheme.onSurfaceVariant,
                 content = {
                     if (ctl_type == null) {
@@ -1675,142 +1694,137 @@ class ComponentActivityEditor: PaganComponentActivity() {
         )
 
         ProvideContentColorTextStyle(contentColor = text_color) {
-            HalfBorderBox(
-                modifier = modifier
-                    .background(color = leaf_color)
-                    .fillMaxHeight(),
-                border_color = MaterialTheme.colorScheme.onBackground,
+            Box(
+                modifier
+                    .fillMaxHeight()
+                    .background(color = leaf_color),
+                contentAlignment = Alignment.Center
             ) {
-                Box(
-                    Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    when (event) {
-                        is AbsoluteNoteEvent -> {
-                            val octave = event.note / radix
-                            val offset = event.note % radix
-                            Row(
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.Bottom
-                            ) {
-                                Column(verticalArrangement = Arrangement.Bottom) {
-                                    ProvideTextStyle(MaterialTheme.typography.labelLarge) {
-                                        Text("$octave")
-                                    }
-                                }
-                                Column(verticalArrangement = Arrangement.Center) {
-                                    ProvideTextStyle(MaterialTheme.typography.titleLarge) {
-                                        Text("$offset")
-                                    }
+                when (event) {
+                    is AbsoluteNoteEvent -> {
+                        val octave = event.note / radix
+                        val offset = event.note % radix
+                        Row(
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.Bottom
+                        ) {
+                            Column(verticalArrangement = Arrangement.Bottom) {
+                                ProvideTextStyle(MaterialTheme.typography.labelLarge) {
+                                    Text("$octave")
                                 }
                             }
-                        }
-
-                        is RelativeNoteEvent -> {
-                            val octave = abs(event.offset) / radix
-                            val offset = abs(event.offset) % radix
-                            Row(
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Box(
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    ProvideTextStyle(MaterialTheme.typography.titleLarge) {
-                                        Text(
-                                            text = if (event.offset > 0) "+" else "-",
-                                            modifier = Modifier
-                                                .padding(bottom = 16.dp)
-                                                .align(Alignment.Center)
-                                        )
-                                    }
-                                    ProvideTextStyle(MaterialTheme.typography.labelLarge) {
-                                        Text(
-                                            text = "$octave",
-                                            modifier = Modifier
-                                                .padding(top = 12.dp)
-                                                .align(Alignment.Center)
-                                        )
-                                    }
-                                }
-                                Spacer(modifier = Modifier.width(1.dp))
+                            Column(verticalArrangement = Arrangement.Center) {
                                 ProvideTextStyle(MaterialTheme.typography.titleLarge) {
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.Center
-                                    ) {
-                                        Text("$offset")
-                                    }
+                                    Text("$offset")
                                 }
                             }
                         }
+                    }
 
-                        is PercussionEvent -> Icon(
-                            modifier = Modifier.padding(8.dp),
-                            painter = painterResource(R.drawable.percussion_indicator),
-                            contentDescription = ""
-                        )
-
-                        is OpusVolumeEvent -> Text("${(event.value * 100F).toInt()}%", color = text_color)
-                        is OpusPanEvent -> {
-                            Text(
-                                text = if (event.value < 0) {
-                                    "<${(abs(event.value) * 10).roundToInt()}"
-                                } else if (event.value > 0) {
-                                    "${(abs(event.value) * 10).roundToInt()}>"
-                                } else {
-                                    "-0-"
-                                },
-                                color = text_color
-                            )
-                        }
-
-                        is DelayEvent -> {
-                            if (event.echo == 0 || event.fade == 0F) {
-                                Canvas(modifier = Modifier.fillMaxSize()) {
-                                    drawCircle(
-                                        color = text_color,
-                                        radius = (size.height * .1F),
-                                        center = Offset(size.width / 2F, size.height / 2F)
+                    is RelativeNoteEvent -> {
+                        val octave = abs(event.offset) / radix
+                        val offset = abs(event.offset) % radix
+                        Row(
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                contentAlignment = Alignment.Center
+                            ) {
+                                ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+                                    Text(
+                                        text = if (event.offset > 0) "+" else "-",
+                                        modifier = Modifier
+                                            .padding(bottom = 16.dp)
+                                            .align(Alignment.Center)
                                     )
                                 }
-                            } else {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Canvas(
+                                ProvideTextStyle(MaterialTheme.typography.labelLarge) {
+                                    Text(
+                                        text = "$octave",
                                         modifier = Modifier
-                                            .fillMaxHeight()
-                                            .width(dimensionResource(R.dimen.base_leaf_width))
-                                    ) {
-                                        drawLine(
-                                            start = Offset((.1F * size.width), (.65F * size.height)),
-                                            end = Offset((size.width * .9F), (.35F * size.height)),
-                                            color = text_color,
-                                            strokeWidth = 1F
+                                            .padding(top = 12.dp)
+                                            .align(Alignment.Center)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(1.dp))
+                            ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Text("$offset")
+                                }
+                            }
+                        }
+                    }
+
+                    is PercussionEvent -> Icon(
+                        modifier = Modifier.padding(8.dp),
+                        painter = painterResource(R.drawable.percussion_indicator),
+                        contentDescription = ""
+                    )
+
+                    is OpusVolumeEvent -> Text("${(event.value * 100F).toInt()}%", color = text_color)
+                    is OpusPanEvent -> {
+                        Text(
+                            text = if (event.value < 0) {
+                                "<${(abs(event.value) * 10).roundToInt()}"
+                            } else if (event.value > 0) {
+                                "${(abs(event.value) * 10).roundToInt()}>"
+                            } else {
+                                "-0-"
+                            },
+                            color = text_color
+                        )
+                    }
+
+                    is DelayEvent -> {
+                        if (event.echo == 0 || event.fade == 0F) {
+                            Canvas(modifier = Modifier.fillMaxSize()) {
+                                drawCircle(
+                                    color = text_color,
+                                    radius = (size.height * .1F),
+                                    center = Offset(size.width / 2F, size.height / 2F)
+                                )
+                            }
+                        } else {
+                            Box(contentAlignment = Alignment.Center) {
+                                Canvas(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .width(dimensionResource(R.dimen.base_leaf_width))
+                                ) {
+                                    drawLine(
+                                        start = Offset((.1F * size.width), (.65F * size.height)),
+                                        end = Offset((size.width * .9F), (.35F * size.height)),
+                                        color = text_color,
+                                        strokeWidth = 1F
+                                    )
+                                }
+                                ProvideTextStyle(MaterialTheme.typography.labelMedium) {
+                                    Row(horizontalArrangement = Arrangement.Center) {
+                                        Column(
+                                            verticalArrangement = Arrangement.Top,
+                                            modifier = Modifier.fillMaxHeight(),
+                                            content = { Text("${event.numerator}") }
                                         )
-                                    }
-                                    ProvideTextStyle(MaterialTheme.typography.labelMedium) {
-                                        Row(horizontalArrangement = Arrangement.Center) {
-                                            Column(
-                                                verticalArrangement = Arrangement.Top,
-                                                modifier = Modifier.fillMaxHeight(),
-                                                content = { Text("${event.numerator}") }
-                                            )
-                                            Spacer(Modifier.width(3.dp))
-                                            Column(
-                                                verticalArrangement = Arrangement.Bottom,
-                                                modifier = Modifier.fillMaxHeight(),
-                                                content = { Text("${event.denominator}") }
-                                            )
-                                        }
+                                        Spacer(Modifier.width(3.dp))
+                                        Column(
+                                            verticalArrangement = Arrangement.Bottom,
+                                            modifier = Modifier.fillMaxHeight(),
+                                            content = { Text("${event.denominator}") }
+                                        )
                                     }
                                 }
                             }
                         }
-
-                        is OpusTempoEvent -> Text("${event.value.roundToInt()}", color = text_color)
-                        is OpusVelocityEvent -> Text("${(event.value * 100F).toInt()}%", color = text_color)
-                        null -> {}
                     }
+
+                    is OpusTempoEvent -> Text("${event.value.roundToInt()}", color = text_color)
+                    is OpusVelocityEvent -> Text("${(event.value * 100F).toInt()}%", color = text_color)
+                    null -> {}
                 }
             }
         }
@@ -1862,6 +1876,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 }
                             )
                     )
+                    TableLine(MaterialTheme.colorScheme.onBackground)
                 }
             }
         }

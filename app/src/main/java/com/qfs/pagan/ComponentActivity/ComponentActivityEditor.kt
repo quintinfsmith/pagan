@@ -24,14 +24,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.calculateCentroid
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.gestures.scrollBy
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -66,7 +61,6 @@ import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -77,15 +71,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.PointerEvent
-import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.ViewConfiguration
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -144,7 +133,6 @@ import com.qfs.pagan.composable.cxtmenu.ContextMenuLineSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuRangeSecondary
 import com.qfs.pagan.composable.cxtmenu.dragging_scroll
 import com.qfs.pagan.composable.cxtmenu.long_press
-import com.qfs.pagan.composable.cxtmenu.long_press_draggable
 import com.qfs.pagan.composable.is_light
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
@@ -165,7 +153,6 @@ import com.qfs.pagan.viewmodel.ViewModelEditorState
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 import java.io.BufferedOutputStream
 import java.io.BufferedReader
 import java.io.DataOutputStream
@@ -664,7 +651,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun get_file_type(uri: Uri): CompatibleFileType {
         return this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
             val test_bytes = ByteArray(4)
-            FileInputStream(it.fileDescriptor).read(test_bytes)
+            val input_stream = FileInputStream(it.fileDescriptor)
+            input_stream.read(test_bytes)
             if (test_bytes.contentEquals("MThd".toByteArray())) {
                 CompatibleFileType.Midi1
             } else {
@@ -1960,7 +1948,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     if (i != 0) {
                         DrawerPadder()
                     }
-                    Row {
+                    Row(Modifier
+                        .long_press(
+                            onPress = { is_dragging.value = true },
+                            onRelease = { is_dragging.value = false }
+                        )
+                    ) {
                         ConfigDrawerChannelLeftButton(
                             modifier = Modifier
                                 .weight(1F),
@@ -1968,10 +1961,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             content = {
                                 Row(
                                     Modifier
-                                        .long_press(
-                                            onPress = { is_dragging.value = true },
-                                            onRelease = { is_dragging.value = false }
-                                        )
                                         .weight(1F),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {

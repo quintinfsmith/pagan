@@ -131,6 +131,7 @@ import com.qfs.pagan.composable.cxtmenu.ContextMenuLeafStdSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuLinePrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuLineSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuRangeSecondary
+import com.qfs.pagan.composable.cxtmenu.conditional_drag
 import com.qfs.pagan.composable.cxtmenu.dragging_scroll
 import com.qfs.pagan.composable.cxtmenu.long_press
 import com.qfs.pagan.composable.is_light
@@ -1952,6 +1953,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         .long_press(
                             onPress = { is_dragging.value = true },
                             onRelease = { is_dragging.value = false }
+                        )
+                        .conditional_drag(
+                            is_dragging,
+                            on_drag_start = { position -> println("START") },
+                            on_drag_stop = { println("STOP") },
+                            on_drag = { position -> println("DRAGGING") }
                         )
                     ) {
                         ConfigDrawerChannelLeftButton(

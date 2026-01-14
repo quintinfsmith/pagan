@@ -19,6 +19,69 @@ import kotlinx.coroutines.launch
 import kotlin.math.pow
 
 @Composable
+fun Modifier.conditional_drag(
+    is_dragging: MutableState<Boolean>,
+    on_drag_start: (Float) -> Unit = {},
+    on_drag_stop: () -> Unit = {},
+    on_drag: (Float) -> Unit = {},
+    orientation: Orientation = Orientation.Vertical,
+): Modifier {
+    var drag_offset = 0F
+    var was_dragging = false
+    return this then Modifier
+        .pointerInput(is_dragging.value) {
+            if (is_dragging.value) {
+                println("CAN DRAG!")
+                was_dragging = true
+                awaitPointerEventScope {
+                    // get drag start
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        if (event.type == PointerEventType.Move) {
+                            event.changes.forEach { change ->
+                                drag_offset = if (orientation == Orientation.Vertical) {
+                                    change.position.y
+                                } else {
+                                    change.position.x
+                                }
+
+                                on_drag_start(drag_offset)
+                            }
+                            break
+                        }
+                    }
+
+                    // Main drag loop
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        when (event.type) {
+                            PointerEventType.Move -> {
+                                if (is_dragging.value) {
+                                    event.changes.forEach { change ->
+                                        val delta = change.position - change.previousPosition
+                                        drag_offset += if (orientation == Orientation.Vertical) {
+                                            delta.y
+                                        } else {
+                                            delta.x
+                                        }
+
+                                        on_drag(drag_offset)
+                                    }
+                                } else {
+                                    event.changes.forEach { it.consume() }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if (was_dragging) {
+                was_dragging = false
+                on_drag_stop()
+            }
+        }
+}
+
+@Composable
 fun Modifier.dragging_scroll(
     is_dragging: MutableState<Boolean>,
     scroll_state: ScrollState,
@@ -38,7 +101,6 @@ fun Modifier.dragging_scroll(
         )
         .pointerInput(is_dragging.value) {
             if (is_dragging.value) {
-                println("------")
                 awaitPointerEventScope {
                     // get drag start
                     while (true) {
@@ -50,7 +112,6 @@ fun Modifier.dragging_scroll(
                                 } else {
                                     change.position.x
                                 } - scroll_state.value
-                                println("${drag_offset.value.toFloat()} / ${scroll_state.viewportSize.toFloat()}")
                             }
                             break
                         }
@@ -121,26 +182,21 @@ fun Modifier.long_press(
                                     val next_event = awaitPointerEvent()
                                     when (next_event.type) {
                                         PointerEventType.Move -> {
-                                            is_pressed = false
-                                            //if (move_action_count++ == move_threshold) {
-                                            //}
+                                            if (++move_action_count == move_threshold) {
+                                                is_pressed = false
+                                            }
                                         }
                                         PointerEventType.Release -> {
                                             is_pressed = false
                                         }
                                     }
-                                    next_event.changes.forEach { it.consume() }
                                 }
                                 false
                             } ?: true) {
-                                println("B")
                                 onPress()
-                            } else {
-                                println("A")
                             }
                         }
                         PointerEventType.Release -> onRelease()
-                        //else -> event.changes.forEach { it.consume() }
                     }
                 }
             }

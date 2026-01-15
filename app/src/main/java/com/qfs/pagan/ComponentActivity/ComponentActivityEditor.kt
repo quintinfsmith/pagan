@@ -1896,9 +1896,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val dispatcher = this.controller_model.action_interface
         val state_model = this.state_model
         val scope = rememberCoroutineScope()
-        val context = LocalContext.current
+
+        val scroll_state = rememberScrollState()
+        val dragging_row = Pair<MutableState<Int?>, MutableState<Dp?>>(mutableStateOf(null), mutableStateOf(null))
+
         DrawerCard {
-            Row(horizontalArrangement = Arrangement.SpaceBetween) {
+            Row(
+                Modifier.height(dimensionResource(R.dimen.config_channel_button_height)),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 ConfigDrawerTopButton(
                     onClick = { dispatcher.set_tuning_table_and_transpose() },
                     content = { SText(R.string.label_tuning) }
@@ -1931,51 +1937,97 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 )
             }
             DrawerPadder()
-            val scroll_state = rememberScrollState()
-            val is_dragging = remember { mutableStateOf(false) }
-            val interaction_source = remember { MutableInteractionSource() }
-
             Column(
                 Modifier
                     .dragging_scroll(
-                        is_dragging,
+                        dragging_row.first.value != null,
                         scroll_state,
-                        interaction_source
                     )
                     .weight(1F)
             ) {
+                val row_height = dimensionResource(R.dimen.config_channel_button_height)
                 for (i in 0 until state_model.channel_count.value) {
                     val channel_data = state_model.channel_data[i]
+                    val is_dragging = remember { mutableStateOf(false) }
                     if (i != 0) {
                         DrawerPadder()
                     }
                     Row(Modifier
+                        .height(row_height)
+                        .zIndex(
+                            if (is_dragging.value) {
+                                2F
+                            } else {
+                                0F
+                            }
+                        )
+                        .offset(
+                            x = 0.dp,
+                            y = if (dragging_row.first.value == null || dragging_row.second.value == null) {
+                                0.dp
+                            } else if (dragging_row.first.value!! == i) {
+                                dragging_row.second.value!!
+                            } else if (dragging_row.first.value!! < i) {
+                                val dragged_position = (row_height * dragging_row.first.value!!) + dragging_row.second.value!!
+                                if ((row_height * i) < dragged_position) {
+                                    row_height * -1
+                                } else {
+                                    0.dp
+                                }
+                            } else {
+                                val dragged_position = (row_height * dragging_row.first.value!!) + dragging_row.second.value!!
+                                if ((row_height * i) > dragged_position) {
+                                    row_height
+                                } else {
+                                    0.dp
+                                }
+                            }
+                        )
                         .long_press(
-                            onPress = { is_dragging.value = true },
-                            onRelease = { is_dragging.value = false }
+                            onPress = {
+                                is_dragging.value = true
+                            },
+                            onRelease = {
+                                is_dragging.value = false
+                            }
                         )
                         .conditional_drag(
                             is_dragging,
-                            on_drag_start = { position -> println("START") },
-                            on_drag_stop = { println("STOP") },
-                            on_drag = { position -> println("DRAGGING") }
+                            on_drag_start = { position ->
+                                dragging_row.second.value = 0.dp
+                                dragging_row.first.value = i
+                            },
+
+                            on_drag_stop = {
+                                val dragged_position = (row_height * dragging_row.first.value!!) + dragging_row.second.value!!
+                                val new_channel_position = dragged_position / row_height
+                                dispatcher.move_channel(i, new_channel_position.toInt(), i > new_channel_position)
+                                dragging_row.second.value = null
+                                dragging_row.first.value = null
+                            },
+
+                            on_drag = { delta ->
+                                dragging_row.second.value = dragging_row.second.value!! + delta
+                            },
+                            scroll_state = scroll_state
                         )
                     ) {
                         ConfigDrawerChannelLeftButton(
-                            modifier = Modifier
-                                .weight(1F),
+                            modifier = Modifier.weight(1F),
                             onClick = { dispatcher.set_channel_preset(i) },
                             content = {
                                 Row(
-                                    Modifier
-                                        .weight(1F),
+                                    Modifier.weight(1F),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(
                                         text = if (channel_data.percussion.value) "!%02d:".format(i)
                                         else "%02d:".format(i),
                                         modifier = Modifier
-                                            .padding(vertical = 0.dp, horizontal = 12.dp)
+                                            .padding(
+                                                vertical = 0.dp,
+                                                horizontal = 12.dp
+                                            )
                                     )
                                     Text(
                                         channel_data.active_name.value ?: this@ComponentActivityEditor.get_default_preset_name(channel_data.instrument.value.first, channel_data.instrument.value.second),
@@ -2002,7 +2054,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
             DrawerPadder()
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .height(dimensionResource(R.dimen.config_channel_button_height))
+                    .fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {

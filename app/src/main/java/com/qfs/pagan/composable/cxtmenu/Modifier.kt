@@ -15,37 +15,50 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kotlin.math.pow
 
 @Composable
 fun Modifier.conditional_drag(
     is_dragging: MutableState<Boolean>,
-    on_drag_start: (Float) -> Unit = {},
+    on_drag_start: (Dp) -> Unit = {},
     on_drag_stop: () -> Unit = {},
-    on_drag: (Float) -> Unit = {},
+    on_drag: (Dp) -> Unit = {},
+    scroll_state: ScrollState? = null,
     orientation: Orientation = Orientation.Vertical,
 ): Modifier {
-    var drag_offset = 0F
-    var was_dragging = false
+    val was_dragging = remember { mutableStateOf(false) }
+    if (is_dragging.value) {
+        was_dragging.value = true
+    } else {
+        if (was_dragging.value) {
+            on_drag_stop()
+        }
+        was_dragging.value = false
+    }
+
     return this then Modifier
         .pointerInput(is_dragging.value) {
             if (is_dragging.value) {
-                println("CAN DRAG!")
-                was_dragging = true
                 awaitPointerEventScope {
+                    var working_scroll_position = 0F
+                    var drag_start_position = 0F
+                    var drag_current_position = 0F
                     // get drag start
                     while (true) {
                         val event = awaitPointerEvent()
                         if (event.type == PointerEventType.Move) {
                             event.changes.forEach { change ->
-                                drag_offset = if (orientation == Orientation.Vertical) {
+                                working_scroll_position = (scroll_state?.value ?: 0).toFloat()
+                                drag_start_position = if (orientation == Orientation.Vertical) {
                                     change.position.y
                                 } else {
                                     change.position.x
                                 }
 
-                                on_drag_start(drag_offset)
+                                on_drag_start(drag_start_position.toDp())
                             }
                             break
                         }
@@ -58,14 +71,14 @@ fun Modifier.conditional_drag(
                             PointerEventType.Move -> {
                                 if (is_dragging.value) {
                                     event.changes.forEach { change ->
-                                        val delta = change.position - change.previousPosition
-                                        drag_offset += if (orientation == Orientation.Vertical) {
-                                            delta.y
+                                        val next_scroll_position = (scroll_state?.value ?: 0).toFloat()
+                                        val delta = if (orientation == Orientation.Vertical) {
+                                            change.position.y - change.previousPosition.y
                                         } else {
-                                            delta.x
-                                        }
-
-                                        on_drag(drag_offset)
+                                            change.position.x - change.previousPosition.x
+                                        } + (next_scroll_position - working_scroll_position)
+                                        working_scroll_position = next_scroll_position
+                                        on_drag(delta.toDp())
                                     }
                                 } else {
                                     event.changes.forEach { it.consume() }
@@ -74,18 +87,14 @@ fun Modifier.conditional_drag(
                         }
                     }
                 }
-            } else if (was_dragging) {
-                was_dragging = false
-                on_drag_stop()
             }
         }
 }
 
 @Composable
 fun Modifier.dragging_scroll(
-    is_dragging: MutableState<Boolean>,
+    is_dragging: Boolean,
     scroll_state: ScrollState,
-    interaction_source: MutableInteractionSource,
     orientation: Orientation = Orientation.Vertical
 ): Modifier {
     val drag_offset = remember { mutableStateOf(0F) }
@@ -94,13 +103,13 @@ fun Modifier.dragging_scroll(
     return this then Modifier
         .then(
             if (orientation == Orientation.Vertical) {
-                Modifier.verticalScroll(scroll_state, enabled = !is_dragging.value)
+                Modifier.verticalScroll(scroll_state, enabled = !is_dragging)
             } else {
-                Modifier.horizontalScroll(scroll_state, enabled = !is_dragging.value)
+                Modifier.horizontalScroll(scroll_state, enabled = !is_dragging)
             }
         )
-        .pointerInput(is_dragging.value) {
-            if (is_dragging.value) {
+        .pointerInput(is_dragging) {
+            if (is_dragging) {
                 awaitPointerEventScope {
                     // get drag start
                     while (true) {
@@ -122,7 +131,7 @@ fun Modifier.dragging_scroll(
                         val event = awaitPointerEvent()
                         when (event.type) {
                             PointerEventType.Move -> {
-                                if (is_dragging.value) {
+                                if (is_dragging) {
                                     event.changes.forEach { change ->
                                         val delta = change.position - change.previousPosition
                                         drag_offset.value += if (orientation == Orientation.Vertical) {

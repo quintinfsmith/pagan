@@ -1,7 +1,6 @@
 package com.qfs.pagan.composable.button
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
@@ -18,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
+import com.qfs.pagan.composable.dashed_border
 
 @Composable
 fun NumberSelectorButton(modifier: Modifier = Modifier, index: Int, alternate: Boolean, selected: Boolean, highlighted: Boolean, callback: (Int) -> Unit) {
@@ -45,10 +45,10 @@ fun NumberSelectorButton(modifier: Modifier = Modifier, index: Int, alternate: B
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .padding(4.dp)
+                .padding(2.dp)
                 .fillMaxSize()
                 .then(
-                    if (highlighted) Modifier.border(.5.dp, foreground, RoundedCornerShape(10.dp))
+                    if (highlighted) Modifier.dashed_border(foreground, shape)
                     else Modifier
                 )
         ) {

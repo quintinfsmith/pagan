@@ -12,8 +12,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kotlin.math.pow
 
@@ -216,4 +226,31 @@ fun Modifier.long_press(
                 }
             }
         }
+}
+
+@Composable
+fun Modifier.dashed_border(
+    color: Color,
+    shape: Shape,
+    width: Dp = 2.dp,
+    dash: Dp = 4.dp,
+    gap: Dp = 4.dp,
+    cap: StrokeCap = StrokeCap.Round
+) = this.drawWithContent {
+    drawContent()
+    drawOutline(
+        style = Stroke(
+            cap = cap,
+            width = width.toPx(),
+            pathEffect = PathEffect.dashPathEffect(
+                intervals = floatArrayOf(dash.toPx(), gap.toPx())
+            )
+        ),
+        outline = shape.createOutline(
+            size = this.size,
+            layoutDirection = this.layoutDirection,
+            density = this
+        ),
+        brush = SolidColor(color)
+    )
 }

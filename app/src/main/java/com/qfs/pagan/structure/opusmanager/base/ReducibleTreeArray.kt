@@ -781,7 +781,7 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
             }
 
             val last_p = mod_position.last()
-            if (mod_position.subList(0, mod_position.size - 1) == position.subList(0, mod_position.size - 1)) {
+            if (position.size >= mod_position.size && mod_position.subList(0, mod_position.size - 1) == position.subList(0, mod_position.size - 1)) {
                 if (last_p <= position[mod_position.size - 1]) {
                     adj_position[mod_position.size - 1] += mod_amount
                 }

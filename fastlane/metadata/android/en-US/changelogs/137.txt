@@ -1,0 +1,4 @@
+- Fixed crash when removing a note in very specific conditions
+- Fixed typo in settings
+
+

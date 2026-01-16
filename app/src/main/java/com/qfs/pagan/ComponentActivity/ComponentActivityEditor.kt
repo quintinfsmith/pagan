@@ -490,7 +490,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 return@registerForActivityResult
             }
             result.data?.data?.also { uri ->
-                thread { this.handle_uri(uri) }
+                this.handle_uri(uri)
             }
         }
 
@@ -1909,9 +1909,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 Spacer(Modifier.weight(1F))
                 ConfigDrawerTopButton(
                     onClick = {
-                        thread {
-                            dispatcher.insert_percussion_channel()
-                        }
+                        dispatcher.insert_percussion_channel()
                     },
                     content = {
                         Icon(
@@ -1923,7 +1921,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 DrawerPadder()
                 ConfigDrawerTopButton(
                     onClick = {
-                        thread { dispatcher.insert_channel(-1) }
+                        dispatcher.insert_channel(-1)
                     },
                     content = {
                         Icon(

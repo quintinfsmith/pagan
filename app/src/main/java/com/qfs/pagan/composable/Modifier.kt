@@ -145,13 +145,13 @@ fun Modifier.dragging_scroll(
                                         }
 
                                         val viewport_height = scroll_state.viewportSize.toFloat()
-                                        val div = 4F
+                                        val div = 3F
                                         val active_zone_height = viewport_height / div
                                         val max_scroll_speed = 40
                                         val relative_y = drag_offset.value
                                         val downscroll_y_position = active_zone_height * (div - 1F)
                                         val factor: Float = if (relative_y < active_zone_height) {
-                                            -1F * (relative_y / active_zone_height).pow(2F)
+                                            -1F * ((active_zone_height - relative_y) / active_zone_height).pow(2F)
                                         } else if (relative_y > downscroll_y_position) {
                                             ((relative_y - downscroll_y_position) / active_zone_height).pow(2F)
                                         } else {
@@ -161,6 +161,7 @@ fun Modifier.dragging_scroll(
                                         scope.launch {
                                             scroll_state.scrollBy(max_scroll_speed * factor)
                                         }
+
                                     }
                                 } else {
                                     event.changes.forEach { it.consume() }

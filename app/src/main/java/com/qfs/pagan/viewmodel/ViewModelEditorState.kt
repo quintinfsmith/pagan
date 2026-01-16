@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.EditorTable
 import com.qfs.pagan.PlaybackState
@@ -448,16 +449,21 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun add_channel(channel: Int, percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean, size: Int = 0) {
-        for (ld in this.line_data) {
-            ld.channel.value?.let {
-                if (it >= channel) {
-                    ld.channel.value = it + 1
+       // viewModelScope.launch(Dispatchers.IO) {
+            for (ld in this@ViewModelEditorState.line_data) {
+                ld.channel.value?.let {
+                    if (it >= channel) {
+                        ld.channel.value = it + 1
+                    }
                 }
             }
-        }
-        this.channel_count.value += 1
-        val name = this.get_preset_name(instrument.first, instrument.second)
-        this.channel_data.add(channel, ChannelData(percussion, instrument, is_mute, name = name, is_selected = false, size = size))
+            this@ViewModelEditorState.channel_count.value += 1
+            val name = this@ViewModelEditorState.get_preset_name(instrument.first, instrument.second)
+            this@ViewModelEditorState.channel_data.add(
+                channel,
+                ChannelData(percussion, instrument, is_mute, name = name, is_selected = false, size = size)
+            )
+      //  }
     }
 
     fun remove_channel(channel: Int) {

@@ -45,6 +45,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import androidx.test.core.app.ActivityScenario.launch
 import com.qfs.apres.VirtualMidiInputDevice
 import com.qfs.json.JSONBoolean
 import com.qfs.json.JSONInteger
@@ -79,8 +80,13 @@ import com.qfs.pagan.structure.opusmanager.cursor.InvalidCursorState
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.io.IOException
 import kotlin.concurrent.thread
+import kotlin.coroutines.CoroutineContext
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
@@ -1640,6 +1646,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
     fun insert_channel(index: Int? = null) {
         this.track(TrackedAction.InsertChannel, listOf(index ?: -1, 0))
+
         val opus_manager = this.get_opus_manager()
         if (index != null) {
             if (index == -1) {

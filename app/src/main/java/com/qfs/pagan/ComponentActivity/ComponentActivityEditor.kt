@@ -5,6 +5,7 @@ import android.app.AlertDialog
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
@@ -23,11 +24,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.gestures.rememberDraggableState
-import androidx.compose.foundation.gestures.scrollBy
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -166,9 +162,6 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.concurrent.thread
 import kotlin.math.abs
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.pow
 import kotlin.math.roundToInt
 
 class ComponentActivityEditor: PaganComponentActivity() {
@@ -1169,10 +1162,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                         Column(
                             Modifier
-                                .verticalScroll(
-                                    scroll_state_v,
-                                    enabled = false,
-                                    overscrollEffect = null
+                                .dragging_scroll(
+                                    ui_facade.dragging_line.value != null,
+                                    scroll_state_v
                                 )
                         ) {
                             for (y in 0 until ui_facade.line_count.value) {
@@ -1181,48 +1173,27 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 } else {
                                     line_height
                                 }
-                                val draggable_state = rememberDraggableState { delta ->
-                                    ui_facade.dragging_offset.value += delta
+                                val is_dragging = remember { mutableStateOf(false) }
 
-                                    val abs_line_offset = ui_facade.dragging_abs_offset.value ?: return@rememberDraggableState
-                                    // Handle drag-scrolling
-                                    val relative_y = (abs_line_offset - scroll_state_v.value) + ui_facade.dragging_offset.value
-                                    val viewport_height = scroll_state_v.viewportSize.toFloat()
-
-                                    val div = 4F
-                                    val active_zone_height = viewport_height / div
-                                    val max_scroll_speed = 50
-
-                                    val downscroll_y_position = active_zone_height * (div - 1F)
-                                    val factor: Float = if (relative_y < active_zone_height) {
-                                        -1F * ((active_zone_height - relative_y) / active_zone_height).pow(2F)
-                                    } else if (relative_y > downscroll_y_position) {
-                                        ((active_zone_height - (relative_y - downscroll_y_position)) / active_zone_height).pow(2F)
-                                    } else {
-                                        return@rememberDraggableState
-                                    }
-
-                                    val scroll_diff = max(0F, min(scroll_state_v.maxValue.toFloat(), (max_scroll_speed * factor) + scroll_state_v.value)) - max(0F, min(scroll_state_v.maxValue, scroll_state_v.value).toFloat())
-
-                                    if (scroll_diff != 0F) {
-                                        ui_facade.dragging_offset.value += scroll_diff
-                                        scope.launch {
-                                            scroll_state_v.scrollBy(scroll_diff)
-                                        }
-                                    }
-                                }
                                 Column(
-                                    modifier = this@ComponentActivityEditor.get_drag_offset_modifier(y, dragging_to_y, is_after)
+                                    modifier = Modifier
+                                        .draggable_line(y, dragging_to_y, is_after)
                                         .then(
                                             // Make std lines draggable
                                             if (ui_facade.line_data[y].ctl_type.value == null) {
                                                 Modifier
-                                                    .draggable(
-                                                        onDragStarted = { offset ->
-                                                            ui_facade.start_dragging(y, offset.y)
+                                                    .long_press(
+                                                        onPress = { is_dragging.value = true },
+                                                        onRelease = { is_dragging.value = false }
+                                                    )
+                                                    .conditional_drag(
+                                                        is_dragging,
+                                                        on_drag_start = { position ->
+                                                            ui_facade.start_dragging(y, position)
                                                             ui_facade.update_line_map(this@ComponentActivityEditor.build_dragging_line_map())
                                                         },
-                                                        onDragStopped = {
+
+                                                        on_drag_stop = {
                                                             dragging_to_y?.let {
                                                                 val from_line = ui_facade.line_data[ui_facade.dragging_line.value!!]
                                                                 val to_line = ui_facade.line_data[it]
@@ -1244,9 +1215,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                             }
                                                             ui_facade.stop_dragging()
                                                         },
-                                                        orientation = Orientation.Vertical,
-                                                        state = draggable_state,
+
+                                                        on_drag = { delta ->
+                                                            ui_facade.dragging_offset.value += delta
+                                                        },
+                                                        scroll_state = scroll_state_v
                                                     )
+
                                                     .onPlaced { coordinates ->
                                                         if (y == ui_facade.dragging_line.value && ui_facade.dragging_abs_offset.value == null) {
                                                             ui_facade.dragging_abs_offset.value = coordinates.positionInParent().y
@@ -1258,6 +1233,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         )
                                         .height(use_height),
                                     content = {
+                                        if (ui_facade.draw_top_line(y)) {
+                                            TableLine(MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
                                         LineLabelView(
                                             modifier = Modifier
                                                 .weight(1F)
@@ -1271,7 +1249,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                                 if ((y == ui_facade.line_data.size - 1 || ui_facade.line_data[y].channel.value != ui_facade.line_data[y + 1].channel.value) && ui_facade.line_data[y].channel.value != null) {
                                     Spacer(
-                                        modifier = this@ComponentActivityEditor.get_drag_offset_modifier(y, dragging_to_y, is_after, true)
+                                        modifier = Modifier
+                                            .draggable_line(y, dragging_to_y, is_after, true)
                                             .width(dimensionResource(R.dimen.line_label_width))
                                             .height(channel_gap_height)
                                             .background(MaterialTheme.colorScheme.onSurfaceVariant)
@@ -1351,19 +1330,27 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 for (y in 0 until ui_facade.line_count.value) {
                                     val cell = ui_facade.cell_map[y][x]
                                     Column(
-                                        this@ComponentActivityEditor.get_drag_offset_modifier(y, dragging_to_y, is_after)
+                                        Modifier
+                                            .draggable_line(y, dragging_to_y, is_after)
                                             .height(
                                                 if (ui_facade.line_data[y].ctl_type.value != null) ctl_line_height
                                                 else line_height
                                             )
                                     ) {
+                                        //if (ui_facade.draw_top_line(y)) {
+                                        //    TableLine(MaterialTheme.colorScheme.onBackground)
+                                        //}
+                                        if (ui_facade.draw_top_line(y)) {
+                                            TableLine(MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
                                         CellView(ui_facade, dispatcher, cell, y, x, Modifier.weight(1F))
                                         TableLine(MaterialTheme.colorScheme.onBackground)
                                     }
 
                                     if ((y == ui_facade.line_data.size - 1 || ui_facade.line_data[y].channel.value != ui_facade.line_data[y + 1].channel.value) && ui_facade.line_data[y].channel.value != null) {
                                         Row(
-                                            this@ComponentActivityEditor.get_drag_offset_modifier(y, dragging_to_y, is_after, is_channel_gap = true)
+                                            Modifier
+                                                .draggable_line(y, dragging_to_y, is_after, true)
                                                 .fillMaxWidth()
                                                 .height(channel_gap_height)
                                                 .background(MaterialTheme.colorScheme.onBackground)
@@ -1399,10 +1386,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
         )
     }
 
-    fun get_drag_offset_modifier(y: Int, dragging_to_y: Int?, is_after: Boolean, is_channel_gap: Boolean = false): Modifier {
-        return Modifier
+    @Composable
+    fun Modifier.draggable_line(y: Int, dragging_to_y: Int?, is_after: Boolean, is_channel_gap: Boolean = false): Modifier {
+        val is_dragging = this@ComponentActivityEditor.state_model.line_data[y].is_dragging.value
+        return this then Modifier
             .zIndex(
-                if (state_model.line_data[y].is_dragging.value) 2F
+                if (is_dragging && ! is_channel_gap) 2F
                 else 0F
             )
             .offset {
@@ -1898,7 +1887,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val scope = rememberCoroutineScope()
 
         val scroll_state = rememberScrollState()
-        val dragging_row = Pair<MutableState<Int?>, MutableState<Dp?>>(mutableStateOf(null), mutableStateOf(null))
+        val dragging_row_index: MutableState<Int?> = remember { mutableStateOf(null) }
+        val dragging_row_offset: MutableState<Float?> = remember { mutableStateOf(null) }
+
+        val context = LocalContext.current
 
         DrawerCard {
             Row(
@@ -1940,12 +1932,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
             Column(
                 Modifier
                     .dragging_scroll(
-                        dragging_row.first.value != null,
+                        dragging_row_index.value != null,
                         scroll_state,
                     )
                     .weight(1F)
             ) {
                 val row_height = dimensionResource(R.dimen.config_channel_button_height)
+                val row_height_px = this@ComponentActivityEditor.toPx(row_height)
+
                 for (i in 0 until state_model.channel_count.value) {
                     val channel_data = state_model.channel_data[i]
                     val is_dragging = remember { mutableStateOf(false) }
@@ -1963,20 +1957,20 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         )
                         .offset(
                             x = 0.dp,
-                            y = if (dragging_row.first.value == null || dragging_row.second.value == null) {
+                            y = if (dragging_row_index.value == null || dragging_row_offset.value == null) {
                                 0.dp
-                            } else if (dragging_row.first.value!! == i) {
-                                dragging_row.second.value!!
-                            } else if (dragging_row.first.value!! < i) {
-                                val dragged_position = (row_height * dragging_row.first.value!!) + dragging_row.second.value!!
-                                if ((row_height * i) < dragged_position) {
-                                    row_height * -1
+                            } else if (dragging_row_index.value!! == i) {
+                                context.toDp(dragging_row_offset.value!!)
+                            } else if (dragging_row_index.value!! < i) {
+                                val dragged_position = (row_height_px * dragging_row_index.value!!) + dragging_row_offset.value!!
+                                if ((row_height_px * i) < dragged_position) {
+                                    (row_height * -1)
                                 } else {
                                     0.dp
                                 }
                             } else {
-                                val dragged_position = (row_height * dragging_row.first.value!!) + dragging_row.second.value!!
-                                if ((row_height * i) > dragged_position) {
+                                val dragged_position = (row_height_px * dragging_row_index.value!!) + dragging_row_offset.value!!
+                                if ((row_height_px * i) > dragged_position) {
                                     row_height
                                 } else {
                                     0.dp
@@ -1984,30 +1978,26 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             }
                         )
                         .long_press(
-                            onPress = {
-                                is_dragging.value = true
-                            },
-                            onRelease = {
-                                is_dragging.value = false
-                            }
+                            onPress = { is_dragging.value = true },
+                            onRelease = { is_dragging.value = false }
                         )
                         .conditional_drag(
                             is_dragging,
                             on_drag_start = { position ->
-                                dragging_row.second.value = 0.dp
-                                dragging_row.first.value = i
+                                dragging_row_offset.value = 0F
+                                dragging_row_index.value = i
                             },
 
                             on_drag_stop = {
-                                val dragged_position = (row_height * dragging_row.first.value!!) + dragging_row.second.value!!
-                                val new_channel_position = dragged_position / row_height
-                                dispatcher.move_channel(i, new_channel_position.toInt(), i > new_channel_position)
-                                dragging_row.second.value = null
-                                dragging_row.first.value = null
+                               val dragged_position = (row_height_px * dragging_row_index.value!!) + dragging_row_offset.value!!
+                               val new_channel_position = dragged_position / row_height_px
+                               dispatcher.move_channel(i, new_channel_position.toInt(), i >= new_channel_position)
+                               dragging_row_offset.value = null
+                               dragging_row_index.value = null
                             },
 
                             on_drag = { delta ->
-                                dragging_row.second.value = dragging_row.second.value!! + delta
+                                dragging_row_offset.value = dragging_row_offset.value!! + delta
                             },
                             scroll_state = scroll_state
                         )
@@ -2606,6 +2596,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     fun get_dragged_offset(y: Int, target_line: Int?, is_after: Boolean, is_spacer: Boolean = false): Int {
+        if (this.state_model.dragging_line.value == null) return 0
+
         val line_height = this.resources.getDimension(R.dimen.line_height)
         val ctl_line_height = this.resources.getDimension(R.dimen.ctl_line_height)
         val is_dragging_channel = this.state_model.is_dragging_channel()
@@ -2627,12 +2619,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         // Spacers get treated like lines when dragging channels
         return if (!is_dragging_channel && is_spacer) {
-            if (target_line <= y && y < first_line) {
-                gap_size
-            } else if (target_line > y && y >= first_line) {
-                0 - gap_size
-            } else {
-                0
+            when (y) {
+                in target_line until first_line -> { gap_size }
+                in first_line until target_line -> { 0 - gap_size }
+                else -> { 0 }
             }
         } else {
             if ((first_line until check_line).contains(target_line)) {
@@ -2701,6 +2691,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         return output
     }
+}
 
 
+// TODO: Move these functions
+fun Context.toDp(float: Float): Dp {
+    val pixel_density = this.resources.displayMetrics.density
+    return (float / pixel_density).dp
+}
+
+fun Context.toPx(density_pixel: Dp): Float {
+    val pixel_density = this.resources.displayMetrics.density
+    return density_pixel.value * pixel_density
 }

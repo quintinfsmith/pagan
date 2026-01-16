@@ -224,21 +224,20 @@ class ViewModelEditorState: ViewModel() {
         this.dragging_initial_offset.value = initial_offset
         this.dragging_height.first.value = 0
         this.dragging_height.second.value = 0
-        val main_line_index = this.dragging_line.value ?: return
-        val main_line = this.line_data[main_line_index]
+        val main_line = this.line_data[y]
         val is_dragging_channel = this.is_dragging_channel()
 
         for ((i, line) in this.line_data.enumerate()) {
             if (main_line.channel.value != line.channel.value) continue
             if (line.line_offset.value == main_line.line_offset.value || is_dragging_channel) {
                 line.is_dragging.value = true
-                if (dragging_first_line.value == null) {
-                    dragging_first_line.value = i
+                if (this.dragging_first_line.value == null) {
+                    this.dragging_first_line.value = i
                 }
                 if (line.ctl_type.value != null) {
-                    dragging_height.second.value += 1
+                    this.dragging_height.second.value += 1
                 } else {
-                    dragging_height.first.value += 1
+                    this.dragging_height.first.value += 1
                 }
             }
         }
@@ -1012,5 +1011,25 @@ class ViewModelEditorState: ViewModel() {
     fun unset_soundfont() {
         this.soundfont_active.value = false
         this.clear_instrument_names()
+    }
+
+    // check if we need to draw the lin *above* the cell (when dragging)
+    fun draw_top_line(y: Int): Boolean {
+        val first_drag_y = this.dragging_first_line.value ?: return false
+        val selection_height = + this.dragging_height.first.value + this.dragging_height.second.value
+        val last_drag_y = first_drag_y + selection_height
+
+        if (y == first_drag_y) return true
+        if (y in first_drag_y until last_drag_y) return false
+
+        val (dragging_to_line, after_line) = this.calculate_dragged_to_line() ?: return false
+
+        return if (y < first_drag_y) {
+            y >= dragging_to_line && ((!after_line &&y == dragging_to_line) || (after_line && y == dragging_to_line + selection_height))
+        } else if (y == last_drag_y) { // (y >= last_drag_y)
+            y >= dragging_to_line && ((y == dragging_to_line + selection_height || (y == dragging_to_line && !after_line)) || (y == dragging_to_line + selection_height + 1 && after_line))
+        } else {
+            y == dragging_to_line && !after_line || (y == dragging_to_line + selection_height && after_line)
+        }
     }
 }

@@ -1,6 +1,8 @@
 package com.qfs.pagan.composable.cxtmenu
 
 import android.view.ViewConfiguration.getLongPressTimeout
+import androidx.compose.foundation.OverscrollEffect
+import androidx.compose.foundation.OverscrollFactory
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollBy
@@ -23,9 +25,9 @@ import kotlin.math.pow
 @Composable
 fun Modifier.conditional_drag(
     is_dragging: MutableState<Boolean>,
-    on_drag_start: (Dp) -> Unit = {},
+    on_drag_start: (Float) -> Unit = {},
     on_drag_stop: () -> Unit = {},
-    on_drag: (Dp) -> Unit = {},
+    on_drag: (Float) -> Unit = {},
     scroll_state: ScrollState? = null,
     orientation: Orientation = Orientation.Vertical,
 ): Modifier {
@@ -45,7 +47,6 @@ fun Modifier.conditional_drag(
                 awaitPointerEventScope {
                     var working_scroll_position = 0F
                     var drag_start_position = 0F
-                    var drag_current_position = 0F
                     // get drag start
                     while (true) {
                         val event = awaitPointerEvent()
@@ -58,7 +59,7 @@ fun Modifier.conditional_drag(
                                     change.position.x
                                 }
 
-                                on_drag_start(drag_start_position.toDp())
+                                on_drag_start(drag_start_position)
                             }
                             break
                         }
@@ -78,7 +79,7 @@ fun Modifier.conditional_drag(
                                             change.position.x - change.previousPosition.x
                                         } + (next_scroll_position - working_scroll_position)
                                         working_scroll_position = next_scroll_position
-                                        on_drag(delta.toDp())
+                                        on_drag(delta)
                                     }
                                 } else {
                                     event.changes.forEach { it.consume() }
@@ -95,7 +96,7 @@ fun Modifier.conditional_drag(
 fun Modifier.dragging_scroll(
     is_dragging: Boolean,
     scroll_state: ScrollState,
-    orientation: Orientation = Orientation.Vertical
+    orientation: Orientation = Orientation.Vertical,
 ): Modifier {
     val drag_offset = remember { mutableStateOf(0F) }
     val scope = rememberCoroutineScope()
@@ -103,9 +104,17 @@ fun Modifier.dragging_scroll(
     return this then Modifier
         .then(
             if (orientation == Orientation.Vertical) {
-                Modifier.verticalScroll(scroll_state, enabled = !is_dragging)
+                Modifier.verticalScroll(
+                    scroll_state,
+                    enabled = !is_dragging,
+                    overscrollEffect = null
+                )
             } else {
-                Modifier.horizontalScroll(scroll_state, enabled = !is_dragging)
+                Modifier.horizontalScroll(
+                    scroll_state,
+                    enabled = !is_dragging,
+                    overscrollEffect = null
+                )
             }
         )
         .pointerInput(is_dragging) {
@@ -168,6 +177,7 @@ fun Modifier.dragging_scroll(
             }
         }
 }
+
 
 @Composable
 fun Modifier.long_press(

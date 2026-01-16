@@ -90,6 +90,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
+import kotlin.math.min
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 /**
@@ -1675,7 +1676,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         if (adj_to_index == index_from) return
 
         this.track(TrackedAction.MoveChannel, listOf(index_from, adj_to_index))
-        opus_manager.move_channel(index_from, adj_to_index)
+        opus_manager.move_channel(index_from, min(opus_manager.channels.size, adj_to_index))
     }
 
 

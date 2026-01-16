@@ -126,6 +126,7 @@ import com.qfs.pagan.composable.cxtmenu.ContextMenuLinePrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuLineSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuRangeSecondary
 import com.qfs.pagan.composable.conditional_drag
+import com.qfs.pagan.composable.dashed_border
 import com.qfs.pagan.composable.dragging_scroll
 import com.qfs.pagan.composable.long_press
 import com.qfs.pagan.composable.is_light
@@ -160,6 +161,8 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.concurrent.thread
 import kotlin.math.abs
+import kotlin.math.ceil
+import kotlin.math.max
 import kotlin.math.roundToInt
 
 class ComponentActivityEditor: PaganComponentActivity() {
@@ -1653,9 +1656,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             }
                             .fillMaxHeight()
                             .widthIn(dimensionResource(R.dimen.base_leaf_width) - 6.dp)
-                            .padding(3.dp)
+                            .padding(horizontal = 4.dp, vertical = 8.dp)
                             .then(
-                                if (column_info.is_tagged.value) Modifier.border(.5.dp, foreground, RoundedCornerShape(4.dp))
+                                if (column_info.is_tagged.value) Modifier.dashed_border(foreground, RoundedCornerShape(12.dp))
                                 else Modifier
                             ),
                         contentAlignment = Alignment.Center,
@@ -1918,9 +1921,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 )
                 DrawerPadder()
                 ConfigDrawerTopButton(
-                    onClick = {
-                        dispatcher.insert_channel(-1)
-                    },
+                    onClick = { dispatcher.insert_channel(-1) },
                     content = {
                         Icon(
                             painter = painterResource(R.drawable.icon_add_channel),
@@ -1991,8 +1992,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                             on_drag_stop = {
                                val dragged_position = (row_height_px * dragging_row_index.value!!) + dragging_row_offset.value!!
-                               val new_channel_position = dragged_position / row_height_px
-                               dispatcher.move_channel(i, new_channel_position.toInt(), i >= new_channel_position)
+                               val new_channel_position = max(0F, ceil(dragged_position / row_height_px))
+                               dispatcher.move_channel(i, new_channel_position.toInt(), true)
                                dragging_row_offset.value = null
                                dragging_row_index.value = null
                             },

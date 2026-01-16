@@ -183,6 +183,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             beat_key.beat,
         ) + position
     }
+
     private fun _vm_state_remove_branch(beat_key: BeatKey, position: List<Int>) {
         if (this.ui_lock.is_locked()) return
         this.vm_state.remove_branch(

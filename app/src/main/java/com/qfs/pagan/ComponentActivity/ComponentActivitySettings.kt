@@ -238,9 +238,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             this.view_model.configuration.project_directory = uri
             this.view_model.save_configuration()
 
-            this.view_model.project_manager?.change_project_path(uri, this.intent.data)?.let {
-                this.result_intent.putExtra(EXTRA_ACTIVE_PROJECT, it.toString())
-            }
+            this.view_model.project_manager?.change_project_path(uri, this.intent.data)
             this.view_model.project_directory.value = uri
 
             this.update_result()

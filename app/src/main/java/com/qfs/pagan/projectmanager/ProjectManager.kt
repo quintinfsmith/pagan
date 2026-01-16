@@ -44,6 +44,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
     }
 
     /**
+     * Deprecated. Potential source of project corruption
      * Move files from [old_uri] to the ProjectManger's current [uri],
      * return the new uri associated with given [active_project_uri] if it was moved
      **/
@@ -98,23 +99,14 @@ class ProjectManager(val context: Context, var uri: Uri?) {
      * [active_project_uri] is a uri that may be changed by the move and the returned Uri
      * is the altered version of that, if it is altered.
      */
-    fun change_project_path(new_uri: Uri, active_project_uri: Uri? = null): Uri? {
+    fun change_project_path(new_uri: Uri, active_project_uri: Uri? = null) {
         val new_directory = DocumentFile.fromTreeUri(this.context, new_uri)
         if (new_directory == null || !new_directory.isDirectory) throw InvalidDirectoryException(new_uri)
 
-        val old_uri = this.uri
         this.uri = new_uri
 
         this.ucheck_update_move_project_files(active_project_uri)
-
-        val output = if (old_uri != null) {
-            this.move_old_projects_directory(old_uri, active_project_uri)
-        } else {
-            null
-        }
-
         this.scan_and_update_project_list()
-        return output
     }
 
     /**

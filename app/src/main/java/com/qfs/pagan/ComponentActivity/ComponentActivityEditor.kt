@@ -127,9 +127,9 @@ import com.qfs.pagan.composable.cxtmenu.ContextMenuLeafStdSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuLinePrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuLineSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuRangeSecondary
-import com.qfs.pagan.composable.cxtmenu.conditional_drag
-import com.qfs.pagan.composable.cxtmenu.dragging_scroll
-import com.qfs.pagan.composable.cxtmenu.long_press
+import com.qfs.pagan.composable.conditional_drag
+import com.qfs.pagan.composable.dragging_scroll
+import com.qfs.pagan.composable.long_press
 import com.qfs.pagan.composable.is_light
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
@@ -472,18 +472,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
             this.view_model.configuration.project_directory = tree_uri
             this.view_model.save_configuration()
 
-            // No need to update the active_project here. using this intent launcher implies the active_project will be changed in the ucheck
             this.view_model.project_manager?.change_project_path(tree_uri, this.controller_model.active_project)
-
             this@ComponentActivityEditor.controller_model.action_interface.save()
+
+            this.reload_config()
         }
 
     internal var result_launcher_settings =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode != RESULT_OK) return@registerForActivityResult
-            result.data?.getStringExtra(EXTRA_ACTIVE_PROJECT)?.toUri()?.let { uri ->
-                this.controller_model.active_project = uri
-            }
             this.reload_config()
         }
 
@@ -593,7 +590,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     override fun on_config_load() {
         super.on_config_load()
-
+        // If the project directory moved, update the active project uri
+        this.controller_model.active_project?.let { project_uri ->
+            this.view_model.project_manager?.let { project_manager ->
+                if (!project_manager.contains(project_uri)) {
+                    this.controller_model.active_project = null
+                    this.controller_model.project_exists.value = false
+                }
+            }
+        }
         this.set_soundfont()
     }
 
@@ -2342,11 +2347,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     fun open_settings() {
         this.result_launcher_settings.launch(
-            Intent(this, ComponentActivitySettings::class.java).apply {
-                this@ComponentActivityEditor.controller_model.active_project?.let {
-                    this.putExtra(EXTRA_ACTIVE_PROJECT, it.toString())
-                }
-            }
+            Intent(this, ComponentActivitySettings::class.java)
         )
     }
 
@@ -2646,9 +2647,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     fun build_dragging_line_map(): List<Triple<ClosedFloatingPointRange<Float>, IntRange, Boolean>> {
-        val line_height = this.resources.getDimension(R.dimen.line_height)
-        val ctl_line_height = this.resources.getDimension(R.dimen.ctl_line_height)
-        val gap_height = this.resources.getDimension(R.dimen.channel_gap_size)
+        val line_height = this.resources.getDimension(R.dimen.line_height).roundToInt()
+        val ctl_line_height = this.resources.getDimension(R.dimen.ctl_line_height).roundToInt()
+        val gap_height = this.resources.getDimension(R.dimen.channel_gap_size).roundToInt()
         val is_dragging_channel = this.state_model.is_dragging_channel()
 
         val output = mutableListOf<Triple<ClosedFloatingPointRange<Float>, IntRange, Boolean>>()

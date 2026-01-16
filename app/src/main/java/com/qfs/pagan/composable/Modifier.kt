@@ -1,13 +1,10 @@
-package com.qfs.pagan.composable.cxtmenu
+package com.qfs.pagan.composable
 
-import android.view.ViewConfiguration.getLongPressTimeout
-import androidx.compose.foundation.OverscrollEffect
-import androidx.compose.foundation.OverscrollFactory
+import android.view.ViewConfiguration
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -17,8 +14,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kotlin.math.pow
 
@@ -184,7 +179,7 @@ fun Modifier.long_press(
     onPress: () -> Unit = {},
     onRelease: () -> Unit = {}
 ): Modifier {
-    val timeout: Long = getLongPressTimeout().toLong()
+    val timeout: Long = ViewConfiguration.getLongPressTimeout().toLong()
     val move_threshold = 3
     var is_pressed = false
     return this then Modifier

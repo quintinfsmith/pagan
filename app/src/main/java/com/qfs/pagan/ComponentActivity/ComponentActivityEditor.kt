@@ -83,7 +83,6 @@ import androidx.compose.ui.zIndex
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
@@ -94,7 +93,6 @@ import com.qfs.apres.soundfont2.Riff
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.ActionTracker
-import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
 import com.qfs.pagan.CompatibleFileType
 import com.qfs.pagan.Exportable
 import com.qfs.pagan.MultiExporterEventHandler
@@ -2690,16 +2688,4 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         return output
     }
-}
-
-
-// TODO: Move these functions
-fun Context.toDp(float: Float): Dp {
-    val pixel_density = this.resources.displayMetrics.density
-    return (float / pixel_density).dp
-}
-
-fun Context.toPx(density_pixel: Dp): Float {
-    val pixel_density = this.resources.displayMetrics.density
-    return density_pixel.value * pixel_density
 }

@@ -370,7 +370,9 @@ open class OpusLayerCursor: OpusLayerBase() {
             }
         }
 
-        this.offset_range(adj_amount, first, second)
+        this.lock_cursor {
+            this.offset_range(adj_amount, first, second)
+        }
     }
 
     // Get the minimum and maximum values of the AbsoluteNoteEvents selected by the cursor

@@ -965,38 +965,22 @@ class ViewModelEditorState: ViewModel() {
             Pair(state.firstVisibleItemIndex, state.firstVisibleItemScrollOffset)
         }
 
-        if (first_visible_beat == beat && last_visible_beat == beat) return
 
         val end_offset = beat_width * (offset + width).toFloat() * this.base_leaf_width.value
 
-        if (beat in (first_visible_beat + 1) until last_visible_beat) {
+        if (first_visible_beat != last_visible_beat && beat in first_visible_beat until last_visible_beat) {
             return
         } else if (first_visible_beat > beat || first_visible_beat == beat && first_visible_offset > offset_px.toInt()) {
             CoroutineScope(Dispatchers.Default).launch {
                 state.requestScrollToItem(beat, offset_px.toInt())
             }
-        } else if (last_visible_beat < beat || (last_visible_beat == beat && state.layoutInfo.visibleItemsInfo.last().offset + end_offset > state.layoutInfo.viewportSize.width - this.table_side_padding.value)) {
-            var working_offset = state.layoutInfo.viewportSize.width - this.table_side_padding.value
-            var working_index = beat
-            val beat_width_px = (beat_width * this.base_leaf_width.value).toInt()
-
-            while (working_index >= 0) {
-                val working_beat_width = this.column_data[working_index].top_weight.value
-                val subtracter = (working_beat_width * this.base_leaf_width.value).toInt()
-                if (working_offset - subtracter < beat_width_px) break
-                working_offset -= subtracter
-                working_index -= 1
-            }
-
+        } else if (last_visible_beat < beat || (state.layoutInfo.visibleItemsInfo.last().offset + end_offset > state.layoutInfo.viewportSize.width - this.table_side_padding.value)) {
+            var screen_width = state.layoutInfo.viewportSize.width - this.table_side_padding.value
             CoroutineScope(Dispatchers.Default).launch {
-                if (working_index > -1) {
-                    state.requestScrollToItem(
-                        working_index,
-                        0 - working_offset + end_offset.toInt()
-                    )
-                } else {
-                    state.requestScrollToItem(0)
-                }
+                state.requestScrollToItem(
+                    beat,
+                    0 - screen_width + end_offset.toInt()
+                )
             }
         }
     }

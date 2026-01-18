@@ -5,7 +5,6 @@ import android.app.AlertDialog
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
@@ -22,7 +21,6 @@ import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -567,6 +565,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val dispatcher = this.controller_model.action_interface
         this.state_model.base_leaf_width.value = this.resources.getDimension(R.dimen.base_leaf_width)
         this.controller_model.attach_state_model(this.state_model)
+
         dispatcher.attach_top_model(this.view_model)
 
         this.bind_midi_interface()
@@ -1133,7 +1132,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val leaf_width = dimensionResource(R.dimen.base_leaf_width)
         val line_label_width = dimensionResource(R.dimen.line_label_width)
         val column_widths = Array(ui_facade.beat_count.value) { i ->
-            Array(ui_facade.line_count.value) { j -> ui_facade.cell_map[j][i].value.top_weight.value }.max()
+            ui_facade.column_data[i].top_weight.value
         }
 
         val channel_gap_height = dimensionResource(R.dimen.channel_gap_size)
@@ -1598,7 +1597,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     .fillMaxSize(),
                 border_color = MaterialTheme.colorScheme.onSurfaceVariant,
                 content = {
-                    if (state_model.wide_beat.value == x) {
+                    if (state_model.active_wide_beat.value == x && LocalContext.current.toPx(dimensionResource(R.dimen.base_leaf_width)) * ui_facade.column_data[x].top_weight.value > ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width) {
                         LinearProgressIndicator(
                             modifier = Modifier
                                 .width(ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width.dp / 5)
@@ -1635,19 +1634,24 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         val floating_position = ((viewport_width - width_px) / 2F) + scroll_offset
                                         val end_position = ((width_px - viewport_width) / 2F)
                                         if (floating_position < end_position) {
-                                            state_model.wide_beat.value = x
-                                            state_model.wide_beat_progress.value = scroll_offset / (width_px - viewport_width).toFloat()
+                                            state_model.active_wide_beat.value = x
+                                            state_model.wide_beat_progress.value = scroll_offset / (width_px - viewport_width)
                                             floating_position
                                         } else {
-                                            state_model.wide_beat.value = null
+                                            if (state_model.active_wide_beat.value == x) {
+                                                state_model.active_wide_beat.value = null
+                                            }
                                             end_position
                                         }
                                     } else if (visible_items.isNotEmpty() && visible_items.last().index == x) {
-                                        state_model.wide_beat.value = null
-                                        state_model.wide_beat.value = null
+                                        if (state_model.active_wide_beat.value == x) {
+                                            state_model.active_wide_beat.value = null
+                                        }
                                         (viewport_width - width_px) / 2F
                                     } else {
-                                        state_model.wide_beat.value = null
+                                        if (state_model.active_wide_beat.value == x) {
+                                            state_model.active_wide_beat.value = null
+                                        }
                                         0F
                                     }
                                 } else {

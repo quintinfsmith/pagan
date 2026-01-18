@@ -7,7 +7,6 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.EditorTable
 import com.qfs.pagan.PlaybackState
@@ -47,9 +46,10 @@ class ViewModelEditorState: ViewModel() {
         val is_dragging = mutableStateOf(false)
     }
 
-    class ColumnData(is_tagged: Boolean, is_selected: Boolean = false) {
+    class ColumnData(is_tagged: Boolean, is_selected: Boolean = false, max_leaf_count: Int = 1) {
         val is_tagged = mutableStateOf(is_tagged)
         val is_selected = mutableStateOf(is_selected)
+        val top_weight = mutableStateOf(max_leaf_count)
     }
 
     class LeafData(event: OpusEvent? = null, is_selected: Boolean = false, is_secondary: Boolean = false, is_valid: Boolean = true, is_spillover: Boolean = false, weight: Float = 1F) {
@@ -192,14 +192,15 @@ class ViewModelEditorState: ViewModel() {
 
     private val working_path = mutableListOf<Int>()
     val preset_names = HashMap<Int, HashMap<Int, String>>()
+    val bkp_preset_names = Array<String>(128) { "" }
     val available_instruments = HashMap<Pair<Int, Int>, List<Pair<String, Int>>>()
     val base_leaf_width = mutableStateOf(0F)
 
     val has_global_effects_hidden = mutableStateOf(true)
     val soundfont_active = mutableStateOf(false)
     val table_side_padding = mutableStateOf(0)
-    val wide_beat: MutableState<Int?> = mutableStateOf(null)
     val wide_beat_progress: MutableState<Float> = mutableStateOf(0F)
+    val active_wide_beat: MutableState<Int?> = mutableStateOf(null)
 
     val dragging_line: MutableState<Int?> = mutableStateOf(null)
     val dragging_abs_offset: MutableState<Float?> = mutableStateOf(null)
@@ -360,6 +361,7 @@ class ViewModelEditorState: ViewModel() {
 
         cell.sort_leafs()
         cell.top_weight.value = tree.get_root().weighted_size
+        this.column_data[coordinate.x].top_weight.value = Array(this.cell_map.size) { this.cell_map[it][coordinate.x].value.top_weight.value }.max()
     }
 
     fun update_column(column: Int, is_tagged: Boolean) {
@@ -891,7 +893,7 @@ class ViewModelEditorState: ViewModel() {
         var working_value = leaf
         for (i in 0 until this.beat_count.value) {
             if (working_value == 0) break
-            working_value -= Array(this.cell_map.size) { j -> this.cell_map[j][i].value.top_weight.value }.max()
+            working_value -= this.column_data[i].top_weight.value
             output = i
             if (working_value < 0) break
         }
@@ -919,7 +921,7 @@ class ViewModelEditorState: ViewModel() {
         } else if (state.firstVisibleItemIndex >= beat) {
             Pair(beat, 0)
         } else if (state.layoutInfo.visibleItemsInfo.last().index <= beat) {
-            val beat_width = Array(this.line_count.value) { this.cell_map[it][beat].value.top_weight.value }.max()
+            val beat_width = this.column_data[beat].top_weight.value
             Pair(beat, (0 - state.layoutInfo.viewportSize.width + (beat_width * this.base_leaf_width.value)).toInt())
         } else {
             return
@@ -933,7 +935,7 @@ class ViewModelEditorState: ViewModel() {
     }
 
     private fun get_beat_width(beat: Int): Int {
-        return Array(this.line_count.value) { j -> this.cell_map[j][beat].value.top_weight.value }.max()
+        return this.column_data[beat].top_weight.value
     }
 
     fun scroll_to_leaf(beat: Int, offset: Rational, width: Rational) {
@@ -958,7 +960,7 @@ class ViewModelEditorState: ViewModel() {
 
         val end_offset = beat_width * (offset + width).toFloat() * this.base_leaf_width.value
 
-        if (first_visible_beat < beat && last_visible_beat > beat) {
+        if (beat in (first_visible_beat + 1) until last_visible_beat) {
             return
         } else if (first_visible_beat > beat || first_visible_beat == beat && first_visible_offset > offset_px.toInt()) {
             CoroutineScope(Dispatchers.Default).launch {
@@ -970,7 +972,7 @@ class ViewModelEditorState: ViewModel() {
             val beat_width_px = (beat_width * this.base_leaf_width.value).toInt()
 
             while (working_index >= 0) {
-                val working_beat_width = Array(this.line_count.value) { j -> this.cell_map[j][working_index].value.top_weight.value }.max()
+                val working_beat_width = this.column_data[working_index].top_weight.value
                 val subtracter = (working_beat_width * this.base_leaf_width.value).toInt()
                 if (working_offset - subtracter < beat_width_px) break
                 working_offset -= subtracter
@@ -1019,6 +1021,12 @@ class ViewModelEditorState: ViewModel() {
         this.clear_instrument_names()
     }
 
+    fun set_bkp_preset_names(names: Array<String>) {
+        for ((i, name) in names.enumerate()) {
+            this.bkp_preset_names[i] = name
+        }
+    }
+
     // check if we need to draw the lin *above* the cell (when dragging)
     fun draw_top_line(y: Int): Boolean {
         val first_drag_y = this.dragging_first_line.value ?: return false
@@ -1038,4 +1046,6 @@ class ViewModelEditorState: ViewModel() {
             y == dragging_to_line && !after_line || (y == dragging_to_line + selection_height && after_line)
         }
     }
+
+
 }

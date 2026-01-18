@@ -1621,7 +1621,10 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         val sort_options = listOf(
             Pair(R.string.sort_option_bank) { a: Int, b: Int -> preset_names[a].first.compareTo(preset_names[b].first) },
             Pair(R.string.sort_option_program) { a: Int, b: Int -> preset_names[a].second.compareTo(preset_names[b].second) },
-            Pair(R.string.sort_option_abc) { a: Int, b: Int -> preset_names[a].third.lowercase().compareTo(preset_names[b].third.lowercase()) }
+            Pair(R.string.sort_option_abc) { a: Int, b: Int ->
+                println("$a, $b, ${preset_names[a]}, ${preset_names[b]}")
+                preset_names[a].third.lowercase().compareTo(preset_names[b].third.lowercase())
+            }
         )
 
         this.vm_top.sortable_list_dialog(

@@ -108,7 +108,6 @@ class ViewModelEditorController(): ViewModel() {
         this.active_soundfont_relative_path = null
     }
 
-
     fun get_soundfont(): SoundFont? {
         return this.audio_interface.soundfont
     }

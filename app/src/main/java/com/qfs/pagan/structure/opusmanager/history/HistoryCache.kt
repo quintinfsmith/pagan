@@ -92,9 +92,8 @@ class HistoryCache {
     }
 
     private fun _close_multi() {
-        if (this.is_locked()) {
-            return
-        }
+        if (this.is_locked()) return
+
         if (this._working_node != null) {
             this._working_node = this._working_node!!.parent
         }

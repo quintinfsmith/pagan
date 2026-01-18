@@ -536,7 +536,6 @@ open class OpusLayerCursor: OpusLayerBase() {
     }
 
     override fun controller_line_overwrite_range_horizontally(type: EffectType, channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey, repeat: Int?) {
-        println("ATTEMPTING....")
         this.lock_cursor {
             super.controller_line_overwrite_range_horizontally(type, channel, line_offset, first_key, second_key, repeat)
         }
@@ -705,8 +704,8 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor_select_line(channel, line_offset)
     }
 
-    override fun insert_beat(beat_index: Int, beats_in_column: List<ReducibleTree<OpusEvent>>?) {
-        super.insert_beat(beat_index, beats_in_column)
+    override fun insert_beat(beat_index: Int) {
+        super.insert_beat(beat_index)
         this.cursor_select_column(beat_index)
     }
 

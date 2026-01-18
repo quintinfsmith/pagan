@@ -337,7 +337,7 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun update_tree(coordinate: EditorTable.Coordinate, position: List<Int>, tree: ReducibleTree<out OpusEvent>) {
-        // NOTE: tree needs to be the ACTUAL tree in order to recalc the weights
+        // NOTE: tree needs to be the ACTUAL (not a copy) tree in order to recalc the weights
         val cell = this.cell_map[coordinate.y][coordinate.x].value
         val no_prune_paths = mutableSetOf<List<Int>>()
 
@@ -975,7 +975,7 @@ class ViewModelEditorState: ViewModel() {
                 state.requestScrollToItem(beat, offset_px.toInt())
             }
         } else if (last_visible_beat < beat || (state.layoutInfo.visibleItemsInfo.last().offset + end_offset > state.layoutInfo.viewportSize.width - this.table_side_padding.value)) {
-            var screen_width = state.layoutInfo.viewportSize.width - this.table_side_padding.value
+            val screen_width = state.layoutInfo.viewportSize.width - this.table_side_padding.value
             CoroutineScope(Dispatchers.Default).launch {
                 state.requestScrollToItem(
                     beat,

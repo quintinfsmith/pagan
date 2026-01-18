@@ -1461,7 +1461,6 @@ open class OpusLayerBase: Effectable {
         if (this.is_percussion(channel_index_from) != this.is_percussion(channel_index_to)) {
             throw IncompatibleChannelException(channel_index_from, channel_index_to)
         }
-        println("$channel_index_to, $line_offset_to")
         this.new_line(channel_index_to, line_offset_to)
         var adj_line_offset_from = line_offset_from
         if (channel_index_to == channel_index_from && line_offset_to < line_offset_from) {
@@ -1504,7 +1503,7 @@ open class OpusLayerBase: Effectable {
      * Insert a beat at [beat_index] into all existing controllers, channels and lines.
      * populate the new beat with [beats_in_column]
      */
-    open fun insert_beat(beat_index: Int, beats_in_column: List<ReducibleTree<OpusEvent>>? = null) {
+    open fun insert_beat(beat_index: Int) {
         if (beat_index > this.length) throw IndexOutOfBoundsException()
 
         this.length += 1
@@ -1513,10 +1512,6 @@ open class OpusLayerBase: Effectable {
         }
 
         this.controllers.insert_beat(beat_index)
-
-        if (beats_in_column != null) {
-            this._apply_column_trees(beat_index, beats_in_column)
-        }
 
         val tag_beats = this.marked_sections.keys.sorted().toMutableList()
         tag_beats.reverse()
@@ -3473,20 +3468,6 @@ open class OpusLayerBase: Effectable {
         }
     }
 
-    /* only used in insert_beat. NO WHERE ELSE */
-    open fun _apply_column_trees(beat_index: Int, beats_in_column: List<ReducibleTree<OpusEvent>>) {
-        var y = 0
-        for (channel in 0 until this.channels.size) {
-            for (line in 0 until this.channels[channel].lines.size) {
-                val beat_key = BeatKey(channel, line, beat_index)
-                this.replace_tree(
-                    beat_key,
-                    listOf(),
-                    checked_cast<ReducibleTree<TunedInstrumentEvent>>(beats_in_column[y++])
-                )
-            }
-        }
-    }
 
     fun remove_channel_by_uuid(uuid: Int) {
         val channel = this._channel_uuid_map[uuid] ?: throw OpusChannelAbstract.InvalidChannelUUID(uuid)

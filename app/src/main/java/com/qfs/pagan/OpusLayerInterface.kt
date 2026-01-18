@@ -648,6 +648,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
         callback()
 
+        if (!line.visible) return
+
         this.remap_blocked_leafs(
             this.get_visible_row_from_ctl_line_line(type, beat_key.channel, beat_key.line_offset),
             original_blocked_leafs,
@@ -661,6 +663,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
         callback()
 
+        if (!line.visible) return
+
         this.remap_blocked_leafs(
             this.get_visible_row_from_ctl_line_channel(type, channel),
             original_blocked_leafs,
@@ -673,6 +677,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         val original_blocked_leafs = line.get_blocked_leafs(beat, position)
 
         callback()
+
+        if (!line.visible) return
 
         this.remap_blocked_leafs(
             this.get_visible_row_from_ctl_line_global(type),
@@ -1063,9 +1069,9 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.vm_state.refresh_cursor()
     }
 
-    override fun insert_beat(beat_index: Int, beats_in_column: List<ReducibleTree<OpusEvent>>?) {
+    override fun insert_beat(beat_index: Int) {
         this.track_blocked_leafs(beat_index) {
-            super.insert_beat(beat_index, beats_in_column)
+            super.insert_beat(beat_index)
             this.ui_add_column(beat_index)
 
             if (this.ui_lock.is_locked()) return@track_blocked_leafs
@@ -1460,19 +1466,24 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             }
         }
 
-        //
-        var tree = this.get_tree(beat_key)
-        val width = Rational(1, 1)
-        var offset = Rational(0, 1)
-        for (p in position) {
-            width.denominator *= tree.size
-            offset += Rational(p, width.denominator)
-            tree = tree[p]
-        }
-        //
-
         this.vm_state.set_active_event(working_event, descriptor)
-        this.vm_state.scroll_to_leaf(beat_key.beat, offset, width)
+
+
+        // UI May still nee to be updated.
+        if (this.vm_state.beat_count.value > beat_key.beat) {
+            //
+            var tree = this.get_tree(beat_key)
+            val width = Rational(1, 1)
+            var offset = Rational(0, 1)
+            for (p in position) {
+                width.denominator *= tree.size
+                offset += Rational(p, width.denominator)
+                tree = tree[p]
+            }
+            //
+
+            this.vm_state.scroll_to_leaf(beat_key.beat, offset, width)
+        }
     }
 
     override fun cursor_select_ctl_at_line(ctl_type: EffectType, beat_key: BeatKey, position: List<Int>) {

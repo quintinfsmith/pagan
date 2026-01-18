@@ -361,7 +361,7 @@ class ViewModelEditorState: ViewModel() {
 
         cell.sort_leafs()
         cell.top_weight.value = tree.get_root().weighted_size
-        this.column_data[coordinate.x].top_weight.value = Array(this.cell_map.size) { this.cell_map[it][coordinate.x].value.top_weight.value }.max()
+        this.column_data[coordinate.x].top_weight.value = Array(this.line_count.value) { this.cell_map[it][coordinate.x].value.top_weight.value }.max()
     }
 
     fun update_column(column: Int, is_tagged: Boolean) {
@@ -397,6 +397,10 @@ class ViewModelEditorState: ViewModel() {
                 working_beat = it.first
                 working_position = it.second
             } ?: break
+        }
+
+        for (x in 0 until this.beat_count.value) {
+            this.column_data[x].top_weight.value = Array(this.line_count.value) { this.cell_map[it][x].value.top_weight.value }.max()
         }
     }
 
@@ -915,6 +919,7 @@ class ViewModelEditorState: ViewModel() {
     fun scroll_to_beat(beat: Int) {
         if (beat >= this.beat_count.value) return
 
+
         val state = this.scroll_state_x.value
         val target = if (this.playback_state_soundfont.value != PlaybackState.Ready) {
             Pair(beat, 0)
@@ -922,7 +927,11 @@ class ViewModelEditorState: ViewModel() {
             Pair(beat, 0)
         } else if (state.layoutInfo.visibleItemsInfo.last().index <= beat) {
             val beat_width = this.column_data[beat].top_weight.value
-            Pair(beat, (0 - state.layoutInfo.viewportSize.width + (beat_width * this.base_leaf_width.value)).toInt())
+            if (this.playback_state_midi.value == PlaybackState.Playing || this.playback_state_soundfont.value == PlaybackState.Playing) {
+                Pair(beat, 0)
+            } else {
+                Pair(beat, (0 - state.layoutInfo.viewportSize.width + (beat_width * this.base_leaf_width.value)).toInt())
+            }
         } else {
             return
         }

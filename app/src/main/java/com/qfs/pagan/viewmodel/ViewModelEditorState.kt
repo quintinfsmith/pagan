@@ -327,10 +327,6 @@ class ViewModelEditorState: ViewModel() {
         this.use_midi_playback.value = value
     }
 
-    fun update_cell(coordinate: EditorTable.Coordinate, tree: ReducibleTree<out OpusEvent>) {
-        this.cell_map[coordinate.y][coordinate.x].value = TreeData(tree)
-    }
-
     fun remove_branch(coordinate: EditorTable.Coordinate, position: List<Int>) {
         val cell = this.cell_map[coordinate.y][coordinate.x].value
         cell.remove_branch(position)

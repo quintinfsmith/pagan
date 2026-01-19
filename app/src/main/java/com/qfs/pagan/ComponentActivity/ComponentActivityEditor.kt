@@ -22,6 +22,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -61,6 +62,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -69,6 +71,7 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -1697,6 +1700,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         ProvideContentColorTextStyle(contentColor = text_color) {
             Box(
                 modifier
+                    .focusable()
                     .fillMaxHeight()
                     .background(color = leaf_color),
                 contentAlignment = Alignment.Center
@@ -2154,7 +2158,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     override fun LayoutLargePortrait(modifier: Modifier) {
         val view_model = this.controller_model
         val ui_facade = this.controller_model.opus_manager.vm_state
-
+        val focusManager = LocalFocusManager.current
         if (!ui_facade.ready.value) {
             LoadingSpinnerPlaceHolder()
             return

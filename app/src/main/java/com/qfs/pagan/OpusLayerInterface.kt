@@ -202,9 +202,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         )
     }
 
-    private fun _update_tree(beat_key: BeatKey, position: List<Int>, clear_branches: Boolean = false) {
+    private fun _update_tree(beat_key: BeatKey, position: List<Int>) {
         if (this.ui_lock.is_locked()) return
-        val tree = this.get_tree(beat_key, position)
         this.vm_state.update_tree(
             EditorTable.Coordinate(
                 y = this.get_visible_row_from_ctl_line(
@@ -218,55 +217,60 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 x = beat_key.beat
             ),
             position,
-            tree
+            this.get_tree(beat_key, position)
         )
         this.vm_state.refresh_cursor()
-
     }
 
-    private fun _queue_global_ctl_cell_change(type: EffectType, beat: Int) {
+    // Global
+    private fun _update_tree(type: EffectType, beat: Int, position: List<Int>,) {
         if (this.ui_lock.is_locked()) return
 
         val controller = this.get_controller<EffectEvent>(type)
         if (!controller.visible) return
 
-        this.vm_state.update_cell(
+        this.vm_state.update_tree(
             EditorTable.Coordinate(
                 y = this.get_visible_row_from_ctl_line_global(type),
                 x = beat
             ),
-            controller.get_tree(beat).copy { it?.copy() }
+            position,
+            controller.get_tree(beat, position)
         )
         this.vm_state.refresh_cursor()
     }
 
-    private fun _queue_channel_ctl_cell_change(type: EffectType, channel: Int, beat: Int) {
+    // Channel
+    private fun _update_tree(type: EffectType, channel: Int, beat: Int, position: List<Int>) {
         if (this.ui_lock.is_locked()) return
 
         val controller = this.get_all_channels()[channel].get_controller<EffectEvent>(type)
         if (!controller.visible) return
 
-        this.vm_state.update_cell(
+        this.vm_state.update_tree(
             EditorTable.Coordinate(
                 y = this.get_visible_row_from_ctl_line_channel(type, channel),
                 x = beat
             ),
-            controller.get_tree(beat).copy { it?.copy() }
+            position,
+            controller.get_tree(beat, position)
         )
         this.vm_state.refresh_cursor()
     }
 
-    private fun _queue_line_ctl_cell_change(type: EffectType, beat_key: BeatKey) {
+    // Line
+    private fun _update_tree(type: EffectType, beat_key: BeatKey, position: List<Int>) {
         if (this.ui_lock.is_locked()) return
         val controller = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].get_controller<EffectEvent>(type)
         if (!controller.visible) return
 
-        this.vm_state.update_cell(
+        this.vm_state.update_tree(
             EditorTable.Coordinate(
                 y = this.get_visible_row_from_ctl_line_line(type, beat_key.channel, beat_key.line_offset),
                 x = beat_key.beat
             ),
-            controller.get_tree(beat_key.beat).copy { it?.copy() }
+            position,
+            controller.get_tree(beat_key.beat, position)
         )
         this.vm_state.refresh_cursor()
     }
@@ -390,6 +394,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                         }
                     }
                 }
+
                 this.vm_state.has_global_effects_hidden.value = available_controllers.isNotEmpty()
                 this.vm_state.refresh_cursor()
             }
@@ -413,31 +418,31 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     override fun unset(beat_key: BeatKey, position: List<Int>) {
         this.track_blocked_leafs(beat_key, position) {
             super.unset(beat_key, position)
-            this._update_tree(beat_key, position, clear_branches = true)
+            this._update_tree(beat_key, position)
             this.check_update_active_event(beat_key, position)
         }
     }
 
     override fun controller_global_unset(type: EffectType, beat: Int, position: List<Int>) {
-        this.track_blocked_leafs<EffectEvent>(type, beat, position) {
+        this.track_blocked_leafs(type, beat, position) {
             super.controller_global_unset(type, beat, position)
-            this._queue_global_ctl_cell_change(type, beat)
+            this._update_tree(type, beat, position)
             this.check_update_active_event(type, beat, position)
         }
     }
 
     override fun controller_channel_unset(type: EffectType, channel: Int, beat: Int, position: List<Int>) {
-        this.track_blocked_leafs<EffectEvent>(type, channel, beat, position) {
+        this.track_blocked_leafs(type, channel, beat, position) {
             super.controller_channel_unset(type, channel, beat, position)
-            this._queue_channel_ctl_cell_change(type, channel, beat)
+            this._update_tree(type, channel, beat, position)
             this.check_update_active_event(type, channel, beat, position)
         }
     }
 
     override fun controller_line_unset(type: EffectType, beat_key: BeatKey, position: List<Int>) {
-        this.track_blocked_leafs<EffectEvent>(type, beat_key, position) {
+        this.track_blocked_leafs(type, beat_key, position) {
             super.controller_line_unset(type, beat_key, position)
-            this._queue_line_ctl_cell_change(type, beat_key)
+            this._update_tree(type, beat_key, position)
             this.check_update_active_event(type, beat_key, position)
         }
     }
@@ -446,7 +451,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.exception_catcher {
             this.track_blocked_leafs(beat_key, position ?: listOf()) {
                 super.replace_tree(beat_key, position, tree)
-                this._update_tree(beat_key, position ?: listOf(), clear_branches = true)
+                this._update_tree(beat_key, position ?: listOf())
                 this.check_update_active_event(beat_key, position ?: listOf())
             }
         }
@@ -454,10 +459,9 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     override fun <T: EffectEvent> controller_global_replace_tree(type: EffectType, beat: Int, position: List<Int>?, tree: ReducibleTree<T>) {
         this.exception_catcher {
-            this.track_blocked_leafs<EffectEvent>(type, beat, position ?: listOf()) {
+            this.track_blocked_leafs(type, beat, position ?: listOf()) {
                 super.controller_global_replace_tree(type, beat, position, tree)
-                this._queue_global_ctl_cell_change(type, beat)
-
+                this._update_tree(type, beat, position ?: listOf())
                 this.check_update_active_event(type, beat, position ?: listOf())
             }
         }
@@ -465,9 +469,9 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     override fun <T: EffectEvent> controller_channel_replace_tree(type: EffectType, channel: Int, beat: Int, position: List<Int>?, tree: ReducibleTree<T>) {
         this.exception_catcher {
-            this.track_blocked_leafs<EffectEvent>(type, channel, beat, position ?: listOf()) {
+            this.track_blocked_leafs(type, channel, beat, position ?: listOf()) {
                 super.controller_channel_replace_tree(type, channel, beat, position, tree)
-                this._queue_channel_ctl_cell_change(type, channel, beat)
+                this._update_tree(type, channel, beat, position ?: listOf())
                 this.check_update_active_event(type, channel, beat, position ?: listOf())
             }
         }
@@ -475,9 +479,9 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     override fun <T: EffectEvent> controller_line_replace_tree(type: EffectType, beat_key: BeatKey, position: List<Int>?, tree: ReducibleTree<T>) {
         this.exception_catcher {
-            this.track_blocked_leafs<EffectEvent>(type, beat_key, position ?: listOf()) {
+            this.track_blocked_leafs(type, beat_key, position ?: listOf()) {
                 super.controller_line_replace_tree(type, beat_key, position, tree)
-                this._queue_line_ctl_cell_change(type, beat_key)
+                this._update_tree(type, beat_key, position ?: listOf())
                 this.check_update_active_event(type, beat_key, position ?: listOf())
             }
         }
@@ -485,9 +489,9 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     override fun <T: EffectEvent> controller_global_set_event(type: EffectType, beat: Int, position: List<Int>, event: T) {
         this.exception_catcher {
-            this.track_blocked_leafs<T>(type, beat, position) {
+            this.track_blocked_leafs(type, beat, position) {
                 super.controller_global_set_event(type, beat, position, event)
-                this._queue_global_ctl_cell_change(type, beat)
+                this._update_tree(type, beat, position)
 
                 this.check_update_active_event(type, beat, position)
             }
@@ -496,9 +500,9 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     override fun <T: EffectEvent> controller_channel_set_event(type: EffectType, channel: Int, beat: Int, position: List<Int>, event: T) {
         this.exception_catcher {
-            this.track_blocked_leafs<T>(type, channel, beat, position) {
+            this.track_blocked_leafs(type, channel, beat, position) {
                 super.controller_channel_set_event(type, channel, beat, position, event)
-                this._queue_channel_ctl_cell_change(type, channel, beat)
+                this._update_tree(type, channel, beat, position)
                 this.check_update_active_event(type, channel, beat, position)
             }
         }
@@ -506,9 +510,9 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     override fun <T: EffectEvent> controller_line_set_event(type: EffectType, beat_key: BeatKey, position: List<Int>, event: T) {
         this.exception_catcher {
-            this.track_blocked_leafs<T>(type, beat_key, position) {
+            this.track_blocked_leafs(type, beat_key, position) {
                 super.controller_line_set_event(type, beat_key, position, event)
-                this._queue_line_ctl_cell_change(type, beat_key)
+                this._update_tree(type, beat_key, position)
                 this.check_update_active_event(type, beat_key, position)
             }
         }
@@ -642,8 +646,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         )
     }
 
-    private fun <T: EffectEvent> track_blocked_leafs(type: EffectType, beat_key: BeatKey, position: List<Int>, callback: () -> Unit) {
-        val line = this.channels[beat_key.channel].lines[beat_key.line_offset].controllers.get<T>(type)
+    private fun track_blocked_leafs(type: EffectType, beat_key: BeatKey, position: List<Int>, callback: () -> Unit) {
+        val line = this.channels[beat_key.channel].lines[beat_key.line_offset].controllers.get<EffectEvent>(type)
         val original_blocked_leafs = line.get_blocked_leafs(beat_key.beat, position)
 
         callback()
@@ -657,8 +661,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         )
     }
 
-    private fun <T: EffectEvent> track_blocked_leafs(type: EffectType, channel: Int, beat: Int, position: List<Int>, callback: () -> Unit) {
-        val line = this.channels[channel].controllers.get<T>(type)
+    private fun track_blocked_leafs(type: EffectType, channel: Int, beat: Int, position: List<Int>, callback: () -> Unit) {
+        val line = this.channels[channel].controllers.get<EffectEvent>(type)
         val original_blocked_leafs = line.get_blocked_leafs(beat, position)
 
         callback()
@@ -672,8 +676,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         )
     }
 
-    private fun <T: EffectEvent> track_blocked_leafs(type: EffectType, beat: Int, position: List<Int>, callback: () -> Unit) {
-        val line = this.controllers.get<T>(type)
+    private fun track_blocked_leafs(type: EffectType, beat: Int, position: List<Int>, callback: () -> Unit) {
+        val line = this.controllers.get<EffectEvent>(type)
         val original_blocked_leafs = line.get_blocked_leafs(beat, position)
 
         callback()
@@ -715,44 +719,34 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.exception_catcher {
             this.track_blocked_leafs(beat_key, position) {
                 super.split_tree(beat_key, position, splits, move_event_to_end)
-                this._update_tree(beat_key, position, clear_branches = true)
+                this._update_tree(beat_key, position)
             }
         }
     }
 
     override fun controller_global_split_tree(type: EffectType, beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
         this.exception_catcher {
-            this.track_blocked_leafs<EffectEvent>(type, beat, position) {
+            this.track_blocked_leafs(type, beat, position) {
                 super.controller_global_split_tree(type, beat, position, splits, move_event_to_end)
-                this._queue_global_ctl_cell_change(type, beat)
+                this._update_tree(type, beat, position)
             }
         }
     }
 
     override fun controller_channel_split_tree(type: EffectType, channel: Int, beat: Int, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
-
         this.exception_catcher {
-            this.track_blocked_leafs<EffectEvent>(type, channel, beat, position) {
+            this.track_blocked_leafs(type, channel, beat, position) {
                 super.controller_channel_split_tree(type, channel, beat, position, splits, move_event_to_end)
-                this._queue_channel_ctl_cell_change(type, channel, beat)
+                this._update_tree(type, channel, beat, position)
             }
         }
     }
 
     override fun controller_line_split_tree(type: EffectType, beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {
         this.exception_catcher {
-            this.track_blocked_leafs<EffectEvent>(type, beat_key, position) {
+            this.track_blocked_leafs(type, beat_key, position) {
                 super.controller_line_split_tree(type, beat_key, position, splits, move_event_to_end)
-                this._queue_line_ctl_cell_change(type, beat_key)
-            }
-        }
-    }
-
-    override fun remove(beat_key: BeatKey, position: List<Int>) {
-        this.exception_catcher {
-            this.track_blocked_leafs(beat_key, position) {
-                super.remove(beat_key, position)
-                this._update_tree(beat_key, position.subList(0, position.size - 1), true)
+                this._update_tree(type, beat_key, position)
             }
         }
     }
@@ -768,27 +762,27 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     override fun controller_global_insert_after(type: EffectType, beat: Int, position: List<Int>) {
         this.exception_catcher {
-            this.track_blocked_leafs<EffectEvent>(type, beat, position) {
+            this.track_blocked_leafs(type, beat, position) {
                 super.controller_global_insert_after(type, beat, position)
-                this._queue_global_ctl_cell_change(type, beat)
+                this._update_tree(type, beat, position.subList(0, position.size - 1))
             }
         }
     }
 
     override fun controller_channel_insert_after(type: EffectType, channel: Int, beat: Int, position: List<Int>) {
         this.exception_catcher {
-            this.track_blocked_leafs<EffectEvent>(type, beat, channel, position) {
+            this.track_blocked_leafs(type, beat, channel, position) {
                 super.controller_channel_insert_after(type, channel, beat, position)
-                this._queue_channel_ctl_cell_change(type, channel, beat)
+                this._update_tree(type, channel, beat, position.subList(0, position.size - 1))
             }
         }
     }
 
     override fun controller_line_insert_after(type: EffectType, beat_key: BeatKey, position: List<Int>) {
         this.exception_catcher {
-            this.track_blocked_leafs<EffectEvent>(type, beat_key, position) {
+            this.track_blocked_leafs(type, beat_key, position) {
                 super.controller_line_insert_after(type, beat_key, position)
-                this._queue_line_ctl_cell_change(type, beat_key)
+                this._update_tree(type, beat_key, position.subList(0, position.size - 1))
             }
         }
     }
@@ -804,71 +798,64 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     override fun controller_global_insert(type: EffectType, beat: Int, position: List<Int>) {
         this.exception_catcher {
-            this.track_blocked_leafs<EffectEvent>(type, beat, position) {
+            this.track_blocked_leafs(type, beat, position) {
                 super.controller_global_insert(type, beat, position)
-                this._queue_global_ctl_cell_change(type, beat)
+                this._update_tree(type, beat, position.subList(0, position.size - 1))
             }
         }
     }
 
     override fun controller_channel_insert(type: EffectType, channel: Int, beat: Int, position: List<Int>) {
         this.exception_catcher {
-            this.track_blocked_leafs<EffectEvent>(type, beat, channel, position) {
+            this.track_blocked_leafs(type, beat, channel, position) {
                 super.controller_channel_insert(type, channel, beat, position)
-                this._queue_channel_ctl_cell_change(type, channel, beat)
+                this._update_tree(type, channel, beat, position.subList(0, position.size - 1))
             }
         }
     }
 
     override fun controller_line_insert(type: EffectType, beat_key: BeatKey, position: List<Int>) {
         this.exception_catcher {
-            this.track_blocked_leafs<EffectEvent>(type, beat_key, position) {
+            this.track_blocked_leafs(type, beat_key, position) {
                 super.controller_line_insert(type, beat_key, position)
-                this._queue_line_ctl_cell_change(type, beat_key)
-                this.vm_state.refresh_cursor()
+                this._update_tree(type, beat_key, position.subList(0, position.size - 1))
+            }
+        }
+    }
+
+    override fun remove(beat_key: BeatKey, position: List<Int>) {
+        this.exception_catcher {
+            this.track_blocked_leafs(beat_key, position) {
+                super.remove(beat_key, position)
+                this._update_tree(beat_key, position.subList(0, position.size - 1))
             }
         }
     }
 
     override fun controller_global_remove(type: EffectType, beat: Int, position: List<Int>) {
         this.exception_catcher {
-            super.controller_global_remove(type, beat, position)
+            this.track_blocked_leafs(type, beat, position) {
+                super.controller_global_remove(type, beat, position)
+                this._update_tree(type, beat, position.subList(0, position.size - 1))
+            }
         }
     }
 
     override fun controller_channel_remove(type: EffectType, channel: Int, beat: Int, position: List<Int>) {
         this.exception_catcher {
-            super.controller_channel_remove(type, channel, beat, position)
+            this.track_blocked_leafs(type, channel, beat, position) {
+                super.controller_channel_remove(type, channel, beat, position)
+                this._update_tree(type, channel, beat, position.subList(0, position.size - 1))
+            }
         }
     }
 
     override fun controller_line_remove(type: EffectType, beat_key: BeatKey, position: List<Int>) {
         this.exception_catcher {
-            super.controller_line_remove(type, beat_key, position)
-        }
-    }
-
-    override fun controller_global_remove_standard(type: EffectType, beat: Int, position: List<Int>) {
-        this.track_blocked_leafs<EffectEvent>(type, beat, position) {
-            super.controller_global_remove_standard(type, beat, position)
-            this._queue_global_ctl_cell_change(type, beat)
-            this.vm_state.refresh_cursor()
-        }
-    }
-
-    override fun controller_channel_remove_standard(type: EffectType, channel: Int, beat: Int, position: List<Int>) {
-        this.track_blocked_leafs<EffectEvent>(type, beat, channel, position) {
-            super.controller_channel_remove_standard(type, channel, beat, position)
-            this._queue_channel_ctl_cell_change(type, channel, beat)
-            this.vm_state.refresh_cursor()
-        }
-    }
-
-    override fun controller_line_remove_standard(type: EffectType, beat_key: BeatKey, position: List<Int>) {
-        this.track_blocked_leafs<EffectEvent>(type, beat_key, position) {
-            super.controller_line_remove_standard(type, beat_key, position)
-            this._queue_line_ctl_cell_change(type, beat_key)
-            this.vm_state.refresh_cursor()
+            this.track_blocked_leafs(type, beat_key, position) {
+                super.controller_line_remove(type, beat_key, position)
+                this._update_tree(type, beat_key, position.subList(0, position.size - 1))
+            }
         }
     }
 

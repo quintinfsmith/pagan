@@ -1,5 +1,6 @@
 package com.qfs.pagan.composable
 
+import android.view.ViewTreeObserver
 import androidx.annotation.IntRange
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ScrollState
@@ -64,8 +65,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldLabelScope
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -76,6 +80,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusState
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
@@ -83,6 +88,9 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -103,6 +111,9 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.PopupProperties
+import androidx.compose.ui.zIndex
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
@@ -809,15 +820,91 @@ fun NumberPicker(modifier: Modifier = Modifier, range: kotlin.ranges.IntRange, d
 }
 
 @Composable
-fun <T> MagicInputInner(
+fun FocusableInput(
     modifier: Modifier = Modifier,
-    value: MutableState<T>,
+    value: Int,
+    minimum: Int? = null,
+    maximum: Int? = null,
     contentPadding: PaddingValues = PaddingValues(vertical = 0.dp),
-    prefix: @Composable (() -> Unit)? = null,
     background_icon: Int? = null,
-    content: @Composable (Modifier, MutableState<Boolean>, FocusRequester) -> Unit
+    callback: (Int) -> Unit = {}
 ) {
+    // Clear focus if keyboard was hidden by user
+    val expanded = remember { mutableStateOf(false) }
+    val label_value = remember { mutableIntStateOf(value) }
+    val backup_value = remember { mutableIntStateOf(value) }
+    val requester = remember { FocusRequester() }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        Button(
+            modifier = modifier,
+            onClick = { expanded.value = !expanded.value },
+            contentPadding = if (expanded.value) {
+                contentPadding
+            } else {
+                PaddingValues(2.dp)
+            },
+            content = {
+                if (expanded.value) {
+                    Icon(
+                        modifier = Modifier
+                            .then (
+                                if (expanded.value) {
+                                    Modifier
+                                        .width(32.dp)
+                                        .height(32.dp)
+                                } else {
+                                    Modifier
+                                }
+                            ),
+                        painter = painterResource(R.drawable.icon_pan),
+                        contentDescription = null
+                    )
+                } else {
+                    Box(contentAlignment = Alignment.Center) {
+                        background_icon?.let {
+                            Icon(
+                                painterResource(it),
+                                contentDescription = null
+                            )
+                        }
+                        Text("${label_value.value}")
+                    }
+                }
+            }
+        )
+
+        if (expanded.value) {
+            IntegerInput(
+                modifier = modifier
+                    .focusRequester(requester),
+                value = label_value,
+                text_align = TextAlign.Center,
+                on_focus_enter = {},
+                on_focus_exit = { value ->
+                    expanded.value = false
+                    label_value.intValue = backup_value.intValue
+                },
+                contentPadding = contentPadding,
+                minimum = minimum,
+                maximum = maximum,
+                callback = {
+                    label_value.intValue = it
+                    backup_value.intValue = it
+                    callback(it)
+                    expanded.value = false
+                }
+            )
+            LaunchedEffect(Unit) {
+                requester.requestFocus()
+            }
+        }
+
+    }
 }
+
 
 @Composable
 fun MagicInput(
@@ -831,66 +918,14 @@ fun MagicInput(
     content: @Composable (() -> Unit) = {},
     callback: (Int) -> Unit
 ) {
-    val expanded = remember { mutableStateOf(false) }
-    val label_value = remember { mutableIntStateOf(value) }
-    val backup_value = remember { mutableIntStateOf(value) }
-    if (expanded.value) {
-        Dialog(
-            onDismissRequest = {
-                expanded.value = false
-                label_value.value = backup_value.value
-            }
-        ) {
-            Box(
-                modifier = Modifier
-                    .background(
-                        color = MaterialTheme.colorScheme.surface,
-                        shape = RoundedCornerShape(12.dp)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                val requester = remember { FocusRequester() }
-                IntegerInput(
-                    value = label_value,
-                    text_align = TextAlign.Center,
-                    on_focus_enter = {},
-                    on_focus_exit = { value -> expanded.value = false },
-                    contentPadding = contentPadding,
-                    modifier = Modifier
-                        .padding(12.dp)
-                        .focusRequester(requester),
-                    minimum = minimum,
-                    maximum = maximum,
-                    prefix = prefix,
-                    callback = {
-                        label_value.value = it
-                        backup_value.value = it
-                        callback(it)
-                        expanded.value = false
-                    }
-                )
-
-                LaunchedEffect(Unit) {
-                    requester.requestFocus()
-                }
-            }
-        }
-    }
-    Button(
-        colors = ButtonDefaults.buttonColors().copy(
-            containerColor = if (expanded.value) {
-                MaterialTheme.colorScheme.tertiary
-            } else {
-                MaterialTheme.colorScheme.primary
-            },
-            contentColor = if (expanded.value) {
-                MaterialTheme.colorScheme.onTertiary
-            } else {
-                MaterialTheme.colorScheme.onPrimary
-            }
-        ),
-        onClick = { expanded.value = !expanded.value },
-        content = { Text("${label_value.value}") }
+    FocusableInput(
+        modifier,
+        value,
+        minimum,
+        maximum,
+        contentPadding = contentPadding,
+        background_icon = background_icon,
+        callback = callback
     )
 }
 
@@ -1038,3 +1073,19 @@ fun MenuPadder() {
     )
 }
 
+// https://stackoverflow.com/questions/68847559/how-can-i-detect-keyboard-opening-and-closing-in-jetpack-compose
+@Composable
+fun keyboardAsState(): MutableState<Boolean> {
+    val keyboardState = remember { mutableStateOf(false) }
+    val view = LocalView.current
+    val viewTreeObserver = view.viewTreeObserver
+    DisposableEffect(viewTreeObserver) {
+        val listener = ViewTreeObserver.OnGlobalLayoutListener {
+            keyboardState.value = ViewCompat.getRootWindowInsets(view)
+                ?.isVisible(WindowInsetsCompat.Type.ime()) ?: true
+        }
+        viewTreeObserver.addOnGlobalLayoutListener(listener)
+        onDispose { viewTreeObserver.removeOnGlobalLayoutListener(listener) }
+    }
+    return keyboardState
+}

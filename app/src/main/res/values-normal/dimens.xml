@@ -2,4 +2,5 @@
 <resources>
 
     <dimen name="contextmenu_button_width">64dp</dimen>
+    <dimen name="contextmenu_button_height">48dp</dimen>
 </resources>

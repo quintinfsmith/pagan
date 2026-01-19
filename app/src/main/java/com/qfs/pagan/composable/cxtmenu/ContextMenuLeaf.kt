@@ -37,7 +37,6 @@ import com.qfs.pagan.viewmodel.ViewModelEditorState
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlin.math.abs
 import kotlin.math.ceil
-import kotlin.math.max
 
 @Composable
 fun SplitButton(dispatcher: ActionTracker) {
@@ -148,10 +147,6 @@ fun RelativeModeButton(dispatcher: ActionTracker, ui_facade: ViewModelEditorStat
             onClick = { expanded.value = !expanded.value }
         )
     }
-}
-
-@Composable
-fun RelativeModeSelect(ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
 }
 
 @Composable

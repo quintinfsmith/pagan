@@ -7,12 +7,10 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -29,7 +27,6 @@ import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.DropdownMenu
 import com.qfs.pagan.composable.IntegerInput
-import com.qfs.pagan.composable.MagicInput
 import com.qfs.pagan.composable.Slider
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.ContextMenuButtonPadding
@@ -54,11 +51,12 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
     )
 
     val echo_label = remember { mutableStateOf(event.echo + 1) }
+    val numerator_label = remember { mutableStateOf(event.numerator) }
+    val denominator_label = remember { mutableStateOf(event.denominator) }
 
     IntegerInput(
         value = echo_label,
         on_focus_exit = {
-            println("EEEEE?")
             it?.let { echo_label.value = it }
         },
         //background_icon = R.drawable.icon_echo,
@@ -74,9 +72,9 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
         }
     }
     Spacer(Modifier.width(2.dp).weight(1F))
-    MagicInput(
-        event.numerator,
-        background_icon = R.drawable.icon_hz,
+    IntegerInput(
+        numerator_label,
+        //background_icon = R.drawable.icon_hz,
         modifier = Modifier
             .fillMaxHeight()
             .width(54.dp)
@@ -91,9 +89,9 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
     Spacer(Modifier.width(2.dp))
     Text("/")
     Spacer(Modifier.width(2.dp))
-    MagicInput(
-        event.denominator,
-        background_icon = R.drawable.icon_hz,
+    IntegerInput(
+        denominator_label,
+        //background_icon = R.drawable.icon_hz,
         modifier = Modifier
             .fillMaxHeight()
             .width(54.dp)

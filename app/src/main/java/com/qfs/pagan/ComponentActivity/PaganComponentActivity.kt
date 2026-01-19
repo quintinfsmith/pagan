@@ -21,7 +21,6 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -30,6 +29,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
@@ -39,7 +39,6 @@ import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
@@ -51,6 +50,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -195,9 +195,15 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 else -> isSystemInDarkTheme()
             }
 
+            view_model.set_layout_size(
+                LocalWindowInfo.current.containerDpSize.width,
+                LocalWindowInfo.current.containerDpSize.height,
+            )
+
             PaganTheme(is_night_mode) {
                 Box(
                     Modifier
+                        .imePadding()
                         .background(MaterialTheme.colorScheme.scrim)
                         .systemBarsPadding()
                 ) {
@@ -208,8 +214,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                         gesturesEnabled = this@PaganComponentActivity.drawer_gesture_enabled.value,
                         drawerContent = { this@PaganComponentActivity.Drawer() },
                         content = {
-                            BoxWithConstraints(modifier = Modifier.padding(it)) {
-                                view_model.set_layout_size(this.maxWidth, this.maxHeight)
+                            Box(modifier = Modifier.padding(it)) {
                                 Box(
                                     modifier = Modifier
                                         .padding(32.dp)
@@ -274,8 +279,9 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                     }
                                 }
                                 // -----------------------------------------------
+                                val layout_size = view_model.get_layout_size()
                                 val modifier = Modifier.fillMaxSize()
-                                when (view_model.get_layout_size()) {
+                                when (layout_size) {
                                     ViewModelPagan.LayoutSize.SmallPortrait -> LayoutSmallPortrait(modifier)
                                     ViewModelPagan.LayoutSize.MediumPortrait -> LayoutMediumPortrait(modifier)
                                     ViewModelPagan.LayoutSize.LargePortrait -> LayoutLargePortrait(modifier)

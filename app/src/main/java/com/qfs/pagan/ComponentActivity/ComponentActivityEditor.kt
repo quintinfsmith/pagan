@@ -47,7 +47,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -62,7 +61,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -115,6 +113,7 @@ import com.qfs.pagan.composable.button.ConfigDrawerChannelRightButton
 import com.qfs.pagan.composable.button.ConfigDrawerTopButton
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.button.TopBarIcon
+import com.qfs.pagan.composable.conditional_drag
 import com.qfs.pagan.composable.cxtmenu.CMBoxBottom
 import com.qfs.pagan.composable.cxtmenu.CMBoxEnd
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelPrimary
@@ -126,11 +125,10 @@ import com.qfs.pagan.composable.cxtmenu.ContextMenuLeafStdSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuLinePrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuLineSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuRangeSecondary
-import com.qfs.pagan.composable.conditional_drag
 import com.qfs.pagan.composable.dashed_border
 import com.qfs.pagan.composable.dragging_scroll
-import com.qfs.pagan.composable.long_press
 import com.qfs.pagan.composable.is_light
+import com.qfs.pagan.composable.long_press
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
@@ -2265,7 +2263,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         val layout = this.view_model.get_layout_size()
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = modifier.fillMaxSize(),
             contentAlignment = Alignment.BottomCenter
         ) {
             MainTable(Modifier.fillMaxSize(), ui_facade, view_model.action_interface, ui_facade.beat_count, layout)
@@ -2276,7 +2274,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
             ) {
                 AnimatedVisibility(ui_facade.active_cursor.value != null, Modifier.weight(1F)) {
                     this@ComponentActivityEditor.get_context_menu_secondary(
-                        Modifier.padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
+                        Modifier
+                            .padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
                         ui_facade,
                         view_model.action_interface,
                         layout
@@ -2289,7 +2288,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                 AnimatedVisibility(ui_facade.active_cursor.value != null) {
                     this@ComponentActivityEditor.get_context_menu_primary(
-                        Modifier,
+                        Modifier
+                            .verticalScroll(rememberScrollState())
+                            .fillMaxHeight(),
                         ui_facade,
                         view_model.action_interface,
                         layout
@@ -2307,7 +2308,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             horizontalArrangement = Arrangement.End,
                             verticalAlignment = Alignment.CenterVertically,
                             content = {
-                                CMBoxEnd(Modifier.height(SIZE_M.second)) { it() }
+                                CMBoxEnd() { it() }
                             }
                         )
                     }

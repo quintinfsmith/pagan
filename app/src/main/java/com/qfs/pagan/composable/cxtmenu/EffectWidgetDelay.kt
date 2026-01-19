@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.DropdownMenu
+import com.qfs.pagan.composable.IntegerInput
 import com.qfs.pagan.composable.MagicInput
 import com.qfs.pagan.composable.Slider
 import com.qfs.pagan.composable.button.Button
@@ -52,9 +53,15 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
         inactiveTickColor = default_colors.activeTickColor
     )
 
-    MagicInput(
-        event.echo + 1,
-        background_icon = R.drawable.icon_echo,
+    val echo_label = remember { mutableStateOf(event.echo + 1) }
+
+    IntegerInput(
+        value = echo_label,
+        on_focus_exit = {
+            println("EEEEE?")
+            it?.let { echo_label.value = it }
+        },
+        //background_icon = R.drawable.icon_echo,
         modifier = Modifier
             .fillMaxHeight()
             .width(54.dp)

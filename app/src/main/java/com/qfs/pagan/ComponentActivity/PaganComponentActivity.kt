@@ -17,6 +17,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,6 +39,7 @@ import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
@@ -46,6 +48,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -225,8 +230,12 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                     dialogs.add(current_dialog)
                                     current_dialog = current_dialog.parent
                                 }
+                                val keyboard_controller = LocalSoftwareKeyboardController.current
+                                val focus_manager = LocalFocusManager.current
                                 for (dialog in dialogs.reversed()) {
-                                    Dialog(onDismissRequest = { view_model.dialog_queue.value = dialog.parent }) {
+                                    Dialog(
+                                        onDismissRequest = { view_model.dialog_queue.value = dialog.parent }
+                                    ) {
                                         DialogCard(
                                             // TODO: These are just roughed in. need to put more thought in and check later
                                             modifier = when (view_model.get_layout_size()) {
@@ -252,6 +261,13 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                                         ViewModelPagan.DialogSize.Medium -> Modifier.width(SIZE_L.second)
                                                     }
                                                 }
+                                            }
+                                            // Allow click-away from text fields
+                                            .pointerInput(Unit) {
+                                                detectTapGestures { offset ->
+                                                    keyboard_controller?.hide()
+                                                    focus_manager.clearFocus()
+                                                }
                                             },
                                             content = dialog.dialog
                                         )
@@ -269,6 +285,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                     ViewModelPagan.LayoutSize.LargeLandscape -> LayoutLargeLandscape(modifier)
                                     ViewModelPagan.LayoutSize.XLargeLandscape -> LayoutXLargeLandscape(modifier)
                                 }
+
                             }
                         }
                     )

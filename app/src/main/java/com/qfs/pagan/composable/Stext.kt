@@ -6,6 +6,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -35,6 +36,8 @@ import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.text.input.InputTransformation
@@ -85,11 +88,13 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -100,6 +105,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -284,17 +290,23 @@ fun <T: Number> NumberInput(
     input_transformation: InputTransformation,
     callback: (T) -> Unit
 ) {
+    val original_text = value.value.toString()
     val state = rememberTextFieldState(value.value.toString())
-
     // Prevent weird focusing behavior causing on_focus_exit to be called without any initial focus
     val was_focused = remember { mutableStateOf(false) }
     val focus_change_callback = { focus_state: FocusState ->
+        println("${focus_state.isFocused}, ${was_focused.value} ------------")
         if (focus_state.isFocused) {
             was_focused.value = true
             state.edit { this.selectAll() }
             on_focus_enter?.let { it() }
         } else if (was_focused.value) {
             was_focused.value = false
+            if (value.value.toString() != state.text.toString()) {
+                state.edit {
+                    replace(0, state.text.length, original_text)
+                }
+            }
             on_focus_exit?.let { it(value.value) }
         }
     }
@@ -328,6 +340,7 @@ fun <T: Number> NumberInput(
             action()
         }
     )
+
 }
 
 
@@ -834,6 +847,7 @@ fun FocusableInput(
     val label_value = remember { mutableIntStateOf(value) }
     val backup_value = remember { mutableIntStateOf(value) }
     val requester = remember { FocusRequester() }
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
@@ -918,6 +932,9 @@ fun MagicInput(
     content: @Composable (() -> Unit) = {},
     callback: (Int) -> Unit
 ) {
+    
+    
+    
     FocusableInput(
         modifier,
         value,

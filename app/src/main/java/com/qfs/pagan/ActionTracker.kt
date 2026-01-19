@@ -2642,20 +2642,20 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Start,
                         ) {
-                            MagicInput(
-                                value = opus_manager.transpose.first,
+                            IntegerInput(
+                                value = transpose_numerator,
                                 minimum = 0,
                                 contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
                                 modifier = Modifier.width(dimensionResource(R.dimen.transpose_dlg_input_width)),
-                                callback = { transpose_numerator.value = it }
+                                callback = { }
                             )
                             Text("/", modifier = Modifier.padding(horizontal = 2.dp))
-                            MagicInput(
-                                value = opus_manager.transpose.second,
+                            IntegerInput(
+                                value = transpose_denominator,
                                 minimum = 0,
                                 contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
                                 modifier = Modifier.width(dimensionResource(R.dimen.transpose_dlg_input_width)),
-                                callback = { transpose_denominator.value = it }
+                                callback = { }
                             )
                         }
                     }
@@ -2663,14 +2663,13 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         horizontalAlignment = Alignment.End
                     ) {
                         SText(R.string.dlg_set_radix, maxLines = 1)
-                        MagicInput(
-                            value = original_radix,
+                        IntegerInput(
+                            value = radix,
                             minimum = 0,
                             maximum = 36,
                             contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
                             modifier = Modifier.width(dimensionResource(R.dimen.transpose_dlg_input_width)),
                             callback = {
-                                radix.value = it
                                 mutable_map.clear()
                                 for (i in 0 until it) {
                                     mutable_map.add(
@@ -2721,24 +2720,22 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                                             modifier = Modifier.padding(horizontal = 4.dp)
                                         )
                                         Column {
-                                            MagicInput(
-                                                value = pair.first,
+                                            IntegerInput(
+                                                value = numer,
                                                 minimum = 0,
                                                 modifier = Modifier.width(64.dp),
                                                 contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
                                                 callback = {
-                                                    numer.value = it
                                                     mutable_map[i].value = Pair(numer.value, denom.value)
                                                 }
                                             )
                                             Spacer(Modifier.height(2.dp))
-                                            MagicInput(
-                                                value = pair.second,
+                                            IntegerInput(
+                                                value = denom,
                                                 minimum = 0,
                                                 modifier = Modifier.width(64.dp),
                                                 contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
                                                 callback = {
-                                                    denom.value = it
                                                     mutable_map[i].value = Pair(numer.value, denom.value)
                                                 }
                                             )

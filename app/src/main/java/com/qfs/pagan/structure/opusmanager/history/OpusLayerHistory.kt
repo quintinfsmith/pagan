@@ -1261,9 +1261,9 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
     override fun <T: EffectEvent> controller_line_set_event(type: EffectType, beat_key: BeatKey, position: List<Int>, event: T) {
         // Trivial?
-        if (this.get_line_ctl_tree<T>(type, beat_key, position).get_event() == event) {
-            return
-        }
+        println("...")
+        if (this.get_line_ctl_tree<T>(type, beat_key, position).get_event() == event) return
+        println("!! $event")
 
         this._remember {
             this.push_replace_line_ctl(type, beat_key, position) {

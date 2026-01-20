@@ -1070,9 +1070,7 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
 
     fun set_event(beat: Int, position: List<Int>, event: T) {
         val blocked_pair = this.is_blocked_set_event(beat, position, event.duration)
-        if (blocked_pair != null) {
-            throw BlockedTreeException(beat, position, blocked_pair.first, blocked_pair.second)
-        }
+        if (blocked_pair != null) throw BlockedTreeException(beat, position, blocked_pair.first, blocked_pair.second)
 
         this.recache_blocked_tree_wrapper(beat, position) {
             val tree = this.get_tree(beat, position)

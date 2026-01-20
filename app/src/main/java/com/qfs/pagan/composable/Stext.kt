@@ -290,22 +290,18 @@ fun <T: Number> NumberInput(
     input_transformation: InputTransformation,
     callback: (T) -> Unit
 ) {
-    val original_text = value.value.toString()
+    val trigger_select_all = remember { mutableStateOf<Boolean?>(null) }
+
     val state = rememberTextFieldState(value.value.toString())
     // Prevent weird focusing behavior causing on_focus_exit to be called without any initial focus
     val was_focused = remember { mutableStateOf(false) }
     val focus_change_callback = { focus_state: FocusState ->
         if (focus_state.isFocused) {
+            trigger_select_all.value = trigger_select_all.value?.let { it -> !it } ?: true
             was_focused.value = true
-            state.edit { selectAll() }
             on_focus_enter?.let { it() }
         } else if (was_focused.value) {
             was_focused.value = false
-            if (value.value.toString() != state.text.toString()) {
-                state.edit {
-                    replace(0, state.text.length, original_text)
-                }
-            }
             on_focus_exit?.let { it(value.value) }
         }
     }
@@ -330,7 +326,7 @@ fun <T: Number> NumberInput(
             .widthIn(1.dp)
             .onFocusChanged { focus_change_callback(it) },
         keyboardOptions = KeyboardOptions.Default.copy(
-            keyboardType = KeyboardType.Companion.Number
+            keyboardType = KeyboardType.Number
         ),
         inputTransformation = input_transformation,
         lineLimits = TextFieldLineLimits.SingleLine,
@@ -340,6 +336,11 @@ fun <T: Number> NumberInput(
         }
     )
 
+    trigger_select_all.value?.let {
+        LaunchedEffect(trigger_select_all.value) {
+            state.edit { selectAll() }
+        }
+    }
 }
 
 

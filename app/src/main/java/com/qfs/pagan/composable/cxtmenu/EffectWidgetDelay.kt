@@ -13,7 +13,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -55,9 +57,17 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
         inactiveTickColor = default_colors.activeTickColor
     )
 
-    val echo_label = remember { mutableStateOf(event.echo + 1) }
-    val numerator_label = remember { mutableStateOf(event.numerator) }
-    val denominator_label = remember { mutableStateOf(event.denominator) }
+    val echo_label = remember { mutableIntStateOf(event.echo + 1) }
+    val numerator_label = remember { mutableIntStateOf(event.numerator) }
+    val denominator_label = remember { mutableIntStateOf(event.denominator) }
+
+    val submit = {
+        if (beat != null) {
+            dispatcher.set_effect(EffectType.Delay, event, channel, line_offset, beat, position!!)
+        } else {
+            dispatcher.set_initial_effect(EffectType.Delay, event, channel, line_offset)
+        }
+    }
 
     Box(
         modifier = Modifier,
@@ -70,19 +80,22 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
             painter = painterResource(R.drawable.icon_hz),
             contentDescription = null
         )
-        IntegerInput(
-            numerator_label,
-            contentPadding = PaddingValues(0.dp),
-            text_align = TextAlign.Center,
-            modifier = Modifier
-                .height(41.dp)
-                .width(54.dp)
-        ) {
-            event.numerator = it
-            if (beat != null) {
-                dispatcher.set_effect(EffectType.Delay, event, channel, line_offset, beat, position!!)
-            } else {
-                dispatcher.set_initial_effect(EffectType.Delay, event, channel, line_offset)
+        val numerator_key = remember { mutableStateOf(false) }
+        key(numerator_key.value) {
+            IntegerInput(
+                numerator_label,
+                contentPadding = PaddingValues(0.dp),
+                text_align = TextAlign.Center,
+                on_focus_exit = {
+                    numerator_label.value = event.numerator
+                    numerator_key.value = !numerator_key.value
+                },
+                modifier = Modifier
+                    .height(41.dp)
+                    .width(54.dp)
+            ) {
+                event.numerator = it
+                submit()
             }
         }
     }
@@ -100,19 +113,23 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
             painter = painterResource(R.drawable.icon_hz),
             contentDescription = null
         )
-        IntegerInput(
-            denominator_label,
-            contentPadding = PaddingValues(0.dp),
-            text_align = TextAlign.Center,
-            modifier = Modifier
-                .height(41.dp)
-                .width(54.dp)
-        ) {
-            event.denominator = it
-            if (beat != null) {
-                dispatcher.set_effect(EffectType.Delay, event, channel, line_offset, beat, position!!)
-            } else {
-                dispatcher.set_initial_effect(EffectType.Delay, event, channel, line_offset)
+        val denominator_key = remember { mutableStateOf(false) }
+        key(denominator_key.value) {
+            IntegerInput(
+                denominator_label,
+                minimum = 1,
+                on_focus_exit = {
+                    denominator_label.value = event.denominator
+                    denominator_key.value = !denominator_key.value
+                },
+                contentPadding = PaddingValues(0.dp),
+                text_align = TextAlign.Center,
+                modifier = Modifier
+                    .height(41.dp)
+                    .width(54.dp)
+            ) {
+                event.denominator = it
+                submit()
             }
         }
     }
@@ -130,25 +147,27 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
             painter = painterResource(R.drawable.icon_echo),
             contentDescription = null
         )
-        IntegerInput(
-            numerator_label,
-            on_focus_exit = {
-                it?.let { echo_label.value = it }
-            },
-            contentPadding = PaddingValues(0.dp),
-            text_align = TextAlign.Center,
-            modifier = Modifier
-                .height(41.dp)
-                .width(54.dp)
-        ) {
-            event.echo = (it - 1)
-            if (beat != null) {
-                dispatcher.set_effect(EffectType.Delay, event, channel, line_offset, beat, position!!)
-            } else {
-                dispatcher.set_initial_effect(EffectType.Delay, event, channel, line_offset)
+        val echo_key = remember { mutableStateOf(false) }
+        key(echo_key.value) {
+            IntegerInput(
+                echo_label,
+                on_focus_exit = {
+                    echo_label.value = event.echo + 1
+                    echo_key.value = !echo_key.value
+                },
+                minimum = 1,
+                contentPadding = PaddingValues(0.dp),
+                text_align = TextAlign.Center,
+                modifier = Modifier
+                    .height(41.dp)
+                    .width(54.dp)
+            ) {
+                event.echo = (it - 1)
+                submit()
             }
         }
     }
+
     Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
     val fade_expanded = remember { mutableStateOf(false) }
     Box(contentAlignment = Alignment.Center) {
@@ -159,13 +178,15 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
                 .height(dimensionResource(R.dimen.contextmenu_button_height))
                 .width(dimensionResource(R.dimen.contextmenu_button_width)),
             content = {
-                if (fade_expanded.value) {
+                Box(contentAlignment = Alignment.Center) {
+                    if (!fade_expanded.value) {
+                        Icon(
+                            modifier = Modifier.alpha(.2f),
+                            painter = painterResource(R.drawable.icon_volume),
+                            contentDescription = stringResource(R.string.cd_fade)
+                        )
+                    }
                     Text("${(fade.floatValue * 100).roundToInt()}%")
-                } else {
-                    Icon(
-                        painter = painterResource(R.drawable.icon_volume),
-                        contentDescription = stringResource(R.string.cd_fade)
-                    )
                 }
             },
             onClick = {

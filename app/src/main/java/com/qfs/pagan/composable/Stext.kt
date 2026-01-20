@@ -295,10 +295,9 @@ fun <T: Number> NumberInput(
     // Prevent weird focusing behavior causing on_focus_exit to be called without any initial focus
     val was_focused = remember { mutableStateOf(false) }
     val focus_change_callback = { focus_state: FocusState ->
-        println("${focus_state.isFocused}, ${was_focused.value} ------------")
         if (focus_state.isFocused) {
             was_focused.value = true
-            state.edit { this.selectAll() }
+            state.edit { selectAll() }
             on_focus_enter?.let { it() }
         } else if (was_focused.value) {
             was_focused.value = false
@@ -520,7 +519,6 @@ fun <T> SortableMenu(
                     .clip(RoundedCornerShape(8.dp))
             ) {
                 itemsIndexed(sorted_menu) { i, (item, label_content) ->
-                    val row_modifier = Modifier
                     if (i > 0) {
                         Spacer(Modifier.height(4.dp))
                     }
@@ -533,7 +531,7 @@ fun <T> SortableMenu(
                         }
                     ) {
                         Row(
-                            modifier = row_modifier
+                            modifier = Modifier
                                 .then(
                                     if (default_index == i) {
                                         Modifier.background(MaterialTheme.colorScheme.tertiary, RoundedCornerShape(8.dp))

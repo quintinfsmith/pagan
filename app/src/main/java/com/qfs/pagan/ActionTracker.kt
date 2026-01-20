@@ -3,7 +3,6 @@ package com.qfs.pagan
 import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +11,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -28,7 +28,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -45,7 +44,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
-import androidx.test.core.app.ActivityScenario.launch
 import com.qfs.apres.VirtualMidiInputDevice
 import com.qfs.json.JSONBoolean
 import com.qfs.json.JSONInteger
@@ -59,7 +57,6 @@ import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.DropdownMenu
 import com.qfs.pagan.composable.DropdownMenuItem
 import com.qfs.pagan.composable.IntegerInput
-import com.qfs.pagan.composable.MagicInput
 import com.qfs.pagan.composable.NumberPicker
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.Slider
@@ -80,13 +77,8 @@ import com.qfs.pagan.structure.opusmanager.cursor.InvalidCursorState
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import java.io.IOException
 import kotlin.concurrent.thread
-import kotlin.coroutines.CoroutineContext
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
@@ -547,22 +539,35 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
             return
         }
 
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
         val title = R.string.dialog_transition
 
         val options = mutableListOf<Pair<EffectTransition, @Composable RowScope.() -> Unit>>()
         for (transition_option in OpusManager.get_available_transitions(event.event_type)) {
             options.add(
                 Pair(transition_option) {
-                    SText(
-                        when (transition_option) {
-                            EffectTransition.Instant -> R.string.effect_transition_instant
-                            EffectTransition.Linear -> R.string.effect_transition_linear
-                            EffectTransition.RInstant -> R.string.effect_transition_rinstant
-                            EffectTransition.RLinear -> R.string.effect_transition_rlinear
-                        }
+                    Icon(
+                        modifier = Modifier.height(32.dp),
+                        painter = painterResource(when (transition_option) {
+                            EffectTransition.Instant -> R.drawable.icon_transition_immediate
+                            EffectTransition.Linear -> R.drawable.icon_transition_linear
+                            EffectTransition.RInstant -> R.drawable.icon_transition_rimmediate
+                            EffectTransition.RLinear -> R.drawable.icon_transition_rlinear
+                        }),
+                        contentDescription = null
                     )
+                    Box(
+                        modifier = Modifier.weight(1F),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        SText(
+                            when (transition_option) {
+                                EffectTransition.Instant -> R.string.effect_transition_instant
+                                EffectTransition.Linear -> R.string.effect_transition_linear
+                                EffectTransition.RInstant -> R.string.effect_transition_rinstant
+                                EffectTransition.RLinear -> R.string.effect_transition_rlinear_out
+                            }
+                        )
+                    }
                 }
             )
         }
@@ -2632,10 +2637,13 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                     )
                 }
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .verticalScroll(rememberScrollState())
+                        .fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
+
                     Column {
                         SText(R.string.dlg_transpose, maxLines = 1)
                         Row(
@@ -2659,6 +2667,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                             )
                         }
                     }
+
                     Column(
                         horizontalAlignment = Alignment.End
                     ) {
@@ -2688,7 +2697,8 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         .fillMaxWidth()
                 )
                 Surface(
-                    modifier = Modifier.weight(1F, fill = false),
+                    modifier = Modifier
+                        .weight(1F, fill = false),
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface),
                     shape = RoundedCornerShape(6.dp),
                     tonalElevation = 1.dp
@@ -2698,6 +2708,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                             modifier = Modifier
                                 .padding(6.dp)
                                 .fillMaxWidth()
+                                .defaultMinSize(minHeight = 54.dp)
                                 .verticalScroll(rememberScrollState()),
                             horizontalArrangement = Arrangement.SpaceAround
                         ) {
@@ -2719,27 +2730,26 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                                             "%02d".format(i),
                                             modifier = Modifier.padding(horizontal = 4.dp)
                                         )
-                                        Column {
-                                            IntegerInput(
-                                                value = numer,
-                                                minimum = 0,
-                                                modifier = Modifier.width(64.dp),
-                                                contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                                                callback = {
-                                                    mutable_map[i].value = Pair(numer.value, denom.value)
-                                                }
-                                            )
-                                            Spacer(Modifier.height(2.dp))
-                                            IntegerInput(
-                                                value = denom,
-                                                minimum = 0,
-                                                modifier = Modifier.width(64.dp),
-                                                contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                                                callback = {
-                                                    mutable_map[i].value = Pair(numer.value, denom.value)
-                                                }
-                                            )
-                                        }
+                                        Spacer(Modifier.weight(1F))
+                                        IntegerInput(
+                                            value = numer,
+                                            minimum = 0,
+                                            modifier = Modifier.width(64.dp),
+                                            contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
+                                            callback = {
+                                                mutable_map[i].value = Pair(numer.value, denom.value)
+                                            }
+                                        )
+                                        Text("/", modifier = Modifier.padding(horizontal = 2.dp))
+                                        IntegerInput(
+                                            value = denom,
+                                            minimum = 0,
+                                            modifier = Modifier.width(64.dp),
+                                            contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
+                                            callback = {
+                                                mutable_map[i].value = Pair(numer.value, denom.value)
+                                            }
+                                        )
                                     }
                                 }
                             }

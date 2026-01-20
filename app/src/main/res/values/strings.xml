@@ -250,10 +250,10 @@
     <string name="settings_night_mode_yes">Night</string>
     <string name="settings_night_mode_system">System</string>
     <string name="settings_night_mode_no">Day</string>
-    <string name="effect_transition_instant">Instant</string>
+    <string name="effect_transition_instant">No Transition</string>
     <string name="effect_transition_linear">Linear</string>
-    <string name="effect_transition_rlinear">Linear Revert</string>
-    <string name="effect_transition_rinstant">Instant Revert</string>
+    <string name="effect_transition_rlinear_out">Temporary/Linear-Out</string>
+    <string name="effect_transition_rinstant">Temporary</string>
     <string name="midi_device_unset">Midi Device Unspecified</string>
     <string name="playback_device">Playback Device</string>
     <string name="default_export_name">Pagan Op. %1$s</string>

@@ -95,6 +95,7 @@ class ViewModelPagan: ViewModel() {
     }
 
     fun get_layout_size(): LayoutSize {
+        println("-- - - - -${active_layout_size.value}")
         return this.active_layout_size.value
     }
 

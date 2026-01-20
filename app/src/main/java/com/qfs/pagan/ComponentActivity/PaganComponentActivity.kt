@@ -238,9 +238,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                 val keyboard_controller = LocalSoftwareKeyboardController.current
                                 val focus_manager = LocalFocusManager.current
                                 for (dialog in dialogs.reversed()) {
-                                    Dialog(
-                                        onDismissRequest = { view_model.dialog_queue.value = dialog.parent }
-                                    ) {
+                                    Dialog( onDismissRequest = { view_model.dialog_queue.value = dialog.parent } ) {
                                         DialogCard(
                                             // TODO: These are just roughed in. need to put more thought in and check later
                                             modifier = when (view_model.get_layout_size()) {

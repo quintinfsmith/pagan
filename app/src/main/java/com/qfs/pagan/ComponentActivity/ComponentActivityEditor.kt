@@ -128,6 +128,7 @@ import com.qfs.pagan.composable.cxtmenu.ContextMenuRangeSecondary
 import com.qfs.pagan.composable.dashed_border
 import com.qfs.pagan.composable.dragging_scroll
 import com.qfs.pagan.composable.is_light
+import com.qfs.pagan.composable.keyboardAsState
 import com.qfs.pagan.composable.long_press
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
@@ -2155,7 +2156,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
     override fun LayoutLargePortrait(modifier: Modifier) {
         val view_model = this.controller_model
         val ui_facade = this.controller_model.opus_manager.vm_state
-        val focusManager = LocalFocusManager.current
         if (!ui_facade.ready.value) {
             LoadingSpinnerPlaceHolder()
             return
@@ -2286,7 +2286,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     } ?: Spacer(Modifier.weight(1F))
                 }
 
-                AnimatedVisibility(ui_facade.active_cursor.value != null) {
+                AnimatedVisibility(!keyboardAsState().value && ui_facade.active_cursor.value != null) {
                     this@ComponentActivityEditor.get_context_menu_primary(
                         Modifier
                             .verticalScroll(rememberScrollState())

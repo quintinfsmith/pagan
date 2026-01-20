@@ -2637,39 +2637,13 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                     )
                 }
                 Row(
-                    modifier = Modifier
-                        .verticalScroll(rememberScrollState())
-                        .fillMaxWidth(),
+                    Modifier.weight(1F, fill = false),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-
-                    Column {
-                        SText(R.string.dlg_transpose, maxLines = 1)
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Start,
-                        ) {
-                            IntegerInput(
-                                value = transpose_numerator,
-                                minimum = 0,
-                                contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                                modifier = Modifier.width(dimensionResource(R.dimen.transpose_dlg_input_width)),
-                                callback = { }
-                            )
-                            Text("/", modifier = Modifier.padding(horizontal = 2.dp))
-                            IntegerInput(
-                                value = transpose_denominator,
-                                minimum = 0,
-                                contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                                modifier = Modifier.width(dimensionResource(R.dimen.transpose_dlg_input_width)),
-                                callback = { }
-                            )
-                        }
-                    }
-
                     Column(
-                        horizontalAlignment = Alignment.End
+                        verticalArrangement = Arrangement.Top,
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         SText(R.string.dlg_set_radix, maxLines = 1)
                         IntegerInput(
@@ -2689,6 +2663,89 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                                 }
                             }
                         )
+
+                        Spacer(Modifier.weight(1F))
+
+                        SText(R.string.dlg_transpose, maxLines = 1)
+                        IntegerInput(
+                            value = transpose_numerator,
+                            minimum = 0,
+                            contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
+                            modifier = Modifier.width(dimensionResource(R.dimen.transpose_dlg_input_width)),
+                            callback = { }
+                        )
+
+                        Spacer(Modifier.height(4.dp))
+                        IntegerInput(
+                            value = transpose_denominator,
+                            minimum = 0,
+                            contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
+                            modifier = Modifier.width(dimensionResource(R.dimen.transpose_dlg_input_width)),
+                            callback = { }
+                        )
+                    }
+
+                    Spacer(Modifier.width(4.dp))
+
+                    Surface(
+                        modifier = Modifier
+                            .weight(1F, fill = false),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface),
+                        shape = RoundedCornerShape(6.dp),
+                        tonalElevation = 1.dp
+                    ) {
+                        key(radix.value) {
+                            FlowRow(
+                                modifier = Modifier
+                                    .padding(6.dp)
+                                    .fillMaxWidth()
+                                    .defaultMinSize(minHeight = 54.dp)
+                                    .verticalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.SpaceAround
+                            ) {
+                                for ((i, state) in mutable_map.enumerate()) {
+                                    val pair = state.value
+                                    val numer = remember { mutableIntStateOf(pair.first) }
+                                    val denom = remember { mutableIntStateOf(pair.second) }
+                                    Surface(
+                                        Modifier.padding(vertical = 3.dp),
+                                        shape = RoundedCornerShape(6.dp),
+                                        tonalElevation = 2.dp
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(6.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                        ) {
+                                            Text(
+                                                "%02d".format(i),
+                                                modifier = Modifier.padding(horizontal = 4.dp)
+                                            )
+                                            Spacer(Modifier.weight(1F))
+                                            IntegerInput(
+                                                value = numer,
+                                                minimum = 0,
+                                                modifier = Modifier.width(64.dp),
+                                                contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
+                                                callback = {
+                                                    mutable_map[i].value = Pair(numer.value, denom.value)
+                                                }
+                                            )
+                                            Text("/", modifier = Modifier.padding(horizontal = 2.dp))
+                                            IntegerInput(
+                                                value = denom,
+                                                minimum = 0,
+                                                modifier = Modifier.width(64.dp),
+                                                contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
+                                                callback = {
+                                                    mutable_map[i].value = Pair(numer.value, denom.value)
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 Spacer(
@@ -2696,66 +2753,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         .height(4.dp)
                         .fillMaxWidth()
                 )
-                Surface(
-                    modifier = Modifier
-                        .weight(1F, fill = false),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface),
-                    shape = RoundedCornerShape(6.dp),
-                    tonalElevation = 1.dp
-                ) {
-                    key(radix.value) {
-                        FlowRow(
-                            modifier = Modifier
-                                .padding(6.dp)
-                                .fillMaxWidth()
-                                .defaultMinSize(minHeight = 54.dp)
-                                .verticalScroll(rememberScrollState()),
-                            horizontalArrangement = Arrangement.SpaceAround
-                        ) {
-                            for ((i, state) in mutable_map.enumerate()) {
-                                val pair = state.value
-                                val numer = remember { mutableIntStateOf(pair.first) }
-                                val denom = remember { mutableIntStateOf(pair.second) }
-                                Surface(
-                                    Modifier.padding(vertical = 3.dp),
-                                    shape = RoundedCornerShape(6.dp),
-                                    tonalElevation = 2.dp
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(6.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                    ) {
-                                        Text(
-                                            "%02d".format(i),
-                                            modifier = Modifier.padding(horizontal = 4.dp)
-                                        )
-                                        Spacer(Modifier.weight(1F))
-                                        IntegerInput(
-                                            value = numer,
-                                            minimum = 0,
-                                            modifier = Modifier.width(64.dp),
-                                            contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                                            callback = {
-                                                mutable_map[i].value = Pair(numer.value, denom.value)
-                                            }
-                                        )
-                                        Text("/", modifier = Modifier.padding(horizontal = 2.dp))
-                                        IntegerInput(
-                                            value = denom,
-                                            minimum = 0,
-                                            modifier = Modifier.width(64.dp),
-                                            contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                                            callback = {
-                                                mutable_map[i].value = Pair(numer.value, denom.value)
-                                            }
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
                 DialogBar(
                     neutral = close,
                     positive = {

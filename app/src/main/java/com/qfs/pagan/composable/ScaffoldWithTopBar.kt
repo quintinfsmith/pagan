@@ -3,7 +3,6 @@ package com.qfs.pagan.composable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -13,7 +12,6 @@ import androidx.compose.material3.DrawerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,7 +51,6 @@ fun ScaffoldWithTopBar(
                 val background = MaterialTheme.colorScheme.top_bar_container_color()
                 val foreground = MaterialTheme.colorScheme.top_bar_content_color()
                 top_app_bar?.let {
-                    println("TOP BAR EXIST? $it")
                     ProvideContentColorTextStyle(contentColor = foreground) {
                         Row(
                             modifier = Modifier

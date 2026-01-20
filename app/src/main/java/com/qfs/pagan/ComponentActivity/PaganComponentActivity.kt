@@ -201,6 +201,56 @@ abstract class PaganComponentActivity: ComponentActivity() {
             )
 
             PaganTheme(is_night_mode) {
+                // Popup Dialogs --------------------------------
+                var current_dialog = view_model.dialog_queue.value
+                val dialogs = mutableListOf<DialogChain>()
+                while (current_dialog != null) {
+                    dialogs.add(current_dialog)
+                    current_dialog = current_dialog.parent
+                }
+                val keyboard_controller = LocalSoftwareKeyboardController.current
+                val focus_manager = LocalFocusManager.current
+                for (dialog in dialogs.reversed()) {
+                    Dialog( onDismissRequest = { view_model.dialog_queue.value = dialog.parent } ) {
+                        DialogCard(
+                            // TODO: These are just roughed in. need to put more thought in and check later
+                            modifier = when (view_model.get_layout_size()) {
+                                ViewModelPagan.LayoutSize.SmallPortrait,
+                                ViewModelPagan.LayoutSize.SmallLandscape,
+                                ViewModelPagan.LayoutSize.MediumPortrait -> Modifier
+
+                                ViewModelPagan.LayoutSize.LargePortrait,
+                                ViewModelPagan.LayoutSize.MediumLandscape -> {
+                                    when (dialog.size) {
+                                        ViewModelPagan.DialogSize.Unbounded -> Modifier
+                                        ViewModelPagan.DialogSize.Small -> Modifier.width(200.dp)
+                                        ViewModelPagan.DialogSize.Medium -> Modifier.width(400.dp)
+                                    }
+                                }
+
+                                ViewModelPagan.LayoutSize.XLargePortrait,
+                                ViewModelPagan.LayoutSize.XLargeLandscape,
+                                ViewModelPagan.LayoutSize.LargeLandscape -> {
+                                    when (dialog.size) {
+                                        ViewModelPagan.DialogSize.Unbounded -> Modifier
+                                        ViewModelPagan.DialogSize.Small -> Modifier.width(300.dp)
+                                        ViewModelPagan.DialogSize.Medium -> Modifier.width(SIZE_L.second)
+                                    }
+                                }
+                            }
+                            // Allow click-away from text fields
+                            .pointerInput(Unit) {
+                                detectTapGestures { offset ->
+                                    keyboard_controller?.hide()
+                                    focus_manager.clearFocus()
+                                }
+                            },
+                            content = dialog.dialog
+                        )
+                    }
+                }
+                // -----------------------------------------------
+
                 Box(
                     Modifier
                         .imePadding()
@@ -228,55 +278,6 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                     )
                                 }
 
-                                // Popup Dialogs --------------------------------
-                                var current_dialog = view_model.dialog_queue.value
-                                val dialogs = mutableListOf<DialogChain>()
-                                while (current_dialog != null) {
-                                    dialogs.add(current_dialog)
-                                    current_dialog = current_dialog.parent
-                                }
-                                val keyboard_controller = LocalSoftwareKeyboardController.current
-                                val focus_manager = LocalFocusManager.current
-                                for (dialog in dialogs.reversed()) {
-                                    Dialog( onDismissRequest = { view_model.dialog_queue.value = dialog.parent } ) {
-                                        DialogCard(
-                                            // TODO: These are just roughed in. need to put more thought in and check later
-                                            modifier = when (view_model.get_layout_size()) {
-                                                ViewModelPagan.LayoutSize.SmallPortrait,
-                                                ViewModelPagan.LayoutSize.SmallLandscape,
-                                                ViewModelPagan.LayoutSize.MediumPortrait -> Modifier
-
-                                                ViewModelPagan.LayoutSize.LargePortrait,
-                                                ViewModelPagan.LayoutSize.MediumLandscape -> {
-                                                    when (dialog.size) {
-                                                        ViewModelPagan.DialogSize.Unbounded -> Modifier
-                                                        ViewModelPagan.DialogSize.Small -> Modifier.width(200.dp)
-                                                        ViewModelPagan.DialogSize.Medium -> Modifier.width(400.dp)
-                                                    }
-                                                }
-
-                                                ViewModelPagan.LayoutSize.XLargePortrait,
-                                                ViewModelPagan.LayoutSize.XLargeLandscape,
-                                                ViewModelPagan.LayoutSize.LargeLandscape -> {
-                                                    when (dialog.size) {
-                                                        ViewModelPagan.DialogSize.Unbounded -> Modifier
-                                                        ViewModelPagan.DialogSize.Small -> Modifier.width(300.dp)
-                                                        ViewModelPagan.DialogSize.Medium -> Modifier.width(SIZE_L.second)
-                                                    }
-                                                }
-                                            }
-                                            // Allow click-away from text fields
-                                            .pointerInput(Unit) {
-                                                detectTapGestures { offset ->
-                                                    keyboard_controller?.hide()
-                                                    focus_manager.clearFocus()
-                                                }
-                                            },
-                                            content = dialog.dialog
-                                        )
-                                    }
-                                }
-                                // -----------------------------------------------
                                 val layout_size = view_model.get_layout_size()
                                 val modifier = Modifier.fillMaxSize()
                                 when (layout_size) {

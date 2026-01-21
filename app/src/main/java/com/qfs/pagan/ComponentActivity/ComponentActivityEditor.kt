@@ -1091,12 +1091,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 content = {
                     Spacer(
                         Modifier
-                            .fillMaxWidth()
-                            .height(dimensionResource(R.dimen.table_line_stroke))
-                            .background(MaterialTheme.colorScheme.onSurfaceVariant)
-                    )
-                    Spacer(
-                        Modifier
+                            .padding(top = dimensionResource(R.dimen.line_height) - dimensionResource(R.dimen.table_line_stroke))
                             .fillMaxHeight()
                             .width(dimensionResource(R.dimen.table_line_stroke))
                             .background(MaterialTheme.colorScheme.onSurfaceVariant)

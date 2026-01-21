@@ -2405,6 +2405,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         // if (this.is_debug_on()) {
         //     this.save_actions()
         // }
+        this.state_model.clear()
         this.save_to_backup()
     }
 

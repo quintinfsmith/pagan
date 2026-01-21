@@ -468,7 +468,6 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         val selecting_range = cursor.mode == CursorMode.Range
-
         if (selecting_range && cursor.ctl_type == ctl_type) {
             if (ctl_type == null) {
                 this.move_selection_to_beat(BeatKey(channel!!, line_offset!!, beat))

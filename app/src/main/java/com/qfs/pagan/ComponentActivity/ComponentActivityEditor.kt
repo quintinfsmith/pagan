@@ -487,11 +487,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
     internal var result_launcher_import = this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode != RESULT_OK) {
-                this@ComponentActivityEditor.state_model.ready.value = true
-                return@registerForActivityResult
-            }
-            result.data?.data?.also { uri ->
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            val uri = result.data?.data ?: return@registerForActivityResult
+            this.action_interface.save_before {
                 this.handle_uri(uri)
             }
         }
@@ -666,6 +664,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     fun import_project(uri: Uri) {
         this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
+            this.state_model.ready.value = false
             val bytes = FileInputStream(it.fileDescriptor).readBytes()
             this.controller_model.opus_manager.load(bytes)
             this.controller_model.active_project = null
@@ -674,12 +673,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     fun import_midi(uri: Uri) {
+        this.state_model.ready.value = false
         val bytes = this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
             FileInputStream(it.fileDescriptor).readBytes()
         } ?: throw InvalidMIDIFile(uri.toString())
 
         val midi = try {
-            Midi.Companion.from_bytes(bytes)
+            Midi.from_bytes(bytes)
         } catch (_: Exception) {
             throw InvalidMIDIFile(uri.toString())
         }
@@ -728,26 +728,24 @@ class ComponentActivityEditor: PaganComponentActivity() {
             else -> { _ -> throw FileNotFoundException(uri.toString()) }
         }
 
-        this.action_interface.save_before {
-            val fallback_msg = try {
-                inner_callback(uri)
-                null
-            } catch (e: Exception) {
-                throw e
-                when (type) {
-                    CompatibleFileType.Midi1 -> this.getString(R.string.feedback_midi_fail)
-                    CompatibleFileType.Pagan -> this.getString(R.string.feedback_import_fail)
-                    null -> this.getString(R.string.feedback_file_not_found)
-                }
+        val fallback_msg = try {
+            inner_callback(uri)
+            null
+        } catch (e: Exception) {
+            throw e
+            when (type) {
+                CompatibleFileType.Midi1 -> this.getString(R.string.feedback_midi_fail)
+                CompatibleFileType.Pagan -> this.getString(R.string.feedback_import_fail)
+                null -> this.getString(R.string.feedback_file_not_found)
             }
+        }
 
-            if (fallback_msg != null) {
-                TODO()
-                // if (!this.get_opus_manager().is_initialized()) {
-                //     this.setup_new()
-                // }
-                // this.feedback_msg(fallback_msg)
-            }
+        if (fallback_msg != null) {
+            TODO()
+            // if (!this.get_opus_manager().is_initialized()) {
+            //     this.setup_new()
+            // }
+            // this.feedback_msg(fallback_msg)
         }
     }
 
@@ -786,7 +784,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         menu_items.add(
             Pair(R.string.menu_item_import) {
-                vm_state.ready.value = false
                 this@ComponentActivityEditor.result_launcher_import.launch(
                     Intent().apply {
                         this.setAction(Intent.ACTION_GET_CONTENT)

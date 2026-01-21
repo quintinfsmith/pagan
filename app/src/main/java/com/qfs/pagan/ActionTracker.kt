@@ -37,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
@@ -2626,91 +2627,129 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
 
         this.vm_top.create_medium_dialog { close ->
             @Composable {
+                val screen_height = LocalWindowInfo.current.containerDpSize.height
+                val is_editing = remember { mutableStateOf(false) }
+                val height_threshold = 360.dp
+                println("SCREEN HEIGHT: $screen_height")
+
                 val original_radix = opus_manager.get_radix()
                 val transpose_numerator = remember { mutableIntStateOf(opus_manager.transpose.first) }
                 val transpose_denominator = remember { mutableIntStateOf(opus_manager.transpose.second) }
                 val radix = remember { mutableIntStateOf(original_radix) }
                 val mutable_map = MutableList(radix.intValue) { i ->
-                    mutableStateOf(
-                        if (radix.intValue == original_radix) opus_manager.tuning_map[i]
-                        else Pair(i, radix.intValue)
-                    )
+                    if (radix.intValue == original_radix) {
+                        Pair(
+                            mutableStateOf(opus_manager.tuning_map[i].first),
+                            mutableStateOf(opus_manager.tuning_map[i].second)
+                        )
+                    } else {
+                        Pair(mutableStateOf(i), mutableStateOf(radix.intValue))
+                    }
                 }
-                Row(
-                    Modifier.weight(1F, fill = false),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(
-                        verticalArrangement = Arrangement.Top,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        SText(R.string.dlg_set_radix, maxLines = 1)
-                        IntegerInput(
-                            value = radix,
-                            minimum = 0,
-                            maximum = 36,
-                            contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                            modifier = Modifier.width(dimensionResource(R.dimen.transpose_dlg_input_width)),
-                            callback = {
-                                mutable_map.clear()
-                                for (i in 0 until it) {
-                                    mutable_map.add(
-                                        mutableStateOf(
-                                            Pair(i, it)
-                                        )
+
+                // val keyboard_controller = LocalSoftwareKeyboardController.current
+                // val focus_manager = LocalFocusManager.current
+                //     // Allow click-away from text fields
+                //     .pointerInput(Unit) {
+                //         detectTapGestures { offset ->
+                //             keyboard_controller?.hide()
+                //             focus_manager.clearFocus()
+                //         }
+                //     }
+
+                key(is_editing.value) {
+                    if (screen_height > height_threshold || !is_editing.value) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                SText(R.string.dlg_transpose, maxLines = 1)
+                                Row {
+                                    IntegerInput(
+                                        value = transpose_numerator,
+                                        minimum = 0,
+                                        contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
+                                        modifier = Modifier.width(dimensionResource(R.dimen.transpose_dlg_input_width)),
+                                        callback = { }
+                                    )
+
+                                    Spacer(Modifier.height(4.dp))
+                                    IntegerInput(
+                                        value = transpose_denominator,
+                                        minimum = 0,
+                                        contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
+                                        modifier = Modifier.width(dimensionResource(R.dimen.transpose_dlg_input_width)),
+                                        callback = { }
                                     )
                                 }
                             }
-                        )
-
-                        Spacer(Modifier.weight(1F))
-
-                        SText(R.string.dlg_transpose, maxLines = 1)
-                        IntegerInput(
-                            value = transpose_numerator,
-                            minimum = 0,
-                            contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                            modifier = Modifier.width(dimensionResource(R.dimen.transpose_dlg_input_width)),
-                            callback = { }
-                        )
-
-                        Spacer(Modifier.height(4.dp))
-                        IntegerInput(
-                            value = transpose_denominator,
-                            minimum = 0,
-                            contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                            modifier = Modifier.width(dimensionResource(R.dimen.transpose_dlg_input_width)),
-                            callback = { }
-                        )
+                            Column {
+                                SText(R.string.dlg_set_radix, maxLines = 1)
+                                IntegerInput(
+                                    value = radix,
+                                    minimum = 0,
+                                    maximum = 36,
+                                    contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
+                                    modifier = Modifier.width(dimensionResource(R.dimen.transpose_dlg_input_width)),
+                                    callback = {
+                                        mutable_map.clear()
+                                        for (i in 0 until it) {
+                                            mutable_map.add(
+                                                Pair(
+                                                    mutableStateOf(i),
+                                                    mutableStateOf(it)
+                                                )
+                                            )
+                                        }
+                                    }
+                                )
+                            }
+                        }
                     }
+                }
 
-                    Spacer(Modifier.width(4.dp))
+                Spacer(Modifier.width(4.dp))
 
-                    Surface(
-                        modifier = Modifier
-                            .weight(1F, fill = false),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface),
-                        shape = RoundedCornerShape(6.dp),
-                        tonalElevation = 1.dp
-                    ) {
-                        key(radix.value) {
-                            FlowRow(
-                                modifier = Modifier
-                                    .padding(6.dp)
-                                    .fillMaxWidth()
-                                    .defaultMinSize(minHeight = 54.dp)
-                                    .verticalScroll(rememberScrollState()),
-                                horizontalArrangement = Arrangement.SpaceAround
-                            ) {
-                                for ((i, state) in mutable_map.enumerate()) {
-                                    val pair = state.value
-                                    val numer = remember { mutableIntStateOf(pair.first) }
-                                    val denom = remember { mutableIntStateOf(pair.second) }
-                                    Surface(
-                                        Modifier.padding(vertical = 3.dp),
-                                        shape = RoundedCornerShape(6.dp),
-                                        tonalElevation = 2.dp
+                Surface(
+                    modifier = Modifier
+                        .weight(1F, fill = false),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface),
+                    shape = RoundedCornerShape(6.dp),
+                    tonalElevation = 1.dp
+                ) {
+                    key(radix.value) {
+                        FlowRow(
+                            modifier = Modifier
+                                .padding(6.dp)
+                                .fillMaxWidth()
+                                .defaultMinSize(minHeight = 54.dp)
+                                .verticalScroll(rememberScrollState()),
+                        ) {
+                            for ((i, state) in mutable_map.enumerate()) {
+                                val (numer, denom) = state
+                                val expanded = remember { mutableStateOf(false) }
+                                Surface(
+                                    Modifier.padding(vertical = 3.dp),
+                                    shape = RoundedCornerShape(6.dp),
+                                    tonalElevation = 2.dp
+                                ) {
+                                    Button(
+                                        onClick = {
+                                            expanded.value = true
+                                            is_editing.value = true
+                                        },
+                                        content = {
+                                            Text("$i) ${numer.value} / ${denom.value}")
+                                        }
+                                    )
+                                    DropdownMenu(
+                                        expanded = expanded.value,
+                                        onDismissRequest = {
+                                            expanded.value = false
+                                            is_editing.value = false
+                                        }
                                     ) {
                                         Row(
                                             modifier = Modifier.padding(6.dp),
@@ -2727,9 +2766,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                                                 minimum = 0,
                                                 modifier = Modifier.width(64.dp),
                                                 contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                                                callback = {
-                                                    mutable_map[i].value = Pair(numer.value, denom.value)
-                                                }
+                                                callback = {}
                                             )
                                             Text("/", modifier = Modifier.padding(horizontal = 2.dp))
                                             IntegerInput(
@@ -2737,9 +2774,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                                                 minimum = 0,
                                                 modifier = Modifier.width(64.dp),
                                                 contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                                                callback = {
-                                                    mutable_map[i].value = Pair(numer.value, denom.value)
-                                                }
+                                                callback = { }
                                             )
                                         }
                                     }
@@ -2748,17 +2783,24 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                         }
                     }
                 }
+
                 Spacer(
                     Modifier
                         .height(4.dp)
                         .fillMaxWidth()
                 )
+
                 DialogBar(
                     neutral = close,
                     positive = {
                         close()
                         this@ActionTracker.set_tuning_table_and_transpose(
-                            Array(mutable_map.size) { i -> mutable_map[i].value },
+                            Array(mutable_map.size) { i ->
+                                Pair(
+                                    mutable_map[i].first.value,
+                                    mutable_map[i].second.value
+                                )
+                            },
                             Pair(
                                 transpose_numerator.value,
                                 transpose_denominator.value

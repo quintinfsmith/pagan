@@ -51,6 +51,8 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
         onValueChange = {
             working_value.value = it
             event.value = it
+        },
+        onValueChangeFinished = {
             dispatcher.set_effect_at_cursor(event)
         },
     )

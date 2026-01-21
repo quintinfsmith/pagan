@@ -704,7 +704,7 @@ fun ColumnScope.DialogBar(modifier: Modifier = Modifier, positive: (() -> Unit)?
     }
 }
 
-// Every time i set "steps" to be the *actual* number of discrete values I want - 2, I get a stress headache. So I'm not doing that.
+// Every time i set "steps" to be the *actual* number of discrete values I want - 2 I get a stress headache. So I'm not doing that.
 @Composable
 fun Slider(
     value: Float,
@@ -717,7 +717,17 @@ fun Slider(
     colors: SliderColors = SliderDefaults.colors(),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
-    StupidSlider(value, onValueChange, modifier, enabled, valueRange, steps - 2, onValueChangeFinished, colors, interactionSource)
+    StupidSlider(
+        value,
+        onValueChange,
+        modifier,
+        enabled,
+        valueRange,
+        steps - 2,
+        onValueChangeFinished,
+        colors,
+        interactionSource
+    )
 }
 
 @Composable

@@ -50,6 +50,8 @@ fun RowScope.VolumeEventMenu(ui_facade: ViewModelEditorState, dispatcher: Action
         onValueChange = {
             event.value = it
             working_value.value = it
+        },
+        onValueChangeFinished = {
             dispatcher.set_effect_at_cursor(event)
         },
     )

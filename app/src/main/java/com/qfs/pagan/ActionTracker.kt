@@ -518,7 +518,17 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                 }
             }
             CursorMode.Line -> {
-                if (channel == cursor.channel && line_offset == cursor.line_offset && ctl_type == cursor.ctl_type) {
+                val ctl_level = if (ctl_type == null) {
+                    null
+                } else if (channel == null) {
+                    CtlLineLevel.Global
+                } else if (line_offset == null) {
+                    CtlLineLevel.Channel
+                } else {
+                    CtlLineLevel.Line
+                }
+
+                if (channel == cursor.channel && line_offset == cursor.line_offset && ctl_type == cursor.ctl_type && ctl_level == cursor.ctl_level) {
                     this.cursor_select_channel(channel)
                 } else {
                     this.cursor_select_line(channel, line_offset, ctl_type)

@@ -1,11 +1,34 @@
 package com.qfs.pagan
 
-import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.structure.greatest_common_denominator
+import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class StructureUnitTest {
+    @Test
+    fun test_swap_sections() {
+        val test_list = mutableListOf(
+            "A0",
+            "A1",
+            "A2",
+            "B0",
+            "B1",
+            "B2",
+            "C0",
+            "D0",
+            "D1",
+            "D2",
+            "D3",
+            "E0",
+        )
+        test_list.swap_sections(0, 3, 7, 4)
+        assertEquals(
+            mutableListOf("D0", "D1", "D2", "D3", "B0", "B1", "B2", "C0", "A0", "A1", "A2", "E0"),
+            test_list
+        )
+    }
+
     @Test
     fun test_merge() {
         val tree_a = ReducibleTree<Int>()

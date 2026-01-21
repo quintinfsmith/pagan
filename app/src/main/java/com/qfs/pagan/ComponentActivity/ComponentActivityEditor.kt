@@ -69,7 +69,6 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -1207,7 +1206,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                                         to_line.channel.value!!,
                                                                         !is_after
                                                                     )
-                                                                } else {
+                                                                } else if (to_line.line_offset.value != null) {
                                                                     dispatcher.move_line(
                                                                         from_line.channel.value!!,
                                                                         from_line.line_offset.value!!,
@@ -2673,8 +2672,18 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
             if (working_line.channel.value != working_channel || (!is_dragging_channel && working_line_offset != working_line.line_offset.value)) {
                 val diff = (running_position - start_position) / 2F
-                output.add(Triple(start_position .. (running_position - diff), start_line .. end_line, false))
-                output.add(Triple((start_position + diff) .. running_position, start_line .. end_line, true))
+                var working_end_line = end_line
+                if (!is_dragging_channel) {
+                    while (working_end_line > 0 && this.state_model.line_data[working_end_line].line_offset.value == null) {
+                        working_end_line -= 1
+                    }
+                }
+                while (working_end_line > 0 && this.state_model.line_data[working_end_line].channel.value == null) {
+                    working_end_line -= 1
+                }
+
+                output.add(Triple(start_position .. (running_position - diff), start_line .. working_end_line, false))
+                output.add(Triple((start_position + diff) .. running_position, start_line .. working_end_line, true))
 
                 start_position = running_position
                 start_line = y
@@ -2687,8 +2696,17 @@ class ComponentActivityEditor: PaganComponentActivity() {
             working_channel = working_line.channel.value ?: break
         }
 
+
         if (this.state_model.line_data[start_line].channel.value != null) {
             val diff = (running_position - start_position) / 2F
+            if (!is_dragging_channel) {
+                while (end_line > 0 && this.state_model.line_data[end_line].line_offset.value == null) {
+                    end_line -= 1
+                }
+            }
+            while (end_line > 0 && this.state_model.line_data[end_line].channel.value == null) {
+                end_line -= 1
+            }
             output.add(Triple(start_position..(running_position - diff), start_line..end_line, false))
             output.add(Triple((start_position + diff)..running_position, start_line..end_line, true))
         }

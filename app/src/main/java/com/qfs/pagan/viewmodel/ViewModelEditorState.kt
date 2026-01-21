@@ -760,43 +760,6 @@ class ViewModelEditorState: ViewModel() {
         }
     }
 
-    fun swap_line_cells(y_a: Int, y_b: Int) {
-        if (y_a == y_b) return
-
-        val lesser = min(y_a, y_b)
-        val larger = max(y_a, y_b)
-
-        val lesser_line_data = this.line_data[lesser]
-        val larger_line_data = this.line_data[larger]
-        var lesser_line_count = 0
-        var larger_line_count = 0
-
-        var i = lesser
-        while (this.line_data[i].channel.value == lesser_line_data.channel.value && this.line_data[i].line_offset.value == lesser_line_data.line_offset.value) {
-            i++
-            lesser_line_count++
-        }
-
-        i = larger
-        while (this.line_data[i].channel.value == larger_line_data.channel.value && this.line_data[i].line_offset.value == larger_line_data.line_offset.value) {
-            i++
-            larger_line_count++
-        }
-
-        val larger_lines = Array(larger_line_count) {
-            this.cell_map.removeAt(larger)
-        }
-        val lesser_lines = Array(lesser_line_count) {
-            this.cell_map.removeAt(lesser)
-        }
-
-        for ((i, line) in larger_lines.enumerate()) {
-            this.cell_map.add(lesser + i, line)
-        }
-        for ((i, line) in lesser_lines.enumerate()) {
-            this.cell_map.add(larger + i + (larger_line_count - lesser_line_count), line)
-        }
-    }
 
     fun set_radix(radix: Int) {
         this.radix.value = radix

@@ -883,70 +883,40 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.vm_state.refresh_cursor()
     }
 
-    private fun _swap_line_ui_update(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
-        var y = 0
-        val first_swapped_line = min(
-            this.get_instrument_line_index(channel_a, line_a),
-            this.get_instrument_line_index(channel_b, line_b)
-        )
-
-        for (c in 0 until this.channels.size) {
-            val channel = this.channels[c]
-            val is_percussion = this.is_percussion(c)
-            for ((l, line) in channel.lines.enumerate()) {
-                val instrument = if (is_percussion) {
-                    (line as OpusLinePercussion).instrument
-                } else {
-                    null
-                }
-
-                if (y >= first_swapped_line) {
-                    this.vm_state.update_line(y, c, l, null, instrument, line.muted, false)
-                }
-                y++
-
-                for ((type, controller) in line.controllers.get_all()) {
-                    if (!controller.visible) continue
-                    if (y > first_swapped_line) {
-                        this.vm_state.update_line(y, c, l, type, instrument, line.muted, false)
-                    }
-                    y++
-                }
-            }
-
-            for ((type, controller) in channel.controllers.get_all()) {
-                if (!controller.visible) continue
-                if (y > first_swapped_line) {
-                    this.vm_state.update_line(y, c, null, type, null, channel.muted, false)
-                }
-                y++
-            }
-        }
-
-        for ((type, controller) in this.controllers.get_all()) {
-            if (!controller.visible) continue
-            if (y > first_swapped_line) {
-                this.vm_state.update_line(y, null, null, type, null, false, false)
-            }
-            y++
-        }
-    }
 
     override fun swap_lines(channel_index_a: Int, line_offset_a: Int, channel_index_b: Int, line_offset_b: Int) {
-        // FIXME: if swap_lines fails, then the state gets fucked.
-        val y_a = this.get_instrument_line_index(channel_index_a, line_offset_a)
-        val y_b = this.get_instrument_line_index(channel_index_b, line_offset_b)
-
-        if (!this.ui_lock.is_locked()) {
-            this.vm_state.swap_line_cells(y_a, y_b)
-        }
-
         super.swap_lines(channel_index_a, line_offset_a, channel_index_b, line_offset_b)
+        if (this.ui_lock.is_locked()) return
 
-        if (!this.ui_lock.is_locked()) {
-            this._swap_line_ui_update(channel_index_a, line_offset_a, channel_index_b, line_offset_b)
-        }
+        this._swap_line_ui_update(channel_index_a, line_offset_a, channel_index_b, line_offset_b)
     }
+
+    private fun get_vm_state_line_and_size(channel: Int, line_offset: Int): Pair<Int, Int> {
+        var output_index = -1
+        var output_size = 0
+
+        for (y in 0 until this.vm_state.line_data.size) {
+            val line_data = this.vm_state.line_data[y]
+            if (line_data.channel.value != channel) continue
+            if (line_data.line_offset.value != line_offset) continue
+
+            if (output_index == -1) {
+                output_index = y
+            }
+
+            output_size += 1
+        }
+        return Pair(output_index, output_size)
+    }
+
+    private fun _swap_line_ui_update(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
+        val pair_a = this.get_vm_state_line_and_size(channel_a, line_a)
+        val pair_b = this.get_vm_state_line_and_size(channel_b, line_b)
+
+        this.vm_state.line_data.swap_sections(pair_a.first, pair_a.second, pair_b.first, pair_b.second)
+        this.vm_state.cell_map.swap_sections(pair_a.first, pair_a.second, pair_b.first, pair_b.second)
+    }
+
 
     override fun remove_line(channel: Int, line_offset: Int): OpusLineAbstract<*> {
         val abs_line = this.get_visible_row_from_ctl_line(
@@ -1247,6 +1217,11 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         super.move_channel(channel_index, new_channel_index)
         if (this.ui_lock.is_locked()) return
         this.vm_state.move_channel(channel_index, new_channel_index)
+    }
+
+    override fun move_line(channel_index_from: Int, line_offset_from: Int, channel_index_to: Int, line_offset_to: Int) {
+        super.move_line(channel_index_from, line_offset_from, channel_index_to, line_offset_to)
+        if (this.ui_lock.is_locked()) return
     }
 
     override fun clear() {

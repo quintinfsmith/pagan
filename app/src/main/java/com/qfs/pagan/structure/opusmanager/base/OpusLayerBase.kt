@@ -1461,6 +1461,7 @@ open class OpusLayerBase: Effectable {
         if (this.is_percussion(channel_index_from) != this.is_percussion(channel_index_to)) {
             throw IncompatibleChannelException(channel_index_from, channel_index_to)
         }
+
         this.new_line(channel_index_to, line_offset_to)
         var adj_line_offset_from = line_offset_from
         if (channel_index_to == channel_index_from && line_offset_to < line_offset_from) {

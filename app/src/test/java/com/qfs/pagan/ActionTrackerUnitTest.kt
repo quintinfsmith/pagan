@@ -1,7 +1,6 @@
 package com.qfs.pagan
 
 import com.qfs.json.JSONBoolean
-import com.qfs.json.JSONFloat
 import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONString
@@ -24,17 +23,11 @@ class ActionTrackerUnitTest {
                 ActionTracker.TrackedAction.TogglePercussion,
                 ActionTracker.TrackedAction.DrawerOpen,
                 ActionTracker.TrackedAction.DrawerClose,
-                ActionTracker.TrackedAction.OpenSettings,
-                ActionTracker.TrackedAction.OpenAbout,
                 ActionTracker.TrackedAction.NewProject,
                 ActionTracker.TrackedAction.ApplyUndo -> {
                     Pair(enum, listOf())
                 }
 
-                // ------- Boolean ------------
-                ActionTracker.TrackedAction.GoBack -> {
-                    Pair(enum, listOf(1))
-                }
 
                 // Special C
                 ActionTracker.TrackedAction.SetProjectNameAndNotes -> {
@@ -49,7 +42,6 @@ class ActionTrackerUnitTest {
                 }
 
                 // -------- Single String Argument -------------
-                ActionTracker.TrackedAction.SetTransitionAtCursor,
                 ActionTracker.TrackedAction.ShowLineController,
                 ActionTracker.TrackedAction.ShowGlobalController,
                 ActionTracker.TrackedAction.ShowChannelController,
@@ -68,16 +60,12 @@ class ActionTrackerUnitTest {
                 ActionTracker.TrackedAction.UnMuteChannel,
                 ActionTracker.TrackedAction.CopyGlobalCtlToBeat,
                 ActionTracker.TrackedAction.MoveGlobalCtlToBeat,
-                ActionTracker.TrackedAction.SetPanAtCursor,
                 ActionTracker.TrackedAction.InsertLine,
                 ActionTracker.TrackedAction.RemoveLine,
                 ActionTracker.TrackedAction.RemoveChannel,
                 ActionTracker.TrackedAction.SetDuration,
                 ActionTracker.TrackedAction.RemoveBeat,
                 ActionTracker.TrackedAction.InsertBeat,
-                ActionTracker.TrackedAction.SetDurationCtl,
-                ActionTracker.TrackedAction.SetVolumeAtCursor,
-                ActionTracker.TrackedAction.SetVelocityAtCursor,
                 ActionTracker.TrackedAction.SetOffset,
                 ActionTracker.TrackedAction.SetOctave,
                 ActionTracker.TrackedAction.SplitLeaf,
@@ -201,21 +189,13 @@ class ActionTrackerUnitTest {
                     Pair(enum, listOf(0, 12, 0, 12, 1, 12, 2, 12, 3, 12, 4, 12, 5, 12, 6, 12, 7, 12, 8, 12, 9, 12, 10, 12, 11, 12))
                 }
 
-                // ----------- Float --------------
-                ActionTracker.TrackedAction.SetTempoAtCursor -> {
-                    Pair(enum, listOf(35f.toBits()))
-                }
 
-                ActionTracker.TrackedAction.MoveLine,
-                ActionTracker.TrackedAction.SwapLines -> {
+                ActionTracker.TrackedAction.MoveLine -> {
                     Pair(enum, listOf(0, 0, 1, 0))
                 }
 
                 ActionTracker.TrackedAction.MoveChannel -> {
                     Pair(enum, listOf(1, 3, 1))
-                }
-                ActionTracker.TrackedAction.SetDelayAtCursor -> {
-                    Pair(enum, listOf(4,3, 0.75F.toBits(), 4))
                 }
             }
 
@@ -236,17 +216,11 @@ class ActionTrackerUnitTest {
                     ActionTracker.TrackedAction.TogglePercussion,
                     ActionTracker.TrackedAction.DrawerOpen,
                     ActionTracker.TrackedAction.DrawerClose,
-                    ActionTracker.TrackedAction.OpenSettings,
-                    ActionTracker.TrackedAction.OpenAbout,
                     ActionTracker.TrackedAction.NewProject,
                     ActionTracker.TrackedAction.ApplyUndo -> {
                         JSONList(json_name)
                     }
 
-                    // ------- Boolean ------------
-                    ActionTracker.TrackedAction.GoBack -> {
-                        JSONList(json_name, JSONBoolean(true))
-                    }
 
                     ActionTracker.TrackedAction.SetProjectNameAndNotes -> {
                         val project_name = "Project Name"
@@ -255,7 +229,6 @@ class ActionTrackerUnitTest {
                     }
 
                     // -------- Single String Argument -------------
-                    ActionTracker.TrackedAction.SetTransitionAtCursor,
                     ActionTracker.TrackedAction.ShowLineController,
                     ActionTracker.TrackedAction.ShowGlobalController,
                     ActionTracker.TrackedAction.ShowChannelController,
@@ -273,16 +246,12 @@ class ActionTrackerUnitTest {
                     ActionTracker.TrackedAction.UnMuteChannel,
                     ActionTracker.TrackedAction.CopyGlobalCtlToBeat,
                     ActionTracker.TrackedAction.MoveGlobalCtlToBeat,
-                    ActionTracker.TrackedAction.SetPanAtCursor,
                     ActionTracker.TrackedAction.InsertLine,
                     ActionTracker.TrackedAction.RemoveLine,
                     ActionTracker.TrackedAction.RemoveChannel,
                     ActionTracker.TrackedAction.SetDuration,
                     ActionTracker.TrackedAction.RemoveBeat,
                     ActionTracker.TrackedAction.InsertBeat,
-                    ActionTracker.TrackedAction.SetDurationCtl,
-                    ActionTracker.TrackedAction.SetVolumeAtCursor,
-                    ActionTracker.TrackedAction.SetVelocityAtCursor,
                     ActionTracker.TrackedAction.SetOffset,
                     ActionTracker.TrackedAction.SetOctave,
                     ActionTracker.TrackedAction.SplitLeaf,
@@ -336,7 +305,6 @@ class ActionTrackerUnitTest {
                     }
 
                     ActionTracker.TrackedAction.InsertChannel,
-                    ActionTracker.TrackedAction.SwapChannels,
                     ActionTracker.TrackedAction.MuteLine,
                     ActionTracker.TrackedAction.UnMuteLine,
                     ActionTracker.TrackedAction.CursorSelectLine -> {
@@ -377,12 +345,7 @@ class ActionTrackerUnitTest {
                     }
 
                     // ----------- Float --------------
-                    ActionTracker.TrackedAction.SetTempoAtCursor -> {
-                        JSONList(json_name, JSONFloat(35f))
-                    }
-
-                    ActionTracker.TrackedAction.MoveLine,
-                    ActionTracker.TrackedAction.SwapLines -> {
+                    ActionTracker.TrackedAction.MoveLine -> {
                         val test_ints = arrayOf(0, 0, 1, 0)
                         JSONList(json_name, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }
@@ -394,9 +357,6 @@ class ActionTrackerUnitTest {
 
                     ActionTracker.TrackedAction.MoveChannel -> {
                         JSONList(json_name, JSONInteger(1), JSONInteger(3), JSONBoolean(true))
-                    }
-                    ActionTracker.TrackedAction.SetDelayAtCursor -> {
-                        JSONList(json_name, JSONInteger(4), JSONInteger(3), JSONFloat(.75F), JSONInteger(4))
                     }
                 },
                 json_item

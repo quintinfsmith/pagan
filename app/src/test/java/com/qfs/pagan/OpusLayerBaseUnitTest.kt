@@ -12,24 +12,24 @@ import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BadBeatKey
 import com.qfs.pagan.structure.opusmanager.base.BadInsertPosition
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.EventlessTreeException
 import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
 import com.qfs.pagan.structure.opusmanager.base.InvalidChannel
 import com.qfs.pagan.structure.opusmanager.base.NonEventConversion
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
-import com.qfs.pagan.structure.opusmanager.base.RangeOverflow
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase.Companion.get_ordered_beat_key_pair
 import com.qfs.pagan.structure.opusmanager.base.PercussionChannelRequired
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
+import com.qfs.pagan.structure.opusmanager.base.RangeOverflow
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.RemovingLastBeatException
 import com.qfs.pagan.structure.opusmanager.base.RemovingRootException
 import com.qfs.pagan.structure.opusmanager.base.TunedInstrumentEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -3435,33 +3435,6 @@ class OpusLayerBaseUnitTest {
         assertEquals(2, manager.channels.size)
     }
 
-    @Test
-    fun test_swap_channels() {
-        val manager = OpusManager()
-        manager._project_change_new()
-        manager.new_channel()
-        manager.set_event(BeatKey(0,0,0), listOf(), AbsoluteNoteEvent(24))
-        manager.set_event(BeatKey(1,0,2), listOf(), PercussionEvent())
-        manager.set_event(BeatKey(2,0,1), listOf(), AbsoluteNoteEvent(24))
-
-        val ch_one = manager.channels[0]
-        val ch_two = manager.channels[1]
-        val ch_thr = manager.channels[2]
-
-        manager.swap_channels(0, 1)
-        assertEquals(ch_one, manager.channels[1])
-        assertEquals(ch_two, manager.channels[0])
-
-        manager.move_channel(1, 0)
-        assertEquals(ch_one, manager.channels[0])
-        assertEquals(ch_two, manager.channels[1])
-
-        manager.move_channel(0, 3)
-        assertEquals(ch_two, manager.channels[0])
-        assertEquals(ch_thr, manager.channels[1])
-        assertEquals(ch_one, manager.channels[2])
-
-    }
 
     @Test
     fun test_mute() {

@@ -1,5 +1,6 @@
 package com.qfs.pagan
 
+import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
@@ -91,7 +92,7 @@ import com.qfs.pagan.OpusLayerInterface as OpusManager
  * This class is meant for recording and playing back UI tests and eventually debugging so
  * not every action directed through here at the moment.
  */
-class ActionTracker(var vm_controller: ViewModelEditorController) {
+class ActionTracker(val context: Context, var vm_controller: ViewModelEditorController) {
     var DEBUG_ON = false
     class NoActivityException: Exception()
     class OpusManagerDetached: Exception()
@@ -1581,7 +1582,7 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
         }
 
         val default = opus_manager.get_channel_instrument(channel)
-        val preset_names =  mutableListOf<Triple<Int, Int, String>>()
+        val preset_names =  mutableListOf<Triple<Int, Int, String?>>()
         val options = mutableListOf<Pair<Pair<Int, Int>, @Composable RowScope.() -> Unit>>()
         val is_percussion = opus_manager.is_percussion(channel)
 
@@ -1622,13 +1623,14 @@ class ActionTracker(var vm_controller: ViewModelEditorController) {
                 )
             }
         }
-
+        val default_presets = this.context.resources.getStringArray(R.array.general_midi_presets)
         val sort_options = listOf(
             Pair(R.string.sort_option_bank) { a: Int, b: Int -> preset_names[a].first.compareTo(preset_names[b].first) },
             Pair(R.string.sort_option_program) { a: Int, b: Int -> preset_names[a].second.compareTo(preset_names[b].second) },
             Pair(R.string.sort_option_abc) { a: Int, b: Int ->
-                println("$a, $b, ${preset_names[a]}, ${preset_names[b]}")
-                preset_names[a].third.lowercase().compareTo(preset_names[b].third.lowercase())
+                val a_name = preset_names[a].third ?: default_presets[preset_names[a].second]
+                val b_name = preset_names[b].third ?: default_presets[preset_names[b].second]
+                a_name.lowercase().compareTo(b_name.lowercase())
             }
         )
 

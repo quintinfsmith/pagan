@@ -168,6 +168,7 @@ import kotlin.math.roundToInt
 class ComponentActivityEditor: PaganComponentActivity() {
     val controller_model: ViewModelEditorController by this.viewModels()
     val state_model: ViewModelEditorState by this.viewModels()
+    lateinit var action_interface: ActionTracker
 
     private var broadcast_receiver = PaganBroadcastReceiver()
     private var receiver_intent_filter = IntentFilter("com.qfs.pagan.CANCEL_EXPORT_WAV")
@@ -474,7 +475,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             this.view_model.save_configuration()
 
             this.view_model.project_manager?.change_project_path(tree_uri, this.controller_model.active_project)
-            this@ComponentActivityEditor.controller_model.action_interface.save()
+            this@ComponentActivityEditor.action_interface.save()
 
             this.reload_config()
         }
@@ -543,7 +544,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     override fun on_back_press_check(): Boolean {
         val active_cursor = this.state_model.active_cursor.value
         return if (active_cursor != null && active_cursor.type != CursorMode.Unset) {
-            this.controller_model.action_interface.cursor_clear()
+            this.action_interface.cursor_clear()
             false
         } else {
             true
@@ -564,7 +565,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val dispatcher = this.controller_model.action_interface
+        action_interface = ActionTracker(this, this.controller_model)
+        val dispatcher = this.action_interface
         this.state_model.base_leaf_width.value = this.resources.getDimension(R.dimen.base_leaf_width)
         this.controller_model.attach_state_model(this.state_model)
 
@@ -606,8 +608,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     fun set_soundfont() {
         // Ensure playback is stopped
-        this.controller_model.action_interface.stop_opus_midi()
-        this.controller_model.action_interface.stop_opus()
+        this.action_interface.stop_opus_midi()
+        this.action_interface.stop_opus()
 
         val file_path = this.view_model.configuration.soundfont
         if (file_path == null) {
@@ -726,7 +728,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             else -> { _ -> throw FileNotFoundException(uri.toString()) }
         }
 
-        this.controller_model.action_interface.save_before {
+        this.action_interface.save_before {
             val fallback_msg = try {
                 inner_callback(uri)
                 null
@@ -761,7 +763,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val vm_state = vm_controller.opus_manager.vm_state
 
         val vm_top = this@ComponentActivityEditor.view_model
-        val dispatcher = vm_controller.action_interface
+        val dispatcher = this@ComponentActivityEditor.action_interface
         val scope = rememberCoroutineScope()
         val menu_items: MutableList<Pair<Int, () -> Unit>> = mutableListOf(
             Pair(R.string.menu_item_new_project) {
@@ -1065,7 +1067,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
-
     @Composable
     fun BoxScope.MainTableBackground() {
         Box(
@@ -1123,7 +1124,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             )
         }
-
     }
 
     @Composable
@@ -1894,7 +1894,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     override fun Drawer(modifier: Modifier) {
-        val dispatcher = this.controller_model.action_interface
+        val dispatcher = this.action_interface
         val state_model = this.state_model
         val scope = rememberCoroutineScope()
 
@@ -2166,19 +2166,19 @@ class ComponentActivityEditor: PaganComponentActivity() {
             contentAlignment = Alignment.BottomCenter
         ) {
             Box(Modifier.fillMaxSize()) {
-                MainTable(Modifier, ui_facade, view_model.action_interface,  ui_facade.beat_count, ViewModelPagan.LayoutSize.LargePortrait)
+                MainTable(Modifier, ui_facade, action_interface,  ui_facade.beat_count, ViewModelPagan.LayoutSize.LargePortrait)
             }
 
             val primary = this@ComponentActivityEditor.get_context_menu_primary(
                 Modifier.padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
                 ui_facade,
-                view_model.action_interface,
+                action_interface,
                 ViewModelPagan.LayoutSize.LargePortrait
             )
             val secondary = this@ComponentActivityEditor.get_context_menu_secondary(
                 Modifier.padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
                 ui_facade,
-                view_model.action_interface,
+                action_interface,
                 ViewModelPagan.LayoutSize.LargePortrait
             )
 
@@ -2217,7 +2217,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             contentAlignment = Alignment.BottomCenter
         ) {
             Box(Modifier.fillMaxSize()) {
-                MainTable(Modifier, ui_facade, view_model.action_interface,  ui_facade.beat_count, layout)
+                MainTable(Modifier, ui_facade, action_interface,  ui_facade.beat_count, layout)
             }
 
             val primary = this@ComponentActivityEditor.get_context_menu_primary(
@@ -2231,14 +2231,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     }
                     .padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
                 ui_facade,
-                view_model.action_interface,
+                action_interface,
                 layout
             )
 
             val secondary = this@ComponentActivityEditor.get_context_menu_secondary(
                 Modifier.padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
                 ui_facade,
-                view_model.action_interface,
+                action_interface,
                 layout
             )
 
@@ -2266,7 +2266,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             modifier = modifier.fillMaxSize(),
             contentAlignment = Alignment.BottomCenter
         ) {
-            MainTable(Modifier.fillMaxSize(), ui_facade, view_model.action_interface, ui_facade.beat_count, layout)
+            MainTable(Modifier.fillMaxSize(), ui_facade, action_interface, ui_facade.beat_count, layout)
             Row(
                 Modifier.fillMaxSize(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -2277,7 +2277,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         Modifier
                             .padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
                         ui_facade,
-                        view_model.action_interface,
+                        action_interface,
                         layout
                     )?.let {
                         Box(Modifier.weight(1F), contentAlignment = Alignment.BottomCenter) {
@@ -2292,7 +2292,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             .verticalScroll(rememberScrollState())
                             .fillMaxHeight(),
                         ui_facade,
-                        view_model.action_interface,
+                        action_interface,
                         layout
                     )?.let {
                         Row(

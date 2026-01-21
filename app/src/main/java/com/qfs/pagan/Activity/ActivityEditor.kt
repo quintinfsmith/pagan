@@ -1599,7 +1599,7 @@ class ActivityEditor : PaganActivity() {
     }
 
     fun get_action_interface(): ActionTracker {
-        return this.editor_view_model.action_interface
+        TODO()
     }
 
     fun save_actions() {

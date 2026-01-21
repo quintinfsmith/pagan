@@ -26,7 +26,6 @@ import java.io.DataOutputStream
 import java.io.File
 
 class ViewModelEditorController(): ViewModel() {
-    var action_interface = ActionTracker(this)
     var opus_manager = OpusLayerInterface(this)
     var active_midi_device: MidiDeviceInfo? = null
     var virtual_midi_device = MidiPlayer()

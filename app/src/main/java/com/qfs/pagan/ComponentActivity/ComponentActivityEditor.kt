@@ -949,11 +949,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             )
         }
-        TopBarIcon(
-            icon = R.drawable.icon_undo,
-            description = R.string.menu_item_undo,
-            onClick = { dispatcher.apply_undo() }
-        )
+        if (vm_state.playback_state_midi.value != PlaybackState.Playing && vm_state.playback_state_soundfont.value != PlaybackState.Playing) {
+            TopBarIcon(
+                icon = R.drawable.icon_undo,
+                description = R.string.menu_item_undo,
+                onClick = { dispatcher.apply_undo() }
+            )
+        }
         Box {
             val expanded = remember { mutableStateOf(false) }
             TopBarIcon(

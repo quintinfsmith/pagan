@@ -65,14 +65,14 @@ import com.qfs.pagan.composable.SettingsRow
 import com.qfs.pagan.composable.SoundFontWarning
 import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.composable.button.Button
-import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.button.TopBarIcon
+import com.qfs.pagan.composable.button.TopBarNoIcon
 import com.qfs.pagan.enumerate
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 
 class ComponentActivitySettings: PaganComponentActivity() {
-    override val top_bar_wrapper: @Composable (RowScope.() -> Unit)? = {
+    override val top_bar_wrapper: @Composable (RowScope.() -> Unit) = {
         TopBarIcon(
             icon = R.drawable.baseline_arrow_back_24,
             description = R.string.go_back,
@@ -83,6 +83,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             textAlign = TextAlign.Center,
             text = stringResource(R.string.settings_fragment_label)
         )
+        TopBarNoIcon()
     }
 
     val options_orientation: List<Pair<Int, @Composable RowScope.() -> Unit>> = listOf(
@@ -335,7 +336,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 .padding(dimensionResource(R.dimen.sf_menu_padding))
                 .verticalScroll(rememberScrollState())
                 .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Top,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Column(

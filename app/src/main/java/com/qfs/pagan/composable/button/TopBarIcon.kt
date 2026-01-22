@@ -15,6 +15,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
 
+
 @Composable
 fun TopBarIcon(icon: Int, description: Int, onLongClick: (() -> Unit)? = null, onClick: () -> Unit) {
     Box(
@@ -37,3 +38,13 @@ fun TopBarIcon(icon: Int, description: Int, onLongClick: (() -> Unit)? = null, o
     )
 }
 
+
+@Composable
+fun TopBarNoIcon() {
+    Box(
+        modifier = Modifier
+            .padding(vertical = 5.dp, horizontal = 16.dp)
+            .width(dimensionResource(R.dimen.topbar_icon_height))
+            .height(dimensionResource(R.dimen.topbar_icon_height))
+    )
+}

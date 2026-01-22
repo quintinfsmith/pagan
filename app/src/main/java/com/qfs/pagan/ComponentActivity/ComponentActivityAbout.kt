@@ -33,6 +33,7 @@ import com.qfs.pagan.composable.MenuPadder
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.SettingsColumn
 import com.qfs.pagan.composable.button.TopBarIcon
+import com.qfs.pagan.composable.button.TopBarNoIcon
 import com.qfs.pagan.find_activity
 
 class ComponentActivityAbout: PaganComponentActivity() {
@@ -47,6 +48,12 @@ class ComponentActivityAbout: PaganComponentActivity() {
             textAlign = TextAlign.Center,
             text = stringResource(R.string.app_name)
         )
+        TopBarNoIcon()
+    }
+
+    fun get_version_name(): String {
+        val package_info = this.applicationContext.packageManager.getPackageInfo(this.applicationContext.packageName,0)
+        return package_info.versionName ?: ""
     }
 
     @Composable
@@ -203,7 +210,6 @@ class ComponentActivityAbout: PaganComponentActivity() {
             }
         }
     }
-
     @Composable
     fun Layout(modifier: Modifier = Modifier) {
         Column(
@@ -213,6 +219,7 @@ class ComponentActivityAbout: PaganComponentActivity() {
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Text("v${this@ComponentActivityAbout.get_version_name()}")
             SectionUrls()
             HorizontalDivider(thickness = 1.dp)
             SectionLicense()

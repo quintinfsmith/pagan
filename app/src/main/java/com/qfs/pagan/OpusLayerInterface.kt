@@ -910,11 +910,52 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     }
 
     private fun _swap_line_ui_update(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
-        val pair_a = this.get_vm_state_line_and_size(channel_a, line_a)
-        val pair_b = this.get_vm_state_line_and_size(channel_b, line_b)
-
-        this.vm_state.line_data.swap_sections(pair_a.first, pair_a.second, pair_b.first, pair_b.second)
-        this.vm_state.cell_map.swap_sections(pair_a.first, pair_a.second, pair_b.first, pair_b.second)
+        this.vm_state.channel_data.clear()
+        this.vm_state.cell_map.clear()
+        this.vm_state.line_data.clear()
+        this.vm_state.line_count.value = 0
+        this.vm_state.channel_count.value = 0
+        var i = 0
+        for ((c, channel) in this.channels.enumerate()) {
+            this.vm_state.add_channel(c, this.is_percussion(c), channel.get_preset(), channel.muted)
+            for ((l, line) in channel.lines.enumerate()) {
+                val instrument = if (this.is_percussion(c)) {
+                    (line as OpusLinePercussion).instrument
+                } else {
+                    null
+                }
+                this.vm_state.add_row(
+                    i++,
+                    line,
+                    ViewModelEditorState.LineData(c, l, null, instrument, line.muted)
+                )
+                for ((type, controller) in line.controllers.get_all()) {
+                    if (!controller.visible) continue
+                    this.vm_state.add_row(
+                        i++,
+                        controller,
+                        ViewModelEditorState.LineData(c, l, type, null, line.muted)
+                    )
+                }
+            }
+            for ((type, controller) in channel.controllers.get_all()) {
+                if (!controller.visible) continue
+                this.vm_state.add_row(
+                    i++,
+                    controller,
+                    ViewModelEditorState.LineData(c, null, type, null, channel.muted)
+                )
+            }
+        }
+        for ((type, controller) in this.controllers.get_all()) {
+            if (!controller.visible) continue
+            this.vm_state.add_row(
+                i++,
+                controller,
+                ViewModelEditorState.LineData(null, null, type, null, false)
+            )
+        }
+        this.vm_state.refresh_cursor()
     }
 
 

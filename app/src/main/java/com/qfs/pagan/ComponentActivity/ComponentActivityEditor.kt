@@ -1184,6 +1184,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                         onPress = { is_dragging.value = true },
                                                         onRelease = { is_dragging.value = false }
                                                     )
+
                                                     .conditional_drag(
                                                         is_dragging,
                                                         on_drag_start = { position ->
@@ -1234,13 +1235,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         if (ui_facade.draw_top_line(y)) {
                                             TableLine(MaterialTheme.colorScheme.onSurfaceVariant)
                                         }
-                                        LineLabelView(
-                                            modifier = Modifier
-                                                .weight(1F)
-                                                .fillMaxWidth(),
-                                            dispatcher,
-                                            ui_facade.line_data[y]
-                                        )
+                                        key(ui_facade.line_data[y].hashCode()) {
+                                            LineLabelView(
+                                                modifier = Modifier
+                                                    .weight(1F)
+                                                    .fillMaxWidth(),
+                                                dispatcher,
+                                                ui_facade.line_data[y]
+                                            )
+                                        }
                                         TableLine(MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
                                 )
@@ -1335,9 +1338,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                 else line_height
                                             )
                                     ) {
-                                        //if (ui_facade.draw_top_line(y)) {
-                                        //    TableLine(MaterialTheme.colorScheme.onBackground)
-                                        //}
                                         if (ui_facade.draw_top_line(y)) {
                                             TableLine(MaterialTheme.colorScheme.onSurfaceVariant)
                                         }
@@ -1837,7 +1837,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     fun CellView(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, cell: MutableState<ViewModelEditorState.TreeData>, y: Int, x: Int, modifier: Modifier = Modifier) {
         val line_info = ui_facade.line_data[y]
-        key(cell.value.key.value) {
+        key(cell.value.key.value + y) {
             Row(modifier.fillMaxSize()) {
                 for ((path, leaf_data) in cell.value.leafs) {
                     this@ComponentActivityEditor.LeafView(

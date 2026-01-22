@@ -1180,11 +1180,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                             // Make std lines draggable
                                             if (ui_facade.line_data[y].ctl_type.value == null) {
                                                 Modifier
+                                                    .onPlaced { coordinates ->
+                                                        if (y == ui_facade.dragging_line.value && ui_facade.dragging_abs_offset.value == null) {
+                                                            ui_facade.dragging_abs_offset.value = coordinates.positionInParent().y
+                                                        }
+                                                    }
                                                     .long_press(
                                                         onPress = { is_dragging.value = true },
                                                         onRelease = { is_dragging.value = false }
                                                     )
-
                                                     .conditional_drag(
                                                         is_dragging,
                                                         on_drag_start = { position ->
@@ -1221,11 +1225,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                         scroll_state = scroll_state_v
                                                     )
 
-                                                    .onPlaced { coordinates ->
-                                                        if (y == ui_facade.dragging_line.value && ui_facade.dragging_abs_offset.value == null) {
-                                                            ui_facade.dragging_abs_offset.value = coordinates.positionInParent().y
-                                                        }
-                                                    }
                                             } else {
                                                 Modifier
                                             }
@@ -1937,11 +1936,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     .weight(1F)
             ) {
                 val row_height = dimensionResource(R.dimen.config_channel_button_height)
+                val padding_height_px = this@ComponentActivityEditor.toPx(dimensionResource(R.dimen.drawer_inner_padding))
                 val row_height_px = this@ComponentActivityEditor.toPx(row_height)
 
                 for (i in 0 until state_model.channel_count.value) {
                     val channel_data = state_model.channel_data[i]
                     val is_dragging = remember { mutableStateOf(false) }
+
                     if (i != 0) {
                         DrawerPadder()
                     }
@@ -1961,15 +1962,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             } else if (dragging_row_index.value!! == i) {
                                 context.toDp(dragging_row_offset.value!!)
                             } else if (dragging_row_index.value!! < i) {
-                                val dragged_position = (row_height_px * dragging_row_index.value!!) + dragging_row_offset.value!!
-                                if ((row_height_px * i) < dragged_position) {
+                                val dragged_position = (padding_height_px * dragging_row_index.value!!) + (row_height_px * dragging_row_index.value!!) + dragging_row_offset.value!!
+                                if (((padding_height_px + row_height_px) * i) < dragged_position) {
                                     (row_height * -1)
                                 } else {
                                     0.dp
                                 }
                             } else {
-                                val dragged_position = (row_height_px * dragging_row_index.value!!) + dragging_row_offset.value!!
-                                if ((row_height_px * i) > dragged_position) {
+                                val dragged_position = (padding_height_px * dragging_row_index.value!!) + (row_height_px * dragging_row_index.value!!) + dragging_row_offset.value!!
+                                if (((padding_height_px + row_height_px) * i) > dragged_position) {
                                     row_height
                                 } else {
                                     0.dp
@@ -1989,7 +1990,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                             on_drag_stop = {
                                 dragging_row_index.value?.let {
-                                    val dragged_position = (row_height_px * it) + dragging_row_offset.value!!
+                                    val dragged_position = (padding_height_px * it) + (row_height_px * it) + dragging_row_offset.value!!
                                     val new_channel_position = max(0F, ceil(dragged_position / row_height_px))
                                     dispatcher.move_channel(i, new_channel_position.toInt(), true)
                                 }

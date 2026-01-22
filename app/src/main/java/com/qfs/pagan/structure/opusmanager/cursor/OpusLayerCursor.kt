@@ -1,5 +1,4 @@
 package com.qfs.pagan.structure.opusmanager.cursor
-import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
@@ -11,7 +10,6 @@ import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.OpusLineAbstract
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectControlSet
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
@@ -785,10 +783,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor.clear()
     }
     open fun cursor_select_channel(channel: Int) {
-        println("SELC: $channel")
         if (this._block_cursor_selection()) return
-        println("....")
-
         this.cursor.select_channel(channel)
     }
     open fun cursor_select_line(channel: Int, line_offset: Int) {

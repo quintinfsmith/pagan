@@ -22,6 +22,8 @@ import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
@@ -37,6 +39,7 @@ fun Modifier.conditional_drag(
     orientation: Orientation = Orientation.Vertical,
 ): Modifier {
     val was_dragging = remember { mutableStateOf(false) }
+    val working_position = remember { mutableStateOf(0F) }
     if (is_dragging.value) {
         was_dragging.value = true
     } else {
@@ -47,25 +50,34 @@ fun Modifier.conditional_drag(
     }
 
     return this then Modifier
+        .onPlaced { coordinates ->
+            working_position.value = if (orientation == Orientation.Vertical) {
+                coordinates.positionInParent().y
+            } else {
+                coordinates.positionInParent().x
+            }
+        }
         .pointerInput(is_dragging.value) {
             if (is_dragging.value) {
                 awaitPointerEventScope {
-                    var working_scroll_position = 0F
-                    var drag_start_position = 0F
+                    var relative_start_position = 0F
+                    var absolute_start_position = 0F
+                    var absolute_latest_position = 0F
                     // get drag start
                     while (true) {
                         val event = awaitPointerEvent()
                         if (event.type == PointerEventType.Move) {
-                            event.changes.forEach { change ->
-                                working_scroll_position = (scroll_state?.value ?: 0).toFloat()
-                                drag_start_position = if (orientation == Orientation.Vertical) {
-                                    change.position.y
-                                } else {
-                                    change.position.x
-                                }
-
-                                on_drag_start(drag_start_position)
+                            val change = event.changes.first()
+                            relative_start_position = if (orientation == Orientation.Vertical) {
+                                change.position.y
+                            } else {
+                                change.position.x
                             }
+
+                            absolute_latest_position = relative_start_position + working_position.value
+
+                            on_drag_start(relative_start_position)
+
                             break
                         }
                     }
@@ -76,16 +88,16 @@ fun Modifier.conditional_drag(
                         when (event.type) {
                             PointerEventType.Move -> {
                                 if (is_dragging.value) {
-                                    event.changes.forEach { change ->
-                                        val next_scroll_position = (scroll_state?.value ?: 0).toFloat()
-                                        val delta = if (orientation == Orientation.Vertical) {
-                                            change.position.y - change.previousPosition.y
-                                        } else {
-                                            change.position.x - change.previousPosition.x
-                                        } + (next_scroll_position - working_scroll_position)
-                                        working_scroll_position = next_scroll_position
-                                        on_drag(delta)
-                                    }
+                                    val change = event.changes.first()
+                                    val absolute_current_position = if (orientation == Orientation.Vertical) {
+                                        change.position.y
+                                    } else {
+                                        change.position.x
+                                    } + working_position.value
+
+                                    val delta = absolute_current_position - absolute_latest_position
+                                    absolute_latest_position = absolute_current_position
+                                    on_drag(delta)
                                 } else {
                                     event.changes.forEach { it.consume() }
                                 }

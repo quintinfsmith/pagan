@@ -1988,11 +1988,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             },
 
                             on_drag_stop = {
-                               val dragged_position = (row_height_px * dragging_row_index.value!!) + dragging_row_offset.value!!
-                               val new_channel_position = max(0F, ceil(dragged_position / row_height_px))
-                               dispatcher.move_channel(i, new_channel_position.toInt(), true)
-                               dragging_row_offset.value = null
-                               dragging_row_index.value = null
+                                dragging_row_index.value?.let {
+                                    val dragged_position = (row_height_px * it) + dragging_row_offset.value!!
+                                    val new_channel_position = max(0F, ceil(dragged_position / row_height_px))
+                                    dispatcher.move_channel(i, new_channel_position.toInt(), true)
+                                }
+                                dragging_row_offset.value = null
+                                dragging_row_index.value = null
                             },
 
                             on_drag = { delta ->

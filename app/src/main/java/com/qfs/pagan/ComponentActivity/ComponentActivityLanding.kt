@@ -93,67 +93,6 @@ class ComponentActivityLanding: PaganComponentActivity() {
         return true
     }
 
-    @Composable
-    fun LayoutMenu() {
-        Column( verticalArrangement = Arrangement.Center ) {
-            if (this@ComponentActivityLanding.view_model.project_manager?.has_backup_saved() == true) {
-                ButtonRecent()
-                Padder()
-            }
-            ButtonNew()
-            Padder()
-            if (this@ComponentActivityLanding.view_model.has_saved_project.value) {
-                ButtonLoad()
-                Padder()
-            }
-            ButtonImport()
-            Padder()
-            ButtonSettings()
-            Padder()
-            ButtonAbout()
-        }
-    }
-
-    @Composable
-    fun LayoutMenuCompact() {
-        Column(Modifier.padding(horizontal = 4.dp)) {
-            if (this@ComponentActivityLanding.view_model.project_manager?.has_backup_saved() == true) {
-                ButtonRecent()
-                Padder()
-            }
-
-            if (!this@ComponentActivityLanding.view_model.has_saved_project.value) {
-                ButtonNew()
-            } else {
-                val corner_radius = 32.dp
-                Row {
-                    ButtonNew(
-                        Modifier.weight(1F),
-                        RoundedCornerShape(corner_radius, 0.dp, 0.dp, corner_radius)
-                    )
-                    Padder()
-                    ButtonLoad(
-                        Modifier.weight(1F),
-                        RoundedCornerShape(0.dp, corner_radius, corner_radius, 0.dp)
-                    )
-                }
-            }
-            Padder()
-            ButtonImport()
-            Padder()
-            Row {
-                val corner_radius = 32.dp
-                ButtonSettings(
-                    Modifier.weight(1F),
-                )
-                Padder()
-                ButtonAbout(
-                    Modifier.weight(1F),
-                    RoundedCornerShape(0.dp, corner_radius, corner_radius, 0.dp)
-                )
-            }
-        }
-    }
 
     @Composable
     fun RowScope.Padder(factor: Float = 1F) {
@@ -396,13 +335,13 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 if (has_backup) {
-                    ButtonRecent()
+                    ButtonRecent(Modifier.fillMaxWidth())
                     Padder()
                 }
-                ButtonNew()
+                ButtonNew(Modifier.fillMaxWidth())
                 if (has_saved_project) {
                     Padder()
-                    ButtonLoad()
+                    ButtonLoad(Modifier.fillMaxWidth())
                 }
             }
 

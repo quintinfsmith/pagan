@@ -11,9 +11,54 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import com.qfs.pagan.Color.*
+import androidx.compose.ui.unit.sp
+import com.qfs.pagan.Color.Background
+import com.qfs.pagan.Color.BackgroundDark
+import com.qfs.pagan.Color.Error
+import com.qfs.pagan.Color.ErrorContainer
+import com.qfs.pagan.Color.ErrorContainerDark
+import com.qfs.pagan.Color.ErrorDark
+import com.qfs.pagan.Color.OnBackground
+import com.qfs.pagan.Color.OnBackgroundDark
+import com.qfs.pagan.Color.OnError
+import com.qfs.pagan.Color.OnErrorContainer
+import com.qfs.pagan.Color.OnErrorContainerDark
+import com.qfs.pagan.Color.OnErrorDark
+import com.qfs.pagan.Color.OnPrimary
+import com.qfs.pagan.Color.OnPrimaryContainer
+import com.qfs.pagan.Color.OnPrimaryContainerDark
+import com.qfs.pagan.Color.OnPrimaryDark
+import com.qfs.pagan.Color.OnSecondary
+import com.qfs.pagan.Color.OnSecondaryContainer
+import com.qfs.pagan.Color.OnSecondaryContainerDark
+import com.qfs.pagan.Color.OnSecondaryDark
+import com.qfs.pagan.Color.OnSurface
+import com.qfs.pagan.Color.OnSurfaceDark
+import com.qfs.pagan.Color.OnSurfaceVariant
+import com.qfs.pagan.Color.OnSurfaceVariantDark
+import com.qfs.pagan.Color.OnTertiary
+import com.qfs.pagan.Color.OnTertiaryContainer
+import com.qfs.pagan.Color.OnTertiaryContainerDark
+import com.qfs.pagan.Color.OnTertiaryDark
+import com.qfs.pagan.Color.Outline
+import com.qfs.pagan.Color.OutlineDark
+import com.qfs.pagan.Color.Primary
+import com.qfs.pagan.Color.PrimaryContainer
+import com.qfs.pagan.Color.PrimaryContainerDark
+import com.qfs.pagan.Color.PrimaryDark
+import com.qfs.pagan.Color.Secondary
+import com.qfs.pagan.Color.SecondaryContainer
+import com.qfs.pagan.Color.SecondaryContainerDark
+import com.qfs.pagan.Color.SecondaryDark
+import com.qfs.pagan.Color.Surface
+import com.qfs.pagan.Color.SurfaceDark
+import com.qfs.pagan.Color.SurfaceVariant
+import com.qfs.pagan.Color.SurfaceVariantDark
+import com.qfs.pagan.Color.Tertiary
+import com.qfs.pagan.Color.TertiaryContainer
+import com.qfs.pagan.Color.TertiaryContainerDark
+import com.qfs.pagan.Color.TertiaryDark
 import com.qfs.pagan.R
 
 @Composable
@@ -94,7 +139,10 @@ fun PaganTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable 
             bodyLarge = default.bodyLarge.copy(fontFamily = font),
             bodyMedium = default.bodyMedium.copy(fontFamily = font),
             bodySmall = default.bodySmall.copy(fontFamily = font),
-            labelLarge = default.labelLarge.copy(fontFamily = font),
+            labelLarge = default.labelLarge.copy(
+                fontFamily = font,
+                letterSpacing = 1.sp
+            ),
             labelMedium = default.labelMedium.copy(fontFamily = font),
             labelSmall = default.labelSmall.copy(fontFamily = font)
         ),

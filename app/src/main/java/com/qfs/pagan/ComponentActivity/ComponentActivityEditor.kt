@@ -45,7 +45,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -475,7 +474,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
             this.contentResolver.takePersistableUriPermission(tree_uri, new_flags)
 
-            this.view_model.configuration.project_directory = tree_uri
+            this.view_model.configuration.project_directory.value = tree_uri
             this.view_model.save_configuration()
 
             this.view_model.project_manager?.change_project_path(tree_uri, this.controller_model.active_project)
@@ -607,6 +606,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             }
         }
+        if (!view_model.configuration.relative_mode.value) {
+            this.action_interface.set_relative_mode()
+        }
         this.set_soundfont()
     }
 
@@ -615,7 +617,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.action_interface.stop_opus_midi()
         this.action_interface.stop_opus()
 
-        val file_path = this.view_model.configuration.soundfont
+        val file_path = this.view_model.configuration.soundfont.value
         if (file_path == null) {
             this.controller_model.unset_soundfont()
             this.state_model.unset_soundfont()
@@ -1022,8 +1024,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
             CursorMode.Single -> {
                 @Composable {
-                    val show_relative_input = this@ComponentActivityEditor.view_model.configuration.relative_mode
-                    ContextMenuLeafPrimary(modifier, ui_facade, dispatcher, show_relative_input, layout)
+                    ContextMenuLeafPrimary(
+                        modifier,
+                        ui_facade,
+                        dispatcher,
+                        this@ComponentActivityEditor.view_model.configuration.relative_mode.value,
+                        layout
+                    )
                 }
             }
             CursorMode.Channel -> {
@@ -2093,12 +2100,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     onClick = {
                         scope.launch { this@ComponentActivityEditor.close_drawer() }
                         val configuration = this@ComponentActivityEditor.view_model.configuration
-                        if (configuration.project_directory == null || DocumentFile.fromTreeUri(this@ComponentActivityEditor, configuration.project_directory!!)?.exists() != true) {
+                        if (configuration.project_directory.value == null || DocumentFile.fromTreeUri(this@ComponentActivityEditor, configuration.project_directory.value!!)?.exists() != true) {
                             this@ComponentActivityEditor._result_launcher_set_project_directory_and_save.launch(
                                 Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also { intent ->
                                     intent.putExtra(Intent.EXTRA_TITLE, "Pagan Projects")
                                     intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                                    configuration.project_directory?.let {
+                                    configuration.project_directory.value?.let {
                                         intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, it)
                                     }
                                 }

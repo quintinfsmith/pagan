@@ -1,7 +1,6 @@
 package com.qfs.pagan.viewmodel
 
 import android.net.Uri
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -71,12 +70,8 @@ class ViewModelPagan: ViewModel() {
 
     // MutableStates
     var dialog_queue: MutableState<DialogChain?> = mutableStateOf(null)
-    val soundfont_name: MutableState<String?> = mutableStateOf(this.configuration.soundfont)
     val requires_soundfont: MutableState<Boolean> = mutableStateOf(false)
     val has_saved_project: MutableState<Boolean> = mutableStateOf(false)
-    val soundfont_directory = mutableStateOf<Uri?>(null)
-    val project_directory = mutableStateOf<Uri?>(null)
-    val night_mode = mutableStateOf(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
 
     fun set_layout_size(width: Dp, height: Dp) {
         this.active_layout_size.value = if (width >= height) {
@@ -103,17 +98,11 @@ class ViewModelPagan: ViewModel() {
 
     fun load_config(path: String) {
         this.configuration_path = path
-        this.configuration = try {
-            PaganConfiguration.from_path(this.configuration_path!!)
+        try {
+            this.configuration.update_from_path(path)
         } catch (e: Exception) {
-            this.configuration
+            // pass
         }
-
-        // Update MutableStates
-        this.soundfont_name.value = this.configuration.soundfont
-        this.project_directory.value = this.configuration.project_directory
-        this.soundfont_directory.value = this.configuration.soundfont_directory
-        this.night_mode.value = this.configuration.night_mode
     }
 
     fun reload_config() {
@@ -205,11 +194,10 @@ class ViewModelPagan: ViewModel() {
     }
 
     internal fun coerce_relative_soundfont_path(soundfont_uri: Uri): String? {
-        return ViewModelPagan.coerce_relative_path(soundfont_uri, this.configuration.soundfont_directory)
+        return ViewModelPagan.coerce_relative_path(soundfont_uri, this.configuration.soundfont_directory.value)
     }
 
     fun set_soundfont_uri(uri: Uri) {
-        this.configuration.soundfont = this.coerce_relative_soundfont_path(uri)
-        this.soundfont_name.value = this.configuration.soundfont
+        this.configuration.soundfont.value = this.coerce_relative_soundfont_path(uri)
     }
 }

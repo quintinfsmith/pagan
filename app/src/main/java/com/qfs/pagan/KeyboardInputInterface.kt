@@ -512,7 +512,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                 }
 
                 if (opus_manager.relative_mode != force_mode) {
-                    opus_manager.set_relative_mode(force_mode)
+                    opus_manager.force_relative_mode(force_mode)
                 }
             }
 
@@ -569,7 +569,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
         Pair(KeyEvent.KEYCODE_R, false) to object: CursorSpecificKeyStrokeNode(this) {
             override fun column(opus_manager: OpusManager, ctrl_pressed: Boolean) {
                 opus_manager.convert_events_in_beat_to_absolute(opus_manager.cursor.beat)
-                opus_manager.set_relative_mode(RelativeInputMode.Absolute)
+                opus_manager.force_relative_mode(RelativeInputMode.Absolute)
             }
             override fun single(opus_manager: OpusManager, ctrl_pressed: Boolean) {
                 if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
@@ -588,12 +588,12 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                         )
                     )
                 }
-                opus_manager.set_relative_mode(RelativeInputMode.Absolute)
+                opus_manager.force_relative_mode(RelativeInputMode.Absolute)
             }
 
             override fun line(opus_manager: OpusManager, ctrl_pressed: Boolean) {
                 opus_manager.convert_events_in_line_to_absolute(opus_manager.cursor.channel, opus_manager.cursor.line_offset)
-                opus_manager.set_relative_mode(RelativeInputMode.Absolute)
+                opus_manager.force_relative_mode(RelativeInputMode.Absolute)
             }
         },
 

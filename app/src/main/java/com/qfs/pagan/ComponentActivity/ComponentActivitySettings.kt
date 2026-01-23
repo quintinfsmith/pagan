@@ -9,12 +9,9 @@ import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -26,7 +23,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -36,10 +32,8 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -55,9 +49,9 @@ import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DropdownMenu
 import com.qfs.pagan.composable.DropdownMenuItem
+import com.qfs.pagan.composable.MenuPadder
 import com.qfs.pagan.composable.RadioMenu
 import com.qfs.pagan.composable.SText
-import com.qfs.pagan.composable.MenuPadder
 import com.qfs.pagan.composable.SettingsColumn
 import com.qfs.pagan.composable.SettingsRow
 import com.qfs.pagan.composable.SoundFontWarning
@@ -143,9 +137,8 @@ class ComponentActivitySettings: PaganComponentActivity() {
             val uri = result_data.data ?: return@registerForActivityResult
             val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
             this.contentResolver.takePersistableUriPermission(uri, new_flags)
-            this.view_model.configuration.soundfont = null
-            this.view_model.configuration.soundfont_directory = uri
-            this.view_model.soundfont_directory.value = uri
+            this.view_model.configuration.soundfont.value = null
+            this.view_model.configuration.soundfont_directory.value = uri
             this.view_model.save_configuration()
             this.view_model.requires_soundfont.value = !this.is_soundfont_available()
         }
@@ -159,13 +152,12 @@ class ComponentActivitySettings: PaganComponentActivity() {
             // Check if this selected file is within the soundfont_directory ////
             // We can directory is set here.
             val configuration = this.view_model.configuration
-            val parent_segments = configuration.soundfont_directory!!.pathSegments!!.last()!!.split("/")
+            val parent_segments = configuration.soundfont_directory!!.value!!.pathSegments!!.last()!!.split("/")
             val child_segments = uri.pathSegments!!.last()!!.split("/")
             val is_within_soundfont_directory = parent_segments.size < child_segments.size && parent_segments == child_segments.subList(0, parent_segments.size)
             //-----------------------------------------------------
             if (is_within_soundfont_directory) {
-                configuration.soundfont = child_segments.subList(parent_segments.size, child_segments.size).joinToString("/")
-                this.view_model.soundfont_name.value = this.view_model.configuration.soundfont
+                configuration.soundfont.value = child_segments.subList(parent_segments.size, child_segments.size).joinToString("/")
             } else {
                 val soundfont_dir = this@ComponentActivitySettings.get_soundfont_directory()
                 val file_name = this.parse_file_name(uri)!!
@@ -196,9 +188,8 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
                     try {
                         SoundFont(this, new_file.uri)
-                        this.view_model.configuration.soundfont = this.view_model.coerce_relative_soundfont_path(new_file.uri)
+                        this.view_model.configuration.soundfont.value = this.view_model.coerce_relative_soundfont_path(new_file.uri)
                         this.view_model.save_configuration()
-                        this.view_model.soundfont_name.value = this.view_model.configuration.soundfont
                         this.view_model.requires_soundfont.value = false
                     } catch (e: Exception) {
                         //this.feedback_msg(this.getString(R.string.feedback_invalid_sf2_file))
@@ -220,9 +211,8 @@ class ComponentActivitySettings: PaganComponentActivity() {
             val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
             this.contentResolver.takePersistableUriPermission(uri, new_flags)
 
-            this.view_model.configuration.soundfont = null
-            this.view_model.configuration.soundfont_directory = uri
-            this.view_model.soundfont_directory.value = uri
+            this.view_model.configuration.soundfont.value = null
+            this.view_model.configuration.soundfont_directory.value = uri
             this.view_model.save_configuration()
             this.view_model.requires_soundfont.value = !this.is_soundfont_available()
 
@@ -239,11 +229,10 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
             val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
             this.contentResolver.takePersistableUriPermission(uri, new_flags)
-            this.view_model.configuration.project_directory = uri
+            this.view_model.configuration.project_directory.value = uri
             this.view_model.save_configuration()
 
             this.view_model.project_manager?.change_project_path(uri, this.intent.data)
-            this.view_model.project_directory.value = uri
 
             this.update_result()
         }
@@ -486,8 +475,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                             },
                             shape = CircleShape,
                             onClick = {
-                                view_model.configuration.soundfont = null
-                                view_model.soundfont_name.value = null
+                                view_model.configuration.soundfont.value = null
                                 view_model.save_configuration()
                                 this@ComponentActivitySettings.update_result()
                                 close()
@@ -526,13 +514,13 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 content = {
                     Text(
                         modifier = Modifier.minimumInteractiveComponentSize(),
-                        text = view_model.soundfont_name.value ?: no_soundfont_text,
+                        text = view_model.configuration.soundfont.value ?: no_soundfont_text,
                         maxLines = 1,
                         overflow = TextOverflow.StartEllipsis
                     )
                 },
                 onClick = {
-                    if (this@ComponentActivitySettings.view_model.soundfont_directory.value == null) {
+                    if (this@ComponentActivitySettings.view_model.configuration.soundfont_directory.value == null) {
                         this@ComponentActivitySettings.view_model.create_dialog { close ->
                             @Composable {
                                 DialogSTitle(R.string.settings_need_soundfont_directory)
@@ -569,7 +557,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                         Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also { intent ->
                             intent.putExtra(Intent.EXTRA_TITLE, "Soundfonts")
                             intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                            view_model.configuration.soundfont_directory?.let {
+                            view_model.configuration.soundfont_directory.value?.let {
                                 intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, it)
                             }
                         }
@@ -577,7 +565,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 },
                 content = {
                     Text(
-                        text = this@ComponentActivitySettings.view_model.soundfont_directory.value?.pathSegments?.last() ?: stringResource(R.string.label_settings_soundfont_directory),
+                        text = this@ComponentActivitySettings.view_model.configuration.soundfont_directory.value?.pathSegments?.last() ?: stringResource(R.string.label_settings_soundfont_directory),
                         modifier = Modifier.minimumInteractiveComponentSize(),
                         maxLines = 1,
                         overflow = TextOverflow.StartEllipsis
@@ -600,7 +588,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                         Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also { intent ->
                             intent.putExtra(Intent.EXTRA_TITLE, "Pagan Projects")
                             intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                            view_model.configuration.project_directory?.let {
+                            view_model.configuration.project_directory.value?.let {
                                 intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, it)
                             }
                         }
@@ -608,7 +596,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 },
                 content = {
                     Text(
-                        text = this@ComponentActivitySettings.view_model.project_directory.value?.pathSegments?.last() ?: stringResource(R.string.label_settings_projects_directory),
+                        text = this@ComponentActivitySettings.view_model.configuration.project_directory.value?.pathSegments?.last() ?: stringResource(R.string.label_settings_projects_directory),
                         modifier = Modifier.minimumInteractiveComponentSize(),
                         maxLines = 1,
                         overflow = TextOverflow.StartEllipsis
@@ -642,8 +630,8 @@ class ComponentActivitySettings: PaganComponentActivity() {
         val options_playback = integerArrayResource(R.array.sample_rates)
         val active_playback_option = remember {
             mutableStateOf(
-                if (options_playback.contains(this.view_model.configuration.sample_rate)) {
-                    options_playback.indexOf(this.view_model.configuration.sample_rate)
+                if (options_playback.contains(this.view_model.configuration.sample_rate.value)) {
+                    options_playback.indexOf(this.view_model.configuration.sample_rate.value)
                 } else {
                     options_playback.size - 1
                 }
@@ -676,7 +664,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                             text = { Text("$rate hz") },
                             onClick = {
                                 active_playback_option.value = i
-                                view_model.configuration.sample_rate = options_playback[i]
+                                view_model.configuration.sample_rate.value = options_playback[i]
                                 view_model.save_configuration()
                                 this@ComponentActivitySettings.update_result()
                                 playback_expanded.value = false
@@ -691,7 +679,6 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
     @Composable
     fun OptionClipNote(modifier: Modifier = Modifier) {
-        var clip_same_line_release by remember { mutableStateOf(view_model.configuration.clip_same_line_release) }
         SettingsRow(
             modifier = modifier,
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -702,10 +689,9 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 modifier = Modifier.weight(1F)
             )
             Switch(
-                checked = clip_same_line_release,
+                checked = view_model.configuration.clip_same_line_release.value,
                 onCheckedChange = {
-                    clip_same_line_release = it
-                    view_model.configuration.clip_same_line_release = it
+                    view_model.configuration.clip_same_line_release.value = it
                     view_model.save_configuration()
                     this@ComponentActivitySettings.update_result()
                 }
@@ -715,7 +701,6 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
     @Composable
     fun OptionRelativeMode(modifier: Modifier = Modifier) {
-        var relative_mode by remember { mutableStateOf(view_model.configuration.relative_mode) }
         SettingsRow(
             modifier = modifier,
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -726,10 +711,9 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 modifier = Modifier.weight(1F)
             )
             Switch(
-                checked = relative_mode,
+                checked = view_model.configuration.relative_mode.value,
                 onCheckedChange = {
-                    relative_mode = it
-                    view_model.configuration.relative_mode = it
+                    view_model.configuration.relative_mode.value = it
                     view_model.save_configuration()
                     this@ComponentActivitySettings.update_result()
                 }
@@ -739,7 +723,6 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
     @Composable
     fun OptionUsePreferredSoundfont(modifier: Modifier = Modifier) {
-        var use_preferred_soundfont by remember { mutableStateOf(view_model.configuration.use_preferred_soundfont) }
         SettingsRow(
             modifier = modifier,
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -750,10 +733,9 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 modifier = Modifier.weight(1F)
             )
             Switch(
-                checked = use_preferred_soundfont,
+                checked = view_model.configuration.use_preferred_soundfont.value,
                 onCheckedChange = {
-                    use_preferred_soundfont = it
-                    view_model.configuration.use_preferred_soundfont = it
+                    view_model.configuration.use_preferred_soundfont.value = it
                     view_model.save_configuration()
                     this@ComponentActivitySettings.update_result()
                 }
@@ -763,7 +745,6 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
     @Composable
     fun OptionAllowStdPercussion(modifier: Modifier = Modifier) {
-        var allow_std_percussion by remember { mutableStateOf(view_model.configuration.allow_std_percussion) }
         SettingsRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -774,30 +755,9 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 modifier = Modifier.weight(1F)
             )
             Switch(
-                checked = allow_std_percussion,
+                checked = view_model.configuration.allow_std_percussion.value,
                 onCheckedChange = {
-                    allow_std_percussion = it
-                    view_model.configuration.allow_std_percussion = it
-                    view_model.save_configuration()
-                    this@ComponentActivitySettings.update_result()
-                }
-            )
-        }
-    }
-
-    @Composable
-    fun OptionNightMode(modifier: Modifier = Modifier) {
-        SettingsColumn(modifier) {
-            ProvideTextStyle(MaterialTheme.typography.titleLarge) {
-                SText(R.string.settings_screen_orientation)
-            }
-            MenuPadder()
-            RadioMenu(
-                options = options_orientation,
-                active = remember { mutableStateOf(view_model.configuration.force_orientation) },
-                callback = { mode ->
-                    this@ComponentActivitySettings.requestedOrientation = mode
-                    view_model.configuration.force_orientation = mode
+                    view_model.configuration.allow_std_percussion.value = it
                     view_model.save_configuration()
                     this@ComponentActivitySettings.update_result()
                 }
@@ -809,15 +769,31 @@ class ComponentActivitySettings: PaganComponentActivity() {
     fun OptionOrientation(modifier: Modifier = Modifier) {
         SettingsColumn(modifier) {
             ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+                SText(R.string.settings_screen_orientation)
+            }
+            MenuPadder()
+            RadioMenu(
+                options = options_orientation,
+                active = view_model.configuration.force_orientation,
+                callback = { mode ->
+                    view_model.save_configuration()
+                    this@ComponentActivitySettings.update_result()
+                }
+            )
+        }
+    }
+
+    @Composable
+    fun OptionNightMode(modifier: Modifier = Modifier) {
+        SettingsColumn(modifier) {
+            ProvideTextStyle(MaterialTheme.typography.titleLarge) {
                 SText(R.string.settings_night_mode)
             }
             MenuPadder()
             RadioMenu(
                 options = options_nightmode,
-                active = remember { mutableStateOf(view_model.configuration.night_mode) },
+                active = view_model.configuration.night_mode,
                 callback = { mode ->
-                    view_model.configuration.night_mode = mode
-                    view_model.night_mode.value = mode
                     view_model.save_configuration()
                     this@ComponentActivitySettings.update_result()
                 }

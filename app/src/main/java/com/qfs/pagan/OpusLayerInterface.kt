@@ -19,6 +19,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.E
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.IncorrectCursorMode
+import com.qfs.pagan.structure.opusmanager.cursor.InvalidModeException
 import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import com.qfs.pagan.structure.opusmanager.history.OpusLayerHistory
 import com.qfs.pagan.structure.rationaltree.InvalidGetCall
@@ -89,6 +90,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     /////////////////////////////////////////////
 
     var relative_mode: RelativeInputMode = RelativeInputMode.Absolute
+    var preferred_relative_mode: RelativeInputMode = RelativeInputMode.Absolute
 
     var temporary_blocker: OpusManagerCursor? = null
 
@@ -1449,8 +1451,11 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.clear_temporary_blocker()
         super.cursor_select(beat_key, position)
 
+
         val current_tree = this.get_tree() ?: return
-        if (!this.is_percussion(beat_key.channel) && current_tree.has_event()) {
+        if (!current_tree.has_event() && this.relative_mode != this.preferred_relative_mode) {
+            this.relative_mode = this.preferred_relative_mode
+        } else if (current_tree.has_event() && !this.is_percussion(beat_key.channel)) {
             this.set_relative_mode(current_tree.get_event()!! as TunedInstrumentEvent)
         }
 
@@ -1962,15 +1967,19 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         // }
     }
 
-    fun set_relative_mode(mode: RelativeInputMode) {
+    fun force_relative_mode(mode: RelativeInputMode) {
         val original_mode = this.relative_mode
         this.relative_mode = mode
+        this.preferred_relative_mode = mode
+
         try {
             when (mode) {
                 RelativeInputMode.Absolute -> this.convert_event_to_absolute()
                 RelativeInputMode.Positive,
                 RelativeInputMode.Negative -> this.convert_event_to_relative()
             }
+        } catch (e: InvalidModeException) {
+            // It's Ok if we aren't in the correct cursor state
         } catch (e: NonEventConversion) {
             // pass
         }

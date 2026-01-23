@@ -12,7 +12,6 @@ import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.apres.soundfontplayer.WaveGenerator
-import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.AudioInterface
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.PaganConfiguration
@@ -70,7 +69,7 @@ class ViewModelEditorController(): ViewModel() {
         ignore_line_effects: Boolean = false,
     ) {
         val frame_map = PlaybackFrameMap(opus_manager, sample_handle_manager)
-        frame_map.clip_same_line_release = configuration?.clip_same_line_release != false
+        frame_map.clip_same_line_release = configuration?.clip_same_line_release?.value != false
         frame_map.parse_opus(
             ignore_global_effects,
             ignore_channel_effects,
@@ -147,10 +146,6 @@ class ViewModelEditorController(): ViewModel() {
     fun update_playback_state_midi(next_state: PlaybackState): Boolean {
         this.playback_state_midi = get_next_playback_state(this.playback_state_midi, next_state) ?: return false
         return true
-    }
-
-    fun set_move_mode(move_mode: PaganConfiguration.MoveMode) {
-        this.move_mode.value = move_mode
     }
 
     fun attach_state_model(model: ViewModelEditorState) {

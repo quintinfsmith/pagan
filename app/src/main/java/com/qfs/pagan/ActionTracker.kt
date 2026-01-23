@@ -401,7 +401,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun move_selection_to_beat(beat_key: BeatKey) {
-        when (this.vm_controller.move_mode.value)  {
+        when (this.vm_top.configuration.move_mode.value)  {
             PaganConfiguration.MoveMode.MOVE -> {
                 this._move_selection_to_beat(beat_key)
             }
@@ -1609,7 +1609,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
 
         for ((bank, bank_map) in pre_option) {
             if (is_percussion && bank != 128) continue
-            if (!this.vm_top.configuration.allow_std_percussion && !is_percussion && bank == 128) continue
+            if (!this.vm_top.configuration.allow_std_percussion.value && !is_percussion && bank == 128) continue
 
             for ((program, name) in bank_map.toSortedMap()) {
                 preset_names.add(Triple(bank, program, name))
@@ -1810,9 +1810,9 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         }
     }
 
-    fun set_relative_mode(mode: RelativeInputMode) {
+    fun set_relative_mode(mode: RelativeInputMode = RelativeInputMode.Absolute) {
         this.track(TrackedAction.SetRelativeMode, listOf(mode.ordinal))
-        this.get_opus_manager().set_relative_mode(mode)
+        this.get_opus_manager().force_relative_mode(mode)
     }
 
     fun set_project_name_and_notes(project_name_and_notes: Pair<String, String>? = null) {
@@ -2520,8 +2520,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun set_copy_mode(mode: PaganConfiguration.MoveMode) {
-        this.vm_controller.move_mode.value = mode
-        this.vm_top.configuration.move_mode = mode
+        this.vm_top.configuration.move_mode.value = mode
         this.vm_top.save_configuration()
     }
 

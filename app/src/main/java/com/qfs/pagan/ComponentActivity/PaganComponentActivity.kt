@@ -1,7 +1,6 @@
 package com.qfs.pagan.ComponentActivity
 
 import android.content.Intent
-import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.provider.DocumentsContract
@@ -16,7 +15,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -49,19 +47,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.ImageShader
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.TileMode
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -192,7 +183,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                     this.finish()
                 }
             }
-            val is_night_mode = when (this.view_model.night_mode.value) {
+            val is_night_mode = when (this.view_model.configuration.night_mode.value) {
                 AppCompatDelegate.MODE_NIGHT_YES -> true
                 AppCompatDelegate.MODE_NIGHT_NO -> false
                 else -> isSystemInDarkTheme()
@@ -308,15 +299,15 @@ abstract class PaganComponentActivity: ComponentActivity() {
     }
 
     open fun on_config_load() {
-        this.view_model.set_project_manager(ProjectManager(this, this.view_model.configuration.project_directory))
-        AppCompatDelegate.setDefaultNightMode(this.view_model.configuration.night_mode)
-        this.requestedOrientation = this.view_model.configuration.force_orientation
+        this.view_model.set_project_manager(ProjectManager(this, this.view_model.configuration.project_directory.value))
+        AppCompatDelegate.setDefaultNightMode(this.view_model.configuration.night_mode.value)
+        this.requestedOrientation = this.view_model.configuration.force_orientation.value
         this.view_model.requires_soundfont.value = !this.is_soundfont_available()
     }
 
 
     fun get_existing_soundfonts(): List<Uri> {
-        return this.get_existing_uris(this.view_model.configuration.soundfont_directory)
+        return this.get_existing_uris(this.view_model.configuration.soundfont_directory.value)
     }
 
     internal fun get_existing_uris(top_uri: Uri?): List<Uri> {
@@ -349,7 +340,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
         return existing_uris
     }
     fun coerce_soundfont_uri(): Uri? {
-        val file_path = this.view_model.configuration.soundfont ?: return null
+        val file_path = this.view_model.configuration.soundfont.value ?: return null
         var soundfont_file = this.get_soundfont_directory()
         for (segment in file_path.split("/")) {
             soundfont_file = soundfont_file.findFile(segment) ?: throw FileNotFoundException()
@@ -359,7 +350,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
 
     fun get_soundfont_directory(): DocumentFile {
         return if (this.view_model.configuration.soundfont_directory != null) {
-            DocumentFile.fromTreeUri(this,this.view_model.configuration.soundfont_directory!!)!!
+            DocumentFile.fromTreeUri(this,this.view_model.configuration.soundfont_directory.value!!)!!
         } else {
             val soundfont_dir = this.applicationContext.getDir("SoundFonts", MODE_PRIVATE)
             if (!soundfont_dir.exists()) {

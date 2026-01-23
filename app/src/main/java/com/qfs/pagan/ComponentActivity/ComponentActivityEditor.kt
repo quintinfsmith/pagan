@@ -1921,7 +1921,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     content = { SText(R.string.label_tuning) }
                 )
                 Spacer(Modifier.weight(1F))
-                ConfigDrawerTopButton(
+                ConfigDrawerChannelLeftButton(
                     onClick = {
                         dispatcher.insert_percussion_channel()
                     },
@@ -1933,7 +1933,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     }
                 )
                 DrawerPadder()
-                ConfigDrawerTopButton(
+                ConfigDrawerChannelRightButton(
                     onClick = { dispatcher.insert_channel(-1) },
                     content = {
                         Icon(

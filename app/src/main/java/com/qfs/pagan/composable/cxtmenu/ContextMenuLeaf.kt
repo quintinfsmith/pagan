@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -240,7 +239,17 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEd
                 Row {
                     ContextMenuStructureControls(Modifier, ui_facade, dispatcher, show_relative_input, true)
                     Column(Modifier.width(dimensionResource(R.dimen.numberselector_column_width))) {
-                        NumberSelector(7 downTo 0, octave, ui_facade.highlighted_octave.value, false) { dispatcher.set_octave(it) }
+                        NumberSelector(
+                            progression = 7 downTo 0,
+                            selected = octave,
+                            highlighted = if (ui_facade.relative_input_mode.value == RelativeInputMode.Absolute) {
+                                ui_facade.highlighted_octave.value
+                            } else {
+                                null
+                            },
+                            alternate = false,
+                            callback = { dispatcher.set_octave(it) }
+                        )
                     }
                 }
             }
@@ -312,7 +321,17 @@ fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
             }
 
             Row {
-                NumberSelector(0 until 8, octave, ui_facade.highlighted_octave.value, false) { dispatcher.set_octave(it) }
+                NumberSelector(
+                    progression = 0 until 8,
+                    selected = octave,
+                    highlighted = if (ui_facade.relative_input_mode.value == RelativeInputMode.Absolute) {
+                        ui_facade.highlighted_octave.value
+                    } else {
+                        null
+                    },
+                    alternate = false,
+                    callback = { dispatcher.set_octave(it) }
+                )
             }
             Spacer(Modifier.height(Dimensions.NumberSelectorSpacing))
         }
@@ -334,7 +353,11 @@ fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
                 NumberSelector(
                     progression = i until ui_facade.radix.value step count,
                     selected = offset,
-                    highlighted = ui_facade.highlighted_offset.value,
+                    highlighted = if (ui_facade.relative_input_mode.value == RelativeInputMode.Absolute) {
+                        ui_facade.highlighted_offset.value
+                    } else {
+                        null
+                    },
                     alternate = true,
                     callback = { dispatcher.set_offset(it) }
                 )

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
@@ -33,6 +34,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEv
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
+import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlin.math.abs
@@ -52,7 +54,7 @@ fun InsertButton(dispatcher: ActionTracker) {
     IconCMenuButton(
         onClick = { dispatcher.insert_leaf(1) },
         onLongClick = { dispatcher.insert_leaf() },
-        icon = R.drawable.icon_insert,
+        icon = R.drawable.icon_add,
         description = R.string.btn_insert
     )
 }
@@ -62,7 +64,7 @@ fun RemoveButton(dispatcher: ActionTracker, cursor: ViewModelEditorState.CacheCu
     IconCMenuButton(
         enabled = (cursor.ints.size > 2),
         onClick = { dispatcher.remove_at_cursor() },
-        icon = R.drawable.icon_remove,
+        icon = R.drawable.icon_subtract,
         description = R.string.btn_remove
     )
 }
@@ -309,9 +311,10 @@ fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
                 else -> throw Exception("Invalid Event Type $active_event") // TODO: Specify
             }
 
-            Row(Modifier.padding(top = dimensionResource(R.dimen.contextmenu_padding))) {
+            Row {
                 NumberSelector(0 until 8, octave, ui_facade.highlighted_octave.value, false) { dispatcher.set_octave(it) }
             }
+            Spacer(Modifier.height(Dimensions.NumberSelectorSpacing))
         }
         ViewModelPagan.LayoutSize.SmallLandscape -> {}
     }

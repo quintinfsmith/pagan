@@ -42,7 +42,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.integerArrayResource
 import androidx.compose.ui.res.painterResource
@@ -51,7 +50,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.qfs.apres.soundfont2.SoundFont
-import com.qfs.pagan.Activity.PaganActivity.Companion.EXTRA_ACTIVE_PROJECT
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
@@ -68,42 +66,47 @@ import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.TopBarIcon
 import com.qfs.pagan.composable.button.TopBarNoIcon
 import com.qfs.pagan.enumerate
+import com.qfs.pagan.ui.theme.Dimensions
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 
 class ComponentActivitySettings: PaganComponentActivity() {
     override val top_bar_wrapper: @Composable (RowScope.() -> Unit) = {
+        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
         TopBarIcon(
             icon = R.drawable.baseline_arrow_back_24,
             description = R.string.go_back,
             onClick = { this@ComponentActivitySettings.finish() }
         )
+        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
         Text(
             modifier = Modifier.weight(1F),
             textAlign = TextAlign.Center,
             text = stringResource(R.string.settings_fragment_label)
         )
+        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
         TopBarNoIcon()
+        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
     }
 
     val options_orientation: List<Pair<Int, @Composable RowScope.() -> Unit>> = listOf(
         Pair(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) @Composable {
             Icon(
-                modifier = Modifier.height(dimensionResource(R.dimen.settings_radio_height)),
+                modifier = Modifier.height(Dimensions.SettingsRadioIconHeight),
                 painter = painterResource(R.drawable.icon_landscape),
                 contentDescription = stringResource(R.string.settings_orientation_landscape),
             )
         },
         Pair(ActivityInfo.SCREEN_ORIENTATION_USER) @Composable {
             Icon(
-                modifier = Modifier.height(dimensionResource(R.dimen.settings_radio_height)),
+                modifier = Modifier.height(Dimensions.SettingsRadioIconHeight),
                 painter = painterResource(R.drawable.icon_orientation_system),
                 contentDescription = stringResource(R.string.settings_orientation_system),
             )
         },
         Pair(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) @Composable {
             Icon(
-                modifier = Modifier.height(dimensionResource(R.dimen.settings_radio_height)),
+                modifier = Modifier.height(Dimensions.SettingsRadioIconHeight),
                 painter = painterResource(R.drawable.icon_portrait),
                 contentDescription = stringResource(R.string.settings_orientation_portrait),
             )
@@ -112,21 +115,21 @@ class ComponentActivitySettings: PaganComponentActivity() {
     val options_nightmode: List<Pair<Int, @Composable RowScope.() -> Unit>> = listOf(
         Pair(AppCompatDelegate.MODE_NIGHT_YES) @Composable {
             Icon(
-                modifier = Modifier.height(dimensionResource(R.dimen.settings_radio_height)),
+                modifier = Modifier.height(Dimensions.SettingsRadioIconHeight),
                 painter = painterResource(R.drawable.icon_night_mode),
                 contentDescription = stringResource(R.string.settings_night_mode_yes),
             )
         },
         Pair(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM) @Composable {
             Icon(
-                modifier = Modifier.height(dimensionResource(R.dimen.settings_radio_height)),
+                modifier = Modifier.height(Dimensions.SettingsRadioIconHeight),
                 painter = painterResource(R.drawable.icon_night_mode_system),
                 contentDescription = stringResource(R.string.settings_night_mode_system)
             )
         },
         Pair(AppCompatDelegate.MODE_NIGHT_NO) @Composable {
             Icon(
-                modifier = Modifier.height(dimensionResource(R.dimen.settings_radio_height)),
+                modifier = Modifier.height(Dimensions.SettingsRadioIconHeight),
                 painter = painterResource(R.drawable.icon_day_mode),
                 contentDescription = stringResource(R.string.settings_night_mode_no)
             )

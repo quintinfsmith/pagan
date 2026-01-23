@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.dimensionResource
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
+import com.qfs.pagan.ui.theme.Dimensions
 
 @Composable
 fun ScaffoldWithTopBar(
@@ -50,11 +51,12 @@ fun ScaffoldWithTopBar(
             topBar = {
                 val background = MaterialTheme.colorScheme.top_bar_container_color()
                 val foreground = MaterialTheme.colorScheme.top_bar_content_color()
+
                 top_app_bar?.let {
                     ProvideContentColorTextStyle(contentColor = foreground) {
                         Row(
                             modifier = Modifier
-                                .height(dimensionResource(R.dimen.topbar_height))
+                                .height(Dimensions.TopBarHeight)
                                 .background(color = background),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween,

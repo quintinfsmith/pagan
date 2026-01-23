@@ -44,7 +44,7 @@ fun RemoveBeatButton(dispatcher: ActionTracker, enabled: Boolean) {
         enabled = enabled,
         onClick = { dispatcher.remove_beat_at_cursor(1) },
         onLongClick = { dispatcher.remove_beat_at_cursor() },
-        icon = R.drawable.icon_remove_beat,
+        icon = R.drawable.icon_subtract,
         description = R.string.cd_remove_beat
     )
 }
@@ -54,7 +54,7 @@ fun InsertBeatButton(dispatcher: ActionTracker) {
     IconCMenuButton(
         onClick = { dispatcher.insert_beat_after_cursor(1) },
         onLongClick = { dispatcher.insert_beat_after_cursor() },
-        icon = R.drawable.icon_insert_beat,
+        icon = R.drawable.icon_add,
         description = R.string.cd_insert_beat
     )
 }

@@ -8,7 +8,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.qfs.apres.soundfont2.SoundFont
-import com.qfs.pagan.EditorTable
+import com.qfs.pagan.Coordinate
 import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.enumerate
@@ -30,6 +30,7 @@ class ViewModelEditorState: ViewModel() {
         Primary,
         Secondary
     }
+
     enum class EventDescriptor {
         Selected,
         Tail,
@@ -327,12 +328,12 @@ class ViewModelEditorState: ViewModel() {
         this.use_midi_playback.value = value
     }
 
-    fun remove_branch(coordinate: EditorTable.Coordinate, position: List<Int>) {
+    fun remove_branch(coordinate: Coordinate, position: List<Int>) {
         val cell = this.cell_map[coordinate.y][coordinate.x].value
         cell.remove_branch(position)
     }
 
-    fun update_tree(coordinate: EditorTable.Coordinate, position: List<Int>, tree: ReducibleTree<out OpusEvent>) {
+    fun update_tree(coordinate: Coordinate, position: List<Int>, tree: ReducibleTree<out OpusEvent>) {
         // NOTE: tree needs to be the ACTUAL (not a copy) tree in order to recalc the weights
         val cell = this.cell_map[coordinate.y][coordinate.x].value
         val no_prune_paths = mutableSetOf<List<Int>>()

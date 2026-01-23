@@ -187,7 +187,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     private fun _vm_state_remove_branch(beat_key: BeatKey, position: List<Int>) {
         if (this.ui_lock.is_locked()) return
         this.vm_state.remove_branch(
-            EditorTable.Coordinate(
+            Coordinate(
                 y = this.get_visible_row_from_ctl_line(
                     this.get_actual_line_index(
                         this.get_instrument_line_index(
@@ -205,7 +205,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     private fun _update_tree(beat_key: BeatKey, position: List<Int>) {
         if (this.ui_lock.is_locked()) return
         this.vm_state.update_tree(
-            EditorTable.Coordinate(
+            Coordinate(
                 y = this.get_visible_row_from_ctl_line(
                     this.get_actual_line_index(
                         this.get_instrument_line_index(
@@ -230,7 +230,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         if (!controller.visible) return
 
         this.vm_state.update_tree(
-            EditorTable.Coordinate(
+            Coordinate(
                 y = this.get_visible_row_from_ctl_line_global(type),
                 x = beat
             ),
@@ -248,7 +248,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         if (!controller.visible) return
 
         this.vm_state.update_tree(
-            EditorTable.Coordinate(
+            Coordinate(
                 y = this.get_visible_row_from_ctl_line_channel(type, channel),
                 x = beat
             ),
@@ -265,7 +265,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         if (!controller.visible) return
 
         this.vm_state.update_tree(
-            EditorTable.Coordinate(
+            Coordinate(
                 y = this.get_visible_row_from_ctl_line_line(type, beat_key.channel, beat_key.line_offset),
                 x = beat_key.beat
             ),

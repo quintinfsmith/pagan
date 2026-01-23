@@ -15,16 +15,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
+import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Shapes
 
 @Composable
 fun ConfigDrawerTopButton(modifier: Modifier = Modifier, content: (@Composable RowScope.() -> Unit), onClick: () -> Unit) {
     Button(
-        modifier = modifier.fillMaxHeight(),
+        modifier = modifier.height(Dimensions.ConfigChannelButtonHeight),
         shape = RoundedCornerShape(12.dp),
-        contentPadding = PaddingValues(
-            vertical = dimensionResource(R.dimen.config_icon_padding_vertical),
-            horizontal = dimensionResource(R.dimen.config_icon_padding_horizontal)
-        ),
+        contentPadding = Dimensions.ConfigButtonPadding,
         onClick = onClick,
         content = content,
     )
@@ -34,13 +33,10 @@ fun ConfigDrawerTopButton(modifier: Modifier = Modifier, content: (@Composable R
 fun ConfigDrawerBottomButton(modifier: Modifier = Modifier, icon: Int, description: Int, enabled: Boolean = true, onClick: () -> Unit) {
     Button(
         modifier = modifier
-            .fillMaxHeight()
+            .height(Dimensions.ConfigChannelBottomButtonHeight)
             .widthIn(dimensionResource(R.dimen.config_button_width)),
         shape = RoundedCornerShape(12.dp),
-        contentPadding = PaddingValues(
-            horizontal = dimensionResource(R.dimen.config_icon_padding_horizontal),
-            vertical = dimensionResource(R.dimen.config_icon_padding_vertical)
-        ),
+        contentPadding = Dimensions.ConfigButtonPadding,
         onClick = onClick,
         enabled = enabled,
         content = {
@@ -54,22 +50,20 @@ fun ConfigDrawerBottomButton(modifier: Modifier = Modifier, icon: Int, descripti
 
 @Composable
 fun ConfigDrawerChannelLeftButton(modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit, onClick: () -> Unit) {
-    val corner_radius = dimensionResource(R.dimen.channel_option_corner_radius)
     Button(
-        modifier = modifier.fillMaxHeight(),
+        modifier = modifier.height(Dimensions.ConfigChannelButtonHeight),
         contentPadding = PaddingValues(4.dp),
-        shape = RoundedCornerShape(corner_radius, 0.dp, 0.dp, corner_radius),
+        shape = Shapes.SectionButtonStart,
         onClick = onClick,
         content = content
     )
 }
 @Composable
 fun ConfigDrawerChannelRightButton(modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit, onClick: () -> Unit) {
-    val corner_radius = dimensionResource(R.dimen.channel_option_corner_radius)
     Button(
         contentPadding = PaddingValues(vertical = 4.dp, horizontal = 8.dp),
-        shape = RoundedCornerShape(0.dp, corner_radius, corner_radius, 0.dp),
-        modifier = modifier.fillMaxHeight(),
+        shape = Shapes.SectionButtonEnd,
+        modifier = modifier.height(Dimensions.ConfigChannelButtonHeight),
         onClick = onClick,
         content = content
     )

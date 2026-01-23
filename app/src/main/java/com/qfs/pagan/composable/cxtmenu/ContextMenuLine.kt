@@ -21,6 +21,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEv
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
+import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import com.qfs.pagan.viewmodel.ViewModelPagan
 
@@ -47,7 +48,7 @@ fun InsertLineButton(dispatcher: ActionTracker) {
     IconCMenuButton(
         onClick = { dispatcher.insert_line(1) },
         onLongClick = { dispatcher.insert_line() },
-        icon = R.drawable.icon_insert_line,
+        icon = R.drawable.icon_add,
         description = R.string.cd_insert_line
     )
 }
@@ -58,7 +59,7 @@ fun RemoveLineButton(dispatcher: ActionTracker, size: Int) {
         enabled = size > 1,
         onClick = { dispatcher.remove_line(1) },
         onLongClick = { dispatcher.remove_line() },
-        icon = R.drawable.icon_remove_line,
+        icon = R.drawable.icon_subtract,
         description = R.string.cd_remove_line
     )
 }
@@ -68,7 +69,7 @@ fun RemoveEffectButton(dispatcher: ActionTracker) {
     IconCMenuButton(
         onClick = { dispatcher.remove_controller() },
         onLongClick = { dispatcher.remove_controller() },
-        icon = R.drawable.icon_remove_line,
+        icon = R.drawable.icon_trash,
         description = R.string.cd_remove_line
     )
 }
@@ -181,7 +182,7 @@ fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
                     CMPadding()
                     PercussionSetInstrumentButton(
                         Modifier
-                            .height(dimensionResource(R.dimen.contextmenu_button_height))
+                            .height(Dimensions.ButtonHeight.Normal)
                             .fillMaxWidth(),
                         vm_state,
                         dispatcher,

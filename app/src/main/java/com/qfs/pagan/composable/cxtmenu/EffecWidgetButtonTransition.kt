@@ -12,12 +12,13 @@ import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
+import com.qfs.pagan.ui.theme.Dimensions
 
 @Composable
 fun EffectTransitionButton(event: EffectEvent, dispatcher: ActionTracker, is_initial: Boolean, modifier: Modifier = Modifier) {
     val transition = event.transition
     if (!is_initial) {
-        Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
+        Spacer(Modifier.width(Dimensions.ContextMenuPadding))
         IconCMenuButton(
             modifier = modifier
                 .width(dimensionResource(R.dimen.contextmenu_button_width))

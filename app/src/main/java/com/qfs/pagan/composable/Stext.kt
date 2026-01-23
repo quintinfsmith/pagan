@@ -81,6 +81,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.focusProperties
@@ -126,6 +127,9 @@ import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.button.SmallButton
 import com.qfs.pagan.composable.button.SmallOutlinedButton
 import com.qfs.pagan.enumerate
+import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Shadows
+import com.qfs.pagan.ui.theme.Shapes
 import kotlinx.coroutines.launch
 import kotlin.math.exp
 import kotlin.math.max
@@ -540,15 +544,12 @@ fun <T> SortableMenu(
                                         Modifier
                                     }
                                 )
-                                .heightIn(dimensionResource(R.dimen.dialog_menu_line_height))
+                                .heightIn(Dimensions.DialogLineHeight)
                                 .combinedClickable(
                                     onClick = { onClick(item) },
                                     onLongClick = { onLongClick(item) }
                                 )
-                                .padding(
-                                    vertical = dimensionResource(R.dimen.dialog_menu_line_padding_vertical),
-                                    horizontal = dimensionResource(R.dimen.dialog_menu_line_padding_horizontal)
-                                )
+                                .padding(Dimensions.DialogLinePadding)
                                 .fillMaxWidth(),
                             content = label_content,
                             verticalAlignment = Alignment.CenterVertically,
@@ -600,13 +601,17 @@ fun DrawerCard(
         disabledContainerColor = Color.Green,
     ),
     elevation: CardElevation = CardDefaults.cardElevation(),
-    shape: Shape = RoundedCornerShape(topStart = 0.dp, bottomStart = 0.dp, topEnd = 4.dp, bottomEnd = 4.dp),
+    shape: Shape = Shapes.Drawer,
     border: BorderStroke? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     ProvideContentColorTextStyle(contentColor = colors.contentColor) {
         Surface(
             modifier = modifier
+                .dropShadow(
+                    shape,
+                    Shadows.ContextMenu
+                )
                 .wrapContentWidth()
                 .then(if (border != null) modifier.border(border) else modifier),
             color = colors.containerColor,
@@ -616,7 +621,7 @@ fun DrawerCard(
             Column(
                 modifier = Modifier
                     .width(IntrinsicSize.Min)
-                    .padding(dimensionResource(R.dimen.dialog_padding)),
+                    .padding(Dimensions.DialogPadding),
                 horizontalAlignment = Alignment.End,
                 content = content
             )
@@ -648,7 +653,7 @@ fun DialogCard(
             Column(
                 modifier = Modifier
                     .wrapContentWidth()
-                    .padding(dimensionResource(R.dimen.dialog_padding)),
+                    .padding(Dimensions.DialogPadding),
                 horizontalAlignment = Alignment.Start,
                 content = content
             )

@@ -14,14 +14,13 @@
         android:icon="@mipmap/logo_rowan"
         android:supportsRtl="true"
         android:windowSoftInputMode="adjustResize"
-        android:theme="@style/Theme.Pagan"
         tools:targetApi="36" >
 
         <activity android:name=".ComponentActivity.ComponentActivityLanding"
             android:exported="true"
+            android:theme="@android:style/Theme.NoTitleBar"
             android:label="@string/app_name"
-            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
-            android:theme="@style/Theme.Pagan">
+            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -33,9 +32,9 @@
             android:exported="true"
             android:appCategory="audio"
             android:windowSoftInputMode="adjustResize"
+            android:theme="@android:style/Theme.NoTitleBar"
             android:label="@string/app_name_brief"
-            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
-            android:theme="@style/Theme.Pagan">
+            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -48,8 +47,8 @@
             android:exported="true"
             android:label="@string/app_name_brief"
             android:windowSoftInputMode="adjustResize"
-            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
-            android:theme="@style/Theme.Pagan">
+            android:theme="@android:style/Theme.NoTitleBar"
+            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -59,8 +58,8 @@
         <activity android:name=".ComponentActivity.ComponentActivityAbout"
             android:windowSoftInputMode="adjustResize"
             android:label="@string/app_name"
-            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"
-            android:theme="@style/Theme.Pagan"/>
+            android:theme="@android:style/Theme.NoTitleBar"
+            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout"/>
 
     </application>
 </manifest>

@@ -71,6 +71,7 @@ import com.qfs.pagan.composable.button.OutlinedButton
 import com.qfs.pagan.projectmanager.ProjectManager
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
+import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.launch
 import java.io.File
@@ -80,13 +81,6 @@ import java.util.Date
 import kotlin.math.roundToInt
 
 abstract class PaganComponentActivity: ComponentActivity() {
-    companion object {
-        // Sizes in Portrait
-        val SIZE_XL = Pair(960.dp, 720.dp)
-        val SIZE_L = Pair(640.dp, 480.dp)
-        val SIZE_M = Pair(470.dp, 320.dp)
-        val SIZE_S = Pair(426.dp, 320.dp)
-    }
 
     @Composable
     abstract fun LayoutXLargePortrait(modifier: Modifier = Modifier)
@@ -234,7 +228,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                     when (dialog.size) {
                                         ViewModelPagan.DialogSize.Unbounded -> Modifier
                                         ViewModelPagan.DialogSize.Small -> Modifier.width(300.dp)
-                                        ViewModelPagan.DialogSize.Medium -> Modifier.width(SIZE_L.second)
+                                        ViewModelPagan.DialogSize.Medium -> Modifier.width(Dimensions.LayoutSize.Large.long)
                                     }
                                 }
                             }

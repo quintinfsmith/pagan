@@ -12,7 +12,6 @@
     <dimen name="line_height">41dp</dimen>
     <dimen name="line_label_width">41dp</dimen>
     <dimen name="ctl_line_height">30dp</dimen>
-    <dimen name="base_leaf_width">41dp</dimen>
     <dimen name="channel_gap_size">5dp</dimen>
     <dimen name="dropdown_item_padding_top">4dp</dimen>
     <dimen name="dropdown_item_padding_sides">16dp</dimen>
@@ -69,7 +68,6 @@
     <dimen name="context_icon_size">32dp</dimen>
     <dimen name="icon_size">30dp</dimen>
     <dimen name="icon_button_width">58dp</dimen>
-    <dimen name="icon_button_height">54dp</dimen>
     <dimen name="contextmenu_icon_corner">16dp</dimen>
 
     <dimen name="icon_button_padding_a">1dp</dimen>
@@ -110,7 +108,6 @@
 
     <dimen name="landing_menu_width">-1px</dimen>
     <dimen name="trailing_space_width">0dp</dimen>
-    <dimen name="number_selector_button_width">@dimen/base_leaf_width</dimen>
     <dimen name="number_selector_button_height">41dp</dimen>
     <dimen name="character_width">16dp</dimen>
 
@@ -118,22 +115,7 @@
 
 
 
-    <dimen name="topbar_height">54dp</dimen>
-    <dimen name="topbar_icon_height">32dp</dimen>
-    <dimen name="topbar_icon_width">32dp</dimen>
-    <dimen name="topbar_icon_padding_v">4dp</dimen>
-    <dimen name="topbar_icon_padding_h">16dp</dimen>
-    <dimen name="dialog_padding">16dp</dimen>
-    <dimen name="dialog_menu_line_height">41dp</dimen>
-    <dimen name="dialog_menu_line_padding_vertical">5dp</dimen>
-    <dimen name="dialog_menu_line_padding_horizontal">12dp</dimen>
-
-
-    <dimen name="config_channel_button_height">41dp</dimen>
-
-    <dimen name="contextmenu_padding">4dp</dimen>
     <dimen name="contextmenu_button_width">54dp</dimen>
-    <dimen name="contextmenu_button_height">48dp</dimen>
     <dimen name="contextmenu_button_padding_h">8dp</dimen>
     <dimen name="contextmenu_button_padding_v">8dp</dimen>
     <dimen name="contextmenu_button_radius">16dp</dimen>
@@ -147,7 +129,6 @@
     <dimen name="dialog_adjust_inner_space">64dp</dimen>
     <dimen name="dialog_bar_button_width">120dp</dimen>
     <dimen name="dialog_bar_button_height">41dp</dimen>
-    <dimen name="drawer_inner_padding">4dp</dimen>
 
     <dimen name="effect_dialog_icon_width">32dp</dimen>
     <dimen name="effect_tempo_input_width">100dp</dimen>
@@ -161,7 +142,6 @@
     <dimen name="sf_menu_icon_height">41dp</dimen>
     <dimen name="about_padding">12dp</dimen>
 
-    <dimen name="settings_radio_height">32dp</dimen>
     <dimen name="transpose_dlg_input_width">64dp</dimen>
     <dimen name="transpose_dlg_input_height">41dp</dimen>
     <dimen name="transpose_dlg_input_padding">8dp</dimen>

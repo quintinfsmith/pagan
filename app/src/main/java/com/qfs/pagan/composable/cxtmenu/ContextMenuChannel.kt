@@ -14,6 +14,7 @@ import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.button.TextCMenuButton
+import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import com.qfs.pagan.viewmodel.ViewModelPagan
 
@@ -39,7 +40,7 @@ fun AdjustChannelButton(dispatcher: ActionTracker) {
 fun RemoveChannelButton(dispatcher: ActionTracker) {
     IconCMenuButton(
         onClick = { dispatcher.remove_channel() },
-        icon = R.drawable.icon_remove_channel,
+        icon = R.drawable.icon_cross,
         description = R.string.cd_remove_channel
     )
 
@@ -59,7 +60,7 @@ fun AddKitButton(dispatcher: ActionTracker) {
 fun AddChannelButton(dispatcher: ActionTracker) {
     IconCMenuButton(
         onClick = { dispatcher.insert_channel() },
-        icon = R.drawable.icon_add_channel,
+        icon = R.drawable.icon_add,
         description = R.string.cd_insert_channel
     )
 }
@@ -112,7 +113,7 @@ fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, ui_facade: ViewMode
                 ToggleEffectsButton(dispatcher)
                 Spacer(
                     Modifier
-                        .width(dimensionResource(R.dimen.contextmenu_padding))
+                        .width(Dimensions.ContextMenuPadding)
                         .weight(1F)
                 )
                 AdjustChannelButton(dispatcher)
@@ -158,7 +159,7 @@ fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
         CMPadding()
         SetPresetButton(
             modifier = Modifier
-                .height(dimensionResource(R.dimen.contextmenu_button_height))
+                .height(Dimensions.ButtonHeight.Normal)
                 .weight(1f),
             ui_facade,
             dispatcher,

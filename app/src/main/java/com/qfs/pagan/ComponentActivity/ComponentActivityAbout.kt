@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -35,20 +36,25 @@ import com.qfs.pagan.composable.SettingsColumn
 import com.qfs.pagan.composable.button.TopBarIcon
 import com.qfs.pagan.composable.button.TopBarNoIcon
 import com.qfs.pagan.find_activity
+import com.qfs.pagan.ui.theme.Dimensions
 
 class ComponentActivityAbout: PaganComponentActivity() {
     override val top_bar_wrapper: @Composable RowScope.() -> Unit = {
+        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
         TopBarIcon(
             icon = R.drawable.baseline_arrow_back_24,
             description = R.string.go_back,
             onClick = { this@ComponentActivityAbout.finish() }
         )
+        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
         Text(
             modifier = Modifier.weight(1F),
             textAlign = TextAlign.Center,
             text = stringResource(R.string.app_name)
         )
+        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
         TopBarNoIcon()
+        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
     }
 
     fun get_version_name(): String {

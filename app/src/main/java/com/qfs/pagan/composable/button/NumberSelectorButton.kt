@@ -5,23 +5,30 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.unit.dp
-import com.qfs.pagan.R
 import com.qfs.pagan.composable.dashed_border
+import com.qfs.pagan.composable.pressable
+import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Shadows
+import com.qfs.pagan.ui.theme.Shapes
 
 @Composable
 fun NumberSelectorButton(modifier: Modifier = Modifier, index: Int, alternate: Boolean, selected: Boolean, highlighted: Boolean, callback: (Int) -> Unit) {
-    val shape = RoundedCornerShape(12.dp)
     val (background, foreground) = if (selected) {
         Pair(MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.onTertiary)
     } else if (!alternate) {
@@ -29,13 +36,25 @@ fun NumberSelectorButton(modifier: Modifier = Modifier, index: Int, alternate: B
     } else {
         Pair(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary)
     }
+
+    val pressed = remember { mutableStateOf(false) }
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
-            .height(dimensionResource(R.dimen.number_selector_button_height))
-            .padding(1.dp)
-            .background(background, shape)
-            .padding(0.dp)
+            .height(Dimensions.NumberSelectorButtonHeight)
+            .pressable(pressed)
+            .then(
+                if (selected || pressed.value) {
+                    Modifier
+                } else {
+                    Modifier.dropShadow(
+                        shape = Shapes.NumberSelectorButton,
+                        shadow = Shadows.Button
+                    )
+                }
+            )
+
+            .background(background, Shapes.NumberSelectorButton)
             .combinedClickable(
                 onClick = {
                     callback(index)
@@ -45,11 +64,15 @@ fun NumberSelectorButton(modifier: Modifier = Modifier, index: Int, alternate: B
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .padding(2.dp)
                 .fillMaxSize()
                 .then(
-                    if (highlighted) Modifier.dashed_border(foreground, shape)
-                    else Modifier
+                    if (highlighted) {
+                        Modifier
+                            .padding(Dimensions.NumberSelectorHighlightedBorderPadding)
+                            .dashed_border(foreground, Shapes.NumberSelectorButton)
+                    } else {
+                        Modifier
+                    }
                 )
         ) {
             Text(
@@ -70,6 +93,9 @@ fun RowScope.NumberSelector(
     callback: (Int) -> Unit
 ) {
     for (i in progression) {
+        if (i != progression.first) {
+            Spacer(Modifier.width(Dimensions.NumberSelectorSpacing))
+        }
         NumberSelectorButton(
             modifier = Modifier.weight(1F),
             index = i,
@@ -90,6 +116,9 @@ fun ColumnScope.NumberSelector(
     callback: (Int) -> Unit
 ) {
     for (i in progression) {
+        if (i != progression.first) {
+            Spacer(Modifier.height(Dimensions.NumberSelectorSpacing))
+        }
         NumberSelectorButton(
             modifier = Modifier.weight(1F),
             index = i,

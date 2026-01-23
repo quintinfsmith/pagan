@@ -266,3 +266,25 @@ fun Modifier.dashed_border(
         brush = SolidColor(color)
     )
 }
+
+@Composable
+fun Modifier.pressable(is_pressed: MutableState<Boolean>): Modifier {
+    return this then Modifier
+        .pointerInput(Unit) {
+            awaitPointerEventScope {
+                // get drag start
+                while (true) {
+                    val event = awaitPointerEvent()
+                    when (event.type) {
+                        PointerEventType.Press -> {
+                            is_pressed.value = true
+                        }
+                        PointerEventType.Release -> {
+                            is_pressed.value = false
+                        }
+                    }
+                    event.changes.forEach { it.consume() }
+                }
+            }
+        }
+}

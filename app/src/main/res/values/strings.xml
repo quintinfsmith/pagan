@@ -284,6 +284,7 @@
     <string name="gm_kit">Percussion</string>
     <string name="cd_sort_options">Sort Options</string>
     <string name="cd_fade">Amount to fade per echo</string>
+    <string name="hold_to_cancel_export">Hold to cancel Export</string>
 
     <string-array name="general_midi_presets">
         <item>Grand Acoustic Piano</item>

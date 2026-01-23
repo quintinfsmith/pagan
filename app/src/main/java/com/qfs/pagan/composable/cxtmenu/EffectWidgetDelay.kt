@@ -43,11 +43,11 @@ import com.qfs.pagan.composable.DropdownMenu
 import com.qfs.pagan.composable.IntegerInput
 import com.qfs.pagan.composable.Slider
 import com.qfs.pagan.composable.button.Button
-import com.qfs.pagan.composable.button.ContextMenuButtonPadding
-import com.qfs.pagan.composable.button.ContextMenuButtonShape
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.roundToInt
 
@@ -175,15 +175,16 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
         }
     }
 
-    Spacer(Modifier.width(dimensionResource(R.dimen.contextmenu_padding)))
+    CMPadding()
+
     val fade_expanded = remember { mutableStateOf(false) }
     Box(contentAlignment = Alignment.Center) {
         Button(
-            contentPadding = ContextMenuButtonPadding(),
-            shape = ContextMenuButtonShape(),
+            contentPadding = Dimensions.ContextMenuButtonPadding,
+            shape = Shapes.ContextMenuButtonPrimary,
             modifier = Modifier
-                .height(dimensionResource(R.dimen.contextmenu_button_height))
-                .width(dimensionResource(R.dimen.contextmenu_button_width)),
+                .height(Dimensions.ButtonHeight.Normal)
+                .width(Dimensions.ButtonHeight.Normal),
             content = {
                 Box(contentAlignment = Alignment.Center) {
                     if (!fade_expanded.value) {

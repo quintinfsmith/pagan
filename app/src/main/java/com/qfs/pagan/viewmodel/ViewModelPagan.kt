@@ -15,9 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.ViewModel
-import com.qfs.pagan.ComponentActivity.PaganComponentActivity.Companion.SIZE_L
-import com.qfs.pagan.ComponentActivity.PaganComponentActivity.Companion.SIZE_M
-import com.qfs.pagan.ComponentActivity.PaganComponentActivity.Companion.SIZE_XL
 import com.qfs.pagan.DialogChain
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.R
@@ -26,6 +23,7 @@ import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.SortableMenu
 import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.projectmanager.ProjectManager
+import com.qfs.pagan.ui.theme.Dimensions
 
 class ViewModelPagan: ViewModel() {
     companion object {
@@ -82,20 +80,19 @@ class ViewModelPagan: ViewModel() {
 
     fun set_layout_size(width: Dp, height: Dp) {
         this.active_layout_size.value = if (width >= height) {
-            if (width >= SIZE_XL.first && height >= SIZE_XL.second) LayoutSize.XLargeLandscape
-            else if (width >= SIZE_L.first && height >= SIZE_L.second) LayoutSize.LargeLandscape
-            else if (width >= SIZE_M.first && height >= SIZE_M.second) LayoutSize.MediumLandscape
+            if (width >= Dimensions.LayoutSize.XLarge.long && height >= Dimensions.LayoutSize.XLarge.short) LayoutSize.XLargeLandscape
+            else if (width >= Dimensions.LayoutSize.Large.short && height >= Dimensions.LayoutSize.Large.long) LayoutSize.LargeLandscape
+            else if (width >= Dimensions.LayoutSize.Medium.short && height >= Dimensions.LayoutSize.Medium.long) LayoutSize.MediumLandscape
             else LayoutSize.SmallLandscape
         } else {
-            if (height >= SIZE_XL.first && width >= SIZE_XL.second) LayoutSize.XLargePortrait
-            else if (height >= SIZE_L.first && width >= SIZE_L.second) LayoutSize.LargePortrait
-            else if (height >= SIZE_M.first && width >= SIZE_M.second) LayoutSize.MediumPortrait
+            if (height >= Dimensions.LayoutSize.XLarge.long && width >= Dimensions.LayoutSize.XLarge.short) LayoutSize.XLargePortrait
+            else if (height >= Dimensions.LayoutSize.Large.short && width >= Dimensions.LayoutSize.Large.long) LayoutSize.LargePortrait
+            else if (height >= Dimensions.LayoutSize.Medium.short && width >= Dimensions.LayoutSize.Medium.long) LayoutSize.MediumPortrait
             else LayoutSize.SmallPortrait
         }
     }
 
     fun get_layout_size(): LayoutSize {
-        println("-- - - - -${active_layout_size.value}")
         return this.active_layout_size.value
     }
 

@@ -1,39 +1,31 @@
 package com.qfs.pagan.ComponentActivity
 
-import android.app.AlertDialog
 import android.content.Intent
-import android.graphics.Paint
 import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -43,17 +35,14 @@ import com.qfs.pagan.R
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.SText
-import com.qfs.pagan.composable.SettingsColumn
 import com.qfs.pagan.composable.SettingsRow
 import com.qfs.pagan.composable.SoundFontWarning
 import com.qfs.pagan.composable.button.Button
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import com.qfs.pagan.ui.theme.Dimensions
 import java.io.File
 import java.io.FileOutputStream
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import kotlin.concurrent.thread
 
 class ComponentActivityLanding: PaganComponentActivity() {
     private var result_launcher_save_crash_report =
@@ -97,28 +86,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val file = File("${this.dataDir}/bkp_crashreport.log")
-        if (!file.isFile) return
-
-        this.view_model.create_medium_dialog { close ->
-            @Composable {
-                DialogSTitle(R.string.crash_report_save)
-                SText(
-                    R.string.crash_report_desc,
-                    modifier = Modifier.padding(vertical = 24.dp)
-                )
-                DialogBar(
-                    negative = {
-                        file.delete()
-                        close()
-                    },
-                    positive = {
-                        this@ComponentActivityLanding.export_crash_report()
-                        close()
-                    }
-                )
-            }
-        }
+        this.check_for_crash_report()
     }
 
     override fun on_back_press_check(): Boolean {
@@ -361,8 +329,8 @@ class ComponentActivityLanding: PaganComponentActivity() {
         ) {
             Column(
                 modifier = Modifier
-                    .height(SIZE_M.first)
-                    .width(SIZE_L.second),
+                    .height(Dimensions.LayoutSize.Medium.short)
+                    .width(Dimensions.LayoutSize.Large.long),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
@@ -374,7 +342,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
                 }
 
                 Column(
-                    Modifier.width(SIZE_M.second),
+                    Modifier.width(Dimensions.LayoutSize.Medium.long),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     if (has_backup) {
@@ -541,20 +509,26 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
     fun check_for_crash_report() {
         val file = File("${this.dataDir}/bkp_crashreport.log")
-        if (file.isFile) {
-            AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
-                .setTitle(R.string.crash_report_save)
-                .setMessage(R.string.crash_report_desc)
-                .setCancelable(true)
-                .setPositiveButton(this.getString(R.string.dlg_confirm)) { dialog, _ ->
-                    this.export_crash_report()
-                    dialog.dismiss()
-                }
-                .setNegativeButton(this.getString(R.string.dlg_decline)) { dialog, _ ->
-                    file.delete()
-                    dialog.dismiss()
-                }
-                .show()
+        if (!file.isFile) return
+
+        this.view_model.create_medium_dialog { close ->
+            @Composable {
+                DialogSTitle(R.string.crash_report_save)
+                SText(
+                    R.string.crash_report_desc,
+                    modifier = Modifier.padding(vertical = 24.dp)
+                )
+                DialogBar(
+                    negative = {
+                        file.delete()
+                        close()
+                    },
+                    positive = {
+                        this@ComponentActivityLanding.export_crash_report()
+                        close()
+                    }
+                )
+            }
         }
     }
 

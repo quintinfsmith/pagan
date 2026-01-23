@@ -20,16 +20,26 @@ import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import com.qfs.pagan.composable.pressable
+import com.qfs.pagan.ui.theme.Shadows
+import com.qfs.pagan.ui.theme.Shapes
 
 @Composable
 fun OutlinedButton(
@@ -53,6 +63,7 @@ fun OutlinedButton(
         border = border,
         outerPadding = outerPadding,
         contentPadding = contentPadding,
+        shadow = null,
         content = content
     )
 }
@@ -67,17 +78,29 @@ fun Button(
     shape: Shape = ButtonDefaults.shape,
     colors: ButtonColors = ButtonDefaults.buttonColors(),
     border: BorderStroke? = null,
-
+    shadow: Shadow? = Shadows.Button,
     outerPadding: PaddingValues = PaddingValues(0.dp),
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
     content: @Composable RowScope.() -> Unit
 ) {
+    val pressed = remember { mutableStateOf(false) }
    // val containerColor = colors.containerColor(enabled)
    // val shadowElevation = elevation?.shadowElevation(enabled)?.value ?: 0.dp
    // val contentColor = colors.contentColor(enabled)
     ProvideContentColorTextStyle(contentColor = colors.contentColor, textStyle = MaterialTheme.typography.labelLarge) {
         Box(
             modifier = modifier
+                .pressable(pressed)
+                .then(
+                    if (shadow == null || pressed.value || !enabled) {
+                        Modifier
+                    } else {
+                        Modifier.dropShadow(
+                            shape = shape,
+                            shadow = shadow
+                        )
+                    }
+                )
                 .padding(outerPadding)
                 .clip(shape)
                 .then(if (border != null) Modifier.border(border, shape) else Modifier)
@@ -131,12 +154,25 @@ fun SmallButton(
     colors: ButtonColors = ButtonDefaults.buttonColors(),
     border: BorderStroke? = null,
 
+    shadow: Shadow? = Shadows.Button,
     outerPadding: PaddingValues = PaddingValues(0.dp),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     content: @Composable RowScope.() -> Unit
 ) {
     ProvideTextStyle(MaterialTheme.typography.bodySmall) {
-        Button(onClick, onLongClick, modifier, enabled, shape, colors, border, outerPadding, contentPadding, content)
+        Button(
+            onClick= onClick,
+            onLongClick = onLongClick,
+            modifier = modifier,
+            enabled = enabled,
+            shape = shape,
+            colors = colors,
+            border = border,
+            shadow = shadow,
+            outerPadding = outerPadding,
+            contentPadding = contentPadding,
+            content = content
+        )
     }
 }
 

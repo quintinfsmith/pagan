@@ -1,7 +1,6 @@
 package com.qfs.pagan.ComponentActivity
 
 import android.Manifest
-import android.app.AlertDialog
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -14,7 +13,6 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.DocumentsContract
 import android.provider.OpenableColumns
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -112,9 +110,11 @@ import com.qfs.pagan.composable.button.ConfigDrawerChannelRightButton
 import com.qfs.pagan.composable.button.ConfigDrawerTopButton
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.button.TopBarIcon
+import com.qfs.pagan.composable.button.TopBarNoIcon
 import com.qfs.pagan.composable.conditional_drag
 import com.qfs.pagan.composable.cxtmenu.CMBoxBottom
 import com.qfs.pagan.composable.cxtmenu.CMBoxEnd
+import com.qfs.pagan.composable.cxtmenu.CMPadding
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelPrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuColumnPrimary
@@ -143,6 +143,8 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocity
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
+import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import com.qfs.pagan.viewmodel.ViewModelPagan
@@ -564,13 +566,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         action_interface = ActionTracker(this, this.controller_model)
         val dispatcher = this.action_interface
-        this.state_model.base_leaf_width.value = this.resources.getDimension(R.dimen.base_leaf_width)
         this.controller_model.attach_state_model(this.state_model)
 
         dispatcher.attach_top_model(this.view_model)
 
         this.bind_midi_interface()
         super.onCreate(savedInstanceState)
+
+        // TODO: remember density instead of specific width
+        this.state_model.base_leaf_width.value = toPx(Dimensions.LeafBaseWidth)
 
         thread {
             if (savedInstanceState != null) {
@@ -731,7 +735,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
             inner_callback(uri)
             null
         } catch (e: Exception) {
-            throw e
             when (type) {
                 CompatibleFileType.Midi1 -> this.getString(R.string.feedback_midi_fail)
                 CompatibleFileType.Pagan -> this.getString(R.string.feedback_import_fail)
@@ -840,7 +843,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         menu_items.add(
             Pair(R.string.menu_item_about) { this@ComponentActivityEditor.open_about() }
         )
-
+        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
         TopBarIcon(
             icon = R.drawable.icon_hamburger_32,
             description = R.string.song_configuration,
@@ -850,7 +853,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             }
         )
-
+        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
         Row(
             modifier = Modifier.weight(1F),
             horizontalArrangement = Arrangement.Center,
@@ -902,6 +905,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     }
                 }
             )
+            Spacer(Modifier.width(Dimensions.TopBarItemSpace))
         } else if (this@ComponentActivityEditor.state_model.soundfont_active.value) {
             TopBarIcon(
                 icon = when (this@ComponentActivityEditor.state_model.playback_state_soundfont.value) {
@@ -948,6 +952,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     }
                 }
             )
+            Spacer(Modifier.width(Dimensions.TopBarItemSpace))
         }
         if (vm_state.playback_state_midi.value != PlaybackState.Playing && vm_state.playback_state_soundfont.value != PlaybackState.Playing) {
             TopBarIcon(
@@ -955,7 +960,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 description = R.string.menu_item_undo,
                 onClick = { dispatcher.apply_undo() }
             )
+        } else {
+            TopBarNoIcon()
         }
+        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
         Box {
             val expanded = remember { mutableStateOf(false) }
             TopBarIcon(
@@ -978,7 +986,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             }
         }
+        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
     }
+
     @Composable
     fun RowScope.LoadingTopBar() {
         Box(Modifier.fillMaxSize()) {}
@@ -1074,12 +1084,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 .width(dimensionResource(R.dimen.line_label_width)),
             contentAlignment = Alignment.CenterEnd,
             content = {
-                Spacer(
-                    Modifier
-                        .fillMaxHeight()
-                        .width(dimensionResource(R.dimen.table_line_stroke))
-                        .background(MaterialTheme.colorScheme.onSurfaceVariant)
-                )
+               // Spacer(
+               //     Modifier
+               //         .fillMaxHeight()
+               //         .width(dimensionResource(R.dimen.table_line_stroke))
+               //         .background(MaterialTheme.colorScheme.onSurfaceVariant)
+               // )
             }
         )
 
@@ -1091,13 +1101,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     .height(dimensionResource(R.dimen.line_height)),
                 contentAlignment = Alignment.BottomEnd,
                 content = {
-                    Spacer(
-                        Modifier
-                            .padding(top = dimensionResource(R.dimen.line_height) - dimensionResource(R.dimen.table_line_stroke))
-                            .fillMaxHeight()
-                            .width(dimensionResource(R.dimen.table_line_stroke))
-                            .background(MaterialTheme.colorScheme.onSurfaceVariant)
-                    )
+                //    Spacer(
+                //        Modifier
+                //            .padding(top = dimensionResource(R.dimen.line_height) - dimensionResource(R.dimen.table_line_stroke))
+                //            .fillMaxHeight()
+                //            .width(dimensionResource(R.dimen.table_line_stroke))
+                //            .background(MaterialTheme.colorScheme.onSurfaceVariant)
+                //    )
                 }
             )
 
@@ -1108,12 +1118,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     .height(dimensionResource(R.dimen.line_height)),
                 contentAlignment = Alignment.BottomCenter,
                 content = {
-                    Spacer(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(dimensionResource(R.dimen.table_line_stroke))
-                            .background(MaterialTheme.colorScheme.onSurfaceVariant)
-                    )
+                 //   Spacer(
+                 //       Modifier
+                 //           .fillMaxWidth()
+                 //           .height(dimensionResource(R.dimen.table_line_stroke))
+                 //           .background(MaterialTheme.colorScheme.onSurfaceVariant)
+                 //   )
                 }
             )
         }
@@ -1124,7 +1134,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val table_stroke_width = dimensionResource(R.dimen.table_line_stroke)
         val line_height = dimensionResource(R.dimen.line_height)
         val ctl_line_height = dimensionResource(R.dimen.ctl_line_height)
-        val leaf_width = dimensionResource(R.dimen.base_leaf_width)
+        val leaf_width = Dimensions.LeafBaseWidth
         val line_label_width = dimensionResource(R.dimen.line_label_width)
         val column_widths = Array(ui_facade.beat_count.value) { i ->
             ui_facade.column_data[i].top_weight.value
@@ -1136,14 +1146,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val scroll_state_v = ui_facade.scroll_state_y.value
         val scroll_state_h = ui_facade.scroll_state_x.value
         val bottom_padding = when (layout) {
-            ViewModelPagan.LayoutSize.SmallPortrait -> SIZE_S.first
-            ViewModelPagan.LayoutSize.MediumPortrait -> SIZE_M.first
-            ViewModelPagan.LayoutSize.LargePortrait -> SIZE_L.first
-            ViewModelPagan.LayoutSize.XLargePortrait -> SIZE_XL.first
-            ViewModelPagan.LayoutSize.SmallLandscape -> SIZE_S.second
-            ViewModelPagan.LayoutSize.MediumLandscape -> SIZE_M.second
-            ViewModelPagan.LayoutSize.LargeLandscape -> SIZE_L.second
-            ViewModelPagan.LayoutSize.XLargeLandscape -> SIZE_XL.second
+            ViewModelPagan.LayoutSize.SmallPortrait -> Dimensions.LayoutSize.Small.short
+            ViewModelPagan.LayoutSize.MediumPortrait -> Dimensions.LayoutSize.Medium.short
+            ViewModelPagan.LayoutSize.LargePortrait -> Dimensions.LayoutSize.Large.short
+            ViewModelPagan.LayoutSize.XLargePortrait -> Dimensions.LayoutSize.XLarge.long
+            ViewModelPagan.LayoutSize.SmallLandscape -> Dimensions.LayoutSize.Small.long
+            ViewModelPagan.LayoutSize.MediumLandscape -> Dimensions.LayoutSize.Medium.long
+            ViewModelPagan.LayoutSize.LargeLandscape -> Dimensions.LayoutSize.Large.long
+            ViewModelPagan.LayoutSize.XLargeLandscape -> Dimensions.LayoutSize.XLarge.short
         } / 2
         val end_padding = 128.dp // Also Arbitrary, safe width
         Box(
@@ -1184,7 +1194,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                 Modifier
                                                     .onPlaced { coordinates ->
                                                         if (y == ui_facade.dragging_line.value && ui_facade.dragging_abs_offset.value == null) {
-                                                            ui_facade.dragging_abs_offset.value = coordinates.positionInParent().y
+                                                            ui_facade.dragging_abs_offset.value =
+                                                                coordinates.positionInParent().y
                                                         }
                                                     }
                                                     .long_press(
@@ -1200,7 +1211,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                                                         on_drag_stop = {
                                                             dragging_to_y?.let {
-                                                                val from_line = ui_facade.line_data[ui_facade.dragging_line.value!!]
+                                                                val from_line =
+                                                                    ui_facade.line_data[ui_facade.dragging_line.value!!]
                                                                 val to_line = ui_facade.line_data[it]
                                                                 if (ui_facade.is_dragging_channel()) {
                                                                     dispatcher.move_channel(
@@ -1292,12 +1304,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onSurfaceVariant) {
                                 Icon(
                                     modifier = Modifier
-                                        .width(dimensionResource(R.dimen.base_leaf_width))
+                                        .width(Dimensions.LeafBaseWidth)
                                         .combinedClickable(
                                             onClick = { dispatcher.append_beats() },
                                             onLongClick = { dispatcher.append_beats() }
                                         ),
-                                    painter = painterResource(R.drawable.icon_add_channel),
+                                    painter = painterResource(R.drawable.icon_add),
                                     contentDescription = stringResource(R.string.cd_insert_beat)
                                 )
                             }
@@ -1390,7 +1402,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val is_dragging = this@ComponentActivityEditor.state_model.line_data[y].is_dragging.value
         return this then Modifier
             .zIndex(
-                if (is_dragging && ! is_channel_gap) 2F
+                if (is_dragging && !is_channel_gap) 2F
                 else 0F
             )
             .offset {
@@ -1591,13 +1603,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     .fillMaxSize(),
                 border_color = MaterialTheme.colorScheme.onSurfaceVariant,
                 content = {
-                    if (state_model.active_wide_beat.value == x && LocalContext.current.toPx(dimensionResource(R.dimen.base_leaf_width)) * ui_facade.column_data[x].top_weight.value > ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width) {
+                    if (state_model.active_wide_beat.value == x && LocalContext.current.toPx(Dimensions.LeafBaseWidth) * ui_facade.column_data[x].top_weight.value > ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width) {
                         LinearProgressIndicator(
                             modifier = Modifier
                                 .width(ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width.dp / 5)
                                 .graphicsLayer {
                                     val width_px = column_width.toPx()
-                                    val scroll_offset = ui_facade.scroll_state_x.value.firstVisibleItemScrollOffset.toFloat()
+                                    val scroll_offset =
+                                        ui_facade.scroll_state_x.value.firstVisibleItemScrollOffset.toFloat()
                                     val viewport_width = ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width
                                     val floating_position = (width_px / -2F) + (viewport_width / 4) + scroll_offset
                                     translationX = floating_position
@@ -1624,12 +1637,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 translationX = if (width_px >= viewport_width) {
                                     val visible_items = ui_facade.scroll_state_x.value.layoutInfo.visibleItemsInfo
                                     if (ui_facade.scroll_state_x.value.firstVisibleItemIndex == x) {
-                                        val scroll_offset = ui_facade.scroll_state_x.value.firstVisibleItemScrollOffset.toFloat()
+                                        val scroll_offset =
+                                            ui_facade.scroll_state_x.value.firstVisibleItemScrollOffset.toFloat()
                                         val floating_position = ((viewport_width - width_px) / 2F) + scroll_offset
                                         val end_position = ((width_px - viewport_width) / 2F)
                                         if (floating_position < end_position) {
                                             state_model.active_wide_beat.value = x
-                                            state_model.wide_beat_progress.value = scroll_offset / (width_px - viewport_width)
+                                            state_model.wide_beat_progress.value =
+                                                scroll_offset / (width_px - viewport_width)
                                             floating_position
                                         } else {
                                             if (state_model.active_wide_beat.value == x) {
@@ -1653,10 +1668,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 }
                             }
                             .fillMaxHeight()
-                            .widthIn(dimensionResource(R.dimen.base_leaf_width) - 6.dp)
+                            .widthIn(Dimensions.LeafBaseWidth - 6.dp)
                             .padding(horizontal = 4.dp, vertical = 8.dp)
                             .then(
-                                if (column_info.is_tagged.value) Modifier.dashed_border(foreground, RoundedCornerShape(12.dp))
+                                if (column_info.is_tagged.value) Modifier.dashed_border(
+                                    foreground,
+                                    Shapes.TaggedBeat
+                                )
                                 else Modifier
                             ),
                         contentAlignment = Alignment.Center,
@@ -1789,7 +1807,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 Canvas(
                                     modifier = Modifier
                                         .fillMaxHeight()
-                                        .width(dimensionResource(R.dimen.base_leaf_width))
+                                        .width(Dimensions.LeafBaseWidth)
                                 ) {
                                     drawLine(
                                         start = Offset((.1F * size.width), (.65F * size.height)),
@@ -1877,11 +1895,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     fun RowScope.DrawerPadder() {
-        Spacer(modifier = Modifier.width(dimensionResource(R.dimen.drawer_inner_padding)))
+        Spacer(modifier = Modifier.width(Dimensions.ConfigDrawerPadding))
     }
     @Composable
     fun ColumnScope.DrawerPadder() {
-        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.drawer_inner_padding)))
+        Spacer(modifier = Modifier.height(Dimensions.ConfigDrawerPadding))
     }
 
     @Composable
@@ -1897,10 +1915,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val context = LocalContext.current
 
         DrawerCard {
-            Row(
-                Modifier.height(dimensionResource(R.dimen.config_channel_button_height)),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
+            Row(horizontalArrangement = Arrangement.SpaceBetween) {
                 ConfigDrawerTopButton(
                     onClick = { dispatcher.set_tuning_table_and_transpose() },
                     content = { SText(R.string.label_tuning) }
@@ -1922,7 +1937,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     onClick = { dispatcher.insert_channel(-1) },
                     content = {
                         Icon(
-                            painter = painterResource(R.drawable.icon_add_channel),
+                            painter = painterResource(R.drawable.icon_add_circle),
                             contentDescription = stringResource(R.string.btn_cfg_add_channel),
                         )
                     }
@@ -1937,8 +1952,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     )
                     .weight(1F)
             ) {
-                val row_height = dimensionResource(R.dimen.config_channel_button_height)
-                val padding_height_px = this@ComponentActivityEditor.toPx(dimensionResource(R.dimen.drawer_inner_padding))
+                val row_height = Dimensions.ConfigChannelButtonHeight
+                val padding_height_px = this@ComponentActivityEditor.toPx(Dimensions.ConfigChannelSpacing)
                 val row_height_px = this@ComponentActivityEditor.toPx(row_height)
 
                 for (i in 0 until state_model.channel_count.value) {
@@ -1949,7 +1964,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         DrawerPadder()
                     }
                     Row(Modifier
-                        .height(row_height)
                         .zIndex(
                             if (is_dragging.value) {
                                 2F
@@ -1964,14 +1978,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             } else if (dragging_row_index.value!! == i) {
                                 context.toDp(dragging_row_offset.value!!)
                             } else if (dragging_row_index.value!! < i) {
-                                val dragged_position = (padding_height_px * dragging_row_index.value!!) + (row_height_px * dragging_row_index.value!!) + dragging_row_offset.value!!
+                                val dragged_position =
+                                    (padding_height_px * dragging_row_index.value!!) + (row_height_px * dragging_row_index.value!!) + dragging_row_offset.value!!
                                 if (((padding_height_px + row_height_px) * i) < dragged_position) {
                                     (row_height * -1)
                                 } else {
                                     0.dp
                                 }
                             } else {
-                                val dragged_position = (padding_height_px * dragging_row_index.value!!) + (row_height_px * dragging_row_index.value!!) + dragging_row_offset.value!!
+                                val dragged_position =
+                                    (padding_height_px * dragging_row_index.value!!) + (row_height_px * dragging_row_index.value!!) + dragging_row_offset.value!!
                                 if (((padding_height_px + row_height_px) * i) > dragged_position) {
                                     row_height
                                 } else {
@@ -1992,7 +2008,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                             on_drag_stop = {
                                 dragging_row_index.value?.let {
-                                    val dragged_position = (padding_height_px * it) + (row_height_px * it) + dragging_row_offset.value!!
+                                    val dragged_position =
+                                        (padding_height_px * it) + (row_height_px * it) + dragging_row_offset.value!!
                                     val new_channel_position = max(0F, ceil(dragged_position / row_height_px))
                                     dispatcher.move_channel(i, new_channel_position.toInt(), true)
                                 }
@@ -2038,7 +2055,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             onClick = { dispatcher.remove_channel(i) },
                             content = {
                                 Icon(
-                                    painter = painterResource(R.drawable.icon_delete_channel),
+                                    painter = painterResource(R.drawable.icon_subtract_circle),
                                     contentDescription = stringResource(R.string.remove_channel, i)
                                 )
                             }
@@ -2049,7 +2066,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
             DrawerPadder()
             Row(
                 modifier = Modifier
-                    .height(dimensionResource(R.dimen.config_channel_button_height))
                     .fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -2112,12 +2128,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     Row(
                         modifier = Modifier
                             .weight(1F)
+                            .height(Dimensions.ConfigChannelBottomButtonHeight)
                             .combinedClickable(
                                 onClick = {
                                     this@ComponentActivityEditor.runOnUiThread {
                                         Toast.makeText(
                                             this@ComponentActivityEditor,
-                                            "Hold to cancel Export",
+                                            getString(R.string.hold_to_cancel_export),
                                             Toast.LENGTH_SHORT
                                         ).show()
                                     }
@@ -2150,7 +2167,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     override fun LayoutLargePortrait(modifier: Modifier) {
-        val view_model = this.controller_model
         val ui_facade = this.controller_model.opus_manager.vm_state
         if (!ui_facade.ready.value) {
             LoadingSpinnerPlaceHolder()
@@ -2166,23 +2182,24 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
 
             val primary = this@ComponentActivityEditor.get_context_menu_primary(
-                Modifier.padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
+                Modifier,
                 ui_facade,
                 action_interface,
                 ViewModelPagan.LayoutSize.LargePortrait
             )
             val secondary = this@ComponentActivityEditor.get_context_menu_secondary(
-                Modifier.padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
+                Modifier,
                 ui_facade,
                 action_interface,
                 ViewModelPagan.LayoutSize.LargePortrait
             )
 
             AnimatedVisibility(primary != null || secondary != null) {
-                CMBoxBottom(
-                    Modifier.width(SIZE_M.first)
-                ) {
+                CMBoxBottom(Modifier.width(Dimensions.LayoutSize.Large.short)) {
                     primary?.invoke()
+                    if (primary != null && secondary != null) {
+                        CMPadding()
+                    }
                     secondary?.invoke()
                 }
             }
@@ -2200,7 +2217,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     override fun LayoutSmallPortrait(modifier: Modifier) {
-        val view_model = this.controller_model
         val ui_facade = this.controller_model.opus_manager.vm_state
         if (!ui_facade.ready.value) {
             LoadingSpinnerPlaceHolder()
@@ -2224,15 +2240,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         layout(placeable.width, placeable.height) {
                             placeable.place(0,0)
                         }
-                    }
-                    .padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
+                    },
                 ui_facade,
                 action_interface,
                 layout
             )
 
             val secondary = this@ComponentActivityEditor.get_context_menu_secondary(
-                Modifier.padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
+                Modifier,
                 ui_facade,
                 action_interface,
                 layout
@@ -2241,6 +2256,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
             AnimatedVisibility(primary != null || secondary != null) {
                 CMBoxBottom {
                     primary?.invoke()
+                    if (primary != null && secondary != null) {
+                        CMPadding()
+                    }
                     secondary?.invoke()
                 }
             }
@@ -2249,7 +2267,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     override fun LayoutSmallLandscape(modifier: Modifier) {
-        val view_model = this.controller_model
         val ui_facade = this.controller_model.opus_manager.vm_state
 
         if (!ui_facade.ready.value) {
@@ -2270,14 +2287,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
             ) {
                 AnimatedVisibility(ui_facade.active_cursor.value != null, Modifier.weight(1F)) {
                     this@ComponentActivityEditor.get_context_menu_secondary(
-                        Modifier
-                            .padding(bottom = dimensionResource(R.dimen.contextmenu_padding)),
+                        Modifier,
                         ui_facade,
                         action_interface,
                         layout
                     )?.let {
                         Box(Modifier.weight(1F), contentAlignment = Alignment.BottomCenter) {
-                            CMBoxBottom(Modifier.width(SIZE_M.first)) { it() }
+                            CMBoxBottom(Modifier.width(Dimensions.LayoutSize.Medium.short)) { it() }
                         }
                     } ?: Spacer(Modifier.weight(1F))
                 }
@@ -2297,7 +2313,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     val placeable = measurable.measure(constraints)
                                     this@ComponentActivityEditor.state_model.table_side_padding.value = placeable.width
                                     layout(placeable.width, placeable.height) {
-                                        placeable.place(0,0)
+                                        placeable.place(0, 0)
                                     }
                                 }
                                 .fillMaxHeight(),
@@ -2420,25 +2436,26 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     fun export_midi_check() {
-        val opus_manager = this.controller_model.opus_manager
-        if (opus_manager.get_percussion_channels().size > 1) {
-            val text_view = TextView(this)
-            text_view.text = this.getString(R.string.multiple_kit_warning)
+        TODO()
+      //  val opus_manager = this.controller_model.opus_manager
+      //  if (opus_manager.get_percussion_channels().size > 1) {
+      //      val text_view = TextView(this)
+      //      text_view.text = this.getString(R.string.multiple_kit_warning)
 
-            AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
-                .setTitle(R.string.generic_warning)
-                .setView(text_view)
-                .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                    this.export_midi()
-                    dialog.dismiss()
-                }
-                .setNeutralButton(android.R.string.cancel) { dialog, _ ->
-                    dialog.cancel()
-                }
-                .show()
-        } else {
-            this.export_midi()
-        }
+      //      //AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
+      //          .setTitle(R.string.generic_warning)
+      //          .setView(text_view)
+      //          .setPositiveButton(android.R.string.ok) { dialog, _ ->
+      //              this.export_midi()
+      //              dialog.dismiss()
+      //          }
+      //          .setNeutralButton(android.R.string.cancel) { dialog, _ ->
+      //              dialog.cancel()
+      //          }
+      //          .show()
+      //  } else {
+      //      this.export_midi()
+      //  }
     }
 
     fun export_midi() {

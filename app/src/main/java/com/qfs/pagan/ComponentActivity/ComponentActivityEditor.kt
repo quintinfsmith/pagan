@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -44,12 +45,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.ProvideTextStyle
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -1914,7 +1917,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         val context = LocalContext.current
 
-        DrawerCard {
+        DrawerCard(modifier.imePadding()) {
             Row(horizontalArrangement = Arrangement.SpaceBetween) {
                 ConfigDrawerTopButton(
                     onClick = { dispatcher.set_tuning_table_and_transpose() },
@@ -1944,14 +1947,19 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 )
             }
             DrawerPadder()
-            Column(
-                Modifier
-                    .dragging_scroll(
-                        dragging_row_index.value != null,
-                        scroll_state,
-                    )
-                    .weight(1F)
+            Surface(
+                tonalElevation = 1.dp,
+                shape = RoundedCornerShape(4.dp),
+                modifier = Modifier.weight(1F)
             ) {
+                Column(
+                    Modifier
+                        .padding(Dimensions.ConfigDrawerPadding)
+                        .dragging_scroll(
+                            dragging_row_index.value != null,
+                            scroll_state,
+                        )
+                ) {
                 val row_height = Dimensions.ConfigChannelButtonHeight
                 val padding_height_px = this@ComponentActivityEditor.toPx(Dimensions.ConfigChannelSpacing)
                 val row_height_px = this@ComponentActivityEditor.toPx(row_height)
@@ -1963,65 +1971,68 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     if (i != 0) {
                         DrawerPadder()
                     }
-                    Row(Modifier
-                        .zIndex(
-                            if (is_dragging.value) {
-                                2F
-                            } else {
-                                0F
-                            }
-                        )
-                        .offset(
-                            x = 0.dp,
-                            y = if (dragging_row_index.value == null || dragging_row_offset.value == null) {
-                                0.dp
-                            } else if (dragging_row_index.value!! == i) {
-                                context.toDp(dragging_row_offset.value!!)
-                            } else if (dragging_row_index.value!! < i) {
-                                val dragged_position =
-                                    (padding_height_px * dragging_row_index.value!!) + (row_height_px * dragging_row_index.value!!) + dragging_row_offset.value!!
-                                if (((padding_height_px + row_height_px) * i) < dragged_position) {
-                                    (row_height * -1)
-                                } else {
-                                    0.dp
-                                }
-                            } else {
-                                val dragged_position =
-                                    (padding_height_px * dragging_row_index.value!!) + (row_height_px * dragging_row_index.value!!) + dragging_row_offset.value!!
-                                if (((padding_height_px + row_height_px) * i) > dragged_position) {
-                                    row_height
-                                } else {
-                                    0.dp
-                                }
-                            }
-                        )
-                        .long_press(
-                            onPress = { is_dragging.value = true },
-                            onRelease = { is_dragging.value = false }
-                        )
-                        .conditional_drag(
-                            is_dragging,
-                            on_drag_start = { position ->
-                                dragging_row_offset.value = 0F
-                                dragging_row_index.value = i
-                            },
 
-                            on_drag_stop = {
-                                dragging_row_index.value?.let {
+                    Row(
+                        Modifier
+                            .zIndex(
+                                if (is_dragging.value) {
+                                    2F
+                                } else {
+                                    0F
+                                }
+                            )
+                            .offset(
+                                x = 0.dp,
+                                y = if (dragging_row_index.value == null || dragging_row_offset.value == null) {
+                                    0.dp
+                                } else if (dragging_row_index.value!! == i) {
+                                    context.toDp(dragging_row_offset.value!!)
+                                } else if (dragging_row_index.value!! < i) {
                                     val dragged_position =
-                                        (padding_height_px * it) + (row_height_px * it) + dragging_row_offset.value!!
-                                    val new_channel_position = max(0F, ceil(dragged_position / row_height_px))
-                                    dispatcher.move_channel(i, new_channel_position.toInt(), true)
+                                        (padding_height_px * dragging_row_index.value!!) + (row_height_px * dragging_row_index.value!!) + dragging_row_offset.value!!
+                                    if (((padding_height_px + row_height_px) * i) < dragged_position) {
+                                        (row_height * -1)
+                                    } else {
+                                        0.dp
+                                    }
+                                } else {
+                                    val dragged_position =
+                                        (padding_height_px * dragging_row_index.value!!) + (row_height_px * dragging_row_index.value!!) + dragging_row_offset.value!!
+                                    if (((padding_height_px + row_height_px) * i) > dragged_position) {
+                                        row_height
+                                    } else {
+                                        0.dp
+                                    }
                                 }
-                                dragging_row_offset.value = null
-                                dragging_row_index.value = null
-                            },
+                            )
+                            .long_press(
+                                onPress = { is_dragging.value = true },
+                                onRelease = { is_dragging.value = false }
+                            )
+                            .conditional_drag(
+                                is_dragging,
+                                on_drag_start = { position ->
+                                    dragging_row_offset.value = 0F
+                                    dragging_row_index.value = i
+                                },
 
-                            on_drag = { delta ->
-                                dragging_row_offset.value = dragging_row_offset.value!! + delta
-                            },
-                            scroll_state = scroll_state
-                        )
+                                on_drag_stop = {
+                                    dragging_row_index.value?.let {
+                                        val dragged_position =
+                                            (padding_height_px * it) + (row_height_px * it) + dragging_row_offset.value!!
+                                        val new_channel_position =
+                                            max(0F, ceil(dragged_position / row_height_px))
+                                        dispatcher.move_channel(i, new_channel_position.toInt(), true)
+                                    }
+                                    dragging_row_offset.value = null
+                                    dragging_row_index.value = null
+                                },
+
+                                on_drag = { delta ->
+                                    dragging_row_offset.value = dragging_row_offset.value!! + delta
+                                },
+                                scroll_state = scroll_state
+                            )
                     ) {
                         ConfigDrawerChannelLeftButton(
                             modifier = Modifier.weight(1F),
@@ -2041,7 +2052,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                             )
                                     )
                                     Text(
-                                        channel_data.active_name.value ?: this@ComponentActivityEditor.get_default_preset_name(channel_data.instrument.value.first, channel_data.instrument.value.second),
+                                        channel_data.active_name.value
+                                            ?: this@ComponentActivityEditor.get_default_preset_name(
+                                                channel_data.instrument.value.first,
+                                                channel_data.instrument.value.second
+                                            ),
                                         textAlign = TextAlign.Center,
                                         modifier = Modifier.weight(1F),
                                         maxLines = 1,
@@ -2062,6 +2077,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         )
                     }
                 }
+            }
             }
             DrawerPadder()
             Row(

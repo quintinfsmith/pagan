@@ -84,9 +84,6 @@ fun Button(
     content: @Composable RowScope.() -> Unit
 ) {
     val pressed = remember { mutableStateOf(false) }
-   // val containerColor = colors.containerColor(enabled)
-   // val shadowElevation = elevation?.shadowElevation(enabled)?.value ?: 0.dp
-   // val contentColor = colors.contentColor(enabled)
     ProvideContentColorTextStyle(contentColor = colors.contentColor, textStyle = MaterialTheme.typography.labelLarge) {
         Box(
             modifier = modifier

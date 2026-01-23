@@ -283,7 +283,6 @@ fun Modifier.pressable(is_pressed: MutableState<Boolean>): Modifier {
                             is_pressed.value = false
                         }
                     }
-                    event.changes.forEach { it.consume() }
                 }
             }
         }

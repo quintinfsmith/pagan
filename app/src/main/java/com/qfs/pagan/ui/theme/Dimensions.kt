@@ -28,6 +28,8 @@ object Dimensions {
     val DialogLineHeight = 41.dp
     val DialogLinePadding = PaddingValues(vertical = 5.dp, horizontal = 12.dp)
 
+    val LandingPadding = 8.dp
+
     val LeafBaseWidth = 41.dp
 
     object LayoutSize {

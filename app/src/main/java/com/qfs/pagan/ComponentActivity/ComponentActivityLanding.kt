@@ -321,7 +321,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
         val has_saved_project = this.view_model.has_saved_project.value
         Column(
             modifier = modifier
-                .padding(dimensionResource(R.dimen.landing_padding))
+                .padding(Dimensions.LandingPadding)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
@@ -412,17 +412,19 @@ class ComponentActivityLanding: PaganComponentActivity() {
             modifier.padding(dimensionResource(R.dimen.landing_padding))
         ) {
             Column(
-                Modifier.align(Alignment.Center),
+                Modifier
+                    .width(Dimensions.LayoutSize.Small.short)
+                    .align(Alignment.Center),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 if (has_backup) {
-                    ButtonRecent()
+                    ButtonRecent(Modifier.fillMaxWidth())
                     Padder()
                 }
-                ButtonNew()
+                ButtonNew(Modifier.fillMaxWidth())
                 if (has_saved_project) {
                     Padder()
-                    ButtonLoad()
+                    ButtonLoad(Modifier.fillMaxWidth())
                 }
             }
 

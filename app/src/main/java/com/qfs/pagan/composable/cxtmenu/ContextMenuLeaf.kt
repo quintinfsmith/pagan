@@ -3,6 +3,7 @@ package com.qfs.pagan.composable.cxtmenu
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -13,7 +14,10 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.RelativeInputMode
@@ -34,6 +38,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEve
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlin.math.abs
@@ -75,12 +80,13 @@ fun DurationButton(
     active_event: OpusEvent?
 ) {
     TextCMenuButton(
-        modifier = Modifier.width(dimensionResource(R.dimen.contextmenu_button_width)),
+        modifier = Modifier.width(Dimensions.ButtonHeight.Normal),
         enabled = when (descriptor) {
             ViewModelEditorState.EventDescriptor.Selected,
             ViewModelEditorState.EventDescriptor.Tail -> true
             else -> false
         },
+        contentPadding = PaddingValues(0.dp),
         onClick = { dispatcher.set_duration() },
         onLongClick = { dispatcher.set_duration(1) },
         text = when (descriptor) {
@@ -92,7 +98,12 @@ fun DurationButton(
 }
 
 @Composable
-fun UnsetButton(dispatcher: ActionTracker, active_line: ViewModelEditorState.LineData, active_event: OpusEvent?) {
+fun UnsetButton(
+    dispatcher: ActionTracker,
+    active_line: ViewModelEditorState.LineData,
+    active_event: OpusEvent?,
+    shape: Shape = Shapes.ContextMenuButtonSecondary
+) {
     IconCMenuButton(
         enabled = active_line.assigned_offset.value != null || active_event != null,
         onClick = {
@@ -109,6 +120,7 @@ fun UnsetButton(dispatcher: ActionTracker, active_line: ViewModelEditorState.Lin
         } else {
             R.drawable.icon_unset
         },
+        shape = shape,
         description = if (active_line.assigned_offset.value != null) {
             R.string.set_percussion_event
         } else {
@@ -145,6 +157,7 @@ fun RelativeModeButton(dispatcher: ActionTracker, ui_facade: ViewModelEditorStat
                 RelativeInputMode.Positive -> "+"
                 RelativeInputMode.Negative -> "-"
             },
+            shape = Shapes.ContextMenuButtonSecondary,
             onClick = { expanded.value = !expanded.value }
         )
     }
@@ -181,7 +194,7 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewM
                 )
             }
             CMPadding()
-            UnsetButton(dispatcher, active_line, active_event)
+            UnsetButton(dispatcher, active_line, active_event, Shapes.ContextMenuButtonSecondaryBottom)
         }
     } else {
         ContextMenuPrimaryRow(modifier) {
@@ -205,7 +218,7 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewM
                 )
             }
             CMPadding()
-            UnsetButton(dispatcher, active_line, active_event)
+            UnsetButton(dispatcher, active_line, active_event, Shapes.ContextMenuButtonSecondaryEnd)
         }
     }
 }
@@ -359,6 +372,16 @@ fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
                         null
                     },
                     alternate = true,
+                    shape_start = if (layout == ViewModelPagan.LayoutSize.SmallLandscape) {
+                        Shapes.NumberSelectorButtonStart
+                    } else {
+                        Shapes.NumberSelectorButton
+                    },
+                    shape_end = if (layout == ViewModelPagan.LayoutSize.SmallLandscape) {
+                        Shapes.NumberSelectorButtonEnd
+                    } else {
+                        Shapes.NumberSelectorButton
+                    },
                     callback = { dispatcher.set_offset(it) }
                 )
             }

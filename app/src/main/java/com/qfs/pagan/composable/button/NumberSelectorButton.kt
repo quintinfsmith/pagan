@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.composable.dashed_border
 import com.qfs.pagan.composable.pressable
@@ -28,7 +29,15 @@ import com.qfs.pagan.ui.theme.Shadows
 import com.qfs.pagan.ui.theme.Shapes
 
 @Composable
-fun NumberSelectorButton(modifier: Modifier = Modifier, index: Int, alternate: Boolean, selected: Boolean, highlighted: Boolean, callback: (Int) -> Unit) {
+fun NumberSelectorButton(
+    modifier: Modifier = Modifier,
+    index: Int,
+    alternate: Boolean,
+    selected: Boolean,
+    highlighted: Boolean,
+    shape: Shape = Shapes.NumberSelectorButton,
+    callback: (Int) -> Unit
+) {
     val (background, foreground) = if (selected) {
         Pair(MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.onTertiary)
     } else if (!alternate) {
@@ -48,13 +57,13 @@ fun NumberSelectorButton(modifier: Modifier = Modifier, index: Int, alternate: B
                     Modifier
                 } else {
                     Modifier.dropShadow(
-                        shape = Shapes.NumberSelectorButton,
+                        shape = shape,
                         shadow = Shadows.Button
                     )
                 }
             )
 
-            .background(background, Shapes.NumberSelectorButton)
+            .background(background, shape)
             .combinedClickable(
                 onClick = {
                     callback(index)
@@ -69,7 +78,7 @@ fun NumberSelectorButton(modifier: Modifier = Modifier, index: Int, alternate: B
                     if (highlighted) {
                         Modifier
                             .padding(Dimensions.NumberSelectorHighlightedBorderPadding)
-                            .dashed_border(foreground, Shapes.NumberSelectorButton)
+                            .dashed_border(foreground, shape)
                     } else {
                         Modifier
                     }
@@ -90,6 +99,9 @@ fun RowScope.NumberSelector(
     selected: Int?,
     highlighted: Int?,
     alternate: Boolean,
+    shape_start: Shape = Shapes.NumberSelectorButton,
+    shape_middle: Shape = Shapes.NumberSelectorButton,
+    shape_end: Shape = Shapes.NumberSelectorButton,
     callback: (Int) -> Unit
 ) {
     for (i in progression) {
@@ -102,6 +114,11 @@ fun RowScope.NumberSelector(
             selected = selected == i,
             highlighted = highlighted == i,
             alternate = alternate,
+            shape = when (i) {
+                progression.first -> shape_start
+                progression.last -> shape_end
+                else -> shape_middle
+            },
             callback = callback
         )
     }
@@ -113,6 +130,9 @@ fun ColumnScope.NumberSelector(
     selected: Int?,
     highlighted: Int?,
     alternate: Boolean,
+    shape_start: Shape = Shapes.NumberSelectorButton,
+    shape_middle: Shape = Shapes.NumberSelectorButton,
+    shape_end: Shape = Shapes.NumberSelectorButton,
     callback: (Int) -> Unit
 ) {
     for (i in progression) {
@@ -125,6 +145,11 @@ fun ColumnScope.NumberSelector(
             selected = selected == i,
             highlighted = highlighted == i,
             alternate = alternate,
+            shape = when (i) {
+                progression.first -> shape_start
+                progression.last -> shape_end
+                else -> shape_middle
+            },
             callback = callback
         )
     }

@@ -499,7 +499,23 @@ fun <T> SortableMenu(
                     ) {
                         for (x in sort_options.indices) {
                             DropdownMenuItem(
-                                text = { SText(sort_options[x].first) },
+                                modifier = Modifier
+                                    .then(
+                                        if (x == active_sort_option.value) {
+                                            Modifier.background(color = MaterialTheme.colorScheme.tertiary)
+                                        } else {
+                                            Modifier
+                                        }
+                                    ),
+                                text = {
+                                    if (x == active_sort_option.value) {
+                                        ProvideContentColorTextStyle(MaterialTheme.colorScheme.onTertiary) {
+                                            SText(sort_options[x].first)
+                                        }
+                                    } else {
+                                        SText(sort_options[x].first)
+                                    }
+                                },
                                 onClick = {
                                     expanded.value = false
                                     active_sort_option.value = x

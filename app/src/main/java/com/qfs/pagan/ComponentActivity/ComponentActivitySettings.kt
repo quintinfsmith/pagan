@@ -9,6 +9,7 @@ import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,7 +31,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,6 +57,7 @@ import com.qfs.pagan.composable.SettingsRow
 import com.qfs.pagan.composable.SoundFontWarning
 import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.composable.button.Button
+import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.button.TopBarIcon
 import com.qfs.pagan.composable.button.TopBarNoIcon
 import com.qfs.pagan.enumerate
@@ -513,7 +514,6 @@ class ComponentActivitySettings: PaganComponentActivity() {
             Button(
                 content = {
                     Text(
-                        modifier = Modifier.minimumInteractiveComponentSize(),
                         text = view_model.configuration.soundfont.value ?: no_soundfont_text,
                         maxLines = 1,
                         overflow = TextOverflow.StartEllipsis
@@ -566,7 +566,6 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 content = {
                     Text(
                         text = this@ComponentActivitySettings.view_model.configuration.soundfont_directory.value?.pathSegments?.last() ?: stringResource(R.string.label_settings_soundfont_directory),
-                        modifier = Modifier.minimumInteractiveComponentSize(),
                         maxLines = 1,
                         overflow = TextOverflow.StartEllipsis
                     )
@@ -597,7 +596,6 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 content = {
                     Text(
                         text = this@ComponentActivitySettings.view_model.configuration.project_directory.value?.pathSegments?.last() ?: stringResource(R.string.label_settings_projects_directory),
-                        modifier = Modifier.minimumInteractiveComponentSize(),
                         maxLines = 1,
                         overflow = TextOverflow.StartEllipsis
                     )
@@ -649,8 +647,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 Button(
                     content = {
                         Text(
-                            text = "${options_playback[active_playback_option.value]} hz",
-                            modifier = Modifier.minimumInteractiveComponentSize(),
+                            text = "${options_playback[active_playback_option.value]} hz"
                         )
                     },
                     onClick = { playback_expanded.value = !playback_expanded.value }
@@ -661,7 +658,24 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 ) {
                     for ((i, rate) in options_playback.enumerate()) {
                         DropdownMenuItem(
-                            text = { Text("$rate hz") },
+                            modifier = Modifier
+                                .then(
+                                    if (rate == view_model.configuration.sample_rate.value) {
+                                        Modifier
+                                            .background(color = MaterialTheme.colorScheme.tertiary)
+                                    } else {
+                                        Modifier
+                                    }
+                                ),
+                            text = {
+                                if (rate == view_model.configuration.sample_rate.value) {
+                                    ProvideContentColorTextStyle(MaterialTheme.colorScheme.onTertiary) {
+                                        Text("$rate hz")
+                                    }
+                                } else {
+                                    Text("$rate hz")
+                                }
+                            },
                             onClick = {
                                 active_playback_option.value = i
                                 view_model.configuration.sample_rate.value = options_playback[i]

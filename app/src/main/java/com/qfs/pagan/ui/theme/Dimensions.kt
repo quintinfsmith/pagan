@@ -20,7 +20,9 @@ object Dimensions {
     val ConfigDrawerPadding = 4.dp
 
     val ContextMenuButtonPadding = PaddingValues(8.dp)
+    val ContextMenuButtonRadius = 8.dp
     val ContextMenuPadding = 4.dp
+    val ContextMenuRadius = 16.dp
 
     val DialogPadding = 16.dp
     val DialogLineHeight = 41.dp
@@ -48,6 +50,7 @@ object Dimensions {
     }
 
     val NumberSelectorButtonHeight = ButtonHeight.Small
+    val NumberSelectorButtonRadius = 4.dp
     val NumberSelectorHighlightedBorderPadding = 4.dp
     val NumberSelectorSpacing = 3.dp
 

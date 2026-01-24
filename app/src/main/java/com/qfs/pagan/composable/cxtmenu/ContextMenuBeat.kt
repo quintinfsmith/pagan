@@ -4,15 +4,23 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Shape
+import androidx.graphics.shapes.toPath
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.IconCMenuButton
+import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import com.qfs.pagan.viewmodel.ViewModelPagan
 
 
 @Composable
-fun TagButton(dispatcher: ActionTracker, column_data: ViewModelEditorState.ColumnData, beat: Int) {
+fun TagButton(
+    dispatcher: ActionTracker,
+    column_data: ViewModelEditorState.ColumnData,
+    beat: Int,
+    shape: Shape = Shapes.ContextMenuButtonSecondary
+) {
     IconCMenuButton(
         onClick = {
             if (column_data.is_tagged.value) {
@@ -22,6 +30,7 @@ fun TagButton(dispatcher: ActionTracker, column_data: ViewModelEditorState.Colum
             }
         },
         onLongClick = { dispatcher.tag_column(beat) },
+        shape = shape,
         icon = if (column_data.is_tagged.value) R.drawable.icon_untag
         else R.drawable.icon_tag,
         description = if (column_data.is_tagged.value) R.string.cd_remove_section_mark
@@ -34,6 +43,7 @@ fun AdjustBeatButton(dispatcher: ActionTracker) {
     IconCMenuButton(
         onClick = { dispatcher.adjust_selection() },
         icon = R.drawable.icon_adjust,
+        shape = Shapes.ContextMenuButtonSecondary,
         description = R.string.cd_adjust_selection
     )
 }
@@ -70,7 +80,7 @@ fun ContextMenuColumnPrimary(modifier: Modifier = Modifier, ui_facade: ViewModel
         ViewModelPagan.LayoutSize.LargePortrait,
         ViewModelPagan.LayoutSize.XLargePortrait -> {
             ContextMenuPrimaryRow(modifier) {
-                TagButton(dispatcher, column_data, beat)
+                TagButton(dispatcher, column_data, beat, Shapes.ContextMenuButtonSecondaryStart)
                 CMPadding()
                 AdjustBeatButton(dispatcher)
                 CMPadding()
@@ -90,7 +100,7 @@ fun ContextMenuColumnPrimary(modifier: Modifier = Modifier, ui_facade: ViewModel
                 CMPadding()
                 AdjustBeatButton(dispatcher)
                 Spacer(Modifier.weight(1F))
-                TagButton(dispatcher, column_data, beat)
+                TagButton(dispatcher, column_data, beat, Shapes.ContextMenuButtonSecondaryBottom)
             }
         }
     }

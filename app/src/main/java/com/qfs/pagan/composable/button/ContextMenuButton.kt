@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -33,6 +34,7 @@ fun IconCMenuButton(
     icon: Int,
     description: Int,
     enabled: Boolean = true,
+    shape: Shape = Shapes.ContextMenuButtonPrimary,
     contentPadding: PaddingValues = Dimensions.ContextMenuButtonPadding
 ) {
     Button(
@@ -43,7 +45,7 @@ fun IconCMenuButton(
         onClick = onClick,
         onLongClick = onLongClick ?: {},
         contentPadding = contentPadding,
-        shape = Shapes.ContextMenuButtonPrimary,
+        shape = shape,
         content = {
             Icon(
                 painter = painterResource(icon),
@@ -59,6 +61,7 @@ fun TextCMenuButton(
     onClick: () -> Unit,
     onLongClick: (() -> Unit) ?= null,
     text: String,
+    shape: Shape = Shapes.ContextMenuButtonSecondary,
     enabled: Boolean = true,
     contentPadding: PaddingValues = Dimensions.ContextMenuButtonPadding
 ) {
@@ -67,7 +70,7 @@ fun TextCMenuButton(
         modifier = modifier
             .height(Dimensions.ButtonHeight.Normal),
         contentPadding = contentPadding,
-        shape = Shapes.ContextMenuButtonPrimary,
+        shape = shape,
         onClick = onClick,
         onLongClick = onLongClick ?: {},
         content = {

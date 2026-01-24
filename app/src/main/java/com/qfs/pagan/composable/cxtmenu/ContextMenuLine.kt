@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -22,6 +24,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEve
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import com.qfs.pagan.viewmodel.ViewModelPagan
 
@@ -29,15 +32,20 @@ import com.qfs.pagan.viewmodel.ViewModelPagan
 fun AdjustLineButton(dispatcher: ActionTracker) {
     IconCMenuButton(
         onClick = { dispatcher.adjust_selection() },
+        shape = Shapes.ContextMenuButtonSecondary,
         icon = R.drawable.icon_adjust,
         description = R.string.cd_adjust_selection
     )
 }
 
 @Composable
-fun ToggleLineControllerButton(dispatcher: ActionTracker) {
+fun ToggleLineControllerButton(
+    dispatcher: ActionTracker,
+    shape: Shape = Shapes.ContextMenuButtonSecondary
+) {
     IconCMenuButton(
         onClick = { dispatcher.show_hidden_line_controller() },
+        shape = shape,
         icon = R.drawable.icon_ctl,
         description = R.string.cd_show_effect_controls
     )
@@ -147,7 +155,10 @@ fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
         ViewModelPagan.LayoutSize.XLargePortrait,
         ViewModelPagan.LayoutSize.XLargeLandscape -> {
             ContextMenuPrimaryRow(modifier) {
-                ToggleLineControllerButton(dispatcher)
+                ToggleLineControllerButton(
+                    dispatcher,
+                    shape = Shapes.ContextMenuButtonSecondaryStart
+                )
 
                 if (active_line.assigned_offset.value != null) {
                     CMPadding()
@@ -196,7 +207,10 @@ fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
 
                 Spacer(Modifier.weight(1F))
 
-                ToggleLineControllerButton(dispatcher)
+                ToggleLineControllerButton(
+                    dispatcher,
+                    shape = Shapes.ContextMenuButtonSecondaryBottom
+                )
             }
         }
     }

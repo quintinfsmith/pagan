@@ -1,13 +1,8 @@
 package com.qfs.pagan.ui.theme
 
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.shape.GenericShape
-import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
-import androidx.graphics.shapes.RoundedPolygon
-import com.qfs.pagan.ui.theme.Dimensions.ContextMenuButtonPadding
 import com.qfs.pagan.ui.theme.Dimensions.ContextMenuButtonRadius
 
 object Shapes {
@@ -24,21 +19,20 @@ object Shapes {
         bottomStart = Dimensions.NumberSelectorButtonRadius,
         bottomEnd = Dimensions.NumberSelectorButtonRadius,
     )
-    val ContextMenuButtonPrimary = CircleShape
-    val ContextMenuButtonSecondary = RoundedCornerShape(ContextMenuButtonRadius)
-    val ContextMenuButtonSecondaryStart = RoundedCornerShape(
+    val ContextMenuButtonPrimary = RoundedCornerShape(ContextMenuButtonRadius)
+    val ContextMenuButtonPrimaryStart = RoundedCornerShape(
         topStart = Dimensions.ContextMenuRadius,
         topEnd = Dimensions.ContextMenuButtonRadius,
         bottomStart = Dimensions.ContextMenuButtonRadius,
         bottomEnd = Dimensions.ContextMenuButtonRadius,
     )
-    val ContextMenuButtonSecondaryEnd = RoundedCornerShape(
+    val ContextMenuButtonPrimaryEnd = RoundedCornerShape(
         topEnd = Dimensions.ContextMenuRadius,
         topStart = Dimensions.ContextMenuButtonRadius,
         bottomEnd = Dimensions.ContextMenuButtonRadius,
         bottomStart = Dimensions.ContextMenuButtonRadius
     )
-    val ContextMenuButtonSecondaryBottom = RoundedCornerShape(
+    val ContextMenuButtonPrimaryBottom = RoundedCornerShape(
         bottomStart = Dimensions.ContextMenuRadius,
         topEnd = Dimensions.ContextMenuButtonRadius,
         topStart = Dimensions.ContextMenuButtonRadius,

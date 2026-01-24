@@ -1051,12 +1051,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         return when (cursor.type) {
             CursorMode.Line -> {
-                @Composable { ContextMenuLineSecondary(ui_facade, dispatcher) }
+                @Composable { ContextMenuLineSecondary(ui_facade, dispatcher, layout = layout) }
             }
             CursorMode.Single -> {
                 val cursor = ui_facade.active_cursor.value ?: return null
                 val line_data = ui_facade.line_data[cursor.ints[0]]
-                if (line_data.assigned_offset.value != null) return null
 
                 @Composable {
                     key(ui_facade.active_event.value.hashCode()) {
@@ -1079,7 +1078,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
 
             CursorMode.Channel -> {
-                @Composable { ContextMenuChannelSecondary(ui_facade, dispatcher) }
+                @Composable { ContextMenuChannelSecondary(ui_facade, dispatcher, layout) }
             }
             CursorMode.Column,
             CursorMode.Unset -> null
@@ -1945,7 +1944,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         },
                         content = {
                             Icon(
-                                painter = painterResource(R.drawable.icon_add_channel_kit),
+                                painter = painterResource(R.drawable.icon_add_bang),
                                 contentDescription = stringResource(R.string.btn_cfg_add_kit_channel),
                             )
                         }
@@ -2082,7 +2081,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 onClick = { dispatcher.remove_channel(i) },
                                 content = {
                                     Icon(
-                                        painter = painterResource(R.drawable.icon_subtract_circle),
+                                        painter = painterResource(
+                                            if (channel_data.percussion.value) {
+                                                R.drawable.icon_subtract_bang
+                                            } else {
+                                                R.drawable.icon_subtract_circle
+                                            }
+                                        ),
                                         contentDescription = stringResource(R.string.remove_channel, i)
                                     )
                                 }

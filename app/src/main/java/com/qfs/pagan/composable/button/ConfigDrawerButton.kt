@@ -74,7 +74,7 @@ fun ConfigDrawerChannelRightButton(
     onClick: () -> Unit)
 {
     Button(
-        contentPadding = PaddingValues(vertical = 4.dp, horizontal = 8.dp),
+        contentPadding = PaddingValues(4.dp),
         shape = Shapes.SectionButtonEnd,
         modifier = modifier.height(Dimensions.ConfigChannelButtonHeight),
         colors = colors,

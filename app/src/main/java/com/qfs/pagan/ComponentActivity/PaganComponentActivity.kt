@@ -68,12 +68,14 @@ import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.ScaffoldWithTopBar
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.OutlinedButton
+import com.qfs.pagan.composable.dashed_border
 import com.qfs.pagan.projectmanager.ProjectManager
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.selects.select
 import java.io.File
 import java.io.FileNotFoundException
 import java.text.SimpleDateFormat
@@ -368,20 +370,18 @@ abstract class PaganComponentActivity: ComponentActivity() {
                     ProjectCard(modifier = Modifier.fillMaxWidth(), uri = uri)
                     Spacer(Modifier.height(8.dp))
                     Row(
-                        modifier = Modifier
-                            .height(dimensionResource(R.dimen.dialog_bar_button_height))
-                            .fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         OutlinedButton(
-                            modifier = Modifier.fillMaxHeight(),
+                            modifier = Modifier.height(Dimensions.ButtonHeight.Small),
                             onClick = close,
                             content = { SText(android.R.string.cancel) }
                         )
                         Spacer(Modifier.width(4.dp))
                         Button(
-                            modifier = Modifier.fillMaxHeight(),
+                            modifier = Modifier.height(Dimensions.ButtonHeight.Small),
                             onClick = {
                                 close()
                                 this@PaganComponentActivity.view_model.create_dialog { close_subdialog ->
@@ -416,7 +416,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                         )
                         Spacer(Modifier.width(4.dp))
                         Button(
-                            modifier = Modifier.fillMaxHeight(),
+                            modifier = Modifier.height(Dimensions.ButtonHeight.Small),
                             onClick = close,
                             content = { SText(R.string.details_load_project) }
                         )
@@ -432,13 +432,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
         for ((uri, title) in project_list) {
             items.add(
                 Pair(uri, {
-                    Text(
-                        // modifier = Modifier.combinedClickable(
-                        //     onClick = {},
-                        //     onLongClick = { this@PaganComponentActivity.create_project_card_dialog(title, uri) }
-                        // ),
-                        text = title
-                    )
+                    Text(text = title)
                 })
             )
         }
@@ -456,6 +450,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
             R.string.menu_item_load_project,
             items,
             sort_options,
+            selected_sort = 0,
             onClick = load_callback,
             onLongClick = {
                 for ((uri, title) in project_list) {
@@ -517,10 +512,10 @@ abstract class PaganComponentActivity: ComponentActivity() {
             ProvideTextStyle(MaterialTheme.typography.bodyLarge) {
                 Row(
                     Modifier
-                        .border(
-                            width = 1.dp,
+                        .dashed_border(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            shape = RoundedCornerShape(4.dp)
+                            shape = RoundedCornerShape(4.dp),
+                            width = 1.dp
                         )
                 ) {
                     Text(

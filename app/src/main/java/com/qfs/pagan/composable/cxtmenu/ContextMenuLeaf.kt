@@ -6,17 +6,22 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
@@ -45,11 +50,15 @@ import kotlin.math.abs
 import kotlin.math.ceil
 
 @Composable
-fun SplitButton(dispatcher: ActionTracker) {
+fun SplitButton(
+    dispatcher: ActionTracker,
+    shape: Shape = Shapes.ContextMenuButtonPrimaryStart
+) {
     IconCMenuButton(
         onClick = { dispatcher.split(2) },
         onLongClick = { dispatcher.split() },
         icon = R.drawable.icon_split,
+        shape = shape,
         description = R.string.btn_split
     )
 }
@@ -102,24 +111,13 @@ fun UnsetButton(
     dispatcher: ActionTracker,
     active_line: ViewModelEditorState.LineData,
     active_event: OpusEvent?,
-    shape: Shape = Shapes.ContextMenuButtonSecondary
+    shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
     IconCMenuButton(
-        enabled = active_line.assigned_offset.value != null || active_event != null,
-        onClick = {
-            if (active_line.assigned_offset.value != null) {
-                dispatcher.toggle_percussion()
-            } else if (active_event != null) {
-                dispatcher.unset()
-            }
-        },
+        enabled = active_event != null,
+        onClick = { dispatcher.unset() },
         onLongClick = { dispatcher.unset_root() },
-        icon = if (active_line.assigned_offset.value != null) {
-            if (active_event != null) R.drawable.icon_unset
-            else R.drawable.icon_set_percussion
-        } else {
-            R.drawable.icon_unset
-        },
+        icon = R.drawable.icon_erase,
         shape = shape,
         description = if (active_line.assigned_offset.value != null) {
             R.string.set_percussion_event
@@ -151,13 +149,13 @@ fun RelativeModeButton(dispatcher: ActionTracker, ui_facade: ViewModelEditorStat
             )
         }
         TextCMenuButton(
-            modifier = Modifier.width(dimensionResource(R.dimen.contextmenu_button_width)),
+            modifier = Modifier.width(Dimensions.ButtonHeight.Normal),
             text = when (ui_facade.relative_input_mode.value) {
                 RelativeInputMode.Absolute -> "|n|"
                 RelativeInputMode.Positive -> "+"
                 RelativeInputMode.Negative -> "-"
             },
-            shape = Shapes.ContextMenuButtonSecondary,
+            shape = Shapes.ContextMenuButtonPrimary,
             onClick = { expanded.value = !expanded.value }
         )
     }
@@ -193,8 +191,10 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewM
                     active_event,
                 )
             }
-            CMPadding()
-            UnsetButton(dispatcher, active_line, active_event, Shapes.ContextMenuButtonSecondaryBottom)
+            if (active_line.assigned_offset.value == null) {
+                CMPadding()
+                UnsetButton(dispatcher, active_line, active_event, Shapes.ContextMenuButtonPrimaryBottom)
+            }
         }
     } else {
         ContextMenuPrimaryRow(modifier) {
@@ -217,8 +217,10 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewM
                     active_event,
                 )
             }
-            CMPadding()
-            UnsetButton(dispatcher, active_line, active_event, Shapes.ContextMenuButtonSecondaryEnd)
+            if (active_line.assigned_offset.value == null) {
+                CMPadding()
+                UnsetButton(dispatcher, active_line, active_event, Shapes.ContextMenuButtonPrimaryEnd)
+            }
         }
     }
 }
@@ -314,76 +316,105 @@ fun ContextMenuLeafCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
 @Composable
 fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier, layout: ViewModelPagan.LayoutSize) {
     val cursor = ui_facade.active_cursor.value ?: return
-    if (ui_facade.line_data[cursor.ints[0]].assigned_offset.value != null) return
+    val active_line = ui_facade.line_data[cursor.ints[0]]
     val active_event = ui_facade.active_event.value
 
-    when (layout) {
-        ViewModelPagan.LayoutSize.SmallPortrait,
-        ViewModelPagan.LayoutSize.MediumLandscape,
-        ViewModelPagan.LayoutSize.MediumPortrait,
-        ViewModelPagan.LayoutSize.LargeLandscape,
-        ViewModelPagan.LayoutSize.LargePortrait,
-        ViewModelPagan.LayoutSize.XLargeLandscape,
-        ViewModelPagan.LayoutSize.XLargePortrait -> {
-            val octave = when (active_event) {
-                is AbsoluteNoteEvent -> active_event.note / ui_facade.radix.value
-                is RelativeNoteEvent -> abs(active_event.offset) / ui_facade.radix.value
-                is PercussionEvent -> 0
-                null -> null
-                else -> throw Exception("Invalid Event Type $active_event") // TODO: Specify
-            }
-
-            Row {
-                NumberSelector(
-                    progression = 0 until 8,
-                    selected = octave,
-                    highlighted = if (ui_facade.relative_input_mode.value == RelativeInputMode.Absolute) {
-                        ui_facade.highlighted_octave.value
+    if (active_line.assigned_offset.value != null) {
+        val checked = remember { mutableStateOf(active_event != null) }
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Switch(
+                checked.value,
+                thumbContent = {
+                    Icon(
+                        modifier = Modifier.padding(4.dp),
+                        painter = painterResource(R.drawable.percussion_indicator),
+                        contentDescription = null
+                    )
+                },
+                onCheckedChange = {
+                    checked.value = it
+                    if (!it) {
+                        dispatcher.unset()
                     } else {
-                        null
-                    },
-                    alternate = false,
-                    callback = { dispatcher.set_octave(it) }
-                )
-            }
-            Spacer(Modifier.height(Dimensions.NumberSelectorSpacing))
+                        dispatcher.toggle_percussion()
+                    }
+                }
+            )
         }
-        ViewModelPagan.LayoutSize.SmallLandscape -> {}
-    }
+    } else {
+        when (layout) {
+            ViewModelPagan.LayoutSize.SmallPortrait,
+            ViewModelPagan.LayoutSize.MediumLandscape,
+            ViewModelPagan.LayoutSize.MediumPortrait,
+            ViewModelPagan.LayoutSize.LargeLandscape,
+            ViewModelPagan.LayoutSize.LargePortrait,
+            ViewModelPagan.LayoutSize.XLargeLandscape,
+            ViewModelPagan.LayoutSize.XLargePortrait -> {
+                val octave = when (active_event) {
+                    is AbsoluteNoteEvent -> active_event.note / ui_facade.radix.value
+                    is RelativeNoteEvent -> abs(active_event.offset) / ui_facade.radix.value
+                    is PercussionEvent -> 0
+                    null -> null
+                    else -> throw Exception("Invalid Event Type $active_event") // TODO: Specify
+                }
 
-    val offset = when (active_event) {
-        is AbsoluteNoteEvent -> active_event.note % ui_facade.radix.value
-        is RelativeNoteEvent -> abs(active_event.offset) % ui_facade.radix.value
-        is PercussionEvent -> 0
-        null -> null
-        else -> throw Exception("Invalid Event Type") // TODO: Specify
-    }
+                Row {
+                    NumberSelector(
+                        progression = 0 until 8,
+                        selected = octave,
+                        highlighted = if (ui_facade.relative_input_mode.value == RelativeInputMode.Absolute) {
+                            ui_facade.highlighted_octave.value
+                        } else {
+                            null
+                        },
+                        alternate = false,
+                        callback = { dispatcher.set_octave(it) }
+                    )
+                }
+                Spacer(Modifier.height(Dimensions.NumberSelectorSpacing))
+            }
 
-    Column {
-        var count = ceil(ui_facade.radix.value.toFloat() / 12F).toInt()
-        for (i in count - 1 downTo 0) {
-            Row(modifier) {
-                NumberSelector(
-                    progression = i until ui_facade.radix.value step count,
-                    selected = offset,
-                    highlighted = if (ui_facade.relative_input_mode.value == RelativeInputMode.Absolute) {
-                        ui_facade.highlighted_offset.value
-                    } else {
-                        null
-                    },
-                    alternate = true,
-                    shape_start = if (layout == ViewModelPagan.LayoutSize.SmallLandscape) {
-                        Shapes.NumberSelectorButtonStart
-                    } else {
-                        Shapes.NumberSelectorButton
-                    },
-                    shape_end = if (layout == ViewModelPagan.LayoutSize.SmallLandscape) {
-                        Shapes.NumberSelectorButtonEnd
-                    } else {
-                        Shapes.NumberSelectorButton
-                    },
-                    callback = { dispatcher.set_offset(it) }
-                )
+            ViewModelPagan.LayoutSize.SmallLandscape -> {}
+        }
+
+        val offset = when (active_event) {
+            is AbsoluteNoteEvent -> active_event.note % ui_facade.radix.value
+            is RelativeNoteEvent -> abs(active_event.offset) % ui_facade.radix.value
+            is PercussionEvent -> 0
+            null -> null
+            else -> throw Exception("Invalid Event Type") // TODO: Specify
+        }
+
+        Column {
+            var count = ceil(ui_facade.radix.value.toFloat() / 12F).toInt()
+            for (i in count - 1 downTo 0) {
+                Row(modifier) {
+                    NumberSelector(
+                        progression = i until ui_facade.radix.value step count,
+                        selected = offset,
+                        highlighted = if (ui_facade.relative_input_mode.value == RelativeInputMode.Absolute) {
+                            ui_facade.highlighted_offset.value
+                        } else {
+                            null
+                        },
+                        alternate = true,
+                        shape_start = if (layout == ViewModelPagan.LayoutSize.SmallLandscape) {
+                            Shapes.NumberSelectorButtonStart
+                        } else {
+                            Shapes.NumberSelectorButton
+                        },
+                        shape_end = if (layout == ViewModelPagan.LayoutSize.SmallLandscape) {
+                            Shapes.NumberSelectorButtonEnd
+                        } else {
+                            Shapes.NumberSelectorButton
+                        },
+                        callback = { dispatcher.set_offset(it) }
+                    )
+                }
             }
         }
     }

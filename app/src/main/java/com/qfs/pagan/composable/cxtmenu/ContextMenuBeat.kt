@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
-import androidx.graphics.shapes.toPath
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.IconCMenuButton
@@ -19,7 +18,7 @@ fun TagButton(
     dispatcher: ActionTracker,
     column_data: ViewModelEditorState.ColumnData,
     beat: Int,
-    shape: Shape = Shapes.ContextMenuButtonSecondary
+    shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
     IconCMenuButton(
         onClick = {
@@ -43,7 +42,7 @@ fun AdjustBeatButton(dispatcher: ActionTracker) {
     IconCMenuButton(
         onClick = { dispatcher.adjust_selection() },
         icon = R.drawable.icon_adjust,
-        shape = Shapes.ContextMenuButtonSecondary,
+        shape = Shapes.ContextMenuButtonPrimary,
         description = R.string.cd_adjust_selection
     )
 }
@@ -60,10 +59,11 @@ fun RemoveBeatButton(dispatcher: ActionTracker, enabled: Boolean) {
 }
 
 @Composable
-fun InsertBeatButton(dispatcher: ActionTracker) {
+fun InsertBeatButton(dispatcher: ActionTracker, shape: Shape = Shapes.ContextMenuButtonPrimary) {
     IconCMenuButton(
         onClick = { dispatcher.insert_beat_after_cursor(1) },
         onLongClick = { dispatcher.insert_beat_after_cursor() },
+        shape = shape,
         icon = R.drawable.icon_add,
         description = R.string.cd_insert_beat
     )
@@ -80,13 +80,13 @@ fun ContextMenuColumnPrimary(modifier: Modifier = Modifier, ui_facade: ViewModel
         ViewModelPagan.LayoutSize.LargePortrait,
         ViewModelPagan.LayoutSize.XLargePortrait -> {
             ContextMenuPrimaryRow(modifier) {
-                TagButton(dispatcher, column_data, beat, Shapes.ContextMenuButtonSecondaryStart)
+                TagButton(dispatcher, column_data, beat, Shapes.ContextMenuButtonPrimaryStart)
                 CMPadding()
                 AdjustBeatButton(dispatcher)
                 CMPadding()
                 RemoveBeatButton(dispatcher, ui_facade.beat_count.value > 1)
                 CMPadding()
-                InsertBeatButton(dispatcher)
+                InsertBeatButton(dispatcher, Shapes.ContextMenuButtonPrimaryEnd)
             }
         }
         ViewModelPagan.LayoutSize.SmallLandscape,
@@ -94,13 +94,13 @@ fun ContextMenuColumnPrimary(modifier: Modifier = Modifier, ui_facade: ViewModel
         ViewModelPagan.LayoutSize.LargeLandscape,
         ViewModelPagan.LayoutSize.XLargeLandscape -> {
             Column {
-                InsertBeatButton(dispatcher)
+                InsertBeatButton(dispatcher, Shapes.ContextMenuButtonPrimaryStart)
                 CMPadding()
                 RemoveBeatButton(dispatcher, ui_facade.beat_count.value > 1)
                 CMPadding()
                 AdjustBeatButton(dispatcher)
                 Spacer(Modifier.weight(1F))
-                TagButton(dispatcher, column_data, beat, Shapes.ContextMenuButtonSecondaryBottom)
+                TagButton(dispatcher, column_data, beat, Shapes.ContextMenuButtonPrimaryBottom)
             }
         }
     }

@@ -23,6 +23,7 @@ import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
@@ -30,6 +31,7 @@ fun AdjustRangeButton(dispatcher: ActionTracker) {
     IconCMenuButton(
         onClick = { dispatcher.adjust_selection() },
         icon = R.drawable.icon_adjust,
+        shape = Shapes.ContextMenuButtonPrimaryStart,
         description = R.string.cd_adjust_selection
     )
 }
@@ -38,7 +40,8 @@ fun AdjustRangeButton(dispatcher: ActionTracker) {
 fun UnsetRangeButton(dispatcher: ActionTracker) {
     IconCMenuButton(
         onClick = { dispatcher.unset() },
-        icon = R.drawable.icon_unset,
+        icon = R.drawable.icon_erase,
+        shape = Shapes.ContextMenuButtonPrimaryEnd,
         description = R.string.cd_unset
     )
 }
@@ -81,9 +84,7 @@ fun ContextMenuRangeSecondary(ui_facade: ViewModelEditorState, dispatcher: Actio
             UnsetRangeButton(dispatcher)
         }
         Row(
-            Modifier
-                .height(dimensionResource(R.dimen.contextmenu_secondary_button_height))
-                .fillMaxWidth(),
+            Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
         ) {
             val cursor_mode = ui_facade.active_cursor.value?.type

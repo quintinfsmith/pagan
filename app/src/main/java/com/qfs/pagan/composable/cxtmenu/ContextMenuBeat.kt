@@ -6,11 +6,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import com.qfs.pagan.ActionTracker
+import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
-import com.qfs.pagan.viewmodel.ViewModelPagan
 
 
 @Composable
@@ -69,16 +69,16 @@ fun InsertBeatButton(dispatcher: ActionTracker, shape: Shape = Shapes.ContextMen
     )
 }
 @Composable
-fun ContextMenuColumnPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: ViewModelPagan.LayoutSize) {
+fun ContextMenuColumnPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: LayoutSize) {
     val cursor = ui_facade.active_cursor.value ?: return
     val beat = cursor.ints[0]
     val column_data = ui_facade.column_data[beat]
 
     when (layout) {
-        ViewModelPagan.LayoutSize.SmallPortrait,
-        ViewModelPagan.LayoutSize.MediumPortrait,
-        ViewModelPagan.LayoutSize.LargePortrait,
-        ViewModelPagan.LayoutSize.XLargePortrait -> {
+        LayoutSize.SmallPortrait,
+        LayoutSize.MediumPortrait,
+        LayoutSize.LargePortrait,
+        LayoutSize.XLargePortrait -> {
             ContextMenuPrimaryRow(modifier) {
                 TagButton(dispatcher, column_data, beat, Shapes.ContextMenuButtonPrimaryStart)
                 CMPadding()
@@ -89,10 +89,10 @@ fun ContextMenuColumnPrimary(modifier: Modifier = Modifier, ui_facade: ViewModel
                 InsertBeatButton(dispatcher, Shapes.ContextMenuButtonPrimaryEnd)
             }
         }
-        ViewModelPagan.LayoutSize.SmallLandscape,
-        ViewModelPagan.LayoutSize.MediumLandscape,
-        ViewModelPagan.LayoutSize.LargeLandscape,
-        ViewModelPagan.LayoutSize.XLargeLandscape -> {
+        LayoutSize.SmallLandscape,
+        LayoutSize.MediumLandscape,
+        LayoutSize.LargeLandscape,
+        LayoutSize.XLargeLandscape -> {
             Column {
                 InsertBeatButton(dispatcher, Shapes.ContextMenuButtonPrimaryStart)
                 CMPadding()

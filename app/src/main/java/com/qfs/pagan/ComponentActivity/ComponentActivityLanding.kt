@@ -268,8 +268,8 @@ class ComponentActivityLanding: PaganComponentActivity() {
         ) {
             Column(
                 modifier = Modifier
-                    .height(Dimensions.LayoutSize.Medium.short)
-                    .width(Dimensions.LayoutSize.Large.long),
+                    .height(Dimensions.Layout.Medium.short)
+                    .width(Dimensions.Layout.Large.long),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
@@ -281,7 +281,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
                 }
 
                 Column(
-                    Modifier.width(Dimensions.LayoutSize.Medium.long),
+                    Modifier.width(Dimensions.Layout.Medium.long),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     if (has_backup) {
@@ -413,7 +413,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
         ) {
             Column(
                 Modifier
-                    .width(Dimensions.LayoutSize.Small.short)
+                    .width(Dimensions.Layout.Small.short)
                     .align(Alignment.Center),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {

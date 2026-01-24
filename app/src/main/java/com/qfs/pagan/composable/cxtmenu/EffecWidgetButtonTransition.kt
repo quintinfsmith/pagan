@@ -1,10 +1,9 @@
 package com.qfs.pagan.composable.cxtmenu
 
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import com.qfs.pagan.ActionTracker
@@ -21,8 +20,8 @@ fun EffectTransitionButton(event: EffectEvent, dispatcher: ActionTracker, is_ini
         Spacer(Modifier.width(Dimensions.ContextMenuPadding))
         IconCMenuButton(
             modifier = modifier
-                .width(dimensionResource(R.dimen.contextmenu_button_width))
-                .fillMaxHeight(),
+                .height(Dimensions.ContextMenuButtonHeight)
+                .width(dimensionResource(R.dimen.contextmenu_button_width)),
             onClick = {
                 dispatcher.set_effect_transition(event)
             },

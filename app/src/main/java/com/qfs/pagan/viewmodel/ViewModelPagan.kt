@@ -15,6 +15,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.ViewModel
 import com.qfs.pagan.DialogChain
+import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.DialogBar
@@ -46,17 +47,6 @@ class ViewModelPagan: ViewModel() {
         }
     }
 
-    enum class LayoutSize {
-        SmallPortrait,
-        MediumPortrait,
-        LargePortrait,
-        XLargePortrait,
-        SmallLandscape,
-        MediumLandscape,
-        LargeLandscape,
-        XLargeLandscape
-    }
-
     enum class DialogSize {
         Unbounded,
         Small, // Single purpose. Eg, number input dialogs
@@ -74,15 +64,17 @@ class ViewModelPagan: ViewModel() {
     val has_saved_project: MutableState<Boolean> = mutableStateOf(false)
 
     fun set_layout_size(width: Dp, height: Dp) {
+        Dimensions.set_active_layout_dimensions(width, height)
+
         this.active_layout_size.value = if (width >= height) {
-            if (width >= Dimensions.LayoutSize.XLarge.long && height >= Dimensions.LayoutSize.XLarge.short) LayoutSize.XLargeLandscape
-            else if (width >= Dimensions.LayoutSize.Large.short && height >= Dimensions.LayoutSize.Large.long) LayoutSize.LargeLandscape
-            else if (width >= Dimensions.LayoutSize.Medium.short && height >= Dimensions.LayoutSize.Medium.long) LayoutSize.MediumLandscape
+            if (width >= Dimensions.Layout.XLarge.long && height >= Dimensions.Layout.XLarge.short) LayoutSize.XLargeLandscape
+            else if (width >= Dimensions.Layout.Large.short && height >= Dimensions.Layout.Large.long) LayoutSize.LargeLandscape
+            else if (width >= Dimensions.Layout.Medium.short && height >= Dimensions.Layout.Medium.long) LayoutSize.MediumLandscape
             else LayoutSize.SmallLandscape
         } else {
-            if (height >= Dimensions.LayoutSize.XLarge.long && width >= Dimensions.LayoutSize.XLarge.short) LayoutSize.XLargePortrait
-            else if (height >= Dimensions.LayoutSize.Large.short && width >= Dimensions.LayoutSize.Large.long) LayoutSize.LargePortrait
-            else if (height >= Dimensions.LayoutSize.Medium.short && width >= Dimensions.LayoutSize.Medium.long) LayoutSize.MediumPortrait
+            if (height >= Dimensions.Layout.XLarge.long && width >= Dimensions.Layout.XLarge.short) LayoutSize.XLargePortrait
+            else if (height >= Dimensions.Layout.Large.short && width >= Dimensions.Layout.Large.long) LayoutSize.LargePortrait
+            else if (height >= Dimensions.Layout.Medium.short && width >= Dimensions.Layout.Medium.long) LayoutSize.MediumPortrait
             else LayoutSize.SmallPortrait
         }
     }

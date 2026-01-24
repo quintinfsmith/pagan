@@ -30,7 +30,7 @@ fun IconCMenuButton(
     Button(
         enabled = enabled,
         modifier = modifier
-            .height(Dimensions.ButtonHeight.Normal)
+            .height(Dimensions.ContextMenuButtonHeight)
             .width(Dimensions.ButtonHeight.Normal),
         onClick = onClick,
         onLongClick = onLongClick ?: {},
@@ -58,8 +58,7 @@ fun TextCMenuButton(
 ) {
     Button(
         enabled = enabled,
-        modifier = modifier
-            .height(Dimensions.ButtonHeight.Normal),
+        modifier = modifier.height(Dimensions.ContextMenuButtonHeight),
         contentPadding = contentPadding,
         shape = shape,
         onClick = onClick,

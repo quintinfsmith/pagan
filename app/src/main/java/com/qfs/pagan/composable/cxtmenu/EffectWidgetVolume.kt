@@ -1,10 +1,8 @@
 package com.qfs.pagan.composable.cxtmenu
 
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -25,8 +23,7 @@ fun RowScope.VolumeEventMenu(ui_facade: ViewModelEditorState, dispatcher: Action
     val working_value = remember { mutableStateOf(event.value) }
     TextCMenuButton(
         modifier = Modifier
-            .width(dimensionResource(R.dimen.contextmenu_button_width))
-            .fillMaxHeight(),
+            .width(dimensionResource(R.dimen.contextmenu_button_width)),
         text = "%02d".format((event.value * 100).roundToInt()),
         onClick = {
             dispatcher.dialog_number_input(R.string.dlg_set_volume, 0, default = (event.value * 100).toInt()) {
@@ -42,9 +39,7 @@ fun RowScope.VolumeEventMenu(ui_facade: ViewModelEditorState, dispatcher: Action
     )
     CMPadding()
     Slider(
-        modifier = Modifier
-            .weight(1F)
-            .fillMaxHeight(),
+        modifier = Modifier.weight(1F),
         value = working_value.value,
         valueRange = 0F .. 1.27F,
         onValueChange = {

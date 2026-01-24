@@ -93,6 +93,7 @@ import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.CompatibleFileType
 import com.qfs.pagan.Exportable
+import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.MultiExporterEventHandler
 import com.qfs.pagan.PaganBroadcastReceiver
 import com.qfs.pagan.PlaybackState
@@ -146,11 +147,9 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEv
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Dimensions.LayoutSize
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
-import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.BufferedOutputStream
@@ -1011,7 +1010,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
-    fun get_context_menu_primary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: ViewModelPagan.LayoutSize): (@Composable () -> Unit)? {
+    fun get_context_menu_primary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: LayoutSize): (@Composable () -> Unit)? {
         if (ui_facade.playback_state_midi.value == PlaybackState.Playing || ui_facade.playback_state_soundfont.value == PlaybackState.Playing) return null
         if (ui_facade.dragging_line.value != null) return null
 
@@ -1043,7 +1042,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
-    fun get_context_menu_secondary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: ViewModelPagan.LayoutSize): (@Composable () -> Unit)? {
+    fun get_context_menu_secondary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: LayoutSize): (@Composable () -> Unit)? {
         if (ui_facade.playback_state_midi.value == PlaybackState.Playing || ui_facade.playback_state_soundfont.value == PlaybackState.Playing) return null
         if (ui_facade.dragging_line.value != null) return null
         val cursor = ui_facade.active_cursor.value ?: return null
@@ -1140,7 +1139,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun MainTable(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, length: MutableState<Int>, layout: ViewModelPagan.LayoutSize) {
+    fun MainTable(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, length: MutableState<Int>, layout: LayoutSize) {
         val table_stroke_width = dimensionResource(R.dimen.table_line_stroke)
         val line_height = dimensionResource(R.dimen.line_height)
         val ctl_line_height = dimensionResource(R.dimen.ctl_line_height)
@@ -1156,14 +1155,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val scroll_state_v = ui_facade.scroll_state_y.value
         val scroll_state_h = ui_facade.scroll_state_x.value
         val bottom_padding = when (layout) {
-            ViewModelPagan.LayoutSize.SmallPortrait -> Dimensions.LayoutSize.Small.short
-            ViewModelPagan.LayoutSize.MediumPortrait -> Dimensions.LayoutSize.Medium.short
-            ViewModelPagan.LayoutSize.LargePortrait -> Dimensions.LayoutSize.Large.short
-            ViewModelPagan.LayoutSize.XLargePortrait -> Dimensions.LayoutSize.XLarge.long
-            ViewModelPagan.LayoutSize.SmallLandscape -> Dimensions.LayoutSize.Small.long
-            ViewModelPagan.LayoutSize.MediumLandscape -> Dimensions.LayoutSize.Medium.long
-            ViewModelPagan.LayoutSize.LargeLandscape -> Dimensions.LayoutSize.Large.long
-            ViewModelPagan.LayoutSize.XLargeLandscape -> Dimensions.LayoutSize.XLarge.short
+            LayoutSize.SmallPortrait -> Dimensions.Layout.Small.short
+            LayoutSize.MediumPortrait -> Dimensions.Layout.Medium.short
+            LayoutSize.LargePortrait -> Dimensions.Layout.Large.short
+            LayoutSize.XLargePortrait -> Dimensions.Layout.XLarge.long
+            LayoutSize.SmallLandscape -> Dimensions.Layout.Small.long
+            LayoutSize.MediumLandscape -> Dimensions.Layout.Medium.long
+            LayoutSize.LargeLandscape -> Dimensions.Layout.Large.long
+            LayoutSize.XLargeLandscape -> Dimensions.Layout.XLarge.short
         } / 2
         val end_padding = 128.dp // Also Arbitrary, safe width
         Box(
@@ -1312,16 +1311,21 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     itemsIndexed(column_widths + listOf(1)) { x, width ->
                         if (x == column_widths.size) {
                             ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onSurfaceVariant) {
-                                Icon(
+                                Box(
                                     modifier = Modifier
                                         .width(Dimensions.LeafBaseWidth)
                                         .combinedClickable(
                                             onClick = { dispatcher.append_beats() },
                                             onLongClick = { dispatcher.append_beats() }
                                         ),
-                                    painter = painterResource(R.drawable.icon_add),
-                                    contentDescription = stringResource(R.string.cd_insert_beat)
-                                )
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        modifier = Modifier.padding(6.dp),
+                                        painter = painterResource(R.drawable.icon_add),
+                                        contentDescription = stringResource(R.string.cd_insert_beat)
+                                    )
+                                }
                             }
 
                             return@itemsIndexed
@@ -1940,7 +1944,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     Spacer(Modifier.weight(1F))
                     ConfigDrawerChannelLeftButton(
                         onClick = {
-                            dispatcher.insert_percussion_channel()
+                            dispatcher.insert_percussion_channel(-1)
                         },
                         content = {
                             Icon(
@@ -2224,24 +2228,24 @@ class ComponentActivityEditor: PaganComponentActivity() {
             contentAlignment = Alignment.BottomCenter
         ) {
             Box(Modifier.fillMaxSize()) {
-                MainTable(Modifier, ui_facade, action_interface,  ui_facade.beat_count, ViewModelPagan.LayoutSize.LargePortrait)
+                MainTable(Modifier, ui_facade, action_interface,  ui_facade.beat_count, LayoutSize.LargePortrait)
             }
 
             val primary = this@ComponentActivityEditor.get_context_menu_primary(
                 Modifier,
                 ui_facade,
                 action_interface,
-                ViewModelPagan.LayoutSize.LargePortrait
+                LayoutSize.LargePortrait
             )
             val secondary = this@ComponentActivityEditor.get_context_menu_secondary(
                 Modifier,
                 ui_facade,
                 action_interface,
-                ViewModelPagan.LayoutSize.LargePortrait
+                LayoutSize.LargePortrait
             )
 
             AnimatedVisibility(primary != null || secondary != null) {
-                CMBoxBottom(Modifier.width(Dimensions.LayoutSize.Large.short)) {
+                CMBoxBottom(Modifier.width(Dimensions.Layout.Large.short)) {
                     primary?.invoke()
                     if (primary != null && secondary != null) {
                         CMPadding()
@@ -2347,8 +2351,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             CMBoxBottom(
                                 Modifier
                                     .then(
-                                        if (layout != ViewModelPagan.LayoutSize.SmallLandscape) {
-                                            Modifier.width(Dimensions.LayoutSize.Medium.long)
+                                        if (layout != LayoutSize.SmallLandscape) {
+                                            Modifier.width(Dimensions.Layout.Medium.long)
                                         } else {
                                             Modifier
                                         }

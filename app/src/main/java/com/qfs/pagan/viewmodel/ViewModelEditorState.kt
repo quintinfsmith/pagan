@@ -69,6 +69,7 @@ class ViewModelEditorState: ViewModel() {
         val is_selected = mutableStateOf(is_selected)
         val active_name = mutableStateOf(name)
         val size = mutableIntStateOf(size)
+
         fun update(percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean, is_selected: Boolean = false, name: String?, size: Int = 0) {
             this.percussion.value = percussion
             this.instrument.value = instrument

@@ -67,9 +67,7 @@ fun CMBoxEnd(modifier: Modifier = Modifier, content: @Composable ColumnScope.() 
 @Composable
 fun ContextMenuSecondaryRow(modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
     Row(
-        modifier
-            .height(Dimensions.ButtonHeight.Normal)
-            .fillMaxWidth(),
+        modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
         content = content
@@ -79,9 +77,7 @@ fun ContextMenuSecondaryRow(modifier: Modifier = Modifier, content: @Composable 
 @Composable
 fun ContextMenuPrimaryRow(modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
     Row(
-        modifier
-            .height(Dimensions.ButtonHeight.Normal)
-            .fillMaxWidth(),
+        modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
         content = content

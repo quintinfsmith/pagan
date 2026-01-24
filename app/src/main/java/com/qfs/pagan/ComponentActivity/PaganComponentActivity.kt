@@ -16,7 +16,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -25,7 +24,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -52,7 +50,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -60,6 +57,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.qfs.pagan.DialogChain
+import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.DialogCard
 import com.qfs.pagan.composable.DialogTitle
@@ -75,7 +73,6 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEve
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.selects.select
 import java.io.File
 import java.io.FileNotFoundException
 import java.text.SimpleDateFormat
@@ -211,12 +208,12 @@ abstract class PaganComponentActivity: ComponentActivity() {
                         DialogCard(
                             // TODO: These are just roughed in. need to put more thought in and check later
                             modifier = when (view_model.get_layout_size()) {
-                                ViewModelPagan.LayoutSize.SmallPortrait,
-                                ViewModelPagan.LayoutSize.SmallLandscape,
-                                ViewModelPagan.LayoutSize.MediumPortrait -> Modifier
+                                LayoutSize.SmallPortrait,
+                                LayoutSize.SmallLandscape,
+                                LayoutSize.MediumPortrait -> Modifier
 
-                                ViewModelPagan.LayoutSize.LargePortrait,
-                                ViewModelPagan.LayoutSize.MediumLandscape -> {
+                                LayoutSize.LargePortrait,
+                                LayoutSize.MediumLandscape -> {
                                     when (dialog.size) {
                                         ViewModelPagan.DialogSize.Unbounded -> Modifier
                                         ViewModelPagan.DialogSize.Small -> Modifier.width(200.dp)
@@ -224,13 +221,13 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                     }
                                 }
 
-                                ViewModelPagan.LayoutSize.XLargePortrait,
-                                ViewModelPagan.LayoutSize.XLargeLandscape,
-                                ViewModelPagan.LayoutSize.LargeLandscape -> {
+                                LayoutSize.XLargePortrait,
+                                LayoutSize.XLargeLandscape,
+                                LayoutSize.LargeLandscape -> {
                                     when (dialog.size) {
                                         ViewModelPagan.DialogSize.Unbounded -> Modifier
                                         ViewModelPagan.DialogSize.Small -> Modifier.width(300.dp)
-                                        ViewModelPagan.DialogSize.Medium -> Modifier.width(Dimensions.LayoutSize.Large.long)
+                                        ViewModelPagan.DialogSize.Medium -> Modifier.width(Dimensions.Layout.Large.long)
                                     }
                                 }
                             }
@@ -277,14 +274,14 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                 val layout_size = view_model.get_layout_size()
                                 val modifier = Modifier.fillMaxSize()
                                 when (layout_size) {
-                                    ViewModelPagan.LayoutSize.SmallPortrait -> LayoutSmallPortrait(modifier)
-                                    ViewModelPagan.LayoutSize.MediumPortrait -> LayoutMediumPortrait(modifier)
-                                    ViewModelPagan.LayoutSize.LargePortrait -> LayoutLargePortrait(modifier)
-                                    ViewModelPagan.LayoutSize.XLargePortrait -> LayoutXLargePortrait(modifier)
-                                    ViewModelPagan.LayoutSize.SmallLandscape -> LayoutSmallLandscape(modifier)
-                                    ViewModelPagan.LayoutSize.MediumLandscape -> LayoutMediumLandscape(modifier)
-                                    ViewModelPagan.LayoutSize.LargeLandscape -> LayoutLargeLandscape(modifier)
-                                    ViewModelPagan.LayoutSize.XLargeLandscape -> LayoutXLargeLandscape(modifier)
+                                    LayoutSize.SmallPortrait -> LayoutSmallPortrait(modifier)
+                                    LayoutSize.MediumPortrait -> LayoutMediumPortrait(modifier)
+                                    LayoutSize.LargePortrait -> LayoutLargePortrait(modifier)
+                                    LayoutSize.XLargePortrait -> LayoutXLargePortrait(modifier)
+                                    LayoutSize.SmallLandscape -> LayoutSmallLandscape(modifier)
+                                    LayoutSize.MediumLandscape -> LayoutMediumLandscape(modifier)
+                                    LayoutSize.LargeLandscape -> LayoutLargeLandscape(modifier)
+                                    LayoutSize.XLargeLandscape -> LayoutXLargeLandscape(modifier)
                                 }
 
                             }

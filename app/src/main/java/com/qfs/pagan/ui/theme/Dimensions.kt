@@ -16,24 +16,25 @@ import com.qfs.pagan.LayoutSize.XLargePortrait
 import com.qfs.pagan.LayoutSize as VLayoutSize
 
 object Dimensions {
-    var active_layout_width = mutableStateOf(0.dp)
-    var active_layout_height = mutableStateOf(0.dp)
-    private var active_layout_size = mutableStateOf(VLayoutSize.SmallPortrait)
+    var active_layout_width = 0.dp
+    var active_layout_height = 0.dp
+    private var active_layout_size = VLayoutSize.SmallPortrait
 
-    fun set_active_layout_dimensions(width: Dp, height: Dp) {
-        Dimensions.active_layout_height.value = height
-        Dimensions.active_layout_width.value = width
-        this.active_layout_size.value = if (width >= height) {
-            if (width >= Layout.XLarge.long && height >= Layout.XLarge.short) LayoutSize.XLargeLandscape
-            else if (width >= Layout.Large.short && height >= Layout.Large.long) LayoutSize.LargeLandscape
-            else if (width >= Layout.Medium.short && height >= Layout.Medium.long) LayoutSize.MediumLandscape
+    fun set_active_layout_dimensions(width: Dp, height: Dp): VLayoutSize {
+        Dimensions.active_layout_height = height
+        Dimensions.active_layout_width = width
+        this.active_layout_size = if (width >= height) {
+            if (width >= Layout.XLarge.long) LayoutSize.XLargeLandscape
+            else if (width >= Layout.Large.long) LayoutSize.LargeLandscape
+            else if (width >= Layout.Medium.long) LayoutSize.MediumLandscape
             else LayoutSize.SmallLandscape
         } else {
-            if (height >= Layout.XLarge.long && width >= Layout.XLarge.short) LayoutSize.XLargePortrait
-            else if (height >= Layout.Large.short && width >= Layout.Large.long) LayoutSize.LargePortrait
-            else if (height >= Layout.Medium.short && width >= Layout.Medium.long) LayoutSize.MediumPortrait
+            if (width >= Layout.XLarge.short) LayoutSize.XLargePortrait
+            else if (width >= Layout.Large.short) LayoutSize.LargePortrait
+            else if (width >= Layout.Medium.short) LayoutSize.MediumPortrait
             else LayoutSize.SmallPortrait
         }
+        return this.active_layout_size
     }
 
     object Layout {
@@ -77,7 +78,7 @@ object Dimensions {
             XLargeLandscape to xlarge_landscape
         )
 
-        val active_size = this.active_layout_size.value
+        val active_size = this.active_layout_size
 
         // If the value is mapped, use it
         mapped_values[active_size]?.let { return it }
@@ -143,6 +144,13 @@ object Dimensions {
     val LandingPadding: Dp
         get() = getter(
             small_portrait = 8.dp,
+        )
+    val LandingIconButtonSize: Dp
+        get() = getter(
+            small_portrait = 41.dp,
+            small_landscape = 41.dp,
+            medium_portrait = 62.dp,
+            medium_landscape = 62.dp,
         )
 
     val LeafBaseWidth = 41.dp

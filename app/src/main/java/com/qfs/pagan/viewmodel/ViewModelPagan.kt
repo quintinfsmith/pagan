@@ -64,19 +64,8 @@ class ViewModelPagan: ViewModel() {
     val has_saved_project: MutableState<Boolean> = mutableStateOf(false)
 
     fun set_layout_size(width: Dp, height: Dp) {
-        Dimensions.set_active_layout_dimensions(width, height)
-
-        this.active_layout_size.value = if (width >= height) {
-            if (width >= Dimensions.Layout.XLarge.long && height >= Dimensions.Layout.XLarge.short) LayoutSize.XLargeLandscape
-            else if (width >= Dimensions.Layout.Large.short && height >= Dimensions.Layout.Large.long) LayoutSize.LargeLandscape
-            else if (width >= Dimensions.Layout.Medium.short && height >= Dimensions.Layout.Medium.long) LayoutSize.MediumLandscape
-            else LayoutSize.SmallLandscape
-        } else {
-            if (height >= Dimensions.Layout.XLarge.long && width >= Dimensions.Layout.XLarge.short) LayoutSize.XLargePortrait
-            else if (height >= Dimensions.Layout.Large.short && width >= Dimensions.Layout.Large.long) LayoutSize.LargePortrait
-            else if (height >= Dimensions.Layout.Medium.short && width >= Dimensions.Layout.Medium.long) LayoutSize.MediumPortrait
-            else LayoutSize.SmallPortrait
-        }
+        this.active_layout_size.value = Dimensions.set_active_layout_dimensions(width, height)
+        println(" - - - - - - - ${this.active_layout_size.value} - - - - - - - ")
     }
 
     fun get_layout_size(): LayoutSize {

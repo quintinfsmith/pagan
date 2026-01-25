@@ -1658,7 +1658,12 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         this.track(TrackedAction.InsertChannel, listOf(index ?: -1, 1))
         val opus_manager = this.get_opus_manager()
         if (index != null) {
-            opus_manager.new_channel(index, is_percussion = true)
+            val adj_index = if (index == -1) {
+                opus_manager.channels.size
+            } else {
+                index
+            }
+            opus_manager.new_channel(adj_index, is_percussion = true)
         } else {
             val channel = opus_manager.cursor.channel
             opus_manager.new_channel(channel + 1, is_percussion = true)

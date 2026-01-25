@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -173,8 +174,8 @@ class ComponentActivityLanding: PaganComponentActivity() {
     ) {
         Button(
             modifier = modifier
-                .height(41.dp)
-                .width(41.dp),
+                .height(Dimensions.LandingIconButtonSize)
+                .width(Dimensions.LandingIconButtonSize),
             onClick = onClick,
             contentPadding = contentPadding,
             shape = CircleShape,
@@ -189,6 +190,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
             contentPadding = PaddingValues(8.dp),
             content =  {
                 Icon(
+                    modifier = Modifier.fillMaxSize(),
                     painter = painterResource(R.drawable.icon_import),
                     contentDescription = stringResource(R.string.btn_landing_import)
                 )
@@ -208,6 +210,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
     fun ButtonSettings(modifier: Modifier = Modifier) {
         SmallIconButton(
             modifier = modifier,
+            contentPadding = PaddingValues(8.dp),
             onClick = {
                 this@ComponentActivityLanding.result_launcher_settings.launch(
                     Intent(this@ComponentActivityLanding, ComponentActivitySettings::class.java)
@@ -215,6 +218,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
             },
             content =  {
                 Icon(
+                    modifier = Modifier.fillMaxSize(),
                     painter = painterResource(R.drawable.icon_settings),
                     contentDescription = stringResource(R.string.btn_landing_settings)
                 )
@@ -235,6 +239,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
     ) {
         SmallIconButton(
             modifier = modifier,
+            contentPadding = PaddingValues(8.dp),
             onClick = {
                 this@ComponentActivityLanding.startActivity(
                     Intent(this@ComponentActivityLanding, ComponentActivityAbout::class.java)
@@ -242,6 +247,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
             },
             content =  {
                 Icon(
+                    modifier = Modifier.fillMaxSize(),
                     painter = painterResource(R.drawable.icon_about),
                     contentDescription = stringResource(R.string.btn_landing_about)
                 )
@@ -267,9 +273,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
             contentAlignment = Alignment.Center
         ) {
             Column(
-                modifier = Modifier
-                    .height(Dimensions.Layout.Medium.short)
-                    .width(Dimensions.Layout.Large.long),
+                modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween
             ) {

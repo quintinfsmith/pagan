@@ -58,6 +58,7 @@ import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.DropdownMenu
 import com.qfs.pagan.composable.DropdownMenuItem
+import com.qfs.pagan.composable.FloatInput
 import com.qfs.pagan.composable.IntegerInput
 import com.qfs.pagan.composable.NumberPicker
 import com.qfs.pagan.composable.SText
@@ -374,6 +375,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     private val action_queue = mutableListOf<Pair<TrackedAction, List<Int?>?>>()
     var lock: Boolean = false
     lateinit var vm_top: ViewModelPagan
+    val persistent_number_input_values = HashMap<Int, Int>()
 
     fun attach_top_model(model: ViewModelPagan) {
         this.vm_top = model
@@ -1895,7 +1897,11 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         this.vm_top.create_small_dialog { close ->
             @Composable {
                 val focus_requester = remember { FocusRequester() }
-                val value = remember { mutableStateOf(default ?: min_value) }
+                val value = remember {
+                    mutableStateOf(
+                        default ?: this@ActionTracker.persistent_number_input_values[title_string_id] ?: min_value
+                    )
+                }
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
@@ -1909,6 +1915,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                         maximum = max_value
                     ) { new_value ->
                         close()
+                        this@ActionTracker.persistent_number_input_values[title_string_id] = new_value
                         callback(new_value)
                     }
                 }
@@ -1917,6 +1924,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                     neutral = close,
                     positive = {
                         close()
+                        this@ActionTracker.persistent_number_input_values[title_string_id] = value.value
                         callback(value.value)
                     }
                 )

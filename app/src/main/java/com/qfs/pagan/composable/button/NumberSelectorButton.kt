@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,9 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
-import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.unit.dp
 import com.qfs.pagan.composable.dashed_border
 import com.qfs.pagan.composable.pressable
 import com.qfs.pagan.ui.theme.Dimensions
@@ -36,7 +33,8 @@ fun NumberSelectorButton(
     selected: Boolean,
     highlighted: Boolean,
     shape: Shape = Shapes.NumberSelectorButton,
-    callback: (Int) -> Unit
+    on_long_click: (Int) -> Unit,
+    on_click: (Int) -> Unit,
 ) {
     val (background, foreground) = if (selected) {
         Pair(MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.onTertiary)
@@ -65,9 +63,8 @@ fun NumberSelectorButton(
 
             .background(background, shape)
             .combinedClickable(
-                onClick = {
-                    callback(index)
-                }
+                onClick = { on_click(index) },
+                onLongClick = { on_long_click(index) }
             )
     ) {
         Box(
@@ -102,7 +99,8 @@ fun RowScope.NumberSelector(
     shape_start: Shape = Shapes.NumberSelectorButton,
     shape_middle: Shape = Shapes.NumberSelectorButton,
     shape_end: Shape = Shapes.NumberSelectorButton,
-    callback: (Int) -> Unit
+    on_long_click: (Int) -> Unit,
+    on_click: (Int) -> Unit
 ) {
     for (i in progression) {
         if (i != progression.first) {
@@ -119,7 +117,8 @@ fun RowScope.NumberSelector(
                 progression.last -> shape_end
                 else -> shape_middle
             },
-            callback = callback
+            on_long_click = on_long_click,
+            on_click = on_click
         )
     }
 }
@@ -133,7 +132,8 @@ fun ColumnScope.NumberSelector(
     shape_start: Shape = Shapes.NumberSelectorButton,
     shape_middle: Shape = Shapes.NumberSelectorButton,
     shape_end: Shape = Shapes.NumberSelectorButton,
-    callback: (Int) -> Unit
+    on_long_click: (Int) -> Unit,
+    on_click: (Int) -> Unit
 ) {
     for (i in progression) {
         if (i != progression.first) {
@@ -150,7 +150,8 @@ fun ColumnScope.NumberSelector(
                 progression.last -> shape_end
                 else -> shape_middle
             },
-            callback = callback
+            on_long_click = on_long_click,
+            on_click = on_click
         )
     }
 }

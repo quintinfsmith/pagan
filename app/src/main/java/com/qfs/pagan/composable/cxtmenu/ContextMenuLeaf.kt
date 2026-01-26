@@ -14,6 +14,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -266,6 +267,7 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEd
                 Row {
                     ContextMenuStructureControls(Modifier, ui_facade, dispatcher, show_relative_input, true)
                     Column(Modifier.width(dimensionResource(R.dimen.numberselector_column_width))) {
+                        val octave_dropdown_visible: MutableState<Int?> = remember { mutableStateOf(null) }
                         NumberSelector(
                             progression = 7 downTo 0,
                             selected = octave,
@@ -275,8 +277,12 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEd
                                 null
                             },
                             alternate = false,
-                            callback = { dispatcher.set_octave(it) }
+                            on_click = { dispatcher.set_octave(it) },
+                            on_long_click = { octave_dropdown_visible.value = it }
                         )
+                        RelativeInputDropDown(ui_facade, dispatcher, octave_dropdown_visible) {
+                            dispatcher.set_octave(it)
+                        }
                     }
                 }
             }
@@ -326,6 +332,28 @@ fun ContextMenuLeafCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
 }
 
 @Composable
+fun RelativeInputDropDown(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, expanded: MutableState<Int?>, callback: (Int) -> Unit) {
+    DropdownMenu(
+        expanded = expanded.value != null,
+        onDismissRequest = { expanded.value = null}
+    ) {
+        RadioMenu(
+            options = listOf(
+                Pair(RelativeInputMode.Negative) { Text("-") },
+                Pair(RelativeInputMode.Absolute) { SText(R.string.absolute_label) },
+                Pair(RelativeInputMode.Positive) { Text("+") }
+            ),
+            active = remember { mutableStateOf(ui_facade.relative_input_mode.value) },
+            callback = {
+                dispatcher.set_relative_mode(it)
+                callback(expanded.value!!)
+                expanded.value = null
+            }
+        )
+    }
+}
+
+@Composable
 fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier, layout: LayoutSize) {
     val cursor = ui_facade.active_cursor.value ?: return
     val active_line = ui_facade.line_data[cursor.ints[0]]
@@ -358,6 +386,10 @@ fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
             )
         }
     } else {
+        val octave_dropdown_visible: MutableState<Int?> = remember { mutableStateOf(null) }
+        RelativeInputDropDown(ui_facade, dispatcher, octave_dropdown_visible) {
+            dispatcher.set_octave(it)
+        }
         when (layout) {
             LayoutSize.SmallPortrait,
             LayoutSize.MediumLandscape,
@@ -384,7 +416,8 @@ fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
                             null
                         },
                         alternate = false,
-                        callback = { dispatcher.set_octave(it) }
+                        on_click = { dispatcher.set_octave(it) },
+                        on_long_click = { octave_dropdown_visible.value = it }
                     )
                 }
                 Spacer(Modifier.height(Dimensions.NumberSelectorSpacing))
@@ -401,6 +434,10 @@ fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
             else -> throw Exception("Invalid Event Type") // TODO: Specify
         }
 
+        val offset_dropdown_visible: MutableState<Int?> = remember { mutableStateOf(null) }
+        RelativeInputDropDown(ui_facade, dispatcher, offset_dropdown_visible) {
+            dispatcher.set_offset(it)
+        }
         Column {
             var count = ceil(ui_facade.radix.value.toFloat() / 12F).toInt()
             for (i in count - 1 downTo 0) {
@@ -424,7 +461,8 @@ fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
                         } else {
                             Shapes.NumberSelectorButton
                         },
-                        callback = { dispatcher.set_offset(it) }
+                        on_long_click = { offset_dropdown_visible.value = i },
+                        on_click = { dispatcher.set_offset(it) }
                     )
                 }
             }

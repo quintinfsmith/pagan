@@ -1929,41 +1929,36 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val context = LocalContext.current
 
         DrawerCard(modifier.imePadding()) {
-            Surface(
-                shape = RoundedCornerShape(4.dp),
-                tonalElevation = 1.dp
+            Row(
+                Modifier.padding(Dimensions.ConfigDrawerPadding),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Row(
-                    Modifier.padding(Dimensions.ConfigDrawerPadding),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    ConfigDrawerTopButton(
-                        onClick = { dispatcher.set_tuning_table_and_transpose() },
-                        content = { SText(R.string.label_tuning) }
-                    )
-                    Spacer(Modifier.weight(1F))
-                    ConfigDrawerChannelLeftButton(
-                        onClick = {
-                            dispatcher.insert_percussion_channel(-1)
-                        },
-                        content = {
-                            Icon(
-                                painter = painterResource(R.drawable.icon_add_bang),
-                                contentDescription = stringResource(R.string.btn_cfg_add_kit_channel),
-                            )
-                        }
-                    )
-                    DrawerPadder()
-                    ConfigDrawerChannelRightButton(
-                        onClick = { dispatcher.insert_channel(-1) },
-                        content = {
-                            Icon(
-                                painter = painterResource(R.drawable.icon_add_circle),
-                                contentDescription = stringResource(R.string.btn_cfg_add_channel),
-                            )
-                        }
-                    )
-                }
+                ConfigDrawerTopButton(
+                    onClick = { dispatcher.set_tuning_table_and_transpose() },
+                    content = { SText(R.string.label_tuning) }
+                )
+                Spacer(Modifier.weight(1F))
+                ConfigDrawerChannelLeftButton(
+                    onClick = {
+                        dispatcher.insert_percussion_channel(-1)
+                    },
+                    content = {
+                        Icon(
+                            painter = painterResource(R.drawable.icon_add_bang),
+                            contentDescription = stringResource(R.string.btn_cfg_add_kit_channel),
+                        )
+                    }
+                )
+                DrawerPadder()
+                ConfigDrawerChannelRightButton(
+                    onClick = { dispatcher.insert_channel(-1) },
+                    content = {
+                        Icon(
+                            painter = painterResource(R.drawable.icon_add_circle),
+                            contentDescription = stringResource(R.string.btn_cfg_add_channel),
+                        )
+                    }
+                )
             }
             DrawerPadder()
             Surface(
@@ -2102,106 +2097,100 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             }
             DrawerPadder()
-            Surface(
-                shape = RoundedCornerShape(4.dp),
-                tonalElevation = 2.dp
+            Row(
+                modifier = Modifier
+                    .padding(Dimensions.ConfigDrawerPadding)
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-
-                Row(
-                    modifier = Modifier
-                        .padding(Dimensions.ConfigDrawerPadding)
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    ConfigDrawerBottomButton(
-                        modifier = Modifier.weight(1F),
-                        icon = R.drawable.icon_save,
-                        description = R.string.btn_cfg_save,
-                        onClick = {
-                            scope.launch { this@ComponentActivityEditor.close_drawer() }
-                            val configuration = this@ComponentActivityEditor.view_model.configuration
-                            if (configuration.project_directory.value == null || DocumentFile.fromTreeUri(
-                                    this@ComponentActivityEditor,
-                                    configuration.project_directory.value!!
-                                )?.exists() != true
-                            ) {
-                                this@ComponentActivityEditor._result_launcher_set_project_directory_and_save.launch(
-                                    Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also { intent ->
-                                        intent.putExtra(Intent.EXTRA_TITLE, "Pagan Projects")
-                                        intent.flags =
-                                            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                                        configuration.project_directory.value?.let {
-                                            intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, it)
-                                        }
-                                    }
-                                )
-                            } else {
-                                dispatcher.save()
-                            }
-                        }
-                    )
-                    DrawerPadder()
-                    ConfigDrawerBottomButton(
-                        modifier = Modifier.weight(1F),
-                        icon = R.drawable.icon_ic_baseline_content_copy_24,
-                        description = R.string.btn_cfg_copy,
-                        enabled = this@ComponentActivityEditor.controller_model.project_exists.value,
-                        onClick = {
-                            scope.launch { this@ComponentActivityEditor.close_drawer() }
-                            dispatcher.project_copy()
-                        }
-                    )
-                    DrawerPadder()
-                    ConfigDrawerBottomButton(
-                        modifier = Modifier.weight(1F),
-                        icon = R.drawable.icon_trash,
-                        description = R.string.btn_cfg_delete,
-                        enabled = this@ComponentActivityEditor.controller_model.project_exists.value,
-                        onClick = {
-                            scope.launch { this@ComponentActivityEditor.close_drawer() }
-                            dispatcher.delete()
-                        }
-                    )
-                    DrawerPadder()
-                    if (!this@ComponentActivityEditor.state_model.export_in_progress.value) {
-                        ConfigDrawerBottomButton(
-                            modifier = Modifier.weight(1F),
-                            icon = R.drawable.icon_export,
-                            description = R.string.btn_cfg_export,
-                            onClick = {
-                                this@ComponentActivityEditor.export()
-                            }
-                        )
-                    } else {
-                        Row(
-                            modifier = Modifier
-                                .weight(1F)
-                                .height(Dimensions.ConfigChannelBottomButtonHeight)
-                                .combinedClickable(
-                                    onClick = {
-                                        this@ComponentActivityEditor.runOnUiThread {
-                                            Toast.makeText(
-                                                this@ComponentActivityEditor,
-                                                getString(R.string.hold_to_cancel_export),
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                    },
-                                    onLongClick = {
-                                        this@ComponentActivityEditor.export_wav_cancel()
-                                    }
-                                ),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
+                ConfigDrawerBottomButton(
+                    modifier = Modifier.weight(1F),
+                    icon = R.drawable.icon_save,
+                    description = R.string.btn_cfg_save,
+                    onClick = {
+                        scope.launch { this@ComponentActivityEditor.close_drawer() }
+                        val configuration = this@ComponentActivityEditor.view_model.configuration
+                        if (configuration.project_directory.value == null || DocumentFile.fromTreeUri(
+                                this@ComponentActivityEditor,
+                                configuration.project_directory.value!!
+                            )?.exists() != true
                         ) {
-                            CircularProgressIndicator(
-                                progress = { this@ComponentActivityEditor.state_model.export_progress.value },
-                                color = ProgressIndicatorDefaults.linearColor,
-                                trackColor = ProgressIndicatorDefaults.linearTrackColor,
-                                strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
+                            this@ComponentActivityEditor._result_launcher_set_project_directory_and_save.launch(
+                                Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also { intent ->
+                                    intent.putExtra(Intent.EXTRA_TITLE, "Pagan Projects")
+                                    intent.flags =
+                                        Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                                    configuration.project_directory.value?.let {
+                                        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, it)
+                                    }
+                                }
                             )
+                        } else {
+                            dispatcher.save()
                         }
+                    }
+                )
+                DrawerPadder()
+                ConfigDrawerBottomButton(
+                    modifier = Modifier.weight(1F),
+                    icon = R.drawable.icon_ic_baseline_content_copy_24,
+                    description = R.string.btn_cfg_copy,
+                    enabled = this@ComponentActivityEditor.controller_model.project_exists.value,
+                    onClick = {
+                        scope.launch { this@ComponentActivityEditor.close_drawer() }
+                        dispatcher.project_copy()
+                    }
+                )
+                DrawerPadder()
+                ConfigDrawerBottomButton(
+                    modifier = Modifier.weight(1F),
+                    icon = R.drawable.icon_trash,
+                    description = R.string.btn_cfg_delete,
+                    enabled = this@ComponentActivityEditor.controller_model.project_exists.value,
+                    onClick = {
+                        scope.launch { this@ComponentActivityEditor.close_drawer() }
+                        dispatcher.delete()
+                    }
+                )
+                DrawerPadder()
+                if (!this@ComponentActivityEditor.state_model.export_in_progress.value) {
+                    ConfigDrawerBottomButton(
+                        modifier = Modifier.weight(1F),
+                        icon = R.drawable.icon_export,
+                        description = R.string.btn_cfg_export,
+                        onClick = {
+                            this@ComponentActivityEditor.export()
+                        }
+                    )
+                } else {
+                    Row(
+                        modifier = Modifier
+                            .weight(1F)
+                            .height(Dimensions.ConfigChannelBottomButtonHeight)
+                            .combinedClickable(
+                                onClick = {
+                                    this@ComponentActivityEditor.runOnUiThread {
+                                        Toast.makeText(
+                                            this@ComponentActivityEditor,
+                                            getString(R.string.hold_to_cancel_export),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                },
+                                onLongClick = {
+                                    this@ComponentActivityEditor.export_wav_cancel()
+                                }
+                            ),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        CircularProgressIndicator(
+                            progress = { this@ComponentActivityEditor.state_model.export_progress.value },
+                            color = ProgressIndicatorDefaults.linearColor,
+                            trackColor = ProgressIndicatorDefaults.linearTrackColor,
+                            strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
+                        )
                     }
                 }
             }

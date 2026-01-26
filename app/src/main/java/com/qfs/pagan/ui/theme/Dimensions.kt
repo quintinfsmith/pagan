@@ -1,7 +1,6 @@
 package com.qfs.pagan.ui.theme
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.LayoutSize
@@ -24,9 +23,9 @@ object Dimensions {
         Dimensions.active_layout_height = height
         Dimensions.active_layout_width = width
         this.active_layout_size = if (width >= height) {
-            if (width >= Layout.XLarge.long) LayoutSize.XLargeLandscape
-            else if (width >= Layout.Large.long) LayoutSize.LargeLandscape
-            else if (width >= Layout.Medium.long) LayoutSize.MediumLandscape
+            if (height >= Layout.XLarge.short) LayoutSize.XLargeLandscape
+            else if (height >= Layout.Large.short) LayoutSize.LargeLandscape
+            else if (height >= Layout.Medium.short) LayoutSize.MediumLandscape
             else LayoutSize.SmallLandscape
         } else {
             if (width >= Layout.XLarge.short) LayoutSize.XLargePortrait
@@ -47,7 +46,7 @@ object Dimensions {
             val long = 640.dp
         }
         object Medium {
-            val short = 320.dp
+            val short = 361.dp
             val long = 470.dp
         }
         object Small {
@@ -147,10 +146,10 @@ object Dimensions {
         )
     val LandingIconButtonSize: Dp
         get() = getter(
-            small_portrait = 41.dp,
-            small_landscape = 41.dp,
-            medium_portrait = 62.dp,
-            medium_landscape = 62.dp,
+            small_portrait = 32.dp,
+            small_landscape = 32.dp,
+            medium_portrait = 41.dp,
+            medium_landscape = 41.dp,
         )
 
     val LeafBaseWidth = 41.dp

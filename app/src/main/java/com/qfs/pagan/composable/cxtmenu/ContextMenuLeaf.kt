@@ -191,6 +191,11 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewM
                     dispatcher,
                     ui_facade.active_event_descriptor.value,
                     active_event,
+                    shape = if (active_line.assigned_offset.value != null) {
+                        Shapes.ContextMenuButtonPrimaryBottom
+                    } else {
+                        Shapes.ContextMenuButtonPrimary
+                    }
                 )
             }
             if (active_line.assigned_offset.value == null) {

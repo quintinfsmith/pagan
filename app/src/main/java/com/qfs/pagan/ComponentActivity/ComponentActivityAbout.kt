@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -37,6 +38,7 @@ import com.qfs.pagan.composable.button.TopBarIcon
 import com.qfs.pagan.composable.button.TopBarNoIcon
 import com.qfs.pagan.find_activity
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Typography
 
 class ComponentActivityAbout: PaganComponentActivity() {
     override val top_bar_wrapper: @Composable RowScope.() -> Unit = {
@@ -86,7 +88,11 @@ class ComponentActivityAbout: PaganComponentActivity() {
         stream.read(bytes)
         stream.close()
         Column {
-            ProvideTextStyle(MaterialTheme.typography.bodyLarge) {
+            Spacer(Modifier.height(12.dp))
+            HorizontalDivider(
+                thickness = 1.dp,
+            )
+            ProvideTextStyle(Typography.About.License) {
                 SelectionContainer {
                     SText(
                         string_id = R.string.fira_sans_license_blurb,
@@ -96,11 +102,11 @@ class ComponentActivityAbout: PaganComponentActivity() {
             }
 
             HorizontalDivider(thickness = 1.dp)
+            Spacer(Modifier.height(12.dp))
 
             SelectionContainer {
                 Text(
                     bytes.toString(charset = Charsets.UTF_8),
-                    modifier = Modifier.padding(top = 12.dp),
                     textAlign = TextAlign.Center
                 )
             }
@@ -119,15 +125,20 @@ class ComponentActivityAbout: PaganComponentActivity() {
                     context.startActivity(intent)
                 }
         ) {
-            ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+            ProvideTextStyle(Typography.About.LinkTitle) {
                 SText(
                     string_id = R.string.label_manual,
                     textAlign = TextAlign.Start
                 )
             }
+            ProvideTextStyle(Typography.About.LinkUrl) {
                 SelectionContainer {
-                    Text(stringResource(R.string.url_manual))
+                    Text(
+                        modifier = Modifier.padding(vertical = Dimensions.LinkUrlPadding),
+                        text = stringResource(R.string.url_manual)
+                    )
                 }
+            }
         }
     }
 
@@ -143,11 +154,16 @@ class ComponentActivityAbout: PaganComponentActivity() {
                     context.startActivity(intent)
                 }
         ) {
-            ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+            ProvideTextStyle(Typography.About.LinkTitle) {
                 Text(stringResource(R.string.label_source_code))
             }
-            SelectionContainer {
-                Text(stringResource(R.string.url_git))
+            ProvideTextStyle(Typography.About.LinkUrl) {
+                SelectionContainer {
+                    Text(
+                        modifier = Modifier.padding(vertical = Dimensions.LinkUrlPadding),
+                        text = stringResource(R.string.url_git)
+                    )
+                }
             }
         }
     }
@@ -163,11 +179,17 @@ class ComponentActivityAbout: PaganComponentActivity() {
                     context.startActivity(intent)
                 }
         ) {
-            ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+
+            ProvideTextStyle(Typography.About.LinkTitle) {
                 Text(stringResource(R.string.label_issues_location))
             }
-            SelectionContainer {
-                Text(stringResource(R.string.url_issues))
+            ProvideTextStyle(Typography.About.LinkUrl) {
+                SelectionContainer {
+                    Text(
+                        modifier = Modifier.padding(vertical = Dimensions.LinkUrlPadding),
+                        text = stringResource(R.string.url_issues)
+                    )
+                }
             }
         }
     }
@@ -183,11 +205,16 @@ class ComponentActivityAbout: PaganComponentActivity() {
                     intent.putExtra(Intent.EXTRA_EMAIL, support_email)
                 }
         ) {
-            ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+            ProvideTextStyle(Typography.About.LinkTitle) {
                 Text(stringResource(R.string.suggestions_description))
             }
-            SelectionContainer {
-                Text(support_email)
+            ProvideTextStyle(Typography.About.LinkUrl) {
+                SelectionContainer {
+                    Text(
+                        modifier = Modifier.padding(vertical = Dimensions.LinkUrlPadding),
+                        text = support_email
+                    )
+                }
             }
         }
     }
@@ -199,19 +226,16 @@ class ComponentActivityAbout: PaganComponentActivity() {
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalArrangement = Arrangement.Center
         ) {
-            Box(Modifier.padding(bottom = 12.dp)) {
+            Box(Modifier.padding(6.dp)) {
                 UrlManual()
             }
-            MenuPadder()
-            Box(Modifier.padding(bottom = 12.dp)) {
+            Box(Modifier.padding(6.dp)) {
                 UrlSource()
             }
-            MenuPadder()
-            Box(Modifier.padding(bottom = 12.dp)) {
+            Box(Modifier.padding(6.dp)) {
                 UrlIssueTracker()
             }
-            MenuPadder()
-            Box(Modifier.padding(bottom = 12.dp)) {
+            Box(Modifier.padding(6.dp)) {
                 SupportEmail()
             }
         }
@@ -227,7 +251,6 @@ class ComponentActivityAbout: PaganComponentActivity() {
         ) {
             Text("v${this@ComponentActivityAbout.get_version_name()}")
             SectionUrls()
-            HorizontalDivider(thickness = 1.dp)
             SectionLicense()
         }
     }

@@ -62,6 +62,7 @@ import com.qfs.pagan.composable.button.TopBarIcon
 import com.qfs.pagan.composable.button.TopBarNoIcon
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Typography
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 
@@ -107,6 +108,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             )
         }
     )
+
     val options_nightmode: List<Pair<Int, @Composable RowScope.() -> Unit>> = listOf(
         Pair(AppCompatDelegate.MODE_NIGHT_YES) @Composable {
             Icon(
@@ -293,7 +295,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
     override fun LayoutXLargePortrait(modifier: Modifier) {
         Column(
             modifier = Modifier
-                .padding(dimensionResource(R.dimen.sf_menu_padding))
+                .padding(Dimensions.SoundFontMenuPadding)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.Center,
@@ -301,7 +303,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
         ) {
             Row {
                 ActiveSoundfontButton(Modifier.weight(1F))
-                SoundFontWarningWrapper(Modifier.weight(1F).padding(start = dimensionResource(R.dimen.sf_menu_padding)))
+                SoundFontWarningWrapper(Modifier.weight(1F).padding(start = Dimensions.SoundFontMenuPadding))
             }
             MenuPadder()
             Row {
@@ -326,7 +328,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
     override fun LayoutXLargeLandscape(modifier: Modifier) {
         Row(
             modifier = Modifier
-                .padding(dimensionResource(R.dimen.sf_menu_padding))
+                .padding(Dimensions.SoundFontMenuPadding)
                 .verticalScroll(rememberScrollState())
                 .fillMaxWidth(),
             verticalAlignment = Alignment.Top,
@@ -336,7 +338,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 Modifier.weight(1F),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                SoundFontWarningWrapper(Modifier.padding(bottom = dimensionResource(R.dimen.sf_menu_padding)))
+                SoundFontWarningWrapper(Modifier.padding(bottom = Dimensions.SoundFontMenuPadding))
                 ActiveSoundfontButton(Modifier.fillMaxWidth())
                 MenuPadder()
                 ActiveSoundfontDirectoryButton(Modifier.fillMaxWidth())
@@ -362,13 +364,13 @@ class ComponentActivitySettings: PaganComponentActivity() {
     override fun LayoutLargePortrait(modifier: Modifier) {
         Column(
             modifier = Modifier
-                .padding(dimensionResource(R.dimen.sf_menu_padding))
+                .padding(Dimensions.SoundFontMenuPadding)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            SoundFontWarningWrapper(Modifier.fillMaxWidth().padding(bottom = dimensionResource(R.dimen.sf_menu_padding)))
+            SoundFontWarningWrapper(Modifier.fillMaxWidth().padding(bottom = Dimensions.SoundFontMenuPadding))
             ActiveSoundfontButton(Modifier.fillMaxWidth())
             MenuPadder()
             Row {
@@ -396,13 +398,13 @@ class ComponentActivitySettings: PaganComponentActivity() {
     override fun LayoutMediumPortrait(modifier: Modifier) {
         Column(
             modifier = Modifier
-                .padding(dimensionResource(R.dimen.sf_menu_padding))
+                .padding(Dimensions.SoundFontMenuPadding)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            SoundFontWarningWrapper(Modifier.fillMaxWidth().padding(bottom = dimensionResource(R.dimen.sf_menu_padding)))
+            SoundFontWarningWrapper(Modifier.fillMaxWidth().padding(bottom = Dimensions.SoundFontMenuPadding))
             ActiveSoundfontButton(Modifier.fillMaxWidth())
             MenuPadder()
             ActiveSoundfontDirectoryButton(Modifier.fillMaxWidth())
@@ -505,7 +507,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
     fun ActiveSoundfontButton(modifier: Modifier = Modifier) {
         val no_soundfont_text = stringResource(R.string.no_soundfont)
         SettingsColumn(modifier) {
-            ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+            ProvideTextStyle(Typography.Settings.Title) {
                 SText(R.string.label_settings_sf)
             }
 
@@ -547,7 +549,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
     @Composable
     fun ActiveSoundfontDirectoryButton(modifier: Modifier = Modifier) {
         SettingsColumn(modifier) {
-            ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+            ProvideTextStyle(Typography.Settings.Title) {
                 SText(R.string.label_settings_soundfont_directory)
             }
             MenuPadder()
@@ -577,7 +579,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
     @Composable
     fun ProjectsDirectoryButton(modifier: Modifier = Modifier) {
         SettingsColumn(modifier) {
-            ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+            ProvideTextStyle(Typography.Settings.Title) {
                 SText(R.string.label_settings_projects_directory)
             }
             MenuPadder()
@@ -782,7 +784,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
     @Composable
     fun OptionOrientation(modifier: Modifier = Modifier) {
         SettingsColumn(modifier) {
-            ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+            ProvideTextStyle(Typography.Settings.Title) {
                 SText(R.string.settings_screen_orientation)
             }
             MenuPadder()
@@ -800,7 +802,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
     @Composable
     fun OptionNightMode(modifier: Modifier = Modifier) {
         SettingsColumn(modifier) {
-            ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+            ProvideTextStyle(Typography.Settings.Title) {
                 SText(R.string.settings_night_mode)
             }
             MenuPadder()
@@ -832,7 +834,8 @@ class ComponentActivitySettings: PaganComponentActivity() {
     }
 
     fun import_soundfont(uri: Uri? = null) {
-        if (this.view_model.configuration.soundfont_directory == null) {
+        if (this.view_model.configuration.soundfont_directory.value == null) {
+            TODO()
             //this.initial_dialog_select_soundfont_directory()
         } else if (uri == null) {
             val intent = Intent()

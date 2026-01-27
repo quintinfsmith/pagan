@@ -71,6 +71,7 @@ import com.qfs.pagan.projectmanager.ProjectManager
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.launch
 import java.io.File
@@ -469,7 +470,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
 
         val padding = 8.dp
         Column(modifier) {
-            ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+            ProvideTextStyle(Typography.DialogTitle) {
                 if (other_project.project_name == null) {
                     SText(R.string.untitled_opus)
                 } else {
@@ -478,7 +479,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
             }
             Spacer(Modifier.height(padding))
 
-            ProvideTextStyle(MaterialTheme.typography.labelLarge) {
+            ProvideTextStyle(Typography.DialogBody) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -488,9 +489,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                     Spacer(Modifier.width(padding))
                     Text(formatter.format(time))
                 }
-            }
-            Spacer(Modifier.height(padding))
-            ProvideTextStyle(MaterialTheme.typography.labelLarge) {
+                Spacer(Modifier.height(padding))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -506,7 +505,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
 
             Spacer(Modifier.height(padding))
 
-            ProvideTextStyle(MaterialTheme.typography.bodyLarge) {
+            ProvideTextStyle(Typography.ProjectNotes) {
                 Row(
                     Modifier
                         .dashed_border(

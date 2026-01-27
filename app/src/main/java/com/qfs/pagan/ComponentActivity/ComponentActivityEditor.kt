@@ -99,7 +99,6 @@ import com.qfs.pagan.PaganBroadcastReceiver
 import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.R
 import com.qfs.pagan.SingleExporterEventHandler
-import com.qfs.pagan.TableColorPalette
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DrawerCard
@@ -146,8 +145,10 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocity
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlinx.coroutines.CoroutineScope
@@ -1701,15 +1702,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     fun LeafView(channel_data: ViewModelEditorState.ChannelData?, line_data: ViewModelEditorState.LineData, leaf_data: ViewModelEditorState.LeafData, radix: Int, modifier: Modifier = Modifier) {
         val event = leaf_data.event.value
-        val leaf_state = if (leaf_data.is_spillover.value) TableColorPalette.LeafState.Spill
-            else if (event != null) TableColorPalette.LeafState.Active
-            else TableColorPalette.LeafState.Empty
+        val leaf_state = if (leaf_data.is_spillover.value) Colors.LeafState.Spill
+            else if (event != null) Colors.LeafState.Active
+            else Colors.LeafState.Empty
 
-        val leaf_selection = if (leaf_data.is_selected.value) TableColorPalette.LeafSelection.Primary
-            else if (leaf_data.is_secondary.value) TableColorPalette.LeafSelection.Secondary
-            else TableColorPalette.LeafSelection.Unselected
+        val leaf_selection = if (leaf_data.is_selected.value) Colors.LeafSelection.Primary
+            else if (leaf_data.is_secondary.value) Colors.LeafSelection.Secondary
+            else Colors.LeafSelection.Unselected
 
-        val (leaf_color, text_color) = TableColorPalette.get_color(
+        val (leaf_color, text_color) = Colors.get_leaf_color(
             leaf_state,
             leaf_selection,
             line_data.ctl_type.value != null,
@@ -1730,15 +1731,18 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         val offset = event.note % radix
                         Row(
                             horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.Bottom
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column(verticalArrangement = Arrangement.Bottom) {
-                                ProvideTextStyle(MaterialTheme.typography.labelLarge) {
+                            Column(verticalArrangement = Arrangement.Center) {
+                                Spacer(Modifier.weight(4F))
+                                ProvideTextStyle(Typography.Leaf.Octave) {
                                     Text("$octave")
                                 }
+                                Spacer(Modifier.weight(1F))
                             }
+
                             Column(verticalArrangement = Arrangement.Center) {
-                                ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+                                ProvideTextStyle(Typography.Leaf.Offset) {
                                     Text("$offset")
                                 }
                             }
@@ -1763,7 +1767,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                             .align(Alignment.Center)
                                     )
                                 }
-                                ProvideTextStyle(MaterialTheme.typography.labelLarge) {
+                                ProvideTextStyle(Typography.Leaf.Octave) {
                                     Text(
                                         text = "$octave",
                                         modifier = Modifier
@@ -1773,7 +1777,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 }
                             }
                             Spacer(modifier = Modifier.width(1.dp))
-                            ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+                            ProvideTextStyle(Typography.Leaf.Offset) {
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.Center

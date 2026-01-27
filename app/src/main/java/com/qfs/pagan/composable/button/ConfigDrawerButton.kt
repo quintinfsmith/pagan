@@ -2,9 +2,7 @@ package com.qfs.pagan.composable.button
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonColors
@@ -59,7 +57,12 @@ fun ConfigDrawerChannelLeftButton(
 ) {
     Button(
         modifier = modifier.height(Dimensions.ConfigChannelButtonHeight),
-        contentPadding = PaddingValues(4.dp),
+        contentPadding = PaddingValues(
+            top = Dimensions.ConfigDrawerButtonPadding,
+            start = Dimensions.ConfigDrawerButtonPadding,
+            bottom = Dimensions.ConfigDrawerButtonPadding,
+            end = Dimensions.ConfigDrawerButtonExtraPadding
+        ),
         shape = Shapes.SectionButtonStart,
         colors = colors,
         onClick = onClick,
@@ -74,7 +77,12 @@ fun ConfigDrawerChannelRightButton(
     onClick: () -> Unit)
 {
     Button(
-        contentPadding = PaddingValues(4.dp),
+        contentPadding = PaddingValues(
+            top = Dimensions.ConfigDrawerButtonPadding,
+            start = Dimensions.ConfigDrawerButtonExtraPadding,
+            bottom = Dimensions.ConfigDrawerButtonPadding,
+            end = Dimensions.ConfigDrawerButtonPadding
+        ),
         shape = Shapes.SectionButtonEnd,
         modifier = modifier.height(Dimensions.ConfigChannelButtonHeight),
         colors = colors,

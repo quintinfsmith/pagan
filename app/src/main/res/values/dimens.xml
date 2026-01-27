@@ -138,7 +138,6 @@
     <dimen name="numberselector_column_width">41dp</dimen>
     <dimen name="landing_padding">8dp</dimen>
     <dimen name="landing_button_height">48dp</dimen>
-    <dimen name="sf_menu_padding">12dp</dimen>
     <dimen name="sf_menu_icon_height">41dp</dimen>
     <dimen name="about_padding">12dp</dimen>
 

@@ -1046,6 +1046,7 @@ fun MagicInput(
 fun SettingsBoxWrapper(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Box(
         modifier
+            .border(1.dp, MaterialTheme.colorScheme.onSurface, RoundedCornerShape(12.dp))
             .background(
                 MaterialTheme.colorScheme.surface,
                 shape = RoundedCornerShape(12.dp)
@@ -1115,8 +1116,8 @@ fun SettingsRow(
 fun MenuPadder() {
     Spacer(
         Modifier
-            .width(dimensionResource(R.dimen.sf_menu_padding))
-            .height(dimensionResource(R.dimen.sf_menu_padding))
+            .width(Dimensions.SoundFontMenuPadding)
+            .height(Dimensions.SoundFontMenuPadding)
     )
 }
 

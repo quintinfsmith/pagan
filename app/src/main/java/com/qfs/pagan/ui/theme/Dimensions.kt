@@ -122,6 +122,8 @@ object Dimensions {
     val ConfigChannelBottomButtonHeight = 48.dp
     val ConfigChannelSpacing = 4.dp
     val ConfigDrawerPadding = 4.dp
+    val ConfigDrawerButtonPadding = 8.dp
+    val ConfigDrawerButtonExtraPadding = 16.dp
 
     val ContextMenuButtonHeight: Dp
         get() = getter(
@@ -140,6 +142,11 @@ object Dimensions {
     val DialogLineHeight = 41.dp
     val DialogLinePadding = PaddingValues(vertical = 5.dp, horizontal = 12.dp)
 
+    val LandingButtonHeight: Dp
+        get() = getter(
+            small_portrait = 41.dp,
+            medium_portrait = 48.dp
+        )
     val LandingPadding: Dp
         get() = getter(
             small_portrait = 8.dp,
@@ -153,19 +160,30 @@ object Dimensions {
         )
 
     val LeafBaseWidth = 41.dp
+    val LinkUrlPadding = 4.dp
 
     val NumberSelectorButtonHeight: Dp
         get() = getter(
             small_portrait = 32.dp,
             medium_portrait = 48.dp,
         )
+
     val NumberSelectorButtonRadius = 4.dp
     val NumberSelectorHighlightedBorderPadding = 4.dp
     val NumberSelectorSpacing = 3.dp
 
     val SettingsRadioIconHeight = 32.dp
+    val SoundFontMenuPadding = 12.dp
 
-    val TopBarHeight = 54.dp
+    val TopBarHeight: Dp
+        get() = getter(
+            small_landscape = 41.dp,
+            small_portrait = 48.dp,
+            medium_portrait = 48.dp,
+            medium_landscape = 54.dp,
+            large_portrait = 54.dp,
+            large_landscape = 54.dp,
+        )
     val TopBarIconSize = 32.dp
     val TopBarItemSpace = 16.dp
 }

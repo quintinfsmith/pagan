@@ -110,7 +110,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
         shape: Shape = ButtonDefaults.shape
     ) {
         Button(
-            modifier = modifier.height(dimensionResource(R.dimen.landing_button_height)),
+            modifier = modifier.height(Dimensions.LandingButtonHeight),
             content = { Text(stringResource(R.string.btn_landing_most_recent)) },
             shape = shape,
             onClick = {
@@ -129,7 +129,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
         shape: Shape = ButtonDefaults.shape
     ) {
         Button(
-            modifier = modifier.height(dimensionResource(R.dimen.landing_button_height)),
+            modifier = modifier.height(Dimensions.LandingButtonHeight),
             content = { Text(stringResource(R.string.btn_landing_new)) },
             shape = shape,
             onClick = {
@@ -150,7 +150,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
         shape: Shape = ButtonDefaults.shape
     ) {
         Button(
-            modifier = modifier.height(dimensionResource(R.dimen.landing_button_height)),
+            modifier = modifier.height(Dimensions.LandingButtonHeight),
             content = { Text(stringResource(R.string.btn_landing_load)) },
             shape = shape,
             onClick = {

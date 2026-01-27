@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import com.qfs.pagan.composable.pressable
 import com.qfs.pagan.ui.theme.Shadows
 import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.Typography
 
 @Composable
 fun OutlinedButton(
@@ -84,7 +85,7 @@ fun Button(
     content: @Composable RowScope.() -> Unit
 ) {
     val pressed = remember { mutableStateOf(false) }
-    ProvideContentColorTextStyle(contentColor = colors.contentColor, textStyle = MaterialTheme.typography.labelLarge) {
+    ProvideContentColorTextStyle(contentColor = colors.contentColor, textStyle = Typography.Button) {
         Box(
             modifier = modifier
                 .pressable(pressed)

@@ -54,6 +54,7 @@ import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -1138,7 +1139,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     fun MainTable(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, length: MutableState<Int>, layout: LayoutSize) {
-        val table_stroke_width = dimensionResource(R.dimen.table_line_stroke)
         val line_height = dimensionResource(R.dimen.line_height)
         val ctl_line_height = dimensionResource(R.dimen.ctl_line_height)
         val leaf_width = Dimensions.LeafBaseWidth
@@ -1152,17 +1152,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val scope = rememberCoroutineScope()
         val scroll_state_v = ui_facade.scroll_state_y.value
         val scroll_state_h = ui_facade.scroll_state_x.value
-        val bottom_padding = when (layout) {
-            LayoutSize.SmallPortrait -> Dimensions.Layout.Small.short
-            LayoutSize.MediumPortrait -> Dimensions.Layout.Medium.short
-            LayoutSize.LargePortrait -> Dimensions.Layout.Large.short
-            LayoutSize.XLargePortrait -> Dimensions.Layout.XLarge.long
-            LayoutSize.SmallLandscape -> Dimensions.Layout.Small.long
-            LayoutSize.MediumLandscape -> Dimensions.Layout.Medium.long
-            LayoutSize.LargeLandscape -> Dimensions.Layout.Large.long
-            LayoutSize.XLargeLandscape -> Dimensions.Layout.XLarge.short
-        } / 2
-        val end_padding = 128.dp // Also Arbitrary, safe width
+
         Box(
             modifier,
             contentAlignment = Alignment.TopStart
@@ -1296,14 +1286,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     )
                                 }
                             }
-                            Spacer(Modifier.height(bottom_padding))
+                            Spacer(Modifier.height(toDp(this@ComponentActivityEditor.state_model.table_bottom_padding.value)))
                         }
                     }
                 }
 
                 LazyRow(
                     state = scroll_state_h,
-                    contentPadding = PaddingValues(end = end_padding),
+                    contentPadding = PaddingValues(end = toDp(this@ComponentActivityEditor.state_model.table_side_padding.value)),
                     overscrollEffect = null
                 ) {
                     itemsIndexed(column_widths + listOf(1)) { x, width ->
@@ -1380,7 +1370,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         ) { }
                                     }
                                 }
-                                Spacer(Modifier.height(line_height + bottom_padding))
+                                Spacer(Modifier.height(line_height + toDp(this@ComponentActivityEditor.state_model.table_bottom_padding.value)))
                             }
                         }
                     }
@@ -2235,13 +2225,26 @@ class ComponentActivityEditor: PaganComponentActivity() {
             )
 
             AnimatedVisibility(primary != null || secondary != null) {
-                CMBoxBottom(Modifier.width(Dimensions.Layout.Large.short)) {
+                CMBoxBottom(
+                    Modifier
+                        .update_bottom_padding()
+                        .width(Dimensions.Layout.Large.short)
+                ) {
                     primary?.invoke()
                     if (primary != null && secondary != null) {
                         CMPadding()
                     }
                     secondary?.invoke()
                 }
+            }
+
+            LaunchedEffect(primary == null && secondary == null) {
+                if (primary == null && secondary == null) {
+                    this@ComponentActivityEditor.state_model.table_bottom_padding.value = 0F
+                }
+            }
+            LaunchedEffect(Unit) {
+                this@ComponentActivityEditor.state_model.table_side_padding.value = 0F
             }
         }
     }
@@ -2265,7 +2268,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         val layout = this.view_model.get_layout_size()
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize(),
             contentAlignment = Alignment.BottomCenter
         ) {
             Box(Modifier.fillMaxSize()) {
@@ -2273,14 +2277,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
 
             val primary = this@ComponentActivityEditor.get_context_menu_primary(
-                Modifier
-                    .layout { measurable, constraints ->
-                        val placeable = measurable.measure(constraints)
-                        this@ComponentActivityEditor.state_model.table_side_padding.value = 0
-                        layout(placeable.width, placeable.height) {
-                            placeable.place(0,0)
-                        }
-                    },
+                Modifier,
                 ui_facade,
                 action_interface,
                 layout
@@ -2294,13 +2291,22 @@ class ComponentActivityEditor: PaganComponentActivity() {
             )
 
             AnimatedVisibility(primary != null || secondary != null) {
-                CMBoxBottom {
+                CMBoxBottom(Modifier.update_bottom_padding()) {
                     primary?.invoke()
                     if (primary != null && secondary != null) {
                         CMPadding()
                     }
                     secondary?.invoke()
                 }
+            }
+
+            LaunchedEffect(primary == null && secondary == null) {
+                if (primary == null && secondary == null) {
+                    this@ComponentActivityEditor.state_model.table_bottom_padding.value = 0F
+                }
+            }
+            LaunchedEffect(Unit) {
+                this@ComponentActivityEditor.state_model.table_side_padding.value = 0F
             }
         }
     }
@@ -2340,6 +2346,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         ) {
                             CMBoxBottom(
                                 Modifier
+                                    .update_bottom_padding()
                                     .then(
                                         if (layout != LayoutSize.SmallLandscape) {
                                             Modifier.width(Dimensions.Layout.Medium.long)
@@ -2364,24 +2371,53 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     )?.let {
                         Row(
                             Modifier
-                                .layout { measurable, constraints ->
-                                    val placeable = measurable.measure(constraints)
-                                    this@ComponentActivityEditor.state_model.table_side_padding.value = placeable.width
-                                    layout(placeable.width, placeable.height) {
-                                        placeable.place(0, 0)
-                                    }
-                                }
                                 .fillMaxHeight(),
                             horizontalArrangement = Arrangement.End,
                             verticalAlignment = Alignment.CenterVertically,
                             content = {
-                                CMBoxEnd() { it() }
+                                CMBoxEnd(
+                                    Modifier.update_side_padding()
+                                ) { it() }
                             }
                         )
                     }
                 }
+                LaunchedEffect(keyboardAsState().value || ui_facade.active_cursor.value == null) {
+                    if (ui_facade.active_cursor.value == null) {
+                        this@ComponentActivityEditor.state_model.table_side_padding.value = 0F
+                    }
+                }
+                LaunchedEffect(ui_facade.active_cursor.value == null) {
+                    if (ui_facade.active_cursor.value == null) {
+                        this@ComponentActivityEditor.state_model.table_bottom_padding.value = 0F
+                    }
+                }
             }
         }
+    }
+
+    @Composable
+    fun Modifier.update_bottom_padding(): Modifier {
+        return this then Modifier
+            .layout { measurable, constraints ->
+                val placeable = measurable.measure(constraints)
+                this@ComponentActivityEditor.state_model.table_bottom_padding.value = placeable.height.toFloat()
+                layout(placeable.width, placeable.height) {
+                    placeable.place(0, 0)
+                }
+            }
+    }
+
+    @Composable
+    fun Modifier.update_side_padding(): Modifier {
+        return this then Modifier
+            .layout { measurable, constraints ->
+                val placeable = measurable.measure(constraints)
+                this@ComponentActivityEditor.state_model.table_side_padding.value = placeable.width.toFloat()
+                layout(placeable.width, placeable.height) {
+                    placeable.place(0, 0)
+                }
+            }
     }
 
     @Composable

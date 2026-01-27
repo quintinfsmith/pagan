@@ -48,6 +48,24 @@ object Typography {
         val Label = TextStyle(fontFamily = Fonts.FiraSans)
     }
 
+    object SoundFontWarning {
+        val Title = TextStyle(
+            fontFamily = Fonts.FiraSans,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.W300
+        )
+        val Url = TextStyle(
+            fontFamily = Fonts.FiraMono,
+            lineHeight = 14.sp,
+            fontSize = 12.sp
+        )
+        val Body = TextStyle(
+            fontFamily = Fonts.FiraSans,
+            lineHeight = 14.sp,
+            fontSize = 12.sp
+        )
+    }
+
 
     val TopBar = TextStyle(fontFamily = Fonts.FiraSans)
 }

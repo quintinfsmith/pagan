@@ -31,7 +31,7 @@ fun IconCMenuButton(
         enabled = enabled,
         modifier = modifier
             .height(Dimensions.ContextMenuButtonHeight)
-            .width(Dimensions.ButtonHeight.Normal),
+            .width(Dimensions.ContextMenuButtonWidth),
         onClick = onClick,
         onLongClick = onLongClick ?: {},
         contentPadding = contentPadding,

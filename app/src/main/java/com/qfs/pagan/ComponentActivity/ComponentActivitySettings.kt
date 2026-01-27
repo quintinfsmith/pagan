@@ -28,7 +28,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -526,9 +525,10 @@ class ComponentActivitySettings: PaganComponentActivity() {
     fun ActiveSoundfontButton(modifier: Modifier = Modifier) {
         val no_soundfont_text = stringResource(R.string.no_soundfont)
         SettingsColumn(modifier) {
-            ProvideTextStyle(Typography.Settings.Title) {
-                SText(R.string.label_settings_sf)
-            }
+            SText(
+                R.string.label_settings_sf,
+                style = Typography.Settings.Title
+            )
 
             MenuPadder()
 
@@ -568,9 +568,10 @@ class ComponentActivitySettings: PaganComponentActivity() {
     @Composable
     fun ActiveSoundfontDirectoryButton(modifier: Modifier = Modifier) {
         SettingsColumn(modifier) {
-            ProvideTextStyle(Typography.Settings.Title) {
-                SText(R.string.label_settings_soundfont_directory)
-            }
+            SText(
+                R.string.label_settings_soundfont_directory,
+                style = Typography.Settings.Title
+            )
             MenuPadder()
             Button(
                 onClick = {
@@ -598,9 +599,10 @@ class ComponentActivitySettings: PaganComponentActivity() {
     @Composable
     fun ProjectsDirectoryButton(modifier: Modifier = Modifier) {
         SettingsColumn(modifier) {
-            ProvideTextStyle(Typography.Settings.Title) {
-                SText(R.string.label_settings_projects_directory)
-            }
+            SText(
+                R.string.label_settings_projects_directory,
+                style = Typography.Settings.Title
+            )
             MenuPadder()
             Button(
                 onClick = {
@@ -662,7 +664,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            SText(R.string.label_settings_playback_quality)
+            SText(R.string.label_settings_playback_quality, style = Typography.Settings.Label)
 
             Box(contentAlignment = Alignment.Center) {
                 Button(
@@ -682,8 +684,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                             modifier = Modifier
                                 .then(
                                     if (rate == view_model.configuration.sample_rate.value) {
-                                        Modifier
-                                            .background(color = MaterialTheme.colorScheme.tertiary)
+                                        Modifier.background(color = MaterialTheme.colorScheme.tertiary)
                                     } else {
                                         Modifier
                                     }
@@ -721,7 +722,8 @@ class ComponentActivitySettings: PaganComponentActivity() {
         ) {
             SText(
                 R.string.label_settings_same_line_release,
-                modifier = Modifier.weight(1F)
+                modifier = Modifier.weight(1F),
+                style = Typography.Settings.Label
             )
             Switch(
                 checked = view_model.configuration.clip_same_line_release.value,
@@ -803,9 +805,10 @@ class ComponentActivitySettings: PaganComponentActivity() {
     @Composable
     fun OptionOrientation(modifier: Modifier = Modifier) {
         SettingsColumn(modifier) {
-            ProvideTextStyle(Typography.Settings.Title) {
-                SText(R.string.settings_screen_orientation)
-            }
+            SText(
+                R.string.settings_screen_orientation,
+                style = Typography.Settings.Title
+            )
             MenuPadder()
             RadioMenu(
                 options = options_orientation,
@@ -821,9 +824,10 @@ class ComponentActivitySettings: PaganComponentActivity() {
     @Composable
     fun OptionNightMode(modifier: Modifier = Modifier) {
         SettingsColumn(modifier) {
-            ProvideTextStyle(Typography.Settings.Title) {
-                SText(R.string.settings_night_mode)
-            }
+            SText(
+                R.string.settings_night_mode,
+                style = Typography.Settings.Title
+            )
             MenuPadder()
             RadioMenu(
                 options = options_nightmode,

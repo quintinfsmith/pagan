@@ -7,6 +7,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +25,8 @@ import androidx.core.net.toUri
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.find_activity
+import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Typography
 
 
 @Composable
@@ -38,19 +42,22 @@ fun SoundFontWarning(in_settings: Boolean = false) {
                 .padding(16.dp),
 
         ) {
-            ProvideTextStyle(MaterialTheme.typography.headlineSmall) {
+            ProvideTextStyle(Typography.SoundFontWarning.Title) {
                 SText(
                     string_id = R.string.warning_nosoundfont_a,
                     textAlign = TextAlign.Center
                 )
             }
 
-            Column(Modifier.padding(top = 8.dp)) {
-                ProvideTextStyle(MaterialTheme.typography.bodyLarge) {
+            Spacer(Modifier.height(Dimensions.SFWarningInnerPadding))
+
+            Column {
+                ProvideTextStyle(Typography.SoundFontWarning.Body) {
                     SText(R.string.warning_nosoundfont_b)
                 }
+                Spacer(Modifier.height(Dimensions.SFWarningInnerPadding))
 
-                ProvideTextStyle(MaterialTheme.typography.labelLarge) {
+                ProvideTextStyle(Typography.SoundFontWarning.Url) {
                     Text(
                         text = url,
                         textAlign = TextAlign.Center,
@@ -64,14 +71,13 @@ fun SoundFontWarning(in_settings: Boolean = false) {
                             }
                     )
                 }
+
             }
 
             if (!in_settings) {
-                Row(
-                    Modifier.padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    ProvideTextStyle(MaterialTheme.typography.bodyLarge) {
+                Spacer(Modifier.height(Dimensions.SFWarningInnerPadding))
+                Row(horizontalArrangement = Arrangement.Center) {
+                    ProvideTextStyle(Typography.SoundFontWarning.Body) {
                         SText(R.string.warning_nosoundfont_c)
                     }
                 }

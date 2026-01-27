@@ -373,8 +373,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
         val has_saved_project = this.view_model.has_saved_project.value
         val button_shape = RoundedCornerShape(50F, 0F, 0F, 50F)
         Row(
-            modifier
-                .padding(dimensionResource(R.dimen.landing_padding)),
+            modifier.padding(dimensionResource(R.dimen.landing_padding)),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {

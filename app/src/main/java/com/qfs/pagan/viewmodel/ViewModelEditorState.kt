@@ -200,7 +200,8 @@ class ViewModelEditorState: ViewModel() {
 
     val has_global_effects_hidden = mutableStateOf(true)
     val soundfont_active = mutableStateOf(false)
-    val table_side_padding = mutableStateOf(0)
+    val table_side_padding: MutableState<Float> = mutableStateOf(0F)
+    val table_bottom_padding: MutableState<Float> = mutableStateOf(0F)
     val wide_beat_progress: MutableState<Float> = mutableStateOf(0F)
     val active_wide_beat: MutableState<Int?> = mutableStateOf(null)
 
@@ -936,7 +937,7 @@ class ViewModelEditorState: ViewModel() {
                 state.requestScrollToItem(beat, offset_px.toInt())
             }
         } else if (last_visible_beat < beat || (state.layoutInfo.visibleItemsInfo.last().offset + end_offset > state.layoutInfo.viewportSize.width - this.table_side_padding.value)) {
-            val screen_width = state.layoutInfo.viewportSize.width - this.table_side_padding.value
+            val screen_width = state.layoutInfo.viewportSize.width - this.table_side_padding.value.toInt()
             CoroutineScope(Dispatchers.Default).launch {
                 state.requestScrollToItem(
                     beat,

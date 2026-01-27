@@ -132,6 +132,10 @@ object Dimensions {
             medium_portrait = 48.dp,
             medium_landscape = 48.dp,
         )
+    val ContextMenuButtonWidth: Dp
+        get() = getter(
+            small_portrait = 48.dp,
+        )
 
     val ContextMenuButtonPadding = PaddingValues(8.dp)
     val ContextMenuButtonRadius = 8.dp
@@ -141,6 +145,7 @@ object Dimensions {
     val DialogPadding = 16.dp
     val DialogLineHeight = 41.dp
     val DialogLinePadding = PaddingValues(vertical = 5.dp, horizontal = 12.dp)
+
 
     val LandingButtonHeight: Dp
         get() = getter(
@@ -164,7 +169,7 @@ object Dimensions {
 
     val NumberSelectorButtonHeight: Dp
         get() = getter(
-            small_portrait = 32.dp,
+            small_portrait = 41.dp,
             medium_portrait = 48.dp,
         )
 
@@ -174,6 +179,7 @@ object Dimensions {
 
     val SettingsRadioIconHeight = 32.dp
     val SoundFontMenuPadding = 12.dp
+    val SFWarningInnerPadding = 10.dp
 
     val TopBarHeight: Dp
         get() = getter(

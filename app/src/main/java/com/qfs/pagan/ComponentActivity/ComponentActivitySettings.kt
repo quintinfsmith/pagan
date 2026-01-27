@@ -293,61 +293,28 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
     @Composable
     override fun LayoutXLargePortrait(modifier: Modifier) {
-        Column(
-            modifier = Modifier
-                .padding(Dimensions.SoundFontMenuPadding)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Row {
-                ActiveSoundfontButton(Modifier.weight(1F))
-                SoundFontWarningWrapper(Modifier.weight(1F).padding(start = Dimensions.SoundFontMenuPadding))
-            }
-            MenuPadder()
-            Row {
-                ActiveSoundfontDirectoryButton(Modifier.weight(1F))
-                MenuPadder()
-                ProjectsDirectoryButton(Modifier.weight(1F))
-            }
-            MenuPadder()
-
-            Row {
-                OptionNightMode(Modifier.weight(1F))
-                MenuPadder()
-                OptionOrientation(Modifier.weight(1F))
-            }
-            MenuPadder()
-            SettingsSectionB()
-            MenuPadder()
-        }
-    }
-
-    @Composable
-    override fun LayoutXLargeLandscape(modifier: Modifier) {
-        Row(
-            modifier = Modifier
-                .padding(Dimensions.SoundFontMenuPadding)
+        Box(
+            Modifier
                 .verticalScroll(rememberScrollState())
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.SpaceBetween,
+                .fillMaxSize(),
         ) {
             Column(
-                Modifier.weight(1F),
+                modifier = Modifier.padding(Dimensions.SoundFontMenuPadding),
+                verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                SoundFontWarningWrapper(Modifier.padding(bottom = Dimensions.SoundFontMenuPadding))
-                ActiveSoundfontButton(Modifier.fillMaxWidth())
+                Row {
+                    ActiveSoundfontButton(Modifier.weight(1F))
+                    SoundFontWarningWrapper(Modifier.weight(1F).padding(start = Dimensions.SoundFontMenuPadding))
+                }
                 MenuPadder()
-                ActiveSoundfontDirectoryButton(Modifier.fillMaxWidth())
+                Row {
+                    ActiveSoundfontDirectoryButton(Modifier.weight(1F))
+                    MenuPadder()
+                    ProjectsDirectoryButton(Modifier.weight(1F))
+                }
                 MenuPadder()
-                ProjectsDirectoryButton(Modifier.fillMaxWidth())
-                MenuPadder()
-            }
-            MenuPadder()
-            Column(Modifier.weight(1.5F)) {
+
                 Row {
                     OptionNightMode(Modifier.weight(1F))
                     MenuPadder()
@@ -361,33 +328,81 @@ class ComponentActivitySettings: PaganComponentActivity() {
     }
 
     @Composable
-    override fun LayoutLargePortrait(modifier: Modifier) {
-        Column(
-            modifier = Modifier
-                .padding(Dimensions.SoundFontMenuPadding)
+    override fun LayoutXLargeLandscape(modifier: Modifier) {
+        Box(
+            Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            SoundFontWarningWrapper(Modifier.fillMaxWidth().padding(bottom = Dimensions.SoundFontMenuPadding))
-            ActiveSoundfontButton(Modifier.fillMaxWidth())
-            MenuPadder()
-            Row {
-                ActiveSoundfontDirectoryButton(Modifier.weight(1F))
+            Row(
+                modifier = Modifier
+                    .padding(Dimensions.SoundFontMenuPadding)
+                    .verticalScroll(rememberScrollState())
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column(
+                    Modifier.weight(1F),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    SoundFontWarningWrapper(Modifier.padding(bottom = Dimensions.SoundFontMenuPadding))
+                    ActiveSoundfontButton(Modifier.fillMaxWidth())
+                    MenuPadder()
+                    ActiveSoundfontDirectoryButton(Modifier.fillMaxWidth())
+                    MenuPadder()
+                    ProjectsDirectoryButton(Modifier.fillMaxWidth())
+                    MenuPadder()
+                }
                 MenuPadder()
-                ProjectsDirectoryButton(Modifier.weight(1F))
+                Column(Modifier.weight(1.5F)) {
+                    Row {
+                        OptionNightMode(Modifier.weight(1F))
+                        MenuPadder()
+                        OptionOrientation(Modifier.weight(1F))
+                    }
+                    MenuPadder()
+                    SettingsSectionB()
+                    MenuPadder()
+                }
             }
-            MenuPadder()
+        }
+    }
 
-            Row {
-                OptionNightMode(Modifier.weight(1F))
+    @Composable
+    override fun LayoutLargePortrait(modifier: Modifier) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(Dimensions.SoundFontMenuPadding)
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                SoundFontWarningWrapper(Modifier.fillMaxWidth().padding(bottom = Dimensions.SoundFontMenuPadding))
+                ActiveSoundfontButton(Modifier.fillMaxWidth())
                 MenuPadder()
-                OptionOrientation(Modifier.weight(1F))
+                Row {
+                    ActiveSoundfontDirectoryButton(Modifier.weight(1F))
+                    MenuPadder()
+                    ProjectsDirectoryButton(Modifier.weight(1F))
+                }
+                MenuPadder()
+
+                Row {
+                    OptionNightMode(Modifier.weight(1F))
+                    MenuPadder()
+                    OptionOrientation(Modifier.weight(1F))
+                }
+                MenuPadder()
+                SettingsSectionB()
+                MenuPadder()
             }
-            MenuPadder()
-            SettingsSectionB()
-            MenuPadder()
         }
     }
 
@@ -396,27 +411,31 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
     @Composable
     override fun LayoutMediumPortrait(modifier: Modifier) {
-        Column(
-            modifier = Modifier
-                .padding(Dimensions.SoundFontMenuPadding)
+        Box(
+            Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            SoundFontWarningWrapper(Modifier.fillMaxWidth().padding(bottom = Dimensions.SoundFontMenuPadding))
-            ActiveSoundfontButton(Modifier.fillMaxWidth())
-            MenuPadder()
-            ActiveSoundfontDirectoryButton(Modifier.fillMaxWidth())
-            MenuPadder()
-            ProjectsDirectoryButton(Modifier.fillMaxWidth())
-            MenuPadder()
-            OptionNightMode(Modifier.fillMaxWidth())
-            MenuPadder()
-            OptionOrientation(Modifier.fillMaxWidth())
-            MenuPadder()
-            SettingsSectionB()
-            MenuPadder()
+            Column(
+                modifier = Modifier
+                    .padding(Dimensions.SoundFontMenuPadding),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                SoundFontWarningWrapper(Modifier.fillMaxWidth().padding(bottom = Dimensions.SoundFontMenuPadding))
+                ActiveSoundfontButton(Modifier.fillMaxWidth())
+                MenuPadder()
+                ActiveSoundfontDirectoryButton(Modifier.fillMaxWidth())
+                MenuPadder()
+                ProjectsDirectoryButton(Modifier.fillMaxWidth())
+                MenuPadder()
+                OptionNightMode(Modifier.fillMaxWidth())
+                MenuPadder()
+                OptionOrientation(Modifier.fillMaxWidth())
+                MenuPadder()
+                SettingsSectionB()
+                MenuPadder()
+            }
         }
     }
 

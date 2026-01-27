@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -18,7 +17,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,7 +29,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.qfs.pagan.R
-import com.qfs.pagan.composable.MenuPadder
 import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.SettingsColumn
 import com.qfs.pagan.composable.button.TopBarIcon
@@ -242,16 +239,20 @@ class ComponentActivityAbout: PaganComponentActivity() {
     }
     @Composable
     fun Layout(modifier: Modifier = Modifier) {
-        Column(
-            modifier
-                .padding(dimensionResource(R.dimen.about_padding))
+        Box(
+            modifier = Modifier
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
+            contentAlignment = Alignment.Center
         ) {
-            Text("v${this@ComponentActivityAbout.get_version_name()}")
-            SectionUrls()
-            SectionLicense()
+            Column(
+                modifier.padding(dimensionResource(R.dimen.about_padding)),
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("v${this@ComponentActivityAbout.get_version_name()}")
+                SectionUrls()
+                SectionLicense()
+            }
         }
     }
 

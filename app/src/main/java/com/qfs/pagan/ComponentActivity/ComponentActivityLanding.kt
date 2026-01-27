@@ -372,43 +372,43 @@ class ComponentActivityLanding: PaganComponentActivity() {
         val has_backup = this.view_model.project_manager?.has_backup_saved() == true
         val has_saved_project = this.view_model.has_saved_project.value
         val button_shape = RoundedCornerShape(50F, 0F, 0F, 50F)
-            Row(
-                modifier
-                    .padding(dimensionResource(R.dimen.landing_padding)),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+        Row(
+            modifier
+                .padding(dimensionResource(R.dimen.landing_padding)),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(2F)
+                    .padding(12.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Box(
-                    modifier = Modifier
-                        .weight(2F)
-                        .padding(12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    SoundFontWarning()
-                }
-                Column(
-                    Modifier
-                        .weight(1F)
-                        .fillMaxHeight(),
-                    horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Spacer(Modifier)
-                    Column(horizontalAlignment = Alignment.End) {
-                        if (has_backup) {
-                            ButtonRecent(shape = button_shape)
-                            Padder()
-                        }
-                        ButtonNew(shape = button_shape)
-                        if (has_saved_project) {
-                            Padder()
-                            ButtonLoad(shape = button_shape)
-                        }
-                    }
-                    LayoutSmallIconLinks()
-
-                }
+                SoundFontWarning()
             }
+            Column(
+                Modifier
+                    .weight(1F)
+                    .fillMaxHeight(),
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Spacer(Modifier)
+                Column(horizontalAlignment = Alignment.End) {
+                    if (has_backup) {
+                        ButtonRecent(shape = button_shape)
+                        Padder()
+                    }
+                    ButtonNew(shape = button_shape)
+                    if (has_saved_project) {
+                        Padder()
+                        ButtonLoad(shape = button_shape)
+                    }
+                }
+                LayoutSmallIconLinks()
+
+            }
+        }
     }
 
     @Composable

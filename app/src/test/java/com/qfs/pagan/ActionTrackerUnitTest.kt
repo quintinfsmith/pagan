@@ -66,8 +66,6 @@ class ActionTrackerUnitTest {
                 ActionTracker.TrackedAction.SetDuration,
                 ActionTracker.TrackedAction.RemoveBeat,
                 ActionTracker.TrackedAction.InsertBeat,
-                ActionTracker.TrackedAction.SetOffset,
-                ActionTracker.TrackedAction.SetOctave,
                 ActionTracker.TrackedAction.SplitLeaf,
                 ActionTracker.TrackedAction.InsertLeaf,
                 ActionTracker.TrackedAction.RemoveLeaf,
@@ -178,6 +176,10 @@ class ActionTrackerUnitTest {
                     Pair(enum, listOf(4, 2, 6))
                 }
 
+                ActionTracker.TrackedAction.SetOffset,
+                ActionTracker.TrackedAction.SetOctave -> {
+                    Pair(enum, listOf(0, 0))
+                }
                 ActionTracker.TrackedAction.InsertBeatAt,
                 ActionTracker.TrackedAction.CopyChannelCtlToBeat,
                 ActionTracker.TrackedAction.MoveChannelCtlToBeat -> {
@@ -252,8 +254,6 @@ class ActionTrackerUnitTest {
                     ActionTracker.TrackedAction.SetDuration,
                     ActionTracker.TrackedAction.RemoveBeat,
                     ActionTracker.TrackedAction.InsertBeat,
-                    ActionTracker.TrackedAction.SetOffset,
-                    ActionTracker.TrackedAction.SetOctave,
                     ActionTracker.TrackedAction.SplitLeaf,
                     ActionTracker.TrackedAction.InsertLeaf,
                     ActionTracker.TrackedAction.RemoveLeaf,
@@ -331,6 +331,10 @@ class ActionTrackerUnitTest {
                         JSONList(json_name, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }
 
+                    ActionTracker.TrackedAction.SetOffset,
+                    ActionTracker.TrackedAction.SetOctave -> {
+                        JSONList(json_name, JSONInteger(1), JSONString(RelativeInputMode.Absolute.name))
+                    }
                     ActionTracker.TrackedAction.InsertBeatAt,
                     ActionTracker.TrackedAction.CopyChannelCtlToBeat,
                     ActionTracker.TrackedAction.MoveChannelCtlToBeat -> {

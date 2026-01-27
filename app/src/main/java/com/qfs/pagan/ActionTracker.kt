@@ -58,7 +58,6 @@ import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.DropdownMenu
 import com.qfs.pagan.composable.DropdownMenuItem
-import com.qfs.pagan.composable.FloatInput
 import com.qfs.pagan.composable.IntegerInput
 import com.qfs.pagan.composable.NumberPicker
 import com.qfs.pagan.composable.SText
@@ -164,7 +163,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         SetProjectNameAndNotes,
         SetTuningTable,
         ImportSong,
-        SetRelativeMode,
         MuteChannel,
         UnMuteChannel,
         MuteLine,
@@ -188,6 +186,13 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                         val name_ints = this.string_to_ints(name)
                         listOf(name_ints.size) + name_ints + this.string_to_ints(notes)
                     }
+
+
+                    TrackedAction.SetOctave,
+                    TrackedAction.SetOffset -> {
+                        listOf(entry.get_int(0), RelativeInputMode.valueOf(entry.get_string(1)).ordinal)
+                    }
+
                     // STRING
                     TrackedAction.ImportSong,
                     TrackedAction.ShowLineController,
@@ -304,6 +309,14 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                         arrayOf(
                             JSONString(name),
                             JSONString(notes)
+                        )
+                    }
+
+                    TrackedAction.SetOctave,
+                    TrackedAction.SetOffset -> {
+                        arrayOf(
+                            JSONInteger(integers[0]!!),
+                            JSONString(RelativeInputMode.values()[integers[1]!!].name)
                         )
                     }
 
@@ -1341,11 +1354,11 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         }
     }
 
-    fun set_offset(new_offset: Int) {
-        this.track(TrackedAction.SetOffset, listOf(new_offset))
+    fun set_offset(new_offset: Int, mode: RelativeInputMode) {
+        this.track(TrackedAction.SetOffset, listOf(new_offset, mode.ordinal))
 
         val opus_manager = this.get_opus_manager()
-        opus_manager.set_note_offset_at_cursor(new_offset)
+        opus_manager.set_note_offset_at_cursor(new_offset, mode)
 
         val beat_key = opus_manager.cursor.get_beatkey()
         val position = opus_manager.cursor.get_position()
@@ -1353,11 +1366,11 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         this.play_event(beat_key.channel, event_note)
     }
 
-    fun set_octave(new_octave: Int) {
+    fun set_octave(new_octave: Int, mode: RelativeInputMode) {
         this.track(TrackedAction.SetOctave, listOf(new_octave))
 
         val opus_manager = this.get_opus_manager()
-        opus_manager.set_note_octave_at_cursor(new_octave)
+        opus_manager.set_note_octave_at_cursor(new_octave, mode)
 
         val beat_key = opus_manager.cursor.get_beatkey()
         val position = opus_manager.cursor.get_position()
@@ -1815,11 +1828,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         this.dialog_number_input(R.string.dlg_remove_beats, 1, opus_manager.length - 1) {
             this.remove_beat_at_cursor(it)
         }
-    }
-
-    fun set_relative_mode(mode: RelativeInputMode = RelativeInputMode.Absolute) {
-        this.track(TrackedAction.SetRelativeMode, listOf(mode.ordinal))
-        this.get_opus_manager().force_relative_mode(mode)
     }
 
     fun set_project_name_and_notes(project_name_and_notes: Pair<String, String>? = null) {
@@ -2342,10 +2350,10 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                 )
             }
             TrackedAction.SetOffset -> {
-                this.set_offset(integers[0]!!)
+                this.set_offset(integers[0]!!, RelativeInputMode.values()[integers[1]!!])
             }
             TrackedAction.SetOctave -> {
-                this.set_octave(integers[0]!!)
+                this.set_octave(integers[0]!!, RelativeInputMode.values()[integers[1]!!])
             }
             TrackedAction.AdjustSelection -> {
                 this.adjust_selection(integers[0])
@@ -2492,10 +2500,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                 //val uri_string = string_from_ints(integers)
                 //val uri = Uri.parse(uri_string)
                 //this.import(uri)
-            }
-
-            TrackedAction.SetRelativeMode -> {
-                this.set_relative_mode(RelativeInputMode.entries[integers[0]!!])
             }
 
             TrackedAction.MuteChannel -> {

@@ -606,9 +606,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             }
         }
-        if (!view_model.configuration.relative_mode.value) {
-            this.action_interface.set_relative_mode()
-        }
         this.set_soundfont()
     }
 

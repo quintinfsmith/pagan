@@ -6,20 +6,17 @@ import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.BlockedActionException
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
-import com.qfs.pagan.structure.opusmanager.base.NonEventConversion
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusLineAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
 import com.qfs.pagan.structure.opusmanager.base.OpusPercussionChannel
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
-import com.qfs.pagan.structure.opusmanager.base.TunedInstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.IncorrectCursorMode
-import com.qfs.pagan.structure.opusmanager.cursor.InvalidModeException
 import com.qfs.pagan.structure.opusmanager.cursor.OpusManagerCursor
 import com.qfs.pagan.structure.opusmanager.history.OpusLayerHistory
 import com.qfs.pagan.structure.rationaltree.InvalidGetCall
@@ -88,9 +85,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     // Refactored properties  //////////////////////
     var minimum_percussions = HashMap<Int, Int>()
     /////////////////////////////////////////////
-
-    var relative_mode: RelativeInputMode = RelativeInputMode.Absolute
-    var preferred_relative_mode: RelativeInputMode = RelativeInputMode.Absolute
 
     var temporary_blocker: OpusManagerCursor? = null
 
@@ -524,10 +518,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.exception_catcher {
             this.track_blocked_leafs(beat_key, position) {
                 super.set_event(beat_key, position, event)
-
-                if (event is TunedInstrumentEvent) {
-                    this.set_relative_mode(event)
-                }
 
                 if (this.ui_lock.is_locked()) return@track_blocked_leafs
                 this._update_tree(beat_key, position)
@@ -1171,7 +1161,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 ViewModelEditorState.LineData(null, null, type, null, false)
             )
         }
-        this.vm_state.set_relative_mode(this.relative_mode)
         this.vm_state.ready.value = true
     }
 
@@ -1341,8 +1330,18 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
         if (cursor.mode == CursorMode.Single && cursor.ctl_level == null && !this.is_percussion(cursor.channel)) {
             val event = this.get_tree()?.get_event()
-            if (event is TunedInstrumentEvent) {
-                this.set_relative_mode(event)
+            this.vm_state.relative_input_mode.value = when (event) {
+                is RelativeNoteEvent -> {
+                    if (event.offset < 0) {
+                        RelativeInputMode.Negative
+                    } else if (event.offset > 0) {
+                        RelativeInputMode.Positive
+                    } else {
+                        return
+                    }
+                }
+                is AbsoluteNoteEvent -> RelativeInputMode.Absolute
+                else -> return
             }
         }
     }
@@ -1453,11 +1452,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
 
         val current_tree = this.get_tree() ?: return
-        if (!current_tree.has_event() && this.relative_mode != this.preferred_relative_mode) {
-            this.relative_mode = this.preferred_relative_mode
-        } else if (current_tree.has_event() && !this.is_percussion(beat_key.channel)) {
-            this.set_relative_mode(current_tree.get_event()!! as TunedInstrumentEvent)
-        }
 
         if (this.ui_lock.is_locked()) return
 
@@ -1491,6 +1485,24 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             //
 
             this.vm_state.scroll_to_leaf(beat_key.beat, offset, width)
+
+            current_tree.event?.let { event ->
+                this.vm_state.relative_input_mode.value = when (event) {
+                    is RelativeNoteEvent -> {
+                        if (event.offset < 0) {
+                            RelativeInputMode.Negative
+                        } else if (event.offset > 0) {
+                            RelativeInputMode.Positive
+                        } else {
+                            return
+                        }
+                    }
+
+                    is AbsoluteNoteEvent -> RelativeInputMode.Absolute
+                    else -> return
+                }
+            }
+
         }
     }
 
@@ -1967,58 +1979,17 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         // }
     }
 
-    fun force_relative_mode(mode: RelativeInputMode) {
-        val original_mode = this.relative_mode
-        this.relative_mode = mode
-        this.preferred_relative_mode = mode
 
-        try {
-            when (mode) {
-                RelativeInputMode.Absolute -> this.convert_event_to_absolute()
-                RelativeInputMode.Positive,
-                RelativeInputMode.Negative -> this.convert_event_to_relative()
-            }
-        } catch (e: InvalidModeException) {
-            // It's Ok if we aren't in the correct cursor state
-        } catch (e: NonEventConversion) {
-            // pass
-        }
-
-        if (this.cursor.mode == CursorMode.Single && this.cursor.ctl_level == null) {
-            this.get_event_at_cursor()?.let { event ->
-                if (event is RelativeNoteEvent) {
-                    if ((mode == RelativeInputMode.Negative && original_mode == RelativeInputMode.Positive) || (mode == RelativeInputMode.Positive && original_mode == RelativeInputMode.Negative)) {
-                        val event_copy = event.copy()
-                        event_copy.offset = event.offset * -1
-                        this.set_event_at_cursor(event_copy)
-                    }
-                }
-            }
-        }
-
-        this.vm_state.set_relative_mode(this.relative_mode)
-    }
-
-    fun set_relative_mode(event: TunedInstrumentEvent) {
-        this.relative_mode = when (event) {
-            is RelativeNoteEvent -> {
-                if (event.offset >= 0) RelativeInputMode.Positive
-                else RelativeInputMode.Negative
-            }
-            else -> RelativeInputMode.Absolute
-        }
-        this.vm_state.set_relative_mode(this.relative_mode)
-    }
 
     // Note: set_note_octave/offset functions need to be in interface layer since they require access to 'relative_mode' property
-    private fun _set_note_octave(beat_key: BeatKey, position: List<Int>, octave: Int) {
+    private fun _set_note_octave(beat_key: BeatKey, position: List<Int>, octave: Int, mode: RelativeInputMode) {
         val current_tree_position = this.get_actual_position(beat_key, position)
         val current_tree = this.get_tree(current_tree_position.first, current_tree_position.second)
         val current_event = current_tree.get_event()
         val duration = current_event?.duration ?: 1
         val radix = this.tuning_map.size
 
-        val new_event = when (this.relative_mode) {
+        val new_event = when (mode) {
             RelativeInputMode.Absolute -> {
                 this.set_latest_octave(octave)
                 AbsoluteNoteEvent(
@@ -2030,7 +2001,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                         }
                         is RelativeNoteEvent -> {
                             this.convert_event_to_absolute(beat_key, position)
-                            return this._set_note_octave(beat_key, position, octave)
+                            return this._set_note_octave(beat_key, position, octave, RelativeInputMode.Absolute)
                         }
                         else -> {
                             val cursor = this.cursor
@@ -2055,7 +2026,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                         is RelativeNoteEvent -> (octave * radix) + (abs(current_event.offset) % radix)
                         is AbsoluteNoteEvent -> {
                             this.convert_event_to_relative(beat_key, position)
-                            return this._set_note_octave(beat_key, position, octave)
+                            return this._set_note_octave(beat_key, position, octave, mode)
                         }
                         else -> octave * radix
                     },
@@ -2072,7 +2043,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                         }
                         is AbsoluteNoteEvent -> {
                             this.convert_event_to_relative(beat_key, position)
-                            return this._set_note_octave(beat_key, position, octave)
+                            return this._set_note_octave(beat_key, position, octave, mode)
                         }
                         else -> 0 - (octave * radix)
                     },
@@ -2084,13 +2055,13 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.set_event(beat_key, position, new_event)
     }
 
-    private fun _set_note_offset(beat_key: BeatKey, position: List<Int>, offset: Int) {
+    private fun _set_note_offset(beat_key: BeatKey, position: List<Int>, offset: Int, mode: RelativeInputMode) {
         val current_tree = this.get_tree(beat_key, position)
         val current_event = current_tree.get_event()
         val duration = current_event?.duration ?: 1
         val radix = this.tuning_map.size
 
-        val new_event = when (this.relative_mode) {
+        val new_event = when (mode) {
             RelativeInputMode.Absolute -> {
                 this.set_latest_offset(offset)
                 AbsoluteNoteEvent(
@@ -2102,7 +2073,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                         }
                         is RelativeNoteEvent -> {
                             this.convert_event_to_absolute(beat_key, position)
-                            return this._set_note_offset(beat_key, position, offset)
+                            return this._set_note_offset(beat_key, position, offset, RelativeInputMode.Absolute)
                         }
                         else -> {
                             val cursor = this.cursor
@@ -2126,7 +2097,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                         is RelativeNoteEvent -> ((abs(current_event.offset) / radix) * radix) + offset
                         is AbsoluteNoteEvent -> {
                             this.convert_event_to_relative(beat_key, position)
-                            return this._set_note_offset(beat_key, position, offset)
+                            return this._set_note_offset(beat_key, position, offset, mode)
                         }
                         else -> offset
                     },
@@ -2143,7 +2114,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                         }
                         is AbsoluteNoteEvent -> {
                             this.convert_event_to_relative(beat_key, position)
-                            return this._set_note_offset(beat_key, position, offset)
+                            return this._set_note_offset(beat_key, position, offset, mode)
                         }
                         else -> 0 - offset
                     },
@@ -2155,18 +2126,18 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.set_event(beat_key, position, new_event)
     }
 
-    fun set_note_octave_at_cursor(octave: Int) {
+    fun set_note_octave_at_cursor(octave: Int, mode: RelativeInputMode) {
         if (this.cursor.mode != CursorMode.Single) throw IncorrectCursorMode(this.cursor.mode, CursorMode.Single)
 
         val current_tree_position = this.get_actual_position(this.cursor.get_beatkey(), this.cursor.get_position())
-        this._set_note_octave(current_tree_position.first, current_tree_position.second, octave)
+        this._set_note_octave(current_tree_position.first, current_tree_position.second, octave, mode)
     }
 
-    fun set_note_offset_at_cursor(offset: Int) {
+    fun set_note_offset_at_cursor(offset: Int, mode: RelativeInputMode) {
         if (this.cursor.mode != CursorMode.Single) throw IncorrectCursorMode(this.cursor.mode, CursorMode.Single)
 
         val current_tree_position = this.get_actual_position(this.cursor.get_beatkey(), this.cursor.get_position())
-        this._set_note_offset(current_tree_position.first, current_tree_position.second, offset)
+        this._set_note_offset(current_tree_position.first, current_tree_position.second, offset, mode)
     }
 
     override fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {

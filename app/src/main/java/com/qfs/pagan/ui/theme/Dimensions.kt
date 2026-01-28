@@ -159,9 +159,14 @@ object Dimensions {
     val LandingIconButtonSize: Dp
         get() = getter(
             small_portrait = 32.dp,
-            small_landscape = 32.dp,
-            medium_portrait = 41.dp,
-            medium_landscape = 41.dp,
+            medium_portrait = 48.dp,
+            large_landscape = 54.dp
+        )
+    val LandingIconButtonPadding: Dp
+        get() = getter(
+            small_portrait = 8.dp,
+            medium_portrait = 8.dp,
+            large_portrait = 12.dp
         )
 
     val LeafBaseWidth = 41.dp

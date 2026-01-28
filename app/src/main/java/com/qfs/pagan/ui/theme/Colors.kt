@@ -10,12 +10,14 @@ object Colors {
     val LEAF_COLOR_INVALID = Color(0xFFe51C3A)
     val LEAF_COLOR_INVALID_SELECTED = Color(0xFF890E21)
 
-    val EFFECT_COLOR = Color(0xFFCB9C10)
+    val EFFECT_COLOR = Color(0xFFCB9C20)
     val EFFECT_COLOR_SPILL = Color(0xFF886E20)
     val EFFECT_COLOR_SELECTED = Color(0xFF095660)
     val EFFECT_COLOR_SECONDARY = Color(0xFF567B80)
+    val EFFECT_LINE_COLOR = Color(0xFFFFFFFF)
+    val EFFECT_LINE_COLOR_NIGHT = Color(0xFF000000)
 
-    val LINE_COLOR = Color(0xFFEFEFEF)
+    val LINE_COLOR = Color(0xFFE0E0E0)
     val LINE_COLOR_NIGHT = Color(0xFF232323)
     val LINE_SELECTED = Color(0xFF5BA1D6)
     val LINE_COLOR_SECONDARY = Color(0xFF9CC6E6)
@@ -129,13 +131,13 @@ object Colors {
                         when (selected) {
                             LeafSelection.Primary -> LINE_SELECTED
                             LeafSelection.Secondary -> LINE_COLOR_SECONDARY_NIGHT
-                            LeafSelection.Unselected -> LINE_COLOR_NIGHT
+                            LeafSelection.Unselected -> EFFECT_LINE_COLOR_NIGHT
                         }
                     } else {
                         when (selected) {
                             LeafSelection.Primary -> LINE_SELECTED
                             LeafSelection.Secondary -> LINE_COLOR_SECONDARY
-                            LeafSelection.Unselected -> LINE_COLOR
+                            LeafSelection.Unselected -> EFFECT_LINE_COLOR
                         }
                     }
                 }

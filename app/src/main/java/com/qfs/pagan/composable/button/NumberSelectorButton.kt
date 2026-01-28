@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,11 +20,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import com.qfs.pagan.composable.dashed_border
 import com.qfs.pagan.composable.pressable
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shadows
 import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.Typography
 
 @Composable
 fun NumberSelectorButton(
@@ -45,6 +50,7 @@ fun NumberSelectorButton(
     }
 
     val pressed = remember { mutableStateOf(false) }
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
@@ -71,20 +77,30 @@ fun NumberSelectorButton(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .fillMaxSize()
-                .then(
-                    if (highlighted) {
-                        Modifier
-                            .padding(Dimensions.NumberSelectorHighlightedBorderPadding)
-                            .dashed_border(foreground, shape)
-                    } else {
-                        Modifier
-                    }
-                )
         ) {
             Text(
                 "$index",
                 maxLines = 1,
-                color = foreground
+                color = foreground,
+                style = Typography.NumberSelector.copy(
+                    fontWeight = if (selected) {
+                        FontWeight.Bold
+                    } else {
+                        LocalTextStyle.current.fontWeight
+                    },
+                    fontSize = if (selected) {
+                        LocalTextStyle.current.fontSize * 1.3
+                    } else if (highlighted) {
+                        LocalTextStyle.current.fontSize * 1.2
+                    } else {
+                        LocalTextStyle.current.fontSize
+                    },
+                    textDecoration = if (highlighted) {
+                        TextDecoration.Underline
+                    } else {
+                        LocalTextStyle.current.textDecoration
+                    }
+                )
             )
         }
     }

@@ -21,7 +21,7 @@ fun EffectTransitionButton(event: EffectEvent, dispatcher: ActionTracker, is_ini
         IconCMenuButton(
             modifier = modifier
                 .height(Dimensions.ContextMenuButtonHeight)
-                .width(dimensionResource(R.dimen.contextmenu_button_width)),
+                .width(Dimensions.ContextMenuButtonWidth),
             onClick = {
                 dispatcher.set_effect_transition(event)
             },

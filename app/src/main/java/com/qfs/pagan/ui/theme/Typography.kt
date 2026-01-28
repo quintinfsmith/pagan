@@ -3,6 +3,7 @@ package com.qfs.pagan.ui.theme
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 object Typography {
@@ -24,9 +25,21 @@ object Typography {
         fontSize = 16.sp
     )
 
+    val BeatLabel = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 16.sp,
+        lineHeight = 16.sp
+    )
+
     val DialogTitle = TextStyle(fontFamily = Fonts.FiraSans)
     val DialogBody = TextStyle(fontFamily = Fonts.FiraSans)
     val DropdownMenu = TextStyle(fontFamily = Fonts.FiraSans)
+
+    val LineLabel = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 14.sp,
+        lineHeight = 14.sp
+    )
 
     object Leaf {
         val Octave = TextStyle(
@@ -40,7 +53,10 @@ object Typography {
         )
     }
 
-    val NumberSelector = TextStyle(fontFamily = Fonts.FiraSans)
+    val NumberSelector = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 20.sp
+    )
     val ProjectNotes = TextStyle(fontFamily = Fonts.FiraSans)
 
     object Settings {

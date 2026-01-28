@@ -1280,7 +1280,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     Icon(
                                         modifier = Modifier
                                             .background(color = Color.Transparent, CircleShape)
-                                            .padding(4.dp),
+                                            .padding(6.dp),
                                         painter = painterResource(R.drawable.icon_ctl),
                                         contentDescription = stringResource(R.string.cd_show_effect_controls)
                                     )
@@ -1488,7 +1488,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             )
         }
 
-        ProvideContentColorTextStyle(foreground, MaterialTheme.typography.labelMedium) {
+        ProvideContentColorTextStyle(foreground, Typography.LineLabel) {
             HalfBorderBox(
                 modifier
                     .combinedClickable(
@@ -1519,10 +1519,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         } else {
                             Pair("${line_info.channel.value}", "${line_info.line_offset.value}")
                         }
+
                         Row(
                             Modifier
                                 .fillMaxSize()
-                                .padding(vertical = 2.dp, horizontal = 4.dp),
+                                .padding(4.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column(
@@ -1590,7 +1591,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             )
         }
 
-        ProvideContentColorTextStyle(foreground, MaterialTheme.typography.labelMedium) {
+        ProvideContentColorTextStyle(foreground, Typography.BeatLabel) {
             HalfBorderBox(
                 modifier
                     .background(
@@ -1675,13 +1676,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             .then(
                                 if (column_info.is_tagged.value) Modifier.dashed_border(
                                     foreground,
-                                    Shapes.TaggedBeat
+                                    Shapes.TaggedBeat,
+                                    1.dp
                                 )
                                 else Modifier
                             ),
                         contentAlignment = Alignment.Center,
                         content = {
-                            Text(text = "$x", modifier = Modifier.padding(4.dp))
+                            Text(text = "$x")
                         }
                     )
                 }

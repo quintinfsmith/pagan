@@ -169,7 +169,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
     @Composable
     fun SmallIconButton(
         modifier: Modifier = Modifier,
-        contentPadding: PaddingValues = PaddingValues(0.dp),
+        contentPadding: PaddingValues = PaddingValues(Dimensions.LandingIconButtonPadding),
         onClick: () -> Unit, content: @Composable RowScope.() -> Unit
     ) {
         Button(
@@ -187,7 +187,6 @@ class ComponentActivityLanding: PaganComponentActivity() {
     fun ButtonImport(modifier: Modifier = Modifier) {
         SmallIconButton(
             modifier = modifier,
-            contentPadding = PaddingValues(8.dp),
             content =  {
                 Icon(
                     modifier = Modifier.fillMaxSize(),
@@ -210,7 +209,6 @@ class ComponentActivityLanding: PaganComponentActivity() {
     fun ButtonSettings(modifier: Modifier = Modifier) {
         SmallIconButton(
             modifier = modifier,
-            contentPadding = PaddingValues(8.dp),
             onClick = {
                 this@ComponentActivityLanding.result_launcher_settings.launch(
                     Intent(this@ComponentActivityLanding, ComponentActivitySettings::class.java)
@@ -239,7 +237,6 @@ class ComponentActivityLanding: PaganComponentActivity() {
     ) {
         SmallIconButton(
             modifier = modifier,
-            contentPadding = PaddingValues(8.dp),
             onClick = {
                 this@ComponentActivityLanding.startActivity(
                     Intent(this@ComponentActivityLanding, ComponentActivityAbout::class.java)
@@ -332,10 +329,16 @@ class ComponentActivityLanding: PaganComponentActivity() {
         ) {
 
             if (this@ComponentActivityLanding.view_model.requires_soundfont.value) {
-                SoundFontWarning()
+                Box(
+                    Modifier.weight(1F),
+                    contentAlignment = Alignment.Center
+                ) {
+                    SoundFontWarning()
+                }
             } else {
-                Spacer(Modifier)
+                Spacer(Modifier.weight(1F))
             }
+
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 if (has_backup) {
@@ -348,6 +351,8 @@ class ComponentActivityLanding: PaganComponentActivity() {
                     ButtonLoad(Modifier.fillMaxWidth())
                 }
             }
+
+            Spacer(Modifier.weight(1F))
 
             Row(
                 Modifier.fillMaxWidth(),

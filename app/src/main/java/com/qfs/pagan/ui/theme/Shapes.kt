@@ -19,6 +19,8 @@ object Shapes {
         bottomStart = Dimensions.NumberSelectorButtonRadius,
         bottomEnd = Dimensions.NumberSelectorButtonRadius,
     )
+
+    val Container = RoundedCornerShape(12.dp)
     val ContextMenuButtonPrimary = RoundedCornerShape(ContextMenuButtonRadius)
     val ContextMenuButtonPrimaryStart = RoundedCornerShape(
         topStart = Dimensions.ContextMenuRadius,
@@ -59,4 +61,5 @@ object Shapes {
     val SectionButtonEnd = RoundedCornerShape(0.dp, 50.dp, 50.dp, 0.dp)
     val SectionButtonCenter = RectangleShape
     val SectionButtonStart = RoundedCornerShape(50.dp, 0.dp, 0.dp, 50.dp)
+
 }

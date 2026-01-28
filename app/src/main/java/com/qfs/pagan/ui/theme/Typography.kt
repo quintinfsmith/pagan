@@ -3,7 +3,6 @@ package com.qfs.pagan.ui.theme
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 object Typography {
@@ -93,5 +92,11 @@ object Typography {
         fontFamily = Fonts.FiraMono,
         fontSize = 16.sp,
         lineHeight = 16.sp
+    )
+
+    val TinyTuningDialogLabel = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 12.sp,
+        lineHeight = 12.sp
     )
 }

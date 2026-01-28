@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -47,8 +46,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
@@ -75,9 +72,7 @@ import com.qfs.pagan.composable.Slider
 import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.composable.button.Button
-import com.qfs.pagan.composable.button.NumberSelector
 import com.qfs.pagan.composable.button.OutlinedButton
-import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
@@ -89,8 +84,8 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.InvalidCursorState
-import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelPagan
@@ -98,7 +93,6 @@ import kotlinx.coroutines.CoroutineScope
 import java.io.IOException
 import kotlin.concurrent.thread
 import kotlin.math.ceil
-import kotlin.math.exp
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
@@ -1932,6 +1926,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                         label = { SText(title_string_id) },
                         modifier = Modifier.focusRequester(focus_requester),
                         contentPadding = PaddingValues(dimensionResource(R.dimen.dlg_input_padding)),
+                        text_align = TextAlign.Center,
                         minimum = min_value,
                         maximum = max_value
                     ) { new_value ->
@@ -2807,9 +2802,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     ) {
         val actively_editting_index = remember { mutableStateOf(0) }
         val expanded = remember { mutableStateOf(false) }
-        Row(
-            Modifier.height(IntrinsicSize.Min)
-        ) {
+        Row(Modifier.height(IntrinsicSize.Min)) {
             Column(
                 Modifier
                     .fillMaxHeight()
@@ -2817,13 +2810,15 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                 verticalArrangement = Arrangement.SpaceAround
             ) {
                 Row(
-                    Modifier
-                        .padding(horizontal = 6.dp)
-                        .fillMaxWidth(),
+                    Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column {
-                        SText(R.string.dlg_transpose, maxLines = 1)
+                        SText(
+                            R.string.dlg_transpose,
+                            maxLines = 1,
+                            style = Typography.TinyTuningDialogLabel
+                        )
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             IntegerInput(
                                 value = transpose_numerator,
@@ -2847,7 +2842,8 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                         SText(
                             R.string.dlg_set_radix,
                             maxLines = 1,
-                            textAlign = TextAlign.End
+                            textAlign = TextAlign.End,
+                            style = Typography.TinyTuningDialogLabel
                         )
                         IntegerInput(
                             value = radix,
@@ -2870,76 +2866,82 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                     }
                 }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Surface(
-                        Modifier.padding(vertical = 3.dp),
-                        shape = RoundedCornerShape(6.dp),
-                        tonalElevation = 2.dp
+                Column(verticalArrangement = Arrangement.Bottom) {
+                    SText(
+                        R.string.label_tuning,
+                        style = Typography.TinyTuningDialogLabel
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier.padding(6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                        Surface(
+                            Modifier.padding(vertical = 3.dp),
+                            shape = RoundedCornerShape(6.dp),
+                            tonalElevation = 2.dp
                         ) {
-                            DropdownMenu(
-                                expanded = expanded.value,
-                                onDismissRequest = { expanded.value = false }
+                            Row(
+                                modifier = Modifier.padding(6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
-                                for (i in 0 until radix.value) {
-                                    DropdownMenuItem(
-                                        modifier = Modifier
-                                            .then(
-                                                if (i == actively_editting_index.value) {
-                                                    Modifier.background(MaterialTheme.colorScheme.tertiary)
-                                                } else {
-                                                    Modifier
-                                                }
-                                            ),
-                                        text = {
-                                            Text(
-                                                "${"%02d".format(i)}: ${mutable_map[i].first.value} / ${mutable_map[i].second.value}",
-                                                style = LocalTextStyle.current.copy(
-                                                    color = if (i == actively_editting_index.value) {
-                                                        MaterialTheme.colorScheme.onTertiary
+                                DropdownMenu(
+                                    expanded = expanded.value,
+                                    onDismissRequest = { expanded.value = false }
+                                ) {
+                                    for (i in 0 until radix.value) {
+                                        DropdownMenuItem(
+                                            modifier = Modifier
+                                                .then(
+                                                    if (i == actively_editting_index.value) {
+                                                        Modifier.background(MaterialTheme.colorScheme.tertiary)
                                                     } else {
-                                                        LocalTextStyle.current.color
+                                                        Modifier
                                                     }
+                                                ),
+                                            text = {
+                                                Text(
+                                                    "${"%02d".format(i)}: ${mutable_map[i].first.value} / ${mutable_map[i].second.value}",
+                                                    style = LocalTextStyle.current.copy(
+                                                        color = if (i == actively_editting_index.value) {
+                                                            MaterialTheme.colorScheme.onTertiary
+                                                        } else {
+                                                            LocalTextStyle.current.color
+                                                        }
+                                                    )
                                                 )
-                                            )
-                                        },
-                                        onClick = {
-                                            actively_editting_index.value = i
-                                            expanded.value = false
-                                        }
-                                    )
+                                            },
+                                            onClick = {
+                                                actively_editting_index.value = i
+                                                expanded.value = false
+                                            }
+                                        )
+                                    }
                                 }
-                            }
-                            key(radix.value) {
-                                Button(
-                                    content = { Text("%02d".format(actively_editting_index.value)) },
-                                    onClick = { expanded.value = !expanded.value }
-                                )
-                                Spacer(Modifier.weight(1F))
-                                key(actively_editting_index.value) {
-                                    IntegerInput(
-                                        value = mutable_map[actively_editting_index.value].first,
-                                        minimum = 0,
-                                        modifier = Modifier.width(64.dp),
-                                        contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                                        callback = {}
+                                key(radix.value) {
+                                    Button(
+                                        content = { Text("%02d".format(actively_editting_index.value)) },
+                                        onClick = { expanded.value = !expanded.value }
                                     )
-                                    Text("/", modifier = Modifier.padding(horizontal = 2.dp))
-                                    IntegerInput(
-                                        value = mutable_map[actively_editting_index.value].second,
-                                        minimum = 1,
-                                        modifier = Modifier.width(64.dp),
-                                        contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                                        callback = { }
-                                    )
+                                    Spacer(Modifier.weight(1F))
+                                    key(actively_editting_index.value) {
+                                        IntegerInput(
+                                            value = mutable_map[actively_editting_index.value].first,
+                                            minimum = 0,
+                                            modifier = Modifier.width(Dimensions.TinyTuningDialogInputWidth),
+                                            contentPadding = PaddingValues(Dimensions.TinyTuningDialogInputPadding),
+                                            callback = {}
+                                        )
+                                        Text("/", modifier = Modifier.padding(horizontal = 2.dp))
+                                        IntegerInput(
+                                            value = mutable_map[actively_editting_index.value].second,
+                                            minimum = 1,
+                                            modifier = Modifier.width(Dimensions.TinyTuningDialogInputWidth),
+                                            contentPadding = PaddingValues(Dimensions.TinyTuningDialogInputPadding),
+                                            callback = { }
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -2947,33 +2949,36 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                 }
             }
 
+            Spacer(Modifier.width(Dimensions.TinyTuningDialogInnerPadding))
+
             Column(
                 Modifier
                     .fillMaxHeight()
+                    .background(color = MaterialTheme.colorScheme.surface, shape = Shapes.Container)
+                    .border(width = 1.dp, color = MaterialTheme.colorScheme.onSurface, shape = Shapes.Container)
                     .padding(horizontal = 4.dp),
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.SpaceEvenly
             ) {
                 OutlinedButton(
                     modifier = Modifier
-                        .width(41.dp)
-                        .height(41.dp),
-                    contentPadding = PaddingValues(4.dp),
+                        .width(Dimensions.TinyTuningDialogButtonSize)
+                        .height(Dimensions.TinyTuningDialogButtonSize),
+                    contentPadding = PaddingValues(Dimensions.TinyTuningDialogButtonPadding),
                     shape = CircleShape,
                     onClick = close_callback,
                     content = {
                         Icon(
                             modifier = Modifier.fillMaxSize(),
-                            painter = painterResource(R.drawable.icon_x),
+                            painter = painterResource(R.drawable.icon_hz),
                             contentDescription = stringResource(android.R.string.cancel)
                         )
                     }
                 )
-                Spacer(Modifier.height(8.dp))
                 Button(
                     modifier = Modifier
-                        .width(41.dp)
-                        .height(41.dp),
-                    contentPadding = PaddingValues(4.dp),
+                        .width(Dimensions.TinyTuningDialogButtonSize)
+                        .height(Dimensions.TinyTuningDialogButtonSize),
+                    contentPadding = PaddingValues(Dimensions.TinyTuningDialogButtonPadding),
                     shape = CircleShape,
                     onClick = {
                         close_callback()
@@ -2993,7 +2998,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                     content = {
                         Icon(
                             modifier = Modifier.fillMaxSize(),
-                            painter = painterResource(R.drawable.icon_check),
+                            painter = painterResource(R.drawable.icon_hz),
                             contentDescription = stringResource(android.R.string.ok)
                         )
                     }

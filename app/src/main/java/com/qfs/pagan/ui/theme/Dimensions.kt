@@ -188,6 +188,12 @@ object Dimensions {
     val SoundFontMenuPadding = 12.dp
     val SFWarningInnerPadding = 10.dp
 
+    val TinyTuningDialogButtonSize = 41.dp
+    val TinyTuningDialogButtonPadding = 4.dp
+    val TinyTuningDialogInnerPadding = 6.dp
+    val TinyTuningDialogInputWidth = 64.dp
+    val TinyTuningDialogInputPadding = 4.dp
+
     val TopBarHeight: Dp
         get() = getter(
             small_landscape = 41.dp,

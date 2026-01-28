@@ -2969,7 +2969,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                     content = {
                         Icon(
                             modifier = Modifier.fillMaxSize(),
-                            painter = painterResource(R.drawable.icon_hz),
+                            painter = painterResource(R.drawable.icon_x),
                             contentDescription = stringResource(android.R.string.cancel)
                         )
                     }
@@ -2998,7 +2998,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                     content = {
                         Icon(
                             modifier = Modifier.fillMaxSize(),
-                            painter = painterResource(R.drawable.icon_hz),
+                            painter = painterResource(R.drawable.icon_check),
                             contentDescription = stringResource(android.R.string.ok)
                         )
                     }

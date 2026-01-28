@@ -39,6 +39,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.roundToInt
 
@@ -175,7 +176,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
             shape = Shapes.ContextMenuButtonPrimary,
             modifier = Modifier
                 .height(Dimensions.ContextMenuButtonHeight)
-                .width(Dimensions.ButtonHeight.Normal),
+                .width(Dimensions.ContextMenuButtonWidth),
             content = {
                 Box(contentAlignment = Alignment.Center) {
                     if (!fade_expanded.value) {
@@ -185,7 +186,10 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
                             contentDescription = stringResource(R.string.cd_fade)
                         )
                     }
-                    Text("${(fade.floatValue * 100).roundToInt()}%")
+                    Text(
+                        text = "${(fade.floatValue * 100).roundToInt()}%",
+                        style = Typography.ContextMenuButton
+                    )
                 }
             },
             onClick = {

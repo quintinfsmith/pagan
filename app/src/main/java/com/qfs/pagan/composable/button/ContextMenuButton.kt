@@ -14,6 +14,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.Typography
 
 
 @Composable
@@ -67,6 +68,7 @@ fun TextCMenuButton(
             Text(
                 text = text,
                 maxLines = 1,
+                style = Typography.ContextMenuButton,
                 overflow = TextOverflow.Ellipsis
             )
         }

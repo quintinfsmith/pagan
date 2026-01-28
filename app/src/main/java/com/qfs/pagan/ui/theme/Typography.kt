@@ -30,6 +30,12 @@ object Typography {
         fontSize = 16.sp,
         lineHeight = 16.sp
     )
+    val ContextMenuButton = TextStyle(
+        fontFamily = Fonts.FiraMono,
+        fontWeight = FontWeight.Bold,
+        fontSize = 12.sp,
+        lineHeight = 12.sp
+    )
 
     val DialogTitle = TextStyle(fontFamily = Fonts.FiraSans)
     val DialogBody = TextStyle(fontFamily = Fonts.FiraSans)
@@ -82,6 +88,10 @@ object Typography {
         )
     }
 
-
     val TopBar = TextStyle(fontFamily = Fonts.FiraSans)
+    val TextField = TextStyle(
+        fontFamily = Fonts.FiraMono,
+        fontSize = 16.sp,
+        lineHeight = 16.sp
+    )
 }

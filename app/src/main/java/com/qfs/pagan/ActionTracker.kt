@@ -5,6 +5,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -76,6 +77,7 @@ import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.NumberSelector
 import com.qfs.pagan.composable.button.OutlinedButton
+import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
@@ -89,6 +91,7 @@ import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.InvalidCursorState
 import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.CoroutineScope
@@ -1455,7 +1458,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                     val max_abs = radix - 1
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         SText(R.string.offset_dialog_octaves)
-                        NumberPicker(Modifier, -7 .. 7, octave)
+                        NumberPicker(Modifier, -7..7, octave)
                     }
                     Spacer(Modifier.width(dimensionResource(R.dimen.dialog_adjust_inner_space)))
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -2948,7 +2951,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                 Modifier
                     .fillMaxHeight()
                     .padding(horizontal = 4.dp),
-                verticalArrangement = Arrangement.Top
+                verticalArrangement = Arrangement.Center
             ) {
                 OutlinedButton(
                     modifier = Modifier

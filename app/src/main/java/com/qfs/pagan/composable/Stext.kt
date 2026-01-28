@@ -36,8 +36,6 @@ import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.text.input.InputTransformation
@@ -49,7 +47,6 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.delete
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.selectAll
-import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
@@ -72,32 +69,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusState
-import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.layout.layout
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -108,7 +98,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -118,11 +107,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.lerp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.PopupProperties
-import androidx.compose.ui.zIndex
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.google.android.material.animation.AnimationUtils.lerp
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
@@ -132,8 +122,10 @@ import com.qfs.pagan.enumerate
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shadows
 import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.Typography
 import kotlinx.coroutines.launch
-import kotlin.math.exp
+import kotlin.math.abs
+import kotlin.math.absoluteValue
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -375,7 +367,7 @@ fun <T: Number> NumberInput(
         state = state,
         label = label,
         contentPadding = contentPadding,
-        textStyle = LocalTextStyle.current.copy(textAlign = text_align),
+        textStyle = Typography.TextField.copy(textAlign = text_align),
         prefix = prefix,
         modifier = modifier
             .onKeyEvent { event ->
@@ -424,7 +416,7 @@ fun TextInput(
         state = state,
         lineLimits = lineLimits,
         label = label,
-        textStyle = LocalTextStyle.current.copy(textAlign = textAlign),
+        textStyle = Typography.TextField.copy(textAlign = textAlign),
         modifier = modifier
             .onKeyEvent { event ->
                 when (event.key) {
@@ -865,63 +857,84 @@ fun DropdownMenuItem(
 fun NumberPicker(modifier: Modifier = Modifier, range: kotlin.ranges.IntRange, default: MutableState<Int>) {
     val h = Dimensions.NumberPickerRowHeight
 
-    val column_height = 4
+    val column_height = 3
+    val page_count = range.last - range.first + 1
     val state = rememberPagerState(
-        (default.value - range.first) + (Int.MAX_VALUE / 2),
+        (default.value - range.first) + (Int.MAX_VALUE / 2) - ((Int.MAX_VALUE / 2) % page_count),
         pageCount = { Int.MAX_VALUE }
     )
 
-    val page_count = range.last - range.first + 1
     default.value = (state.currentPage + range.first) % page_count
 
     val scope = rememberCoroutineScope()
-    Box(
-        Modifier
-            .width(Dimensions.NumberPickerRowWidth)
-            .height(h * column_height),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .height(h),
-            verticalArrangement = Arrangement.SpaceBetween
+    ProvideContentColorTextStyle(MaterialTheme.colorScheme.onSurface) {
+        Box(
+            modifier
+                .background(
+                    color = MaterialTheme.colorScheme.surface,
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .width(Dimensions.NumberPickerRowWidth)
+                .height(h * column_height),
+            contentAlignment = Alignment.Center
         ) {
-            Spacer(
+            Column(
                 Modifier
-                    .height(1.dp)
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.outline)
-            )
-            Spacer(
-                Modifier
-                    .height(1.dp)
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.outline)
-            )
-        }
+                    .height(h),
+                verticalArrangement = Arrangement.SpaceBetween,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(
+                    Modifier
+                        .height(1.dp)
+                        .fillMaxWidth(.8F)
+                        .background(MaterialTheme.colorScheme.outline)
+                )
+                Spacer(
+                    Modifier
+                        .height(1.dp)
+                        .fillMaxWidth(.8F)
+                        .background(MaterialTheme.colorScheme.outline)
+                )
+            }
 
-        VerticalPager(
-            state = state,
-            pageSize = PageSize.Fixed(h),
-            snapPosition = SnapPosition.Center,
-            beyondViewportPageCount = 6,
-            modifier = Modifier.height(h * column_height),
-            contentPadding = PaddingValues(vertical = h * 4)
-        ) { i ->
-            val page = i % page_count
-            Row(
-                Modifier
-                    .height(h)
-                    .combinedClickable(
-                        onClick = {
-                            scope.launch { state.scrollToPage(i) }
+            VerticalPager(
+                state = state,
+                pageSize = PageSize.Fixed(h),
+                snapPosition = SnapPosition.Center,
+                beyondViewportPageCount = 6,
+                modifier = Modifier
+                    .height(h * column_height),
+                contentPadding = PaddingValues(vertical = h * 4)
+            ) { i ->
+                val page = i % page_count
+                Row(
+                    Modifier
+                        .height(h)
+                        .graphicsLayer {
+                            val page_offset = abs((state.currentPage - i) + state.currentPageOffsetFraction)
+                            alpha = lerp(
+                                start = 0.0f,
+                                stop = 1f,
+                                fraction = 1f - (page_offset / 1.5F).coerceIn(0f, 1f)
+                            )
                         }
-                    ),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-                content = { Text("${range.first + page}") }
-            )
+                        .combinedClickable(
+                            onClick = {
+                                scope.launch { state.scrollToPage(i) }
+                            }
+                        ),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    content = { Text("${range.first + page}") }
+                )
+            }
         }
     }
 }

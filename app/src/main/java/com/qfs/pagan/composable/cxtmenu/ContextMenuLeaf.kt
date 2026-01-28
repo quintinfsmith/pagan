@@ -420,6 +420,9 @@ fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
                         on_click = { dispatcher.set_offset(it, ui_facade.relative_input_mode.value) }
                     )
                 }
+                if (i != 0) {
+                    Spacer(Modifier.height(Dimensions.NumberSelectorSpacing))
+                }
             }
         }
     }

@@ -1862,10 +1862,10 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                     label = { SText(R.string.dlg_project_notes) },
                     input = project_notes,
                     textAlign = TextAlign.Start,
-                    modifier = Modifier.fillMaxWidth()
-                        .weight(1F, fill = false),
-                        //.verticalScroll(rememberScrollState()),
-                    lineLimits = TextFieldLineLimits.Default
+                    lineLimits = TextFieldLineLimits.MultiLine(3),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1F, fill = false)
                 ) {}
                 DialogBar(
                     neutral = close,

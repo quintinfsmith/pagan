@@ -378,7 +378,7 @@ class ViewModelEditorState: ViewModel() {
         // Update spillover
         var working_beat = 0
         var working_position = cells.get_first_position(0)
-        if (cells.get_tree(working_beat, working_position).has_event()) {
+        if (!cells.get_tree(working_beat, working_position).has_event()) {
             cells.get_proceding_event_position(working_beat, working_position)?.let {
                 working_beat = it.first
                 working_position = it.second

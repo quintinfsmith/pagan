@@ -11,6 +11,8 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
@@ -55,32 +57,18 @@ fun ContextMenuRangeSecondary(ui_facade: ViewModelEditorState, dispatcher: Actio
             verticalAlignment = Alignment.CenterVertically
         ) {
             AdjustRangeButton(dispatcher)
-            SingleChoiceSegmentedButtonRow {
-                // TODO: MERGE
-                val options = PaganConfiguration.MoveMode.entries.filter { it != PaganConfiguration.MoveMode.MERGE }
-                for ((i, mode) in options.enumerate()) {
-                    if (i != 0) {
-                        Spacer(Modifier.width(4.dp))
+            RadioMenu(
+                options = listOf(
+                    Pair(PaganConfiguration.MoveMode.MOVE) {
+                        SText(R.string.move_mode_move)
+                    },
+                    Pair(PaganConfiguration.MoveMode.COPY) {
+                        SText(R.string.move_mode_copy)
                     }
-                    SegmentedButton(
-                        shape = SegmentedButtonDefaults.itemShape(
-                            index = i,
-                            count = options.size
-                        ),
-                        onClick = { dispatcher.set_copy_mode(mode) },
-                        selected = mode == move_mode,
-                        label = {
-                            SText(
-                                when (mode) {
-                                    PaganConfiguration.MoveMode.MOVE -> R.string.move_mode_move
-                                    PaganConfiguration.MoveMode.COPY -> R.string.move_mode_copy
-                                    PaganConfiguration.MoveMode.MERGE -> R.string.move_mode_merge
-                                }
-                            )
-                        }
-                    )
-                }
-            }
+                ),
+                active = remember { mutableStateOf(move_mode) },
+                callback = { dispatcher.set_copy_mode(it) }
+            )
             UnsetRangeButton(dispatcher)
         }
         Row(

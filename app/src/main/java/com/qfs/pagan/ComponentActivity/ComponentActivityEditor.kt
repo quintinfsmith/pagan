@@ -776,6 +776,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             }
         )
+
         if (vm_top.has_saved_project.value) {
             menu_items.add(
                 Pair(R.string.menu_item_load_project) {
@@ -958,39 +959,37 @@ class ComponentActivityEditor: PaganComponentActivity() {
             )
             Spacer(Modifier.width(Dimensions.TopBarItemSpace))
         }
-        if (vm_state.playback_state_midi.value != PlaybackState.Playing && vm_state.playback_state_soundfont.value != PlaybackState.Playing) {
+        if (vm_state.playback_state_midi.value != PlaybackState.Playing && vm_state.playback_state_soundfont.value != PlaybackState.Playing ) {
             TopBarIcon(
                 icon = R.drawable.icon_undo,
                 description = R.string.menu_item_undo,
                 onClick = { dispatcher.apply_undo() }
             )
-        } else {
-            TopBarNoIcon()
-        }
-        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
-        Box {
-            val expanded = remember { mutableStateOf(false) }
-            TopBarIcon(
-                icon = R.drawable.icon_kebab,
-                description = R.string.menu_item_playpause,
-                onClick = { expanded.value = !expanded.value }
-            )
-            DropdownMenu(
-                expanded = expanded.value,
-                onDismissRequest = { expanded.value = false }
-            ) {
-                for ((_, item) in menu_items.enumerate()) {
-                    DropdownMenuItem(
-                        text = { SText(item.first) },
-                        onClick = {
-                            expanded.value = false
-                            item.second()
-                        }
-                    )
+            Spacer(Modifier.width(Dimensions.TopBarItemSpace))
+            Box {
+                val expanded = remember { mutableStateOf(false) }
+                TopBarIcon(
+                    icon = R.drawable.icon_kebab,
+                    description = R.string.menu_item_playpause,
+                    onClick = { expanded.value = !expanded.value }
+                )
+                DropdownMenu(
+                    expanded = expanded.value,
+                    onDismissRequest = { expanded.value = false }
+                ) {
+                    for ((_, item) in menu_items.enumerate()) {
+                        DropdownMenuItem(
+                            text = { SText(item.first) },
+                            onClick = {
+                                expanded.value = false
+                                item.second()
+                            }
+                        )
+                    }
                 }
             }
+            Spacer(Modifier.width(Dimensions.TopBarItemSpace))
         }
-        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
     }
 
     @Composable
@@ -1971,6 +1970,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     val padding_height_px = this@ComponentActivityEditor.toPx(Dimensions.ConfigChannelSpacing)
                     val row_height_px = this@ComponentActivityEditor.toPx(row_height)
 
+                    // FIXME: difference between channel_count.value && channel_data.size is causing crash sometimes
                     for (i in 0 until state_model.channel_count.value) {
                         val channel_data = state_model.channel_data[i]
                         val is_dragging = remember { mutableStateOf(false) }

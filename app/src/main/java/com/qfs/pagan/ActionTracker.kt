@@ -4,24 +4,31 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
@@ -29,6 +36,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -38,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -65,6 +74,8 @@ import com.qfs.pagan.composable.Slider
 import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.composable.button.Button
+import com.qfs.pagan.composable.button.NumberSelector
+import com.qfs.pagan.composable.button.OutlinedButton
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
@@ -76,12 +87,15 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.InvalidCursorState
+import com.qfs.pagan.ui.theme.Colors
+import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.CoroutineScope
 import java.io.IOException
 import kotlin.concurrent.thread
 import kotlin.math.ceil
+import kotlin.math.exp
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
@@ -1441,16 +1455,12 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                     val max_abs = radix - 1
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         SText(R.string.offset_dialog_octaves)
-                        NumberPicker(Modifier, -7 .. 7, octave) { i ->
-                            octave.value = i
-                        }
+                        NumberPicker(Modifier, -7 .. 7, octave)
                     }
                     Spacer(Modifier.width(dimensionResource(R.dimen.dialog_adjust_inner_space)))
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         SText(R.string.offset_dialog_offset)
-                        NumberPicker(Modifier, 0 - max_abs .. max_abs, offset) { i ->
-                            offset.value = i
-                        }
+                        NumberPicker(Modifier, 0 - max_abs .. max_abs, offset)
                     }
                 }
                 DialogBar(
@@ -2644,6 +2654,351 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         )
     }
 
+    @Composable
+    fun ColumnScope.TuningDialogNormal(
+        close_callback: () -> Unit,
+        transpose_numerator: MutableState<Int>,
+        transpose_denominator: MutableState<Int>,
+        radix: MutableState<Int>,
+        mutable_map: MutableList<Pair<MutableState<Int>, MutableState<Int>>>
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                SText(R.string.dlg_transpose, maxLines = 1)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IntegerInput(
+                        value = transpose_numerator,
+                        minimum = 0,
+                        contentPadding = PaddingValues(Dimensions.TransposeDialogInnerPadding),
+                        modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
+                        callback = { }
+                    )
+                    Text("/", Modifier.padding(horizontal = 4.dp))
+                    IntegerInput(
+                        value = transpose_denominator,
+                        minimum = 1,
+                        contentPadding = PaddingValues(Dimensions.TransposeDialogInnerPadding),
+                        modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
+                        callback = { }
+                    )
+                }
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                SText(
+                    R.string.dlg_set_radix,
+                    maxLines = 1,
+                    textAlign = TextAlign.End
+                )
+                IntegerInput(
+                    value = radix,
+                    minimum = 1,
+                    maximum = 36,
+                    contentPadding = PaddingValues(Dimensions.TransposeDialogInnerPadding),
+                    modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
+                    callback = {
+                        mutable_map.clear()
+                        for (i in 0 until it) {
+                            mutable_map.add(
+                                Pair(
+                                    mutableStateOf(i),
+                                    mutableStateOf(it)
+                                )
+                            )
+                        }
+                    }
+                )
+            }
+        }
+
+        Spacer(Modifier.height(Dimensions.TransposeDialogInnerPadding))
+
+        Surface(
+            modifier = Modifier.weight(1F, fill = false),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface),
+            shape = RoundedCornerShape(6.dp),
+            tonalElevation = 1.dp
+        ) {
+            key(radix.value) {
+                FlowRow(
+                    modifier = Modifier
+                        .padding(6.dp)
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
+                ) {
+                    for ((i, state) in mutable_map.enumerate()) {
+                        val (numer, denom) = state
+                        Surface(
+                            Modifier.padding(vertical = 3.dp),
+                            shape = RoundedCornerShape(6.dp),
+                            tonalElevation = 2.dp
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                Text(
+                                    "%02d".format(i),
+                                    modifier = Modifier.padding(horizontal = 4.dp)
+                                )
+                                Spacer(Modifier.weight(1F))
+                                IntegerInput(
+                                    value = numer,
+                                    minimum = 0,
+                                    modifier = Modifier.width(64.dp),
+                                    contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
+                                    callback = {}
+                                )
+                                Text("/", modifier = Modifier.padding(horizontal = 2.dp))
+                                IntegerInput(
+                                    value = denom,
+                                    minimum = 1,
+                                    modifier = Modifier.width(64.dp),
+                                    contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
+                                    callback = { }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(
+            Modifier
+                .height(4.dp)
+                .fillMaxWidth()
+        )
+
+        DialogBar(
+            neutral = close_callback,
+            positive = {
+                close_callback()
+                this@ActionTracker.set_tuning_table_and_transpose(
+                    Array(mutable_map.size) { i ->
+                        Pair(
+                            mutable_map[i].first.value,
+                            mutable_map[i].second.value
+                        )
+                    },
+                    Pair(
+                        transpose_numerator.value,
+                        transpose_denominator.value
+                    )
+                )
+            }
+        )
+    }
+
+    @Composable
+    fun ColumnScope.TuningDialogTiny(
+        close_callback: () -> Unit,
+        transpose_numerator: MutableState<Int>,
+        transpose_denominator: MutableState<Int>,
+        radix: MutableState<Int>,
+        mutable_map: MutableList<Pair<MutableState<Int>, MutableState<Int>>>
+    ) {
+        val actively_editting_index = remember { mutableStateOf(0) }
+        val expanded = remember { mutableStateOf(false) }
+        Row(
+            Modifier.height(IntrinsicSize.Min)
+        ) {
+            Column(
+                Modifier
+                    .fillMaxHeight()
+                    .weight(1F, fill = false),
+                verticalArrangement = Arrangement.SpaceAround
+            ) {
+                Row(
+                    Modifier
+                        .padding(horizontal = 6.dp)
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        SText(R.string.dlg_transpose, maxLines = 1)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IntegerInput(
+                                value = transpose_numerator,
+                                minimum = 0,
+                                contentPadding = PaddingValues(Dimensions.TransposeDialogInnerPadding),
+                                modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
+                                callback = { }
+                            )
+                            Text("/", Modifier.padding(horizontal = 4.dp))
+                            IntegerInput(
+                                value = transpose_denominator,
+                                minimum = 1,
+                                contentPadding = PaddingValues(Dimensions.TransposeDialogInnerPadding),
+                                modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
+                                callback = { }
+                            )
+                        }
+                    }
+
+                    Column {
+                        SText(
+                            R.string.dlg_set_radix,
+                            maxLines = 1,
+                            textAlign = TextAlign.End
+                        )
+                        IntegerInput(
+                            value = radix,
+                            minimum = 1,
+                            maximum = 36,
+                            contentPadding = PaddingValues(Dimensions.TransposeDialogInnerPadding),
+                            modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
+                            callback = {
+                                mutable_map.clear()
+                                for (i in 0 until it) {
+                                    mutable_map.add(
+                                        Pair(
+                                            mutableStateOf(i),
+                                            mutableStateOf(it)
+                                        )
+                                    )
+                                }
+                            }
+                        )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        Modifier.padding(vertical = 3.dp),
+                        shape = RoundedCornerShape(6.dp),
+                        tonalElevation = 2.dp
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            DropdownMenu(
+                                expanded = expanded.value,
+                                onDismissRequest = { expanded.value = false }
+                            ) {
+                                for (i in 0 until radix.value) {
+                                    DropdownMenuItem(
+                                        modifier = Modifier
+                                            .then(
+                                                if (i == actively_editting_index.value) {
+                                                    Modifier.background(MaterialTheme.colorScheme.tertiary)
+                                                } else {
+                                                    Modifier
+                                                }
+                                            ),
+                                        text = {
+                                            Text(
+                                                "${"%02d".format(i)}: ${mutable_map[i].first.value} / ${mutable_map[i].second.value}",
+                                                style = LocalTextStyle.current.copy(
+                                                    color = if (i == actively_editting_index.value) {
+                                                        MaterialTheme.colorScheme.onTertiary
+                                                    } else {
+                                                        LocalTextStyle.current.color
+                                                    }
+                                                )
+                                            )
+                                        },
+                                        onClick = {
+                                            actively_editting_index.value = i
+                                            expanded.value = false
+                                        }
+                                    )
+                                }
+                            }
+                            key(radix.value) {
+                                Button(
+                                    content = { Text("%02d".format(actively_editting_index.value)) },
+                                    onClick = { expanded.value = !expanded.value }
+                                )
+                                Spacer(Modifier.weight(1F))
+                                key(actively_editting_index.value) {
+                                    IntegerInput(
+                                        value = mutable_map[actively_editting_index.value].first,
+                                        minimum = 0,
+                                        modifier = Modifier.width(64.dp),
+                                        contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
+                                        callback = {}
+                                    )
+                                    Text("/", modifier = Modifier.padding(horizontal = 2.dp))
+                                    IntegerInput(
+                                        value = mutable_map[actively_editting_index.value].second,
+                                        minimum = 1,
+                                        modifier = Modifier.width(64.dp),
+                                        contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
+                                        callback = { }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Column(
+                Modifier
+                    .fillMaxHeight()
+                    .padding(horizontal = 4.dp),
+                verticalArrangement = Arrangement.Top
+            ) {
+                OutlinedButton(
+                    modifier = Modifier
+                        .width(41.dp)
+                        .height(41.dp),
+                    contentPadding = PaddingValues(4.dp),
+                    shape = CircleShape,
+                    onClick = close_callback,
+                    content = {
+                        Icon(
+                            modifier = Modifier.fillMaxSize(),
+                            painter = painterResource(R.drawable.icon_x),
+                            contentDescription = stringResource(android.R.string.cancel)
+                        )
+                    }
+                )
+                Spacer(Modifier.height(8.dp))
+                Button(
+                    modifier = Modifier
+                        .width(41.dp)
+                        .height(41.dp),
+                    contentPadding = PaddingValues(4.dp),
+                    shape = CircleShape,
+                    onClick = {
+                        close_callback()
+                        this@ActionTracker.set_tuning_table_and_transpose(
+                            Array(mutable_map.size) { i ->
+                                Pair(
+                                    mutable_map[i].first.value,
+                                    mutable_map[i].second.value
+                                )
+                            },
+                            Pair(
+                                transpose_numerator.value,
+                                transpose_denominator.value
+                            )
+                        )
+                    },
+                    content = {
+                        Icon(
+                            modifier = Modifier.fillMaxSize(),
+                            painter = painterResource(R.drawable.icon_check),
+                            contentDescription = stringResource(android.R.string.ok)
+                        )
+                    }
+                )
+            }
+        }
+    }
+
     fun set_tuning_table_and_transpose(tuning_map: Array<Pair<Int, Int>>? = null, transpose: Pair<Int, Int>? = null) {
         val opus_manager = this.get_opus_manager()
         if (tuning_map != null && transpose != null) {
@@ -2654,11 +3009,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
 
         this.vm_top.create_medium_dialog { close ->
             @Composable {
-                val screen_height = LocalWindowInfo.current.containerDpSize.height
-                val is_editing = remember { mutableStateOf(false) }
-                val height_threshold = 360.dp
-                println("SCREEN HEIGHT: $screen_height")
-
                 val original_radix = opus_manager.get_radix()
                 val transpose_numerator = remember { mutableIntStateOf(opus_manager.transpose.first) }
                 val transpose_denominator = remember { mutableIntStateOf(opus_manager.transpose.second) }
@@ -2674,167 +3024,11 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                     }
                 }
 
-                // val keyboard_controller = LocalSoftwareKeyboardController.current
-                // val focus_manager = LocalFocusManager.current
-                //     // Allow click-away from text fields
-                //     .pointerInput(Unit) {
-                //         detectTapGestures { offset ->
-                //             keyboard_controller?.hide()
-                //             focus_manager.clearFocus()
-                //         }
-                //     }
-
-                key(is_editing.value) {
-                    if (screen_height > height_threshold || !is_editing.value) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                SText(R.string.dlg_transpose, maxLines = 1)
-                                Row {
-                                    IntegerInput(
-                                        value = transpose_numerator,
-                                        minimum = 0,
-                                        contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                                        modifier = Modifier.width(dimensionResource(R.dimen.transpose_dlg_input_width)),
-                                        callback = { }
-                                    )
-
-                                    Spacer(Modifier.height(4.dp))
-                                    IntegerInput(
-                                        value = transpose_denominator,
-                                        minimum = 0,
-                                        contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                                        modifier = Modifier.width(dimensionResource(R.dimen.transpose_dlg_input_width)),
-                                        callback = { }
-                                    )
-                                }
-                            }
-                            Column {
-                                SText(R.string.dlg_set_radix, maxLines = 1)
-                                IntegerInput(
-                                    value = radix,
-                                    minimum = 0,
-                                    maximum = 36,
-                                    contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                                    modifier = Modifier.width(dimensionResource(R.dimen.transpose_dlg_input_width)),
-                                    callback = {
-                                        mutable_map.clear()
-                                        for (i in 0 until it) {
-                                            mutable_map.add(
-                                                Pair(
-                                                    mutableStateOf(i),
-                                                    mutableStateOf(it)
-                                                )
-                                            )
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                    }
+                if(this@ActionTracker.vm_top.active_layout_size.value == LayoutSize.SmallLandscape) {
+                    TuningDialogTiny(close, transpose_numerator, transpose_denominator, radix, mutable_map)
+                } else {
+                    TuningDialogNormal(close, transpose_numerator, transpose_denominator, radix, mutable_map)
                 }
-
-                Spacer(Modifier.width(4.dp))
-
-                Surface(
-                    modifier = Modifier
-                        .weight(1F, fill = false),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface),
-                    shape = RoundedCornerShape(6.dp),
-                    tonalElevation = 1.dp
-                ) {
-                    key(radix.value) {
-                        FlowRow(
-                            modifier = Modifier
-                                .padding(6.dp)
-                                .fillMaxWidth()
-                                .defaultMinSize(minHeight = 54.dp)
-                                .verticalScroll(rememberScrollState()),
-                        ) {
-                            for ((i, state) in mutable_map.enumerate()) {
-                                val (numer, denom) = state
-                                val expanded = remember { mutableStateOf(false) }
-                                Surface(
-                                    Modifier.padding(vertical = 3.dp),
-                                    shape = RoundedCornerShape(6.dp),
-                                    tonalElevation = 2.dp
-                                ) {
-                                    Button(
-                                        onClick = {
-                                            expanded.value = true
-                                            is_editing.value = true
-                                        },
-                                        content = {
-                                            Text("$i) ${numer.value} / ${denom.value}")
-                                        }
-                                    )
-                                    DropdownMenu(
-                                        expanded = expanded.value,
-                                        onDismissRequest = {
-                                            expanded.value = false
-                                            is_editing.value = false
-                                        }
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.padding(6.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                        ) {
-                                            Text(
-                                                "%02d".format(i),
-                                                modifier = Modifier.padding(horizontal = 4.dp)
-                                            )
-                                            Spacer(Modifier.weight(1F))
-                                            IntegerInput(
-                                                value = numer,
-                                                minimum = 0,
-                                                modifier = Modifier.width(64.dp),
-                                                contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                                                callback = {}
-                                            )
-                                            Text("/", modifier = Modifier.padding(horizontal = 2.dp))
-                                            IntegerInput(
-                                                value = denom,
-                                                minimum = 0,
-                                                modifier = Modifier.width(64.dp),
-                                                contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
-                                                callback = { }
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Spacer(
-                    Modifier
-                        .height(4.dp)
-                        .fillMaxWidth()
-                )
-
-                DialogBar(
-                    neutral = close,
-                    positive = {
-                        close()
-                        this@ActionTracker.set_tuning_table_and_transpose(
-                            Array(mutable_map.size) { i ->
-                                Pair(
-                                    mutable_map[i].first.value,
-                                    mutable_map[i].second.value
-                                )
-                            },
-                            Pair(
-                                transpose_numerator.value,
-                                transpose_denominator.value
-                            )
-                        )
-                    }
-                )
             }
         }
     }

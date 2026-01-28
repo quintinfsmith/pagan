@@ -302,7 +302,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Row {
+                Row(verticalAlignment = Alignment.Bottom) {
                     ActiveSoundfontButton(Modifier.weight(1F))
                     SoundFontWarningWrapper(Modifier.weight(1F).padding(start = Dimensions.SoundFontMenuPadding))
                 }

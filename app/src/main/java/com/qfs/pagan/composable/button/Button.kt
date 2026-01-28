@@ -50,6 +50,7 @@ fun OutlinedButton(
     enabled: Boolean = true,
     border: BorderStroke = ButtonDefaults.outlinedButtonBorder(),
 
+    shape: Shape = ButtonDefaults.shape,
     outerPadding: PaddingValues = PaddingValues(0.dp),
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
     content: @Composable RowScope.() -> Unit
@@ -60,7 +61,7 @@ fun OutlinedButton(
         modifier = modifier,
         enabled = enabled,
         colors = ButtonDefaults.outlinedButtonColors(),
-        shape = ButtonDefaults.outlinedShape,
+        shape = shape,
         border = border,
         outerPadding = outerPadding,
         contentPadding = contentPadding,

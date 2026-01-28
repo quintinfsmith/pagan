@@ -17,7 +17,7 @@ import com.qfs.pagan.LayoutSize as VLayoutSize
 object Dimensions {
     var active_layout_width = 0.dp
     var active_layout_height = 0.dp
-    private var active_layout_size = VLayoutSize.SmallPortrait
+    var active_layout_size = VLayoutSize.SmallPortrait
 
     fun set_active_layout_dimensions(width: Dp, height: Dp): VLayoutSize {
         Dimensions.active_layout_height = height
@@ -172,6 +172,8 @@ object Dimensions {
     val LeafBaseWidth = 41.dp
     val LinkUrlPadding = 4.dp
 
+    val NumberPickerRowHeight = 41.dp
+    val NumberPickerRowWidth = 80.dp
     val NumberSelectorButtonHeight: Dp
         get() = getter(
             small_portrait = 41.dp,
@@ -197,4 +199,7 @@ object Dimensions {
         )
     val TopBarIconSize = 32.dp
     val TopBarItemSpace = 16.dp
+
+    val TransposeDialogInnerPadding = 8.dp
+    val TransposeDialogInputWidth = 64.dp
 }

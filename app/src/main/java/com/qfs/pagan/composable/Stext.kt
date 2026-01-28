@@ -46,6 +46,7 @@ import androidx.compose.foundation.text.input.OutputTransformation
 import androidx.compose.foundation.text.input.TextFieldBuffer
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.delete
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.selectAll
 import androidx.compose.material3.ButtonColors
@@ -78,6 +79,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -215,6 +217,35 @@ fun IntegerInput(
                 value.value = converted_value
             }
         },
+        {
+            val working_string = this.toString()
+            if (working_string == "-" && minimum != null && minimum < 0) return@NumberInput
+
+            var converted_value = try {
+                if (working_string.isEmpty()) {
+                    0
+                } else {
+                    this.toString().toInt()
+                }
+            } catch (_: Exception) {
+                return@NumberInput
+            }
+
+            minimum?.let {
+                if (it > converted_value) {
+                    converted_value = max(it, converted_value)
+                    this.delete(0, this.length)
+                    this.append(converted_value.toString())
+                }
+            }
+            maximum?.let {
+                if (it < converted_value) {
+                    converted_value = min(it, converted_value)
+                    this.delete(0, this.length)
+                    this.append(converted_value.toString())
+                }
+            }
+        },
         callback
     )
 }
@@ -275,6 +306,35 @@ fun FloatInput(
                 value.value = converted_value
             }
         },
+        {
+            val working_string = this.toString()
+            if (working_string == "-" && minimum != null && minimum < 0) return@NumberInput
+
+            var converted_value = try {
+                if (working_string.isEmpty()) {
+                    0F
+                } else {
+                    this.toString().toFloat()
+                }
+            } catch (_: Exception) {
+                return@NumberInput
+            }
+
+            minimum?.let {
+                if (it > converted_value) {
+                    converted_value = max(it, converted_value)
+                    this.delete(0, this.length)
+                    this.append(converted_value.toString())
+                }
+            }
+            maximum?.let {
+                if (it < converted_value) {
+                    converted_value = min(it, converted_value)
+                    this.delete(0, this.length)
+                    this.append(converted_value.toString())
+                }
+            }
+        },
         callback
     )
 }
@@ -292,6 +352,7 @@ fun <T: Number> NumberInput(
     on_focus_enter: (() -> Unit)? = null,
     on_focus_exit: ((T?) -> Unit)? = null,
     input_transformation: InputTransformation,
+    output_transformation: OutputTransformation,
     callback: (T) -> Unit
 ) {
     val trigger_select_all = remember { mutableStateOf<Boolean?>(null) }
@@ -333,6 +394,7 @@ fun <T: Number> NumberInput(
             keyboardType = KeyboardType.Number
         ),
         inputTransformation = input_transformation,
+        outputTransformation = output_transformation,
         lineLimits = TextFieldLineLimits.SingleLine,
         onKeyboardAction = { action ->
             callback(value.value)
@@ -800,21 +862,22 @@ fun DropdownMenuItem(
 }
 
 @Composable
-fun NumberPicker(modifier: Modifier = Modifier, range: kotlin.ranges.IntRange, default: MutableState<Int>, callback: (Int) -> Unit) {
-    val h = dimensionResource(R.dimen.numberpicker_row_height)
+fun NumberPicker(modifier: Modifier = Modifier, range: kotlin.ranges.IntRange, default: MutableState<Int>) {
+    val h = Dimensions.NumberPickerRowHeight
+
     val column_height = 4
-    val page_count = range.last - range.first + 1
     val state = rememberPagerState(
-        default.value - range.first,
-        pageCount = { page_count }
+        (default.value - range.first) + (Int.MAX_VALUE / 2),
+        pageCount = { Int.MAX_VALUE }
     )
 
-    default.value = (state.currentPage + range.first)
+    val page_count = range.last - range.first + 1
+    default.value = (state.currentPage + range.first) % page_count
 
     val scope = rememberCoroutineScope()
     Box(
         Modifier
-            .width(dimensionResource(R.dimen.numberpicker_row_width))
+            .width(Dimensions.NumberPickerRowWidth)
             .height(h * column_height),
         contentAlignment = Alignment.Center
     ) {
@@ -845,13 +908,14 @@ fun NumberPicker(modifier: Modifier = Modifier, range: kotlin.ranges.IntRange, d
             beyondViewportPageCount = 6,
             modifier = Modifier.height(h * column_height),
             contentPadding = PaddingValues(vertical = h * 4)
-        ) { page ->
+        ) { i ->
+            val page = i % page_count
             Row(
                 Modifier
                     .height(h)
                     .combinedClickable(
                         onClick = {
-                            scope.launch { state.scrollToPage(page) }
+                            scope.launch { state.scrollToPage(i) }
                         }
                     ),
                 verticalAlignment = Alignment.CenterVertically,

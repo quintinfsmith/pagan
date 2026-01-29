@@ -4180,7 +4180,7 @@ open class OpusLayerBase: Effectable {
         this.recache_line_maps()
     }
 
-    open fun load(bytes: ByteArray, on_load_callback: (() -> Unit)? = null) {
+    open fun load(bytes: ByteArray, on_load_callback: ((JSONHashMap) -> Unit)? = null) {
         val json_content = bytes.toString(Charsets.UTF_8)
         var generalized_object = JSONParser.parse<JSONHashMap>(json_content) ?: throw EmptyJSONException()
         var version = OpusManagerJSONInterface.detect_version(generalized_object)
@@ -4223,10 +4223,10 @@ open class OpusLayerBase: Effectable {
         this.import_from_other(OpusLayerBase.initialize_basic())
     }
 
-    fun project_change_json(json_data: JSONHashMap, on_load_callback: (() -> Unit)? = null) {
+    fun project_change_json(json_data: JSONHashMap, on_load_callback: ((JSONHashMap) -> Unit)? = null) {
         this.project_change_wrapper {
             this._project_change_json(json_data)
-            on_load_callback?.let { it() }
+            on_load_callback?.let { it(json_data) }
         }
     }
 

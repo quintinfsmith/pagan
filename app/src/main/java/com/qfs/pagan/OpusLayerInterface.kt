@@ -1243,6 +1243,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     override fun _project_change_json(json_data: JSONHashMap) {
         super._project_change_json(json_data)
+
     }
 
     override fun move_channel(channel_index: Int, new_channel_index: Int) {

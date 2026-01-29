@@ -2489,9 +2489,26 @@ class ComponentActivityEditor: PaganComponentActivity() {
         reader.close()
         input_stream?.close()
 
-        this@ComponentActivityEditor.controller_model.opus_manager.load(content) {
+        this@ComponentActivityEditor.controller_model.opus_manager.load(content) { json_data ->
             this@ComponentActivityEditor.controller_model.active_project = uri
             this@ComponentActivityEditor.controller_model.project_exists.value = true
+            if (this@ComponentActivityEditor.view_model.configuration.use_preferred_soundfont.value) {
+                json_data.get_hashmap("d").get_stringn("sf")?.let {
+                    val original = this@ComponentActivityEditor.view_model.configuration.soundfont.value
+                    if (it != original) {
+                        this@ComponentActivityEditor.view_model.configuration.soundfont.value = it
+                        // Try opening the assigned soundfont, but if it fails for any reason, go back to the
+                        // Currently active one.
+                        try {
+                            this.set_soundfont()
+                        } catch (_: Exception) {
+                            this@ComponentActivityEditor.view_model.configuration.soundfont.value = original
+                            this@ComponentActivityEditor.set_soundfont()
+                        }
+                        this@ComponentActivityEditor.view_model.save_configuration()
+                    }
+                }
+            }
         }
     }
 

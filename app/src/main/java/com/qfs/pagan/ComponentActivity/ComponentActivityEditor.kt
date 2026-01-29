@@ -1652,6 +1652,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             } else {
                                 MaterialTheme.colorScheme.surfaceContainerHigh
                             },
+                            drawStopIndicator = {},
                             progress = { state_model.wide_beat_progress.value },
                         )
                     }

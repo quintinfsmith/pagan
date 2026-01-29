@@ -5,7 +5,7 @@
     <string name="label_choose_percussion">%1$d: %2$s</string>
     <string name="label_choose_instrument">%1$02d: %2$s</string>
     <string name="label_choose_instrument_percussion">!%1$02d: %2$s</string>
-    <string name="label_shortcut_scrollbar">Jump to beat %1$d</string>
+    <string name="label_shortcut_scrollbar">Jump to beat %1$d / %2$d</string>
     <string name="label_shortcut">Jump to beat</string>
     <string name="dlg_tuning">Tuning</string>
     <string name="pfx_subtract">-</string>
@@ -15,14 +15,16 @@
     <string name="settings_fragment_label">Pagan Settings</string>
     <string name="front_fragment_label">@string/app_name</string>
     <string name="license_fragment_label">License</string>
-    <string name="percussion_label">\u2716</string>
+    <string name="percussion_label"></string>
     <string name="cd_insert">Insert subdivision</string>
     <string name="cd_split">Split this beat or subdivision</string>
     <string name="cd_remove">Remove this subdivision</string>
     <string name="cd_unset">Unset this subdivision</string>
-    <string name="warning_nosoundfont">A soundfont is needed for playback. The Fluid General Midi soundfont can be found here:</string>
-    <string name="warning_nosoundfont_2">You can import and select soundfonts from the settings menu</string>
     <string name="url_fluid">https://archive.org/download/fluidr3-gm-gs/FluidR3_GM_GS.sf2</string>
+    <string name="warning_nosoundfont_a">A soundfont is needed for playback.</string>
+    <string name="warning_nosoundfont_b">Download Fluidr3_GM_GS.sf2 here:</string>
+    <string name="fluid_download">Download Fluid3 Soundfont</string>
+    <string name="warning_nosoundfont_c">You can import and select soundfonts from the settings menu.</string>
     <string name="url_git">https://github.com/quintinfsmith/pagan</string>
     <string name="url_issues">https://github.com/quintinfsmith/pagan/issues</string>
     <string name="url_manual">https://burnsomni.net/manual/pagan</string>
@@ -42,7 +44,7 @@
     <string name="label_settings_playback_limit_samples">Playback: Limit 1 sample per note</string>
     <string name="label_settings_relative">Relative Input Mode</string>
     <string name="label_settings_sf">Active Soundfont</string>
-    <string name="label_settings_same_line_release">Clip sample fade-out on same lines</string>
+    <string name="label_settings_same_line_release">Clip consecutive samples</string>
     <string name="btn_settings_sfmute">Mute</string>
 
     <string name="btn_cfg_change_name">Change Project Name…</string>
@@ -54,11 +56,11 @@
     <string name="btn_cfg_export">Export</string>
 
     <string name="dlg_delete_title">Really Delete %1s?</string>
-    <string name="feedback_delete">Deleted %1s</string>
+    <string name="feedback_delete">Deleted Project</string>
     <string name="config_file_not_found">Configuration can\'t be accessed</string>
 
     <string name="label_manual">Manual</string>
-    <string name="label_issues_location">Issues Tracker</string>
+    <string name="label_issues_location">Issue Tracker</string>
     <string name="suggestions_description">Issues or Feature Requests</string>
     <string name="label_source_code">Source</string>
     <string name="feedback_on_copy">Now working on copy</string>
@@ -140,6 +142,7 @@
     <string name="untitled_opus">Untitled</string>
     <string name="error_caught_from_keyboard_input">Error caught from keyboard input: %1$s</string>
     <string name="playback_failed">Playback Failed</string>
+    <string name="delete_failed">Failed to delete project</string>
     <string name="invalid_soundfont">Invalid Soundfont</string>
     <string name="std_percussion_swap">Can\'t swap percussion with other instruments</string>
     <string name="corrupted_project">Corrupted Project</string>
@@ -162,6 +165,7 @@
     <string name="menu_item_playpause_midi">Play / Pause Midi output</string>
     <string name="btn_split">Split</string>
     <string name="btn_insert">Insert</string>
+    <string name="btn_unset">Unset</string>
     <string name="btn_remove">Remove</string>
     <string name="btn_landing_about">About</string>
     <string name="cd_channel_volume">Toggle Volume Control</string>
@@ -185,7 +189,7 @@
     <string name="rb_mm_copy">Copy</string>
     <string name="rb_mm_move">Move</string>
     <string name="rb_mm_merge">Merge</string>
-    <string name="label_settings_use_preferred_sf">Remember soundfont when loading project</string>
+    <string name="label_settings_use_preferred_sf">Change soundfont with project</string>
     <string name="cd_channel_mute">Mute and unmute this channel</string>
     <string name="cd_line_mute">Mute and unmute this line</string>
     <string name="settings_screen_orientation">Screen Orientation</string>
@@ -208,11 +212,14 @@
     <string name="cd_mark_section">Tag Section</string>
     <string name="cd_remove_section_mark">Remove Section Tag</string>
     <string name="dialog_mark_section">Tag Section</string>
-    <string name="section_spinner_item">%2$d: Section %1$02d</string>
+    <string name="section_spinner_item">%02$d: Section %1$02d</string>
     <string name="sorted_list_desc">%1$s desc.</string>
+    <string name="sorting_by">Sorting By:</string>
     <string name="sort_option_date_created">Date Created</string>
     <string name="sort_option_date_modified">Date Modified</string>
     <string name="sort_option_abc">ABC...</string>
+    <string name="sort_option_bank">Bank...</string>
+    <string name="sort_option_program">Program...</string>
     <string name="hexcode">HexCode</string>
     <string name="red">Red</string>
     <string name="green">Green</string>
@@ -229,7 +236,7 @@
     <string name="multiple_kit_warning">This project has multiple percussion channels but Midi 1.0 only supports 1 percussion channel at a time. The first <i>unmuted</i> percussion channel will be the only one included in the output file.</string>
     <string name="dialog_connected_midi_devices">Connected Midi Devices</string>
     <string name="unknown_midi_device">Unknown Device #%1$d</string>
-    <string name="fira_sans_license_blurb">Fira Sans bundled under the terms of the SIL Open Font License.</string>
+    <string name="fira_sans_license_blurb">Fira Sans &amp; Fira Code bundled under the terms of the SIL Open Font License.</string>
     <string name="soundfont_not_found">Soundfont Not Found.</string>
     <string name="btn_settings_set_project_directory">Set Location</string>
     <string name="btn_settings_set_soundfont_directory">Set Location</string>
@@ -243,10 +250,10 @@
     <string name="settings_night_mode_yes">Night</string>
     <string name="settings_night_mode_system">System</string>
     <string name="settings_night_mode_no">Day</string>
-    <string name="effect_transition_instant">Instant</string>
+    <string name="effect_transition_instant">No Transition</string>
     <string name="effect_transition_linear">Linear</string>
-    <string name="effect_transition_rlinear">Linear Revert</string>
-    <string name="effect_transition_rinstant">Instant Revert</string>
+    <string name="effect_transition_rlinear_out">Temporary/Linear-Out</string>
+    <string name="effect_transition_rinstant">Temporary</string>
     <string name="midi_device_unset">Midi Device Unspecified</string>
     <string name="playback_device">Playback Device</string>
     <string name="default_export_name">Pagan Op. %1$s</string>
@@ -257,8 +264,29 @@
     <string name="bpm">BPM</string>
     <string name="dialog_delay_attenuation">Echo Attenuation %</string>
     <string name="settings_note_memory">Default to latest input</string>
+    <string name="ctl_desc_tempo">Tempo</string>
+    <string name="ctl_desc_delay">Delay</string>
+    <string name="ctl_desc_volume">Volume</string>
+    <string name="ctl_desc_velocity">Velocity</string>
+    <string name="ctl_desc_pan">Pan</string>
+    <string name="go_back">Go Back</string>
+    <string name="song_configuration">Song Configuration</string>
+    <string name="set_percussion_event">Toggle Event</string>
+    <string name="move_mode_move">Move</string>
+    <string name="move_mode_copy">Copy</string>
+    <string name="move_mode_merge">Merge</string>
+    <string name="remove_channel">Remove Channel %1$d</string>
+    <string name="no">No</string>
+    <string name="last_modified">Last Modified</string>
+    <string name="unsorted">Unsorted</string>
+    <string name="unavailable_preset">Unavailable %s</string>
+    <string name="unavailable_kit">Unavailable Kit</string>
+    <string name="gm_kit">Percussion</string>
+    <string name="cd_sort_options">Sort Options</string>
+    <string name="cd_fade">Amount to fade per echo</string>
+    <string name="hold_to_cancel_export">Hold to cancel Export</string>
 
-    <string-array name="midi_instruments">
+    <string-array name="general_midi_presets">
         <item>Grand Acoustic Piano</item>
         <item>Bright Acoustic Piano</item>
         <item>Electric Grand Piano</item>

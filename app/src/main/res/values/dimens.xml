@@ -12,7 +12,6 @@
     <dimen name="line_height">41dp</dimen>
     <dimen name="line_label_width">41dp</dimen>
     <dimen name="ctl_line_height">30dp</dimen>
-    <dimen name="base_leaf_width">41dp</dimen>
     <dimen name="channel_gap_size">5dp</dimen>
     <dimen name="dropdown_item_padding_top">4dp</dimen>
     <dimen name="dropdown_item_padding_sides">16dp</dimen>
@@ -20,7 +19,7 @@
     <dimen name="dropdown_textsize">18sp</dimen>
     <dimen name="dropdown_title_textsize">18sp</dimen>
     <dimen name="config_padding_outer">5dp</dimen>
-    <dimen name="config_button_width">62dp</dimen>
+    <dimen name="config_button_width">72dp</dimen>
     <dimen name="config_item_padding">2dp</dimen>
     <dimen name="config_width">280dp</dimen>
     <dimen name="number_selector_spacing">2dp</dimen>
@@ -47,7 +46,11 @@
     <dimen name="landing_button_space">6dp</dimen>
     <dimen name="landing_button_space_h">6dp</dimen>
     <dimen name="config_icon_corner">10dp</dimen>
-    <dimen name="config_icon_size">24dp</dimen>
+
+    <dimen name="config_icon_size">41dp</dimen>
+    <dimen name="config_icon_padding_vertical">8dp</dimen>
+    <dimen name="config_icon_padding_horizontal">16dp</dimen>
+
     <dimen name="channel_cfg_icon_size">24dp</dimen>
     <dimen name="dialog_name_and_notes_padding_v">12dp</dimen>
     <dimen name="dialog_name_and_notes_padding_h">12dp</dimen>
@@ -57,6 +60,7 @@
 
     <dimen name="channel_option_corner_radius_percussion">12dp</dimen>
     <dimen name="channel_option_corner_radius">40dp</dimen>
+    <dimen name="channel_option_corn">12dp</dimen>
 
     <dimen name="radio_stroke">2dp</dimen>
     <dimen name="progress_bar_size">64dp</dimen>
@@ -64,7 +68,6 @@
     <dimen name="context_icon_size">32dp</dimen>
     <dimen name="icon_size">30dp</dimen>
     <dimen name="icon_button_width">58dp</dimen>
-    <dimen name="icon_button_height">54dp</dimen>
     <dimen name="contextmenu_icon_corner">16dp</dimen>
 
     <dimen name="icon_button_padding_a">1dp</dimen>
@@ -92,13 +95,9 @@
     <dimen name="contextmenu_secondary_padding_end">0dp</dimen>
     <dimen name="contextmenu_secondary_padding_bottom">0dp</dimen>
 
-    <dimen name="contextmenu_primary_width">-1px</dimen>
-    <dimen name="contextmenu_primary_height">-2px</dimen>
     <dimen name="contextmenu_primary_inner_width">-1px</dimen>
     <dimen name="contextmenu_primary_inner_height">-1px</dimen>
-    <dimen name="contextmenu_secondary_width">-1px</dimen>
-    <dimen name="contextmenu_secondary_height">-2px</dimen>
-    <dimen name="contextmenu_secondary_button_height">30dp</dimen>
+    <dimen name="contextmenu_secondary_button_height">48dp</dimen>
 
     <dimen name="contextmenu_primary_landscape_height">-1px</dimen>
     <dimen name="contextmenu_primary_corner_radius_top_left">0dp</dimen>
@@ -109,8 +108,40 @@
 
     <dimen name="landing_menu_width">-1px</dimen>
     <dimen name="trailing_space_width">0dp</dimen>
-    <dimen name="number_selector_button_width">@dimen/base_leaf_width</dimen>
     <dimen name="number_selector_button_height">41dp</dimen>
     <dimen name="character_width">16dp</dimen>
 
+
+
+
+
+    <dimen name="contextmenu_button_width">54dp</dimen>
+    <dimen name="contextmenu_button_padding_h">8dp</dimen>
+    <dimen name="contextmenu_button_padding_v">8dp</dimen>
+    <dimen name="contextmenu_button_radius">16dp</dimen>
+
+    <dimen name="contextmenu_primary_width">41dp</dimen>
+    <dimen name="contextmenu_secondary_width">41dp</dimen>
+    <dimen name="dialog_bar_padding_horizontal">4dp</dimen>
+    <dimen name="dialog_bar_padding_vertical">8dp</dimen>
+    <dimen name="dialog_width_max">500dp</dimen>
+
+    <dimen name="dialog_adjust_inner_space">64dp</dimen>
+    <dimen name="dialog_bar_button_width">120dp</dimen>
+    <dimen name="dialog_bar_button_height">41dp</dimen>
+
+    <dimen name="effect_dialog_icon_width">32dp</dimen>
+    <dimen name="effect_tempo_input_width">100dp</dimen>
+    <dimen name="dlg_input_padding">8dp</dimen>
+    <dimen name="numberpicker_row_height">41dp</dimen>
+    <dimen name="numberpicker_row_width">80dp</dimen>
+    <dimen name="numberselector_column_width">41dp</dimen>
+    <dimen name="landing_padding">8dp</dimen>
+    <dimen name="landing_button_height">48dp</dimen>
+    <dimen name="sf_menu_icon_height">41dp</dimen>
+    <dimen name="about_padding">12dp</dimen>
+
+    <dimen name="transpose_dlg_input_width">64dp</dimen>
+    <dimen name="transpose_dlg_input_height">41dp</dimen>
+    <dimen name="transpose_dlg_input_padding">8dp</dimen>
 </resources>

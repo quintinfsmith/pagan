@@ -23,6 +23,7 @@ class Riff(var context: Context, private var uri: Uri) {
         val tag: String,
         val size: Int
     )
+
     lateinit var type_cc: String
 
     var list_chunks: MutableList<ListChunkHeader> = mutableListOf()

@@ -61,8 +61,8 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor_select(beat_key, position)
     }
 
-    override fun channel_set_instrument(channel: Int, instrument: Pair<Int, Int>) {
-        super.channel_set_instrument(channel, instrument)
+    override fun channel_set_preset(channel: Int, instrument: Pair<Int, Int>) {
+        super.channel_set_preset(channel, instrument)
         this.cursor_select_channel(channel)
     }
 
@@ -167,14 +167,29 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor_select(beat_key, position)
     }
 
+    override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
+        super.set_duration(beat_key, position, duration)
+        this.cursor_select(beat_key, position)
+    }
+
+    override fun set_duration(type: EffectType, beat: Int, position: List<Int>, duration: Int) {
+        super.set_duration(type, beat, position, duration)
+        this.cursor_select_ctl_at_global(type, beat, position)
+    }
+
+    override fun set_duration(type: EffectType, beat_key: BeatKey, position: List<Int>, duration: Int) {
+        super.set_duration(type, beat_key, position, duration)
+        this.cursor_select_ctl_at_line(type, beat_key, position)
+    }
+
+    override fun set_duration(type: EffectType, channel: Int, beat: Int, position: List<Int>, duration: Int) {
+        super.set_duration(type, channel, beat, position, duration)
+        this.cursor_select_ctl_at_channel(type, channel, beat, position)
+    }
+
     override fun swap_lines(channel_index_a: Int, line_offset_a: Int, channel_index_b: Int, line_offset_b: Int) {
         super.swap_lines(channel_index_a, line_offset_a, channel_index_b, line_offset_b)
         this.cursor_select_line(channel_index_b, line_offset_b)
-    }
-
-    override fun swap_channels(channel_a: Int, channel_b: Int) {
-        super.swap_channels(channel_a, channel_b)
-        this.cursor_select_channel(channel_b)
     }
 
     override fun remove_line(channel: Int, line_offset: Int): OpusLineAbstract<*> {
@@ -193,11 +208,6 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     override fun move_channel(channel_index: Int, new_channel_index: Int) {
         super.move_channel(channel_index, new_channel_index)
-        this.cursor_select_channel(if (channel_index < new_channel_index) {
-            new_channel_index - 1
-        } else {
-            new_channel_index
-        })
     }
 
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?, is_percussion: Boolean) {
@@ -692,8 +702,8 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor_select_line(channel, line_offset)
     }
 
-    override fun insert_beat(beat_index: Int, beats_in_column: List<ReducibleTree<OpusEvent>>?) {
-        super.insert_beat(beat_index, beats_in_column)
+    override fun insert_beat(beat_index: Int) {
+        super.insert_beat(beat_index)
         this.cursor_select_column(beat_index)
     }
 
@@ -834,36 +844,42 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     fun set_event_at_cursor(event: EffectEvent) {
         val cursor = this.cursor
-        when (cursor.ctl_level) {
-            null -> throw InvalidCursorState()
-            CtlLineLevel.Global -> {
-                val (actual_beat, actual_position) = this.controller_global_get_actual_position<EffectEvent>(cursor.ctl_type!!, cursor.beat, cursor.get_position())
-                this.controller_global_set_event(
-                    cursor.ctl_type!!,
-                    actual_beat,
-                    actual_position,
-                    event
-                )
+        when (cursor.mode) {
+            CursorMode.Line -> this.set_initial_event(event)
+            CursorMode.Single -> {
+                when (cursor.ctl_level) {
+                    null -> throw InvalidCursorState()
+                    CtlLineLevel.Global -> {
+                        val (actual_beat, actual_position) = this.controller_global_get_actual_position(cursor.ctl_type!!, cursor.beat, cursor.get_position())
+                        this.controller_global_set_event(
+                            cursor.ctl_type!!,
+                            actual_beat,
+                            actual_position,
+                            event
+                        )
+                    }
+                    CtlLineLevel.Channel -> {
+                        val (actual_beat, actual_position) = this.controller_channel_get_actual_position(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.get_position())
+                        this.controller_channel_set_event(
+                            cursor.ctl_type!!,
+                            cursor.channel,
+                            actual_beat,
+                            actual_position,
+                            event
+                        )
+                    }
+                    CtlLineLevel.Line -> {
+                        val (actual_beat_key, actual_position) = this.controller_line_get_actual_position(cursor.ctl_type!!, cursor.get_beatkey(), cursor.get_position())
+                        this.controller_line_set_event(
+                            cursor.ctl_type!!,
+                            actual_beat_key,
+                            actual_position,
+                            event
+                        )
+                    }
+                }
             }
-            CtlLineLevel.Channel -> {
-                val (actual_beat, actual_position) = this.controller_channel_get_actual_position<EffectEvent>(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.get_position())
-                this.controller_channel_set_event(
-                    cursor.ctl_type!!,
-                    cursor.channel,
-                    actual_beat,
-                    actual_position,
-                    event
-                )
-            }
-            CtlLineLevel.Line -> {
-                val (actual_beat_key, actual_position) = this.controller_line_get_actual_position<EffectEvent>(cursor.ctl_type!!, cursor.get_beatkey(), cursor.get_position())
-                this.controller_line_set_event(
-                    cursor.ctl_type!!,
-                    actual_beat_key,
-                    actual_position,
-                    event
-                )
-            }
+            else -> throw InvalidCursorState()
         }
     }
     fun set_event_at_cursor(event: InstrumentEvent) {
@@ -888,57 +904,34 @@ open class OpusLayerCursor: OpusLayerBase() {
             this.cursor.get_position()
         )
     }
-    open fun remove_at_cursor(count: Int) {
+    open fun remove_at_cursor(count: Int = 1) {
         val cursor = this.cursor
         when (cursor.ctl_level) {
             null -> {
                 val beat_key = cursor.get_beatkey()
-                val position = cursor.get_position().toMutableList()
+                val position = cursor.get_position()
 
                 val (real_count, _) = this._calculate_new_position_after_remove(this.get_tree_copy(beat_key), position, count)
-
                 this.remove_repeat(beat_key, position, real_count)
             }
 
             CtlLineLevel.Global -> {
                 val working_tree = this.get_global_ctl_tree<EffectEvent>(cursor.ctl_type!!, cursor.beat).copy()
                 val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, cursor.get_position(), count)
-
                 this.repeat_controller_global_remove(cursor.ctl_type!!, cursor.beat, cursor.get_position(), real_count)
-
-                this.cursor_select_ctl_at_global(
-                    cursor.ctl_type!!,
-                    cursor.beat,
-                    this.get_first_position_global_ctl(cursor.ctl_type!!, cursor.beat, cursor_position)
-                )
             }
 
             CtlLineLevel.Channel -> {
                 val working_tree = this.get_channel_ctl_tree<EffectEvent>(cursor.ctl_type!!, cursor.channel, cursor.beat).copy()
                 val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, cursor.get_position(), count)
-
                 this.repeat_controller_channel_remove(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.get_position(), real_count)
-
-                this.cursor_select_ctl_at_channel(
-                    cursor.ctl_type!!,
-                    cursor.channel,
-                    cursor.beat,
-                    this.get_first_position_channel_ctl(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor_position)
-                )
             }
 
             CtlLineLevel.Line -> {
                 val beat_key = cursor.get_beatkey()
                 val working_tree = this.get_line_ctl_tree<EffectEvent>(cursor.ctl_type!!, beat_key).copy()
                 val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, cursor.get_position(), count)
-
                 this.repeat_controller_line_remove(cursor.ctl_type!!, beat_key, cursor.get_position(), real_count)
-
-                this.cursor_select_ctl_at_line(
-                    cursor.ctl_type!!,
-                    beat_key,
-                    this.get_first_position_line_ctl(cursor.ctl_type!!, beat_key, cursor_position)
-                )
             }
         }
     }
@@ -974,12 +967,6 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor_apply(this.cursor.copy())
     }
 
-    fun get_tree(): ReducibleTree<out InstrumentEvent> {
-        return this.get_tree(
-            this.cursor.get_beatkey(),
-            this.cursor.get_position()
-        )
-    }
     fun unset() {
         when (this.cursor.mode) {
             CursorMode.Range -> {
@@ -1016,13 +1003,12 @@ open class OpusLayerCursor: OpusLayerBase() {
                         val beat_key = this.cursor.get_beatkey()
                         val position = this.cursor.get_position()
                         val real_position = this.get_actual_position(beat_key, position)
-
                         this.unset(real_position.first, real_position.second)
                     }
                     CtlLineLevel.Global -> {
                         val beat = this.cursor.beat
                         val position = this.cursor.get_position()
-                        val real_position = this.controller_global_get_actual_position<EffectEvent>(this.cursor.ctl_type!!, beat, position)
+                        val real_position = this.controller_global_get_actual_position(this.cursor.ctl_type!!, beat, position)
 
                         this.controller_global_unset(this.cursor.ctl_type!!, real_position.first, real_position.second)
                     }
@@ -1030,14 +1016,14 @@ open class OpusLayerCursor: OpusLayerBase() {
                         val channel = this.cursor.channel
                         val beat = this.cursor.beat
                         val position = this.cursor.get_position()
-                        val real_position = this.controller_channel_get_actual_position<EffectEvent>(this.cursor.ctl_type!!, channel, beat, position)
+                        val real_position = this.controller_channel_get_actual_position(this.cursor.ctl_type!!, channel, beat, position)
 
                         this.controller_channel_unset(this.cursor.ctl_type!!, channel, real_position.first, real_position.second)
                     }
                     CtlLineLevel.Line -> {
                         val beat_key = this.cursor.get_beatkey()
                         val position = this.cursor.get_position()
-                        val real_position = this.controller_line_get_actual_position<EffectEvent>(this.cursor.ctl_type!!, beat_key, position)
+                        val real_position = this.controller_line_get_actual_position(this.cursor.ctl_type!!, beat_key, position)
 
                         this.controller_line_unset(this.cursor.ctl_type!!, real_position.first, real_position.second)
                     }
@@ -1870,20 +1856,16 @@ open class OpusLayerCursor: OpusLayerBase() {
     // End Cursor Functions ////////////////////////////////////////////////////////////////////////
 
     fun is_selected(beat_key: BeatKey, position: List<Int>): Boolean {
-        if (this.cursor.ctl_level != null) {
-            return false
-        }
+        if (this.cursor.ctl_level != null) return false
 
         return when (this.cursor.mode) {
-            CursorMode.Line -> {
-                false
-            }
             CursorMode.Single -> {
                 val cbeat_key = this.cursor.get_beatkey()
                 val cposition = this.cursor.get_position()
                 cbeat_key == beat_key && position.size >= cposition.size && position.subList(0, cposition.size) == cposition
             }
             CursorMode.Range -> this.cursor.range!!.second == beat_key
+            CursorMode.Line,
             CursorMode.Column,
             CursorMode.Unset,
             CursorMode.Channel -> false
@@ -2376,8 +2358,8 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     fun <T: EffectEvent> set_initial_event(event: T) {
         when (this.cursor.ctl_level) {
-            null -> return
-            CtlLineLevel.Line -> this.controller_line_set_initial_event(this.cursor.ctl_type!!, this.cursor.channel, this.cursor.line_offset, event)
+            null,
+            CtlLineLevel.Line -> this.controller_line_set_initial_event(this.cursor.ctl_type ?: EffectType.Volume, this.cursor.channel, this.cursor.line_offset, event)
             CtlLineLevel.Channel -> this.controller_channel_set_initial_event(this.cursor.ctl_type!!, this.cursor.channel, event)
             CtlLineLevel.Global -> this.controller_global_set_initial_event(this.cursor.ctl_type!!, event)
         }
@@ -2444,5 +2426,50 @@ open class OpusLayerCursor: OpusLayerBase() {
         }
 
         this.cursor_select_line(adj_channel, adj_line_offset)
+    }
+
+    fun get_tree(): ReducibleTree<out OpusEvent>? {
+        if (this.cursor.mode != CursorMode.Single) return null
+        return when (this.cursor.ctl_level) {
+            null -> this.get_tree(this.cursor.get_beatkey(), this.cursor.get_position())
+            CtlLineLevel.Line -> this.get_line_ctl_tree(this.cursor.ctl_type!!, this.cursor.get_beatkey(), this.cursor.get_position())
+            CtlLineLevel.Channel -> this.get_channel_ctl_tree(this.cursor.ctl_type!!, this.cursor.channel, this.cursor.beat, this.cursor.get_position())
+            CtlLineLevel.Global -> this.get_global_ctl_tree_copy(this.cursor.ctl_type!!, this.cursor.beat, this.cursor.get_position())
+        }
+    }
+
+    fun get_event_at_cursor(): OpusEvent? {
+        if (this.cursor.mode != CursorMode.Single) return null
+        return when (this.cursor.ctl_level) {
+            null -> {
+                val (actual_beat_key, actual_position) = this.get_actual_position(this.cursor.get_beatkey(), this.cursor.get_position())
+                this.get_tree(actual_beat_key, actual_position).event
+            }
+            CtlLineLevel.Line -> {
+                val (actual_beat_key, actual_position) = this.controller_line_get_actual_position(
+                    this.cursor.ctl_type!!,
+                    this.cursor.get_beatkey(),
+                    this.cursor.get_position()
+                )
+                this.get_line_ctl_tree<EffectEvent>(this.cursor.ctl_type!!, actual_beat_key, actual_position).event
+            }
+            CtlLineLevel.Channel -> {
+                val (actual_beat, actual_position) = this.controller_channel_get_actual_position(
+                    this.cursor.ctl_type!!,
+                    this.cursor.channel,
+                    this.cursor.beat,
+                    this.cursor.get_position()
+                )
+                this.get_channel_ctl_tree<EffectEvent>(this.cursor.ctl_type!!, this.cursor.channel, actual_beat, actual_position).event
+            }
+            CtlLineLevel.Global -> {
+                val (actual_beat, actual_position) = this.controller_global_get_actual_position(
+                    this.cursor.ctl_type!!,
+                    this.cursor.beat,
+                    this.cursor.get_position()
+                )
+                this.get_global_ctl_tree_copy<EffectEvent>(this.cursor.ctl_type!!, actual_beat, actual_position).event
+            }
+        }
     }
 }

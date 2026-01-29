@@ -57,4 +57,14 @@ class DelayEvent(var numerator: Int, var denominator: Int, var echo: Int, var fa
 
         return copy_event
     }
+
+    override fun hashCode(): Int {
+        var result = super.hashCode()
+        result = 31 * result + this.numerator
+        result = 31 * result + this.denominator
+        result = 31 * result + this.echo
+        result = 31 * result + this.fade.hashCode()
+        result = 31 * result + this.event_type.hashCode()
+        return result
+    }
 }

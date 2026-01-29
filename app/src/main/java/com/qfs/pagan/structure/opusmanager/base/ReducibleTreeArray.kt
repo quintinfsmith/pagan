@@ -384,7 +384,7 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
         val (target_offset, _) = this.get_leaf_offset_and_width(next_beat, next_position)
 
         val (direct_offset, direct_width) = this.get_leaf_offset_and_width(beat, position)
-        val stack = mutableListOf<Triple<Rational, Int, ReducibleTree<T>>>(Triple(direct_offset, direct_width, new_tree))
+        val stack = mutableListOf(Triple(direct_offset, direct_width, new_tree))
         while (stack.isNotEmpty()) {
             val (working_offset, working_width, working_tree) = stack.removeAt(0)
             if (working_tree.has_event()) {
@@ -646,8 +646,8 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
         }
         // -------------------------------
 
-        if (overlapper != null) {
-            this.cache_tree_overlaps(overlapper.first, overlapper.second)
+        overlapper?.let { (beat: Int, position: List<Int>) ->
+            this.cache_tree_overlaps(beat, position)
         }
 
         this.cache_tree_overlaps(beat, working_position)
@@ -729,9 +729,10 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
         return null
     }
 
+
     fun get_preceding_event(beat: Int, position: List<Int>): T? {
         val (event_beat, event_position) = this.get_preceding_event_position(beat, position) ?: return null
-        return this.get_tree(beat, position).get_event()
+        return this.get_tree(event_beat, event_position).get_event()
     }
 
     fun get_preceding_leaf_position(beat: Int, position: List<Int>): Pair<Int, List<Int>>? {
@@ -879,9 +880,7 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
     }
 
     fun insert(beat: Int, position: List<Int>) {
-        if (position.isEmpty()) {
-            throw BadInsertPosition()
-        }
+        if (position.isEmpty()) throw BadInsertPosition()
 
         val blocked_pair = this.is_blocked_insert(beat, position)
         if (blocked_pair != null) {
@@ -893,9 +892,7 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
             val tree = this.get_tree(beat, parent_position)
 
             val index = position.last()
-            if (index > tree.size) {
-                throw BadInsertPosition()
-            }
+            if (index > tree.size) throw BadInsertPosition()
             tree.insert(index)
         }
     }
@@ -905,15 +902,10 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
         this._decache_overlapping_leaf(beat, position)
 
         val tree = this.get_tree(beat, position)
-        tree.unset_event()
+        tree.empty()
 
-        if (tree.parent != null) {
-            val index = tree.get_index()
-            tree.parent!!.divisions.remove(index)
-        }
-
-        if (overlap != null) {
-            this.cache_tree_overlaps(overlap.first, overlap.second)
+        overlap?.let { (beat: Int, position: List<Int>) ->
+            this.cache_tree_overlaps(beat, position)
         }
     }
 
@@ -940,6 +932,43 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
             }
         }
         return null
+    }
+
+    // used to access the cached values. not to calculate new ones
+    fun get_blocked_leafs(beat: Int, position: List<Int>): List<Pair<Pair<Int, List<Int>>, List<Pair<Int, List<Int>>>>> {
+        val output = mutableListOf<Pair<Pair<Int, List<Int>>, List<Pair<Int, List<Int>>>>>()
+        if (beat >= this.beat_count()) return output
+
+        var tree = this.get_tree(beat)
+        for (p in position) {
+            if (tree.is_leaf()) break
+            try {
+                tree = tree[p]
+            } catch (e: InvalidGetCall) {
+                // It's possible that the leat got removed
+                break
+            }
+        }
+
+        val mapped_heads = mutableSetOf<Pair<Int, List<Int>>>()
+        tree.traverse { subtree, event ->
+            if (subtree.is_leaf()) {
+                val working_path = subtree.get_path()
+                val head = this.get_blocking_position(beat, working_path) ?: Pair(beat, working_path)
+                if (mapped_heads.contains(head)) return@traverse
+                mapped_heads.add(head)
+
+                val working_blocked_leafs = mutableListOf<Pair<Int, List<Int>>>()
+                val blocked_trees = this._cache_blocked_tree_map[head] ?: listOf()
+                for ((blocked_beat, blocked_position, _) in blocked_trees) {
+                    working_blocked_leafs.add(Pair(blocked_beat, blocked_position.toList()))
+                }
+
+                output.add(Pair(head, working_blocked_leafs))
+            }
+        }
+
+        return output
     }
 
     // Get all blocked positions connected, regardless of if the given position is an event or a blocked tree
@@ -1011,13 +1040,11 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
                 next_position_pair = this.get_proceding_event_position(working_beat, working_position) ?: break
                 working_beat = next_position_pair.first
                 working_position = next_position_pair.second
-
             }
         }
 
         this.recache_blocked_tree_wrapper(beat, position.subList(0, position.size - 1)) {
-            val tree = this.get_tree(beat, position)
-            tree.detach()
+            this.get_tree(beat, position).detach()
         }
     }
 
@@ -1043,9 +1070,7 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
 
     fun set_event(beat: Int, position: List<Int>, event: T) {
         val blocked_pair = this.is_blocked_set_event(beat, position, event.duration)
-        if (blocked_pair != null) {
-            throw BlockedTreeException(beat, position, blocked_pair.first, blocked_pair.second)
-        }
+        if (blocked_pair != null) throw BlockedTreeException(beat, position, blocked_pair.first, blocked_pair.second)
 
         this.recache_blocked_tree_wrapper(beat, position) {
             val tree = this.get_tree(beat, position)

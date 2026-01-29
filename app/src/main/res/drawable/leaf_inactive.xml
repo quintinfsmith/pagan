@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:start="@dimen/leaf_padding" android:top="@dimen/leaf_padding" android:bottom="@dimen/leaf_padding" android:end="@dimen/leaf_padding">
-        <shape android:shape="rectangle">
-            <solid android:color="@color/leaf"/>
-            <corners android:radius="@dimen/leaf_radius"/>
-        </shape>
-    </item>
-</layer-list>

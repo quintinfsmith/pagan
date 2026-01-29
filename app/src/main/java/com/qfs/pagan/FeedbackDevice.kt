@@ -103,6 +103,7 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
     //}
 
     fun new_event(event: NoteOn79, duration_millis: Int) {
+        val t = System.currentTimeMillis()
         for (handle in this._sample_handle_manager.gen_sample_handles(event)) {
             handle.release_frame = duration_millis * this.sample_rate / 1000
 

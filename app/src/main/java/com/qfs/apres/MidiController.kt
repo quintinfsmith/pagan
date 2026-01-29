@@ -191,9 +191,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
     }
 
     fun poll_output_devices(): List<MidiDeviceInfo> {
-        if (this.midi_manager == null) {
-            return listOf()
-        }
+        if (this.midi_manager == null) return listOf()
 
         val devices_info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             this.midi_manager!!.getDevicesForTransport(MidiManager.TRANSPORT_MIDI_BYTE_STREAM)
@@ -207,13 +205,12 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
                 output_devices.add(device_info)
             }
         }
+
         return output_devices
     }
 
     fun poll_input_devices(): List<MidiDeviceInfo> {
-        if (this.midi_manager == null) {
-            return listOf()
-        }
+        if (this.midi_manager == null) return listOf()
 
         val devices_info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             this.midi_manager!!.getDevicesForTransport(MidiManager.TRANSPORT_MIDI_BYTE_STREAM)

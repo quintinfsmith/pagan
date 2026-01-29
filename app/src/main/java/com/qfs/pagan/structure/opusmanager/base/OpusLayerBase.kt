@@ -1,6 +1,5 @@
 package com.qfs.pagan.structure.opusmanager.base
 
-import android.icu.lang.UCharacter
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BalanceMSB
 import com.qfs.apres.event.BankSelect
@@ -20,6 +19,7 @@ import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONParser
 import com.qfs.json.JSONString
+import com.qfs.pagan.enumerate
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.ActiveControlSetJSONInterface
@@ -164,9 +164,7 @@ open class OpusLayerBase: Effectable {
                         val tree_divisions = tree.divisions.toList()
                         tree.set_size(new_beat_size)
                         for ((f, child) in tree_divisions) {
-                            if (!child.has_event()) {
-                                continue
-                            }
+                            if (!child.has_event()) continue
                             val new_index = f * new_beat_size / original_beat_size
 
                             val eventset = if (!tree[new_index].has_event()) {
@@ -219,7 +217,7 @@ open class OpusLayerBase: Effectable {
             opus.set_size(beat_values.size)
 
             var overflow_events = mutableSetOf<Array<Int>>()
-            beat_values.forEachIndexed { i: Int, beat_tree: ReducibleTree<Set<Array<Int>>> ->
+            for ((i, beat_tree) in beat_values.enumerate()) {
                 // Quantize the beat ////////////
                 val quantized_tree = ReducibleTree<Set<Array<Int>>>()
                 quantized_tree.set_size(beat_tree.size)
@@ -577,7 +575,7 @@ open class OpusLayerBase: Effectable {
      * Get the midi instrument current used by Channel [channel]
      */
     fun get_channel_instrument(channel: Int): Pair<Int, Int> {
-        return this.get_channel(channel).get_instrument()
+        return this.get_channel(channel).get_preset()
     }
 
     /**
@@ -631,7 +629,7 @@ open class OpusLayerBase: Effectable {
         // Because of the variance (out InstrumentEvent) my copy function in the OpusTree doesn't work correctly
         // Instead just copy the events here
         val working_tree = this.get_tree(beat_key, position).copy { event ->
-            event.copy()
+            event?.copy()
         }
         return working_tree
     }
@@ -707,14 +705,10 @@ open class OpusLayerBase: Effectable {
      * [position] defaults to null, indicating the root tree of the beat
      */
     fun <T : EffectEvent> get_line_ctl_tree(type: EffectType, beat_key: BeatKey, position: List<Int>? = null): ReducibleTree<T> {
-        if (beat_key.channel >= this.channels.size) {
-            throw BadBeatKey(beat_key)
-        }
+        if (beat_key.channel >= this.channels.size) throw BadBeatKey(beat_key)
 
         val working_channel = this.get_channel(beat_key.channel)
-        if (beat_key.line_offset > working_channel.size) {
-            throw BadBeatKey(beat_key)
-        }
+        if (beat_key.line_offset > working_channel.size) throw BadBeatKey(beat_key)
 
         return working_channel.get_ctl_tree(
             beat_key.line_offset,
@@ -1053,22 +1047,37 @@ open class OpusLayerBase: Effectable {
     /**
      * Get the initial [type] controller event of the line at [channel], [line_offset]
      */
-    fun <T : EffectEvent> get_line_controller_initial_event(type: EffectType, channel: Int, line_offset: Int): T {
-        return this.get_line_controller<T>(type, channel, line_offset).initial_event
+    fun <T : EffectEvent> get_line_controller_initial_event(type: EffectType, channel: Int, line_offset: Int, copy: Boolean = false): T {
+        val output = this.get_line_controller<T>(type, channel, line_offset).initial_event
+        return if (copy) {
+            output.copy() as T
+        } else {
+            output
+        }
     }
 
     /**
      * Get the initial [type] controller event of the channel at [channel]
      */
-    fun <T : EffectEvent> get_channel_controller_initial_event(type: EffectType, channel: Int): T {
-        return this.get_channel_controller<T>(type, channel).initial_event
+    fun <T : EffectEvent> get_channel_controller_initial_event(type: EffectType, channel: Int, copy: Boolean = false): T {
+        val output = this.get_channel_controller<T>(type, channel).initial_event
+        return if (copy) {
+            output.copy() as T
+        } else {
+            output
+        }
     }
 
     /**
      * Get the initial [type] controller event of the project
      */
-    fun <T : EffectEvent> get_global_controller_initial_event(type: EffectType): T {
-        return this.get_global_controller<T>(type).initial_event
+    fun <T : EffectEvent> get_global_controller_initial_event(type: EffectType, copy: Boolean = false): T {
+        val output = this.get_global_controller<T>(type).initial_event
+        return if (copy) {
+            output.copy() as T
+        } else {
+            output
+        }
     }
 
     /**
@@ -1352,7 +1361,7 @@ open class OpusLayerBase: Effectable {
     /**
      * Set the bank of the channel at [channel] to [instrument.first] and the program to [instrument.second].
      */
-    open fun channel_set_instrument(channel: Int, instrument: Pair<Int, Int>) {
+    open fun channel_set_preset(channel: Int, instrument: Pair<Int, Int>) {
         if (!this.is_percussion(channel)) {
             this.set_channel_bank(channel, instrument.first)
         }
@@ -1452,6 +1461,7 @@ open class OpusLayerBase: Effectable {
         if (this.is_percussion(channel_index_from) != this.is_percussion(channel_index_to)) {
             throw IncompatibleChannelException(channel_index_from, channel_index_to)
         }
+
         this.new_line(channel_index_to, line_offset_to)
         var adj_line_offset_from = line_offset_from
         if (channel_index_to == channel_index_from && line_offset_to < line_offset_from) {
@@ -1490,22 +1500,12 @@ open class OpusLayerBase: Effectable {
         this.recache_line_maps()
     }
 
-    open fun swap_channels(channel_a: Int, channel_b: Int) {
-        val tmp_channel = this.channels[channel_a]
-        this.channels[channel_a] = this.channels[channel_b]
-        this.channels[channel_b] = tmp_channel
-
-        this.recache_line_maps()
-    }
-
     /**
      * Insert a beat at [beat_index] into all existing controllers, channels and lines.
      * populate the new beat with [beats_in_column]
      */
-    open fun insert_beat(beat_index: Int, beats_in_column: List<ReducibleTree<OpusEvent>>? = null) {
-        if (beat_index > this.length) {
-            throw IndexOutOfBoundsException()
-        }
+    open fun insert_beat(beat_index: Int) {
+        if (beat_index > this.length) throw IndexOutOfBoundsException()
 
         this.length += 1
         for (channel in this.channels) {
@@ -1513,10 +1513,6 @@ open class OpusLayerBase: Effectable {
         }
 
         this.controllers.insert_beat(beat_index)
-
-        if (beats_in_column != null) {
-            this._apply_column_trees(beat_index, beats_in_column)
-        }
 
         val tag_beats = this.marked_sections.keys.sorted().toMutableList()
         tag_beats.reverse()
@@ -1534,15 +1530,11 @@ open class OpusLayerBase: Effectable {
         val is_percussion = this.is_percussion(channel)
         when (line) {
             is OpusLine -> {
-                if (is_percussion) {
-                    throw InvalidLineException()
-                }
+                if (is_percussion) throw InvalidLineException()
                 (this.get_channel(channel) as OpusChannel).insert_line(line_offset, line)
             }
             is OpusLinePercussion -> {
-                if (!is_percussion) {
-                    throw InvalidPercussionLineException()
-                }
+                if (!is_percussion) throw InvalidPercussionLineException()
                 (this.get_channel(channel) as OpusPercussionChannel).insert_line(line_offset, line)
             }
             else -> throw UnhandledLineType(line)
@@ -2526,27 +2518,55 @@ open class OpusLayerBase: Effectable {
     open fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
         this._catch_blocked_tree_exception(beat_key.channel) {
             val tree = this.get_tree(beat_key, position)
-            if (!tree.has_event()) {
-                throw EventlessTreeException()
-            }
+            if (!tree.has_event()) throw EventlessTreeException()
+
             val new_event = tree.event!!.copy()
             new_event.duration = duration
             this.set_event(beat_key, position, new_event)
         }
     }
 
+    open fun set_duration(type: EffectType, beat_key: BeatKey, position: List<Int>, duration: Int) {
+        this._catch_blocked_tree_exception(beat_key.channel) {
+            val tree = this.get_line_ctl_tree_copy<EffectEvent>(type, beat_key, position)
+            if (!tree.has_event()) throw EventlessTreeException()
+
+            val new_event = tree.event!!.copy()
+            new_event.duration = duration
+            this.controller_line_set_event(type, beat_key, position, new_event)
+        }
+    }
+
+    open fun set_duration(type: EffectType, channel: Int, beat: Int, position: List<Int>, duration: Int) {
+        this._catch_blocked_tree_exception(channel) {
+            val tree = this.get_channel_ctl_tree_copy<EffectEvent>(type, channel, beat, position)
+            if (!tree.has_event()) throw EventlessTreeException()
+
+            val new_event = tree.event!!.copy()
+            new_event.duration = duration
+            this.controller_channel_set_event(type, channel, beat, position, new_event)
+        }
+    }
+
+    open fun set_duration(type: EffectType, beat: Int, position: List<Int>, duration: Int) {
+        this._catch_global_ctl_blocked_tree_exception(type) {
+            val tree = this.get_global_ctl_tree_copy<EffectEvent>(type, beat, position)
+            if (!tree.has_event()) throw EventlessTreeException()
+
+            val new_event = tree.event!!.copy()
+            new_event.duration = duration
+            this.controller_global_set_event(type, beat, position, new_event)
+        }
+    }
     /**
      * Remove tree @ [beat_key]/[position] if it's not a top-level tree
      */
     open fun remove(beat_key: BeatKey, position: List<Int>) {
         // Can't remove beat
-        if (position.isEmpty()) {
-            throw RemovingRootException()
-        }
+        if (position.isEmpty()) throw RemovingRootException()
 
         val tree = this.get_tree(beat_key, position)
         val parent_tree = tree.parent!!
-
         when (parent_tree.size) {
             // 1 Shouldn't be able to happen and this isn't the place to check for that failure
             1 -> throw TrivialBranchException(beat_key, position)
@@ -2701,9 +2721,7 @@ open class OpusLayerBase: Effectable {
         val beat_keys = this._get_beat_keys_for_overwrite_beat_range_horizontally(channel, line_offset, first_key, second_key, count)
         // Need to unset all events FIRST so no replaces get blocked
         for ((target_key, key_list) in beat_keys) {
-            if (key_list.isEmpty()) {
-                continue
-            }
+            if (key_list.isEmpty()) continue
             for (overwrite_key in key_list) {
                 if (overwrite_key != target_key) {
                     this.unset(overwrite_key, listOf())
@@ -2716,9 +2734,7 @@ open class OpusLayerBase: Effectable {
         }
 
         for ((target_key, key_list) in beat_keys) {
-            if (key_list.isEmpty()) {
-                continue
-            }
+            if (key_list.isEmpty()) continue
             for (overwrite_key in key_list) {
                 if (target_key != overwrite_key) {
                     this.replace_tree(overwrite_key, null, this.get_tree_copy(target_key))
@@ -2804,9 +2820,8 @@ open class OpusLayerBase: Effectable {
 
         for (i in 0 until width) {
             for (j in 0 until count) {
-                if (j == 0) {
-                    continue
-                }
+                if (j == 0) continue
+
                 this.controller_line_replace_tree(
                     type,
                     BeatKey(
@@ -3356,14 +3371,10 @@ open class OpusLayerBase: Effectable {
      */
     open fun convert_event_to_relative(beat_key: BeatKey, position: List<Int>) {
         val tree = this.get_tree(beat_key, position)
-        if (!tree.has_event()) {
-            throw NonEventConversion(beat_key, position)
-        }
+        if (!tree.has_event()) throw NonEventConversion(beat_key, position)
 
         val event = tree.get_event()!!
-        if (event !is AbsoluteNoteEvent) {
-            return
-        }
+        if (event !is AbsoluteNoteEvent) return
 
         var working_beat_key: BeatKey = beat_key
         var working_position: List<Int> = position
@@ -3375,15 +3386,8 @@ open class OpusLayerBase: Effectable {
             working_position = pair.second
         }
 
-
-        this.set_event(
-            beat_key,
-            position,
-            RelativeNoteEvent(
-                event.note - (preceding_value ?: 0),
-                event.duration
-            )
-        )
+        val new_value = event.note - (preceding_value ?: 0)
+        this.set_event(beat_key, position, RelativeNoteEvent(new_value, event.duration))
     }
 
     /**
@@ -3399,9 +3403,7 @@ open class OpusLayerBase: Effectable {
         }
 
         val event = tree.get_event()!!
-        if (event !is RelativeNoteEvent) {
-            return
-        }
+        if (event !is RelativeNoteEvent) return
 
         // The implied first value can be 0
         var value = this.get_absolute_value(beat_key, position) ?: event.offset
@@ -3424,16 +3426,16 @@ open class OpusLayerBase: Effectable {
         this.get_channel(channel).set_midi_program(program)
     }
 
-    fun <T: EffectEvent> controller_global_get_actual_position(ctl_type: EffectType, beat: Int, position: List<Int>): Pair<Int, List<Int>> {
-        return this.get_controller<T>(ctl_type).get_blocking_position(beat, position) ?: Pair(beat, position)
+    fun controller_global_get_actual_position(ctl_type: EffectType, beat: Int, position: List<Int>): Pair<Int, List<Int>> {
+        return this.get_controller<EffectEvent>(ctl_type).get_blocking_position(beat, position) ?: Pair(beat, position)
     }
 
-    fun <T: EffectEvent> controller_channel_get_actual_position(ctl_type: EffectType, channel: Int, beat: Int, position: List<Int>): Pair<Int, List<Int>> {
-        return this.get_all_channels()[channel].get_controller<T>(ctl_type).get_blocking_position(beat, position) ?: Pair(beat, position)
+    fun controller_channel_get_actual_position(ctl_type: EffectType, channel: Int, beat: Int, position: List<Int>): Pair<Int, List<Int>> {
+        return this.get_all_channels()[channel].get_controller<EffectEvent>(ctl_type).get_blocking_position(beat, position) ?: Pair(beat, position)
     }
 
-    fun <T: EffectEvent> controller_line_get_actual_position(ctl_type: EffectType, beat_key: BeatKey, position: List<Int>): Pair<BeatKey, List<Int>> {
-        val output = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].get_controller<T>(ctl_type).get_blocking_position(beat_key.beat, position)
+    fun controller_line_get_actual_position(ctl_type: EffectType, beat_key: BeatKey, position: List<Int>): Pair<BeatKey, List<Int>> {
+        val output = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].get_controller<EffectEvent>(ctl_type).get_blocking_position(beat_key.beat, position)
         return if (output == null) {
             Pair(beat_key, position)
         } else {
@@ -3467,20 +3469,6 @@ open class OpusLayerBase: Effectable {
         }
     }
 
-    /* only used in insert_beat. NO WHERE ELSE */
-    open fun _apply_column_trees(beat_index: Int, beats_in_column: List<ReducibleTree<OpusEvent>>) {
-        var y = 0
-        for (channel in 0 until this.channels.size) {
-            for (line in 0 until this.channels[channel].lines.size) {
-                val beat_key = BeatKey(channel, line, beat_index)
-                this.replace_tree(
-                    beat_key,
-                    listOf(),
-                    checked_cast<ReducibleTree<TunedInstrumentEvent>>(beats_in_column[y++])
-                )
-            }
-        }
-    }
 
     fun remove_channel_by_uuid(uuid: Int) {
         val channel = this._channel_uuid_map[uuid] ?: throw OpusChannelAbstract.InvalidChannelUUID(uuid)
@@ -3657,13 +3645,13 @@ open class OpusLayerBase: Effectable {
             when (event.transition) {
                 EffectTransition.RInstant -> {
                     listOf(
-                        Pair(0, SetTempo.Companion.from_bpm((event.value * 1000f).roundToInt() / 1000F)),
-                        Pair(frames, SetTempo.Companion.from_bpm(((previous_event?.value ?: 120F) * 1000f).roundToInt() / 1000F))
+                        Pair(0, SetTempo.from_bpm((event.value * 1000f).roundToInt() / 1000F)),
+                        Pair(frames, SetTempo.from_bpm(((previous_event?.value ?: 120F) * 1000f).roundToInt() / 1000F))
                     )
                 }
                 else -> {
                     listOf(
-                        Pair(0, SetTempo.Companion.from_bpm((event.value * 1000f).roundToInt() / 1000F))
+                        Pair(0, SetTempo.from_bpm((event.value * 1000f).roundToInt() / 1000F))
                     )
                 }
             }
@@ -4109,7 +4097,7 @@ open class OpusLayerBase: Effectable {
 
         val channels: MutableList<JSONHashMap> = mutableListOf()
         for (channel in this.channels) {
-            channels.add(OpusChannelJSONInterface.Companion.generalize(channel))
+            channels.add(OpusChannelJSONInterface.generalize(channel))
         }
         output["size"] = this.length
         output["tuning_map"] = JSONList(this.tuning_map.size) { i: Int ->
@@ -4126,10 +4114,10 @@ open class OpusLayerBase: Effectable {
 
         output["transpose"] = JSONInteger(this.transpose.first)
         output["transpose_radix"] = JSONInteger(this.transpose.second)
-        output["controllers"] = ActiveControlSetJSONInterface.Companion.to_json(this.controllers)
+        output["controllers"] = ActiveControlSetJSONInterface.to_json(this.controllers)
 
         output["channels"] = JSONList(this.channels.size) { i: Int ->
-            OpusChannelJSONInterface.Companion.generalize(this.channels[i])
+            OpusChannelJSONInterface.generalize(this.channels[i])
         }
 
         output["title"] = if (this.project_name == null) {
@@ -4145,7 +4133,7 @@ open class OpusLayerBase: Effectable {
 
         return JSONHashMap(
             "d" to output,
-            "v" to JSONInteger(OpusManagerJSONInterface.Companion.LATEST_VERSION)
+            "v" to JSONInteger(OpusManagerJSONInterface.LATEST_VERSION)
         )
     }
 
@@ -4192,16 +4180,16 @@ open class OpusLayerBase: Effectable {
         this.recache_line_maps()
     }
 
-    open fun load(bytes: ByteArray, on_load_callback: (() -> Unit)? = null) {
+    open fun load(bytes: ByteArray, on_load_callback: ((JSONHashMap) -> Unit)? = null) {
         val json_content = bytes.toString(Charsets.UTF_8)
-        var generalized_object = JSONParser.Companion.parse<JSONHashMap>(json_content) ?: throw EmptyJSONException()
-        var version = OpusManagerJSONInterface.Companion.detect_version(generalized_object)
-        while (version < OpusManagerJSONInterface.Companion.LATEST_VERSION) {
+        var generalized_object = JSONParser.parse<JSONHashMap>(json_content) ?: throw EmptyJSONException()
+        var version = OpusManagerJSONInterface.detect_version(generalized_object)
+        while (version < OpusManagerJSONInterface.LATEST_VERSION) {
             generalized_object = when (version++) {
-                3 -> OpusManagerJSONInterface.Companion.convert_v3_to_v4(generalized_object)
-                2 -> OpusManagerJSONInterface.Companion.convert_v2_to_v3(generalized_object)
-                1 -> OpusManagerJSONInterface.Companion.convert_v1_to_v2(generalized_object)
-                0 -> OpusManagerJSONInterface.Companion.convert_v0_to_v1(generalized_object)
+                3 -> OpusManagerJSONInterface.convert_v3_to_v4(generalized_object)
+                2 -> OpusManagerJSONInterface.convert_v2_to_v3(generalized_object)
+                1 -> OpusManagerJSONInterface.convert_v1_to_v2(generalized_object)
+                0 -> OpusManagerJSONInterface.convert_v0_to_v1(generalized_object)
                 else -> throw UnknownSaveVersion(version - 1)
             }
         }
@@ -4235,10 +4223,10 @@ open class OpusLayerBase: Effectable {
         this.import_from_other(OpusLayerBase.initialize_basic())
     }
 
-    fun project_change_json(json_data: JSONHashMap, on_load_callback: (() -> Unit)? = null) {
+    fun project_change_json(json_data: JSONHashMap, on_load_callback: ((JSONHashMap) -> Unit)? = null) {
         this.project_change_wrapper {
             this._project_change_json(json_data)
-            on_load_callback?.let { it() }
+            on_load_callback?.let { it(json_data) }
         }
     }
 
@@ -4250,7 +4238,7 @@ open class OpusLayerBase: Effectable {
 
         this.set_beat_count(inner_map.get_int("size"))
         for (generalized_channel in inner_map.get_list("channels")) {
-            val channel = OpusChannelJSONInterface.Companion.interpret(
+            val channel = OpusChannelJSONInterface.interpret(
                 generalized_channel as JSONHashMap,
                 this.length
             )
@@ -4274,7 +4262,7 @@ open class OpusLayerBase: Effectable {
             inner_map.get_int("transpose_radix", this.tuning_map.size)
         )
 
-        this.controllers = ActiveControlSetJSONInterface.Companion.from_json(inner_map.get_hashmap("controllers"), this.length)
+        this.controllers = ActiveControlSetJSONInterface.from_json(inner_map.get_hashmap("controllers"), this.length)
 
         this.marked_sections.clear()
         val tags = inner_map.get_hashmapn("tags")
@@ -4517,9 +4505,7 @@ open class OpusLayerBase: Effectable {
                     val original_size = beat_tree.size
                     beat_tree.reduce()
                     beat_tree.traverse { working_tree: ReducibleTree<out InstrumentEvent>, event: InstrumentEvent? ->
-                        if (event == null) {
-                            return@traverse
-                        }
+                        if (event == null) return@traverse
 
                         var tmp_tree = beat_tree
                         var denominator = 1
@@ -4567,11 +4553,11 @@ open class OpusLayerBase: Effectable {
                 var max_leafs = 0
                 for (channel in this.channels) {
                     for (line in channel.lines) {
-                        max_leafs = max(line.beats[i].get_total_child_weight(), max_leafs)
+                        max_leafs = max(line.beats[i].weighted_size, max_leafs)
                     }
                 }
 
-                if (max_leafs < tempo_tree.get_total_child_weight()) {
+                if (max_leafs < tempo_tree.weighted_size) {
                     tempo_tree.flatten()
                     val new_tree = ReducibleTree<OpusTempoEvent>()
                     new_tree.set_size(max_leafs)
@@ -4691,8 +4677,12 @@ open class OpusLayerBase: Effectable {
         return this.get_beatkeys_in_range(beat_key, target_second_key)
     }
 
-    fun <T: EffectEvent> copy_control_event(event: T): T {
-        return event.copy() as T
+    fun <T: EffectEvent> copy_control_event(event: T?): T? {
+        return if (event == null) {
+            null
+        } else {
+            event.copy() as T
+        }
     }
 
     private fun _is_valid_beat_range(first_corner: BeatKey, second_corner: BeatKey): Boolean {
@@ -4856,18 +4846,11 @@ open class OpusLayerBase: Effectable {
         every entry is also ((some number) / 12)
      */
     fun is_tuning_standard(): Boolean {
-        val actuals = List(12) { i: Int ->
-            i.toDouble() / 12.0
-        }
-
-        if (!actuals.contains((this.transpose.first.toDouble() / this.transpose.second.toDouble()) % 1.0)) {
-            return false
-        }
+        val actuals = List(12) { i: Int -> i.toDouble() / 12.0 }
+        if (!actuals.contains((this.transpose.first.toDouble() / this.transpose.second.toDouble()) % 1.0)) return false
 
         for ((numerator, denominator) in this.tuning_map) {
-            if (!actuals.contains(numerator.toDouble() / denominator.toDouble())) {
-                return false
-            }
+            if (!actuals.contains(numerator.toDouble() / denominator.toDouble())) return false
         }
 
         return true
@@ -5055,6 +5038,14 @@ open class OpusLayerBase: Effectable {
      */
     fun get_ctl_line_from_row(row: Int): Int {
         return this._cached_row_map[row] ?: throw Exception("Row $row not found.")
+    }
+
+    fun get_visible_row_from_pair(channel: Int, line_offset: Int): Int {
+        return this.get_visible_row_from_ctl_line(
+            this.get_actual_line_index(
+                this.get_instrument_line_index(channel, line_offset)
+            )
+        ) ?: -1
     }
 
     fun get_visible_row_from_ctl_line(line: Int): Int? {

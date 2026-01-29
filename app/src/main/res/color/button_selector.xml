@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<selector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
-    <item
-        app:state_alternate="false"
-        android:color="@color/ns_default"/>
-    <item
-        app:state_alternate="true"
-        android:color="@color/ns_alt"/>
-</selector>

@@ -105,18 +105,18 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                 if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
                     opus_manager.set_percussion_event_at_cursor()
                 } else {
-                    opus_manager.set_note_octave_at_cursor(
-                        this.get_buffer_value(0, 0, 7)
-                    )
+                   // opus_manager.set_note_octave_at_cursor(
+                   //     this.get_buffer_value(0, 0, 7)
+                   // )
                 }
             }
         },
 
         Pair(KeyEvent.KEYCODE_RIGHT_BRACKET, false) to object: CursorSpecificKeyStrokeNode(this) {
             override fun single(opus_manager: OpusLayerInterface, ctrl_pressed: Boolean) {
-                opus_manager.set_note_offset_at_cursor(
-                    this.get_buffer_value(0, 0, opus_manager.tuning_map.size - 1)
-                )
+                // opus_manager.set_note_offset_at_cursor(
+                //     this.get_buffer_value(0, 0, opus_manager.tuning_map.size - 1)
+                // )
             }
         },
 
@@ -133,7 +133,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             override fun single(opus_manager: OpusLayerInterface, ctrl_pressed: Boolean) {
                 var repeat = this.get_buffer_value(1, maximum=64)
                 if (repeat > 0) {
-                    val tree = opus_manager.get_tree()
+                    val tree = opus_manager.get_tree() ?: return
                     if (tree.parent == null) {
                         try {
                             opus_manager.split_tree_at_cursor(repeat + 1)
@@ -205,13 +205,13 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                     CtlLineLevel.Channel -> TODO()
                     CtlLineLevel.Global -> TODO()
                     null -> {
-                        if (opus_manager.marked_range != null) {
+                        if (opus_manager.cursor.range != null) {
                             opus_manager.overwrite_beat_range(
                                 opus_manager.cursor.get_beatkey(),
-                                opus_manager.marked_range!!.first,
-                                opus_manager.marked_range!!.second,
+                                opus_manager.cursor.range!!.first,
+                                opus_manager.cursor.range!!.second,
                             )
-                            opus_manager.marked_range = null
+                            opus_manager.cursor.range = null
                         }
                     }
                 }
@@ -321,7 +321,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             override fun single(opus_manager: OpusLayerInterface, ctrl_pressed: Boolean) {
                 val repeat = this.get_buffer_value(1, maximum=64, minimum=0)
                 if (repeat > 0) {
-                    val tree = opus_manager.get_tree()
+                    val tree = opus_manager.get_tree() ?: return
                     if (tree.parent == null) {
                         try {
                             opus_manager.split_tree_at_cursor(repeat + 1, true)
@@ -473,13 +473,13 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                     CtlLineLevel.Channel -> TODO()
                     CtlLineLevel.Global -> TODO()
                     null -> {
-                        if (opus_manager.marked_range != null) {
+                        if (opus_manager.cursor.range != null) {
                             opus_manager.move_beat_range(
                                 opus_manager.cursor.get_beatkey(),
-                                opus_manager.marked_range!!.first,
-                                opus_manager.marked_range!!.second,
+                                opus_manager.cursor.range!!.first,
+                                opus_manager.cursor.range!!.second,
                             )
-                            opus_manager.marked_range = null
+                            opus_manager.cursor.range = null
                         }
                     }
                 }
@@ -492,7 +492,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                     CtlLineLevel.Global -> TODO()
                     null -> {
                         val range = opus_manager.cursor.range
-                        opus_manager.marked_range = range
+                        opus_manager.cursor.range = range
                         val beat_key = opus_manager.cursor.range!!.second
                         val position = opus_manager.get_first_position(beat_key)
                         opus_manager.cursor_select(beat_key, position)
@@ -503,17 +503,17 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
 
         Pair(KeyEvent.KEYCODE_R, true) to object: CursorSpecificKeyStrokeNode(this) {
             private fun _set_relative_mode(opus_manager: OpusManager, force_mode: RelativeInputMode = RelativeInputMode.Absolute) {
-                if (opus_manager.relative_mode == RelativeInputMode.Absolute) {
-                    val activity = opus_manager.get_activity()
-                    if (activity != null) {
-                        activity.configuration.relative_mode = true
-                        activity.save_configuration()
-                    }
-                }
+               // if (opus_manager.relative_mode == RelativeInputMode.Absolute) {
+               //     //val activity = opus_manager.get_activity()
+               //     //if (activity != null) {
+               //     //    activity.configuration.relative_mode = true
+               //     //    activity.save_configuration()
+               //     //}
+               // }
 
-                if (opus_manager.relative_mode != force_mode) {
-                    opus_manager.set_relative_mode(force_mode)
-                }
+               // if (opus_manager.relative_mode != force_mode) {
+               //     opus_manager.force_relative_mode(force_mode)
+               // }
             }
 
             override fun column(opus_manager: OpusManager, ctrl_pressed: Boolean) {
@@ -522,11 +522,9 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
             }
 
             override fun single(opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
-                    return
-                }
+                if (opus_manager.is_percussion(opus_manager.cursor.channel)) return
                 
-                val tree = opus_manager.get_tree()
+                val tree = opus_manager.get_tree() ?: return
 
                 if (tree.has_event()) {
                     val event = tree.get_event()
@@ -551,14 +549,14 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                         )
                     }
                 } else {
-                    this._set_relative_mode(
-                        opus_manager,
-                        if (opus_manager.relative_mode == RelativeInputMode.Positive) {
-                            RelativeInputMode.Negative
-                        } else {
-                            RelativeInputMode.Positive
-                        }
-                    )
+                    //this._set_relative_mode(
+                    //    opus_manager,
+                    //    if (opus_manager.relative_mode == RelativeInputMode.Positive) {
+                    //        RelativeInputMode.Negative
+                    //    } else {
+                    //        RelativeInputMode.Positive
+                    //    }
+                    //)
                 }
             }
 
@@ -571,7 +569,6 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
         Pair(KeyEvent.KEYCODE_R, false) to object: CursorSpecificKeyStrokeNode(this) {
             override fun column(opus_manager: OpusManager, ctrl_pressed: Boolean) {
                 opus_manager.convert_events_in_beat_to_absolute(opus_manager.cursor.beat)
-                opus_manager.set_relative_mode(RelativeInputMode.Absolute)
             }
             override fun single(opus_manager: OpusManager, ctrl_pressed: Boolean) {
                 if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
@@ -581,7 +578,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                 try {
                     opus_manager.convert_event_to_absolute(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
                 } catch (e: NoteOutOfRange) {
-                    val tree = opus_manager.get_tree()
+                    val tree = opus_manager.get_tree() ?: return
                     val event = tree.get_event()!! as RelativeNoteEvent
                     opus_manager.set_event_at_cursor(
                         AbsoluteNoteEvent(
@@ -590,12 +587,10 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
                         )
                     )
                 }
-                opus_manager.set_relative_mode(RelativeInputMode.Absolute)
             }
 
             override fun line(opus_manager: OpusManager, ctrl_pressed: Boolean) {
                 opus_manager.convert_events_in_line_to_absolute(opus_manager.cursor.channel, opus_manager.cursor.line_offset)
-                opus_manager.set_relative_mode(RelativeInputMode.Absolute)
             }
         },
 
@@ -676,7 +671,7 @@ class KeyboardInputInterface(var opus_manager: OpusManager) {
         Pair(KeyEvent.KEYCODE_W, true) to object: KeyStrokeNode(this) {
             override fun call(opus_manager: OpusLayerInterface, ctrl_pressed: Boolean): Boolean {
                 println("???")
-                opus_manager.get_activity()?.project_save()
+                //opus_manager.get_activity()?.project_save()
                 return true
             }
         },

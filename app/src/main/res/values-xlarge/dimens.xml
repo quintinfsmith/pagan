@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <dimen name="contextmenu_primary_width">480dp</dimen>
-    <dimen name="contextmenu_secondary_width">480dp</dimen>
-    <dimen name="landing_menu_width">480dp</dimen>
-    <dimen name="config_width">400dp</dimen>
-</resources>

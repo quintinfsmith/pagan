@@ -6,4 +6,11 @@
     <integer name="EXPORTED_CHUNK_SIZE">22500</integer>
     <integer name="EXPORTED_SAMPLE_RATE">44100</integer>
     <integer name="max_tempo">1024</integer>
+    <integer-array name="sample_rates">
+        <item>8000</item>
+        <item>22050</item>
+        <item>32000</item>
+        <item>44100</item>
+        <item>48000</item>
+    </integer-array>
 </resources>

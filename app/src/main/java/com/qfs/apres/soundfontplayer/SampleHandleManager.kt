@@ -100,9 +100,7 @@ class SampleHandleManager(
             )?.toList() ?: listOf()
 
             for (sample_directive in sample_directives) {
-                if (sample_directive.sample == null) {
-                    continue
-                }
+                if (sample_directive.sample == null) continue
                 sample_pairs.add(Pair(sample_directive, p_instrument))
             }
         }
@@ -121,9 +119,7 @@ class SampleHandleManager(
                 output.add(new_linked_handle)
             }
 
-            if (this.sample_limit != null && output.size >= this.sample_limit!!) {
-                break
-            }
+            if (this.sample_limit != null && output.size >= this.sample_limit!!) break
         }
 
         return output
@@ -184,6 +180,9 @@ class SampleHandleManager(
         }
     }
 
+    fun get_preset(key: Pair<Int, Int>): Preset? {
+        return this.loaded_presets[key]
+    }
     fun get_preset(channel: Int): Preset? {
         val key = this.get_channel_preset(channel)
         return this.loaded_presets[key]

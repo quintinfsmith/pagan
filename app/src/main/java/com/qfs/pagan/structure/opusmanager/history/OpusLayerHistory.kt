@@ -7,6 +7,7 @@ import com.qfs.pagan.structure.opusmanager.base.OpusLine
 import com.qfs.pagan.structure.opusmanager.base.OpusLineAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
 import com.qfs.pagan.structure.opusmanager.base.OpusPercussionChannel
+import com.qfs.pagan.structure.opusmanager.base.TunedInstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.cursor.OpusLayerCursor
@@ -17,7 +18,6 @@ import kotlin.math.min
 
 open class OpusLayerHistory: OpusLayerCursor() {
     var history_cache = HistoryCache()
-    private var _memory_depth = 0
 
     override fun offset_range(amount: Int, first_key: BeatKey, second_key: BeatKey) {
         this._remember {
@@ -267,7 +267,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     private fun push_set_event(beat_key: BeatKey, position: List<Int>, event: InstrumentEvent) {
-        this.push_to_history_stack( HistoryToken.SET_EVENT, listOf(beat_key.copy(), position, event.copy()) )
+        this.push_to_history_stack(HistoryToken.SET_EVENT, listOf(beat_key.copy(), position, event.copy()))
     }
 
     private fun push_set_percussion_event(beat_key: BeatKey, position: List<Int>, duration: Int) {
@@ -286,26 +286,11 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     private fun <T> _remember(callback: () -> T): T {
-        return try {
-            this._memory_depth += 1
-            val output = this.history_cache.remember(callback)
-            this._memory_depth -= 1
-            output
-        } catch (e: Exception) {
-            this._memory_depth -= 1
-            if (this._memory_depth == 0) {
-                this.lock_cursor {
-                    this.apply_undo()
-                }
-            }
-            throw e
-        }
+        return this.history_cache.remember(callback)
     }
 
     private fun <T> _forget(callback: () -> T): T {
-        return this.history_cache.forget {
-            callback()
-        }
+        return this.history_cache.forget(callback)
     }
 
     fun prepend_to_history_stack(token: HistoryToken, args: List<Any>) {
@@ -460,7 +445,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                         uuid = current_node.args[1] as Int,
                         is_percussion = is_percussion
                     )
-                    this.channel_set_instrument(channel, Pair(current_node.args[2] as Int, current_node.args[3] as Int))
+                    this.channel_set_preset(channel, Pair(current_node.args[2] as Int, current_node.args[3] as Int))
                 }
 
                 HistoryToken.REMOVE -> {
@@ -562,12 +547,24 @@ open class OpusLayerHistory: OpusLayerCursor() {
                             current_node.args[2]
                         )
                     val beat_index = current_node.args[0] as Int
-                    this.insert_beat(beat_index, instrument_events)
+                    this.insert_beat(beat_index)
+
+                    // Re-add Instrument Events
+                    var y = 0
+                    for (channel in 0 until this.channels.size) {
+                        for (line in 0 until this.channels[channel].lines.size) {
+                            val beat_key = BeatKey(channel, line, beat_index)
+                            this.replace_tree(
+                                beat_key,
+                                listOf(),
+                                checked_cast<ReducibleTree<TunedInstrumentEvent>>(instrument_events[y++])
+                            )
+                        }
+                    }
 
                     // re-add line control events
                     for ((line_pair, type, tree) in control_events.first) {
-                        this.controller_line_replace_tree(type,
-                            BeatKey(line_pair.first, line_pair.second, beat_index), listOf(), tree)
+                        this.controller_line_replace_tree(type, BeatKey(line_pair.first, line_pair.second, beat_index), listOf(), tree)
                     }
 
                     // re-add channel control events
@@ -596,7 +593,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 }
 
                 HistoryToken.SET_CHANNEL_INSTRUMENT -> {
-                    this.channel_set_instrument(
+                    this.channel_set_preset(
                         current_node.args[0] as Int,
                         checked_cast<Pair<Int, Int>>(current_node.args[1])
                     )
@@ -610,27 +607,12 @@ open class OpusLayerHistory: OpusLayerCursor() {
                     )
                 }
 
-                HistoryToken.SET_EVENT_DURATION -> {
-                    this.set_duration(
-                        current_node.args[0] as BeatKey,
-                        checked_cast<List<Int>>(current_node.args[1]),
-                        current_node.args[2] as Int
-                    )
-                }
-
                 HistoryToken.SWAP_LINES -> {
                     this.swap_lines(
                         current_node.args[0] as Int,
                         current_node.args[1] as Int,
                         current_node.args[2] as Int,
                         current_node.args[3] as Int
-                    )
-                }
-
-                HistoryToken.SWAP_CHANNELS -> {
-                    this.swap_channels(
-                        current_node.args[0] as Int,
-                        current_node.args[1] as Int
                     )
                 }
 
@@ -820,16 +802,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
             this.push_to_history_stack(
                 HistoryToken.SWAP_LINES,
                 listOf(channel_index_a, line_offset_a, channel_index_b, line_offset_b)
-            )
-        }
-    }
-
-    override fun swap_channels(channel_a: Int, channel_b: Int) {
-        this._remember {
-            super.swap_channels(channel_a, channel_b)
-            this.push_to_history_stack(
-                HistoryToken.SWAP_CHANNELS,
-                listOf(channel_a, channel_b)
             )
         }
     }
@@ -1024,8 +996,8 @@ open class OpusLayerHistory: OpusLayerCursor() {
         }
     }
 
-    override fun insert_beat(beat_index: Int, beats_in_column: List<ReducibleTree<OpusEvent>>?) {
-        super.insert_beat(beat_index, beats_in_column)
+    override fun insert_beat(beat_index: Int) {
+        super.insert_beat(beat_index)
         this.push_to_history_stack( HistoryToken.REMOVE_BEATS, listOf(beat_index, 1) )
     }
 
@@ -1289,10 +1261,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
     override fun <T: EffectEvent> controller_line_set_event(type: EffectType, beat_key: BeatKey, position: List<Int>, event: T) {
         // Trivial?
-        if (this.get_line_ctl_tree<T>(type, beat_key, position).get_event() == event) {
-            return
-        }
-
+        if (this.get_line_ctl_tree<T>(type, beat_key, position).get_event() == event) return
         this._remember {
             this.push_replace_line_ctl(type, beat_key, position) {
                 super.controller_line_set_event(type, beat_key, position, event)
@@ -1457,13 +1426,13 @@ open class OpusLayerHistory: OpusLayerCursor() {
         super.set_transpose(new_transpose)
     }
 
-    override fun channel_set_instrument(channel: Int, instrument: Pair<Int, Int>) {
+    override fun channel_set_preset(channel: Int, instrument: Pair<Int, Int>) {
         this._remember {
             this.push_to_history_stack(
                 HistoryToken.SET_CHANNEL_INSTRUMENT,
                 listOf(channel, this.get_channel_instrument(channel))
             )
-            super.channel_set_instrument(channel, instrument)
+            super.channel_set_preset(channel, instrument)
         }
     }
 
@@ -1496,12 +1465,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
     override fun set_duration(beat_key: BeatKey, position: List<Int>, duration: Int) {
         this._remember {
-            val tree = this.get_tree(beat_key, position)
-            if (tree.has_event()) {
-                val event = tree.get_event()
-                this.push_to_history_stack(HistoryToken.SET_EVENT_DURATION, listOf(beat_key, position, event!!.duration))
-            }
-
             super.set_duration(beat_key, position, duration)
         }
     }

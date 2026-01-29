@@ -35,7 +35,6 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
     class BlockedTreeException(var line_offset: Int, var e: ReducibleTreeArray.BlockedTreeException): Exception()
     class BlockedLineCtlTreeException(var line_offset: Int, var e: OpusLineAbstract.BlockedCtlTreeException): Exception()
     class BlockedCtlTreeException(var e: OpusLineAbstract.BlockedCtlTreeException): Exception()
-
     var lines: MutableList<T> = mutableListOf()
     var controllers = EffectControlSet(0)
     var midi_program = 0
@@ -72,18 +71,14 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
     }
 
     fun insert_line(index: Int, line: T) {
-        if (line.beats.size != this._beat_count) {
-            throw LineSizeMismatch(line.beats.size, this._beat_count)
-        }
+        if (line.beats.size != this._beat_count) throw LineSizeMismatch(line.beats.size, this._beat_count)
 
         this.lines.add(index, line)
         this.size += 1
     }
 
     fun remove_line(index: Int? = null): T {
-        if (this.lines.size == 1) {
-            throw LastLineException()
-        }
+        if (this.lines.size == 1) throw LastLineException()
 
         return if (index == null) {
             this.size -= 1
@@ -142,7 +137,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
         this.midi_program = program
     }
 
-    fun get_instrument(): Pair<Int, Int> {
+    fun get_preset(): Pair<Int, Int> {
         return Pair(this.get_midi_bank(), this.midi_program)
     }
 

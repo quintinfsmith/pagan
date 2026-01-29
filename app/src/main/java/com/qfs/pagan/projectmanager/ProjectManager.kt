@@ -9,7 +9,7 @@ import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONList
 import com.qfs.json.JSONParser
 import com.qfs.json.JSONString
-import com.qfs.pagan.Activity.PaganActivity
+import com.qfs.pagan.ComponentActivity.PaganComponentActivity
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
@@ -44,6 +44,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
     }
 
     /**
+     * Deprecated. Potential source of project corruption
      * Move files from [old_uri] to the ProjectManger's current [uri],
      * return the new uri associated with given [active_project_uri] if it was moved
      **/
@@ -98,23 +99,14 @@ class ProjectManager(val context: Context, var uri: Uri?) {
      * [active_project_uri] is a uri that may be changed by the move and the returned Uri
      * is the altered version of that, if it is altered.
      */
-    fun change_project_path(new_uri: Uri, active_project_uri: Uri? = null): Uri? {
+    fun change_project_path(new_uri: Uri, active_project_uri: Uri? = null) {
         val new_directory = DocumentFile.fromTreeUri(this.context, new_uri)
         if (new_directory == null || !new_directory.isDirectory) throw InvalidDirectoryException(new_uri)
 
-        val old_uri = this.uri
         this.uri = new_uri
 
         this.ucheck_update_move_project_files(active_project_uri)
-
-        val output = if (old_uri != null) {
-            this.move_old_projects_directory(old_uri, active_project_uri)
-        } else {
-            null
-        }
-
         this.scan_and_update_project_list()
-        return output
     }
 
     /**
@@ -187,7 +179,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
     }
 
     fun get_existing_uris(): List<Uri> {
-        return (this.context as PaganActivity).get_existing_uris(this.uri)
+        return (this.context as PaganComponentActivity).get_existing_uris(this.uri)
     }
 
     /**
@@ -533,6 +525,21 @@ class ProjectManager(val context: Context, var uri: Uri?) {
                 file.delete()
             }
         }
+    }
+
+    fun open_project(uri: Uri): OpusLayerBase {
+        val output = OpusLayerBase()
+        if (DocumentFile.fromSingleUri(this.context, uri)?.exists() != true) return output
+
+        val input_stream = this.context.contentResolver.openInputStream(uri)
+        val reader = BufferedReader(InputStreamReader(input_stream))
+        val content = reader.readText().toByteArray(Charsets.UTF_8)
+
+        reader.close()
+        input_stream?.close()
+
+        output.load(content) {}
+        return output
     }
 
     /**

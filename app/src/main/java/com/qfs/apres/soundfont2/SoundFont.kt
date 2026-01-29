@@ -54,9 +54,7 @@ class SoundFont(val context: Context, uri: Uri) {
 
     init {
         this.riff.with {
-            if (this.riff.type_cc != "sfbk") {
-                throw InvalidSoundFont(uri)
-            }
+            if (this.riff.type_cc != "sfbk") throw InvalidSoundFont(uri)
 
             val info_chunk = this.riff.get_chunk_data(this.riff.list_chunks[0])
             val pdta_chunk = this.riff.get_chunk_data(this.riff.list_chunks[2])
@@ -245,8 +243,7 @@ class SoundFont(val context: Context, uri: Uri) {
 
             val current_program = toUInt(phdr_bytes[offset + 20]) + (toUInt(phdr_bytes[offset + 21]) * 256)
             val current_bank = toUInt(phdr_bytes[offset + 22]) + (toUInt(phdr_bytes[offset + 23]) * 256)
-
-            output.add(Triple(phdr_name, current_program, current_bank))
+            output.add(Triple(phdr_name, current_bank, current_program))
         }
         return output
     }

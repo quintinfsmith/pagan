@@ -1390,6 +1390,17 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
+    fun BoxScope.TableLine(color: Color) {
+        Spacer(
+            Modifier
+                .background(color = color)
+                .align(Alignment.CenterEnd)
+                .fillMaxHeight()
+                .width(dimensionResource(R.dimen.table_line_stroke))
+        )
+    }
+
+    @Composable
     fun RowScope.TableLine(color: Color) {
         Spacer(
             Modifier
@@ -1859,6 +1870,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     is OpusVelocityEvent -> Text("${(event.value * 100F).toInt()}%", color = text_color)
                     null -> {}
                 }
+                TableLine(MaterialTheme.colorScheme.onBackground)
             }
         }
     }
@@ -1907,7 +1919,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 }
                             )
                     )
-                    TableLine(MaterialTheme.colorScheme.onBackground)
                 }
             }
         }

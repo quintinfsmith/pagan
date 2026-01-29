@@ -250,8 +250,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         }
 
                         tmp_file.deleteOnExit()
-                        // FIXME: Move magic numbers
-                        val exporter_sample_handle_manager = SampleHandleManager(soundfont, 44100, 22050)
+                        val exporter_sample_handle_manager = SampleHandleManager(soundfont, Values.ExportSampleRate, Values.ExportBufferSize)
 
                         for (c_b in opus_manager_copy.get_all_channels().indices) {
                             val channel_copy = opus_manager_copy.get_channel(c_b)
@@ -357,7 +356,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
 
                 tmp_file.deleteOnExit()
-                val exporter_sample_handle_manager = SampleHandleManager(soundfont, 44100, 22050)
+                val exporter_sample_handle_manager = SampleHandleManager(soundfont, Values.ExportSampleRate, Values.ExportBufferSize)
 
                 for (c_b in opus_manager_copy.get_all_channels().indices) {
                     val channel_copy = opus_manager_copy.get_channel(c_b)
@@ -584,8 +583,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         thread {
             if (savedInstanceState != null) {
-                // TODO: Handle lost state without losing context
-                // if the activity is forgotten, the opus_manager is be uninitialized
                 dispatcher.load_from_bkp()
             } else if (this.intent.getBooleanExtra("load_backup", false)) {
                 dispatcher.load_from_bkp()
@@ -749,11 +746,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
         if (fallback_msg != null) {
-            TODO()
-            // if (!this.get_opus_manager().is_initialized()) {
-            //     this.setup_new()
-            // }
-            // this.feedback_msg(fallback_msg)
+            dispatcher.new_project()
+            dispatcher.toast(fallback_msg)
         }
     }
 
@@ -903,9 +897,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 onClick = {
                     scope.launch {
                         when (this@ComponentActivityEditor.controller_model.playback_state_midi) {
-                            PlaybackState.Queued -> TODO()
-                            PlaybackState.Stopping -> TODO()
-                            PlaybackState.NotReady -> TODO()
+                            PlaybackState.Queued,
+                            PlaybackState.Stopping,
+                            PlaybackState.NotReady -> {}
                             PlaybackState.Ready -> {
                                 dispatcher.play_opus_midi()
                             }

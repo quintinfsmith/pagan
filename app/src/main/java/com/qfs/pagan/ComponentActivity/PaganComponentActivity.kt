@@ -212,8 +212,8 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 for (dialog in dialogs.reversed()) {
                     Dialog( onDismissRequest = { view_model.dialog_queue.value = dialog.parent } ) {
                         DialogCard(
-                            // TODO: These are just roughed in. need to put more thought in and check later
                             modifier = when (view_model.get_layout_size()) {
+                                // No Constraints, regardless of requested size
                                 LayoutSize.SmallPortrait,
                                 LayoutSize.SmallLandscape,
                                 LayoutSize.MediumPortrait -> Modifier
@@ -222,8 +222,8 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                 LayoutSize.MediumLandscape -> {
                                     when (dialog.size) {
                                         ViewModelPagan.DialogSize.Unbounded -> Modifier
-                                        ViewModelPagan.DialogSize.Small -> Modifier.width(200.dp)
-                                        ViewModelPagan.DialogSize.Medium -> Modifier.width(400.dp)
+                                        ViewModelPagan.DialogSize.Small -> Modifier.width(Dimensions.Layout.Medium.short)
+                                        ViewModelPagan.DialogSize.Medium -> Modifier.width(Dimensions.Layout.Small.long)
                                     }
                                 }
 
@@ -232,7 +232,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                 LayoutSize.LargeLandscape -> {
                                     when (dialog.size) {
                                         ViewModelPagan.DialogSize.Unbounded -> Modifier
-                                        ViewModelPagan.DialogSize.Small -> Modifier.width(300.dp)
+                                        ViewModelPagan.DialogSize.Small -> Modifier.width(Dimensions.Layout.Medium.short)
                                         ViewModelPagan.DialogSize.Medium -> Modifier.width(Dimensions.Layout.Large.long)
                                     }
                                 }

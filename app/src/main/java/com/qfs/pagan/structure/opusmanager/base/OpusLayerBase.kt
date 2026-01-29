@@ -4604,6 +4604,7 @@ open class OpusLayerBase: Effectable {
         for ((_, controller) in this.controllers.get_all()) {
             controller.init_blocked_tree_caches()
         }
+
         // ----------------------------------------------
         // Unflag so blocking gets tracked
         for (channel in this.get_all_channels()) {

@@ -133,7 +133,6 @@ class ViewModelEditorState: ViewModel() {
                 }
             }
             this.key.value = System.currentTimeMillis()
-            // TODO
         }
 
         fun remove_branch(path: List<Int>) {
@@ -665,7 +664,7 @@ class ViewModelEditorState: ViewModel() {
                     this.cell_map[y][x].value.also {
                         for ((leaf_path, leaf_data) in it.leafs) {
                             leaf_data.value.is_selected.value = leaf_path == cursor.ints.subList(2, cursor.ints.size)
-                            leaf_data.value.is_secondary.value = false // TODO
+                            leaf_data.value.is_secondary.value = false
                             this.selected_leafs.add(leaf_data.value)
                         }
                     }
@@ -853,30 +852,9 @@ class ViewModelEditorState: ViewModel() {
         return null
     }
 
-    // TODO: (maybe) cache these values so we don't have to calculate on every scroll
-    private fun get_column_from_leaf(leaf: Int): Int {
-        var output = 0
-        var working_value = leaf
-        for (i in 0 until this.beat_count.value) {
-            if (working_value == 0) break
-            working_value -= this.column_data[i].top_weight.value
-            output = i
-            if (working_value < 0) break
-        }
-        return output
-    }
-
     fun get_first_visible_column_index(): Int {
         return this.scroll_state_x.value.firstVisibleItemIndex
     }
-
-    // fun get_last_visible_column_index(): Int {
-    //     val scroll_container_offset = this.scroll_state_x.value.
-    //     val min_leaf_width = this.base_leaf_width.value
-    //     val reduced_x = scroll_container_offset / min_leaf_width
-    //     val column_position = this.get_column_from_leaf(reduced_x.toInt())
-    //     return column_position
-    // }
 
     fun scroll_to_beat(beat: Int) {
         if (beat >= this.beat_count.value) return

@@ -918,7 +918,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             )
             Spacer(Modifier.width(Dimensions.TopBarItemSpace))
-        } else if (this@ComponentActivityEditor.state_model.soundfont_active.value) {
+        } else if (this@ComponentActivityEditor.state_model.soundfont_active.value != null) {
             TopBarIcon(
                 icon = when (this@ComponentActivityEditor.state_model.playback_state_soundfont.value) {
                     PlaybackState.Queued,

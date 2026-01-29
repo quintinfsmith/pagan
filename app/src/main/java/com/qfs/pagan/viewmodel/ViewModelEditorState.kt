@@ -199,7 +199,7 @@ class ViewModelEditorState: ViewModel() {
     val base_leaf_width = mutableStateOf(0F)
 
     val has_global_effects_hidden = mutableStateOf(true)
-    val soundfont_active = mutableStateOf(false)
+    val soundfont_active: MutableState<Long?> = mutableStateOf(null) // can use as key if we specify some indicator
     val table_side_padding: MutableState<Float> = mutableStateOf(0F)
     val table_bottom_padding: MutableState<Float> = mutableStateOf(0F)
     val wide_beat_progress: MutableState<Float> = mutableStateOf(0F)
@@ -814,7 +814,7 @@ class ViewModelEditorState: ViewModel() {
 
                     var instrument_name = sample_directive.sample!!.first().name
                     if (instrument_name.contains("(")) {
-                        instrument_name = instrument_name.substring(0, instrument_name.indexOf("("))
+                        instrument_name = instrument_name.substringBefore("(")
                     }
 
                     for (key in usable_range) {
@@ -880,7 +880,6 @@ class ViewModelEditorState: ViewModel() {
 
     fun scroll_to_beat(beat: Int) {
         if (beat >= this.beat_count.value) return
-
 
         val in_playback = (this.playback_state_midi.value == PlaybackState.Playing || this.playback_state_soundfont.value == PlaybackState.Playing)
 
@@ -966,11 +965,11 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun enable_soundfont() {
-        this.soundfont_active.value = true
+        this.soundfont_active.value = System.currentTimeMillis()
     }
 
     fun unset_soundfont() {
-        this.soundfont_active.value = false
+        this.soundfont_active.value = null
         this.clear_instrument_names()
     }
 

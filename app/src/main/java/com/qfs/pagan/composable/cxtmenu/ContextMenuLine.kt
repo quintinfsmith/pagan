@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.stringArrayResource
@@ -90,20 +91,29 @@ fun PercussionSetInstrumentButton(modifier: Modifier = Modifier, vm_state: ViewM
     } else {
         "!${"%02d".format(assigned_offset)}"
     }
-
-    TextCMenuButton(
-        modifier = modifier,
-        onClick = { dispatcher.set_percussion_instrument(active_line.channel.value!!, active_line.line_offset.value!!) },
-        text = label ?: if (active_channel.instrument.value.first == 128) {
-            if (vm_state.soundfont_active.value && !vm_state.use_midi_playback.value) {
-                stringResource(R.string.unavailable_preset, stringArrayResource(R.array.midi_drums)[assigned_offset])
+    key(vm_state.soundfont_active.value) {
+        TextCMenuButton(
+            modifier = modifier,
+            onClick = {
+                dispatcher.set_percussion_instrument(
+                    active_line.channel.value!!,
+                    active_line.line_offset.value!!
+                )
+            },
+            text = label ?: if (active_channel.instrument.value.first == 128) {
+                if (vm_state.soundfont_active.value != null && !vm_state.use_midi_playback.value) {
+                    stringResource(
+                        R.string.unavailable_preset,
+                        stringArrayResource(R.array.midi_drums)[assigned_offset]
+                    )
+                } else {
+                    stringArrayResource(R.array.midi_drums)[assigned_offset]
+                }
             } else {
-                stringArrayResource(R.array.midi_drums)[assigned_offset]
+                "${stringArrayResource(R.array.general_midi_presets)[active_channel.instrument.value.first]} @${assigned_offset}"
             }
-        } else {
-            "${stringArrayResource(R.array.general_midi_presets)[active_channel.instrument.value.first]} @${assigned_offset}"
-        }
-    )
+        )
+    }
 }
 
 @Composable

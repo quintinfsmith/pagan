@@ -1561,6 +1561,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
             val preset = opus_manager.get_channel_instrument(channel)
             val instruments = opus_manager.vm_state.get_available_instruments(preset)
             for ((name, index) in instruments) {
+                if (index < 0) continue
                 options.add(Pair(index, { Text("$index: $name") }))
             }
         } else {

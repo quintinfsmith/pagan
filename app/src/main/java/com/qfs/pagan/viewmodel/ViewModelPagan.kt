@@ -65,7 +65,6 @@ class ViewModelPagan: ViewModel() {
 
     fun set_layout_size(width: Dp, height: Dp) {
         this.active_layout_size.value = Dimensions.set_active_layout_dimensions(width, height)
-        println(" - - - - - - - ${this.active_layout_size.value} - - - - - - - ")
     }
 
     fun get_layout_size(): LayoutSize {

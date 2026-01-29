@@ -2284,7 +2284,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                             working_beat = it.first
                             working_position = it.second
                             working_event = controller.get_tree(it.first, it.second).get_event()
-                            println("$working_event ($working_beat, $working_position")
                         } ?: break
                     }
 

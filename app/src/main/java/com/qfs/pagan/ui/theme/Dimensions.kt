@@ -192,7 +192,6 @@ object Dimensions {
     val TinyTuningDialogButtonPadding = 4.dp
     val TinyTuningDialogInnerPadding = 6.dp
     val TinyTuningDialogInputWidth = 64.dp
-    val TinyTuningDialogInputPadding = 4.dp
 
     val TopBarHeight: Dp
         get() = getter(
@@ -207,5 +206,6 @@ object Dimensions {
     val TopBarItemSpace = 16.dp
 
     val TransposeDialogInnerPadding = 8.dp
+    val TransposeDialogInputPadding = 8.dp
     val TransposeDialogInputWidth = 64.dp
 }

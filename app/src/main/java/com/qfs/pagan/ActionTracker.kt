@@ -30,6 +30,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
@@ -2653,8 +2654,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     @Composable
-    fun ColumnScope.TuningDialogNormal(
-        close_callback: () -> Unit,
+    fun TuningDialogTopLine(
         transpose_numerator: MutableState<Int>,
         transpose_denominator: MutableState<Int>,
         radix: MutableState<Int>,
@@ -2671,7 +2671,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                     IntegerInput(
                         value = transpose_numerator,
                         minimum = 0,
-                        contentPadding = PaddingValues(Dimensions.TransposeDialogInnerPadding),
+                        contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
                         modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
                         callback = { }
                     )
@@ -2679,7 +2679,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                     IntegerInput(
                         value = transpose_denominator,
                         minimum = 1,
-                        contentPadding = PaddingValues(Dimensions.TransposeDialogInnerPadding),
+                        contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
                         modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
                         callback = { }
                     )
@@ -2711,6 +2711,18 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                 )
             }
         }
+    }
+
+    @Composable
+    fun ColumnScope.TuningDialogNormal(
+        close_callback: () -> Unit,
+        transpose_numerator: MutableState<Int>,
+        transpose_denominator: MutableState<Int>,
+        radix: MutableState<Int>,
+        mutable_map: MutableList<Pair<MutableState<Int>, MutableState<Int>>>
+    ) {
+
+        TuningDialogTopLine(transpose_numerator, transpose_denominator, radix, mutable_map)
 
         Spacer(Modifier.height(Dimensions.TransposeDialogInnerPadding))
 
@@ -2809,139 +2821,83 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                     .weight(1F, fill = false),
                 verticalArrangement = Arrangement.SpaceAround
             ) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column {
-                        SText(
-                            R.string.dlg_transpose,
-                            maxLines = 1,
-                            style = Typography.TinyTuningDialogLabel
-                        )
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            IntegerInput(
-                                value = transpose_numerator,
-                                minimum = 0,
-                                contentPadding = PaddingValues(Dimensions.TransposeDialogInnerPadding),
-                                modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
-                                callback = { }
-                            )
-                            Text("/", Modifier.padding(horizontal = 4.dp))
-                            IntegerInput(
-                                value = transpose_denominator,
-                                minimum = 1,
-                                contentPadding = PaddingValues(Dimensions.TransposeDialogInnerPadding),
-                                modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
-                                callback = { }
-                            )
-                        }
-                    }
-
-                    Column {
-                        SText(
-                            R.string.dlg_set_radix,
-                            maxLines = 1,
-                            textAlign = TextAlign.End,
-                            style = Typography.TinyTuningDialogLabel
-                        )
-                        IntegerInput(
-                            value = radix,
-                            minimum = 1,
-                            maximum = 36,
-                            contentPadding = PaddingValues(Dimensions.TransposeDialogInnerPadding),
-                            modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
-                            callback = {
-                                mutable_map.clear()
-                                for (i in 0 until it) {
-                                    mutable_map.add(
-                                        Pair(
-                                            mutableStateOf(i),
-                                            mutableStateOf(it)
-                                        )
-                                    )
-                                }
-                            }
-                        )
-                    }
+                ProvideTextStyle(Typography.TinyTuningDialogLabel) {
+                    TuningDialogTopLine(transpose_numerator, transpose_denominator, radix, mutable_map)
                 }
-
-                Column(verticalArrangement = Arrangement.Bottom) {
+                Column(
+                    verticalArrangement = Arrangement.Bottom,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
                     SText(
                         R.string.label_tuning,
                         style = Typography.TinyTuningDialogLabel
                     )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    Surface(
+                        shape = Shapes.Container,
+                        tonalElevation = 1.dp
                     ) {
-                        Surface(
-                            Modifier.padding(vertical = 3.dp),
-                            shape = RoundedCornerShape(6.dp),
-                            tonalElevation = 2.dp
+                        Row(
+                            modifier = Modifier
+                                .padding(Dimensions.TinyTuningDialogInnerPadding)
+                                .fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                modifier = Modifier.padding(6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween,
+                            DropdownMenu(
+                                expanded = expanded.value,
+                                onDismissRequest = { expanded.value = false }
                             ) {
-                                DropdownMenu(
-                                    expanded = expanded.value,
-                                    onDismissRequest = { expanded.value = false }
-                                ) {
-                                    for (i in 0 until radix.value) {
-                                        DropdownMenuItem(
-                                            modifier = Modifier
-                                                .then(
-                                                    if (i == actively_editting_index.value) {
-                                                        Modifier.background(MaterialTheme.colorScheme.tertiary)
+                                for (i in 0 until radix.value) {
+                                    DropdownMenuItem(
+                                        modifier = Modifier
+                                            .then(
+                                                if (i == actively_editting_index.value) {
+                                                    Modifier.background(MaterialTheme.colorScheme.tertiary)
+                                                } else {
+                                                    Modifier
+                                                }
+                                            ),
+                                        text = {
+                                            Text(
+                                                "${"%02d".format(i)}: ${mutable_map[i].first.value} / ${mutable_map[i].second.value}",
+                                                style = LocalTextStyle.current.copy(
+                                                    color = if (i == actively_editting_index.value) {
+                                                        MaterialTheme.colorScheme.onTertiary
                                                     } else {
-                                                        Modifier
+                                                        LocalTextStyle.current.color
                                                     }
-                                                ),
-                                            text = {
-                                                Text(
-                                                    "${"%02d".format(i)}: ${mutable_map[i].first.value} / ${mutable_map[i].second.value}",
-                                                    style = LocalTextStyle.current.copy(
-                                                        color = if (i == actively_editting_index.value) {
-                                                            MaterialTheme.colorScheme.onTertiary
-                                                        } else {
-                                                            LocalTextStyle.current.color
-                                                        }
-                                                    )
                                                 )
-                                            },
-                                            onClick = {
-                                                actively_editting_index.value = i
-                                                expanded.value = false
-                                            }
-                                        )
-                                    }
-                                }
-                                key(radix.value) {
-                                    Button(
-                                        content = { Text("%02d".format(actively_editting_index.value)) },
-                                        onClick = { expanded.value = !expanded.value }
+                                            )
+                                        },
+                                        onClick = {
+                                            actively_editting_index.value = i
+                                            expanded.value = false
+                                        }
                                     )
-                                    Spacer(Modifier.weight(1F))
-                                    key(actively_editting_index.value) {
-                                        IntegerInput(
-                                            value = mutable_map[actively_editting_index.value].first,
-                                            minimum = 0,
-                                            modifier = Modifier.width(Dimensions.TinyTuningDialogInputWidth),
-                                            contentPadding = PaddingValues(Dimensions.TinyTuningDialogInputPadding),
-                                            callback = {}
-                                        )
-                                        Text("/", modifier = Modifier.padding(horizontal = 2.dp))
-                                        IntegerInput(
-                                            value = mutable_map[actively_editting_index.value].second,
-                                            minimum = 1,
-                                            modifier = Modifier.width(Dimensions.TinyTuningDialogInputWidth),
-                                            contentPadding = PaddingValues(Dimensions.TinyTuningDialogInputPadding),
-                                            callback = { }
-                                        )
-                                    }
+                                }
+                            }
+                            key(radix.value) {
+                                Button(
+                                    content = { Text("%02d".format(actively_editting_index.value)) },
+                                    onClick = { expanded.value = !expanded.value }
+                                )
+                                Spacer(Modifier.weight(1F))
+                                key(actively_editting_index.value) {
+                                    IntegerInput(
+                                        value = mutable_map[actively_editting_index.value].first,
+                                        minimum = 0,
+                                        modifier = Modifier.width(Dimensions.TinyTuningDialogInputWidth),
+                                        contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
+                                        callback = {}
+                                    )
+                                    Text("/", modifier = Modifier.padding(horizontal = 2.dp))
+                                    IntegerInput(
+                                        value = mutable_map[actively_editting_index.value].second,
+                                        minimum = 1,
+                                        modifier = Modifier.width(Dimensions.TinyTuningDialogInputWidth),
+                                        contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
+                                        callback = { }
+                                    )
                                 }
                             }
                         }

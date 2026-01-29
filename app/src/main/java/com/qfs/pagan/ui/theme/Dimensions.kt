@@ -107,6 +107,13 @@ object Dimensions {
         throw Exception("Value Not Set") // TODO: Specify
     }
 
+    object Background {
+        val Radius = 24.dp
+        val Gap = 24.dp
+        val BarWidth = LeafBaseWidth * 2
+        val BarSmallHeight = BarWidth
+        val BarLargeHeight = BarSmallHeight * 3
+    }
 
     object ButtonHeight {
         val Normal = 48.dp

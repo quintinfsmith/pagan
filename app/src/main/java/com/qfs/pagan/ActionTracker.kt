@@ -114,7 +114,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     enum class TrackedAction {
         ApplyUndo,
         NewProject,
-        LoadProject,
         CursorSelectColumn,
         CursorSelectGlobalCtlRange,
         CursorSelectChannelCtlRange,
@@ -210,8 +209,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                     TrackedAction.ShowLineController,
                     TrackedAction.ShowChannelController,
                     TrackedAction.ShowGlobalController,
-                    TrackedAction.SetCopyMode,
-                    TrackedAction.LoadProject -> {
+                    TrackedAction.SetCopyMode -> {
                         val string = entry.get_string(1)
                         this.string_to_ints(string)
                     }
@@ -337,8 +335,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                     TrackedAction.ShowChannelController,
                     TrackedAction.ShowGlobalController,
                     TrackedAction.SetCopyMode,
-                    TrackedAction.ImportSong,
-                    TrackedAction.LoadProject -> {
+                    TrackedAction.ImportSong -> {
                         arrayOf(JSONString(this.string_from_ints(integers)))
                     }
 
@@ -1171,12 +1168,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         opus_manager.clear_history()
     }
 
-    fun load_project(uri: Uri) {
-        this.track(TrackedAction.LoadProject, ActionTracker.string_to_ints(uri.toString()))
-        TODO()
-        //activity.load_project(uri)
-    }
-
     fun <T: EffectEvent> set_initial_effect(type: EffectType, event: T, channel: Int?, line_offset: Int?, lock_cursor: Boolean = false) {
         // TODO: Track
         val opus_manager = this.get_opus_manager()
@@ -1980,7 +1971,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
             return
         }
 
-        this.vm_top.create_small_dialog { close ->
+        this.vm_top.create_medium_dialog { close ->
             @Composable {
                 Row { DialogSTitle(R.string.dialog_save_warning_title, modifier = Modifier.weight(1F)) }
                 DialogBar(
@@ -2154,9 +2145,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
             }
             TrackedAction.NewProject -> {
                 this.new_project()
-            }
-            TrackedAction.LoadProject -> {
-                this.load_project(ActionTracker.string_from_ints(integers).toUri())
             }
             TrackedAction.CursorSelectColumn -> {
                 this.cursor_select_column(integers[0]!!)

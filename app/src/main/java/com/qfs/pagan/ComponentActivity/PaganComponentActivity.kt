@@ -15,6 +15,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -32,9 +33,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
@@ -47,11 +46,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -80,10 +83,10 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.text.SimpleDateFormat
 import java.util.Date
+import kotlin.math.ceil
 import kotlin.math.roundToInt
 
 abstract class PaganComponentActivity: ComponentActivity() {
-
     @Composable
     abstract fun LayoutXLargePortrait(modifier: Modifier = Modifier)
     @Composable
@@ -261,17 +264,53 @@ abstract class PaganComponentActivity: ComponentActivity() {
                         drawerContent = { this@PaganComponentActivity.Drawer() },
                         content = {
                             Box(modifier = Modifier.padding(it)) {
-                                Box(
-                                    modifier = Modifier
-                                        .padding(32.dp)
+                                Canvas(
+                                    Modifier
+                                        .background(MaterialTheme.colorScheme.background)
                                         .fillMaxSize()
                                 ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.rowanleaf_no_padding),
-                                        tint = colorResource(R.color.main_background_etching),
-                                        contentDescription = "",
-                                        modifier = Modifier.fillMaxSize()
-                                    )
+                                    val gap_width = Dimensions.Background.Gap.toPx()
+                                    val bar_width = Dimensions.Background.BarWidth.toPx()
+                                    val bar_height_small = Dimensions.Background.BarSmallHeight.toPx()
+                                    val bar_height_large = Dimensions.Background.BarLargeHeight.toPx()
+                                    clipRect {
+                                        for (x in 0 until ceil(this.size.width / (bar_width + gap_width)).toInt()) {
+                                            var y_offset = if (x % 2 == 0) {
+                                                bar_height_large
+                                            } else {
+                                                bar_height_small
+                                            } / -2F
+                                            var y = 0
+                                            while (y_offset < this.size.height) {
+                                                val bar_height = if (x % 2 == 0) {
+                                                    if (y % 2 == 0) {
+                                                        bar_height_large
+                                                    } else {
+                                                        bar_height_small
+                                                    }
+                                                } else if (y % 2 == 0) {
+                                                    bar_height_small
+                                                } else {
+                                                    bar_height_large
+                                                }
+                                                drawRoundRect(
+                                                    color = Color(0x10888888),
+                                                    topLeft = Offset(
+                                                        x = (x * (bar_width + gap_width)) - (bar_width / 2F),
+                                                        y = y_offset
+                                                    ),
+                                                    size = Size(
+                                                        width = bar_width,
+                                                        height = bar_height
+                                                    ),
+                                                    cornerRadius = CornerRadius(Dimensions.Background.Radius.toPx())
+                                                )
+
+                                                y_offset += bar_height + gap_width
+                                                y++
+                                            }
+                                        }
+                                    }
                                 }
 
                                 val layout_size = view_model.get_layout_size()

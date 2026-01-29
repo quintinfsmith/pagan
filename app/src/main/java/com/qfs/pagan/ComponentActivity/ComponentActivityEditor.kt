@@ -83,6 +83,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.documentfile.provider.DocumentFile
+import androidx.lifecycle.Lifecycle
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
 import com.qfs.apres.MidiController
@@ -556,6 +557,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        action_interface = ActionTracker(this, this.controller_model)
+        val dispatcher = this.action_interface
+        this.controller_model.attach_state_model(this.state_model)
+
         this.registerReceiver(
             this.broadcast_receiver,
             this.receiver_intent_filter,
@@ -565,12 +573,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 0
             }
         )
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        action_interface = ActionTracker(this, this.controller_model)
-        val dispatcher = this.action_interface
-        this.controller_model.attach_state_model(this.state_model)
 
         dispatcher.attach_top_model(this.view_model)
 
@@ -764,6 +766,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     override fun onDestroy() {
         this.save_to_backup()
         this.controller_model.playback_device?.activity = null
+        this.unregisterReceiver(this.broadcast_receiver)
         super.onDestroy()
     }
 
@@ -787,7 +790,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             menu_items.add(
                 Pair(R.string.menu_item_load_project) {
                     this@ComponentActivityEditor.load_menu_dialog { uri ->
-                        thread {
+                        this@ComponentActivityEditor.action_interface.save_before {
                             this@ComponentActivityEditor.load_project(uri)
                         }
                     }
@@ -1295,86 +1298,89 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     }
                 }
 
-                LazyRow(
-                    state = scroll_state_h,
-                    contentPadding = PaddingValues(end = toDp(this@ComponentActivityEditor.state_model.table_side_padding.value)),
-                    overscrollEffect = null
-                ) {
-                    itemsIndexed(column_widths + listOf(1)) { x, width ->
-                        if (x == column_widths.size) {
-                            ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onSurfaceVariant) {
-                                Box(
-                                    modifier = Modifier
-                                        .width(Dimensions.LeafBaseWidth)
-                                        .combinedClickable(
-                                            onClick = { dispatcher.append_beats() },
-                                            onLongClick = { dispatcher.append_beats() }
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        modifier = Modifier.padding(6.dp),
-                                        painter = painterResource(R.drawable.icon_add),
-                                        contentDescription = stringResource(R.string.cd_insert_beat)
-                                    )
-                                }
-                            }
-
-                            return@itemsIndexed
-                        }
-
-                        Column {
-                            Column(
-                                Modifier
-                                    .width(leaf_width * width)
-                                    .height(line_height),
-                            ) {
-                                BeatLabelView(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .weight(1F),
-                                    x = x,
-                                    ui_facade = ui_facade,
-                                    dispatcher = dispatcher,
-                                    column_info = ui_facade.column_data[x],
-                                    column_width = (leaf_width * width)
-                                )
-                                TableLine(MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-
-                            Column(
-                                Modifier
-                                    .verticalScroll(scroll_state_v, overscrollEffect = null)
-                                    .width(leaf_width * width)
-                            ) {
-                                for (y in 0 until ui_facade.line_count.value) {
-                                    val cell = ui_facade.cell_map[y][x]
-                                    Column(
-                                        Modifier
-                                            .draggable_line(y, dragging_to_y, is_after)
-                                            .height(
-                                                if (ui_facade.line_data[y].ctl_type.value != null) ctl_line_height
-                                                else line_height
-                                            )
+                // Key to prevent incongruence between column_width size and content
+                key(ui_facade.beat_count.value) {
+                    LazyRow(
+                        state = scroll_state_h,
+                        contentPadding = PaddingValues(end = toDp(this@ComponentActivityEditor.state_model.table_side_padding.value)),
+                        overscrollEffect = null
+                    ) {
+                        itemsIndexed(column_widths + listOf(1)) { x, width ->
+                            if (x == column_widths.size) {
+                                ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onSurfaceVariant) {
+                                    Box(
+                                        modifier = Modifier
+                                            .width(Dimensions.LeafBaseWidth)
+                                            .combinedClickable(
+                                                onClick = { dispatcher.append_beats() },
+                                                onLongClick = { dispatcher.append_beats() }
+                                            ),
+                                        contentAlignment = Alignment.Center
                                     ) {
-                                        if (ui_facade.draw_top_line(y)) {
-                                            TableLine(MaterialTheme.colorScheme.onSurfaceVariant)
-                                        }
-                                        CellView(ui_facade, dispatcher, cell, y, x, Modifier.weight(1F))
-                                        TableLine(MaterialTheme.colorScheme.onBackground)
-                                    }
-
-                                    if ((y == ui_facade.line_data.size - 1 || ui_facade.line_data[y].channel.value != ui_facade.line_data[y + 1].channel.value) && ui_facade.line_data[y].channel.value != null) {
-                                        Row(
-                                            Modifier
-                                                .draggable_line(y, dragging_to_y, is_after, true)
-                                                .fillMaxWidth()
-                                                .height(channel_gap_height)
-                                                .background(MaterialTheme.colorScheme.onBackground)
-                                        ) { }
+                                        Icon(
+                                            modifier = Modifier.padding(6.dp),
+                                            painter = painterResource(R.drawable.icon_add),
+                                            contentDescription = stringResource(R.string.cd_insert_beat)
+                                        )
                                     }
                                 }
-                                Spacer(Modifier.height(line_height + toDp(this@ComponentActivityEditor.state_model.table_bottom_padding.value)))
+
+                                return@itemsIndexed
+                            }
+
+                            Column {
+                                Column(
+                                    Modifier
+                                        .width(leaf_width * width)
+                                        .height(line_height),
+                                ) {
+                                    BeatLabelView(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .weight(1F),
+                                        x = x,
+                                        ui_facade = ui_facade,
+                                        dispatcher = dispatcher,
+                                        column_info = ui_facade.column_data[x],
+                                        column_width = (leaf_width * width)
+                                    )
+                                    TableLine(MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+
+                                Column(
+                                    Modifier
+                                        .verticalScroll(scroll_state_v, overscrollEffect = null)
+                                        .width(leaf_width * width)
+                                ) {
+                                    for (y in 0 until ui_facade.line_count.value) {
+                                        val cell = ui_facade.cell_map[y][x]
+                                        Column(
+                                            Modifier
+                                                .draggable_line(y, dragging_to_y, is_after)
+                                                .height(
+                                                    if (ui_facade.line_data[y].ctl_type.value != null) ctl_line_height
+                                                    else line_height
+                                                )
+                                        ) {
+                                            if (ui_facade.draw_top_line(y)) {
+                                                TableLine(MaterialTheme.colorScheme.onSurfaceVariant)
+                                            }
+                                            CellView(ui_facade, dispatcher, cell, y, x, Modifier.weight(1F))
+                                            TableLine(MaterialTheme.colorScheme.onBackground)
+                                        }
+
+                                        if ((y == ui_facade.line_data.size - 1 || ui_facade.line_data[y].channel.value != ui_facade.line_data[y + 1].channel.value) && ui_facade.line_data[y].channel.value != null) {
+                                            Row(
+                                                Modifier
+                                                    .draggable_line(y, dragging_to_y, is_after, true)
+                                                    .fillMaxWidth()
+                                                    .height(channel_gap_height)
+                                                    .background(MaterialTheme.colorScheme.onBackground)
+                                            ) { }
+                                        }
+                                    }
+                                    Spacer(Modifier.height(line_height + toDp(this@ComponentActivityEditor.state_model.table_bottom_padding.value)))
+                                }
                             }
                         }
                     }

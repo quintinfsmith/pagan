@@ -377,8 +377,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             Column(
                 modifier = Modifier
                     .padding(Dimensions.SoundFontMenuPadding)
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState()),
+                    .fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {

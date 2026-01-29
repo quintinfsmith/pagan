@@ -755,6 +755,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
+    override fun onStop() {
+        this.action_interface.stop_opus_midi()
+        this.action_interface.stop_opus()
+        super.onStop()
+    }
+
     override fun onDestroy() {
         this.save_to_backup()
         this.controller_model.playback_device?.activity = null

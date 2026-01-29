@@ -1514,25 +1514,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
         if (this.ui_lock.is_locked()) return
         this._queue_cursor_update(this.cursor)
-        val controller = this.get_line_controller<EffectEvent>(ctl_type, beat_key.channel, beat_key.line_offset)
-        val this_event = this.get_line_ctl_tree<EffectEvent>(ctl_type, beat_key, position).get_event()
-
-        val (working_event, descriptor) = if (this_event != null) {
-            Pair(this_event, ViewModelEditorState.EventDescriptor.Selected)
-        } else {
-            val original = this.controller_line_get_actual_position(ctl_type, beat_key, position)
-            val head_tree = this.get_line_ctl_tree<EffectEvent>(ctl_type, original.first, original.second)
-            if (original != Pair(beat_key, position) && head_tree.event != null) {
-                Pair(head_tree.event!!, ViewModelEditorState.EventDescriptor.Tail)
-            } else {
-                Pair(
-                    controller.get_preceding_event(beat_key.beat, position) ?: controller.initial_event,
-                    ViewModelEditorState.EventDescriptor.Backup
-                )
-            }
-        }
-
-        this.vm_state.set_active_event(working_event.copy(), descriptor)
+        this.check_update_active_event(ctl_type, beat_key, position)
     }
 
     override fun cursor_select_ctl_at_channel(ctl_type: EffectType, channel: Int, beat: Int, position: List<Int>) {
@@ -1543,25 +1525,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
         if (this.ui_lock.is_locked()) return
         this._queue_cursor_update(this.cursor)
-        val controller = this.get_channel_controller<EffectEvent>(ctl_type, channel)
-        val this_event = this.get_channel_ctl_tree<EffectEvent>(ctl_type, channel, beat, position).event
-
-        val (working_event, descriptor) = if (this_event != null) {
-            Pair(this_event, ViewModelEditorState.EventDescriptor.Selected)
-        } else {
-            val original = this.controller_channel_get_actual_position(ctl_type, channel, beat, position)
-            val head_tree = this.get_channel_ctl_tree<EffectEvent>(ctl_type, channel, original.first, original.second)
-            if (original != Pair(beat, position) && head_tree.event != null) {
-                Pair(head_tree.event!!, ViewModelEditorState.EventDescriptor.Tail)
-            } else {
-                Pair(
-                    controller.get_preceding_event(beat, position) ?: controller.initial_event,
-                    ViewModelEditorState.EventDescriptor.Backup
-                )
-            }
-        }
-
-        this.vm_state.set_active_event(working_event.copy(), descriptor)
+        this.check_update_active_event(ctl_type, channel, beat, position)
     }
 
     override fun cursor_select_ctl_at_global(ctl_type: EffectType, beat: Int, position: List<Int>) {
@@ -1571,26 +1535,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         super.cursor_select_ctl_at_global(ctl_type, beat, position)
 
         if (this.ui_lock.is_locked()) return
-
         this._queue_cursor_update(this.cursor)
-        val controller = this.get_global_controller<EffectEvent>(ctl_type)
-        val this_event = this.get_global_ctl_tree<EffectEvent>(ctl_type, beat, position).get_event()
-        val (working_event, descriptor) = if (this_event != null) {
-            Pair(this_event, ViewModelEditorState.EventDescriptor.Selected)
-        } else {
-            val original = this.controller_global_get_actual_position(ctl_type, beat, position)
-            val head_tree = this.get_global_ctl_tree<EffectEvent>(ctl_type, original.first, original.second)
-            if (original != Pair(beat, position) && head_tree.event != null) {
-                Pair(head_tree.event!!, ViewModelEditorState.EventDescriptor.Tail)
-            } else {
-                Pair(
-                    controller.get_preceding_event(beat, position) ?: controller.initial_event,
-                    ViewModelEditorState.EventDescriptor.Backup
-                )
-            }
-        }
-
-        this.vm_state.set_active_event(working_event.copy(), descriptor)
+        this.check_update_active_event(ctl_type, beat, position)
     }
 
     fun cursor_select_global_ctl_range_next(type: EffectType, beat: Int) {
@@ -2233,7 +2179,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         val controller = this.get_line_controller<EffectEvent>(type, beat_key.channel, beat_key.line_offset)
         val this_event = this.get_line_ctl_tree<EffectEvent>(type, beat_key, position).get_event()
 
-        val (working_event, descriptor) = if (this_event != null) {
+        var (working_event, descriptor) = if (this_event != null) {
             Pair(this_event, ViewModelEditorState.EventDescriptor.Selected)
         } else {
             val original = this.controller_line_get_actual_position(type, beat_key, position)
@@ -2241,8 +2187,18 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             if (original != Pair(beat_key, position) && head_tree.event != null) {
                 Pair(head_tree.event!!, ViewModelEditorState.EventDescriptor.Tail)
             } else {
+                var (working_beat, working_position) = controller.get_preceding_event_position(beat_key.beat, position) ?: Pair(beat_key.beat, position)
+                var working_event = controller.get_tree(beat_key.beat, position).event
+                while (working_event == null || !working_event.is_persistent()) {
+                    controller.get_preceding_event_position(working_beat, working_position)?.let {
+                        working_beat = it.first
+                        working_position = it.second
+                        working_event = controller.get_tree(it.first, it.second).get_event()
+                    } ?: break
+                }
+
                 Pair(
-                    controller.get_preceding_event(beat_key.beat, position) ?: controller.initial_event,
+                    working_event ?: controller.initial_event,
                     ViewModelEditorState.EventDescriptor.Backup
                 )
             }
@@ -2274,8 +2230,17 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             if (original != Pair(beat, position) && head_tree.event != null) {
                 Pair(head_tree.event!!, ViewModelEditorState.EventDescriptor.Tail)
             } else {
+                var (working_beat, working_position) = controller.get_preceding_event_position(beat, position) ?: Pair(beat, position)
+                var working_event = controller.get_tree(beat, position).event
+                while (working_event == null || !working_event.is_persistent()) {
+                    controller.get_preceding_event_position(working_beat, working_position)?.let {
+                        working_beat = it.first
+                        working_position = it.second
+                        working_event = controller.get_tree(it.first, it.second).get_event()
+                    } ?: break
+                }
                 Pair(
-                    controller.get_preceding_event(beat, position) ?: controller.initial_event,
+                    working_event ?: controller.initial_event,
                     ViewModelEditorState.EventDescriptor.Backup
                 )
             }
@@ -2311,8 +2276,19 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 if (original != Pair(beat, position) && head_tree.event != null) {
                     Pair(head_tree.event!!, ViewModelEditorState.EventDescriptor.Tail)
                 } else {
+                    var (working_beat, working_position) = controller.get_preceding_event_position(beat, position) ?: Pair(beat, position)
+                    var working_event = controller.get_tree(beat, position).event
+                    while (working_event == null || !working_event.is_persistent()) {
+                        controller.get_preceding_event_position(working_beat, working_position)?.let {
+                            working_beat = it.first
+                            working_position = it.second
+                            working_event = controller.get_tree(it.first, it.second).get_event()
+                            println("$working_event ($working_beat, $working_position")
+                        } ?: break
+                    }
+
                     Pair(
-                        controller.get_preceding_event(beat, position) ?: controller.initial_event,
+                        working_event ?: controller.initial_event,
                         ViewModelEditorState.EventDescriptor.Backup
                     )
                 }

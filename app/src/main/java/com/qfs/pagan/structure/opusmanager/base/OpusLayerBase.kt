@@ -3645,13 +3645,13 @@ open class OpusLayerBase: Effectable {
             when (event.transition) {
                 EffectTransition.RInstant -> {
                     listOf(
-                        Pair(0, SetTempo.Companion.from_bpm((event.value * 1000f).roundToInt() / 1000F)),
-                        Pair(frames, SetTempo.Companion.from_bpm(((previous_event?.value ?: 120F) * 1000f).roundToInt() / 1000F))
+                        Pair(0, SetTempo.from_bpm((event.value * 1000f).roundToInt() / 1000F)),
+                        Pair(frames, SetTempo.from_bpm(((previous_event?.value ?: 120F) * 1000f).roundToInt() / 1000F))
                     )
                 }
                 else -> {
                     listOf(
-                        Pair(0, SetTempo.Companion.from_bpm((event.value * 1000f).roundToInt() / 1000F))
+                        Pair(0, SetTempo.from_bpm((event.value * 1000f).roundToInt() / 1000F))
                     )
                 }
             }
@@ -4097,7 +4097,7 @@ open class OpusLayerBase: Effectable {
 
         val channels: MutableList<JSONHashMap> = mutableListOf()
         for (channel in this.channels) {
-            channels.add(OpusChannelJSONInterface.Companion.generalize(channel))
+            channels.add(OpusChannelJSONInterface.generalize(channel))
         }
         output["size"] = this.length
         output["tuning_map"] = JSONList(this.tuning_map.size) { i: Int ->
@@ -4114,10 +4114,10 @@ open class OpusLayerBase: Effectable {
 
         output["transpose"] = JSONInteger(this.transpose.first)
         output["transpose_radix"] = JSONInteger(this.transpose.second)
-        output["controllers"] = ActiveControlSetJSONInterface.Companion.to_json(this.controllers)
+        output["controllers"] = ActiveControlSetJSONInterface.to_json(this.controllers)
 
         output["channels"] = JSONList(this.channels.size) { i: Int ->
-            OpusChannelJSONInterface.Companion.generalize(this.channels[i])
+            OpusChannelJSONInterface.generalize(this.channels[i])
         }
 
         output["title"] = if (this.project_name == null) {
@@ -4133,7 +4133,7 @@ open class OpusLayerBase: Effectable {
 
         return JSONHashMap(
             "d" to output,
-            "v" to JSONInteger(OpusManagerJSONInterface.Companion.LATEST_VERSION)
+            "v" to JSONInteger(OpusManagerJSONInterface.LATEST_VERSION)
         )
     }
 
@@ -4182,14 +4182,14 @@ open class OpusLayerBase: Effectable {
 
     open fun load(bytes: ByteArray, on_load_callback: (() -> Unit)? = null) {
         val json_content = bytes.toString(Charsets.UTF_8)
-        var generalized_object = JSONParser.Companion.parse<JSONHashMap>(json_content) ?: throw EmptyJSONException()
-        var version = OpusManagerJSONInterface.Companion.detect_version(generalized_object)
-        while (version < OpusManagerJSONInterface.Companion.LATEST_VERSION) {
+        var generalized_object = JSONParser.parse<JSONHashMap>(json_content) ?: throw EmptyJSONException()
+        var version = OpusManagerJSONInterface.detect_version(generalized_object)
+        while (version < OpusManagerJSONInterface.LATEST_VERSION) {
             generalized_object = when (version++) {
-                3 -> OpusManagerJSONInterface.Companion.convert_v3_to_v4(generalized_object)
-                2 -> OpusManagerJSONInterface.Companion.convert_v2_to_v3(generalized_object)
-                1 -> OpusManagerJSONInterface.Companion.convert_v1_to_v2(generalized_object)
-                0 -> OpusManagerJSONInterface.Companion.convert_v0_to_v1(generalized_object)
+                3 -> OpusManagerJSONInterface.convert_v3_to_v4(generalized_object)
+                2 -> OpusManagerJSONInterface.convert_v2_to_v3(generalized_object)
+                1 -> OpusManagerJSONInterface.convert_v1_to_v2(generalized_object)
+                0 -> OpusManagerJSONInterface.convert_v0_to_v1(generalized_object)
                 else -> throw UnknownSaveVersion(version - 1)
             }
         }
@@ -4238,7 +4238,7 @@ open class OpusLayerBase: Effectable {
 
         this.set_beat_count(inner_map.get_int("size"))
         for (generalized_channel in inner_map.get_list("channels")) {
-            val channel = OpusChannelJSONInterface.Companion.interpret(
+            val channel = OpusChannelJSONInterface.interpret(
                 generalized_channel as JSONHashMap,
                 this.length
             )
@@ -4262,7 +4262,7 @@ open class OpusLayerBase: Effectable {
             inner_map.get_int("transpose_radix", this.tuning_map.size)
         )
 
-        this.controllers = ActiveControlSetJSONInterface.Companion.from_json(inner_map.get_hashmap("controllers"), this.length)
+        this.controllers = ActiveControlSetJSONInterface.from_json(inner_map.get_hashmap("controllers"), this.length)
 
         this.marked_sections.clear()
         val tags = inner_map.get_hashmapn("tags")

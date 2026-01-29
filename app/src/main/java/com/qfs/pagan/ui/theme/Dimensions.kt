@@ -203,7 +203,7 @@ object Dimensions {
             large_landscape = 54.dp,
         )
     val TopBarIconSize = 32.dp
-    val TopBarItemSpace = 16.dp
+    val TopBarItemSpace = 8.dp
 
     val TransposeDialogInnerPadding = 8.dp
     val TransposeDialogInputPadding = 8.dp

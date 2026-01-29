@@ -395,7 +395,6 @@ fun <T: Number> NumberInput(
                 }
             }
             .heightIn(1.dp)
-            .widthIn(1.dp)
             .onFocusChanged { focus_change_callback(it) },
         keyboardOptions = KeyboardOptions.Default.copy(
             keyboardType = KeyboardType.Number

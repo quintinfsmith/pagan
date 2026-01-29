@@ -113,6 +113,7 @@ import com.qfs.pagan.composable.button.ConfigDrawerChannelRightButton
 import com.qfs.pagan.composable.button.ConfigDrawerTopButton
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.button.TopBarIcon
+import com.qfs.pagan.composable.button.TopBarNoIcon
 import com.qfs.pagan.composable.conditional_drag
 import com.qfs.pagan.composable.cxtmenu.CMBoxBottom
 import com.qfs.pagan.composable.cxtmenu.CMBoxEnd
@@ -866,9 +867,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             Text(
                 modifier = Modifier
                     .combinedClickable(
-                        onClick = {
-                            dispatcher.set_project_name_and_notes()
-                        }
+                        onClick = { dispatcher.set_project_name_and_notes() }
                     ),
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
@@ -964,30 +963,31 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 description = R.string.menu_item_undo,
                 onClick = { dispatcher.apply_undo() }
             )
-            Spacer(Modifier.width(Dimensions.TopBarItemSpace))
-            Box {
-                val expanded = remember { mutableStateOf(false) }
-                TopBarIcon(
-                    icon = R.drawable.icon_kebab,
-                    description = R.string.menu_item_playpause,
-                    onClick = { expanded.value = !expanded.value }
-                )
-                DropdownMenu(
-                    expanded = expanded.value,
-                    onDismissRequest = { expanded.value = false }
-                ) {
-                    for ((_, item) in menu_items.enumerate()) {
-                        DropdownMenuItem(
-                            text = { SText(item.first) },
-                            onClick = {
-                                expanded.value = false
-                                item.second()
-                            }
-                        )
-                    }
+        } else {
+            TopBarNoIcon()
+        }
+        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
+        Box {
+            val expanded = remember { mutableStateOf(false) }
+            TopBarIcon(
+                icon = R.drawable.icon_kebab,
+                description = R.string.menu_item_playpause,
+                onClick = { expanded.value = !expanded.value }
+            )
+            DropdownMenu(
+                expanded = expanded.value,
+                onDismissRequest = { expanded.value = false }
+            ) {
+                for ((_, item) in menu_items.enumerate()) {
+                    DropdownMenuItem(
+                        text = { SText(item.first) },
+                        onClick = {
+                            expanded.value = false
+                            item.second()
+                        }
+                    )
                 }
             }
-            Spacer(Modifier.width(Dimensions.TopBarItemSpace))
         }
     }
 
@@ -1525,20 +1525,23 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column(
-                                modifier = Modifier.fillMaxHeight(),
+                                modifier = Modifier
+                                    .fillMaxHeight(),
                                 verticalArrangement = Arrangement.Top,
                                 horizontalAlignment = Alignment.End
                             ) {
                                 Text(label_a, maxLines = 1)
                             }
                             Column(
-                                modifier = Modifier.fillMaxHeight(),
+                                modifier = Modifier
+                                    .fillMaxHeight(),
                                 verticalArrangement = Arrangement.Bottom,
                                 horizontalAlignment = Alignment.End
                             ) {
                                 Text(
                                     text = label_b,
                                     maxLines = 1,
+                                    textAlign = TextAlign.End
                                 )
                             }
                         }

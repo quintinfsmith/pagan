@@ -1,6 +1,7 @@
 package com.qfs.pagan.composable.cxtmenu
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -64,7 +65,7 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
             text_align = TextAlign.Center,
             modifier = Modifier
                 .height(41.dp)
-                .width(dimensionResource(R.dimen.effect_tempo_input_width))
+                .width(IntrinsicSize.Min)
         ) {
             event.value = it
             if (beat != null) {

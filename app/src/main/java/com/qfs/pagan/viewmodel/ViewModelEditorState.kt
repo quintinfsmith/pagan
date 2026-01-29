@@ -882,18 +882,16 @@ class ViewModelEditorState: ViewModel() {
         if (beat >= this.beat_count.value) return
 
 
+        val in_playback = (this.playback_state_midi.value == PlaybackState.Playing || this.playback_state_soundfont.value == PlaybackState.Playing)
+
         val state = this.scroll_state_x.value
-        val target = if (this.playback_state_soundfont.value != PlaybackState.Ready) {
+        val target = if (in_playback) { // Force if in playback
             Pair(beat, 0)
         } else if (state.firstVisibleItemIndex >= beat) {
             Pair(beat, 0)
         } else if (state.layoutInfo.visibleItemsInfo.last().index <= beat) {
             val beat_width = this.column_data[beat].top_weight.value
-            if (this.playback_state_midi.value == PlaybackState.Playing || this.playback_state_soundfont.value == PlaybackState.Playing) {
-                Pair(beat, 0)
-            } else {
-                Pair(beat, (0 - state.layoutInfo.viewportSize.width + (beat_width * this.base_leaf_width.value)).toInt())
-            }
+            Pair(beat, (0 - state.layoutInfo.viewportSize.width + (beat_width * this.base_leaf_width.value)).toInt())
         } else {
             return
         }

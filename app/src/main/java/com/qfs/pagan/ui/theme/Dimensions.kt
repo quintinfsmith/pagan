@@ -33,6 +33,7 @@ object Dimensions {
             else if (width >= Layout.Medium.short) LayoutSize.MediumPortrait
             else LayoutSize.SmallPortrait
         }
+        println("------ ${this.active_layout_size} -------")
         return this.active_layout_size
     }
 
@@ -156,7 +157,8 @@ object Dimensions {
 
     val LandingButtonHeight: Dp
         get() = getter(
-            small_portrait = 41.dp,
+            small_landscape = 41.dp,
+            small_portrait = 48.dp,
             medium_portrait = 48.dp
         )
     val LandingPadding: Dp
@@ -165,12 +167,14 @@ object Dimensions {
         )
     val LandingIconButtonSize: Dp
         get() = getter(
-            small_portrait = 32.dp,
+            small_landscape = 32.dp,
+            small_portrait = 41.dp,
             medium_portrait = 48.dp,
             large_landscape = 54.dp
         )
     val LandingIconButtonPadding: Dp
         get() = getter(
+            small_landscape = 8.dp,
             small_portrait = 8.dp,
             medium_portrait = 8.dp,
             large_portrait = 12.dp

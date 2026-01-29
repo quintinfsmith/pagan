@@ -680,7 +680,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
             PaganConfiguration.MoveMode.MOVE -> {
                 this._move_line_ctl_to_beat(beat_key)
             }
-            PaganConfiguration.MoveMode.MERGE -> TODO()
+            PaganConfiguration.MoveMode.MERGE -> TODO("Merge not implemented yet")
             PaganConfiguration.MoveMode.COPY -> {
                 this._copy_line_ctl_to_beat(beat_key)
             }
@@ -707,7 +707,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
             PaganConfiguration.MoveMode.MOVE -> {
                 this._move_channel_ctl_to_beat(channel, beat)
             }
-            PaganConfiguration.MoveMode.MERGE -> TODO()
+            PaganConfiguration.MoveMode.MERGE -> TODO("Merge not implemented yet")
             PaganConfiguration.MoveMode.COPY -> {
                 this._copy_channel_ctl_to_beat(channel, beat)
             }
@@ -734,7 +734,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
             PaganConfiguration.MoveMode.MOVE -> {
                 this._move_global_ctl_to_beat(beat)
             }
-            PaganConfiguration.MoveMode.MERGE -> TODO()
+            PaganConfiguration.MoveMode.MERGE -> TODO("Merge not implemented yet")
             PaganConfiguration.MoveMode.COPY -> {
                 this._copy_global_ctl_to_beat(beat)
             }
@@ -1751,19 +1751,20 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
 
     fun set_percussion_instrument(value: Int? = null) {
         val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+
         value?.let {
             this.track(TrackedAction.SetPercussionInstrument, listOf(it))
             opus_manager.set_percussion_instrument(it)
-            // TODO
-            // main.play_event(cursor.channel, it)
+            if (value >= 0) {
+                this.play_event(cursor.channel, value)
+            }
             return
         }
 
-        val cursor = opus_manager.cursor
         val default_instrument = opus_manager.get_percussion_instrument(cursor.channel, cursor.line_offset)
 
         val options = mutableListOf<Pair<Int, @Composable RowScope.() -> Unit>>()
-        // TODO()
         this.dialog_popup_menu(R.string.dropdown_choose_percussion, options, default_instrument) {
             this.set_percussion_instrument(it)
         }
@@ -3001,30 +3002,10 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                listOf(channel_from, line_offset_from, channel_to, adj_to_index)
            )
        } catch (e: IncompatibleChannelException) {
-           // TODO
+           // TODO: Toast message
           //  this.toast(R.string.std_percussion_swap)
        }
     }
-
-
-    // TODO: Reimplement once i figure out how action tracking will work with split activities
-    //fun import(uri: Uri? = null) {
-    //
-    //    // TODO: Track action
-    //    val activity = this.get_activity()
-    //    if (uri == null) {
-    //        val intent = Intent()
-    //        intent.setAction(Intent.ACTION_GET_CONTENT)
-    //        intent.setType("*/*") // Allow all, for some reason the emulators don't recognize midi files
-    //        activity.general_import_intent_launcher.launch(intent)
-    //    } else {
-    //        // TODO: Right now this still needs to be manually handled during playback. Not sure if its even possible to automate
-    //        val intent = Intent()
-    //        intent.setAction(Intent.ACTION_GET_CONTENT)
-    //        intent.setType("*/*") // Allow all, for some reason the emulators don't recognize midi files
-    //        activity.general_import_intent_launcher.launch(intent)
-    //    }
-    //}
 
     fun to_json(): JSONObject {
         return JSONList(

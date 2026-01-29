@@ -936,9 +936,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 onClick = {
                     scope.launch {
                         when (this@ComponentActivityEditor.controller_model.playback_state_soundfont) {
-                            PlaybackState.Queued -> TODO()
-                            PlaybackState.Stopping -> TODO()
-                            PlaybackState.NotReady -> TODO()
+                            PlaybackState.Queued,
+                            PlaybackState.Stopping,
+                            PlaybackState.NotReady -> {}
                             PlaybackState.Ready -> {
                                 dispatcher.play_opus(this, false)
                             }
@@ -952,14 +952,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 onLongClick = {
                     scope.launch {
                         when (this@ComponentActivityEditor.controller_model.playback_state_soundfont) {
-                            PlaybackState.Queued -> TODO()
-                            PlaybackState.Stopping -> TODO()
-                            PlaybackState.NotReady -> TODO()
+                            PlaybackState.Queued,
+                            PlaybackState.Stopping,
+                            PlaybackState.NotReady -> {}
                             PlaybackState.Ready -> { dispatcher.play_opus(this, true) }
-
-                            PlaybackState.Playing -> {
-                                dispatcher.stop_opus()
-                            }
+                            PlaybackState.Playing -> { dispatcher.stop_opus() }
                         }
                     }
                 }
@@ -2573,26 +2570,24 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     fun export_midi_check() {
-        TODO()
-      //  val opus_manager = this.controller_model.opus_manager
-      //  if (opus_manager.get_percussion_channels().size > 1) {
-      //      val text_view = TextView(this)
-      //      text_view.text = this.getString(R.string.multiple_kit_warning)
-
-      //      //AlertDialog.Builder(this, R.style.Theme_Pagan_Dialog)
-      //          .setTitle(R.string.generic_warning)
-      //          .setView(text_view)
-      //          .setPositiveButton(android.R.string.ok) { dialog, _ ->
-      //              this.export_midi()
-      //              dialog.dismiss()
-      //          }
-      //          .setNeutralButton(android.R.string.cancel) { dialog, _ ->
-      //              dialog.cancel()
-      //          }
-      //          .show()
-      //  } else {
-      //      this.export_midi()
-      //  }
+      val opus_manager = this.controller_model.opus_manager
+      if (opus_manager.get_percussion_channels().size > 1) {
+          this.view_model.create_dialog { close ->
+              @Composable {
+                  DialogSTitle(R.string.generic_warning)
+                  SText(R.string.multiple_kit_warning)
+                  DialogBar(
+                      neutral = close,
+                      positive = {
+                          close()
+                          this@ComponentActivityEditor.export_midi()
+                      }
+                  )
+              }
+          }
+      } else {
+          this.export_midi()
+      }
     }
 
     fun export_midi() {

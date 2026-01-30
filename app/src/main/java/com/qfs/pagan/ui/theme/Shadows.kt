@@ -18,4 +18,10 @@ object Shadows {
         offset = DpOffset(0.dp, 2.dp),
     )
     val ContextMenu = Drawer
+    val TopBar = Shadow(
+        radius = 0.dp,
+        spread = 0.dp,
+        alpha = .5f,
+        offset = DpOffset(0.dp, 2.dp),
+    )
 }

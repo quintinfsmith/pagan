@@ -96,12 +96,9 @@
     <string name="desc_column_label">Column %1d</string>
     <string name="dropdown_choose_percussion">Choose Percussion</string>
     <string name="dropdown_choose_instrument">Choose Instrument</string>
-    <string name="label_copy_beat">Tap a beat to copy it. *Tap and hold* to group copy.</string>
-    <string name="label_copy_range">Tap top left corner of range to copy</string>
-    <string name="label_move_beat">Tap a beat to move it. *Tap and hold* to group move.</string>
-    <string name="label_move_range">Tap top left corner of range to move</string>
-    <string name="label_merge_beat">Tap a beat to merge it.</string>
-    <string name="label_merge_range">Tap top left corner of range to merge</string>
+    <string name="label_copy_beat">Tap to copy.\n*Tap-and-hold* to select.</string>
+    <string name="label_move_beat">Tap to move.\n*Tap-and-hold* to select.</string>
+    <string name="label_merge_beat">Tap to merge.\n*Tap-and-hold* to select.</string>
     <string name="label_copy_ctl">Copy</string>
     <string name="label_move_ctl">Move</string>
     <string name="reticle_msg_import_project">Importing Project…</string>

@@ -56,10 +56,10 @@ object Shapes {
 
     val Drawer = RoundedCornerShape(topStart = 0.dp, bottomStart = 0.dp, topEnd = 4.dp, bottomEnd = 4.dp)
 
-    val TaggedBeat = RoundedCornerShape(12.dp)
-
     val SectionButtonEnd = RoundedCornerShape(0.dp, 50.dp, 50.dp, 0.dp)
     val SectionButtonCenter = RectangleShape
     val SectionButtonStart = RoundedCornerShape(50.dp, 0.dp, 0.dp, 50.dp)
 
+    val TaggedBeat = RoundedCornerShape(12.dp)
+    val TopBar = RectangleShape
 }

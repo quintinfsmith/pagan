@@ -68,6 +68,8 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
         }
     }
 
+    Spacer(Modifier.weight(.5F))
+
     Box(
         modifier = Modifier,
         contentAlignment = Alignment.Center
@@ -86,8 +88,8 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
                 contentPadding = PaddingValues(0.dp),
                 text_align = TextAlign.Center,
                 on_focus_exit = {
-                    numerator_label.value = event.numerator
-                    numerator_key.value = !numerator_key.value
+                    event.numerator = numerator_label.value
+                    submit()
                 },
                 modifier = Modifier
                     .height(41.dp)
@@ -118,8 +120,8 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
                 denominator_label,
                 minimum = 1,
                 on_focus_exit = {
-                    denominator_label.value = event.denominator
-                    denominator_key.value = !denominator_key.value
+                    event.denominator = denominator_label.value
+                    submit()
                 },
                 contentPadding = PaddingValues(0.dp),
                 text_align = TextAlign.Center,
@@ -151,8 +153,8 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
             IntegerInput(
                 echo_label,
                 on_focus_exit = {
-                    echo_label.value = event.echo + 1
-                    echo_key.value = !echo_key.value
+                    event.echo = echo_label.value -1
+                    submit()
                 },
                 minimum = 1,
                 contentPadding = PaddingValues(0.dp),

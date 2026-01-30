@@ -60,7 +60,7 @@ object Typography {
 
     val NumberSelector = TextStyle(
         fontFamily = Fonts.FiraSans,
-        fontSize = 20.sp
+        fontSize = 18.sp
     )
     val ProjectNotes = TextStyle(fontFamily = Fonts.FiraSans)
     val RadioMenu = TextStyle(fontFamily = Fonts.FiraSans, fontSize = 22.sp, fontWeight = FontWeight.Bold)

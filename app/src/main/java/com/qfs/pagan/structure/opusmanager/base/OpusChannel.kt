@@ -236,18 +236,12 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
     }
 
     override fun equals(other: Any?): Boolean {
-        if (other !is OpusChannelAbstract<U, T>) {
-            return false
-        }
-
-        if (this.lines.size != other.lines.size) {
-            return false
-        }
+        if (other !is OpusChannelAbstract<U, T>) return false
+        if (this.midi_program != other.midi_program) return false
+        if (this.lines.size != other.lines.size) return false
 
         for (i in 0 until this.lines.size) {
-            if (this.lines[i] != other.lines[i]) {
-                return false
-            }
+            if (this.lines[i] != other.lines[i]) return false
         }
 
         return (this.controllers == other.controllers)

@@ -15,6 +15,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -22,6 +23,8 @@ import androidx.compose.ui.res.dimensionResource
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Shadows
+import com.qfs.pagan.ui.theme.Shapes
 
 @Composable
 fun ScaffoldWithTopBar(
@@ -57,6 +60,10 @@ fun ScaffoldWithTopBar(
                         Row(
                             modifier = Modifier
                                 .height(Dimensions.TopBarHeight)
+                                .dropShadow(
+                                    shadow = Shadows.TopBar,
+                                    shape = Shapes.TopBar
+                                )
                                 .background(color = background),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween,

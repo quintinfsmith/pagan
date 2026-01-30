@@ -62,6 +62,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -99,8 +100,8 @@ import com.qfs.pagan.MultiExporterEventHandler
 import com.qfs.pagan.PaganBroadcastReceiver
 import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.R
-import com.qfs.pagan.Values
 import com.qfs.pagan.SingleExporterEventHandler
+import com.qfs.pagan.Values
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DrawerCard
@@ -149,6 +150,7 @@ import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Shadows
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorController
@@ -1083,54 +1085,26 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     fun BoxScope.MainTableBackground() {
-        Box(
+        Spacer(
             Modifier
                 .fillMaxHeight()
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .width(dimensionResource(R.dimen.line_label_width)),
-            contentAlignment = Alignment.CenterEnd,
-            content = {
-               // Spacer(
-               //     Modifier
-               //         .fillMaxHeight()
-               //         .width(dimensionResource(R.dimen.table_line_stroke))
-               //         .background(MaterialTheme.colorScheme.onSurfaceVariant)
-               // )
-            }
         )
 
         Row {
-            Box(
+            Spacer(
                 Modifier
                     .background(MaterialTheme.colorScheme.surfaceVariant)
                     .width(dimensionResource(R.dimen.line_label_width))
                     .height(dimensionResource(R.dimen.line_height)),
-                contentAlignment = Alignment.BottomEnd,
-                content = {
-                //    Spacer(
-                //        Modifier
-                //            .padding(top = dimensionResource(R.dimen.line_height) - dimensionResource(R.dimen.table_line_stroke))
-                //            .fillMaxHeight()
-                //            .width(dimensionResource(R.dimen.table_line_stroke))
-                //            .background(MaterialTheme.colorScheme.onSurfaceVariant)
-                //    )
-                }
             )
 
-            Box(
+            Spacer(
                 Modifier
                     .weight(1F)
                     .background(MaterialTheme.colorScheme.surfaceVariant)
                     .height(dimensionResource(R.dimen.line_height)),
-                contentAlignment = Alignment.BottomCenter,
-                content = {
-                 //   Spacer(
-                 //       Modifier
-                 //           .fillMaxWidth()
-                 //           .height(dimensionResource(R.dimen.table_line_stroke))
-                 //           .background(MaterialTheme.colorScheme.onSurfaceVariant)
-                 //   )
-                }
             )
         }
     }

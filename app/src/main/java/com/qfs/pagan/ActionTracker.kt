@@ -1,8 +1,8 @@
 package com.qfs.pagan
 
 import android.content.Context
-import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -53,7 +53,6 @@ import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import com.qfs.apres.VirtualMidiInputDevice
 import com.qfs.json.JSONBoolean
 import com.qfs.json.JSONInteger
@@ -453,6 +452,11 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
             this.vm_top.has_saved_project.value = true
             this.vm_controller.active_project = uri
             this.vm_controller.project_exists.value = true
+            Toast.makeText(
+                this@ActionTracker.context,
+                R.string.feedback_project_saved,
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -494,14 +498,18 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val cursor = opus_manager.cursor
         val selecting_range = cursor.mode == CursorMode.Range
         if (selecting_range && cursor.ctl_type == ctl_type) {
-            if (ctl_type == null) {
-                this.move_selection_to_beat(BeatKey(channel!!, line_offset!!, beat))
-            } else if (line_offset != null) {
-                this.move_line_ctl_to_beat(BeatKey(channel!!, line_offset, beat))
-            } else if (channel != null) {
-                this.move_channel_ctl_to_beat(channel, beat)
-            } else {
-                this.move_global_ctl_to_beat(beat)
+            try {
+                if (ctl_type == null) {
+                    this.move_selection_to_beat(BeatKey(channel!!, line_offset!!, beat))
+                } else if (line_offset != null) {
+                    this.move_line_ctl_to_beat(BeatKey(channel!!, line_offset, beat))
+                } else if (channel != null) {
+                    this.move_channel_ctl_to_beat(channel, beat)
+                } else {
+                    this.move_global_ctl_to_beat(beat)
+                }
+            } catch (e: MixedInstrumentException) {
+                Toast.makeText(this.context, R.string.feedback_mixed_copy, Toast.LENGTH_SHORT).show()
             }
         } else if (ctl_type == null) {
             this.cursor_select(BeatKey(channel!!, line_offset!!, beat), position)
@@ -1985,6 +1993,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                     positive = {
                         close()
                         this@ActionTracker.save()
+
                         callback(true)
                     }
                 )

@@ -306,7 +306,7 @@ fun RelativeInputDropDown(ui_facade: ViewModelEditorState, dispatcher: ActionTra
                     Icon(
                         modifier = Modifier
                             .padding(vertical = 4.dp)
-                            .height(24.dp),
+                            .height(20.dp),
                         painter = painterResource(R.drawable.icon_subtract),
                         contentDescription = stringResource(R.string.relative_input_mode_positive)
                     )
@@ -316,7 +316,7 @@ fun RelativeInputDropDown(ui_facade: ViewModelEditorState, dispatcher: ActionTra
                         R.string.absolute_label,
                         modifier = Modifier
                             .padding(vertical = 4.dp)
-                            .height(24.dp),
+                            .height(20.dp),
                         style = Typography.RadioMenu
                     )
                 },
@@ -324,7 +324,7 @@ fun RelativeInputDropDown(ui_facade: ViewModelEditorState, dispatcher: ActionTra
                     Icon(
                         modifier = Modifier
                             .padding(vertical = 4.dp)
-                            .height(24.dp),
+                            .height(20.dp),
                         painter = painterResource(R.drawable.icon_add),
                         contentDescription = stringResource(R.string.relative_input_mode_positive)
                     )

@@ -684,7 +684,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun move_line_ctl_to_beat(beat_key: BeatKey) {
-        when (this.vm_controller.move_mode.value)  {
+        when (this.vm_top.configuration.move_mode.value)  {
             PaganConfiguration.MoveMode.MOVE -> {
                 this._move_line_ctl_to_beat(beat_key)
             }
@@ -711,7 +711,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun move_channel_ctl_to_beat(channel: Int, beat: Int) {
-        when (this.vm_controller.move_mode.value)  {
+        when (this.vm_top.configuration.move_mode.value)  {
             PaganConfiguration.MoveMode.MOVE -> {
                 this._move_channel_ctl_to_beat(channel, beat)
             }
@@ -738,7 +738,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun move_global_ctl_to_beat(beat: Int) {
-        when (this.vm_controller.move_mode.value)  {
+        when (this.vm_top.configuration.move_mode.value)  {
             PaganConfiguration.MoveMode.MOVE -> {
                 this._move_global_ctl_to_beat(beat)
             }

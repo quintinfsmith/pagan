@@ -1069,7 +1069,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     ContextMenuRangeSecondary(
                         ui_facade,
                         dispatcher,
-                        this@ComponentActivityEditor.controller_model.move_mode.value
+                        this@ComponentActivityEditor.view_model.configuration.move_mode.value
                     )
                 }
             }
@@ -1090,7 +1090,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .width(dimensionResource(R.dimen.line_label_width)),
         )
-
         Row {
             Spacer(
                 Modifier
@@ -1128,7 +1127,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
             modifier,
             contentAlignment = Alignment.TopStart
         ) {
-            MainTableBackground()
+            if (ui_facade.ready.value) {
+                MainTableBackground()
+            }
             val (dragging_to_y, is_after) = ui_facade.calculate_dragged_to_line() ?: Pair(null, false)
             Row {
                 ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onSurfaceVariant) {
@@ -2415,15 +2416,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     fun LoadingSpinnerPlaceHolder() {
-        Box(contentAlignment = Alignment.TopStart) {
-            MainTableBackground()
-            Box(
-                Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator( )
-            }
-        }
+        Box(
+            Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+            content = { CircularProgressIndicator( ) }
+        )
     }
 
     private fun get_default_preset_name(bank: Int, program: Int): String {

@@ -33,7 +33,6 @@ class ViewModelEditorController(): ViewModel() {
     var playback_device: PlaybackDevice? = null
     var playback_state_soundfont: PlaybackState = PlaybackState.NotReady
     var playback_state_midi: PlaybackState = PlaybackState.NotReady
-    var move_mode: MutableState<PaganConfiguration.MoveMode> = mutableStateOf(PaganConfiguration.MoveMode.COPY)
     var export_handle: WavConverter? = null
     var active_project: Uri? = null
     var project_exists: MutableState<Boolean> = mutableStateOf(false)

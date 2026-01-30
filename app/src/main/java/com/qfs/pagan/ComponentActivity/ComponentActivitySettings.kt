@@ -753,31 +753,9 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 style = Typography.Settings.Label
             )
             Switch(
-                checked = view_model.configuration.latest_note_indicator.value,
+                checked = view_model.configuration.latest_input_indicator.value,
                 onCheckedChange = {
-                    view_model.configuration.latest_note_indicator.value = it
-                    view_model.save_configuration()
-                    this@ComponentActivitySettings.update_result()
-                }
-            )
-        }
-    }
-
-    @Composable
-    fun OptionRelativeMode(modifier: Modifier = Modifier) {
-        SettingsRow(
-            modifier = modifier,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                stringResource(R.string.label_settings_relative),
-                modifier = Modifier.weight(1F)
-            )
-            Switch(
-                checked = view_model.configuration.relative_mode.value,
-                onCheckedChange = {
-                    view_model.configuration.relative_mode.value = it
+                    view_model.configuration.latest_input_indicator.value = it
                     view_model.save_configuration()
                     this@ComponentActivitySettings.update_result()
                 }
@@ -876,8 +854,6 @@ class ComponentActivitySettings: PaganComponentActivity() {
             OptionNoteInputMemory(Modifier.fillMaxWidth())
             MenuPadder()
             OptionClipNote(Modifier.fillMaxWidth())
-            MenuPadder()
-            OptionRelativeMode(Modifier.fillMaxWidth())
             MenuPadder()
             OptionUsePreferredSoundfont(Modifier.fillMaxWidth())
             MenuPadder()

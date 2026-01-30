@@ -22,10 +22,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
+import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.composable.DropdownMenu
 import com.qfs.pagan.composable.RadioMenu
@@ -131,7 +133,7 @@ fun UnsetButton(
 
 
 @Composable
-fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, show_relative_input: Boolean, landscape: Boolean) {
+fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
     val active_event = ui_facade.active_event.value
     val cursor = ui_facade.active_cursor.value ?: return
     val active_line = ui_facade.line_data[cursor.ints[0]]
@@ -196,7 +198,7 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewM
 
 
 @Composable
-fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, show_relative_input: Boolean, layout: LayoutSize) {
+fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: LayoutSize) {
     val active_event = ui_facade.active_event.value
     val cursor = ui_facade.active_cursor.value ?: return
     val active_line = ui_facade.line_data[cursor.ints[0]]
@@ -216,12 +218,11 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEd
                     modifier,
                     ui_facade,
                     dispatcher,
-                    show_relative_input = false,
                     landscape = true
                 )
             } else {
                 Row {
-                    ContextMenuStructureControls(Modifier, ui_facade, dispatcher, show_relative_input, true)
+                    ContextMenuStructureControls(Modifier, ui_facade, dispatcher, true)
                     Column(Modifier.width(dimensionResource(R.dimen.numberselector_column_width))) {
                         val octave_dropdown_visible: MutableState<Int?> = remember { mutableStateOf(null) }
                         NumberSelector(
@@ -253,7 +254,7 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEd
         }
 
         LayoutSize.MediumLandscape -> {
-            ContextMenuStructureControls(modifier, ui_facade, dispatcher, show_relative_input && ! is_percussion, true)
+            ContextMenuStructureControls(modifier, ui_facade, dispatcher, true)
         }
 
         LayoutSize.SmallPortrait,
@@ -263,13 +264,10 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEd
         LayoutSize.XLargeLandscape,
         LayoutSize.XLargePortrait -> {
             if (is_percussion) {
-                ContextMenuStructureControls(modifier, ui_facade, dispatcher,
-                    show_relative_input = false,
-                    landscape = false
-                )
+                ContextMenuStructureControls(modifier, ui_facade, dispatcher, landscape = false)
             } else {
                 Column(modifier) {
-                    ContextMenuStructureControls(Modifier, ui_facade, dispatcher, show_relative_input, false)
+                    ContextMenuStructureControls(Modifier, ui_facade, dispatcher, false)
                 }
             }
         }
@@ -302,13 +300,39 @@ fun RelativeInputDropDown(ui_facade: ViewModelEditorState, dispatcher: ActionTra
         onDismissRequest = { expanded.value = null}
     ) {
         RadioMenu(
+            modifier = Modifier.padding(8.dp),
             options = listOf(
-                Pair(RelativeInputMode.Negative) { Text("-") },
-                Pair(RelativeInputMode.Absolute) { SText(R.string.absolute_label) },
-                Pair(RelativeInputMode.Positive) { Text("+") }
+                Pair(RelativeInputMode.Negative) {
+                    Icon(
+                        modifier = Modifier
+                            .padding(vertical = 4.dp)
+                            .height(24.dp),
+                        painter = painterResource(R.drawable.icon_subtract),
+                        contentDescription = stringResource(R.string.relative_input_mode_positive)
+                    )
+                },
+                Pair(RelativeInputMode.Absolute) {
+                    SText(
+                        R.string.absolute_label,
+                        modifier = Modifier
+                            .padding(vertical = 4.dp)
+                            .height(24.dp),
+                        style = Typography.RadioMenu
+                    )
+                },
+                Pair(RelativeInputMode.Positive) {
+                    Icon(
+                        modifier = Modifier
+                            .padding(vertical = 4.dp)
+                            .height(24.dp),
+                        painter = painterResource(R.drawable.icon_add),
+                        contentDescription = stringResource(R.string.relative_input_mode_positive)
+                    )
+                }
             ),
             active = remember { mutableStateOf(ui_facade.relative_input_mode.value) },
             callback = {
+                ui_facade.relative_input_mode.value = it
                 callback(expanded.value!!, it)
                 expanded.value = null
             }

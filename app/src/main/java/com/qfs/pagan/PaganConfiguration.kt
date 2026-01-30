@@ -14,7 +14,6 @@ import java.io.File
 @Serializable
 class PaganConfiguration(
     soundfont: String? = null,
-    relative_mode: Boolean = false,
     sample_rate: Int = 32000,
     move_mode: MoveMode = MoveMode.COPY,
     clip_same_line_release: Boolean = true,
@@ -28,7 +27,6 @@ class PaganConfiguration(
     latest_input_indicator: Boolean = true
 ) {
     val soundfont: MutableState<String?> = mutableStateOf(soundfont)
-    val relative_mode: MutableState<Boolean> = mutableStateOf(relative_mode)
     val sample_rate: MutableState<Int> = mutableStateOf(sample_rate)
     val move_mode: MutableState<MoveMode> = mutableStateOf(move_mode)
     val clip_same_line_release: MutableState<Boolean> = mutableStateOf(clip_same_line_release)
@@ -53,7 +51,6 @@ class PaganConfiguration(
             return PaganConfiguration(
                 soundfont = content.get_stringn("soundfont2"),
                 sample_rate = content.get_int("sample_rate", 32000),
-                relative_mode = content.get_boolean("relative_mode", false),
                 move_mode = MoveMode.valueOf(content.get_string("move_mode", "COPY")),
                 clip_same_line_release = content.get_boolean("clip_same_line_release", true),
                 use_preferred_soundfont = content.get_boolean("use_preferred_soundfont", true),
@@ -82,7 +79,6 @@ class PaganConfiguration(
     fun update_from_path(path: String) {
         val config = PaganConfiguration.from_path(path)
         this.soundfont.value = config.soundfont.value
-        this.relative_mode.value = config.relative_mode.value
         this.sample_rate.value = config.sample_rate.value
         this.move_mode.value = config.move_mode.value
         this.clip_same_line_release.value = config.clip_same_line_release.value
@@ -104,7 +100,6 @@ class PaganConfiguration(
         val output = JSONHashMap()
         output["soundfont2"] = this.soundfont.value
         output["sample_rate"] = this.sample_rate.value
-        output["relative_mode"] = this.relative_mode.value
         output["move_mode"] = this.move_mode.value.name
         output["clip_same_line_release"] = this.clip_same_line_release.value
         output["use_preferred_soundfont"] = this.use_preferred_soundfont.value

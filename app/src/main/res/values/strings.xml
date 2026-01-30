@@ -286,6 +286,8 @@
     <string name="cd_fade">Amount to fade per echo</string>
     <string name="hold_to_cancel_export">Hold to cancel Export</string>
     <string name="label_settings_note_memory">Indicate latest octave &amp; offset input</string>
+    <string name="relative_input_mode_positive">Relative Input Mode - Positive</string>
+    <string name="relative_input_mode_negative">Relative Input Mode - Negative</string>
 
     <string-array name="general_midi_presets">
         <item>Grand Acoustic Piano</item>

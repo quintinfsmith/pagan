@@ -10,6 +10,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.Dp
@@ -19,12 +20,16 @@ import com.qfs.pagan.enumerate
 
 @Composable
 fun <T> RadioMenu(
+    modifier: Modifier = Modifier,
     options: List<Pair<T, @Composable (RowScope.() -> Unit)>>,
     active: MutableState<T>,
     gap_size: Dp = 4.dp,
     callback: (T) -> Unit
 ) {
-    Row {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         for ((i, option) in options.enumerate()) {
             val (item, content) = option
 

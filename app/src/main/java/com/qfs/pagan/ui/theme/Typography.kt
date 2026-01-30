@@ -63,6 +63,7 @@ object Typography {
         fontSize = 20.sp
     )
     val ProjectNotes = TextStyle(fontFamily = Fonts.FiraSans)
+    val RadioMenu = TextStyle(fontFamily = Fonts.FiraSans, fontSize = 22.sp, fontWeight = FontWeight.Bold)
 
     object Settings {
         val Title = TextStyle(fontFamily = Fonts.FiraSans)

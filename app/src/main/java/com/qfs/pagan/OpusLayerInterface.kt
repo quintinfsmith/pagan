@@ -24,7 +24,6 @@ import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.uibill.UILock
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
-import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
@@ -1917,162 +1916,35 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
 
 
-    // Note: set_note_octave/offset functions need to be in interface layer since they require access to 'relative_mode' property
-    private fun _set_note_octave(beat_key: BeatKey, position: List<Int>, octave: Int, mode: RelativeInputMode) {
-        val current_tree_position = this.get_actual_position(beat_key, position)
-        val current_tree = this.get_tree(current_tree_position.first, current_tree_position.second)
-        val current_event = current_tree.get_event()
-        val duration = current_event?.duration ?: 1
-        val radix = this.tuning_map.size
-
-        val new_event = when (mode) {
-            RelativeInputMode.Absolute -> {
-                this.set_latest_octave(octave)
-                AbsoluteNoteEvent(
-                    when (current_event) {
-                        is AbsoluteNoteEvent -> {
-                            val offset = current_event.note % radix
-                            this.set_latest_offset(offset)
-                            (octave * radix) + offset
-                        }
-                        is RelativeNoteEvent -> {
-                            this.convert_event_to_absolute(beat_key, position)
-                            return this._set_note_octave(beat_key, position, octave, RelativeInputMode.Absolute)
-                        }
-                        else -> {
-                            val cursor = this.cursor
-                            val absolute_value = this.get_absolute_value(cursor.get_beatkey(), cursor.get_position())
-                            val offset = if (absolute_value != null) {
-                                absolute_value % radix
-                            } else {
-                                this.latest_set_offset ?: 0
-                            }
-                            (octave * radix) + offset
-                        }
-                    },
-                    duration
-                )
-            }
-            RelativeInputMode.Positive -> {
-                this.set_latest_octave()
-                this.set_latest_offset()
-                RelativeNoteEvent(
-                    when (current_event) {
-                        is RelativeNoteEvent -> (octave * radix) + (abs(current_event.offset) % radix)
-                        is AbsoluteNoteEvent -> {
-                            this.convert_event_to_relative(beat_key, position)
-                            return this._set_note_octave(beat_key, position, octave, mode)
-                        }
-                        else -> octave * radix
-                    },
-                    duration
-                )
-            }
-            RelativeInputMode.Negative -> {
-                this.set_latest_octave()
-                this.set_latest_offset()
-                RelativeNoteEvent(
-                    when (current_event) {
-                        is RelativeNoteEvent -> {
-                            0 - ((octave * radix) + (abs(current_event.offset) % radix))
-                        }
-                        is AbsoluteNoteEvent -> {
-                            this.convert_event_to_relative(beat_key, position)
-                            return this._set_note_octave(beat_key, position, octave, mode)
-                        }
-                        else -> 0 - (octave * radix)
-                    },
-                    duration
-                )
-            }
+    override fun _set_note_octave(beat_key: BeatKey, position: List<Int>, octave: Int, mode: RelativeInputMode, fallback_offset: Int) {
+        super._set_note_octave(beat_key, position, octave, mode, fallback_offset)
+        when (mode) {
+            RelativeInputMode.Absolute -> this.set_latest_octave(octave)
+            RelativeInputMode.Positive -> this.set_latest_octave()
+            RelativeInputMode.Negative -> this.set_latest_octave()
         }
-
-        this.set_event(beat_key, position, new_event)
     }
-
-    private fun _set_note_offset(beat_key: BeatKey, position: List<Int>, offset: Int, mode: RelativeInputMode) {
-        val current_tree = this.get_tree(beat_key, position)
-        val current_event = current_tree.get_event()
-        val duration = current_event?.duration ?: 1
-        val radix = this.tuning_map.size
-
-        val new_event = when (mode) {
-            RelativeInputMode.Absolute -> {
-                this.set_latest_offset(offset)
-                AbsoluteNoteEvent(
-                    when (current_event) {
-                        is AbsoluteNoteEvent -> {
-                            val octave = (current_event.note / radix)
-                            this.set_latest_octave(octave)
-                            (octave * radix) + offset
-                        }
-                        is RelativeNoteEvent -> {
-                            this.convert_event_to_absolute(beat_key, position)
-                            return this._set_note_offset(beat_key, position, offset, RelativeInputMode.Absolute)
-                        }
-                        else -> {
-                            val cursor = this.cursor
-                            val absolute_value = this.get_absolute_value(cursor.get_beatkey(), cursor.get_position())
-                            val octave = if (absolute_value != null) {
-                                absolute_value / radix
-                            } else {
-                                this.latest_set_octave ?: 0
-                            }
-                            offset + (octave * radix)
-                        }
-                    },
-                    duration
-                )
-            }
-            RelativeInputMode.Positive -> {
-                this.set_latest_offset()
-                this.set_latest_octave()
-                RelativeNoteEvent(
-                    when (current_event) {
-                        is RelativeNoteEvent -> ((abs(current_event.offset) / radix) * radix) + offset
-                        is AbsoluteNoteEvent -> {
-                            this.convert_event_to_relative(beat_key, position)
-                            return this._set_note_offset(beat_key, position, offset, mode)
-                        }
-                        else -> offset
-                    },
-                    duration
-                )
-            }
-            RelativeInputMode.Negative -> {
-                this.set_latest_offset()
-                this.set_latest_octave()
-                RelativeNoteEvent(
-                    when (current_event) {
-                        is RelativeNoteEvent -> {
-                            0 - ((abs(current_event.offset) / radix) * radix) - offset
-                        }
-                        is AbsoluteNoteEvent -> {
-                            this.convert_event_to_relative(beat_key, position)
-                            return this._set_note_offset(beat_key, position, offset, mode)
-                        }
-                        else -> 0 - offset
-                    },
-                    duration
-                )
-            }
+    override fun _set_note_offset(beat_key: BeatKey, position: List<Int>, offset: Int, mode: RelativeInputMode, fallback_octave: Int) {
+        super._set_note_offset(beat_key, position, offset, mode, fallback_octave)
+        when (mode) {
+            RelativeInputMode.Absolute -> this.set_latest_offset(offset)
+            RelativeInputMode.Positive -> this.set_latest_offset()
+            RelativeInputMode.Negative -> this.set_latest_offset()
         }
-
-        this.set_event(beat_key, position, new_event)
     }
 
     fun set_note_octave_at_cursor(octave: Int, mode: RelativeInputMode) {
         if (this.cursor.mode != CursorMode.Single) throw IncorrectCursorMode(this.cursor.mode, CursorMode.Single)
 
         val current_tree_position = this.get_actual_position(this.cursor.get_beatkey(), this.cursor.get_position())
-        this._set_note_octave(current_tree_position.first, current_tree_position.second, octave, mode)
+        this._set_note_octave(current_tree_position.first, current_tree_position.second, octave, mode, this.latest_set_offset ?: 0)
     }
 
     fun set_note_offset_at_cursor(offset: Int, mode: RelativeInputMode) {
         if (this.cursor.mode != CursorMode.Single) throw IncorrectCursorMode(this.cursor.mode, CursorMode.Single)
 
         val current_tree_position = this.get_actual_position(this.cursor.get_beatkey(), this.cursor.get_position())
-        this._set_note_offset(current_tree_position.first, current_tree_position.second, offset, mode)
+        this._set_note_offset(current_tree_position.first, current_tree_position.second, offset, mode, this.latest_set_octave ?: 0)
     }
 
     override fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {

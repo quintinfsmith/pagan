@@ -1,4 +1,5 @@
 package com.qfs.pagan.structure.opusmanager.cursor
+import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
@@ -9,12 +10,14 @@ import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.OpusLineAbstract
+import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectControlSet
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import java.lang.Integer.max
 import java.lang.Integer.min
+import kotlin.math.abs
 
 open class OpusLayerCursor: OpusLayerBase() {
     var cursor = OpusManagerCursor()
@@ -2471,5 +2474,119 @@ open class OpusLayerCursor: OpusLayerBase() {
                 this.get_global_ctl_tree_copy<EffectEvent>(this.cursor.ctl_type!!, actual_beat, actual_position).event
             }
         }
+    }
+
+    open fun _set_note_octave(beat_key: BeatKey, position: List<Int>, octave: Int, mode: RelativeInputMode, fallback_offset: Int = 0) {
+        val current_tree_position = this.get_actual_position(beat_key, position)
+        val current_tree = this.get_tree(current_tree_position.first, current_tree_position.second)
+        val current_event = current_tree.get_event()
+        val duration = current_event?.duration ?: 1
+        val radix = this.tuning_map.size
+
+        val new_event = when (mode) {
+            RelativeInputMode.Absolute -> {
+                AbsoluteNoteEvent(
+                    when (current_event) {
+                        is AbsoluteNoteEvent -> {
+                            val offset = current_event.note % radix
+                            (octave * radix) + offset
+                        }
+                        else -> {
+                            val cursor = this.cursor
+                            val absolute_value = this.get_preceding_leaf_position(cursor.get_beatkey(), cursor.get_position())?.let {
+                                this.get_absolute_value(it.first, it.second)
+                            }
+
+                            val offset = if (absolute_value != null) {
+                                absolute_value % radix
+                            } else {
+                                fallback_offset
+                            }
+                            (octave * radix) + offset
+                        }
+                    },
+                    duration
+                )
+            }
+            RelativeInputMode.Positive -> {
+                RelativeNoteEvent(
+                    when (current_event) {
+                        is RelativeNoteEvent -> (octave * radix) + (abs(current_event.offset) % radix)
+                        else -> octave * radix
+                    },
+                    duration
+                )
+            }
+            RelativeInputMode.Negative -> {
+                RelativeNoteEvent(
+                    when (current_event) {
+                        is RelativeNoteEvent -> {
+                            0 - ((octave * radix) + (abs(current_event.offset) % radix))
+                        }
+                        else -> 0 - (octave * radix)
+                    },
+                    duration
+                )
+            }
+        }
+
+        this.set_event(beat_key, position, new_event)
+    }
+
+    open fun _set_note_offset(beat_key: BeatKey, position: List<Int>, offset: Int, mode: RelativeInputMode, fallback_octave: Int = 0) {
+        val current_tree = this.get_tree(beat_key, position)
+        val current_event = current_tree.get_event()
+        val duration = current_event?.duration ?: 1
+        val radix = this.tuning_map.size
+
+        val new_event = when (mode) {
+            RelativeInputMode.Absolute -> {
+                AbsoluteNoteEvent(
+                    when (current_event) {
+                        is AbsoluteNoteEvent -> {
+                            val octave = (current_event.note / radix)
+                            (octave * radix) + offset
+                        }
+                        else -> {
+                            val cursor = this.cursor
+                            val absolute_value = this.get_preceding_leaf_position(cursor.get_beatkey(), cursor.get_position())?.let {
+                                this.get_absolute_value(it.first, it.second)
+                            }
+
+                            val octave = if (absolute_value != null) {
+                                absolute_value / radix
+                            } else {
+                                fallback_octave
+                            }
+
+                            offset + (octave * radix)
+                        }
+                    },
+                    duration
+                )
+            }
+            RelativeInputMode.Positive -> {
+                RelativeNoteEvent(
+                    when (current_event) {
+                        is RelativeNoteEvent -> ((abs(current_event.offset) / radix) * radix) + offset
+                        else -> offset
+                    },
+                    duration
+                )
+            }
+            RelativeInputMode.Negative -> {
+                RelativeNoteEvent(
+                    when (current_event) {
+                        is RelativeNoteEvent -> {
+                            0 - ((abs(current_event.offset) / radix) * radix) - offset
+                        }
+                        else -> 0 - offset
+                    },
+                    duration
+                )
+            }
+        }
+
+        this.set_event(beat_key, position, new_event)
     }
 }

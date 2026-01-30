@@ -607,7 +607,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             }
         }
-        this.state_model.latest_input_indicator.value = this.view_model.configuration.latest_note_indicator.value
+        this.state_model.latest_input_indicator.value = this.view_model.configuration.latest_input_indicator.value
         this.set_soundfont()
     }
 
@@ -1026,7 +1026,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         modifier,
                         ui_facade,
                         dispatcher,
-                        this@ComponentActivityEditor.view_model.configuration.relative_mode.value,
                         layout
                     )
                 }

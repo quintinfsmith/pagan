@@ -62,7 +62,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -150,7 +149,6 @@ import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Shadows
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorController
@@ -865,22 +863,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
         )
         Spacer(Modifier.width(Dimensions.TopBarItemSpace))
-        Row(
-            modifier = Modifier.weight(1F),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                modifier = Modifier
-                    .combinedClickable(
-                        onClick = { dispatcher.set_project_name_and_notes() }
-                    ),
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                text = vm_state.project_name.value ?: stringResource(R.string.untitled_opus)
-            )
-        }
 
         if (this@ComponentActivityEditor.state_model.use_midi_playback.value) {
             TopBarIcon(
@@ -960,6 +942,23 @@ class ComponentActivityEditor: PaganComponentActivity() {
             )
             Spacer(Modifier.width(Dimensions.TopBarItemSpace))
         }
+        Row(
+            modifier = Modifier.weight(1F),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                modifier = Modifier
+                    .combinedClickable(
+                        onClick = { dispatcher.set_project_name_and_notes() }
+                    ),
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                text = vm_state.project_name.value ?: stringResource(R.string.untitled_opus)
+            )
+        }
+
         if (vm_state.playback_state_midi.value != PlaybackState.Playing && vm_state.playback_state_soundfont.value != PlaybackState.Playing ) {
             TopBarIcon(
                 icon = R.drawable.icon_undo,

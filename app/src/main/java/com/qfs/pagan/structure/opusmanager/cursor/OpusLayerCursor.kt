@@ -1387,9 +1387,7 @@ open class OpusLayerCursor: OpusLayerBase() {
     }
 
     fun copy_global_ctl_to_beat(beat: Int) {
-        if (this.cursor.ctl_level != CtlLineLevel.Global) {
-            throw InvalidOverwriteCall()
-        }
+        if (this.cursor.ctl_level != CtlLineLevel.Global) throw InvalidOverwriteCall()
 
         if (this.cursor.is_selecting_range()) {
             val (first, second) = this.cursor.get_ordered_range()!!
@@ -1423,9 +1421,7 @@ open class OpusLayerCursor: OpusLayerBase() {
     }
 
     fun move_global_ctl_to_beat(beat: Int) {
-        if (this.cursor.ctl_level != CtlLineLevel.Global) {
-            throw InvalidOverwriteCall()
-        }
+        if (this.cursor.ctl_level != CtlLineLevel.Global) throw InvalidOverwriteCall()
 
         if (this.cursor.is_selecting_range()) {
             val (first, second) = this.cursor.get_ordered_range()!!
@@ -1460,9 +1456,7 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     fun move_to_previous_visible_line(repeat: Int = 1) {
         val cursor = this.cursor
-        if (cursor.mode != CursorMode.Line) {
-            throw IncorrectCursorMode(this.cursor.mode, CursorMode.Line)
-        }
+        if (cursor.mode != CursorMode.Line) throw IncorrectCursorMode(this.cursor.mode, CursorMode.Line)
 
         var visible_row = when (cursor.ctl_level) {
             null -> {
@@ -1771,7 +1765,6 @@ open class OpusLayerCursor: OpusLayerBase() {
                     working_position = next_pair.second
                 }
                 this.cursor_select_ctl_at_global(this.cursor.ctl_type!!, working_beat, working_position)
-
             }
             null -> {
                 var working_beat_key = this.cursor.get_beatkey()

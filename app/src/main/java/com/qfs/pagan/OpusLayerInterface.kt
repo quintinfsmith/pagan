@@ -1456,9 +1456,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         if (this.ui_lock.is_locked()) return
 
         this._queue_cursor_update(this.cursor)
-        println("...XX")
         this.check_update_active_event(beat_key, position)
-        println("|||||||||||||||")
 
         // UI May still nee to be updated.
         if (this.vm_state.beat_count.value > beat_key.beat) {

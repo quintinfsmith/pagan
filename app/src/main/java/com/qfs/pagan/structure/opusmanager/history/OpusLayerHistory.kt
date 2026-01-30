@@ -1,6 +1,7 @@
 package com.qfs.pagan.structure.opusmanager.history
 import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
+import com.qfs.pagan.structure.opusmanager.base.BlockedActionException
 import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
@@ -287,7 +288,12 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     private fun <T> _remember(callback: () -> T): T {
-        return this.history_cache.remember(callback)
+        return try {
+            this.history_cache.remember(callback)
+        } catch (e: BlockedActionException) {
+            this.apply_undo()
+            throw e
+        }
     }
 
     private fun <T> _forget(callback: () -> T): T {
@@ -1978,6 +1984,10 @@ open class OpusLayerHistory: OpusLayerCursor() {
         }
     }
 
+
+    override fun on_action_blocked(blocker_key: BeatKey, blocker_position: List<Int>) {
+        super.on_action_blocked(blocker_key, blocker_position)
+    }
 
     // HISTORY FUNCTIONS vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     // HISTORY FUNCTIONS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

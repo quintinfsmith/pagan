@@ -226,11 +226,19 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEd
                         val octave_dropdown_visible: MutableState<Int?> = remember { mutableStateOf(null) }
                         NumberSelector(
                             progression = 7 downTo 0,
-                            selected = octave,
-                            highlighted = if (ui_facade.relative_input_mode.value == RelativeInputMode.Absolute) {
+                            selected = when (ui_facade.active_event_descriptor.value) {
+                                ViewModelEditorState.EventDescriptor.Tail,
+                                ViewModelEditorState.EventDescriptor.Selected -> octave
+                                else -> null
+                            },
+                            highlighted = if (ui_facade.latest_input_indicator.value && ui_facade.relative_input_mode.value == RelativeInputMode.Absolute) {
                                 ui_facade.highlighted_octave.value
                             } else {
                                 null
+                            },
+                            default = when (ui_facade.active_event_descriptor.value) {
+                                ViewModelEditorState.EventDescriptor.Backup -> octave
+                                else -> null
                             },
                             alternate = false,
                             on_click = { dispatcher.set_octave(it, ui_facade.relative_input_mode.value) },
@@ -364,11 +372,19 @@ fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
                 Row {
                     NumberSelector(
                         progression = 0 until 8,
-                        selected = octave,
-                        highlighted = if (ui_facade.relative_input_mode.value == RelativeInputMode.Absolute) {
+                        selected = when (ui_facade.active_event_descriptor.value) {
+                            ViewModelEditorState.EventDescriptor.Selected,
+                            ViewModelEditorState.EventDescriptor.Tail -> octave
+                            else -> null
+                        },
+                        highlighted = if (ui_facade.latest_input_indicator.value && ui_facade.relative_input_mode.value == RelativeInputMode.Absolute) {
                             ui_facade.highlighted_octave.value
                         } else {
                             null
+                        },
+                        default = when (ui_facade.active_event_descriptor.value) {
+                            ViewModelEditorState.EventDescriptor.Backup -> octave
+                            else -> null
                         },
                         alternate = false,
                         on_click = { dispatcher.set_octave(it, ui_facade.relative_input_mode.value) },
@@ -399,11 +415,19 @@ fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
                 Row(modifier) {
                     NumberSelector(
                         progression = i until ui_facade.radix.value step count,
-                        selected = offset,
-                        highlighted = if (ui_facade.relative_input_mode.value == RelativeInputMode.Absolute) {
+                        selected = when (ui_facade.active_event_descriptor.value) {
+                            ViewModelEditorState.EventDescriptor.Selected,
+                            ViewModelEditorState.EventDescriptor.Tail -> offset
+                            else -> null
+                        },
+                        highlighted = if (ui_facade.latest_input_indicator.value && ui_facade.relative_input_mode.value == RelativeInputMode.Absolute) {
                             ui_facade.highlighted_offset.value
                         } else {
                             null
+                        },
+                        default = when (ui_facade.active_event_descriptor.value) {
+                            ViewModelEditorState.EventDescriptor.Backup -> offset
+                            else -> null
                         },
                         alternate = true,
                         shape_start = if (layout == LayoutSize.SmallLandscape) {

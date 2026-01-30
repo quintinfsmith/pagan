@@ -25,7 +25,7 @@ class PaganConfiguration(
     soundfont_directory: Uri? = null,
     night_mode: Int = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM,
     indent_json: Boolean = false,
-    note_memory: NoteMemory = NoteMemory.UserInput
+    latest_input_indicator: Boolean = true
 ) {
     val soundfont: MutableState<String?> = mutableStateOf(soundfont)
     val relative_mode: MutableState<Boolean> = mutableStateOf(relative_mode)
@@ -39,13 +39,8 @@ class PaganConfiguration(
     val soundfont_directory: MutableState<Uri?> = mutableStateOf(soundfont_directory)
     val night_mode: MutableState<Int> = mutableStateOf(night_mode)
     val indent_json: MutableState<Boolean> = mutableStateOf(indent_json)
-    val note_memory: MutableState<NoteMemory> = mutableStateOf(note_memory)
+    val latest_input_indicator: MutableState<Boolean> = mutableStateOf(latest_input_indicator)
 
-
-    enum class NoteMemory {
-        UserInput,
-        Inline
-    }
 
     enum class MoveMode {
         MOVE,
@@ -68,7 +63,7 @@ class PaganConfiguration(
                 soundfont_directory = content.get_stringn("soundfont_directory")?.toUri(),
                 night_mode = content.get_int("night_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM),
                 indent_json = content.get_boolean("indent_json", false),
-                note_memory = NoteMemory.valueOf(content.get_string("note_memory", "UserInput"))
+                latest_input_indicator = content.get_boolean("latest_input_indicator", true)
             )
         }
 
@@ -98,7 +93,7 @@ class PaganConfiguration(
         this.soundfont_directory.value = config.soundfont_directory.value
         this.night_mode.value = config.night_mode.value
         this.indent_json.value = config.indent_json.value
-        this.note_memory.value = config.note_memory.value
+        this.latest_input_indicator.value = config.latest_input_indicator.value
     }
 
     fun save(path: String) {
@@ -119,7 +114,7 @@ class PaganConfiguration(
         output["soundfont_directory"] = this.soundfont_directory.value?.toString()
         output["night_mode"] = this.night_mode.value
         output["indent_json"] = this.indent_json.value
-        output["note_memory"] = this.note_memory.value.name
+        output["latest_input_indicator"] = this.latest_input_indicator.value
         // output["channel_colors"] = JSONList(*Array(this.channel_colors.size) {
         //     JSONString(this.channel_colors[it].toHexString(HexFormat.Default))
         // })

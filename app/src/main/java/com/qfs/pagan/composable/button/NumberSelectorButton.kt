@@ -1,5 +1,6 @@
 package com.qfs.pagan.composable.button
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
@@ -8,8 +9,8 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -19,11 +20,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import com.qfs.pagan.composable.dashed_border
+import com.qfs.pagan.R
 import com.qfs.pagan.composable.pressable
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shadows
@@ -37,6 +39,7 @@ fun NumberSelectorButton(
     alternate: Boolean,
     selected: Boolean,
     highlighted: Boolean,
+    default: Boolean,
     shape: Shape = Shapes.NumberSelectorButton,
     on_long_click: (Int) -> Unit,
     on_click: (Int) -> Unit,
@@ -66,7 +69,6 @@ fun NumberSelectorButton(
                     )
                 }
             )
-
             .background(background, shape)
             .combinedClickable(
                 onClick = { on_click(index) },
@@ -87,21 +89,32 @@ fun NumberSelectorButton(
                         FontWeight.Bold
                     } else {
                         LocalTextStyle.current.fontWeight
-                    },
-                    fontSize = if (selected) {
-                        LocalTextStyle.current.fontSize * 1.3
-                    } else if (highlighted) {
-                        LocalTextStyle.current.fontSize * 1.2
-                    } else {
-                        LocalTextStyle.current.fontSize
-                    },
-                    textDecoration = if (highlighted) {
-                        TextDecoration.Underline
-                    } else {
-                        LocalTextStyle.current.textDecoration
                     }
                 )
             )
+            Canvas(Modifier.fillMaxSize()) {
+                if (highlighted) {
+                    drawCircle(
+                        color = foreground,
+                        radius = (size.height * .05F),
+                        center = Offset(size.width * .3F, size.height * .2F)
+                    )
+                }
+                if (default) {
+                    drawLine(
+                        color = foreground,
+                        start = Offset(
+                            size.width / 5F,
+                            size.height * .8F
+                        ),
+                        end = Offset(
+                            size.width * 4F / 5F,
+                            size.height * .8F
+                        ),
+                        strokeWidth = 2.5F
+                    )
+                }
+            }
         }
     }
 }
@@ -111,6 +124,7 @@ fun RowScope.NumberSelector(
     progression: IntProgression,
     selected: Int?,
     highlighted: Int?,
+    default: Int?,
     alternate: Boolean,
     shape_start: Shape = Shapes.NumberSelectorButton,
     shape_middle: Shape = Shapes.NumberSelectorButton,
@@ -127,6 +141,7 @@ fun RowScope.NumberSelector(
             index = i,
             selected = selected == i,
             highlighted = highlighted == i,
+            default = default == i,
             alternate = alternate,
             shape = when (i) {
                 progression.first -> shape_start
@@ -144,6 +159,7 @@ fun ColumnScope.NumberSelector(
     progression: IntProgression,
     selected: Int?,
     highlighted: Int?,
+    default: Int?,
     alternate: Boolean,
     shape_start: Shape = Shapes.NumberSelectorButton,
     shape_middle: Shape = Shapes.NumberSelectorButton,
@@ -155,11 +171,13 @@ fun ColumnScope.NumberSelector(
         if (i != progression.first) {
             Spacer(Modifier.height(Dimensions.NumberSelectorSpacing))
         }
+
         NumberSelectorButton(
             modifier = Modifier.weight(1F),
             index = i,
             selected = selected == i,
             highlighted = highlighted == i,
+            default = default == i,
             alternate = alternate,
             shape = when (i) {
                 progression.first -> shape_start

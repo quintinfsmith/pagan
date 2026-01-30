@@ -83,7 +83,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.documentfile.provider.DocumentFile
-import androidx.lifecycle.Lifecycle
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
 import com.qfs.apres.MidiController
@@ -100,6 +99,7 @@ import com.qfs.pagan.MultiExporterEventHandler
 import com.qfs.pagan.PaganBroadcastReceiver
 import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.R
+import com.qfs.pagan.Values
 import com.qfs.pagan.SingleExporterEventHandler
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
@@ -607,6 +607,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             }
         }
+        this.state_model.latest_input_indicator.value = this.view_model.configuration.latest_note_indicator.value
         this.set_soundfont()
     }
 
@@ -746,8 +747,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
         if (fallback_msg != null) {
-            dispatcher.new_project()
-            dispatcher.toast(fallback_msg)
+            this.action_interface.new_project()
+            this.toast(fallback_msg)
         }
     }
 
@@ -2471,6 +2472,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     fun toast(id: Int, length: Int = Toast.LENGTH_SHORT) {
         Toast.makeText(this, id, length).show()
+    }
+
+    fun toast(msg: String, length: Int = Toast.LENGTH_SHORT) {
+        Toast.makeText(this, msg, length).show()
     }
 
     fun open_settings() {

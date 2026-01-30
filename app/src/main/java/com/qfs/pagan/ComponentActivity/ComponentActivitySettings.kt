@@ -304,7 +304,9 @@ class ComponentActivitySettings: PaganComponentActivity() {
             ) {
                 Row(verticalAlignment = Alignment.Bottom) {
                     ActiveSoundfontButton(Modifier.weight(1F))
-                    SoundFontWarningWrapper(Modifier.weight(1F).padding(start = Dimensions.SoundFontMenuPadding))
+                    SoundFontWarningWrapper(Modifier
+                        .weight(1F)
+                        .padding(start = Dimensions.SoundFontMenuPadding))
                 }
                 MenuPadder()
                 Row {
@@ -381,7 +383,9 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                SoundFontWarningWrapper(Modifier.fillMaxWidth().padding(bottom = Dimensions.SoundFontMenuPadding))
+                SoundFontWarningWrapper(Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = Dimensions.SoundFontMenuPadding))
                 ActiveSoundfontButton(Modifier.fillMaxWidth())
                 MenuPadder()
                 Row {
@@ -419,7 +423,9 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                SoundFontWarningWrapper(Modifier.fillMaxWidth().padding(bottom = Dimensions.SoundFontMenuPadding))
+                SoundFontWarningWrapper(Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = Dimensions.SoundFontMenuPadding))
                 ActiveSoundfontButton(Modifier.fillMaxWidth())
                 MenuPadder()
                 ActiveSoundfontDirectoryButton(Modifier.fillMaxWidth())
@@ -735,6 +741,29 @@ class ComponentActivitySettings: PaganComponentActivity() {
     }
 
     @Composable
+    fun OptionNoteInputMemory(modifier: Modifier = Modifier) {
+        SettingsRow(
+            modifier = modifier,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            SText(
+                R.string.label_settings_note_memory,
+                modifier = Modifier.weight(1F),
+                style = Typography.Settings.Label
+            )
+            Switch(
+                checked = view_model.configuration.latest_note_indicator.value,
+                onCheckedChange = {
+                    view_model.configuration.latest_note_indicator.value = it
+                    view_model.save_configuration()
+                    this@ComponentActivitySettings.update_result()
+                }
+            )
+        }
+    }
+
+    @Composable
     fun OptionRelativeMode(modifier: Modifier = Modifier) {
         SettingsRow(
             modifier = modifier,
@@ -843,6 +872,8 @@ class ComponentActivitySettings: PaganComponentActivity() {
     fun SettingsSectionB(modifier: Modifier = Modifier) {
         Column {
             PlaybackRateMenu(Modifier.fillMaxWidth())
+            MenuPadder()
+            OptionNoteInputMemory(Modifier.fillMaxWidth())
             MenuPadder()
             OptionClipNote(Modifier.fillMaxWidth())
             MenuPadder()

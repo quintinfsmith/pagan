@@ -179,6 +179,7 @@ class ViewModelEditorState: ViewModel() {
     val looping_playback: MutableState<Boolean> = mutableStateOf(false)
     val playback_state_midi: MutableState<PlaybackState> = mutableStateOf(PlaybackState.NotReady)
     val relative_input_mode: MutableState<RelativeInputMode> = mutableStateOf(RelativeInputMode.Absolute)
+    val latest_input_indicator: MutableState<Boolean> = mutableStateOf(false)
 
     val highlighted_offset: MutableState<Int?> = mutableStateOf(null)
     val highlighted_octave: MutableState<Int?> = mutableStateOf(null)

@@ -91,7 +91,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     var latest_set_octave: Int? = null
     var latest_set_offset: Int? = null
     lateinit var vm_state: ViewModelEditorState
-    var note_memory = PaganConfiguration.NoteMemory.UserInput
+    var note_memory: Boolean = true
 
     fun attach_state_model(model: ViewModelEditorState) {
         this.vm_state = model
@@ -1457,20 +1457,9 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         if (this.ui_lock.is_locked()) return
 
         this._queue_cursor_update(this.cursor)
-        val (working_event, descriptor) = if (current_tree.event != null) {
-            Pair(current_tree.event!!, ViewModelEditorState.EventDescriptor.Selected)
-        } else {
-            val original = this.get_actual_position(beat_key, position)
-            val head_tree = this.get_tree(original.first, original.second)
-            if (original != Pair(beat_key, position) && head_tree.event != null) {
-                Pair(head_tree.event!!, ViewModelEditorState.EventDescriptor.Tail)
-            } else {
-                Pair(null, null)
-            }
-        }
-
-        this.vm_state.set_active_event(working_event, descriptor)
-
+        println("...XX")
+        this.check_update_active_event(beat_key, position)
+        println("|||||||||||||||")
 
         // UI May still nee to be updated.
         if (this.vm_state.beat_count.value > beat_key.beat) {
@@ -1952,14 +1941,13 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                         }
                         else -> {
                             val cursor = this.cursor
-                            val offset = when (this.note_memory) {
-                                PaganConfiguration.NoteMemory.UserInput -> this.latest_set_offset
-                                else -> null
+                            val absolute_value = this.get_absolute_value(cursor.get_beatkey(), cursor.get_position())
+                            val offset = if (absolute_value != null) {
+                                absolute_value % radix
+                            } else {
+                                this.latest_set_offset ?: 0
                             }
-                            this.set_latest_offset(
-                                (offset ?: ((this.get_absolute_value(cursor.get_beatkey(), cursor.get_position()) ?: 0) % radix))
-                            )
-                            (octave * radix) + this.latest_set_offset!!
+                            (octave * radix) + offset
                         }
                     },
                     duration
@@ -2024,13 +2012,13 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                         }
                         else -> {
                             val cursor = this.cursor
-                            val octave = when (this.note_memory) {
-                                PaganConfiguration.NoteMemory.UserInput -> this.latest_set_octave
-                                else -> null
+                            val absolute_value = this.get_absolute_value(cursor.get_beatkey(), cursor.get_position())
+                            val octave = if (absolute_value != null) {
+                                absolute_value / radix
+                            } else {
+                                this.latest_set_octave ?: 0
                             }
-
-                            this.set_latest_octave(octave ?: ((this.get_absolute_value(cursor.get_beatkey(), cursor.get_position()) ?: 0) / radix))
-                            offset + (this.latest_set_octave!! * radix)
+                            offset + (octave * radix)
                         }
                     },
                     duration
@@ -2158,12 +2146,29 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
         val cursor_position = this.cursor.get_position()
         val min_position_length = min(cursor_position.size, position.size)
-        if (cursor_position.subList(0, min_position_length) == position.subList(0, min_position_length)) return
+        if (cursor_position.subList(0, min_position_length) != position.subList(0, min_position_length)) return
 
-        this.vm_state.set_active_event(
-            this.get_tree(beat_key, cursor_position).get_event(),
-            ViewModelEditorState.EventDescriptor.Selected
-        )
+        val line = this.channels[beat_key.channel].lines[beat_key.line_offset]
+        val this_event = this.get_tree(beat_key, position).get_event()
+
+        var (working_event, descriptor) = if (this_event != null) {
+            Pair(this_event, ViewModelEditorState.EventDescriptor.Selected)
+        } else {
+            val original = this.get_actual_position(beat_key, position)
+            val head_tree = this.get_tree(original.first, original.second)
+            if (original != Pair(beat_key, position) && head_tree.event != null) {
+                Pair(head_tree.event!!, ViewModelEditorState.EventDescriptor.Tail)
+            } else {
+                var (working_beat, working_position) = line.get_preceding_event_position(beat_key.beat, position) ?: Pair(beat_key.beat, position)
+                var working_event = line.get_tree(working_beat, working_position).event
+                Pair(
+                    working_event,
+                    ViewModelEditorState.EventDescriptor.Backup
+                )
+            }
+        }
+
+        this.vm_state.set_active_event(working_event, descriptor)
     }
 
     fun check_update_active_event(type: EffectType, beat_key: BeatKey, position: List<Int>) {

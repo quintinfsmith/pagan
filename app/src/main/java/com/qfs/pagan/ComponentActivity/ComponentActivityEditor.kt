@@ -115,7 +115,6 @@ import com.qfs.pagan.composable.button.ConfigDrawerChannelRightButton
 import com.qfs.pagan.composable.button.ConfigDrawerTopButton
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.button.TopBarIcon
-import com.qfs.pagan.composable.button.TopBarNoIcon
 import com.qfs.pagan.composable.conditional_drag
 import com.qfs.pagan.composable.cxtmenu.CMBoxBottom
 import com.qfs.pagan.composable.cxtmenu.CMBoxEnd
@@ -1041,15 +1040,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
             )
         }
 
-        if (vm_state.playback_state_midi.value != PlaybackState.Playing && vm_state.playback_state_soundfont.value != PlaybackState.Playing ) {
-            TopBarIcon(
-                icon = R.drawable.icon_undo,
-                description = R.string.menu_item_undo,
-                onClick = { dispatcher.apply_undo() }
-            )
-        } else {
-            TopBarNoIcon()
-        }
+        TopBarIcon(
+            icon = R.drawable.icon_undo,
+            description = R.string.menu_item_undo,
+            onClick = {
+                if (vm_state.playback_state_midi.value != PlaybackState.Playing && vm_state.playback_state_soundfont.value != PlaybackState.Playing ) {
+                    dispatcher.apply_undo()
+                }
+            }
+        )
         Spacer(Modifier.width(Dimensions.TopBarItemSpace))
     }
 
@@ -1772,7 +1771,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
             else if (event != null) Colors.LeafState.Active
             else Colors.LeafState.Empty
 
-        val leaf_selection = if (leaf_data.is_selected.value) Colors.LeafSelection.Primary
+        val leaf_selection = if (this@ComponentActivityEditor.state_model.playback_state_midi.value == PlaybackState.Playing || this@ComponentActivityEditor.state_model.playback_state_soundfont.value == PlaybackState.Playing) Colors.LeafSelection.Unselected
+            else if (leaf_data.is_selected.value) Colors.LeafSelection.Primary
             else if (leaf_data.is_secondary.value) Colors.LeafSelection.Secondary
             else Colors.LeafSelection.Unselected
 

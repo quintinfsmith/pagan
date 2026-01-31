@@ -490,6 +490,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
             )
             this.vm_controller.active_project = null
             this.vm_controller.project_exists.value = false
+            Toast.makeText(this.context, R.string.feedback_on_copy, Toast.LENGTH_SHORT).show()
         }
     }
 

@@ -43,6 +43,7 @@ class ComponentActivityAbout: PaganComponentActivity() {
         TopBarIcon(
             icon = R.drawable.baseline_arrow_back_24,
             description = R.string.go_back,
+            contentAlignment = Alignment.CenterStart,
             onClick = { this@ComponentActivityAbout.finish() }
         )
         Spacer(Modifier.width(Dimensions.TopBarItemSpace))

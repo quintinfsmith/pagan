@@ -1,9 +1,11 @@
 package com.qfs.pagan.structure.opusmanager.history
-import com.qfs.pagan.RelativeInputMode
+import androidx.compose.ui.graphics.Color
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.BlockedActionException
 import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
+import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.OpusColorPalette
+import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.OpusColorPalette.ColorToken
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusLine
 import com.qfs.pagan.structure.opusmanager.base.OpusLineAbstract
@@ -708,20 +710,65 @@ open class OpusLayerHistory: OpusLayerCursor() {
                     )
                 }
 
-                HistoryToken.SET_LINE_COLOR -> {
-                    this.set_line_color(
-                        current_node.args[0] as Int,
-                        current_node.args[1] as Int,
-                        current_node.args[2] as Int?
-                    )
+                HistoryToken.SET_CHANNEL_COLOR -> {
+                    when (current_node.args[3] as ColorToken) {
+                        ColorToken.Event -> {
+                            this.set_channel_event_color(
+                                current_node.args[0] as Int,
+                                current_node.args[1] as Color?,
+                            )
+                        }
+                        ColorToken.EventBg -> {
+                            this.set_channel_event_bg_color(
+                                current_node.args[0] as Int,
+                                current_node.args[1] as Color?,
+                            )
+                        }
+                        ColorToken.Effect -> {
+                            this.set_channel_effect_color(
+                                current_node.args[0] as Int,
+                                current_node.args[1] as Color?,
+                            )
+                        }
+                        ColorToken.EffectBg -> {
+                            this.set_channel_effect_bg_color(
+                                current_node.args[0] as Int,
+                                current_node.args[1] as Color?,
+                            )
+                        }
+                    }
                 }
-
-                HistoryToken.UNSET_LINE_COLOR -> {
-                    this.set_line_color(
-                        current_node.args[0] as Int,
-                        current_node.args[1] as Int,
-                        null
-                    )
+                HistoryToken.SET_LINE_COLOR -> {
+                    when (current_node.args[3] as ColorToken) {
+                        ColorToken.Event -> {
+                            this.set_line_event_color(
+                                current_node.args[0] as Int,
+                                current_node.args[1] as Int,
+                                current_node.args[2] as Color?,
+                            )
+                        }
+                        ColorToken.EventBg -> {
+                            this.set_line_event_bg_color(
+                                current_node.args[0] as Int,
+                                current_node.args[1] as Int,
+                                current_node.args[2] as Color?,
+                            )
+                        }
+                        ColorToken.Effect -> {
+                            this.set_line_effect_color(
+                                current_node.args[0] as Int,
+                                current_node.args[1] as Int,
+                                current_node.args[2] as Color?,
+                            )
+                        }
+                        ColorToken.EffectBg -> {
+                            this.set_line_effect_bg_color(
+                                current_node.args[0] as Int,
+                                current_node.args[1] as Int,
+                                current_node.args[2] as Color?,
+                            )
+                        }
+                    }
                 }
 
                 HistoryToken.TAG_SECTION -> {
@@ -1825,22 +1872,95 @@ open class OpusLayerHistory: OpusLayerCursor() {
         }
     }
 
-    override fun set_line_color(channel: Int, line_offset: Int, color: Int?) {
-        this._remember {
-            val original_color = this.get_all_channels()[channel].lines[line_offset].color
-            super.set_line_color(channel, line_offset, color)
+    private fun remember_channel_color(channel: Int, original_color: Color?, token: OpusColorPalette.ColorToken) {
+        if (original_color == null) {
+            this.push_to_history_stack(
+                HistoryToken.UNSET_CHANNEL_COLOR,
+                listOf<Any>(channel, token)
+            )
+        } else {
+            this.push_to_history_stack(
+                HistoryToken.SET_CHANNEL_COLOR,
+                listOf(channel, token, original_color)
+            )
+        }
+    }
 
-            if (original_color == null) {
-                this.push_to_history_stack(
-                    HistoryToken.UNSET_LINE_COLOR,
-                    listOf<Any>(channel, line_offset)
-                )
-            } else {
-                this.push_to_history_stack(
-                    HistoryToken.SET_LINE_COLOR,
-                    listOf(channel, line_offset, original_color)
-                )
-            }
+    private fun remember_line_color(channel: Int, line_offset: Int, original_color: Color?, token: OpusColorPalette.ColorToken) {
+        if (original_color == null) {
+            this.push_to_history_stack(
+                HistoryToken.UNSET_LINE_COLOR,
+                listOf<Any>(channel, line_offset, token)
+            )
+        } else {
+            this.push_to_history_stack(
+                HistoryToken.SET_LINE_COLOR,
+                listOf(channel, line_offset, token, original_color)
+            )
+        }
+    }
+
+    override fun set_channel_event_color(channel: Int, color: Color?) {
+        this._remember {
+            val original_color = this.channels[channel].palette.event
+            super.set_channel_event_color(channel, color)
+            this.remember_channel_color(channel, original_color, ColorToken.Event)
+        }
+    }
+
+    override fun set_channel_event_bg_color(channel: Int, color: Color?) {
+        this._remember {
+            val original_color = this.channels[channel].palette.event_bg
+            super.set_channel_event_bg_color(channel, color)
+            this.remember_channel_color(channel, original_color, ColorToken.EventBg)
+        }
+    }
+
+    override fun set_channel_effect_color(channel: Int, color: Color?) {
+        this._remember {
+            val original_color = this.channels[channel].palette.effect
+            super.set_channel_effect_color(channel, color)
+            this.remember_channel_color(channel, original_color, ColorToken.Effect)
+        }
+    }
+
+    override fun set_channel_effect_bg_color(channel: Int, color: Color?) {
+        this._remember {
+            val original_color = this.channels[channel].palette.effect_bg
+            super.set_channel_effect_bg_color(channel, color)
+            this.remember_channel_color(channel, original_color, ColorToken.EffectBg)
+        }
+    }
+
+    override fun set_line_event_color(channel: Int, line_offset: Int, color: Color?) {
+        this._remember {
+            val original_color = this.channels[channel].lines[line_offset].palette.event
+            super.set_line_event_color(channel, line_offset, color)
+            this.remember_line_color(channel, line_offset, original_color, ColorToken.Event)
+        }
+    }
+
+    override fun set_line_event_bg_color(channel: Int, line_offset: Int, color: Color?) {
+        this._remember {
+            val original_color = this.channels[channel].lines[line_offset].palette.event_bg
+            super.set_line_event_bg_color(channel, line_offset, color)
+            this.remember_line_color(channel, line_offset, original_color, ColorToken.EventBg)
+        }
+    }
+
+    override fun set_line_effect_color(channel: Int, line_offset: Int, color: Color?) {
+        this._remember {
+            val original_color = this.channels[channel].lines[line_offset].palette.effect
+            super.set_line_effect_color(channel, line_offset, color)
+            this.remember_line_color(channel, line_offset, original_color, ColorToken.Effect)
+        }
+    }
+
+    override fun set_line_effect_bg_color(channel: Int, line_offset: Int, color: Color?) {
+        this._remember {
+            val original_color = this.channels[channel].palette.effect_bg
+            super.set_line_effect_bg_color(channel, line_offset, color)
+            this.remember_line_color(channel, line_offset, original_color, ColorToken.EffectBg)
         }
     }
 

@@ -1,5 +1,8 @@
 package com.qfs.pagan.structure.opusmanager.base
 
+import androidx.compose.ui.graphics.Color
+import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.ColorPalettable
+import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.OpusColorPalette
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectControlSet
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.Effectable
@@ -7,11 +10,11 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.E
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
-abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<ReducibleTree<T>>): ReducibleTreeArray<T>(beats), Effectable {
+abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<ReducibleTree<T>>): ReducibleTreeArray<T>(beats), ColorPalettable, Effectable {
     class BlockedCtlTreeException(var type: EffectType, var e: BlockedTreeException): Exception(e.message)
+    override var palette = OpusColorPalette()
     var controllers = EffectControlSet(this.beats.size, setOf(EffectType.Volume))
     var muted = false
-    var color: Int? = null
 
     init {
         // Default volume to hidden

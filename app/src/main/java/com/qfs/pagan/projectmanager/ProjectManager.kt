@@ -274,8 +274,8 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         val content = reader.readText()
         reader.close()
 
-        val json_obj = JSONParser.Companion.parse<JSONHashMap>(content) ?: return null
-        val version = OpusManagerJSONInterface.Companion.detect_version(json_obj)
+        val json_obj = JSONParser.parse<JSONHashMap>(content) ?: return null
+        val version = OpusManagerJSONInterface.detect_version(json_obj)
         return when (version) {
             0, 1, 2 -> json_obj.get_string("name")
             else -> {

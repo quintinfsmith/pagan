@@ -1,5 +1,7 @@
 package com.qfs.pagan.structure.opusmanager.base
 
+import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.ColorPalettable
+import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.OpusColorPalette
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectControlSet
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.Effectable
@@ -28,7 +30,8 @@ data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int) {
     }
 }
 
-abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(var uuid: Int): Effectable {
+
+abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(var uuid: Int): Effectable, ColorPalettable {
     class InvalidChannelUUID(uuid: Int): Exception("No such channel uuid: $uuid")
     class LineSizeMismatch(incoming_size: Int, required_size: Int): Exception("Line is $incoming_size beats but OpusManager is $required_size beats")
     class LastLineException: Exception("Can't remove final line in channel")
@@ -41,6 +44,8 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
     private var _beat_count: Int = 0
     var size: Int = 0
     var muted = false
+
+    override var palette = OpusColorPalette()
 
     abstract fun gen_line(): T
     open fun clear() {
@@ -331,10 +336,6 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
         this.catch_blocked_tree_exception(line_offset) {
             this.lines[line_offset].insert_after(beat, position)
         }
-    }
-
-    fun set_line_color(line_offset: Int, color: Int?) {
-        this.lines[line_offset].color = color
     }
 
     override fun hashCode(): Int {

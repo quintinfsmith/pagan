@@ -1,5 +1,6 @@
 package com.qfs.pagan.structure.opusmanager.base
 
+import androidx.compose.ui.graphics.Color
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BalanceMSB
 import com.qfs.apres.event.BankSelect
@@ -1666,9 +1667,6 @@ open class OpusLayerBase: Effectable {
         }
     }
 
-    open fun set_line_color(channel: Int, line_offset: Int, color: Int?) {
-        this.get_all_channels()[channel].set_line_color(line_offset, color)
-    }
 
     /**
      * Remove the [type] effect controller of the [line_offset]th line of the [channel_index]th channel.
@@ -5074,5 +5072,31 @@ open class OpusLayerBase: Effectable {
 
     override fun <T : EffectEvent> get_controller(type: EffectType): EffectController<T> {
         return this.controllers.get<T>(type)
+    }
+
+    open fun set_channel_event_color(channel: Int, color: Color?) {
+        this.channels[channel].set_event_color(color)
+    }
+    open fun set_channel_effect_color(channel: Int, color: Color?) {
+        this.channels[channel].set_effect_color(color)
+    }
+    open fun set_channel_event_bg_color(channel: Int, color: Color?) {
+        this.channels[channel].set_event_bg_color(color)
+    }
+    open fun set_channel_effect_bg_color(channel: Int, color: Color?) {
+        this.channels[channel].set_effect_bg_color(color)
+    }
+
+    open fun set_line_event_color(channel: Int, line_offset: Int, color: Color?) {
+        this.channels[channel].set_event_color(color)
+    }
+    open fun set_line_effect_color(channel: Int, line_offset: Int, color: Color?) {
+        this.channels[channel].set_effect_color(color)
+    }
+    open fun set_line_event_bg_color(channel: Int, line_offset: Int, color: Color?) {
+        this.channels[channel].set_event_bg_color(color)
+    }
+    open fun set_line_effect_bg_color(channel: Int, line_offset: Int, color: Color?) {
+        this.channels[channel].set_effect_bg_color(color)
     }
 }

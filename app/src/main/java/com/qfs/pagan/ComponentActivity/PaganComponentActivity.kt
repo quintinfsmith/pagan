@@ -257,7 +257,8 @@ abstract class PaganComponentActivity: ComponentActivity() {
                         .systemBarsPadding()
                 ) {
                     ScaffoldWithTopBar(
-                        modifier = Modifier.wrapContentWidth(),
+                        modifier = Modifier
+                            .wrapContentWidth(),
                         top_app_bar = this@PaganComponentActivity.top_bar_wrapper,
                         drawerState = this@PaganComponentActivity.drawer_state,
                         gesturesEnabled = this@PaganComponentActivity.drawer_gesture_enabled.value,

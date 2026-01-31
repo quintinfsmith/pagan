@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -766,13 +767,115 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun RowScope.ActiveTopBar() {
-        val vm_controller = this@ComponentActivityEditor.controller_model
-        val vm_state = vm_controller.opus_manager.vm_state
+    fun NoPlayButton() {
+        TopBarIcon(
+            icon = R.drawable.icon_play,
+            description = R.string.menu_item_playpause,
+            onClick = {
+                this.view_model.create_dialog { close ->
+                    @Composable {
+                        SText(
+                            R.string.need_soundfont_playback_warning,
+                            textAlign = TextAlign.Center
+                        )
+                        DialogBar(positive = close)
+                    }
+                }
+            },
+        )
+    }
 
-        val vm_top = this@ComponentActivityEditor.view_model
+    @Composable
+    fun PlaySFButton() {
         val dispatcher = this@ComponentActivityEditor.action_interface
         val scope = rememberCoroutineScope()
+        TopBarIcon(
+            icon = when (this@ComponentActivityEditor.state_model.playback_state_soundfont.value) {
+                PlaybackState.Queued,
+                PlaybackState.NotReady -> R.drawable.baseline_play_disabled_24
+
+                PlaybackState.Ready -> R.drawable.icon_play
+                PlaybackState.Stopping,
+                PlaybackState.Playing -> if (this@ComponentActivityEditor.state_model.looping_playback.value) {
+                    R.drawable.icon_pause_loop
+                } else {
+                    R.drawable.icon_pause
+                }
+            },
+            description = R.string.menu_item_playpause,
+            onClick = {
+                scope.launch {
+                    when (this@ComponentActivityEditor.controller_model.playback_state_soundfont) {
+                        PlaybackState.Queued,
+                        PlaybackState.Stopping,
+                        PlaybackState.NotReady -> {}
+                        PlaybackState.Ready -> {
+                            dispatcher.play_opus(this, false)
+                        }
+
+                        PlaybackState.Playing -> {
+                            dispatcher.stop_opus()
+                        }
+                    }
+                }
+            },
+            onLongClick = {
+                scope.launch {
+                    when (this@ComponentActivityEditor.controller_model.playback_state_soundfont) {
+                        PlaybackState.Queued,
+                        PlaybackState.Stopping,
+                        PlaybackState.NotReady -> {}
+                        PlaybackState.Ready -> { dispatcher.play_opus(this, true) }
+                        PlaybackState.Playing -> { dispatcher.stop_opus() }
+                    }
+                }
+            }
+        )
+    }
+    @Composable
+    fun PlayMidiButton() {
+        val dispatcher = this@ComponentActivityEditor.action_interface
+        val scope = rememberCoroutineScope()
+        TopBarIcon(
+            icon = when (this@ComponentActivityEditor.state_model.playback_state_midi.value) {
+                PlaybackState.Queued,
+                PlaybackState.NotReady -> R.drawable.baseline_play_disabled_24
+
+                PlaybackState.Ready -> R.drawable.icon_play
+                PlaybackState.Stopping,
+                PlaybackState.Playing -> if (this@ComponentActivityEditor.state_model.looping_playback.value) {
+                    R.drawable.icon_pause_loop
+                } else {
+                    R.drawable.icon_pause
+                }
+            },
+            description = R.string.menu_item_playpause,
+            onClick = {
+                scope.launch {
+                    when (this@ComponentActivityEditor.controller_model.playback_state_midi) {
+                        PlaybackState.Queued,
+                        PlaybackState.Stopping,
+                        PlaybackState.NotReady -> {}
+                        PlaybackState.Ready -> {
+                            dispatcher.play_opus_midi()
+                        }
+
+                        PlaybackState.Playing -> {
+                            dispatcher.stop_opus_midi()
+                        }
+                    }
+                }
+            }
+        )
+    }
+
+    @Composable
+    fun TopBarDropDown() {
+        val vm_top = this@ComponentActivityEditor.view_model
+        val vm_state = this@ComponentActivityEditor.state_model
+        val vm_controller = this@ComponentActivityEditor.controller_model
+        val dispatcher = this@ComponentActivityEditor.action_interface
+
         val menu_items: MutableList<Pair<Int, () -> Unit>> = mutableListOf(
             Pair(R.string.menu_item_new_project) {
                 dispatcher.save_before {
@@ -785,7 +888,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             menu_items.add(
                 Pair(R.string.menu_item_load_project) {
                     this@ComponentActivityEditor.load_menu_dialog { uri ->
-                        this@ComponentActivityEditor.action_interface.save_before {
+                        dispatcher.save_before {
                             this@ComponentActivityEditor.load_project(uri)
                         }
                     }
@@ -852,96 +955,73 @@ class ComponentActivityEditor: PaganComponentActivity() {
         menu_items.add(
             Pair(R.string.menu_item_about) { this@ComponentActivityEditor.open_about() }
         )
-        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
+
+        Box {
+            val expanded = remember { mutableStateOf(false) }
+            TopBarIcon(
+                icon = R.drawable.icon_kebab,
+                description = R.string.menu_item_playpause,
+                contentAlignment = Alignment.CenterEnd,
+                onClick = { expanded.value = !expanded.value }
+            )
+            DropdownMenu(
+                expanded = expanded.value,
+                onDismissRequest = { expanded.value = false }
+            ) {
+                for ((_, item) in menu_items.enumerate()) {
+                    DropdownMenuItem(
+                        text = { SText(item.first) },
+                        onClick = {
+                            expanded.value = false
+                            item.second()
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun RowScope.TopBarNoTitle() {
+        val vm_state = this@ComponentActivityEditor.state_model
+        val dispatcher = this@ComponentActivityEditor.action_interface
+
+        Spacer(Modifier.weight(1F))
+
+        if (vm_state.use_midi_playback.value) {
+            PlayMidiButton()
+        } else if (vm_state.soundfont_active.value != null) {
+            PlaySFButton()
+        } else {
+            NoPlayButton()
+        }
+        Spacer(Modifier.weight(1F))
+
         TopBarIcon(
-            icon = R.drawable.icon_hamburger_32,
-            description = R.string.song_configuration,
+            icon = R.drawable.icon_undo,
+            description = R.string.menu_item_undo,
             onClick = {
-                scope.launch {
-                    this@ComponentActivityEditor.open_drawer()
+                if (vm_state.playback_state_midi.value != PlaybackState.Playing && vm_state.playback_state_soundfont.value != PlaybackState.Playing ) {
+                    dispatcher.apply_undo()
                 }
             }
         )
+        Spacer(Modifier.weight(1F))
+    }
+    @Composable
+    fun RowScope.TopBarWithTitle() {
+        val vm_state = this@ComponentActivityEditor.state_model
+        val dispatcher = this@ComponentActivityEditor.action_interface
+
         Spacer(Modifier.width(Dimensions.TopBarItemSpace))
-
-        if (this@ComponentActivityEditor.state_model.use_midi_playback.value) {
-            TopBarIcon(
-                icon = when (this@ComponentActivityEditor.state_model.playback_state_midi.value) {
-                    PlaybackState.Queued,
-                    PlaybackState.NotReady -> R.drawable.baseline_play_disabled_24
-
-                    PlaybackState.Ready -> R.drawable.icon_play
-                    PlaybackState.Stopping,
-                    PlaybackState.Playing -> if (this@ComponentActivityEditor.state_model.looping_playback.value) {
-                        R.drawable.icon_pause_loop
-                    } else {
-                        R.drawable.icon_pause
-                    }
-                },
-                description = R.string.menu_item_playpause,
-                onClick = {
-                    scope.launch {
-                        when (this@ComponentActivityEditor.controller_model.playback_state_midi) {
-                            PlaybackState.Queued,
-                            PlaybackState.Stopping,
-                            PlaybackState.NotReady -> {}
-                            PlaybackState.Ready -> {
-                                dispatcher.play_opus_midi()
-                            }
-
-                            PlaybackState.Playing -> {
-                                dispatcher.stop_opus_midi()
-                            }
-                        }
-                    }
-                }
-            )
-            Spacer(Modifier.width(Dimensions.TopBarItemSpace))
-        } else if (this@ComponentActivityEditor.state_model.soundfont_active.value != null) {
-            TopBarIcon(
-                icon = when (this@ComponentActivityEditor.state_model.playback_state_soundfont.value) {
-                    PlaybackState.Queued,
-                    PlaybackState.NotReady -> R.drawable.baseline_play_disabled_24
-
-                    PlaybackState.Ready -> R.drawable.icon_play
-                    PlaybackState.Stopping,
-                    PlaybackState.Playing -> if (this@ComponentActivityEditor.state_model.looping_playback.value) {
-                        R.drawable.icon_pause_loop
-                    } else {
-                        R.drawable.icon_pause
-                    }
-                },
-                description = R.string.menu_item_playpause,
-                onClick = {
-                    scope.launch {
-                        when (this@ComponentActivityEditor.controller_model.playback_state_soundfont) {
-                            PlaybackState.Queued,
-                            PlaybackState.Stopping,
-                            PlaybackState.NotReady -> {}
-                            PlaybackState.Ready -> {
-                                dispatcher.play_opus(this, false)
-                            }
-
-                            PlaybackState.Playing -> {
-                                dispatcher.stop_opus()
-                            }
-                        }
-                    }
-                },
-                onLongClick = {
-                    scope.launch {
-                        when (this@ComponentActivityEditor.controller_model.playback_state_soundfont) {
-                            PlaybackState.Queued,
-                            PlaybackState.Stopping,
-                            PlaybackState.NotReady -> {}
-                            PlaybackState.Ready -> { dispatcher.play_opus(this, true) }
-                            PlaybackState.Playing -> { dispatcher.stop_opus() }
-                        }
-                    }
-                }
-            )
-            Spacer(Modifier.width(Dimensions.TopBarItemSpace))
+        if (vm_state.use_midi_playback.value) {
+            PlayMidiButton()
+        } else if (vm_state.soundfont_active.value != null) {
+            PlaySFButton()
+        } else {
+            NoPlayButton()
         }
+        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
         Row(
             modifier = Modifier.weight(1F),
             horizontalArrangement = Arrangement.Center,
@@ -950,7 +1030,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
             Text(
                 modifier = Modifier
                     .combinedClickable(
-                        onClick = { dispatcher.set_project_name_and_notes() }
+                        onClick = {
+                            dispatcher.set_project_name_and_notes()
+                        }
                     ),
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
@@ -969,28 +1051,31 @@ class ComponentActivityEditor: PaganComponentActivity() {
             TopBarNoIcon()
         }
         Spacer(Modifier.width(Dimensions.TopBarItemSpace))
-        Box {
-            val expanded = remember { mutableStateOf(false) }
-            TopBarIcon(
-                icon = R.drawable.icon_kebab,
-                description = R.string.menu_item_playpause,
-                onClick = { expanded.value = !expanded.value }
-            )
-            DropdownMenu(
-                expanded = expanded.value,
-                onDismissRequest = { expanded.value = false }
-            ) {
-                for ((_, item) in menu_items.enumerate()) {
-                    DropdownMenuItem(
-                        text = { SText(item.first) },
-                        onClick = {
-                            expanded.value = false
-                            item.second()
-                        }
-                    )
+    }
+
+    @Composable
+    fun RowScope.ActiveTopBar() {
+        val vm_top = this@ComponentActivityEditor.view_model
+        val scope = rememberCoroutineScope()
+
+        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
+        TopBarIcon(
+            icon = R.drawable.icon_hamburger_32,
+            description = R.string.song_configuration,
+            contentAlignment = Alignment.CenterStart,
+            onClick = {
+                scope.launch {
+                    this@ComponentActivityEditor.open_drawer()
                 }
             }
+        )
+
+        when (vm_top.active_layout_size.value) {
+            LayoutSize.SmallPortrait -> TopBarNoTitle()
+            else -> TopBarWithTitle()
         }
+
+        TopBarDropDown()
     }
 
     @Composable
@@ -1902,6 +1987,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     override fun Drawer(modifier: Modifier) {
         val dispatcher = this.action_interface
         val state_model = this.state_model
+        val top_model = this.view_model
         val scope = rememberCoroutineScope()
 
         val scroll_state = rememberScrollState()
@@ -1910,7 +1996,28 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         val context = LocalContext.current
 
-        DrawerCard(modifier.imePadding()) {
+        DrawerCard(
+            modifier
+                .width(IntrinsicSize.Min)
+                .imePadding()
+        ) {
+            if (top_model.active_layout_size.value == LayoutSize.SmallPortrait) {
+                Text(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .combinedClickable(
+                            onClick = {
+                                dispatcher.set_project_name_and_notes()
+                            }
+                        ),
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    text = state_model.project_name.value ?: stringResource(R.string.untitled_opus)
+                )
+            }
+
             Row(
                 Modifier.padding(Dimensions.ConfigDrawerPadding),
                 horizontalArrangement = Arrangement.SpaceBetween

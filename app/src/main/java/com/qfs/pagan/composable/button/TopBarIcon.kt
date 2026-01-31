@@ -16,19 +16,25 @@ import com.qfs.pagan.ui.theme.Dimensions
 
 
 @Composable
-fun TopBarIcon(icon: Int, description: Int, onLongClick: (() -> Unit)? = null, onClick: () -> Unit) {
+fun TopBarIcon(
+    icon: Int,
+    description: Int,
+    contentAlignment: Alignment = Alignment.Center,
+    onLongClick: (() -> Unit)? = null,
+    onClick: () -> Unit,
+) {
     Box(
         modifier = Modifier
             .background(color = Color.Transparent, shape = CircleShape)
             .size(
-                Dimensions.TopBarIconSize,
-                Dimensions.TopBarIconSize
+                Dimensions.TopBarIconWidth,
+                Dimensions.TopBarIconHeight
             )
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick ?: {}
             ),
-        contentAlignment = Alignment.Center,
+        contentAlignment = contentAlignment,
         content = {
             Icon(
                 painter = painterResource(icon),
@@ -43,6 +49,6 @@ fun TopBarIcon(icon: Int, description: Int, onLongClick: (() -> Unit)? = null, o
 fun TopBarNoIcon() {
     Box(
         modifier = Modifier
-            .size(Dimensions.TopBarIconSize, Dimensions.TopBarIconSize)
+            .size(Dimensions.TopBarIconWidth, Dimensions.TopBarIconHeight)
     )
 }

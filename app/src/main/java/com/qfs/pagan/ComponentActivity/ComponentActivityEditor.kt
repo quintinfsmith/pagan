@@ -1239,7 +1239,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                             .background(MaterialTheme.colorScheme.onSurfaceVariant)
                                     )
                                 }
-
                             }
                             Row(
                                 Modifier

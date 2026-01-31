@@ -4477,9 +4477,6 @@ open class OpusLayerBase: Effectable {
             if (event[0] == Midi.PERCUSSION_CHANNEL) {
                 val tree = (this.get_channel(beatkey.channel) as OpusPercussionChannel).lines[beatkey.line_offset].get_tree(beatkey.beat, position)
                 tree.set_event(PercussionEvent(event[2]))
-
-                //this.set_percussion_event(beatkey, position)
-                //this.set_duration(beatkey, position, event[2])
             } else {
                 val event_note = event[1] - 21
                 if (event_note in 0..127) {

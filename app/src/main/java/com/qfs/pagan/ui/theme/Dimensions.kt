@@ -135,7 +135,7 @@ object Dimensions {
 
     val ContextMenuButtonHeight: Dp
         get() = getter(
-            small_portrait = 41.dp,
+            small_portrait = 48.dp,
             small_landscape = 41.dp,
             medium_portrait = 48.dp,
             medium_landscape = 48.dp,

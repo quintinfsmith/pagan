@@ -850,17 +850,13 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         }
     }
 
-    private fun get_minimum_percussion_instrument(channel: Int): Int {
-        return this.minimum_percussions[channel] ?: 0
-    }
-
     override fun new_line(channel: Int, line_offset: Int?) {
         super.new_line(channel, line_offset)
 
         // set the default instrument to the first available in the soundfont (if applicable)
         if (this.is_percussion(channel)) {
             (this.get_channel(channel) as OpusPercussionChannel).let {
-                it.lines[line_offset ?: (it.size - 1)].instrument = max(0, this.get_minimum_percussion_instrument(channel) - 27)
+                it.lines[line_offset ?: (it.size - 1)].instrument = max(0, this.vm_controller.audio_interface.get_minimum_instrument_index(it.get_preset()) - 27)
             }
         }
 
@@ -1283,7 +1279,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
         if (this.ui_lock.is_locked()) return
         this.vm_state.set_channel_data(channel, this.is_percussion(channel), instrument, this.channels[channel].muted, size = this.channels[channel].lines.size, )
-
     }
 
     override fun on_action_blocked(blocker_key: BeatKey, blocker_position: List<Int>) {
@@ -1489,7 +1484,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                     else -> return
                 }
             }
-
         }
     }
 

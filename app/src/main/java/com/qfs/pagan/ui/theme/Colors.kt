@@ -47,7 +47,8 @@ object Colors {
     }
 
     fun get_text(input: Color): Color {
-        val avg = (input.red + input.green + input.blue) / 3F
+        // Green is brighter, weight it more
+        val avg = (input.red + (input.green * 2.5F) + input.blue) / 3F
         return if (avg > .5F) Color(0xFF000000)
         else  Color(0xFFFFFFFF)
     }
@@ -80,8 +81,8 @@ object Colors {
             EFFECT_COLOR
         }
 
-        val event_bg_color_base = line_palette.event_bg ?: channel_palette.event_bg ?: if (dark_mode) LINE_COLOR_NIGHT else LINE_COLOR
-        val effect_bg_color_base = line_palette.effect_bg ?: channel_palette.effect_bg ?: if (dark_mode) EFFECT_LINE_COLOR_NIGHT else EFFECT_LINE_COLOR
+        // val event_bg_color_base = line_palette.event_bg ?: channel_palette.event_bg ?: if (dark_mode) LINE_COLOR_NIGHT else LINE_COLOR
+        // val effect_bg_color_base = line_palette.effect_bg ?: channel_palette.effect_bg ?: if (dark_mode) EFFECT_LINE_COLOR_NIGHT else EFFECT_LINE_COLOR
 
         var primary_base = if (is_effect_line) {
             when (active) {

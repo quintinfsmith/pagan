@@ -711,7 +711,7 @@ fun <T> SortableMenu(
                                         Modifier
                                     }
                                 )
-                                .height(Dimensions.DialogLineHeight)
+                                .heightIn(min = Dimensions.DialogLineHeight)
                                 .combinedClickable(
                                     onClick = { onClick(item) },
                                     onLongClick = { onLongClick(item) }

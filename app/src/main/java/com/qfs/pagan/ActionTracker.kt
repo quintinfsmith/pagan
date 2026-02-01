@@ -2205,7 +2205,9 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
 
                     CursorMode.Line,
                     CursorMode.Channel,
-                    CursorMode.Unset -> 0
+                    CursorMode.Unset -> {
+                        opus_manager.vm_state.scroll_state_x.value.firstVisibleItemIndex
+                    }
                 },
                 loop_playback
             )

@@ -133,7 +133,8 @@ object Dimensions {
     )
 
     val ConfigChannelButtonHeight = 41.dp
-    val ConfigChannelBottomButtonHeight = 48.dp
+    val ConfigBottomButtonHeight = 48.dp
+    val ConfigBottomButtonWidth = 72.dp
     val ConfigChannelSpacing = 4.dp
     val ConfigDrawerPadding = 4.dp
     val ConfigDrawerButtonPadding = 8.dp

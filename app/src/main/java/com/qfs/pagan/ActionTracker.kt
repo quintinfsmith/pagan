@@ -54,6 +54,7 @@ import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.documentfile.provider.DocumentFile
 import com.qfs.apres.VirtualMidiInputDevice
 import com.qfs.json.JSONBoolean
 import com.qfs.json.JSONInteger
@@ -3121,6 +3122,9 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val (backup_uri, bytes) = this.vm_top.project_manager?.read_backup() ?: throw MissingProjectManager()
         this.get_opus_manager().load(bytes) {
             this.vm_controller.active_project = backup_uri
+            backup_uri?.let {
+                this.vm_controller.project_exists.value = DocumentFile.fromTreeUri(this.context, it)?.exists() == true
+            }
         }
     }
 

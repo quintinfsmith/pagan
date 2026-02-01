@@ -135,7 +135,6 @@ import com.qfs.pagan.composable.keyboardAsState
 import com.qfs.pagan.composable.long_press
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
-import com.qfs.pagan.structure.opusmanager.base.OpusChannel
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.OpusColorPalette
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
@@ -2269,7 +2268,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     Row(
                         modifier = Modifier
                             .weight(1F)
-                            .height(Dimensions.ConfigChannelBottomButtonHeight)
+                            .height(Dimensions.ConfigBottomButtonHeight)
                             .combinedClickable(
                                 onClick = {
                                     this@ComponentActivityEditor.runOnUiThread {

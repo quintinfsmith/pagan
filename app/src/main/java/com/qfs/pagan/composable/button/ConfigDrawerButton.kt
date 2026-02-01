@@ -10,11 +10,9 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.qfs.pagan.R
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 
@@ -33,8 +31,8 @@ fun ConfigDrawerTopButton(modifier: Modifier = Modifier, content: (@Composable R
 fun ConfigDrawerBottomButton(modifier: Modifier = Modifier, icon: Int, description: Int, enabled: Boolean = true, onClick: () -> Unit) {
     Button(
         modifier = modifier
-            .height(Dimensions.ConfigChannelBottomButtonHeight)
-            .widthIn(dimensionResource(R.dimen.config_button_width)),
+            .height(Dimensions.ConfigBottomButtonHeight)
+            .widthIn(Dimensions.ConfigBottomButtonWidth),
         shape = RoundedCornerShape(12.dp),
         contentPadding = Dimensions.ConfigButtonPadding,
         onClick = onClick,

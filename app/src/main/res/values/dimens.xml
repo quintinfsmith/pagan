@@ -19,7 +19,6 @@
     <dimen name="dropdown_textsize">18sp</dimen>
     <dimen name="dropdown_title_textsize">18sp</dimen>
     <dimen name="config_padding_outer">5dp</dimen>
-    <dimen name="config_button_width">72dp</dimen>
     <dimen name="config_item_padding">2dp</dimen>
     <dimen name="config_width">280dp</dimen>
     <dimen name="number_selector_spacing">2dp</dimen>

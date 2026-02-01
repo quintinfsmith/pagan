@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.Dp
@@ -99,11 +100,12 @@ class ViewModelPagan: ViewModel() {
         this.has_saved_project.value = this.project_manager?.has_projects_saved() ?: false
     }
 
-    fun create_dialog(level: Int = 0, dialog_callback: (() -> Unit) -> (@Composable (ColumnScope.() -> Unit))) {
+    fun create_dialog(level: Int = 0, alignment: Alignment = Alignment.Center, dialog_callback: (() -> Unit) -> (@Composable (ColumnScope.() -> Unit))) {
         // Use level to block Dup dialogs. set it to allow for dialogs opened from other dialogs
         if (this.dialog_queue.value?.level == level) return
         this.dialog_queue.value = DialogChain(
             parent = this.dialog_queue.value,
+            alignment = alignment,
             dialog = dialog_callback {
                 this.dialog_queue.value?.let {
                     this.dialog_queue.value = it.parent

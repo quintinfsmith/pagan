@@ -17,6 +17,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -62,6 +63,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.qfs.pagan.DialogChain
@@ -213,19 +215,29 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 val keyboard_controller = LocalSoftwareKeyboardController.current
                 val focus_manager = LocalFocusManager.current
                 for (dialog in dialogs.reversed()) {
-                    Dialog( onDismissRequest = { view_model.dialog_queue.value = dialog.parent } ) {
-                        DialogCard(
-                            modifier = Modifier
-                                // Allow click-away from text fields
-                                .wrapContentSize()
-                                .pointerInput(Unit) {
-                                    detectTapGestures { offset ->
-                                        keyboard_controller?.hide()
-                                        focus_manager.clearFocus()
-                                    }
-                                },
-                            content = dialog.dialog
-                        )
+                    Dialog(
+                        onDismissRequest = { view_model.dialog_queue.value = dialog.parent },
+                    ) {
+                        // Extra Box prevents weird dialog jumping on focus
+                        Box(
+                            Modifier
+                                .clickable { view_model.dialog_queue.value = dialog.parent }
+                                .fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            DialogCard(
+                                modifier = Modifier
+                                    // Allow click-away from text fields
+                                    .wrapContentSize()
+                                    .pointerInput(Unit) {
+                                        detectTapGestures { offset ->
+                                            keyboard_controller?.hide()
+                                            focus_manager.clearFocus()
+                                        }
+                                    },
+                                content = dialog.dialog
+                            )
+                        }
                     }
                 }
                 // -----------------------------------------------

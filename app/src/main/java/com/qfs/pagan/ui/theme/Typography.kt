@@ -74,7 +74,13 @@ object Typography {
         )
     }
 
-    val NumberSelector = TextStyle(
+    val NumberPicker = TextStyle(
+        fontFamily = Fonts.FiraMono,
+        fontSize = 16.sp,
+        lineHeight = 16.sp,
+    )
+
+    val NoteSelector = TextStyle(
         fontFamily = Fonts.FiraSans,
         fontSize = 18.sp
     )

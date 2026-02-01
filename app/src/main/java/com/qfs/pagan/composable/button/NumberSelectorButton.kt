@@ -80,7 +80,7 @@ fun NumberSelectorButton(
                 "$index",
                 maxLines = 1,
                 color = foreground,
-                style = Typography.NumberSelector.copy(
+                style = Typography.NoteSelector.copy(
                     fontWeight = if (selected) {
                         FontWeight.Bold
                     } else {

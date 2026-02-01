@@ -1040,7 +1040,12 @@ fun NumberPicker(modifier: Modifier = Modifier, range: kotlin.ranges.IntRange, d
                         ),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
-                    content = { Text("${range.first + page}") }
+                    content = {
+                        Text(
+                            "${range.first + page}",
+                            style = Typography.NumberPicker
+                        )
+                    }
                 )
             }
         }

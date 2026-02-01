@@ -311,6 +311,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     open fun apply_history_node(current_node: HistoryCache.HistoryNode, depth: Int = 0) {
+        println("APPLYING: ${current_node.token}")
         try {
             when (current_node.token) {
                 HistoryToken.SET_PROJECT_NAME -> {
@@ -711,7 +712,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 }
 
                 HistoryToken.SET_CHANNEL_COLOR -> {
-                    when (current_node.args[3] as ColorToken) {
+                    when (current_node.args[2] as ColorToken) {
                         ColorToken.Event -> {
                             this.set_channel_event_color(
                                 current_node.args[0] as Int,
@@ -738,34 +739,79 @@ open class OpusLayerHistory: OpusLayerCursor() {
                         }
                     }
                 }
+                HistoryToken.UNSET_CHANNEL_COLOR -> {
+                    when (current_node.args[1] as ColorToken) {
+                        ColorToken.Event -> {
+                            this.set_channel_event_color(current_node.args[0] as Int)
+                        }
+                        ColorToken.EventBg -> {
+                            this.set_channel_event_bg_color(current_node.args[0] as Int)
+                        }
+                        ColorToken.Effect -> {
+                            this.set_channel_effect_color(current_node.args[0] as Int)
+                        }
+                        ColorToken.EffectBg -> {
+                            this.set_channel_effect_bg_color(current_node.args[0] as Int)
+                        }
+                    }
+                }
                 HistoryToken.SET_LINE_COLOR -> {
                     when (current_node.args[3] as ColorToken) {
                         ColorToken.Event -> {
                             this.set_line_event_color(
                                 current_node.args[0] as Int,
                                 current_node.args[1] as Int,
-                                current_node.args[2] as Color?,
+                                current_node.args[2] as Color,
                             )
                         }
                         ColorToken.EventBg -> {
                             this.set_line_event_bg_color(
                                 current_node.args[0] as Int,
                                 current_node.args[1] as Int,
-                                current_node.args[2] as Color?,
+                                current_node.args[2] as Color,
                             )
                         }
                         ColorToken.Effect -> {
                             this.set_line_effect_color(
                                 current_node.args[0] as Int,
                                 current_node.args[1] as Int,
-                                current_node.args[2] as Color?,
+                                current_node.args[2] as Color,
                             )
                         }
                         ColorToken.EffectBg -> {
                             this.set_line_effect_bg_color(
                                 current_node.args[0] as Int,
                                 current_node.args[1] as Int,
-                                current_node.args[2] as Color?,
+                                current_node.args[2] as Color,
+                            )
+                        }
+                    }
+                }
+
+                HistoryToken.UNSET_LINE_COLOR -> {
+                    when (current_node.args[2] as ColorToken) {
+                        ColorToken.Event -> {
+                            this.set_line_event_color(
+                                current_node.args[0] as Int,
+                                current_node.args[1] as Int
+                            )
+                        }
+                        ColorToken.EventBg -> {
+                            this.set_line_event_bg_color(
+                                current_node.args[0] as Int,
+                                current_node.args[1] as Int
+                            )
+                        }
+                        ColorToken.Effect -> {
+                            this.set_line_effect_color(
+                                current_node.args[0] as Int,
+                                current_node.args[1] as Int
+                            )
+                        }
+                        ColorToken.EffectBg -> {
+                            this.set_line_effect_bg_color(
+                                current_node.args[0] as Int,
+                                current_node.args[1] as Int
                             )
                         }
                     }
@@ -1881,7 +1927,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
         } else {
             this.push_to_history_stack(
                 HistoryToken.SET_CHANNEL_COLOR,
-                listOf(channel, token, original_color)
+                listOf(channel, original_color, token)
             )
         }
     }
@@ -1895,7 +1941,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
         } else {
             this.push_to_history_stack(
                 HistoryToken.SET_LINE_COLOR,
-                listOf(channel, line_offset, token, original_color)
+                listOf(channel, line_offset, original_color, token)
             )
         }
     }

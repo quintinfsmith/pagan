@@ -1,4 +1,5 @@
 package com.qfs.pagan.structure.opusmanager.cursor
+import androidx.compose.ui.graphics.Color
 import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
@@ -2577,5 +2578,45 @@ open class OpusLayerCursor: OpusLayerBase() {
         }
 
         this.set_event(beat_key, position, new_event)
+    }
+
+    override fun set_channel_event_color(channel: Int, color: Color?) {
+        super.set_channel_event_color(channel, color)
+        this.cursor_select_channel(channel)
+    }
+
+    override fun set_channel_event_bg_color(channel: Int, color: Color?) {
+        super.set_channel_event_bg_color(channel, color)
+        this.cursor_select_channel(channel)
+    }
+
+    override fun set_channel_effect_color(channel: Int, color: Color?) {
+        super.set_channel_effect_color(channel, color)
+        this.cursor_select_channel(channel)
+    }
+
+    override fun set_channel_effect_bg_color(channel: Int, color: Color?) {
+        super.set_channel_effect_bg_color(channel, color)
+        this.cursor_select_channel(channel)
+    }
+
+    override fun set_line_event_color(channel: Int, line_offset: Int, color: Color?) {
+        super.set_line_event_color(channel, line_offset, color)
+        this.cursor_select_line(channel, line_offset)
+    }
+
+    override fun set_line_event_bg_color(channel: Int, line_offset: Int, color: Color?) {
+        super.set_line_event_bg_color(channel, line_offset, color)
+        this.cursor_select_line(channel, line_offset)
+    }
+
+    override fun set_line_effect_color(channel: Int, line_offset: Int, color: Color?) {
+        super.set_line_effect_color(channel, line_offset, color)
+        this.cursor_select_line(channel, line_offset)
+    }
+
+    override fun set_line_effect_bg_color(channel: Int, line_offset: Int, color: Color?) {
+        super.set_line_effect_bg_color(channel, line_offset, color)
+        this.cursor_select_line(channel, line_offset)
     }
 }

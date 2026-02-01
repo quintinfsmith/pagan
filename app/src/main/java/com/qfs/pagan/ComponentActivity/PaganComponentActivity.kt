@@ -22,9 +22,11 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -32,6 +34,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DrawerState
@@ -212,38 +215,15 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 for (dialog in dialogs.reversed()) {
                     Dialog( onDismissRequest = { view_model.dialog_queue.value = dialog.parent } ) {
                         DialogCard(
-                            modifier = when (view_model.get_layout_size()) {
-                                // No Constraints, regardless of requested size
-                                LayoutSize.SmallPortrait,
-                                LayoutSize.SmallLandscape,
-                                LayoutSize.MediumPortrait -> Modifier
-
-                                LayoutSize.LargePortrait,
-                                LayoutSize.MediumLandscape -> {
-                                    when (dialog.size) {
-                                        ViewModelPagan.DialogSize.Unbounded -> Modifier
-                                        ViewModelPagan.DialogSize.Small -> Modifier.width(Dimensions.Layout.Medium.short)
-                                        ViewModelPagan.DialogSize.Medium -> Modifier.width(Dimensions.Layout.Small.long)
+                            modifier = Modifier
+                                // Allow click-away from text fields
+                                .wrapContentSize()
+                                .pointerInput(Unit) {
+                                    detectTapGestures { offset ->
+                                        keyboard_controller?.hide()
+                                        focus_manager.clearFocus()
                                     }
-                                }
-
-                                LayoutSize.XLargePortrait,
-                                LayoutSize.XLargeLandscape,
-                                LayoutSize.LargeLandscape -> {
-                                    when (dialog.size) {
-                                        ViewModelPagan.DialogSize.Unbounded -> Modifier
-                                        ViewModelPagan.DialogSize.Small -> Modifier.width(Dimensions.Layout.Medium.short)
-                                        ViewModelPagan.DialogSize.Medium -> Modifier.width(Dimensions.Layout.Large.long)
-                                    }
-                                }
-                            }
-                            // Allow click-away from text fields
-                            .pointerInput(Unit) {
-                                detectTapGestures { offset ->
-                                    keyboard_controller?.hide()
-                                    focus_manager.clearFocus()
-                                }
-                            },
+                                },
                             content = dialog.dialog
                         )
                     }
@@ -391,7 +371,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
     }
 
     fun get_soundfont_directory(): DocumentFile {
-        return if (this.view_model.configuration.soundfont_directory != null) {
+        return if (this.view_model.configuration.soundfont_directory.value != null) {
             DocumentFile.fromTreeUri(this,this.view_model.configuration.soundfont_directory.value!!)!!
         } else {
             val soundfont_dir = this.applicationContext.getDir("SoundFonts", MODE_PRIVATE)
@@ -403,8 +383,8 @@ abstract class PaganComponentActivity: ComponentActivity() {
         }
     }
 
-    private fun create_project_card_dialog(title: String, uri: Uri) {
-        this.view_model.create_medium_dialog(level = 1) { close ->
+    private fun create_project_card_dialog(title: String, uri: Uri, load_callback: (Uri) -> Unit) {
+        this.view_model.create_dialog(level = 1) { close ->
             @Composable {
                 Column {
                     ProjectCard(modifier = Modifier.fillMaxWidth(), uri = uri)
@@ -457,7 +437,10 @@ abstract class PaganComponentActivity: ComponentActivity() {
                         Spacer(Modifier.width(4.dp))
                         Button(
                             modifier = Modifier.height(Dimensions.ButtonHeight.Small),
-                            onClick = close,
+                            onClick = {
+                                close()
+                                load_callback(uri)
+                            },
                             content = { SText(R.string.details_load_project) }
                         )
                     }
@@ -492,10 +475,13 @@ abstract class PaganComponentActivity: ComponentActivity() {
             sort_options,
             selected_sort = 0,
             onClick = load_callback,
-            onLongClick = {
+            onLongClick = { it, close_callback ->
                 for ((uri, title) in project_list) {
                     if (uri != it) continue
-                    this.create_project_card_dialog(title, it)
+                    this.create_project_card_dialog(title, it) {
+                        close_callback()
+                        load_callback(it)
+                    }
                     break
                 }
             }

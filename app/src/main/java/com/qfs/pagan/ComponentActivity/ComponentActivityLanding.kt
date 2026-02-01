@@ -464,7 +464,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
         val file = File("${this.dataDir}/bkp_crashreport.log")
         if (!file.isFile) return
 
-        this.view_model.create_medium_dialog { close ->
+        this.view_model.create_dialog { close ->
             @Composable {
                 DialogSTitle(R.string.crash_report_save)
                 SText(

@@ -1,4 +1,5 @@
 package com.qfs.pagan
+import androidx.compose.ui.graphics.Color
 import com.qfs.json.JSONHashMap
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
@@ -904,7 +905,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.vm_state.channel_count.value = 0
         var i = 0
         for ((c, channel) in this.channels.enumerate()) {
-            this.vm_state.add_channel(c, this.is_percussion(c), channel.get_preset(), channel.muted)
+            this.vm_state.add_channel(c, this.is_percussion(c), channel.get_preset(), channel.muted, palette = channel.palette)
             for ((l, line) in channel.lines.enumerate()) {
                 val instrument = if (this.is_percussion(c)) {
                     (line as OpusLinePercussion).instrument
@@ -914,14 +915,14 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 this.vm_state.add_row(
                     i++,
                     line,
-                    ViewModelEditorState.LineData(c, l, null, instrument, line.muted)
+                    ViewModelEditorState.LineData(c, l, null, instrument, line.muted, palette = line.palette)
                 )
                 for ((type, controller) in line.controllers.get_all()) {
                     if (!controller.visible) continue
                     this.vm_state.add_row(
                         i++,
                         controller,
-                        ViewModelEditorState.LineData(c, l, type, null, line.muted)
+                        ViewModelEditorState.LineData(c, l, type, null, line.muted, palette = line.palette)
                     )
                 }
             }
@@ -930,7 +931,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 this.vm_state.add_row(
                     i++,
                     controller,
-                    ViewModelEditorState.LineData(c, null, type, null, channel.muted)
+                    ViewModelEditorState.LineData(c, null, type, null, channel.muted, palette = null)
                 )
             }
         }
@@ -939,7 +940,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             this.vm_state.add_row(
                 i++,
                 controller,
-                ViewModelEditorState.LineData(null, null, type, null, false)
+                ViewModelEditorState.LineData(null, null, type, null, false, palette = null)
             )
         }
         this.vm_state.refresh_cursor()
@@ -995,7 +996,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                     } else {
                         null
                     },
-                    line.muted
+                    line.muted,
+                    palette = line.palette
                 )
             )
             for ((type, controller) in line.controllers.get_all()) {
@@ -1025,7 +1027,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
         if (this.ui_lock.is_locked()) return
 
-        this.vm_state.add_channel(notify_index, is_percussion, this.channels[notify_index].get_preset(), this.channels[notify_index].muted)
+        this.vm_state.add_channel(notify_index, is_percussion, this.channels[notify_index].get_preset(), this.channels[notify_index].muted, palette = this.channels[notify_index].palette)
         this._post_new_channel(notify_index, lines)
         this.vm_state.refresh_cursor()
     }
@@ -1118,7 +1120,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
         var i = 0
         for ((c, channel) in this.channels.enumerate()) {
-            this.vm_state.add_channel(c, this.is_percussion(c), channel.get_preset(), channel.muted)
+            this.vm_state.add_channel(c, this.is_percussion(c), channel.get_preset(), channel.muted, palette = channel.palette)
             for ((l, line) in channel.lines.enumerate()) {
                 val instrument = if (this.is_percussion(c)) {
                     (line as OpusLinePercussion).instrument
@@ -1128,14 +1130,14 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 this.vm_state.add_row(
                     i++,
                     line,
-                    ViewModelEditorState.LineData(c, l, null, instrument, line.muted)
+                    ViewModelEditorState.LineData(c, l, null, instrument, line.muted, palette = line.palette)
                 )
                 for ((type, controller) in line.controllers.get_all()) {
                     if (!controller.visible) continue
                     this.vm_state.add_row(
                         i++,
                         controller,
-                        ViewModelEditorState.LineData(c, l, type, null, line.muted)
+                        ViewModelEditorState.LineData(c, l, type, null, line.muted, palette = null)
                     )
                 }
             }
@@ -1144,7 +1146,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 this.vm_state.add_row(
                     i++,
                     controller,
-                    ViewModelEditorState.LineData(c, null, type, null, channel.muted)
+                    ViewModelEditorState.LineData(c, null, type, null, channel.muted, palette = null)
                 )
             }
         }
@@ -1153,7 +1155,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             this.vm_state.add_row(
                 i++,
                 controller,
-                ViewModelEditorState.LineData(null, null, type, null, false)
+                ViewModelEditorState.LineData(null, null, type, null, false, palette = null)
             )
         }
         this.vm_state.ready.value = true
@@ -1278,7 +1280,14 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         )
 
         if (this.ui_lock.is_locked()) return
-        this.vm_state.set_channel_data(channel, this.is_percussion(channel), instrument, this.channels[channel].muted, size = this.channels[channel].lines.size, )
+        this.vm_state.set_channel_data(
+            channel,
+            this.is_percussion(channel),
+            instrument,
+            this.channels[channel].muted,
+            size = this.channels[channel].lines.size,
+            this.channels[channel].palette
+        )
     }
 
     override fun on_action_blocked(blocker_key: BeatKey, blocker_position: List<Int>) {
@@ -1820,7 +1829,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.vm_state.add_row(
             y,
             controller_line,
-            ViewModelEditorState.LineData(channel_index, line_offset, ctl_type, null, line.muted)
+            ViewModelEditorState.LineData(channel_index, line_offset, ctl_type, null, line.muted, palette = line.palette)
         )
     }
 
@@ -1851,7 +1860,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 } else {
                     null
                 },
-                this.channels[channel].lines[adj_line_offset].muted
+                this.channels[channel].lines[adj_line_offset].muted,
+                palette = this.channels[channel].lines[adj_line_offset].palette,
             )
         )
 
@@ -2165,5 +2175,61 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         }
 
         this.vm_state.set_active_event(working_event, descriptor)
+    }
+
+    override fun set_channel_event_color(channel: Int, color: Color?) {
+        super.set_channel_event_color(channel, color)
+        if (this.ui_lock.is_locked()) return
+        this.vm_state.channel_data[channel].palette.value = this.get_channel(channel).palette.copy()
+    }
+
+    override fun set_channel_event_bg_color(channel: Int, color: Color?) {
+        super.set_channel_event_bg_color(channel, color)
+        if (this.ui_lock.is_locked()) return
+        this.vm_state.channel_data[channel].palette.value = this.get_channel(channel).palette.copy()
+    }
+
+    override fun set_channel_effect_color(channel: Int, color: Color?) {
+        super.set_channel_effect_color(channel, color)
+        if (this.ui_lock.is_locked()) return
+        this.vm_state.channel_data[channel].palette.value = this.get_channel(channel).palette.copy()
+    }
+
+    override fun set_channel_effect_bg_color(channel: Int, color: Color?) {
+        super.set_channel_effect_bg_color(channel, color)
+        if (this.ui_lock.is_locked()) return
+        this.vm_state.channel_data[channel].palette.value = this.get_channel(channel).palette.copy()
+    }
+
+    override fun set_line_event_color(channel: Int, line_offset: Int, color: Color?) {
+        super.set_line_event_color(channel, line_offset, color)
+
+        if (this.ui_lock.is_locked()) return
+        val y = this.get_visible_row_from_pair(channel, line_offset)
+        this.vm_state.line_data[y].palette.value = this.get_channel(channel).lines[line_offset].palette.copy()
+    }
+
+    override fun set_line_event_bg_color(channel: Int, line_offset: Int, color: Color?) {
+        super.set_line_event_bg_color(channel, line_offset, color)
+
+        if (this.ui_lock.is_locked()) return
+        val y = this.get_visible_row_from_pair(channel, line_offset)
+        this.vm_state.line_data[y].palette.value = this.get_channel(channel).lines[line_offset].palette.copy()
+    }
+
+    override fun set_line_effect_color(channel: Int, line_offset: Int, color: Color?) {
+        super.set_line_effect_color(channel, line_offset, color)
+
+        if (this.ui_lock.is_locked()) return
+        val y = this.get_visible_row_from_pair(channel, line_offset)
+        this.vm_state.line_data[y].palette.value = this.get_channel(channel).lines[line_offset].palette.copy()
+    }
+
+    override fun set_line_effect_bg_color(channel: Int, line_offset: Int, color: Color?) {
+        super.set_line_effect_bg_color(channel, line_offset, color)
+
+        if (this.ui_lock.is_locked()) return
+        val y = this.get_visible_row_from_pair(channel, line_offset)
+        this.vm_state.line_data[y].palette.value = this.get_channel(channel).lines[line_offset].palette.copy()
     }
 }

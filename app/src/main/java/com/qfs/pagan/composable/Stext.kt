@@ -7,6 +7,7 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -19,12 +20,15 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -45,6 +49,7 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.delete
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.selectAll
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
@@ -86,6 +91,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -174,6 +182,87 @@ fun SText(
 }
 
 @Composable
+fun HexInput(
+    value: MutableState<Int>,
+    maximum: Int? = null,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(12.dp),
+    text_align: TextAlign = TextAlign.End,
+    prefix: @Composable (() -> Unit)? = null,
+    label: (@Composable TextFieldLabelScope.() -> Unit)? = null,
+    on_focus_enter: (() -> Unit)? = null,
+    on_focus_exit: ((Int?) -> Unit)? = null,
+    callback: (Int) -> Unit
+) {
+    val minimum = 0x00
+    val hex_state = remember { mutableStateOf(value.value.toHexString()) }
+    NumberInput(
+        hex_state,
+        modifier,
+        contentPadding,
+        text_align,
+        prefix,
+        label,
+        on_focus_enter,
+        { on_focus_exit?.invoke(value.value) },
+        object : InputTransformation {
+            override fun TextFieldBuffer.transformInput() {
+                val working_string = this.toString()
+
+                var converted_value = try {
+                    if (working_string.isEmpty()) {
+                        0
+                    } else {
+                        this.toString().toInt(16)
+                    }
+                } catch (_: Exception) {
+                    this.revertAllChanges()
+                    return
+                }
+
+                converted_value = max(minimum, converted_value)
+                maximum?.let {
+                    converted_value = min(it, converted_value)
+                }
+
+                value.value = converted_value
+            }
+        },
+        {
+            val working_string = this.toString()
+
+            var converted_value = try {
+                if (working_string.isEmpty()) {
+                    0
+                } else {
+                    this.toString().toInt(16)
+                }
+            } catch (_: Exception) {
+                return@NumberInput
+            }
+
+            if (minimum > converted_value) {
+                converted_value = max(minimum, converted_value)
+                this.delete(0, this.length)
+                this.append(converted_value.toString())
+            }
+
+            maximum?.let {
+                if (it < converted_value) {
+                    converted_value = min(it, converted_value)
+                    this.delete(0, this.length)
+                    this.append(converted_value.toString())
+                }
+            }
+        },
+
+        callback = {
+            callback(value.value)
+        }
+    )
+}
+
+@Composable
 fun IntegerInput(
     value: MutableState<Int>,
     minimum: Int? = null,
@@ -189,8 +278,6 @@ fun IntegerInput(
 ) {
     NumberInput(
         value,
-        minimum,
-        maximum,
         modifier,
         contentPadding,
         text_align,
@@ -274,8 +361,6 @@ fun FloatInput(
 ) {
     NumberInput(
         value,
-        minimum,
-        maximum,
         modifier,
         contentPadding,
         text_align,
@@ -347,10 +432,8 @@ fun FloatInput(
 }
 
 @Composable
-fun <T: Number> NumberInput(
+fun <T> NumberInput(
     value: MutableState<T>,
-    minimum: T? = null,
-    maximum: T? = null,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
     text_align: TextAlign = TextAlign.End,
@@ -529,7 +612,8 @@ fun <T> SortableMenu(
         }
     }
 
-    val scroll_state = rememberLazyListState()
+    val scroll_state = rememberScrollState()
+    val item_map = HashMap<Int, Float>()
 
     Column(modifier = modifier) {
         if (sort_options.isNotEmpty()) {
@@ -592,22 +676,21 @@ fun <T> SortableMenu(
                         }
                     }
                 }
-
             }
         }
 
         Surface(
-            modifier = Modifier.clip(RoundedCornerShape(8.dp)),
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp)),
             tonalElevation = 2.dp
         ) {
-            LazyColumn(
-                state = scroll_state,
-                contentPadding = PaddingValues(0.dp),
+            Column(
                 modifier = Modifier
                     .padding(4.dp)
+                    .verticalScroll(scroll_state)
                     .clip(RoundedCornerShape(8.dp))
             ) {
-                itemsIndexed(sorted_menu) { i, (item, label_content) ->
+                sorted_menu.forEachIndexed { i, (item, label_content) ->
                     if (i > 0) {
                         Spacer(Modifier.height(4.dp))
                     }
@@ -628,13 +711,16 @@ fun <T> SortableMenu(
                                         Modifier
                                     }
                                 )
-                                .heightIn(Dimensions.DialogLineHeight)
+                                .height(Dimensions.DialogLineHeight)
                                 .combinedClickable(
                                     onClick = { onClick(item) },
                                     onLongClick = { onLongClick(item) }
                                 )
-                                .padding(Dimensions.DialogLinePadding)
-                                .fillMaxWidth(),
+                                .onPlaced { coordinates ->
+                                    item_map[i] = coordinates.positionInParent().y
+                                }
+                                .fillMaxWidth()
+                                .padding(Dimensions.DialogLinePadding),
                             content = label_content,
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
@@ -646,7 +732,7 @@ fun <T> SortableMenu(
     }
     LaunchedEffect(rememberCoroutineScope()) {
         if (default_index > -1) {
-            scroll_state.requestScrollToItem(default_index)
+            scroll_state.scrollTo(item_map[default_index]?.roundToInt() ?: 0)
         }
     }
 }
@@ -730,13 +816,12 @@ fun DialogCard(
     ProvideContentColorTextStyle(contentColor = colors.contentColor) {
         Surface(
             modifier = modifier
-                .wrapContentWidth()
-                .then(if (border != null) modifier.border(border) else modifier),
+                .then(if (border != null) modifier.border(border) else Modifier),
             shape = shape
         ) {
             Column(
                 modifier = Modifier
-                    .wrapContentWidth()
+                    .wrapContentSize()
                     .padding(Dimensions.DialogPadding),
                 horizontalAlignment = Alignment.Start,
                 content = content
@@ -747,7 +832,16 @@ fun DialogCard(
 
 
 @Composable
-fun ColumnScope.DialogBar(modifier: Modifier = Modifier, positive: (() -> Unit)? = null, negative: (() -> Unit)? = null, neutral: (() -> Unit)? = null) {
+fun ColumnScope.DialogBar(
+    modifier: Modifier = Modifier,
+    positive: (() -> Unit)? = null,
+    negative: (() -> Unit)? = null,
+    neutral: (() -> Unit)? = null,
+    neutral_label: Int = android.R.string.cancel,
+    negative_label: Int = R.string.no,
+    positive_label: Int = android.R.string.ok,
+
+) {
     Row(
         modifier = modifier
             .padding(
@@ -762,7 +856,7 @@ fun ColumnScope.DialogBar(modifier: Modifier = Modifier, positive: (() -> Unit)?
                     .height(dimensionResource(R.dimen.dialog_bar_button_height))
                     .weight(1F),
                 onClick = it,
-                content = { SText(R.string.no) }
+                content = { SText(negative_label) }
             )
         }
         neutral?.let {
@@ -775,7 +869,7 @@ fun ColumnScope.DialogBar(modifier: Modifier = Modifier, positive: (() -> Unit)?
                     .weight(1F),
                 onClick = it,
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface),
-                content = { SText(android.R.string.cancel, maxLines = 1) }
+                content = { SText(neutral_label, maxLines = 1) }
             )
         }
         positive?.let {
@@ -787,7 +881,7 @@ fun ColumnScope.DialogBar(modifier: Modifier = Modifier, positive: (() -> Unit)?
                     .height(dimensionResource(R.dimen.dialog_bar_button_height))
                     .weight(1F),
                 onClick = it,
-                content = { SText(android.R.string.ok) }
+                content = { SText(positive_label) }
             )
         }
     }

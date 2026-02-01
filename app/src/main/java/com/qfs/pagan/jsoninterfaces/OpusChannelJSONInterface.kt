@@ -25,6 +25,7 @@ import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusPercussionChannel
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.apres.Midi
+import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.OpusColorPalette
 
 object OpusChannelJSONInterface {
     fun generalize(channel: OpusChannelAbstract<*, *>): JSONHashMap {
@@ -43,6 +44,7 @@ object OpusChannelJSONInterface {
         channel_map["midi_program"] = channel.midi_program
         channel_map["controllers"] = ActiveControlSetJSONInterface.to_json(channel.controllers)
         channel_map["muted"] = channel.muted
+        channel_map["palette"] = channel.palette.to_json()
 
         return channel_map
     }
@@ -87,6 +89,7 @@ object OpusChannelJSONInterface {
         channel.midi_program = input_map.get_int("midi_program")
         channel.controllers = ActiveControlSetJSONInterface.from_json(input_map.get_hashmap("controllers"), beat_count)
         channel.muted = input_map.get_boolean("muted", false)
+        channel.palette = input_map.get_hashmapn("palette")?.let { OpusColorPalette.from_json(it) } ?: OpusColorPalette()
 
         return channel
     }

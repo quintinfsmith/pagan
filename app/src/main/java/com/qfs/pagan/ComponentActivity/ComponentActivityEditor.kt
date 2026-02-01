@@ -135,7 +135,9 @@ import com.qfs.pagan.composable.keyboardAsState
 import com.qfs.pagan.composable.long_press
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
+import com.qfs.pagan.structure.opusmanager.base.OpusChannel
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
+import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.OpusColorPalette
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
@@ -748,7 +750,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         if (fallback_msg != null) {
             this.action_interface.new_project()
-            this.toast(fallback_msg)
+            runOnUiThread {
+                this.toast(fallback_msg)
+            }
         }
     }
 
@@ -909,7 +913,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         if (vm_state.midi_device_connected.value) {
             menu_items.add(
                 Pair(R.string.playback_device) {
-                    vm_top.create_medium_dialog { close ->
+                    vm_top.create_dialog { close ->
                         @Composable {
                             val options = mutableListOf<Pair<MidiDeviceInfo?, @Composable RowScope.() -> Unit>>(
                                 Pair(null) { SText(R.string.device_menu_default_name) }
@@ -1765,18 +1769,25 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun LeafView(channel_data: ViewModelEditorState.ChannelData?, line_data: ViewModelEditorState.LineData, leaf_data: ViewModelEditorState.LeafData, radix: Int, modifier: Modifier = Modifier) {
+    fun LeafView(
+        channel_data: ViewModelEditorState.ChannelData?,
+        line_data: ViewModelEditorState.LineData,
+        leaf_data: ViewModelEditorState.LeafData,
+        radix: Int,
+        modifier: Modifier = Modifier
+    ) {
         val event = leaf_data.event.value
         val leaf_state = if (leaf_data.is_spillover.value) Colors.LeafState.Spill
-            else if (event != null) Colors.LeafState.Active
-            else Colors.LeafState.Empty
+        else if (event != null) Colors.LeafState.Active
+        else Colors.LeafState.Empty
 
-        val leaf_selection = if (this@ComponentActivityEditor.state_model.playback_state_midi.value == PlaybackState.Playing || this@ComponentActivityEditor.state_model.playback_state_soundfont.value == PlaybackState.Playing) Colors.LeafSelection.Unselected
-            else if (leaf_data.is_selected.value) Colors.LeafSelection.Primary
-            else if (leaf_data.is_secondary.value) Colors.LeafSelection.Secondary
-            else Colors.LeafSelection.Unselected
+        val leaf_selection = if (leaf_data.is_selected.value) Colors.LeafSelection.Primary
+        else if (leaf_data.is_secondary.value) Colors.LeafSelection.Secondary
+        else Colors.LeafSelection.Unselected
 
         val (leaf_color, text_color) = Colors.get_leaf_color(
+            line_data.palette.value ?: OpusColorPalette(),
+            channel_data?.palette?.value ?: OpusColorPalette(),
             leaf_state,
             leaf_selection,
             line_data.ctl_type.value != null,
@@ -1938,7 +1949,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     fun CellView(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, cell: MutableState<ViewModelEditorState.TreeData>, y: Int, x: Int, modifier: Modifier = Modifier) {
         val line_info = ui_facade.line_data[y]
-        key(cell.value.key.value + y) {
+        key(cell.value.key.value, y) {
             Row(modifier.fillMaxSize()) {
                 for ((path, leaf_data) in cell.value.leafs) {
                     this@ComponentActivityEditor.LeafView(
@@ -2546,11 +2557,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     fun toast(id: Int, length: Int = Toast.LENGTH_SHORT) {
-        Toast.makeText(this, id, length).show()
+        Toast.makeText(this.baseContext, id, length).show()
     }
 
     fun toast(msg: String, length: Int = Toast.LENGTH_SHORT) {
-        Toast.makeText(this, msg, length).show()
+        Toast.makeText(this.baseContext, msg, length).show()
     }
 
     fun open_settings() {

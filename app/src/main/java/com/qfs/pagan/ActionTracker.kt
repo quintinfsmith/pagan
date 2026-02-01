@@ -47,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
@@ -60,6 +61,7 @@ import com.qfs.json.JSONList
 import com.qfs.json.JSONObject
 import com.qfs.json.JSONString
 import com.qfs.pagan.OpusLayerInterface
+import com.qfs.pagan.composable.ColorPicker
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DialogTitle
@@ -84,6 +86,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.cursor.InvalidCursorState
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
@@ -461,7 +464,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun delete() {
-        this.vm_top.create_small_dialog { close ->
+        this.vm_top.create_dialog { close ->
             val project_name = this.get_opus_manager().project_name ?: "Project"
             @Composable {
                 DialogTitle(stringResource(R.string.dlg_delete_title, project_name))
@@ -1007,7 +1010,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
             return
         }
 
-        this.vm_top.create_medium_dialog { close ->
+        this.vm_top.create_dialog { close ->
             @Composable {
                 val slider_position = remember {
                     mutableFloatStateOf(
@@ -1442,7 +1445,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         }
 
         val radix = opus_manager.get_radix()
-        this.vm_top.create_medium_dialog { close ->
+        this.vm_top.create_dialog { close ->
             @Composable {
                 val octave = remember { mutableIntStateOf(0) }
                 val offset = remember { mutableIntStateOf(0) }
@@ -1589,6 +1592,76 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                 this.set_percussion_instrument(channel, line_offset, it)
             }
         }
+    }
+
+    private fun color_picker_dialog(color: Color, callback: (Color?) -> Unit) {
+        val color_state: MutableState<Color> = mutableStateOf(color)
+        this.vm_top.create_dialog { close ->
+            @Composable {
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    ColorPicker(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = color_state
+                    )
+                }
+                DialogBar(
+                    negative = {
+                        close()
+                        callback(null)
+                    },
+                    negative_label = R.string.use_default_color,
+                    neutral = close,
+                    positive = {
+                        callback(color_state.value)
+                        close()
+                    }
+
+                )
+            }
+        }
+    }
+    fun set_line_color(channel: Int, line_offset: Int, color: Color? = null) {
+        val opus_manager = this.get_opus_manager()
+        color?.let {
+            // TODO: Track
+            opus_manager.set_line_event_color(channel, line_offset, color)
+        }
+
+        this.color_picker_dialog(opus_manager.get_channel(channel).lines[line_offset].palette.event ?: Colors.LEAF_COLOR) { new_color: Color? ->
+            if (new_color == null) {
+                this.unset_line_color(channel, line_offset)
+            } else {
+                this.set_line_color(channel, line_offset, new_color)
+            }
+        }
+    }
+    fun unset_line_color(channel: Int, line_offset: Int) {
+        //TODO: Track
+        val opus_manager = this.get_opus_manager()
+        opus_manager.set_line_event_color(channel, line_offset, null)
+    }
+
+    fun set_channel_color(channel: Int, color: Color? = null) {
+        val opus_manager = this.get_opus_manager()
+        color?.let {
+            // TODO: Track
+            opus_manager.set_channel_event_color(channel, color)
+        }
+
+        this.color_picker_dialog(opus_manager.get_channel(channel).palette.event ?: Colors.LEAF_COLOR) { new_color: Color? ->
+            if (new_color == null) {
+                this.unset_channel_color(channel)
+            } else {
+                this.set_channel_color(channel, new_color)
+            }
+        }
+    }
+    fun unset_channel_color(channel: Int) {
+        //TODO: Track
+        val opus_manager = this.get_opus_manager()
+        opus_manager.set_channel_event_color(channel, null)
     }
 
     fun set_channel_preset(channel: Int, instrument: Pair<Int, Int>? = null) {
@@ -1856,7 +1929,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
             return
         }
 
-        this.vm_top.create_medium_dialog { close ->
+        this.vm_top.create_dialog { close ->
             @Composable {
                 val project_name = remember { mutableStateOf(opus_manager.project_name ?: "") }
                 val project_notes = remember { mutableStateOf(opus_manager.project_notes ?: "") }
@@ -1896,7 +1969,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         if (skip) {
             callback()
         } else {
-            this.vm_top.create_small_dialog { close ->
+            this.vm_top.create_dialog { close ->
                 @Composable {
                     Row { DialogTitle(title, modifier = Modifier.weight(1F)) }
                     DialogBar(
@@ -1912,7 +1985,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
      fun dialog_number_input(title_string_id: Int, min_value: Int, max_value: Int? = null, default: Int? = null, callback: (value: Int) -> Unit) {
-        this.vm_top.create_small_dialog { close ->
+        this.vm_top.create_dialog { close ->
             @Composable {
                 val focus_requester = remember { FocusRequester() }
                 val value = remember {
@@ -1982,7 +2055,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
             return
         }
 
-        this.vm_top.create_medium_dialog { close ->
+        this.vm_top.create_dialog { close ->
             @Composable {
                 Row { DialogSTitle(R.string.dialog_save_warning_title, modifier = Modifier.weight(1F)) }
                 DialogBar(
@@ -2007,8 +2080,8 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
      * wrapper around MainActivity::dialog_popup_menu
      * will subvert popup on replay
      */
-    private fun <T> dialog_popup_menu(title: Int, options: List<Pair<T, @Composable RowScope.() -> Unit>>, default: T? = null, dialog_size: ViewModelPagan.DialogSize = ViewModelPagan.DialogSize.Medium, callback: (value: T) -> Unit) {
-        this.vm_top.create_dialog(0, dialog_size) { close ->
+    private fun <T> dialog_popup_menu(title: Int, options: List<Pair<T, @Composable RowScope.() -> Unit>>, default: T? = null, callback: (value: T) -> Unit) {
+        this.vm_top.create_dialog(0) { close ->
             @Composable {
                 DialogSTitle(title)
                 UnSortableMenu(Modifier, options, default) { value ->
@@ -2971,7 +3044,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
             return
         }
 
-        this.vm_top.create_medium_dialog { close ->
+        this.vm_top.create_dialog { close ->
             @Composable {
                 val original_radix = opus_manager.get_radix()
                 val transpose_numerator = remember { mutableIntStateOf(opus_manager.transpose.first) }

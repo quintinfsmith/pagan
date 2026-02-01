@@ -115,6 +115,22 @@ fun SetPresetButton(
 }
 
 @Composable
+fun SetChannelColorButton(
+    modifier: Modifier = Modifier,
+    ui_facade: ViewModelEditorState,
+    dispatcher: ActionTracker,
+    channel_index: Int,
+    shape: Shape = Shapes.ContextMenuButtonPrimary
+) {
+    IconCMenuButton(
+        onClick = { dispatcher.set_channel_color(channel_index) },
+        shape = shape,
+        icon = R.drawable.icon_palette,
+        description = R.string.cd_line_mute
+    )
+}
+
+@Composable
 fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: LayoutSize) {
     when (layout) {
         LayoutSize.SmallPortrait,
@@ -193,5 +209,13 @@ fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
                 Shapes.ContextMenuButtonPrimary
             }
         )
+        CMPadding()
+        SetChannelColorButton(
+            Modifier,
+            ui_facade,
+            dispatcher,
+            channel_index
+        )
+
     }
 }

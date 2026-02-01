@@ -121,6 +121,12 @@ object Dimensions {
         val Small = 41.dp
     }
 
+    val ColorPickerHexInputWidth = 42.dp
+    val ColorPickerLabelWidth = 64.dp
+    val ColorPickerInnerPadding = 8.dp
+    val ColorPickerPreviewHeight = 48.dp
+    val ColorPickerSliderWidth = Layout.Small.short * .6F
+
     val ConfigButtonPadding = PaddingValues(
         horizontal = 16.dp,
         vertical = 8.dp
@@ -153,6 +159,7 @@ object Dimensions {
     val DialogPadding = 16.dp
     val DialogLineHeight = 41.dp
     val DialogLinePadding = PaddingValues(vertical = 5.dp, horizontal = 12.dp)
+
 
 
     val LandingButtonHeight: Dp

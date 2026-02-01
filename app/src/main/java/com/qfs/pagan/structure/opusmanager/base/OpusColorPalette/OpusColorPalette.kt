@@ -16,7 +16,6 @@ data class OpusColorPalette(
         EffectBg
     }
     companion object {
-
         fun from_json(input: JSONHashMap): OpusColorPalette {
             return OpusColorPalette(
                 event = input.get_stringn("event")?.toColor(),

@@ -13,6 +13,8 @@ import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.Rational
+import com.qfs.pagan.structure.opusmanager.base.OpusChannel
+import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.OpusColorPalette
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.ReducibleTreeArray
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
@@ -37,7 +39,7 @@ class ViewModelEditorState: ViewModel() {
         Backup
     }
 
-    class LineData(channel: Int?, line_offset: Int?, ctl_type: EffectType?, assigned_offset: Int? = null, is_mute: Boolean, is_selected: Boolean = false) {
+    class LineData(channel: Int?, line_offset: Int?, ctl_type: EffectType?, assigned_offset: Int? = null, is_mute: Boolean, is_selected: Boolean = false, palette: OpusColorPalette?) {
         val channel = mutableStateOf(channel)
         val line_offset = mutableStateOf(line_offset)
         val ctl_type = mutableStateOf(ctl_type)
@@ -45,6 +47,7 @@ class ViewModelEditorState: ViewModel() {
         val is_mute = mutableStateOf(is_mute)
         val is_selected = mutableStateOf(is_selected)
         val is_dragging = mutableStateOf(false)
+        val palette = mutableStateOf(palette)
     }
 
     class ColumnData(is_tagged: Boolean, is_selected: Boolean = false, max_leaf_count: Int = 1) {
@@ -62,21 +65,23 @@ class ViewModelEditorState: ViewModel() {
         val is_spillover = mutableStateOf(is_spillover)
     }
 
-    class ChannelData(percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean, is_selected: Boolean = false, name: String?, size: Int = 0) {
+    class ChannelData(percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean, is_selected: Boolean = false, name: String?, size: Int = 0, palette: OpusColorPalette) {
         val percussion = mutableStateOf(percussion)
         val instrument = mutableStateOf(instrument)
         val is_mute = mutableStateOf(is_mute)
         val is_selected = mutableStateOf(is_selected)
         val active_name = mutableStateOf(name)
         val size = mutableIntStateOf(size)
+        val palette = mutableStateOf(palette)
 
-        fun update(percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean, is_selected: Boolean = false, name: String?, size: Int = 0) {
+        fun update(percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean, is_selected: Boolean = false, name: String?, size: Int = 0, palette: OpusColorPalette) {
             this.percussion.value = percussion
             this.instrument.value = instrument
             this.is_mute.value = is_mute
             this.is_selected.value = is_selected
             this.active_name.value = name
             this.size.intValue = size
+            this.palette.value = palette.copy()
         }
     }
 
@@ -453,22 +458,28 @@ class ViewModelEditorState: ViewModel() {
         }
     }
 
-    fun add_channel(channel: Int, percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean, size: Int = 0) {
-       // viewModelScope.launch(Dispatchers.IO) {
-            for (ld in this@ViewModelEditorState.line_data) {
-                ld.channel.value?.let {
-                    if (it >= channel) {
-                        ld.channel.value = it + 1
-                    }
+    fun add_channel(channel: Int, percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean, size: Int = 0, palette: OpusColorPalette) {
+        for (ld in this@ViewModelEditorState.line_data) {
+            ld.channel.value?.let {
+                if (it >= channel) {
+                    ld.channel.value = it + 1
                 }
             }
-            this@ViewModelEditorState.channel_count.value += 1
-            val name = this@ViewModelEditorState.get_preset_name(instrument.first, instrument.second)
-            this@ViewModelEditorState.channel_data.add(
-                channel,
-                ChannelData(percussion, instrument, is_mute, name = name, is_selected = false, size = size)
+        }
+        this@ViewModelEditorState.channel_count.value += 1
+        val name = this@ViewModelEditorState.get_preset_name(instrument.first, instrument.second)
+        this@ViewModelEditorState.channel_data.add(
+            channel,
+            ChannelData(
+                percussion,
+                instrument,
+                is_mute,
+                name = name,
+                is_selected = false,
+                size = size,
+                palette = palette
             )
-      //  }
+        )
     }
 
     fun remove_channel(channel: Int) {
@@ -568,9 +579,9 @@ class ViewModelEditorState: ViewModel() {
         }
     }
 
-    fun set_channel_data(channel_index: Int, percussion: Boolean, preset: Pair<Int, Int>, is_mute: Boolean, size: Int = 0) {
+    fun set_channel_data(channel_index: Int, percussion: Boolean, preset: Pair<Int, Int>, is_mute: Boolean, size: Int = 0, palette: OpusColorPalette) {
         val name = this.get_preset_name(preset.first, preset.second)
-        this.channel_data[channel_index].update(percussion, preset, is_mute, is_selected = false, name = name, size)
+        this.channel_data[channel_index].update(percussion, preset, is_mute, is_selected = false, name = name, size = size, palette = palette)
     }
 
     fun set_project_name(name: String? = null) {

@@ -117,6 +117,24 @@ fun PercussionSetInstrumentButton(modifier: Modifier = Modifier, vm_state: ViewM
 }
 
 @Composable
+fun SetLineColorButton(
+    modifier: Modifier = Modifier,
+    ui_facade: ViewModelEditorState,
+    dispatcher: ActionTracker,
+    channel: Int,
+    line_offset: Int,
+    shape: Shape = Shapes.ContextMenuButtonPrimary
+) {
+
+    IconCMenuButton(
+        onClick = { dispatcher.set_line_color(channel, line_offset) },
+        shape = shape,
+        icon = R.drawable.icon_palette,
+        description = R.string.cd_line_mute
+    )
+}
+
+@Composable
 fun MuteButton(
     dispatcher: ActionTracker,
     line: ViewModelEditorState.LineData,
@@ -302,6 +320,14 @@ fun ContextMenuLineStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
         )
         CMPadding()
         VolumeEventMenu(ui_facade, dispatcher, volume_event)
+        CMPadding()
+        SetLineColorButton(
+            Modifier,
+            ui_facade,
+            dispatcher,
+            line.channel.value!!,
+            line.line_offset.value!!
+        )
     }
 }
 

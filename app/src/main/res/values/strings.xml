@@ -221,6 +221,8 @@
     <string name="red">Red</string>
     <string name="green">Green</string>
     <string name="blue">Blue</string>
+    <string name="alpha">Alpha</string>
+    <string name="use_default_color">Default</string>
     <string name="color_picker_clear">Clear</string>
     <string name="dlg_title_set_line_color">Set Line Color</string>
     <string name="app_name_brief">Pagan</string>

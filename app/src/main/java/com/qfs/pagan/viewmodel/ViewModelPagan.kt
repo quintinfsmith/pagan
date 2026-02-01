@@ -4,15 +4,21 @@ import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import com.qfs.pagan.DialogChain
 import com.qfs.pagan.LayoutSize
@@ -93,20 +99,11 @@ class ViewModelPagan: ViewModel() {
         this.has_saved_project.value = this.project_manager?.has_projects_saved() ?: false
     }
 
-    fun create_small_dialog(level: Int = 0, dialog_callback: (() -> Unit) -> (@Composable (ColumnScope.() -> Unit))) {
-        this.create_dialog(level, DialogSize.Small, dialog_callback)
-    }
-
-    fun create_medium_dialog(level: Int = 0, dialog_callback: (() -> Unit) -> (@Composable (ColumnScope.() -> Unit))) {
-        this.create_dialog(level, DialogSize.Medium, dialog_callback)
-    }
-
-    fun create_dialog(level: Int = 0, size: DialogSize = DialogSize.Unbounded, dialog_callback: (() -> Unit) -> (@Composable (ColumnScope.() -> Unit))) {
+    fun create_dialog(level: Int = 0, dialog_callback: (() -> Unit) -> (@Composable (ColumnScope.() -> Unit))) {
         // Use level to block Dup dialogs. set it to allow for dialogs opened from other dialogs
         if (this.dialog_queue.value?.level == level) return
         this.dialog_queue.value = DialogChain(
             parent = this.dialog_queue.value,
-            size = size,
             dialog = dialog_callback {
                 this.dialog_queue.value?.let {
                     this.dialog_queue.value = it.parent
@@ -117,7 +114,7 @@ class ViewModelPagan: ViewModel() {
     }
 
     fun <T> unsortable_list_dialog(title: Int, options: List<Pair<T, @Composable RowScope.() -> Unit>>, default_value: T? = null, callback: (T) -> Unit) {
-        this.create_medium_dialog { close ->
+        this.create_dialog { close ->
             @Composable {
                 DialogSTitle(title)
                 UnSortableMenu(Modifier.weight(1F, fill=false), options, default_value) {
@@ -136,33 +133,35 @@ class ViewModelPagan: ViewModel() {
         selected_sort: Int = -1,
         default_value: T? = null,
         content: (@Composable RowScope.() -> Unit)? = null,
-        onLongClick: (T) -> Unit = {},
+        onLongClick: (T, (() -> Unit)) -> Unit = {_, _ -> },
         onClick: (T) -> Unit
     ) {
-        this.create_medium_dialog { close ->
+        this.create_dialog { close ->
             @Composable {
-                Column(verticalArrangement = Arrangement.SpaceBetween) {
-                    SortableMenu(
-                        modifier = Modifier.weight(1F, fill=false),
-                        title_content = {
-                            DialogSTitle(title)
-                            content?.let { Row(content = it) }
-                        },
-                        default_menu = default_menu,
-                        sort_row_padding = PaddingValues(
-                            bottom = dimensionResource(R.dimen.dialog_bar_padding_vertical),
-                        ),
-                        sort_options = sort_options,
-                        selected_sort = selected_sort,
-                        onLongClick = onLongClick,
-                        default_value = default_value,
-                        onClick = {
-                            close()
-                            onClick(it)
-                        }
-                    )
-                    DialogBar(neutral = close)
-                }
+                SortableMenu(
+                    modifier = Modifier
+                        .weight(1F, fill = false)
+                        .fillMaxWidth(),
+                    title_content = {
+                        DialogSTitle(title)
+                        content?.let { Row(content = it) }
+                    },
+                    default_menu = default_menu,
+                    sort_row_padding = PaddingValues(
+                        bottom = dimensionResource(R.dimen.dialog_bar_padding_vertical),
+                    ),
+                    sort_options = sort_options,
+                    selected_sort = selected_sort,
+                    onLongClick = {
+                        onLongClick(it, close)
+                    },
+                    default_value = default_value,
+                    onClick = {
+                        close()
+                        onClick(it)
+                    }
+                )
+                DialogBar(neutral = close)
             }
         }
     }

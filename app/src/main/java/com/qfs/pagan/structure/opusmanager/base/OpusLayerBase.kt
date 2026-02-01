@@ -5074,29 +5074,29 @@ open class OpusLayerBase: Effectable {
         return this.controllers.get<T>(type)
     }
 
-    open fun set_channel_event_color(channel: Int, color: Color?) {
+    open fun set_channel_event_color(channel: Int, color: Color? = null) {
         this.channels[channel].set_event_color(color)
     }
-    open fun set_channel_effect_color(channel: Int, color: Color?) {
+    open fun set_channel_effect_color(channel: Int, color: Color? = null) {
         this.channels[channel].set_effect_color(color)
     }
-    open fun set_channel_event_bg_color(channel: Int, color: Color?) {
+    open fun set_channel_event_bg_color(channel: Int, color: Color? = null) {
         this.channels[channel].set_event_bg_color(color)
     }
-    open fun set_channel_effect_bg_color(channel: Int, color: Color?) {
+    open fun set_channel_effect_bg_color(channel: Int, color: Color? = null) {
         this.channels[channel].set_effect_bg_color(color)
     }
 
-    open fun set_line_event_color(channel: Int, line_offset: Int, color: Color?) {
-        this.channels[channel].set_event_color(color)
+    open fun set_line_event_color(channel: Int, line_offset: Int, color: Color? = null) {
+        this.channels[channel].lines[line_offset].set_event_color(color)
     }
-    open fun set_line_effect_color(channel: Int, line_offset: Int, color: Color?) {
-        this.channels[channel].set_effect_color(color)
+    open fun set_line_effect_color(channel: Int, line_offset: Int, color: Color? = null) {
+        this.channels[channel].lines[line_offset].set_effect_color(color)
     }
-    open fun set_line_event_bg_color(channel: Int, line_offset: Int, color: Color?) {
-        this.channels[channel].set_event_bg_color(color)
+    open fun set_line_event_bg_color(channel: Int, line_offset: Int, color: Color? = null) {
+        this.channels[channel].lines[line_offset].set_event_bg_color(color)
     }
-    open fun set_line_effect_bg_color(channel: Int, line_offset: Int, color: Color?) {
-        this.channels[channel].set_effect_bg_color(color)
+    open fun set_line_effect_bg_color(channel: Int, line_offset: Int, color: Color? = null) {
+        this.channels[channel].lines[line_offset].set_effect_bg_color(color)
     }
 }

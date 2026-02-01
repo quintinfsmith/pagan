@@ -1630,7 +1630,11 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
             opus_manager.set_line_event_color(channel, line_offset, color)
         }
 
-        this.color_picker_dialog(opus_manager.get_channel(channel).lines[line_offset].palette.event ?: Colors.LEAF_COLOR) { new_color: Color? ->
+        val default_color = opus_manager.get_channel(channel).lines[line_offset].palette.event
+            ?: opus_manager.get_channel(channel).palette.event
+            ?: Colors.LEAF_COLOR
+
+        this.color_picker_dialog(default_color) { new_color: Color? ->
             if (new_color == null) {
                 this.unset_line_color(channel, line_offset)
             } else {

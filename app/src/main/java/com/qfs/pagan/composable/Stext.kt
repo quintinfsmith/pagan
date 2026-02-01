@@ -972,7 +972,7 @@ fun NumberPicker(modifier: Modifier = Modifier, range: kotlin.ranges.IntRange, d
         pageCount = { Int.MAX_VALUE }
     )
 
-    default.value = (state.currentPage + range.first) % page_count
+    default.value = (state.currentPage % page_count) + range.first
 
     val scope = rememberCoroutineScope()
     ProvideContentColorTextStyle(MaterialTheme.colorScheme.onSurface) {

@@ -2574,6 +2574,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     fun load_project(uri: Uri) {
+        // Stop Playback First
+        this.action_interface.stop_opus()
+        this.action_interface.stop_opus_midi()
+
         this.controller_model.opus_manager.vm_state.ready.value = false
         val input_stream = this@ComponentActivityEditor.contentResolver.openInputStream(uri)
         val reader = BufferedReader(InputStreamReader(input_stream))

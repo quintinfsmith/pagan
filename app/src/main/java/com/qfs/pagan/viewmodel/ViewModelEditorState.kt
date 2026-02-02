@@ -73,6 +73,7 @@ class ViewModelEditorState: ViewModel() {
         val active_name = mutableStateOf(name)
         val size = mutableIntStateOf(size)
         val palette = mutableStateOf(palette)
+        val update_key = mutableStateOf(System.currentTimeMillis())
 
         fun update(percussion: Boolean, instrument: Pair<Int, Int>, is_mute: Boolean, is_selected: Boolean = false, name: String?, size: Int = 0, palette: OpusColorPalette) {
             this.percussion.value = percussion
@@ -82,6 +83,7 @@ class ViewModelEditorState: ViewModel() {
             this.active_name.value = name
             this.size.intValue = size
             this.palette.value = palette.copy()
+            this.update_key.value = System.currentTimeMillis()
         }
     }
 
@@ -566,6 +568,9 @@ class ViewModelEditorState: ViewModel() {
             this.channel_data.add(new_channel_index, this.channel_data.removeAt(channel_index))
         } else {
             this.channel_data.add(new_channel_index - 1, this.channel_data.removeAt(channel_index))
+        }
+        for (i in min(new_channel_index, channel_index) until this.channel_data.size) {
+            this.channel_data[i].update_key.value = System.currentTimeMillis()
         }
 
         // ... Finally update the channels

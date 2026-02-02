@@ -203,18 +203,19 @@ fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
             dispatcher,
             channel_index,
             active_channel,
-            if (layout == LayoutSize.SmallLandscape || layout == LayoutSize.MediumLandscape) {
-                Shapes.ContextMenuButtonPrimaryEnd
-            } else {
-                Shapes.ContextMenuButtonPrimary
-            }
+            Shapes.ContextMenuButtonPrimary
         )
         CMPadding()
         SetChannelColorButton(
             Modifier,
             ui_facade,
             dispatcher,
-            channel_index
+            channel_index,
+            if (layout == LayoutSize.SmallLandscape || layout == LayoutSize.MediumLandscape) {
+                Shapes.ContextMenuButtonPrimaryEnd
+            } else {
+                Shapes.ContextMenuButtonPrimary
+            }
         )
 
     }

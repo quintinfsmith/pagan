@@ -12,7 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 
@@ -20,7 +19,7 @@ import com.qfs.pagan.ui.theme.Shapes
 fun ConfigDrawerTopButton(modifier: Modifier = Modifier, content: (@Composable RowScope.() -> Unit), onClick: () -> Unit) {
     Button(
         modifier = modifier.height(Dimensions.ConfigChannelButtonHeight),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(Dimensions.ConfigDrawerButtonRadius),
         contentPadding = Dimensions.ConfigButtonPadding,
         onClick = onClick,
         content = content,
@@ -33,7 +32,7 @@ fun ConfigDrawerBottomButton(modifier: Modifier = Modifier, icon: Int, descripti
         modifier = modifier
             .height(Dimensions.ConfigBottomButtonHeight)
             .widthIn(Dimensions.ConfigBottomButtonWidth),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(Dimensions.ConfigDrawerButtonRadius),
         contentPadding = Dimensions.ConfigButtonPadding,
         onClick = onClick,
         enabled = enabled,
@@ -61,7 +60,7 @@ fun ConfigDrawerChannelLeftButton(
             bottom = Dimensions.ConfigDrawerButtonPadding,
             end = Dimensions.ConfigDrawerButtonExtraPadding
         ),
-        shape = Shapes.SectionButtonStart,
+        shape = Shapes.ConfigChannelButtonStart,
         colors = colors,
         onClick = onClick,
         content = content
@@ -81,7 +80,7 @@ fun ConfigDrawerChannelRightButton(
             bottom = Dimensions.ConfigDrawerButtonPadding,
             end = Dimensions.ConfigDrawerButtonPadding
         ),
-        shape = Shapes.SectionButtonEnd,
+        shape = Shapes.ConfigChannelButtonEnd,
         modifier = modifier.height(Dimensions.ConfigChannelButtonHeight),
         colors = colors,
         onClick = onClick,

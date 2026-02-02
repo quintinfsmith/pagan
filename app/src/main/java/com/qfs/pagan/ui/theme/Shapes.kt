@@ -20,6 +20,18 @@ object Shapes {
         bottomEnd = Dimensions.NumberSelectorButtonRadius,
     )
 
+    val ConfigChannelButtonEnd = RoundedCornerShape(
+        0.dp,
+        Dimensions.ConfigDrawerButtonRadius,
+        Dimensions.ConfigDrawerButtonRadius,
+        0.dp,
+    )
+    val ConfigChannelButtonStart = RoundedCornerShape(
+        Dimensions.ConfigDrawerButtonRadius,
+        0.dp,
+        0.dp,
+        Dimensions.ConfigDrawerButtonRadius,
+    )
     val Container = RoundedCornerShape(12.dp)
     val ContextMenuButtonPrimary = RoundedCornerShape(ContextMenuButtonRadius)
     val ContextMenuButtonPrimaryStart = RoundedCornerShape(
@@ -56,9 +68,16 @@ object Shapes {
 
     val Drawer = RoundedCornerShape(topStart = 0.dp, bottomStart = 0.dp, topEnd = 4.dp, bottomEnd = 4.dp)
 
+    val LandingButtonShape = RoundedCornerShape(Dimensions.LandingButtonCornerRadius)
+
     val SectionButtonEnd = RoundedCornerShape(0.dp, 50.dp, 50.dp, 0.dp)
     val SectionButtonCenter = RectangleShape
-    val SectionButtonStart = RoundedCornerShape(50.dp, 0.dp, 0.dp, 50.dp)
+    val SectionButtonStart = RoundedCornerShape(
+        50.dp,
+        0.dp,
+        0.dp,
+        50.dp
+    )
 
     val TaggedBeat = RoundedCornerShape(12.dp)
     val TopBar = RectangleShape

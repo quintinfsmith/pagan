@@ -109,8 +109,8 @@ object Dimensions {
     }
 
     object Background {
-        val Radius = 24.dp
-        val Gap = 24.dp
+        val Radius = 12.dp
+        val Gap = 20.dp
         val BarWidth = LeafBaseWidth * 2
         val BarSmallHeight = BarWidth
         val BarLargeHeight = BarSmallHeight * 3
@@ -139,6 +139,7 @@ object Dimensions {
     val ConfigDrawerPadding = 4.dp
     val ConfigDrawerButtonPadding = 8.dp
     val ConfigDrawerButtonExtraPadding = 16.dp
+    val ConfigDrawerButtonRadius = 12.dp
 
     val ContextMenuButtonHeight: Dp
         get() = getter(
@@ -162,7 +163,7 @@ object Dimensions {
     val DialogLinePadding = PaddingValues(vertical = 5.dp, horizontal = 12.dp)
 
 
-
+    val LandingButtonCornerRadius = 12.dp
     val LandingButtonHeight: Dp
         get() = getter(
             small_landscape = 41.dp,

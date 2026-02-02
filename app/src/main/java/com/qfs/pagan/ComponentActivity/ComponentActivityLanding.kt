@@ -21,7 +21,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,6 +39,7 @@ import com.qfs.pagan.composable.SettingsRow
 import com.qfs.pagan.composable.SoundFontWarning
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Shapes
 import java.io.File
 import java.io.FileOutputStream
 import java.time.LocalDateTime
@@ -108,7 +108,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
     @Composable
     fun ButtonRecent(
         modifier: Modifier = Modifier,
-        shape: Shape = ButtonDefaults.shape
+        shape: Shape = Shapes.LandingButtonShape
     ) {
         Button(
             modifier = modifier.height(Dimensions.LandingButtonHeight),
@@ -127,7 +127,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
     @Composable
     fun ButtonNew(
         modifier: Modifier = Modifier,
-        shape: Shape = ButtonDefaults.shape
+        shape: Shape = Shapes.LandingButtonShape
     ) {
         Button(
             modifier = modifier.height(Dimensions.LandingButtonHeight),
@@ -148,7 +148,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
     @Composable
     fun ButtonLoad(
         modifier: Modifier = Modifier,
-        shape: Shape = ButtonDefaults.shape
+        shape: Shape = Shapes.LandingButtonShape
     ) {
         Button(
             modifier = modifier.height(Dimensions.LandingButtonHeight),
@@ -234,7 +234,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
     @Composable
     fun ButtonAbout(
         modifier: Modifier = Modifier,
-        shape: Shape = ButtonDefaults.shape
+        shape: Shape = Shapes.LandingButtonShape
     ) {
         SmallIconButton(
             modifier = modifier,
@@ -377,7 +377,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
     fun LayoutSmallLandscapeNeedsSF(modifier: Modifier = Modifier) {
         val has_backup = this.view_model.project_manager?.has_backup_saved() == true
         val has_saved_project = this.view_model.has_saved_project.value
-        val button_shape = RoundedCornerShape(50F, 0F, 0F, 50F)
+        val button_shape = RoundedCornerShape(Dimensions.LandingButtonCornerRadius, 0.dp, 0.dp, Dimensions.LandingButtonCornerRadius)
         Row(
             modifier.padding(dimensionResource(R.dimen.landing_padding)),
             verticalAlignment = Alignment.CenterVertically,

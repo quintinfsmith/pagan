@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import com.qfs.pagan.ActionTracker
+import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.button.TextCMenuButton
@@ -24,7 +25,6 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEv
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
-import com.qfs.pagan.LayoutSize
 
 @Composable
 fun AdjustLineButton(dispatcher: ActionTracker) {
@@ -328,7 +328,12 @@ fun ContextMenuLineStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
             ui_facade,
             dispatcher,
             line.channel.value!!,
-            line.line_offset.value!!
+            line.line_offset.value!!,
+            if (layout == LayoutSize.SmallLandscape || layout == LayoutSize.MediumLandscape) {
+                Shapes.ContextMenuButtonPrimaryEnd
+            } else {
+                Shapes.ContextMenuButtonPrimary
+            }
         )
     }
 }

@@ -464,25 +464,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         }
     }
 
-    fun delete() {
-        this.vm_top.create_dialog { close ->
-            val project_name = this.get_opus_manager().project_name ?: "Project"
-            @Composable {
-                DialogTitle(stringResource(R.string.dlg_delete_title, project_name))
-                DialogBar(
-                    neutral = close,
-                    positive = {
-                        close()
-                        this@ActionTracker.vm_controller.active_project?.let { project ->
-                            this@ActionTracker.vm_top.delete_project(project)
-                            this@ActionTracker.new_project()
-                        }
-                    }
-                )
-            }
-        }
-    }
-
     fun project_copy() {
         this.vm_controller.active_project ?: return
         this.save_before {
@@ -2567,7 +2548,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                 this.save()
             }
             TrackedAction.DeleteProject -> {
-                this.delete()
+                TODO()
             }
             TrackedAction.CopyProject -> {
                 this.project_copy()

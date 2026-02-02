@@ -23,11 +23,9 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -63,12 +61,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.qfs.pagan.DialogChain
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
+import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogCard
 import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.PaganTheme
@@ -395,7 +393,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
         }
     }
 
-    private fun create_project_card_dialog(title: String, uri: Uri, load_callback: (Uri) -> Unit) {
+    private fun create_project_card_dialog(title: String, uri: Uri, close_top_callback: () -> Unit, load_callback: (Uri) -> Unit) {
         this.view_model.create_dialog(level = 1) { close ->
             @Composable {
                 Column {
@@ -415,26 +413,24 @@ abstract class PaganComponentActivity: ComponentActivity() {
                         Button(
                             modifier = Modifier.height(Dimensions.ButtonHeight.Small),
                             onClick = {
-                                close()
                                 this@PaganComponentActivity.view_model.create_dialog { close_subdialog ->
                                     @Composable {
                                         Column {
-                                            Row { DialogTitle(stringResource(R.string.dlg_delete_title, title), modifier = Modifier.weight(1F)) }
                                             Row {
-                                                Button(
-                                                    onClick = close_subdialog,
-                                                    content = { SText(android.R.string.cancel) }
-                                                )
-                                                Button(
-                                                    onClick = {
-                                                        close_subdialog()
-                                                        this@PaganComponentActivity.view_model.project_manager?.delete(
-                                                            uri
-                                                        )
-                                                    },
-                                                    content = { SText(android.R.string.cancel) }
+                                                DialogTitle(
+                                                    stringResource(R.string.dlg_delete_title, title),
+                                                    modifier = Modifier.weight(1F)
                                                 )
                                             }
+                                            DialogBar(
+                                                neutral = close_subdialog,
+                                                positive = {
+                                                    this@PaganComponentActivity.delete_project(uri)
+                                                    close()
+                                                    close_subdialog()
+                                                    close_top_callback()
+                                                }
+                                            )
                                         }
                                     }
                                 }
@@ -451,6 +447,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                             modifier = Modifier.height(Dimensions.ButtonHeight.Small),
                             onClick = {
                                 close()
+                                close_top_callback()
                                 load_callback(uri)
                             },
                             content = { SText(R.string.details_load_project) }
@@ -460,6 +457,13 @@ abstract class PaganComponentActivity: ComponentActivity() {
             }
         }
     }
+
+    fun delete_project(uri: Uri) {
+        this.view_model.delete_project(uri)
+        this.on_delete_project(uri)
+    }
+
+    open fun on_delete_project(uri: Uri) { }
 
     fun load_menu_dialog(load_callback: (Uri) -> Unit) {
         val project_list = this.view_model.project_manager?.get_project_list() ?: return
@@ -490,8 +494,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
             onLongClick = { it, close_callback ->
                 for ((uri, title) in project_list) {
                     if (uri != it) continue
-                    this.create_project_card_dialog(title, it) {
-                        close_callback()
+                    this.create_project_card_dialog(title, it, close_callback) {
                         load_callback(it)
                     }
                     break

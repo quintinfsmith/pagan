@@ -104,6 +104,7 @@ import com.qfs.pagan.SingleExporterEventHandler
 import com.qfs.pagan.Values
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
+import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.DrawerCard
 import com.qfs.pagan.composable.DropdownMenu
 import com.qfs.pagan.composable.DropdownMenuItem
@@ -2250,8 +2251,25 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     description = R.string.btn_cfg_delete,
                     enabled = this@ComponentActivityEditor.controller_model.project_exists.value,
                     onClick = {
+                        val controller_model = this@ComponentActivityEditor.controller_model
+                        val opus_manager = controller_model.opus_manager
                         scope.launch { this@ComponentActivityEditor.close_drawer() }
-                        dispatcher.delete()
+
+                        this@ComponentActivityEditor.view_model.create_dialog { close ->
+                            val project_name = opus_manager.project_name ?: "Project"
+                            @Composable {
+                                DialogTitle(stringResource(R.string.dlg_delete_title, project_name))
+                                DialogBar(
+                                    neutral = close,
+                                    positive = {
+                                        close()
+                                        controller_model.active_project?.let { project ->
+                                            this@ComponentActivityEditor.delete_project(project)
+                                        }
+                                    }
+                                )
+                            }
+                        }
                     }
                 )
                 DrawerPadder()
@@ -2949,5 +2967,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
         return output
+    }
+
+    override fun on_delete_project(uri: Uri) {
+        val is_current = uri == this.controller_model.active_project
+        super.on_delete_project(uri)
+        if (is_current) {
+            this.action_interface.new_project()
+        }
     }
 }

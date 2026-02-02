@@ -74,6 +74,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
                 }
             }
         }
+
     internal var result_launcher_settings =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode != RESULT_OK) return@registerForActivityResult
@@ -214,7 +215,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
                     Intent(this@ComponentActivityLanding, ComponentActivitySettings::class.java)
                 )
             },
-            content =  {
+            content = {
                 Icon(
                     modifier = Modifier.fillMaxSize(),
                     painter = painterResource(R.drawable.icon_settings),

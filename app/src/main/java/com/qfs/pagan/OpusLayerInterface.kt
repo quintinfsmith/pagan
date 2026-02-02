@@ -1017,13 +1017,15 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         val notify_index = channel ?: this.channels.size
         super.new_channel(channel, lines, uuid, is_percussion)
 
-        val preset = this.get_channel(notify_index).get_preset()
-
-        this.vm_controller.update_channel_preset(
-            this.get_midi_channel(notify_index),
-            preset.first,
-            preset.second
-        )
+        for (i in notify_index until this.channels.size) {
+            val working_channel = this.get_channel(i)
+            val preset = working_channel.get_preset()
+            this.vm_controller.update_channel_preset(
+                this.get_midi_channel(i),
+                preset.first,
+                preset.second
+            )
+        }
 
         if (this.ui_lock.is_locked()) return
 

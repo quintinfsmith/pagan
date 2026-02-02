@@ -1075,10 +1075,20 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     override fun remove_channel(channel: Int) {
         super.remove_channel(channel)
-        if (!this.ui_lock.is_locked()) {
-            this.vm_state.remove_channel(channel)
-            this.vm_state.refresh_cursor()
+
+        for (i in channel until this.channels.size) {
+            val working_channel = this.get_channel(i)
+            val preset = working_channel.get_preset()
+            this.vm_controller.update_channel_preset(
+                this.get_midi_channel(i),
+                preset.first,
+                preset.second
+            )
         }
+
+        if (this.ui_lock.is_locked()) return
+        this.vm_state.remove_channel(channel)
+        this.vm_state.refresh_cursor()
     }
 
     override fun on_project_changed() {
@@ -1263,6 +1273,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     override fun move_line(channel_index_from: Int, line_offset_from: Int, channel_index_to: Int, line_offset_to: Int) {
         super.move_line(channel_index_from, line_offset_from, channel_index_to, line_offset_to)
         if (this.ui_lock.is_locked()) return
+
+        this.vm_state.refresh_cursor()
     }
 
     override fun clear() {

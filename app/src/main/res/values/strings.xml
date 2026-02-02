@@ -92,7 +92,7 @@
     <string name="feedback_invalid_sf2_file">Invalid sf2 File</string>
     <string name="no_soundfont">No Soundfont</string>
     <string name="option_import_soundfont">Import…</string>
-    <string name="unknown_instrument">Unknown %1s</string>
+    <string name="unknown_instrument">Unknown @ %1s</string>
     <string name="desc_column_label">Column %1d</string>
     <string name="dropdown_choose_percussion">Choose Percussion</string>
     <string name="dropdown_choose_instrument">Choose Instrument</string>

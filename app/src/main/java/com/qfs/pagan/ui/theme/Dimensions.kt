@@ -33,7 +33,6 @@ object Dimensions {
             else if (width >= Layout.Medium.short) LayoutSize.MediumPortrait
             else LayoutSize.SmallPortrait
         }
-        println("------ ${this.active_layout_size} -------")
         return this.active_layout_size
     }
 
@@ -111,7 +110,7 @@ object Dimensions {
     object Background {
         val Radius = 12.dp
         val Gap = 20.dp
-        val BarWidth = LeafBaseWidth * 2
+        val BarWidth = LeafBaseWidth * 2F
         val BarSmallHeight = BarWidth
         val BarLargeHeight = BarSmallHeight * 3
     }

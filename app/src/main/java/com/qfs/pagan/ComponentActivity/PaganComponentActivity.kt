@@ -263,8 +263,6 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                     val gap_width = Dimensions.Background.Gap.toPx()
                                     val bar_width = Dimensions.Background.BarWidth.toPx()
                                     val f = (this.size.width + gap_width) / (gap_width + bar_width)
-                                    val x_offset = (this.size.width - (f.toInt() * (gap_width + bar_width))) / 2F
-
                                     val bar_height_small = Dimensions.Background.BarSmallHeight.toPx()
                                     val bar_height_large = Dimensions.Background.BarLargeHeight.toPx()
                                     clipRect {
@@ -290,7 +288,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                                 drawRoundRect(
                                                     color = Color(0x10888888),
                                                     topLeft = Offset(
-                                                        x = (x * (bar_width + gap_width)) - x_offset,
+                                                        x = (x * (bar_width + gap_width)) - (bar_width / 2F),
                                                         y = y_offset
                                                     ),
                                                     size = Size(

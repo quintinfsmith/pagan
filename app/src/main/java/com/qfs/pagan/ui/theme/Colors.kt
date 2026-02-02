@@ -48,7 +48,7 @@ object Colors {
 
     fun get_text(input: Color): Color {
         // Green is brighter, weight it more
-        val avg = (input.red + (input.green * 2.5F) + input.blue) / 3F
+        val avg = (input.red + (input.green * 2F) + input.blue) / 3F
         return if (avg > .5F) Color(0xFF000000)
         else  Color(0xFFFFFFFF)
     }

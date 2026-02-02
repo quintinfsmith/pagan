@@ -212,6 +212,13 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     override fun move_channel(channel_index: Int, new_channel_index: Int) {
         super.move_channel(channel_index, new_channel_index)
+        this.cursor_select_channel(
+            if (channel_index < new_channel_index) {
+                new_channel_index - 1
+            } else {
+                new_channel_index
+            }
+        )
     }
 
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?, is_percussion: Boolean) {

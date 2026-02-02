@@ -111,16 +111,12 @@ class AudioInterface {
     }
 
     fun connect_feedback_device() {
-        val buffer_size = this.sample_rate / 10
+        val buffer_size = this.sample_rate / 40
         this.feedback_revolver.set_handle_manager(
             SampleHandleManager(
                 this.soundfont!!,
                 this.sample_rate,
-                buffer_size - 2 + (if (buffer_size % 2 == 0) {
-                    2
-                } else {
-                    1
-                })
+                buffer_size - 2 + (if (buffer_size % 2 == 0) { 2 } else { 1 })
             )
         )
     }

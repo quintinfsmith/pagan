@@ -648,7 +648,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
             return
         } catch (_: SoundFont.InvalidSoundFont) {
             // Possible if user puts the sf2 in their files manually
-            // Possible if user puts the sf2 in their files manually
             //this.feedback_msg("Invalid Soundfont")
             return
         }

@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
-import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.composable.DropdownMenu
 import com.qfs.pagan.composable.RadioMenu
@@ -46,6 +45,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocity
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -463,7 +463,7 @@ fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
                         } else {
                             Shapes.NumberSelectorButton
                         },
-                        on_long_click = { offset_dropdown_visible.value = i },
+                        on_long_click = { offset_dropdown_visible.value = it },
                         on_click = { dispatcher.set_offset(it, ui_facade.relative_input_mode.value) }
                     )
                 }

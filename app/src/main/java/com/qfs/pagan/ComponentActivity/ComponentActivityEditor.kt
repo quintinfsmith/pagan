@@ -123,6 +123,7 @@ import com.qfs.pagan.composable.cxtmenu.CMPadding
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelPrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuChannelSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuColumnPrimary
+import com.qfs.pagan.composable.cxtmenu.ContextMenuColumnSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuLeafCtlSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuLeafPrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuLeafStdSecondary
@@ -1123,7 +1124,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
             CursorMode.Range,
             CursorMode.Unset,
-            null -> null
+            null -> {
+                null
+            }
         }
     }
 
@@ -1164,7 +1167,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
             CursorMode.Channel -> {
                 @Composable { ContextMenuChannelSecondary(ui_facade, dispatcher, layout) }
             }
-            CursorMode.Column,
+            CursorMode.Column -> {
+                @Composable { ContextMenuColumnSecondary(modifier, ui_facade, dispatcher, layout) }
+            }
             CursorMode.Unset -> null
         }
     }

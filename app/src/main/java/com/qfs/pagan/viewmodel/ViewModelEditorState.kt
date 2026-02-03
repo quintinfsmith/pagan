@@ -13,7 +13,6 @@ import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.Rational
-import com.qfs.pagan.structure.opusmanager.base.OpusChannel
 import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.OpusColorPalette
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.ReducibleTreeArray
@@ -50,8 +49,9 @@ class ViewModelEditorState: ViewModel() {
         val palette = mutableStateOf(palette)
     }
 
-    class ColumnData(is_tagged: Boolean, is_selected: Boolean = false, max_leaf_count: Int = 1) {
+    class ColumnData(is_tagged: Boolean, is_selected: Boolean = false, tag_content: String? = null, max_leaf_count: Int = 1) {
         val is_tagged = mutableStateOf(is_tagged)
+        val tag_content = mutableStateOf(tag_content)
         val is_selected = mutableStateOf(is_selected)
         val top_weight = mutableStateOf(max_leaf_count)
     }
@@ -370,8 +370,9 @@ class ViewModelEditorState: ViewModel() {
         this.column_data[coordinate.x].top_weight.value = Array(this.line_count.value) { this.cell_map[it][coordinate.x].value.top_weight.value }.max()
     }
 
-    fun update_column(column: Int, is_tagged: Boolean) {
+    fun update_column(column: Int, is_tagged: Boolean, tag_content: String?) {
         this.column_data[column].is_tagged.value = is_tagged
+        this.column_data[column].tag_content.value = tag_content
     }
 
     fun add_row(y: Int, cells: ReducibleTreeArray<*>, new_line_data: LineData) {
@@ -504,8 +505,8 @@ class ViewModelEditorState: ViewModel() {
         this.channel_data.removeAt(channel)
     }
 
-    fun add_column(column: Int, is_tagged: Boolean, new_cells: List<ReducibleTree<out OpusEvent>>? = null) {
-        this.column_data.add(column, ColumnData(is_tagged))
+    fun add_column(column: Int, is_tagged: Boolean, tag_content: String?, new_cells: List<ReducibleTree<out OpusEvent>>? = null) {
+        this.column_data.add(column, ColumnData(is_tagged, tag_content = tag_content))
         new_cells?.let {
             for ((y, line) in this.cell_map.enumerate()) {
                 line.add(column, mutableStateOf(TreeData(new_cells[y])))

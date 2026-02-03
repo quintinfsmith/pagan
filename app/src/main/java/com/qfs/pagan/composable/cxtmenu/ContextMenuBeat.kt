@@ -2,12 +2,19 @@ package com.qfs.pagan.composable.cxtmenu
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.text.style.TextAlign
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
+import com.qfs.pagan.composable.SText
+import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
@@ -75,24 +82,8 @@ fun ContextMenuColumnPrimary(modifier: Modifier = Modifier, ui_facade: ViewModel
     val column_data = ui_facade.column_data[beat]
 
     when (layout) {
-        LayoutSize.SmallPortrait,
-        LayoutSize.MediumPortrait,
-        LayoutSize.LargePortrait,
-        LayoutSize.XLargePortrait -> {
-            ContextMenuPrimaryRow(modifier) {
-                TagButton(dispatcher, column_data, beat, Shapes.ContextMenuButtonPrimaryStart)
-                CMPadding()
-                AdjustBeatButton(dispatcher)
-                CMPadding()
-                RemoveBeatButton(dispatcher, ui_facade.beat_count.value > 1)
-                CMPadding()
-                InsertBeatButton(dispatcher, Shapes.ContextMenuButtonPrimaryEnd)
-            }
-        }
-        LayoutSize.SmallLandscape,
         LayoutSize.MediumLandscape,
-        LayoutSize.LargeLandscape,
-        LayoutSize.XLargeLandscape -> {
+        LayoutSize.SmallLandscape -> {
             Column {
                 InsertBeatButton(dispatcher, Shapes.ContextMenuButtonPrimaryStart)
                 CMPadding()
@@ -103,9 +94,68 @@ fun ContextMenuColumnPrimary(modifier: Modifier = Modifier, ui_facade: ViewModel
                 TagButton(dispatcher, column_data, beat, Shapes.ContextMenuButtonPrimaryBottom)
             }
         }
+        else -> {
+            TagDescription(modifier, ui_facade, dispatcher)
+        }
     }
 }
 
 @Composable
-fun ContextMenuColumnSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier) {}
+fun ContextMenuColumnSecondary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: LayoutSize) {
+    val cursor = ui_facade.active_cursor.value ?: return
+    val beat = cursor.ints[0]
+    val column_data = ui_facade.column_data[beat]
+
+    when (layout) {
+        LayoutSize.MediumLandscape,
+        LayoutSize.SmallLandscape -> {
+            TagDescription(modifier, ui_facade, dispatcher)
+        }
+        else -> {
+            ContextMenuPrimaryRow(modifier) {
+                TagButton(dispatcher, column_data, beat, Shapes.ContextMenuButtonPrimaryStart)
+                CMPadding()
+                AdjustBeatButton(dispatcher)
+                CMPadding()
+                RemoveBeatButton(dispatcher, ui_facade.beat_count.value > 1)
+                CMPadding()
+                InsertBeatButton(
+                    dispatcher,
+                    if (!column_data.is_tagged.value) {
+                        Shapes.ContextMenuButtonPrimaryEnd
+                    } else {
+                        Shapes.ContextMenuButtonPrimary
+                    }
+                )
+            }
+
+        }
+    }
+}
+
+@Composable
+fun TagDescription(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
+    val cursor = ui_facade.active_cursor.value ?: return
+    val beat = cursor.ints[0]
+    val column_data = ui_facade.column_data[beat]
+    if (!column_data.is_tagged.value) return
+    val callback: (String) -> Unit = {
+        val description = it.trim().ifEmpty { null }
+        dispatcher.tag_column(beat, description = description, description == null)
+    }
+    TextInput(
+        input = remember { mutableStateOf(column_data.tag_content.value ?: "") },
+        textAlign = TextAlign.Start,
+        modifier = Modifier
+            .fillMaxWidth(),
+        lineLimits = TextFieldLineLimits.MultiLine(
+            minHeightInLines = 1,
+            maxHeightInLines = 4
+        ),
+        shape = Shapes.ContextMenuButtonFull,
+        placeholder = { SText(R.string.tag_description) },
+        on_focus_exit = callback,
+        callback = callback
+    )
+}
 

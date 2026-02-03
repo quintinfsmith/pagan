@@ -7,7 +7,6 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -20,19 +19,13 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -91,7 +84,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalView
@@ -99,7 +91,6 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextLayoutResult
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -474,6 +465,7 @@ fun <T> NumberInput(
                         callback(value.value)
                         false
                     }
+
                     else -> true
                 }
             }
@@ -505,14 +497,32 @@ fun TextInput(
     input: MutableState<String>,
     textAlign: TextAlign = TextAlign.End,
     label: (@Composable TextFieldLabelScope.() -> Unit)? = null,
+    placeholder: (@Composable () -> Unit)? = null,
     lineLimits: TextFieldLineLimits = TextFieldLineLimits.Default,
+    on_focus_enter: (() -> Unit)? = null,
+    on_focus_exit: ((String) -> Unit)? = null,
+    shape: Shape = Shapes.Container,
     callback: (String) -> Unit
 ) {
     val state = rememberTextFieldState(input.value)
+    val trigger_select_all = remember { mutableStateOf<Boolean?>(null) }
+
+    val was_focused = remember { mutableStateOf(false) }
+    val focus_change_callback = { focus_state: FocusState ->
+        if (focus_state.isFocused) {
+            trigger_select_all.value = trigger_select_all.value?.let { it -> !it } ?: true
+            was_focused.value = true
+            on_focus_enter?.let { it() }
+        } else if (was_focused.value) {
+            was_focused.value = false
+            on_focus_exit?.let { it(input.value) }
+        }
+    }
     OutlinedTextField(
         state = state,
         lineLimits = lineLimits,
         label = label,
+        placeholder = placeholder,
         textStyle = Typography.TextField.copy(textAlign = textAlign),
         modifier = modifier
             .onKeyEvent { event ->
@@ -521,16 +531,12 @@ fun TextInput(
                         callback(input.value)
                         false
                     }
+
                     else -> true
                 }
             }
-            .onFocusChanged { focus_state ->
-                if (focus_state.hasFocus) {
-                    state.edit {
-                        this.selection = TextRange(0, this.length)
-                    }
-                }
-            },
+            .onFocusChanged { focus_change_callback(it) },
+        shape = shape,
         scrollState = rememberScrollState(),
         onKeyboardAction = { callback(input.value) },
         keyboardOptions = KeyboardOptions.Companion.Default.copy(keyboardType = KeyboardType.Companion.Text),

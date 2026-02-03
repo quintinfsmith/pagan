@@ -2079,8 +2079,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         }
     }
 
-    private fun dialog_text_popup(title: Int, default: String? = null, stub_output: String? = null, callback: (String) -> Unit) {
-        if (stub_output != null) return callback(stub_output)
+    private fun dialog_text_popup(title: Int, default: String? = null, callback: (String) -> Unit) {
 
         this.vm_top.create_dialog { close ->
             @Composable {
@@ -2615,10 +2614,12 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         this.track(TrackedAction.RemoveController)
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        when (cursor.ctl_level!!) {
-            CtlLineLevel.Line -> opus_manager.remove_line_controller(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
-            CtlLineLevel.Channel -> opus_manager.remove_channel_controller(cursor.ctl_type!!, cursor.channel)
-            CtlLineLevel.Global -> opus_manager.remove_global_controller(cursor.ctl_type!!)
+        opus_manager.lock_cursor {
+            when (cursor.ctl_level!!) {
+                CtlLineLevel.Line -> opus_manager.remove_line_controller(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
+                CtlLineLevel.Channel -> opus_manager.remove_channel_controller(cursor.ctl_type!!, cursor.channel)
+                CtlLineLevel.Global -> opus_manager.remove_global_controller(cursor.ctl_type!!)
+            }
         }
     }
 
@@ -2626,10 +2627,12 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         this.track(TrackedAction.ToggleControllerVisibility)
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        when (cursor.ctl_level!!) {
-            CtlLineLevel.Line -> opus_manager.toggle_line_controller_visibility(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
-            CtlLineLevel.Channel -> opus_manager.toggle_channel_controller_visibility(cursor.ctl_type!!, cursor.channel)
-            CtlLineLevel.Global -> opus_manager.toggle_global_controller_visibility(cursor.ctl_type!!)
+        opus_manager.lock_cursor {
+            when (cursor.ctl_level!!) {
+                CtlLineLevel.Line -> opus_manager.toggle_line_controller_visibility(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
+                CtlLineLevel.Channel -> opus_manager.toggle_channel_controller_visibility(cursor.ctl_type!!, cursor.channel)
+                CtlLineLevel.Global -> opus_manager.toggle_global_controller_visibility(cursor.ctl_type!!)
+            }
         }
     }
 
@@ -2639,7 +2642,9 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val w_channel = channel ?: cursor.channel
 
         this.track(TrackedAction.MuteChannel, listOf(w_channel))
-        opus_manager.mute_channel(w_channel)
+        opus_manager.lock_cursor {
+            opus_manager.mute_channel(w_channel)
+        }
     }
 
     fun channel_unmute(channel: Int? = null) {
@@ -2648,7 +2653,9 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val w_channel = channel ?: cursor.channel
 
         this.track(TrackedAction.UnMuteChannel, listOf(w_channel))
-        opus_manager.unmute_channel(w_channel)
+        opus_manager.lock_cursor {
+            opus_manager.unmute_channel(w_channel)
+        }
     }
 
     fun line_mute(channel: Int? = null, line_offset: Int? = null) {
@@ -2668,7 +2675,9 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val w_line_offset = line_offset ?: cursor.line_offset
 
         this.track(TrackedAction.UnMuteLine, listOf(w_channel, w_line_offset))
-        opus_manager.unmute_line(w_channel, w_line_offset)
+        opus_manager.lock_cursor {
+            opus_manager.unmute_line(w_channel, w_line_offset)
+        }
     }
 
     fun tag_column(beat: Int? = null, description: String? = null, force_null_description: Boolean = false) {
@@ -2678,18 +2687,29 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         if (force_null_description && description == null) {
             val integers = mutableListOf(use_beat)
             this.track(TrackedAction.TagColumn, integers)
-            opus_manager.tag_section(use_beat, null)
+            opus_manager.lock_cursor {
+                opus_manager.tag_section(use_beat, null)
+            }
+            return
+        } else if (description != null) {
+            val integers = mutableListOf(use_beat)
+            this.track(TrackedAction.TagColumn, integers)
+            opus_manager.lock_cursor {
+                opus_manager.tag_section(use_beat, description)
+            }
             return
         }
 
-        this.dialog_text_popup(R.string.dialog_mark_section, opus_manager.marked_sections[use_beat], description) { result: String ->
+        this.dialog_text_popup(R.string.dialog_mark_section, opus_manager.marked_sections[use_beat]) { result: String ->
             val integers = mutableListOf(use_beat)
             for (byte in result.toByteArray()) {
                 integers.add(byte.toInt())
             }
 
             this.track(TrackedAction.TagColumn, integers)
-            opus_manager.tag_section(use_beat, if (result == "") null else result)
+            opus_manager.lock_cursor {
+                opus_manager.tag_section(use_beat, if (result == "") null else result)
+            }
         }
     }
 
@@ -2697,7 +2717,9 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val opus_manager = this.get_opus_manager()
         val use_beat = beat ?: opus_manager.cursor.beat
         this.track(TrackedAction.UntagColumn, listOf(use_beat))
-        opus_manager.remove_tagged_section(use_beat)
+        opus_manager.lock_cursor {
+            opus_manager.remove_tagged_section(use_beat)
+        }
     }
 
     internal fun _track_tuning_map_and_transpose(tuning_map: Array<Pair<Int, Int>>, transpose: Pair<Int, Int>) {

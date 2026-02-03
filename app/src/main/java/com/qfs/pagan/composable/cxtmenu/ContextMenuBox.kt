@@ -41,7 +41,8 @@ fun CMBoxBottom(modifier: Modifier = Modifier, content: @Composable ColumnScope.
         content = {
             Column(
                 modifier = modifier.padding(Dimensions.ContextMenuPadding),
-                content = content
+                content = content,
+                verticalArrangement = Arrangement.Center
             )
         }
     )

@@ -1127,7 +1127,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.vm_state.set_radix(this.get_radix())
 
         for (x in 0 until this.length) {
-            this.vm_state.add_column(x, this.is_beat_tagged(x))
+            this.vm_state.add_column(x, this.is_beat_tagged(x), this.marked_sections[x])
         }
 
         var i = 0
@@ -1194,7 +1194,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             new_cells.add(this.get_global_ctl_tree(type, beat_index))
         }
 
-        this.vm_state.add_column(beat_index, this.is_beat_tagged(beat_index), new_cells)
+        this.vm_state.add_column(beat_index, this.is_beat_tagged(beat_index), this.marked_sections[beat_index], new_cells)
     }
 
     override fun project_change_wrapper(callback: () -> Unit)  {
@@ -1981,13 +1981,13 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     override fun tag_section(beat: Int, title: String?) {
         super.tag_section(beat, title)
         if (this.ui_lock.is_locked()) return
-        this.vm_state.update_column(beat, true)
+        this.vm_state.update_column(beat, true, title)
     }
 
     override fun remove_tagged_section(beat: Int) {
         super.remove_tagged_section(beat)
         if (this.ui_lock.is_locked()) return
-        this.vm_state.update_column(beat, false)
+        this.vm_state.update_column(beat, false, null)
     }
 
 

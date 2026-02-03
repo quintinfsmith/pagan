@@ -35,6 +35,12 @@ object Shapes {
         Dimensions.ConfigDrawerButtonRadius,
     )
     val Container = RoundedCornerShape(12.dp)
+    val ContextMenuButtonFull = RoundedCornerShape(
+        topEnd = Dimensions.ContextMenuRadius,
+        topStart = Dimensions.ContextMenuRadius,
+        bottomEnd = Dimensions.ContextMenuButtonRadius,
+        bottomStart = Dimensions.ContextMenuButtonRadius
+    )
     val ContextMenuButtonPrimary = RoundedCornerShape(ContextMenuButtonRadius)
     val ContextMenuButtonPrimaryStart = RoundedCornerShape(
         topStart = Dimensions.ContextMenuRadius,

@@ -288,6 +288,9 @@
     <string name="relative_input_mode_positive">Relative Input Mode - Positive</string>
     <string name="relative_input_mode_negative">Relative Input Mode - Negative</string>
     <string name="need_soundfont_playback_warning">In order to play the project you\'ll need to either:\n\n A) Enable a soundfont in settings.\n-- or --\nB) Attach a MIDI device.\n</string>
+    <string name="audio_playback_attribution">This app plays audio.</string>
+    <string name="empty"></string>
+
 
     <string-array name="general_midi_presets">
         <item>Grand Acoustic Piano</item>

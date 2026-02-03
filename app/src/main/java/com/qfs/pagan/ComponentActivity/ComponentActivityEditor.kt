@@ -1142,7 +1142,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 val line_data = ui_facade.line_data[cursor.ints[0]]
 
                 @Composable {
-                    key(ui_facade.active_event.value.hashCode()) {
+                    key(ui_facade.active_event.value, ui_facade.active_event_descriptor.value) {
                         if (line_data.ctl_type.value == null) {
                             ContextMenuLeafStdSecondary(ui_facade, dispatcher, modifier, layout)
                         } else {

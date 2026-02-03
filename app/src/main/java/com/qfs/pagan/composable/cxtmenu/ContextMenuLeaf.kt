@@ -346,7 +346,7 @@ fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
     val active_event = ui_facade.active_event.value
 
     if (active_line.assigned_offset.value != null) {
-        val checked = remember { mutableStateOf(active_event != null) }
+        val checked = remember { mutableStateOf(ui_facade.active_event_descriptor.value == ViewModelEditorState.EventDescriptor.Selected && ui_facade.active_event.value != null) }
         Row(
             Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,

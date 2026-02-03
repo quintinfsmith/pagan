@@ -16,7 +16,7 @@ import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 
 @Composable
-fun EffectTransitionButton(event: EffectEvent, dispatcher: ActionTracker, is_initial: Boolean, modifier: Modifier = Modifier, shape: Shape = Shapes.NumberSelectorButton) {
+fun EffectTransitionButton(event: EffectEvent, dispatcher: ActionTracker, is_initial: Boolean, modifier: Modifier = Modifier) {
     val transition = event.transition
     if (!is_initial) {
         Spacer(Modifier.width(Dimensions.ContextMenuPadding))

@@ -59,11 +59,13 @@ object Shapes {
         get() = getter(
             small_portrait = ContextMenuButtonPrimary,
             small_landscape = ContextMenuButtonPrimaryEnd,
+            medium_portrait = ContextMenuButtonPrimary,
         )
     val ContextMenuSecondaryButtonStart: Shape
         get() = getter(
             small_portrait = ContextMenuButtonPrimary,
             small_landscape = ContextMenuButtonPrimaryStart,
+            medium_portrait = ContextMenuButtonPrimary,
         )
 
 

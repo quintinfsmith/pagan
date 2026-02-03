@@ -33,7 +33,7 @@ fun EffectTransitionButton(event: EffectEvent, dispatcher: ActionTracker, is_ini
                 EffectTransition.RInstant -> R.drawable.icon_transition_rimmediate
                 EffectTransition.RLinear -> R.drawable.icon_transition_rlinear
             },
-            shape = Shapes.NumberSelectorButton,
+            shape = Shapes.ContextMenuSecondaryButtonEnd,
             description = R.string.cd_show_effect_controls
         )
     }

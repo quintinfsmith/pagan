@@ -35,7 +35,7 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
     val is_initial = cursor.type == CursorMode.Line
     val (channel, line_offset, beat, position) = ui_facade.get_location_ints()
 
-    Spacer(Modifier.weight(1F))
+    Spacer(Modifier.weight(.5F))
 
     val tempo_key = remember { mutableStateOf(false) }
     val tempo_label = remember { mutableFloatStateOf(event.value) }
@@ -59,8 +59,7 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
             text_align = TextAlign.Center,
             modifier = Modifier
                 .height(41.dp)
-                .weight(1F, fill = false)
-                .width(IntrinsicSize.Min)
+                .weight(1F, fill = true)
         ) {
             event.value = it
             if (beat != null) {
@@ -78,7 +77,7 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
         }
     )
 
-    Spacer(Modifier.weight(1F))
+    Spacer(Modifier.weight(.5F))
 
     EffectTransitionButton(event, dispatcher, is_initial)
 }

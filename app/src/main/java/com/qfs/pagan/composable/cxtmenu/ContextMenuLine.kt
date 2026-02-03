@@ -329,11 +329,7 @@ fun ContextMenuLineStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
             dispatcher,
             line.channel.value!!,
             line.line_offset.value!!,
-            if (layout == LayoutSize.SmallLandscape || layout == LayoutSize.MediumLandscape) {
-                Shapes.ContextMenuButtonPrimaryEnd
-            } else {
-                Shapes.ContextMenuButtonPrimary
-            }
+            shape = Shapes.ContextMenuSecondaryButtonEnd
         )
     }
 }

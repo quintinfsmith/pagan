@@ -211,11 +211,7 @@ fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
             ui_facade,
             dispatcher,
             channel_index,
-            if (layout == LayoutSize.SmallLandscape || layout == LayoutSize.MediumLandscape) {
-                Shapes.ContextMenuButtonPrimaryEnd
-            } else {
-                Shapes.ContextMenuButtonPrimary
-            }
+            shape = Shapes.ContextMenuSecondaryButtonEnd
         )
 
     }

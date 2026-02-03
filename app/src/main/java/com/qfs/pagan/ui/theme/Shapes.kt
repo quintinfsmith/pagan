@@ -2,8 +2,10 @@ package com.qfs.pagan.ui.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ui.theme.Dimensions.ContextMenuButtonRadius
+import com.qfs.pagan.ui.theme.Dimensions.getter
 
 object Shapes {
     val NumberSelectorButton = RoundedCornerShape(Dimensions.NumberSelectorButtonRadius)
@@ -52,6 +54,13 @@ object Shapes {
         topStart = Dimensions.ContextMenuButtonRadius,
         bottomEnd = Dimensions.ContextMenuButtonRadius,
     )
+
+    val ContextMenuSecondaryButtonEnd: Shape
+        get() = getter(
+            small_portrait = ContextMenuButtonPrimary,
+            small_landscape = ContextMenuButtonPrimaryEnd,
+        )
+
 
     val CMBoxBottom = RoundedCornerShape(
         topStart = Dimensions.ContextMenuRadius,

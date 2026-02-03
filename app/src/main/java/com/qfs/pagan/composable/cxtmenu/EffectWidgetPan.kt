@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
@@ -15,6 +16,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.composable.Slider
@@ -30,9 +32,9 @@ fun RowScope.PanEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionTra
     val colors = SliderColors(
         thumbColor = default_colors.thumbColor,
         activeTrackColor = default_colors.activeTrackColor,
-        activeTickColor = default_colors.activeTickColor,
+        activeTickColor = MaterialTheme.colorScheme.surface,
         inactiveTrackColor = default_colors.activeTrackColor,
-        inactiveTickColor = default_colors.activeTickColor,
+        inactiveTickColor = MaterialTheme.colorScheme.surface,
         disabledThumbColor = default_colors.disabledThumbColor,
         disabledActiveTrackColor = default_colors.disabledActiveTrackColor,
         disabledActiveTickColor = default_colors.disabledActiveTickColor,

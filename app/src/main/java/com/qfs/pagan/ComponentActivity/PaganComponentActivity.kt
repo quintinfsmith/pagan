@@ -262,19 +262,19 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                 ) {
                                     val gap_width = Dimensions.Background.Gap.toPx()
                                     val bar_width = Dimensions.Background.BarWidth.toPx()
-                                    val f = (this.size.width + gap_width) / (gap_width + bar_width)
+                                    val f = (this.size.width + gap_width + (bar_width / 2)) / (gap_width + bar_width)
                                     val bar_height_small = Dimensions.Background.BarSmallHeight.toPx()
                                     val bar_height_large = Dimensions.Background.BarLargeHeight.toPx()
                                     clipRect {
                                         for (x in 0 until ceil(f).toInt()) {
-                                            var y_offset = if (x % 2 == 0) {
+                                            var y_offset = if (x % 2 == 1) {
                                                 bar_height_large
                                             } else {
                                                 bar_height_small
                                             } / -2F
                                             var y = 0
                                             while (y_offset < this.size.height) {
-                                                val bar_height = if (x % 2 == 0) {
+                                                val bar_height = if (x % 2 == 1) {
                                                     if (y % 2 == 0) {
                                                         bar_height_large
                                                     } else {
@@ -288,7 +288,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                                 drawRoundRect(
                                                     color = Color(0x10888888),
                                                     topLeft = Offset(
-                                                        x = (x * (bar_width + gap_width)) - (bar_width / 2F),
+                                                        x = (x * (bar_width + gap_width)) - (bar_width / 2),
                                                         y = y_offset
                                                     ),
                                                     size = Size(

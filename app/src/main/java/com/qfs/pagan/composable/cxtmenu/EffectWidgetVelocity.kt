@@ -1,6 +1,7 @@
 package com.qfs.pagan.composable.cxtmenu
 
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableFloatStateOf
@@ -13,6 +14,8 @@ import com.qfs.pagan.composable.Slider
 import com.qfs.pagan.composable.button.TextCMenuButton
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.roundToInt
 
@@ -22,8 +25,9 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
     val is_initial = cursor.type == CursorMode.Line
     val working_value = remember { mutableFloatStateOf(event.value) }
     TextCMenuButton(
-        modifier = Modifier.width(dimensionResource(R.dimen.contextmenu_button_width)),
+        modifier = Modifier.width(Dimensions.ContextMenuButtonWidth),
         text = "%02d".format((event.value * 100).roundToInt()),
+        shape = Shapes.ContextMenuSecondaryButtonStart,
         onClick = {
             dispatcher.dialog_number_input(R.string.dlg_set_velocity, 0, 127, default = (event.value * 100).toInt()) {
                 event.value = it.toFloat() / 100F
@@ -38,7 +42,9 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
     )
     CMPadding()
     Slider(
-        modifier = Modifier.weight(1F),
+        modifier = Modifier
+            .height(Dimensions.ContextMenuButtonHeight)
+            .weight(1F),
         value = working_value.floatValue,
         valueRange = 0F .. 1.27F,
         onValueChange = {

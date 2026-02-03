@@ -14,6 +14,7 @@ import com.qfs.pagan.composable.button.TextCMenuButton
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.roundToInt
 
@@ -25,6 +26,7 @@ fun RowScope.VolumeEventMenu(ui_facade: ViewModelEditorState, dispatcher: Action
     TextCMenuButton(
         modifier = Modifier.width(Dimensions.ContextMenuButtonWidth),
         text = "%02d".format((event.value * 100).roundToInt()),
+        shape = Shapes.ContextMenuSecondaryButtonStart,
         onClick = {
             dispatcher.dialog_number_input(R.string.dlg_set_volume, 0, default = (event.value * 100).toInt()) {
                 event.value = it.toFloat() / 100F
@@ -35,7 +37,7 @@ fun RowScope.VolumeEventMenu(ui_facade: ViewModelEditorState, dispatcher: Action
             working_value.value = 1F
             event.value = 1F
             dispatcher.set_effect_at_cursor(event)
-        }
+        },
     )
     CMPadding()
     Slider(

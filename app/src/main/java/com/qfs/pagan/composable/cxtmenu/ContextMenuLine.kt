@@ -140,7 +140,6 @@ fun SetLineColorButton(
 fun MuteButton(
     dispatcher: ActionTracker,
     line: ViewModelEditorState.LineData,
-    shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
     IconCMenuButton(
         onClick = {
@@ -152,7 +151,7 @@ fun MuteButton(
         },
         icon = if (!line.is_mute.value) R.drawable.icon_unmute
         else R.drawable.icon_mute,
-        shape = shape,
+        shape = Shapes.ContextMenuSecondaryButtonStart,
         description = R.string.cd_line_mute
     )
 }
@@ -311,15 +310,7 @@ fun ContextMenuLineStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
     val line = ui_facade.line_data[y]
 
     ContextMenuSecondaryRow {
-        MuteButton(
-            dispatcher,
-            line,
-            if (layout == LayoutSize.SmallLandscape) {
-                Shapes.ContextMenuButtonPrimaryStart
-            } else {
-                Shapes.ContextMenuButtonPrimary
-            }
-        )
+        MuteButton(dispatcher, line)
         CMPadding()
         VolumeEventMenu(ui_facade, dispatcher, volume_event)
         CMPadding()

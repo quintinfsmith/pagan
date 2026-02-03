@@ -60,6 +60,11 @@ object Shapes {
             small_portrait = ContextMenuButtonPrimary,
             small_landscape = ContextMenuButtonPrimaryEnd,
         )
+    val ContextMenuSecondaryButtonStart: Shape
+        get() = getter(
+            small_portrait = ContextMenuButtonPrimary,
+            small_landscape = ContextMenuButtonPrimaryStart,
+        )
 
 
     val CMBoxBottom = RoundedCornerShape(

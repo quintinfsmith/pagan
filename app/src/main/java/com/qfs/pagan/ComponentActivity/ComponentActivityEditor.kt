@@ -1875,65 +1875,85 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         contentDescription = ""
                     )
 
-                    is OpusVolumeEvent -> Text("${(event.value * 100F).toInt()}%", color = text_color)
-                    is OpusPanEvent -> {
-                        Text(
-                            text = if (event.value < 0) {
-                                "<${(abs(event.value) * 10).roundToInt()}"
-                            } else if (event.value > 0) {
-                                "${(abs(event.value) * 10).roundToInt()}>"
-                            } else {
-                                "-0-"
-                            },
-                            color = text_color
-                        )
-                    }
-
-                    is DelayEvent -> {
-                        if (event.echo == 0 || event.fade == 0F) {
-                            Canvas(modifier = Modifier.fillMaxSize()) {
-                                drawCircle(
-                                    color = text_color,
-                                    radius = (size.height * .1F),
-                                    center = Offset(size.width / 2F, size.height / 2F)
-                                )
-                            }
-                        } else {
-                            Box(contentAlignment = Alignment.Center) {
-                                Canvas(
-                                    modifier = Modifier
-                                        .fillMaxHeight()
-                                        .width(Dimensions.LeafBaseWidth)
-                                ) {
-                                    drawLine(
-                                        start = Offset((.1F * size.width), (.65F * size.height)),
-                                        end = Offset((size.width * .9F), (.35F * size.height)),
-                                        color = text_color,
-                                        strokeWidth = 1F
+                    else -> {
+                        ProvideTextStyle(Typography.EffectLeaf) {
+                            when (event) {
+                                is OpusVolumeEvent -> Text("${(event.value * 100F).toInt()}%", color = text_color)
+                                is OpusPanEvent -> {
+                                    Text(
+                                        text = if (event.value < 0) {
+                                            "<${(abs(event.value) * 10).roundToInt()}"
+                                        } else if (event.value > 0) {
+                                            "${(abs(event.value) * 10).roundToInt()}>"
+                                        } else {
+                                            "-0-"
+                                        },
+                                        color = text_color
                                     )
                                 }
-                                ProvideTextStyle(MaterialTheme.typography.labelMedium) {
-                                    Row(horizontalArrangement = Arrangement.Center) {
-                                        Column(
-                                            verticalArrangement = Arrangement.Top,
-                                            modifier = Modifier.fillMaxHeight(),
-                                            content = { Text("${event.numerator}") }
-                                        )
-                                        Spacer(Modifier.width(3.dp))
-                                        Column(
-                                            verticalArrangement = Arrangement.Bottom,
-                                            modifier = Modifier.fillMaxHeight(),
-                                            content = { Text("${event.denominator}") }
-                                        )
+
+                                is DelayEvent -> {
+                                    if (event.echo == 0 || event.fade == 0F) {
+                                        Canvas(modifier = Modifier.fillMaxSize()) {
+                                            drawCircle(
+                                                color = text_color,
+                                                radius = (size.height * .1F),
+                                                center = Offset(size.width / 2F, size.height / 2F)
+                                            )
+                                        }
+                                    } else {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Canvas(
+                                                modifier = Modifier
+                                                    .fillMaxHeight()
+                                                    .width(Dimensions.LeafBaseWidth)
+                                            ) {
+                                                drawLine(
+                                                    start = Offset((.1F * size.width), (.65F * size.height)),
+                                                    end = Offset((size.width * .9F), (.35F * size.height)),
+                                                    color = text_color,
+                                                    strokeWidth = 1F
+                                                )
+                                            }
+                                            ProvideTextStyle(MaterialTheme.typography.labelMedium) {
+                                                Row(horizontalArrangement = Arrangement.Center) {
+                                                    Column(
+                                                        verticalArrangement = Arrangement.Top,
+                                                        modifier = Modifier.fillMaxHeight(),
+                                                        content = {
+                                                            Text("${event.numerator}")
+                                                        }
+                                                    )
+                                                    Spacer(Modifier.width(3.dp))
+                                                    Column(
+                                                        verticalArrangement = Arrangement.Bottom,
+                                                        modifier = Modifier.fillMaxHeight(),
+                                                        content = {
+                                                            Text("${event.denominator}")
+                                                        }
+                                                    )
+                                                }
+                                            }
+                                        }
                                     }
                                 }
+
+                                is OpusTempoEvent -> Text(
+                                    "${event.value.roundToInt()}",
+                                    color = text_color,
+                                    style = Typography.EffectLeaf
+                                )
+
+                                is OpusVelocityEvent -> Text(
+                                    "${(event.value * 100F).toInt()}%",
+                                    color = text_color,
+                                    style = Typography.EffectLeaf
+                                )
+
+                                null -> {}
                             }
                         }
                     }
-
-                    is OpusTempoEvent -> Text("${event.value.roundToInt()}", color = text_color)
-                    is OpusVelocityEvent -> Text("${(event.value * 100F).toInt()}%", color = text_color)
-                    null -> {}
                 }
                 TableLine(MaterialTheme.colorScheme.onBackground)
             }

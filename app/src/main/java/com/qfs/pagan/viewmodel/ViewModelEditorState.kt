@@ -677,13 +677,59 @@ class ViewModelEditorState: ViewModel() {
             }
             CursorMode.Single -> {
                 val y = cursor.ints[0]
-                val x = cursor.ints[1]
+                var x = cursor.ints[1]
                 if (this.cell_map.size > y && this.cell_map[y].size > x) {
                     this.cell_map[y][x].value.also {
-                        for ((leaf_path, leaf_data) in it.leafs) {
-                            leaf_data.value.is_selected.value = leaf_path == cursor.ints.subList(2, cursor.ints.size)
-                            leaf_data.value.is_secondary.value = false
-                            this.selected_leafs.add(leaf_data.value)
+                        for ((i, pair) in it.leafs.enumerate()) {
+                            val (leaf_path, leaf_data) = pair
+                            if (x == cursor.ints[1] && leaf_path == cursor.ints.subList(2, cursor.ints.size)) {
+                                val stack = mutableListOf<Triple<Int, Int, Boolean?>>(Triple(x, i, null))
+                                while (stack.isNotEmpty()) {
+                                    val (working_x, path_index, move_back) = stack.removeAt(0)
+                                    val working_leaf_data = this.cell_map[y][working_x].value.leafs[path_index].second
+
+                                    val add_next = (move_back != true) && working_leaf_data.value.event.value != null || working_leaf_data.value.is_spillover.value
+                                    val add_prev = (move_back != false) && working_leaf_data.value.is_spillover.value
+
+                                    if (move_back == null) {
+                                        working_leaf_data.value.is_selected.value = true
+                                        working_leaf_data.value.is_secondary.value = false
+                                    } else if (move_back) {
+                                        working_leaf_data.value.is_selected.value = false
+                                        working_leaf_data.value.is_secondary.value = working_leaf_data.value.is_spillover.value || working_leaf_data.value.event.value != null
+                                    } else { // Move forward
+                                        working_leaf_data.value.is_selected.value = false
+                                        working_leaf_data.value.is_secondary.value = working_leaf_data.value.is_spillover.value
+                                    }
+                                    this.selected_leafs.add(working_leaf_data.value)
+
+                                    if (add_prev) {
+                                        if (path_index > 0) {
+                                            stack.add(Triple(working_x, path_index - 1, true))
+                                        } else if (working_x > 0) {
+                                            stack.add(
+                                                Triple(
+                                                    working_x - 1,
+                                                    this.cell_map[y][working_x - 1].value.leafs.size - 1,
+                                                    true
+                                                )
+                                            )
+                                        }
+                                    }
+
+                                    if (add_next) {
+                                        if (path_index < it.leafs.size - 1) {
+                                            stack.add(Triple(working_x, path_index + 1, false))
+                                        } else if (working_x < this.cell_map[y].size - 1) {
+                                            stack.add(Triple(working_x + 1, 0, false))
+                                        }
+                                    }
+                                }
+                                break
+                            } else {
+                                leaf_data.value.is_selected.value = false
+                                leaf_data.value.is_secondary.value = false
+                            }
                         }
                     }
                 }
@@ -696,7 +742,9 @@ class ViewModelEditorState: ViewModel() {
                                 val is_selected = x == cursor.ints[0] && y == cursor.ints[1]
                                 leaf_data.value.is_selected.value = is_selected
                                 leaf_data.value.is_secondary.value = !is_selected
-                                this.selected_leafs.add(leaf_data.value)
+                                if (is_selected) {
+                                    this.selected_leafs.add(leaf_data.value)
+                                }
                             }
                         }
                     }

@@ -1239,6 +1239,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 )
                         ) {
                             for (y in 0 until ui_facade.line_count.value) {
+                                if (y >= ui_facade.line_data.size) break
                                 val use_height = if (ui_facade.line_data[y].ctl_type.value != null) {
                                     ctl_line_height
                                 } else {

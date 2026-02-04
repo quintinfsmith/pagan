@@ -311,7 +311,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     open fun apply_history_node(current_node: HistoryCache.HistoryNode, depth: Int = 0) {
-        println("APPLYING: ${current_node.token}")
         try {
             when (current_node.token) {
                 HistoryToken.SET_PROJECT_NAME -> {

@@ -154,7 +154,6 @@ fun TagDescription(modifier: Modifier = Modifier, ui_facade: ViewModelEditorStat
                 maxHeightInLines = 4
             ),
             shape = Shapes.ContextMenuButtonFull,
-            placeholder = { SText(R.string.tag_description) },
             callback_on_return = true,
             callback = callback
         )

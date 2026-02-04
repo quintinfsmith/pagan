@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -138,24 +139,25 @@ fun TagDescription(modifier: Modifier = Modifier, ui_facade: ViewModelEditorStat
     val cursor = ui_facade.active_cursor.value ?: return
     val beat = cursor.ints[0]
     val column_data = ui_facade.column_data[beat]
-    if (!column_data.is_tagged.value) return
-    val callback: (String) -> Unit = {
-        val description = it.trim().ifEmpty { null }
-        dispatcher.tag_column(beat, description = description, description == null)
+    key(column_data.tag_content.value) {
+        if (!column_data.is_tagged.value) return
+        val callback: (String) -> Unit = {
+            val description = it.trim().ifEmpty { null }
+            dispatcher.tag_column(beat, description = description, description == null)
+        }
+        TextInput(
+            input = remember { mutableStateOf(column_data.tag_content.value ?: "") },
+            textAlign = TextAlign.Start,
+            modifier = Modifier.fillMaxWidth(),
+            lineLimits = TextFieldLineLimits.MultiLine(
+                minHeightInLines = 1,
+                maxHeightInLines = 4
+            ),
+            shape = Shapes.ContextMenuButtonFull,
+            placeholder = { SText(R.string.tag_description) },
+            callback_on_return = true,
+            callback = callback
+        )
     }
-    TextInput(
-        input = remember { mutableStateOf(column_data.tag_content.value ?: "") },
-        textAlign = TextAlign.Start,
-        modifier = Modifier
-            .fillMaxWidth(),
-        lineLimits = TextFieldLineLimits.MultiLine(
-            minHeightInLines = 1,
-            maxHeightInLines = 4
-        ),
-        shape = Shapes.ContextMenuButtonFull,
-        placeholder = { SText(R.string.tag_description) },
-        on_focus_exit = callback,
-        callback = callback
-    )
 }
 

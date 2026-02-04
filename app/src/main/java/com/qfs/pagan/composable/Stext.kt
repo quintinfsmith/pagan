@@ -86,6 +86,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -95,10 +96,12 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.substring
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
@@ -502,11 +505,12 @@ fun TextInput(
     on_focus_enter: (() -> Unit)? = null,
     on_focus_exit: ((String) -> Unit)? = null,
     shape: Shape = Shapes.Container,
+    callback_on_return: Boolean = false,
     callback: (String) -> Unit
 ) {
     val state = rememberTextFieldState(input.value)
     val trigger_select_all = remember { mutableStateOf<Boolean?>(null) }
-
+    val focus_manager = LocalFocusManager.current
     val was_focused = remember { mutableStateOf(false) }
     val focus_change_callback = { focus_state: FocusState ->
         if (focus_state.isFocused) {
@@ -524,22 +528,21 @@ fun TextInput(
         label = label,
         placeholder = placeholder,
         textStyle = Typography.TextField.copy(textAlign = textAlign),
-        modifier = modifier
-            .onKeyEvent { event ->
-                when (event.key) {
-                    Key.Enter -> {
-                        callback(input.value)
-                        false
-                    }
-
-                    else -> true
-                }
-            }
-            .onFocusChanged { focus_change_callback(it) },
+        modifier = modifier.onFocusChanged { focus_change_callback(it) },
         shape = shape,
         scrollState = rememberScrollState(),
-        onKeyboardAction = { callback(input.value) },
-        keyboardOptions = KeyboardOptions.Companion.Default.copy(keyboardType = KeyboardType.Companion.Text),
+        onKeyboardAction = {
+            callback(input.value)
+            focus_manager.clearFocus()
+        },
+        keyboardOptions = KeyboardOptions.Default.copy(
+            imeAction = if (callback_on_return) {
+                ImeAction.Done
+            } else {
+                KeyboardOptions.Default.imeAction
+            },
+            keyboardType = KeyboardType.Text
+        ),
         inputTransformation = object : InputTransformation {
             override fun TextFieldBuffer.transformInput() {
                 input.value = this.toString()

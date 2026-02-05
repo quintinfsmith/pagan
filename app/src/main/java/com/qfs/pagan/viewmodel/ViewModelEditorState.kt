@@ -695,8 +695,7 @@ class ViewModelEditorState: ViewModel() {
                                 while (stack.isNotEmpty()) {
                                     val (working_x, path_index, move_back) = stack.removeAt(0)
                                     val (_, working_leaf_data) = this.cell_map[y][working_x].value.leafs[path_index]
-
-                                    val add_next = (move_back == true && working_leaf_data.value.is_spillover.value) || (move_back == null && working_leaf_data.value.event.value != null)
+                                    val add_next = (working_leaf_data.value.event.value != null && move_back == null) || (move_back != true && working_leaf_data.value.is_spillover.value)
                                     val add_prev = (move_back != false) && working_leaf_data.value.is_spillover.value
 
                                     if (move_back == null) {

@@ -578,17 +578,18 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         for ((i, entries) in originals.enumerate()) {
             originals[i] = List(entries.size) { j ->
                 val (head, tail) = entries[j]
-                Pair(
-                    head,
-                    List(tail.size) { k ->
-                        val section = tail[k]
+                val adj_tail_entries = mutableListOf<Pair<Int, List<Int>>>()
+                for (section in tail) {
+                    adj_tail_entries.add(
                         if (section.first >= beat) {
+                            if (section.first + diff < 0) continue
                             Pair(section.first + diff, section.second)
                         } else {
                             section
                         }
-                    }
-                )
+                    )
+                }
+                Pair(head, adj_tail_entries)
             }
         }
 
@@ -1059,7 +1060,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     }
 
     override fun insert_beat(beat_index: Int) {
-        this.track_blocked_leafs(beat_index - 1) {
+        this.track_blocked_leafs(max(0, beat_index - 1)) {
             super.insert_beat(beat_index)
             this.ui_add_column(beat_index)
 

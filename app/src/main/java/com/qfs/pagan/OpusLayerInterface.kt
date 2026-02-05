@@ -781,7 +781,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     override fun insert(beat_key: BeatKey, position: List<Int>) {
         this.exception_catcher {
-            this.track_blocked_leafs(beat_key, position) {
+            this.track_blocked_leafs(beat_key, position.subList(0, position.size - 1)) {
                 super.insert(beat_key, position)
                 this._update_tree(beat_key, position.subList(0, position.size - 1))
             }

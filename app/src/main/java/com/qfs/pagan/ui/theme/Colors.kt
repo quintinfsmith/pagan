@@ -15,7 +15,7 @@ object Colors {
     val EFFECT_LINE_COLOR = Color(0xFFFFFFFF)
     val EFFECT_LINE_COLOR_NIGHT = Color(0xFF000000)
 
-    val SELECTION = Color(0xFF25BAFF)
+    val SELECTION = Color(0xFF0033AA)
     val LINE_COLOR = Color(0xFFE0E0E0)
     val LINE_SELECTED = Color(0xFF5BA1D6)
     val LINE_COLOR_NIGHT = Color(0xFF232323)
@@ -164,10 +164,11 @@ object Colors {
             when (selected) {
                 LeafSelection.Unselected -> {}
                 else -> {
+                    val weight = .5F
                     primary_base = Color(
-                        red = (primary_base.red * 1.3F).coerceIn(0F, 1F),
-                        green = (primary_base.green * 1.3F).coerceIn(0F, 1F),
-                        blue = (primary_base.blue * 1.3F).coerceIn(0F, 1F),
+                        red = ((primary_base.red * .8F) * weight) + (SELECTION.red * (1F - weight)),
+                        green = ((primary_base.green * .8F) * weight) + (SELECTION.green * (1F - weight)),
+                        blue = ((primary_base.blue * .8F) * weight) + (SELECTION.blue * (1F - weight)),
                     )
                 }
             }

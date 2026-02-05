@@ -1,25 +1,20 @@
 package com.qfs.pagan.viewmodel
 
 import android.net.Uri
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import com.qfs.pagan.DialogChain
 import com.qfs.pagan.LayoutSize
@@ -132,9 +127,10 @@ class ViewModelPagan: ViewModel() {
         title: Int,
         default_menu: List<Pair<T, @Composable RowScope.() -> Unit>>,
         sort_options: List<Pair<Int, (Int, Int) -> Int>>,
-        selected_sort: Int = -1,
+        selected_sort: MutableIntState = mutableIntStateOf(-1),
         default_value: T? = null,
         content: (@Composable RowScope.() -> Unit)? = null,
+        other: (@Composable (() -> Unit, Int) -> Unit)? = null,
         onLongClick: (T, (() -> Unit)) -> Unit = {_, _ -> },
         onClick: (T) -> Unit
     ) {
@@ -153,14 +149,17 @@ class ViewModelPagan: ViewModel() {
                         bottom = dimensionResource(R.dimen.dialog_bar_padding_vertical),
                     ),
                     sort_options = sort_options,
-                    selected_sort = selected_sort,
+                    active_sort_option = selected_sort,
                     onLongClick = {
                         onLongClick(it, close)
                     },
+                    other = {
+                        other?.let { it(close, selected_sort.value) }
+                    },
                     default_value = default_value,
                     onClick = {
-                        close()
                         onClick(it)
+                        close()
                     }
                 )
                 DialogBar(neutral = close)

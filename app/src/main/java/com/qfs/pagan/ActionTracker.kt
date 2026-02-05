@@ -1731,7 +1731,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
             R.string.dropdown_choose_instrument,
             default_menu = options,
             sort_options = sort_options,
-            selected_sort = 0,
+            selected_sort = mutableIntStateOf(0),
             default_value = default,
             onClick = { this.set_channel_preset(channel, it) }
         )

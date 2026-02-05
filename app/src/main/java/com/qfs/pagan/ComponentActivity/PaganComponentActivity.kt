@@ -24,6 +24,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -37,6 +38,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
@@ -45,7 +48,9 @@ import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -82,11 +87,13 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEve
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelPagan
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileNotFoundException
 import java.text.SimpleDateFormat
 import java.util.Date
+import kotlin.coroutines.CoroutineContext
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 
@@ -467,7 +474,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
 
     open fun on_delete_project(uri: Uri) { }
 
-    fun load_menu_dialog(load_callback: (Uri) -> Unit) {
+    fun load_menu_dialog(current_sort: Int = 0, load_callback: (Uri) -> Unit) {
         val project_list = this.view_model.project_manager?.get_project_list() ?: return
         val items = mutableListOf<Pair<Uri, @Composable RowScope.() -> Unit>>()
         for ((uri, title) in project_list) {
@@ -491,7 +498,41 @@ abstract class PaganComponentActivity: ComponentActivity() {
             R.string.menu_item_load_project,
             items,
             sort_options,
-            selected_sort = 0,
+            selected_sort = mutableIntStateOf(current_sort),
+            other = @Composable { close, active_sort ->
+                val is_loading = remember { mutableStateOf(false) }
+                if (is_loading.value) {
+                    CircularProgressIndicator(
+                        Modifier
+                            .height(36.dp)
+                            .width(36.dp),
+                    )
+                } else {
+                    Button(
+                        modifier = Modifier
+                            .height(36.dp)
+                            .width(36.dp),
+                        colors = ButtonDefaults.buttonColors().copy(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
+                        onClick = {
+                            is_loading.value = true
+                            this@PaganComponentActivity.view_model.project_manager?.scan_and_update_project_list()
+                            close()
+                            is_loading.value = false
+                            load_menu_dialog(active_sort, load_callback)
+                        },
+                        contentPadding = PaddingValues(6.dp),
+                        content = {
+                            Icon(
+                                painter = painterResource(R.drawable.icon_refresh),
+                                contentDescription = stringResource(R.string.cd_sort_options)
+                            )
+                        }
+                    )
+                }
+            },
             onClick = load_callback,
             onLongClick = { it, close_callback ->
                 for ((uri, title) in project_list) {

@@ -64,6 +64,7 @@ import androidx.compose.material3.TextFieldLabelScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -101,7 +102,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.substring
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
@@ -599,13 +599,13 @@ fun <T> SortableMenu(
     sort_row_padding: PaddingValues = PaddingValues(0.dp),
     default_menu: List<Pair<T, @Composable RowScope.() -> Unit>>,
     sort_options: List<Pair<Int, (Int, Int) -> Int>>,
-    selected_sort: Int = -1,
+    active_sort_option: MutableIntState = mutableIntStateOf(-1),
     default_value: T? = null,
     title_content: @Composable (RowScope.() -> Unit)? = null,
+    other: @Composable (RowScope.() -> Unit)? = null,
     onLongClick: (T) -> Unit = {},
     onClick: (T) -> Unit
 ) {
-    val active_sort_option = remember { mutableIntStateOf(selected_sort) }
     val sorted_menu = if (sort_options.isEmpty() || active_sort_option.intValue == -1) {
         default_menu
     } else {
@@ -635,7 +635,10 @@ fun <T> SortableMenu(
 
                 title_content?.let { it() }
                 Spacer(Modifier.weight(1F))
-
+                other?.let {
+                    it()
+                    Spacer(Modifier.width(4.dp))
+                }
                 Box {
                     Button(
                         modifier = Modifier

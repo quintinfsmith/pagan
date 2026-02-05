@@ -582,10 +582,10 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                     head,
                     List(tail.size) { k ->
                         val section = tail[k]
-                        if (section.first < beat) {
-                            section
-                        } else {
+                        if (section.first >= beat) {
                             Pair(section.first + diff, section.second)
+                        } else {
+                            section
                         }
                     }
                 )
@@ -745,7 +745,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     override fun insert_after(beat_key: BeatKey, position: List<Int>) {
         this.exception_catcher {
-            this.track_blocked_leafs(beat_key, position) {
+            this.track_blocked_leafs(beat_key, position.subList(0, position.size - 1)) {
                 super.insert_after(beat_key, position)
                 this._update_tree(beat_key, position.subList(0, position.size - 1))
             }
@@ -1059,7 +1059,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     }
 
     override fun insert_beat(beat_index: Int) {
-        this.track_blocked_leafs(beat_index) {
+        this.track_blocked_leafs(beat_index - 1) {
             super.insert_beat(beat_index)
             this.ui_add_column(beat_index)
 

@@ -38,21 +38,23 @@ class ViewModelEditorState: ViewModel() {
         Backup
     }
 
-    class LineData(channel: Int?, line_offset: Int?, ctl_type: EffectType?, assigned_offset: Int? = null, is_mute: Boolean, is_selected: Boolean = false, palette: OpusColorPalette?) {
+    class LineData(channel: Int?, line_offset: Int?, ctl_type: EffectType?, assigned_offset: Int? = null, is_mute: Boolean, is_selected: Boolean = false, is_secondary: Boolean = false, palette: OpusColorPalette?) {
         val channel = mutableStateOf(channel)
         val line_offset = mutableStateOf(line_offset)
         val ctl_type = mutableStateOf(ctl_type)
         val assigned_offset = mutableStateOf(assigned_offset)
         val is_mute = mutableStateOf(is_mute)
         val is_selected = mutableStateOf(is_selected)
+        val is_secondary = mutableStateOf(is_secondary)
         val is_dragging = mutableStateOf(false)
         val palette = mutableStateOf(palette)
     }
 
-    class ColumnData(is_tagged: Boolean, is_selected: Boolean = false, tag_content: String? = null, max_leaf_count: Int = 1) {
+    class ColumnData(is_tagged: Boolean, is_selected: Boolean = false, is_secondary: Boolean = false, tag_content: String? = null, max_leaf_count: Int = 1) {
         val is_tagged = mutableStateOf(is_tagged)
         val tag_content = mutableStateOf(tag_content)
         val is_selected = mutableStateOf(is_selected)
+        val is_secondary = mutableStateOf(is_secondary)
         val top_weight = mutableStateOf(max_leaf_count)
     }
 
@@ -608,10 +610,16 @@ class ViewModelEditorState: ViewModel() {
     fun set_cursor(cursor: CacheCursor?) {
         // Deselect old cursor
         while (this.selected_lines.isNotEmpty()) {
-            this.selected_lines.removeAt(0).is_selected.value = false
+            this.selected_lines.removeAt(0).also {
+                it.is_selected.value = false
+                it.is_secondary.value = false
+            }
         }
         while (this.selected_columns.isNotEmpty()) {
-            this.selected_columns.removeAt(0).is_selected.value = false
+            this.selected_columns.removeAt(0).also {
+                it.is_selected.value = false
+                it.is_secondary.value = false
+            }
         }
         while (this.selected_leafs.isNotEmpty()) {
             val leaf = this.selected_leafs.removeAt(0)
@@ -686,9 +694,9 @@ class ViewModelEditorState: ViewModel() {
                                 val stack = mutableListOf<Triple<Int, Int, Boolean?>>(Triple(x, i, null))
                                 while (stack.isNotEmpty()) {
                                     val (working_x, path_index, move_back) = stack.removeAt(0)
-                                    val working_leaf_data = this.cell_map[y][working_x].value.leafs[path_index].second
+                                    val (_, working_leaf_data) = this.cell_map[y][working_x].value.leafs[path_index]
 
-                                    val add_next = (move_back != true) && working_leaf_data.value.event.value != null || working_leaf_data.value.is_spillover.value
+                                    val add_next = (move_back != true) && (working_leaf_data.value.event.value != null || working_leaf_data.value.is_spillover.value)
                                     val add_prev = (move_back != false) && working_leaf_data.value.is_spillover.value
 
                                     if (move_back == null) {
@@ -718,7 +726,7 @@ class ViewModelEditorState: ViewModel() {
                                     }
 
                                     if (add_next) {
-                                        if (path_index < it.leafs.size - 1) {
+                                        if (path_index < this.cell_map[y][working_x].value.leafs.size - 1) {
                                             stack.add(Triple(working_x, path_index + 1, false))
                                         } else if (working_x < this.cell_map[y].size - 1) {
                                             stack.add(Triple(working_x + 1, 0, false))
@@ -742,9 +750,7 @@ class ViewModelEditorState: ViewModel() {
                                 val is_selected = x == cursor.ints[0] && y == cursor.ints[1]
                                 leaf_data.value.is_selected.value = is_selected
                                 leaf_data.value.is_secondary.value = !is_selected
-                                if (is_selected) {
-                                    this.selected_leafs.add(leaf_data.value)
-                                }
+                                this.selected_leafs.add(leaf_data.value)
                             }
                         }
                     }
@@ -761,6 +767,7 @@ class ViewModelEditorState: ViewModel() {
                 if (x < this.column_data.size) {
                     this.column_data[x].also {
                         it.is_selected.value = true
+                        it.is_secondary.value = false
                         this.selected_columns.add(it)
                     }
                 }
@@ -769,7 +776,8 @@ class ViewModelEditorState: ViewModel() {
                 val x = cursor.ints[1]
                 if (x < this.column_data.size) {
                     this.column_data[x].also {
-                        it.is_selected.value = true
+                        it.is_selected.value = false
+                        it.is_secondary.value = true
                         this.selected_columns.add(it)
                     }
                 }
@@ -778,7 +786,8 @@ class ViewModelEditorState: ViewModel() {
                 for (x in min(cursor.ints[1], cursor.ints[3]) .. max(cursor.ints[1], cursor.ints[3])) {
                     if (x < this.column_data.size) {
                         this.column_data[x].also {
-                            it.is_selected.value = true
+                            it.is_selected.value = false
+                            it.is_secondary.value = true
                             this.selected_columns.add(it)
                         }
                     }
@@ -793,7 +802,8 @@ class ViewModelEditorState: ViewModel() {
             CursorMode.Channel -> {
                 for (line_data in this.line_data) {
                     if (line_data.channel.value != cursor.ints[0]) continue
-                    line_data.is_selected.value = true
+                    line_data.is_selected.value = false
+                    line_data.is_secondary.value = true
                     this.selected_lines.add(line_data)
                 }
             }
@@ -801,25 +811,28 @@ class ViewModelEditorState: ViewModel() {
                 val y = cursor.ints[0]
                 if (y >= this.line_count.value) return // This is ok. It just means the line hasn't been added yet
                 val active_line = this.line_data[y]
-                for ((_, line) in this.line_data.enumerate()) {
+                for ((line_index, line) in this.line_data.enumerate()) {
                     if (line.channel.value != active_line.channel.value) continue
                     if (line.line_offset.value != active_line.line_offset.value) continue
                     if (active_line.ctl_type.value != null && active_line.ctl_type.value != line.ctl_type.value) continue
-                    line.is_selected.value = true
+                    line.is_selected.value = y == line_index
+                    line.is_secondary.value = y != line_index
                     this.selected_lines.add(line)
 
                 }
             }
             CursorMode.Single -> {
                 this.line_data[cursor.ints[0]].also {
-                    it.is_selected.value = true
+                    it.is_selected.value = false
+                    it.is_secondary.value = true
                     this.selected_lines.add(it)
                 }
             }
             CursorMode.Range -> {
                 for (y in min(cursor.ints[0], cursor.ints[2]) .. max(cursor.ints[0], cursor.ints[2])) {
                     this.line_data[y].also {
-                        it.is_selected.value = true
+                        it.is_selected.value = false
+                        it.is_secondary.value = true
                         this.selected_lines.add(it)
                     }
                 }

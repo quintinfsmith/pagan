@@ -19,6 +19,7 @@ import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -63,6 +64,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -152,6 +154,7 @@ import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Shadows
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorController
@@ -1554,7 +1557,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         line_info: ViewModelEditorState.LineData
     ) {
         val ctl_type = line_info.ctl_type.value
-        val (background, foreground) = if (!line_info.is_selected.value) {
+        val (background, foreground) = if (!line_info.is_selected.value && !line_info.is_secondary.value) {
             Pair(
                 MaterialTheme.colorScheme.surfaceVariant,
                 MaterialTheme.colorScheme.onSurfaceVariant
@@ -1646,6 +1649,23 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             )
                         }
                     }
+                    if (line_info.is_selected.value) {
+                        Spacer(
+                            Modifier
+                                .padding(
+                                    top = 2.dp,
+                                    bottom = 2.dp,
+                                    end = 3.dp,
+                                    start = 2.dp
+                                )
+                                .fillMaxSize()
+                                .dashed_border(
+                                    color = foreground,
+                                    shape = RectangleShape,
+                                    width = 2.dp
+                                )
+                        )
+                    }
                 }
             )
         }
@@ -1660,7 +1680,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         column_info: ViewModelEditorState.ColumnData,
         column_width: Dp // Necessary for floating label
     ) {
-        val (background, foreground) = if (!column_info.is_selected.value) {
+        val (background, foreground) = if (!column_info.is_selected.value && !column_info.is_secondary.value) {
             Pair(
                 MaterialTheme.colorScheme.surfaceVariant,
                 MaterialTheme.colorScheme.onSurfaceVariant
@@ -1768,6 +1788,23 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             Text(text = "$x")
                         }
                     )
+                    if (column_info.is_selected.value) {
+                        Spacer(
+                            Modifier
+                                .padding(
+                                    top = 2.dp,
+                                    bottom = 2.dp,
+                                    end = 3.dp,
+                                    start = 2.dp
+                                )
+                                .fillMaxSize()
+                                .dashed_border(
+                                    color = foreground,
+                                    shape = RectangleShape,
+                                    width = 2.dp
+                                )
+                        )
+                    }
                 }
             )
         }
@@ -1807,6 +1844,23 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     .background(color = leaf_color),
                 contentAlignment = Alignment.Center
             ) {
+                if (leaf_selection == Colors.LeafSelection.Primary) {
+                    Spacer(
+                        Modifier
+                            .fillMaxSize()
+                            .padding(
+                                top = 2.dp,
+                                end = 3.dp, // Need extra padding to account for TableLine
+                                bottom = 2.dp,
+                                start = 2.dp
+                            )
+                            .dashed_border(
+                                color = text_color,
+                                shape = RectangleShape,
+                                width = 2.dp
+                            )
+                    )
+                }
                 when (event) {
                     is AbsoluteNoteEvent -> {
                         val octave = event.note / radix
@@ -1975,7 +2029,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun CellView(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, cell: MutableState<ViewModelEditorState.TreeData>, y: Int, x: Int, modifier: Modifier = Modifier) {
         val line_info = ui_facade.line_data[y]
         key(cell.value.key.value, y) {
-            Row(modifier.fillMaxSize()) {
+            Row(
+                modifier
+                    .fillMaxSize()
+            ) {
                 for ((path, leaf_data) in cell.value.leafs) {
                     this@ComponentActivityEditor.LeafView(
                         line_info.channel.value?.let { ui_facade.channel_data[it] },

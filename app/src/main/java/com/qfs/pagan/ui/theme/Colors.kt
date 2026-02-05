@@ -6,8 +6,6 @@ import kotlin.math.min
 
 object Colors {
     val LEAF_COLOR = Color(0xFF765bd5)
-    val LEAF_COLOR_SELECTED = Color(0xFF2636b2)
-    val LEAF_COLOR_SECONDARY = Color(0xFF4F5BBC)
     val LEAF_COLOR_INVALID = Color(0xFFe51C3A)
     val LEAF_COLOR_INVALID_SELECTED = Color(0xFF890E21)
 
@@ -17,10 +15,11 @@ object Colors {
     val EFFECT_LINE_COLOR = Color(0xFFFFFFFF)
     val EFFECT_LINE_COLOR_NIGHT = Color(0xFF000000)
 
+    val SELECTION = Color(0xFF25BAFF)
     val LINE_COLOR = Color(0xFFE0E0E0)
     val LINE_SELECTED = Color(0xFF5BA1D6)
     val LINE_COLOR_NIGHT = Color(0xFF232323)
-    val LINE_COLOR_SECONDARY = Color(0xFF608BAB)
+    val LINE_COLOR_SECONDARY = Color(0xFF95BFDE)
     val LINE_COLOR_SECONDARY_NIGHT = Color(0xFF416B8B)
 
     val MUTED_LEAF_COLOR = Color(0xFF888888)
@@ -71,6 +70,7 @@ object Colors {
         } else {
             line_palette.event ?: channel_palette.event ?: LEAF_COLOR
         }
+
         val effect_color_base = if (is_muted) {
             if (dark_mode) {
                 MUTED_LEAF_COLOR_NIGHT
@@ -162,27 +162,14 @@ object Colors {
             }
         } else {
             when (selected) {
-                LeafSelection.Primary -> {
-                    val selector = Color(0xFF67B7f3)
-                    primary_base = Color(
-                        alpha = primary_base.alpha,
-                        red = primary_base.red * selector.red,
-                        green = primary_base.green * selector.green,
-                        blue = primary_base.blue * selector.blue,
-                    )
-                }
-
-                LeafSelection.Secondary -> {
-                    val selector = Color(0xFF67B7F3)
-                    primary_base = Color(
-                        alpha = primary_base.alpha,
-                        red = primary_base.red * selector.red,
-                        green = primary_base.green * selector.green,
-                        blue = primary_base.blue * selector.blue,
-                    )
-                }
-
                 LeafSelection.Unselected -> {}
+                else -> {
+                    primary_base = Color(
+                        red = (primary_base.red * 1.3F).coerceIn(0F, 1F),
+                        green = (primary_base.green * 1.3F).coerceIn(0F, 1F),
+                        blue = (primary_base.blue * 1.3F).coerceIn(0F, 1F),
+                    )
+                }
             }
         }
 

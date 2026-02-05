@@ -158,8 +158,8 @@ class ViewModelPagan: ViewModel() {
                     },
                     default_value = default_value,
                     onClick = {
-                        onClick(it)
                         close()
+                        onClick(it)
                     }
                 )
                 DialogBar(neutral = close)

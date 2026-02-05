@@ -2,7 +2,6 @@ package com.qfs.pagan.ComponentActivity
 
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.provider.DocumentsContract
 import android.provider.DocumentsContract.Document.COLUMN_DOCUMENT_ID
@@ -87,13 +86,11 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEve
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelPagan
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileNotFoundException
 import java.text.SimpleDateFormat
 import java.util.Date
-import kotlin.coroutines.CoroutineContext
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 
@@ -500,8 +497,8 @@ abstract class PaganComponentActivity: ComponentActivity() {
             sort_options,
             selected_sort = mutableIntStateOf(current_sort),
             other = @Composable { close, active_sort ->
-                val is_loading = remember { mutableStateOf(false) }
-                if (is_loading.value) {
+                val is_refreshing = remember { mutableStateOf(false) }
+                if (is_refreshing.value) {
                     CircularProgressIndicator(
                         Modifier
                             .height(36.dp)
@@ -517,10 +514,10 @@ abstract class PaganComponentActivity: ComponentActivity() {
                             contentColor = MaterialTheme.colorScheme.onPrimary
                         ),
                         onClick = {
-                            is_loading.value = true
+                            is_refreshing.value = true
                             this@PaganComponentActivity.view_model.project_manager?.scan_and_update_project_list()
                             close()
-                            is_loading.value = false
+                            is_refreshing.value = false
                             load_menu_dialog(active_sort, load_callback)
                         },
                         contentPadding = PaddingValues(6.dp),

@@ -1,0 +1,8 @@
+Complete UI Refactor - rebuilt with JetPack Compose
+- Custom Channel & Line colors.
+- Overhauled icons to more simplistic & effective designs.
+- Percussion input now uses a switch widget instead of a button.
+- Relative input mode now accessed by tap-and-holding notes instead of a dedicated widget.
+- Moved play button further away from undo button.
+- Added dots to indicate previously pressed notes and underlines to indicate preceding note values.
+- Dashed border used to indicate primary selection

@@ -862,10 +862,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
     }
 
     fun import_soundfont(uri: Uri? = null) {
-        if (this.view_model.configuration.soundfont_directory.value == null) {
-            TODO()
-            //this.initial_dialog_select_soundfont_directory()
-        } else if (uri == null) {
+        if (uri == null) {
             val intent = Intent()
                 .setType("*/*")
                 .setAction(Intent.ACTION_GET_CONTENT)

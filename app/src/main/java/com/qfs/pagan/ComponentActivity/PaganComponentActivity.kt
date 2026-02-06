@@ -150,7 +150,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        this.debug_mode = this.packageName == "com.qfs.pagandevb"
+        this.debug_mode = this.packageName == "com.qfs.pagandev"
         super.onCreate(savedInstanceState)
 
         if (!this.debug_mode) {

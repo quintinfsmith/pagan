@@ -322,15 +322,15 @@ fun IntegerInput(
             minimum?.let {
                 if (it > converted_value) {
                     converted_value = max(it, converted_value)
-                    this.delete(0, this.length)
-                    this.append(converted_value.toString())
+                    val text = this.originalText
+                    this.replace(0, text.length, converted_value.toString())
                 }
             }
             maximum?.let {
                 if (it < converted_value) {
+                    val text = this.originalText
                     converted_value = min(it, converted_value)
-                    this.delete(0, this.length)
-                    this.append(converted_value.toString())
+                    this.replace(0, text.length, converted_value.toString())
                 }
             }
         },
@@ -409,15 +409,15 @@ fun FloatInput(
             minimum?.let {
                 if (it > converted_value) {
                     converted_value = max(it, converted_value)
-                    this.delete(0, this.length)
-                    this.append(converted_value.toString())
+                    val text = this.originalText
+                    this.replace(0, text.length, converted_value.toString())
                 }
             }
             maximum?.let {
                 if (it < converted_value) {
                     converted_value = min(it, converted_value)
-                    this.delete(0, this.length)
-                    this.append(converted_value.toString())
+                    val text = this.originalText
+                    this.replace(0, text.length, converted_value.toString())
                 }
             }
         },

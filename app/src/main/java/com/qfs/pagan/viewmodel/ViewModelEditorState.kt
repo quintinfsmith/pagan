@@ -639,6 +639,7 @@ class ViewModelEditorState: ViewModel() {
         when (cursor.type) {
             CursorMode.Column -> {
                 for (y in 0 until this.line_count.value) {
+                    if (cursor.ints[0] >= this.cell_map[y].size) continue // This is ok, the column just hasn't been added yet
                     this.cell_map[y][cursor.ints[0]].value.let {
                         for ((_, leaf_data) in it.leafs) {
                             leaf_data.value.is_selected.value = false

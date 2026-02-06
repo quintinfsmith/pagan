@@ -27,8 +27,8 @@ object Typography {
 
     val BeatLabel = TextStyle(
         fontFamily = Fonts.FiraSans,
-        fontSize = 16.sp,
-        lineHeight = 16.sp
+        fontSize = 14.sp,
+        lineHeight = 14.sp
     )
 
     val ColorPickerLabel = TextStyle(

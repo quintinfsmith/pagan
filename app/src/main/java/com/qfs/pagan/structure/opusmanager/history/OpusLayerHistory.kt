@@ -678,7 +678,9 @@ open class OpusLayerHistory: OpusLayerCursor() {
                     val channel = current_node.args[1] as Int
                     val line_offset = current_node.args[2] as Int
                     this.new_line_controller(type, channel, line_offset)
-                    this.set_line_controller_visibility(type, channel, line_offset, current_node.args[3] as Boolean)
+                    if (current_node.args[3] as Boolean) {
+                        this.set_line_controller_visibility(type, channel, line_offset, true)
+                    }
                 }
                 HistoryToken.NEW_GLOBAL_CONTROLLER -> {
                     this.new_global_controller(
@@ -690,7 +692,9 @@ open class OpusLayerHistory: OpusLayerCursor() {
                     val type = current_node.args[0] as EffectType
                     val channel = current_node.args[1] as Int
                     this.new_channel_controller(type, channel)
-                    this.set_channel_controller_visibility(type, channel, current_node.args[2] as Boolean)
+                    if (current_node.args[2] as Boolean) {
+                        this.set_channel_controller_visibility(type, channel, true)
+                    }
                 }
 
                 HistoryToken.CURSOR_SELECT -> {
@@ -1802,7 +1806,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
                     if (controller.beats[beat].is_leaf() && !controller.beats[beat].has_event()) {
                         continue
                     }
-
                     this.push_to_history_stack(
                         HistoryToken.REPLACE_CHANNEL_CTL_TREE,
                         listOf(type, channel_index, beat, listOf<Int>(), controller.beats[beat])
@@ -1869,7 +1872,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
                     HistoryToken.REMOVE_CHANNEL_CONTROLLER,
                     listOf(type, channel_index)
                 )
-
             }
             super.new_channel_controller(type, channel_index)
         }

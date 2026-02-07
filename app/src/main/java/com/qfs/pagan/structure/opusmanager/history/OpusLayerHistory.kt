@@ -1503,14 +1503,13 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
             this.push_to_history_stack(
                 HistoryToken.MOVE_CHANNEL,
-                listOf(
-                    if (channel_index < new_channel_index) {
-                        new_channel_index - 1
-                    } else {
-                        new_channel_index
-                    },
-                    channel_index
-                )
+                if (new_channel_index > channel_index) {
+                    listOf(new_channel_index - 1, channel_index)
+                } else if (new_channel_index < channel_index) {
+                    listOf(new_channel_index, channel_index + 1)
+                } else {
+                    listOf(new_channel_index, channel_index)
+                }
             )
         }
     }

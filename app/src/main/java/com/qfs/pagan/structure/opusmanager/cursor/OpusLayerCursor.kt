@@ -2572,7 +2572,6 @@ open class OpusLayerCursor: OpusLayerBase() {
                 )
             }
             RelativeInputMode.Positive -> {
-                println("P: $offset - - - -- - - - - ")
                 RelativeNoteEvent(
                     when (current_event) {
                         is RelativeNoteEvent -> ((abs(current_event.offset) / radix) * radix) + offset
@@ -2582,7 +2581,6 @@ open class OpusLayerCursor: OpusLayerBase() {
                 )
             }
             RelativeInputMode.Negative -> {
-                println("N: $offset - - - -- - - - - ")
                 RelativeNoteEvent(
                     when (current_event) {
                         is RelativeNoteEvent -> {

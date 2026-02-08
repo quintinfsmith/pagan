@@ -44,7 +44,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.integerArrayResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -483,7 +482,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                         DialogSTitle(R.string.dialog_select_soundfont)
                         Spacer(modifier = Modifier.weight(1F))
                         Button(
-                            modifier = Modifier.height(dimensionResource(R.dimen.sf_menu_icon_height)),
+                            modifier = Modifier.height(Dimensions.SoundFontMenuIconHeight),
                             contentPadding = PaddingValues(8.dp),
                             content = {
                                 Icon(
@@ -499,7 +498,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                         )
                         MenuPadder()
                         Button(
-                            modifier = Modifier.height(dimensionResource(R.dimen.sf_menu_icon_height)),
+                            modifier = Modifier.height(Dimensions.SoundFontMenuIconHeight),
                             contentPadding = PaddingValues(8.dp),
                             content = {
                                 Icon(

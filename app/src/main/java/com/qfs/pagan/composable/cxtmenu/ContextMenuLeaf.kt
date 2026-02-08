@@ -28,7 +28,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -148,7 +147,7 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewM
 
     if (landscape) {
         Column(
-            Modifier.width(dimensionResource(R.dimen.contextmenu_button_width)),
+            Modifier.width(Dimensions.ContextMenuButtonWidth),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             SplitButton(dispatcher)
@@ -231,7 +230,7 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEd
             } else {
                 Row {
                     ContextMenuStructureControls(Modifier, ui_facade, dispatcher, true)
-                    Column(Modifier.width(dimensionResource(R.dimen.numberselector_column_width))) {
+                    Column(Modifier.width(Dimensions.NumberSelectorColumnWidth)) {
                         val octave_dropdown_visible: MutableState<Int?> = remember { mutableStateOf(null) }
                         NumberSelector(
                             progression = 7 downTo 0,

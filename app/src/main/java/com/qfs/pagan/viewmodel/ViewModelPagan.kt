@@ -22,13 +22,11 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.ViewModel
 import com.qfs.pagan.DialogChain
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.PaganConfiguration
-import com.qfs.pagan.R
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.SortableMenu
@@ -155,7 +153,7 @@ class ViewModelPagan: ViewModel() {
                     },
                     default_menu = default_menu,
                     sort_row_padding = PaddingValues(
-                        bottom = dimensionResource(R.dimen.dialog_bar_padding_vertical),
+                        bottom = Dimensions.DialogBarPaddingVertical,
                     ),
                     sort_options = sort_options,
                     active_sort_option = selected_sort,

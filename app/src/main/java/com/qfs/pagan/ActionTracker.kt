@@ -57,7 +57,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -1268,7 +1267,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     private fun generate_effect_menu_option(ctl_type: EffectType, icon_id: Int): Pair<EffectType, @Composable RowScope.() -> Unit> {
         return Pair(ctl_type) {
             Icon(
-                modifier = Modifier.width(dimensionResource(R.dimen.effect_dialog_icon_width)),
+                modifier = Modifier.width(Dimensions.EffectDialogIconWidth),
                 painter = painterResource(icon_id),
                 contentDescription = ctl_type.name // TODO: extract string resource
             )
@@ -1449,7 +1448,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                         SText(R.string.offset_dialog_octaves)
                         NumberPicker(Modifier, -7..7, octave)
                     }
-                    Spacer(Modifier.width(dimensionResource(R.dimen.dialog_adjust_inner_space)))
+                    Spacer(Modifier.width(Dimensions.DialogAdjustInnerSpace))
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         SText(R.string.offset_dialog_offset)
                         NumberPicker(Modifier, 0 - max_abs .. max_abs, offset)
@@ -1996,7 +1995,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                         value = value,
                         label = { SText(title_string_id) },
                         modifier = Modifier.focusRequester(focus_requester),
-                        contentPadding = PaddingValues(dimensionResource(R.dimen.dlg_input_padding)),
+                        contentPadding = PaddingValues(Dimensions.NumberInputDialogPadding),
                         text_align = TextAlign.Center,
                         minimum = min_value,
                         maximum = max_value
@@ -2851,16 +2850,16 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                                 IntegerInput(
                                     value = numer,
                                     minimum = 0,
-                                    modifier = Modifier.width(64.dp),
-                                    contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
+                                    modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
+                                    contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
                                     callback = {}
                                 )
                                 Text("/", modifier = Modifier.padding(horizontal = 2.dp))
                                 IntegerInput(
                                     value = denom,
                                     minimum = 1,
-                                    modifier = Modifier.width(64.dp),
-                                    contentPadding = PaddingValues(dimensionResource(R.dimen.transpose_dlg_input_padding)),
+                                    modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
+                                    contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
                                     callback = { }
                                 )
                             }

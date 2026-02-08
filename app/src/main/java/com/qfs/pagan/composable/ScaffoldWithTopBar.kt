@@ -28,8 +28,6 @@ import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.dimensionResource
-import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shadows

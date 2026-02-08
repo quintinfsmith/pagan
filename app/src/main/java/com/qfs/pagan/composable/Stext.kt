@@ -98,7 +98,6 @@ import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextLayoutResult
@@ -866,7 +865,7 @@ fun ColumnScope.DialogBar(
     Row(
         modifier = modifier
             .padding(
-                vertical = dimensionResource(R.dimen.dialog_bar_padding_vertical)
+                vertical = Dimensions.DialogBarPaddingVertical
             ),
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically
@@ -874,7 +873,7 @@ fun ColumnScope.DialogBar(
         negative?.let {
             SmallButton(
                 modifier = Modifier
-                    .height(dimensionResource(R.dimen.dialog_bar_button_height))
+                    .height(Dimensions.DialogBarButtonHeight)
                     .weight(1F),
                 onClick = it,
                 content = { SText(negative_label) }
@@ -886,7 +885,7 @@ fun ColumnScope.DialogBar(
             }
             SmallOutlinedButton(
                 modifier = Modifier
-                    .height(dimensionResource(R.dimen.dialog_bar_button_height))
+                    .height(Dimensions.DialogBarButtonHeight)
                     .weight(1F),
                 onClick = it,
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface),
@@ -899,7 +898,7 @@ fun ColumnScope.DialogBar(
             }
             SmallButton(
                 modifier = Modifier
-                    .height(dimensionResource(R.dimen.dialog_bar_button_height))
+                    .height(Dimensions.DialogBarButtonHeight)
                     .weight(1F),
                 onClick = it,
                 content = { SText(positive_label) }

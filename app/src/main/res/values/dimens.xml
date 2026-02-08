@@ -9,10 +9,6 @@
     <dimen name="ctl_leaf_padding">1dp</dimen>
     <dimen name="ctl_leaf_radius">6dp</dimen>
     <dimen name="relative_option_width">35dp</dimen>
-    <dimen name="line_height">41dp</dimen>
-    <dimen name="line_label_width">41dp</dimen>
-    <dimen name="ctl_line_height">30dp</dimen>
-    <dimen name="channel_gap_size">5dp</dimen>
     <dimen name="dropdown_item_padding_top">4dp</dimen>
     <dimen name="dropdown_item_padding_sides">16dp</dimen>
     <dimen name="dropdown_item_min_width">248dp</dimen>
@@ -121,24 +117,12 @@
 
     <dimen name="contextmenu_primary_width">41dp</dimen>
     <dimen name="contextmenu_secondary_width">41dp</dimen>
-    <dimen name="dialog_bar_padding_horizontal">4dp</dimen>
-    <dimen name="dialog_bar_padding_vertical">8dp</dimen>
     <dimen name="dialog_width_max">500dp</dimen>
 
-    <dimen name="dialog_adjust_inner_space">64dp</dimen>
-    <dimen name="dialog_bar_button_width">120dp</dimen>
-    <dimen name="dialog_bar_button_height">41dp</dimen>
-
-    <dimen name="effect_dialog_icon_width">32dp</dimen>
     <dimen name="effect_tempo_input_width">100dp</dimen>
-    <dimen name="dlg_input_padding">8dp</dimen>
     <dimen name="numberpicker_row_height">41dp</dimen>
     <dimen name="numberpicker_row_width">80dp</dimen>
-    <dimen name="numberselector_column_width">41dp</dimen>
-    <dimen name="landing_padding">8dp</dimen>
     <dimen name="landing_button_height">48dp</dimen>
-    <dimen name="sf_menu_icon_height">41dp</dimen>
-    <dimen name="about_padding">12dp</dimen>
 
     <dimen name="transpose_dlg_input_width">64dp</dimen>
     <dimen name="transpose_dlg_input_height">41dp</dimen>

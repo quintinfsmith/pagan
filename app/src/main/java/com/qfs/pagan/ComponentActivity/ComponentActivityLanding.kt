@@ -36,7 +36,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -107,11 +106,11 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
     @Composable
     fun RowScope.Padder(factor: Float = 1F) {
-        Spacer(Modifier.width(dimensionResource(R.dimen.landing_padding) * factor))
+        Spacer(Modifier.width(Dimensions.LandingPadding * factor))
     }
     @Composable
     fun ColumnScope.Padder(factor: Float = 1F) {
-        Spacer(Modifier.height(dimensionResource(R.dimen.landing_padding) * factor))
+        Spacer(Modifier.height(Dimensions.LandingPadding * factor))
     }
 
     @Composable
@@ -232,12 +231,6 @@ class ComponentActivityLanding: PaganComponentActivity() {
                 )
             }
         )
-
-        // Button(
-        //     modifier = modifier,
-        //     //.height(dimensionResource(R.dimen.landing_button_height)),
-        //     //content = { Text(stringResource(R.string.btn_landing_settings)) },
-        // )
     }
 
     @Composable
@@ -276,7 +269,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
         val has_backup = this.view_model.project_manager?.has_backup_saved() == true
         val has_saved_project = this.view_model.has_saved_project.value
         Box(
-            modifier = modifier.padding(dimensionResource(R.dimen.landing_padding)),
+            modifier = modifier.padding(Dimensions.LandingPadding),
             contentAlignment = Alignment.Center
         ) {
             Column(
@@ -388,7 +381,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
         val has_saved_project = this.view_model.has_saved_project.value
         val button_shape = RoundedCornerShape(Dimensions.LandingButtonCornerRadius, 0.dp, 0.dp, Dimensions.LandingButtonCornerRadius)
         Row(
-            modifier.padding(dimensionResource(R.dimen.landing_padding)),
+            modifier.padding(Dimensions.LandingPadding),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -431,7 +424,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
         val has_saved_project = this.view_model.has_saved_project.value
 
         Box(
-            modifier.padding(dimensionResource(R.dimen.landing_padding))
+            modifier.padding(Dimensions.LandingPadding)
         ) {
             Column(
                 Modifier

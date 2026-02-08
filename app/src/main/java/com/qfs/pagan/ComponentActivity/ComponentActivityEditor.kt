@@ -80,7 +80,6 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -1189,36 +1188,36 @@ class ComponentActivityEditor: PaganComponentActivity() {
             Modifier
                 .fillMaxHeight()
                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                .width(dimensionResource(R.dimen.line_label_width)),
+                .width(Dimensions.LineLabelWidth),
         )
         Row {
             Spacer(
                 Modifier
                     .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .width(dimensionResource(R.dimen.line_label_width))
-                    .height(dimensionResource(R.dimen.line_height)),
+                    .width(Dimensions.LineLabelWidth)
+                    .height(Dimensions.LineHeight),
             )
 
             Spacer(
                 Modifier
                     .weight(1F)
                     .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .height(dimensionResource(R.dimen.line_height)),
+                    .height(Dimensions.LineHeight),
             )
         }
     }
 
     @Composable
     fun MainTable(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, length: MutableState<Int>, layout: LayoutSize) {
-        val line_height = dimensionResource(R.dimen.line_height)
-        val ctl_line_height = dimensionResource(R.dimen.ctl_line_height)
+        val line_height = Dimensions.LineHeight
+        val ctl_line_height = Dimensions.EffectLineHeight
         val leaf_width = Dimensions.LeafBaseWidth
-        val line_label_width = dimensionResource(R.dimen.line_label_width)
+        val line_label_width = Dimensions.LineLabelWidth
         val column_widths = Array(ui_facade.beat_count.value) { i ->
             ui_facade.column_data[i].top_weight.value
         }
 
-        val channel_gap_height = dimensionResource(R.dimen.channel_gap_size)
+        val channel_gap_height = Dimensions.ChannelGapHeight
 
         val scope = rememberCoroutineScope()
         val scroll_state_v = ui_facade.scroll_state_y.value
@@ -1336,7 +1335,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     Spacer(
                                         modifier = Modifier
                                             .draggable_line(y, dragging_to_y, is_after, true)
-                                            .width(dimensionResource(R.dimen.line_label_width))
+                                            .width(Dimensions.LineLabelWidth)
                                             .height(channel_gap_height)
                                             .background(MaterialTheme.colorScheme.onSurfaceVariant)
                                     )
@@ -1462,7 +1461,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 .background(color = color)
                 .align(Alignment.CenterEnd)
                 .fillMaxHeight()
-                .width(dimensionResource(R.dimen.table_line_stroke))
+                .width(Dimensions.TableLineStroke)
         )
     }
 
@@ -1472,7 +1471,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             Modifier
                 .background(color = color)
                 .fillMaxHeight()
-                .width(dimensionResource(R.dimen.table_line_stroke))
+                .width(Dimensions.TableLineStroke)
         )
     }
 
@@ -1482,7 +1481,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             Modifier
                 .background(color = color)
                 .fillMaxWidth()
-                .height(dimensionResource(R.dimen.table_line_stroke))
+                .height(Dimensions.TableLineStroke)
         )
     }
 
@@ -1534,7 +1533,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     fun HalfBorderBox(
         modifier: Modifier = Modifier,
-        border_width: Dp = dimensionResource(R.dimen.table_line_stroke),
+        border_width: Dp = Dimensions.TableLineStroke,
         border_color: Color,
         content: @Composable BoxScope.() -> Unit) {
         Box(
@@ -2945,8 +2944,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun get_dragged_offset(y: Int, target_line: Int?, is_after: Boolean, is_spacer: Boolean = false): Int {
         if (this.state_model.dragging_line.value == null) return 0
 
-        val line_height = this.resources.getDimension(R.dimen.line_height)
-        val ctl_line_height = this.resources.getDimension(R.dimen.ctl_line_height)
+        val line_height = toPx(Dimensions.LineHeight)
+        val ctl_line_height = toPx(Dimensions.EffectLineHeight)
         val is_dragging_channel = this.state_model.is_dragging_channel()
 
         if ((is_dragging_channel || !is_spacer) && this.state_model.line_data[y].is_dragging.value) return this.state_model.dragging_offset.value.roundToInt()
@@ -2993,8 +2992,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     fun build_dragging_line_map(): List<Triple<ClosedFloatingPointRange<Float>, IntRange, Boolean>> {
-        val line_height = this.resources.getDimension(R.dimen.line_height).roundToInt()
-        val ctl_line_height = this.resources.getDimension(R.dimen.ctl_line_height).roundToInt()
+        val line_height = toPx(Dimensions.LineHeight).roundToInt()
+        val ctl_line_height = toPx(Dimensions.EffectLineHeight).roundToInt()
         val gap_height = this.resources.getDimension(R.dimen.channel_gap_size).roundToInt()
         val is_dragging_channel = this.state_model.is_dragging_channel()
 

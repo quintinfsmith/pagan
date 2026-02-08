@@ -116,6 +116,10 @@ object Dimensions {
         throw Exception("Value Not Set") // TODO: Specify
     }
 
+    ///////////////////////////////////////////////////////////////////////
+
+    val AboutPadding = 12.dp
+
     object Background {
         val Radius = 12.dp
         val Gap = 20.dp
@@ -128,6 +132,8 @@ object Dimensions {
         val Normal = 48.dp
         val Small = 41.dp
     }
+
+    val ChannelGapHeight = 5.dp
 
     val ColorPickerHexInputWidth = 42.dp
     val ColorPickerLabelWidth = 64.dp
@@ -166,10 +172,15 @@ object Dimensions {
     val ContextMenuPadding = 4.dp
     val ContextMenuRadius = 16.dp
 
+    val DialogAdjustInnerSpace = 64.dp
+    val DialogBarButtonHeight = 41.dp
+    val DialogBarPaddingVertical = 8.dp
     val DialogPadding = 16.dp
     val DialogLineHeight = 41.dp
     val DialogLinePadding = PaddingValues(vertical = 5.dp, horizontal = 12.dp)
 
+    val EffectLineHeight = 30.dp
+    val EffectDialogIconWidth = 32.dp
 
     val LandingButtonCornerRadius = 12.dp
     val LandingButtonHeight: Dp
@@ -199,7 +210,11 @@ object Dimensions {
 
     val LeafBaseWidth = 41.dp
     val LinkUrlPadding = 4.dp
+    
+    val LineHeight = 41.dp
+    val LineLabelWidth = 41.dp
 
+    val NumberInputDialogPadding = 8.dp
     val NumberPickerRowHeight = 41.dp
     val NumberPickerRowWidth = 80.dp
     val NumberSelectorButtonHeight: Dp
@@ -209,12 +224,16 @@ object Dimensions {
         )
 
     val NumberSelectorButtonRadius = 4.dp
+    val NumberSelectorColumnWidth = 41.dp
     val NumberSelectorHighlightedBorderPadding = 4.dp
     val NumberSelectorSpacing = 3.dp
 
     val SettingsRadioIconHeight = 32.dp
     val SoundFontMenuPadding = 12.dp
+    val SoundFontMenuIconHeight = 41.dp
     val SFWarningInnerPadding = 10.dp
+
+    val TableLineStroke = 1.dp
 
     val TinyTuningDialogButtonSize = 41.dp
     val TinyTuningDialogButtonPadding = 4.dp
@@ -237,4 +256,5 @@ object Dimensions {
     val TransposeDialogInnerPadding = 8.dp
     val TransposeDialogInputPadding = 8.dp
     val TransposeDialogInputWidth = 64.dp
+
 }

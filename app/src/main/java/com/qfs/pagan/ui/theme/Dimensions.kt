@@ -232,6 +232,13 @@ object Dimensions {
     val NumberSelectorSpacing = 3.dp
 
     val SettingsRadioIconHeight = 32.dp
+
+    val SortableMenuSortButtonSize = 36.dp
+    val SortableMenuSortButtonPadding = PaddingValues(6.dp)
+    val SortableMenuHeadSpacing = 4.dp
+    val SortableMenuBoxRadius = 8.dp
+    val SortableMenuLineGap = 4.dp
+
     val SoundFontMenuPadding = 12.dp
     val SoundFontMenuIconHeight = 41.dp
     val SFWarningInnerPadding = 10.dp

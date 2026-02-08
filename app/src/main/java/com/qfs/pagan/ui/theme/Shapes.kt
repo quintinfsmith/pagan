@@ -110,6 +110,8 @@ object Shapes {
         50.dp
     )
 
+    val SortableMenuBox = RoundedCornerShape(Dimensions.SortableMenuBoxRadius)
+
     val TaggedBeat = RoundedCornerShape(12.dp)
     val TopBar = RectangleShape
 }

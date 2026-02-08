@@ -54,6 +54,7 @@ import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Dimensions.Unpadded
+import com.qfs.pagan.ui.theme.Shapes
 import kotlin.math.roundToInt
 
 @Composable
@@ -100,19 +101,19 @@ fun <T> SortableMenu(
                 Spacer(Modifier.weight(1F))
                 other?.let {
                     it()
-                    Spacer(Modifier.width(4.dp))
+                    Spacer(Modifier.width(Dimensions.SortableMenuHeadSpacing))
                 }
                 Box {
                     Button(
                         modifier = Modifier
-                            .height(36.dp)
-                            .width(36.dp),
+                            .height(Dimensions.SortableMenuSortButtonSize)
+                            .width(Dimensions.SortableMenuSortButtonSize),
                         colors = ButtonDefaults.buttonColors().copy(
                             containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = MaterialTheme.colorScheme.onPrimary
                         ),
                         onClick = { expanded.value = !expanded.value },
-                        contentPadding = PaddingValues(6.dp),
+                        contentPadding = Dimensions.SortableMenuSortButtonPadding,
                         content = {
                             Icon(
                                 painter = painterResource(R.drawable.icon_sort),
@@ -156,18 +157,18 @@ fun <T> SortableMenu(
 
         Surface(
             modifier = Modifier
-                .clip(RoundedCornerShape(8.dp)),
+                .clip(Shapes.SortableMenuBox),
             tonalElevation = 2.dp
         ) {
             Column(
                 modifier = Modifier
-                    .padding(4.dp)
+                    .padding(Dimensions.SortableMenuLineGap)
                     .verticalScroll(scroll_state)
-                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+                    .clip(Shapes.SortableMenuBox)
             ) {
                 sorted_menu.forEachIndexed { i, (item, label_content) ->
                     if (i > 0) {
-                        Spacer(Modifier.height(4.dp))
+                        Spacer(Modifier.height(Dimensions.SortableMenuLineGap))
                     }
 
                     ProvideContentColorTextStyle(
@@ -183,7 +184,7 @@ fun <T> SortableMenu(
                                     if (default_index == i) {
                                         Modifier.background(
                                             MaterialTheme.colorScheme.tertiary,
-                                            androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                                            Shapes.SortableMenuBox
                                         )
                                     } else {
                                         Modifier
@@ -208,6 +209,7 @@ fun <T> SortableMenu(
             }
         }
     }
+
     LaunchedEffect(rememberCoroutineScope()) {
         if (default_index > -1) {
             scroll_state.scrollTo(item_map[default_index]?.roundToInt() ?: 0)
@@ -216,7 +218,19 @@ fun <T> SortableMenu(
 }
 
 @Composable
-fun <T> UnSortableMenu(modifier: Modifier = Modifier, options: List<Pair<T, @Composable RowScope.() -> Unit>>, default_value: T? = null, callback: (T) -> Unit) {
-    SortableMenu(modifier, Unpadded, options, listOf(), default_value = default_value, onClick = callback)
+fun <T> UnSortableMenu(
+    modifier: Modifier = Modifier,
+    options: List<Pair<T, @Composable RowScope.() -> Unit>>,
+    default_value: T? = null,
+    callback: (T) -> Unit
+) {
+    SortableMenu(
+        modifier,
+        Unpadded,
+        options,
+        listOf(),
+        default_value = default_value,
+        onClick = callback
+    )
 }
 

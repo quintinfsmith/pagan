@@ -37,7 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.qfs.pagan.R
-import com.qfs.pagan.composable.SText
+import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.composable.SettingsColumn
 import com.qfs.pagan.composable.button.TopBarIcon
 import com.qfs.pagan.composable.button.TopBarNoIcon
@@ -100,7 +100,7 @@ class ComponentActivityAbout: PaganComponentActivity() {
             )
             ProvideTextStyle(Typography.About.License) {
                 SelectionContainer {
-                    SText(
+                    Text(
                         string_id = R.string.fira_sans_license_blurb,
                         modifier = Modifier.padding(12.dp)
                     )
@@ -132,7 +132,7 @@ class ComponentActivityAbout: PaganComponentActivity() {
                 }
         ) {
             ProvideTextStyle(Typography.About.LinkTitle) {
-                SText(
+                Text(
                     string_id = R.string.label_manual,
                     textAlign = TextAlign.Start
                 )

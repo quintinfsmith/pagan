@@ -84,7 +84,7 @@ import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogCard
 import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.PaganTheme
-import com.qfs.pagan.composable.SText
+import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.composable.ScaffoldWithTopBar
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.OutlinedButton
@@ -422,7 +422,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                         OutlinedButton(
                             modifier = Modifier.height(Dimensions.ButtonHeight.Small),
                             onClick = close,
-                            content = { SText(android.R.string.cancel) }
+                            content = { Text(android.R.string.cancel) }
                         )
                         Spacer(Modifier.width(4.dp))
                         Button(
@@ -465,7 +465,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                 close_top_callback()
                                 load_callback(uri)
                             },
-                            content = { SText(R.string.details_load_project) }
+                            content = { Text(R.string.details_load_project) }
                         )
                     }
                 }
@@ -564,7 +564,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
         Column(modifier) {
             ProvideTextStyle(Typography.DialogTitle) {
                 if (other_project.project_name == null) {
-                    SText(R.string.untitled_opus)
+                    Text(R.string.untitled_opus)
                 } else {
                     Text(other_project.project_name!!)
                 }
@@ -577,7 +577,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    SText(R.string.last_modified)
+                    Text(R.string.last_modified)
                     Spacer(Modifier.width(padding))
                     Text(formatter.format(time))
                 }

@@ -12,5 +12,14 @@ package com.qfs.pagan
 object Values {
     val ExportSampleRate = 44100
     val ExportBufferSize = 22050
+
+    object Defaults {
+        val Radix = 12
+    }
+
+    val OctaveCount = 8
+    val OffsetModulo = 12
+    val MaximumOctaveSize = 36
+    val MinimumOctaveSize = 1
 }
 

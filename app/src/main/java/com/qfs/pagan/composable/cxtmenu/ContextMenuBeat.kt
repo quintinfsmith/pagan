@@ -23,7 +23,6 @@ import androidx.compose.ui.text.style.TextAlign
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
-import com.qfs.pagan.composable.SText
 import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.ui.theme.Shapes

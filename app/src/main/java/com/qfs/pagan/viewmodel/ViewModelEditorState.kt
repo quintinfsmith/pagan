@@ -20,6 +20,7 @@ import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.Coordinate
 import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.RelativeInputMode
+import com.qfs.pagan.Values
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.OpusColorPalette
@@ -180,7 +181,7 @@ class ViewModelEditorState: ViewModel() {
     val column_data: MutableList<ColumnData> = mutableListOf()
     val cell_map = mutableListOf<MutableList<MutableState<TreeData>>>()
     val channel_data: MutableList<ChannelData> = mutableListOf()
-    var radix: MutableState<Int> = mutableIntStateOf(12)
+    var radix: MutableState<Int> = mutableIntStateOf(Values.Defaults.Radix)
 
     var active_event: MutableState<OpusEvent?> = mutableStateOf(null)
     var active_event_descriptor: MutableState<EventDescriptor?> = mutableStateOf(null)
@@ -339,9 +340,6 @@ class ViewModelEditorState: ViewModel() {
             this@ViewModelEditorState.scroll_state_x.value.requestScrollToItem(0)
             this@ViewModelEditorState.scroll_state_y.value.scrollTo(0)
         }
-
-        // this.preset_names.clear()
-        // this.available_instruments.clear()
     }
 
     fun set_use_midi_playback(value: Boolean) {

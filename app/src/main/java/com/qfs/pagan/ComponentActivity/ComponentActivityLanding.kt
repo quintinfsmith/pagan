@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
-import com.qfs.pagan.composable.SText
+import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.composable.SettingsRow
 import com.qfs.pagan.composable.SoundFontWarning
 import com.qfs.pagan.composable.button.Button
@@ -470,7 +470,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
         this.view_model.create_dialog { close ->
             @Composable {
                 DialogSTitle(R.string.crash_report_save)
-                SText(
+                Text(
                     R.string.crash_report_desc,
                     modifier = Modifier.padding(vertical = 24.dp)
                 )

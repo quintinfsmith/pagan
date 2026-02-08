@@ -10,7 +10,6 @@
 package com.qfs.pagan.structure.opusmanager.base
 
 import com.qfs.pagan.structure.Rational
-import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase.Companion.next_position
 import com.qfs.pagan.structure.rationaltree.InvalidGetCall
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
@@ -461,7 +460,7 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
         if (!tree.is_leaf()) {
             for (i in 0 until tree.size) {
                 output.addAll(
-                    this._decache_overlapping_leaf(beat, next_position(position, i))
+                    this._decache_overlapping_leaf(beat, OpusLayerBase.next_position(position, i))
                 )
             }
         }
@@ -573,7 +572,7 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
                         Triple(
                             working_tree[i],
                             working_beat,
-                            next_position(working_position, i)
+                            OpusLayerBase.next_position(working_position, i)
                         )
                     )
                 }
@@ -935,7 +934,7 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
             } else {
                 for (i in 0 until working_tree.size) {
                     stack.add(
-                        Pair(working_tree[i], next_position(working_position, i))
+                        Pair(working_tree[i], OpusLayerBase.next_position(working_position, i))
                     )
                 }
             }
@@ -1070,7 +1069,7 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
                 }
             } else {
                 for (i in 0 until working_tree.size) {
-                    stack.add(Pair(working_tree[i], next_position(position, i)))
+                    stack.add(Pair(working_tree[i], OpusLayerBase.next_position(position, i)))
                 }
             }
         }

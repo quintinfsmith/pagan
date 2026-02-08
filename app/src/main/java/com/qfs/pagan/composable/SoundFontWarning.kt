@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
+import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.find_activity
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Typography
@@ -52,7 +53,7 @@ fun SoundFontWarning(in_settings: Boolean = false) {
 
         ) {
             ProvideTextStyle(Typography.SoundFontWarning.Title) {
-                SText(
+                Text(
                     string_id = R.string.warning_nosoundfont_a,
                     textAlign = TextAlign.Center
                 )
@@ -62,7 +63,7 @@ fun SoundFontWarning(in_settings: Boolean = false) {
 
             Column {
                 ProvideTextStyle(Typography.SoundFontWarning.Body) {
-                    SText(R.string.warning_nosoundfont_b)
+                    Text(R.string.warning_nosoundfont_b)
                 }
                 Spacer(Modifier.height(Dimensions.SFWarningInnerPadding))
 
@@ -87,7 +88,7 @@ fun SoundFontWarning(in_settings: Boolean = false) {
                 Spacer(Modifier.height(Dimensions.SFWarningInnerPadding))
                 Row(horizontalArrangement = Arrangement.Center) {
                     ProvideTextStyle(Typography.SoundFontWarning.Body) {
-                        SText(R.string.warning_nosoundfont_c)
+                        Text(R.string.warning_nosoundfont_c)
                     }
                 }
             }

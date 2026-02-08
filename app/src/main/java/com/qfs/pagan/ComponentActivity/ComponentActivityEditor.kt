@@ -114,9 +114,9 @@ import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.DrawerCard
-import com.qfs.pagan.composable.DropdownMenu
-import com.qfs.pagan.composable.DropdownMenuItem
-import com.qfs.pagan.composable.SText
+import com.qfs.pagan.composable.wrappers.DropdownMenu
+import com.qfs.pagan.composable.wrappers.DropdownMenuItem
+import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.composable.button.ConfigDrawerBottomButton
 import com.qfs.pagan.composable.button.ConfigDrawerChannelLeftButton
@@ -785,7 +785,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             onClick = {
                 this.view_model.create_dialog { close ->
                     @Composable {
-                        SText(
+                        Text(
                             R.string.need_soundfont_playback_warning,
                             textAlign = TextAlign.Center
                         )
@@ -924,7 +924,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     vm_top.create_dialog { close ->
                         @Composable {
                             val options = mutableListOf<Pair<MidiDeviceInfo?, @Composable RowScope.() -> Unit>>(
-                                Pair(null) { SText(R.string.device_menu_default_name) }
+                                Pair(null) { Text(R.string.device_menu_default_name) }
                             )
 
                             for (device_info in this@ComponentActivityEditor._midi_interface.poll_output_devices()) {
@@ -981,7 +981,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             ) {
                 for ((_, item) in menu_items.enumerate()) {
                     DropdownMenuItem(
-                        text = { SText(item.first) },
+                        text = { Text(item.first) },
                         onClick = {
                             expanded.value = false
                             item.second()
@@ -2122,7 +2122,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             ) {
                 ConfigDrawerTopButton(
                     onClick = { dispatcher.set_tuning_table_and_transpose() },
-                    content = { SText(R.string.label_tuning) }
+                    content = { Text(R.string.label_tuning) }
                 )
                 Spacer(Modifier.weight(1F))
                 ConfigDrawerChannelLeftButton(
@@ -2769,7 +2769,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
           this.view_model.create_dialog { close ->
               @Composable {
                   DialogSTitle(R.string.generic_warning)
-                  SText(R.string.multiple_kit_warning)
+                  Text(R.string.multiple_kit_warning)
                   DialogBar(
                       neutral = close,
                       positive = {
@@ -2892,7 +2892,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         export_options.add(
             Pair(
                 Exportable.JSON,
-                @Composable { SText(R.string.export_option_json) }
+                @Composable { Text(R.string.export_option_json) }
             )
         )
 
@@ -2900,7 +2900,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             export_options.add(
                 Pair(
                     Exportable.MIDI1,
-                    @Composable { SText(R.string.export_option_midi) }
+                    @Composable { Text(R.string.export_option_midi) }
                 )
             )
         }
@@ -2909,19 +2909,19 @@ class ComponentActivityEditor: PaganComponentActivity() {
             export_options.add(
                 Pair(
                     Exportable.WAV_SINGLE,
-                    @Composable { SText(R.string.export_option_wav) }
+                    @Composable { Text(R.string.export_option_wav) }
                 )
             )
             export_options.add(
                 Pair(
                     Exportable.WAV_LINES,
-                    @Composable { SText(R.string.export_option_wav_lines) }
+                    @Composable { Text(R.string.export_option_wav_lines) }
                 )
             )
             export_options.add(
                 Pair(
                     Exportable.WAV_CHANNELS,
-                    @Composable { SText(R.string.export_option_wav_channels) }
+                    @Composable { Text(R.string.export_option_wav_channels) }
                 )
             )
         }

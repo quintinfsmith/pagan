@@ -14,15 +14,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -35,6 +32,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
+import com.qfs.pagan.composable.wrappers.Text
+import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
@@ -62,7 +61,7 @@ fun ColorPicker(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            SText(
+            Text(
                 R.string.red,
                 style = Typography.ColorPickerLabel,
                 modifier = Modifier.width(Dimensions.ColorPickerLabelWidth)
@@ -74,10 +73,15 @@ fun ColorPicker(
                     activeTrackColor = Color(red = red.floatValue, green = 0F, blue = 0F)
                 ),
                 modifier = Modifier
-                    .weight(1F, fill=false),
+                    .weight(1F, fill = false),
                 onValueChange = {
                     red.floatValue = it
-                    color.value = Color(red = red.floatValue, green = green.floatValue, blue = blue.floatValue, alpha = alpha.floatValue)
+                    color.value = Color(
+                        red = red.floatValue,
+                        green = green.floatValue,
+                        blue = blue.floatValue,
+                        alpha = alpha.floatValue
+                    )
                 }
             )
             Spacer(Modifier.width(Dimensions.ColorPickerInnerPadding))
@@ -88,7 +92,7 @@ fun ColorPicker(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            SText(
+            Text(
                 R.string.green,
                 style = Typography.ColorPickerLabel,
                 modifier = Modifier.width(Dimensions.ColorPickerLabelWidth)
@@ -100,10 +104,15 @@ fun ColorPicker(
                     activeTrackColor = Color(red = 0F, green = green.floatValue, blue = 0F)
                 ),
                 modifier = Modifier
-                    .weight(1F, fill=false),
+                    .weight(1F, fill = false),
                 onValueChange = {
                     green.floatValue = it
-                    color.value = Color(red = red.floatValue, green = green.floatValue, blue = blue.floatValue, alpha = alpha.floatValue)
+                    color.value = Color(
+                        red = red.floatValue,
+                        green = green.floatValue,
+                        blue = blue.floatValue,
+                        alpha = alpha.floatValue
+                    )
                 }
             )
             Spacer(Modifier.width(Dimensions.ColorPickerInnerPadding))
@@ -114,7 +123,7 @@ fun ColorPicker(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            SText(
+            Text(
                 R.string.blue,
                 style = Typography.ColorPickerLabel,
                 modifier = Modifier.width(Dimensions.ColorPickerLabelWidth)
@@ -126,10 +135,15 @@ fun ColorPicker(
                     activeTrackColor = Color(red = 0F, green = 0F, blue = blue.floatValue)
                 ),
                 modifier = Modifier
-                    .weight(1F, fill=false),
+                    .weight(1F, fill = false),
                 onValueChange = {
                     blue.floatValue = it
-                    color.value = Color(red = red.floatValue, green = green.floatValue, blue = blue.floatValue, alpha = alpha.floatValue)
+                    color.value = Color(
+                        red = red.floatValue,
+                        green = green.floatValue,
+                        blue = blue.floatValue,
+                        alpha = alpha.floatValue
+                    )
                 }
             )
             Spacer(Modifier.width(Dimensions.ColorPickerInnerPadding))
@@ -141,7 +155,7 @@ fun ColorPicker(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                SText(
+                Text(
                     R.string.alpha,
                     style = Typography.ColorPickerLabel,
                     modifier = Modifier.width(Dimensions.ColorPickerLabelWidth)

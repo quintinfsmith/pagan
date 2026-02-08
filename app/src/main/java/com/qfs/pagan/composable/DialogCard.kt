@@ -1,0 +1,142 @@
+package com.qfs.pagan.composable
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CardElevation
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProvideTextStyle
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import com.qfs.pagan.R
+import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
+import com.qfs.pagan.composable.button.SmallButton
+import com.qfs.pagan.composable.button.SmallOutlinedButton
+import com.qfs.pagan.composable.wrappers.Text
+import com.qfs.pagan.ui.theme.Dimensions
+
+@Composable
+fun DialogCard(
+    modifier: Modifier = Modifier,
+    colors: CardColors = CardColors(
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        disabledContentColor = Color.Gray,
+        disabledContainerColor = Color.Green,
+    ),
+    elevation: CardElevation = CardDefaults.cardElevation(),
+    shape: Shape = RoundedCornerShape(12.dp),
+    border: BorderStroke? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    ProvideContentColorTextStyle(contentColor = colors.contentColor) {
+        Surface(
+            modifier = modifier
+                .then(if (border != null) modifier.border(border) else Modifier),
+            shape = shape
+        ) {
+            Column(
+                modifier = Modifier
+                    .wrapContentSize()
+                    .padding(Dimensions.DialogPadding),
+                horizontalAlignment = Alignment.Start,
+                content = content
+            )
+        }
+    }
+}
+
+@Composable
+fun DialogTitle(text: String, modifier: Modifier = Modifier) {
+    ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+        Text(
+            text = text,
+            modifier = modifier
+                .padding(
+                    vertical = 16.dp,
+                    horizontal = 12.dp
+                )
+        )
+    }
+}
+
+@Composable
+fun DialogSTitle(text: Int, modifier: Modifier = Modifier) {
+    DialogTitle(text = stringResource(text), modifier = modifier)
+}
+
+
+@Composable
+fun ColumnScope.DialogBar(
+    modifier: Modifier = Modifier,
+    positive: (() -> Unit)? = null,
+    negative: (() -> Unit)? = null,
+    neutral: (() -> Unit)? = null,
+    neutral_label: Int = android.R.string.cancel,
+    negative_label: Int = R.string.no,
+    positive_label: Int = android.R.string.ok,
+
+    ) {
+    Row(
+        modifier = modifier
+            .padding(
+                vertical = Dimensions.DialogBarPaddingVertical
+            ),
+        horizontalArrangement = Arrangement.End,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        negative?.let {
+            SmallButton(
+                modifier = Modifier
+                    .height(Dimensions.DialogBarButtonHeight)
+                    .weight(1F),
+                onClick = it,
+                content = { Text(negative_label) }
+            )
+        }
+        neutral?.let {
+            if (negative != null) {
+                Spacer(Modifier.width(12.dp))
+            }
+            SmallOutlinedButton(
+                modifier = Modifier
+                    .height(Dimensions.DialogBarButtonHeight)
+                    .weight(1F),
+                onClick = it,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface),
+                content = { Text(neutral_label, maxLines = 1) }
+            )
+        }
+        positive?.let {
+            if (negative != null || neutral != null) {
+                Spacer(Modifier.width(12.dp))
+            }
+            SmallButton(
+                modifier = Modifier
+                    .height(Dimensions.DialogBarButtonHeight)
+                    .weight(1F),
+                onClick = it,
+                content = { Text(positive_label) }
+            )
+        }
+    }
+}
+

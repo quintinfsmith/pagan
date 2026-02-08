@@ -25,7 +25,7 @@ import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.RadioMenu
-import com.qfs.pagan.composable.SText
+import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
@@ -62,10 +62,10 @@ fun ContextMenuRangeSecondary(ui_facade: ViewModelEditorState, dispatcher: Actio
             RadioMenu(
                 options = listOf(
                     Pair(PaganConfiguration.MoveMode.MOVE) {
-                        SText(R.string.move_mode_move)
+                        Text(R.string.move_mode_move)
                     },
                     Pair(PaganConfiguration.MoveMode.COPY) {
-                        SText(R.string.move_mode_copy)
+                        Text(R.string.move_mode_copy)
                     }
                 ),
                 active = remember { mutableStateOf(move_mode) },
@@ -77,7 +77,7 @@ fun ContextMenuRangeSecondary(ui_facade: ViewModelEditorState, dispatcher: Actio
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
         ) {
-            SText(
+            Text(
                 when (move_mode) {
                     PaganConfiguration.MoveMode.MOVE -> R.string.label_move_beat
                     PaganConfiguration.MoveMode.COPY -> R.string.label_copy_beat

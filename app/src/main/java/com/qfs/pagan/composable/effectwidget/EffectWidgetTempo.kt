@@ -7,16 +7,14 @@
  * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
  * Inquiries can be made to Quintin via email at smith.quintin@protonmail.com
  */
-package com.qfs.pagan.composable.cxtmenu
+package com.qfs.pagan.composable.effectwidget
 
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -31,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.FloatInput
-import com.qfs.pagan.composable.SText
+import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
@@ -82,7 +80,7 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
     ProvideContentColorTextStyle(
         contentColor = MaterialTheme.colorScheme.onSurface,
         content = {
-            SText(R.string.bpm, Modifier.padding(start = 4.dp))
+            Text(R.string.bpm, Modifier.padding(start = 4.dp))
         }
     )
 

@@ -7,7 +7,7 @@
  * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
  * Inquiries can be made to Quintin via email at smith.quintin@protonmail.com
  */
-package com.qfs.pagan.composable.cxtmenu
+package com.qfs.pagan.composable.effectwidget
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -39,10 +39,11 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
-import com.qfs.pagan.composable.DropdownMenu
+import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.IntegerInput
-import com.qfs.pagan.composable.Slider
+import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.composable.button.Button
+import com.qfs.pagan.composable.cxtmenu.CMPadding
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode

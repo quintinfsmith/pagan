@@ -54,11 +54,11 @@ import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
-import com.qfs.pagan.composable.DropdownMenu
-import com.qfs.pagan.composable.DropdownMenuItem
+import com.qfs.pagan.composable.wrappers.DropdownMenu
+import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.MenuPadder
 import com.qfs.pagan.composable.RadioMenu
-import com.qfs.pagan.composable.SText
+import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.composable.SettingsColumn
 import com.qfs.pagan.composable.SettingsRow
 import com.qfs.pagan.composable.SoundFontWarning
@@ -537,7 +537,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
     fun ActiveSoundfontButton(modifier: Modifier = Modifier) {
         val no_soundfont_text = stringResource(R.string.no_soundfont)
         SettingsColumn(modifier) {
-            SText(
+            Text(
                 R.string.label_settings_sf,
                 style = Typography.Settings.Title
             )
@@ -580,7 +580,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
     @Composable
     fun ActiveSoundfontDirectoryButton(modifier: Modifier = Modifier) {
         SettingsColumn(modifier) {
-            SText(
+            Text(
                 R.string.label_settings_soundfont_directory,
                 style = Typography.Settings.Title
             )
@@ -611,7 +611,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
     @Composable
     fun ProjectsDirectoryButton(modifier: Modifier = Modifier) {
         SettingsColumn(modifier) {
-            SText(
+            Text(
                 R.string.label_settings_projects_directory,
                 style = Typography.Settings.Title
             )
@@ -676,7 +676,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            SText(R.string.label_settings_playback_quality, style = Typography.Settings.Label)
+            Text(R.string.label_settings_playback_quality, style = Typography.Settings.Label)
 
             Box(contentAlignment = Alignment.Center) {
                 Button(
@@ -732,7 +732,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            SText(
+            Text(
                 R.string.label_settings_same_line_release,
                 modifier = Modifier.weight(1F),
                 style = Typography.Settings.Label
@@ -755,7 +755,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            SText(
+            Text(
                 R.string.label_settings_note_memory,
                 modifier = Modifier.weight(1F),
                 style = Typography.Settings.Label
@@ -818,7 +818,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
     @Composable
     fun OptionOrientation(modifier: Modifier = Modifier) {
         SettingsColumn(modifier) {
-            SText(
+            Text(
                 R.string.settings_screen_orientation,
                 style = Typography.Settings.Title
             )
@@ -837,7 +837,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
     @Composable
     fun OptionNightMode(modifier: Modifier = Modifier) {
         SettingsColumn(modifier) {
-            SText(
+            Text(
                 R.string.settings_night_mode,
                 style = Typography.Settings.Title
             )

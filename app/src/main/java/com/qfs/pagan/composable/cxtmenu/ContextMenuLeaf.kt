@@ -35,12 +35,19 @@ import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
 import com.qfs.pagan.RelativeInputMode
-import com.qfs.pagan.composable.DropdownMenu
+import com.qfs.pagan.Values
+import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.RadioMenu
-import com.qfs.pagan.composable.SText
+import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.composable.button.IconCMenuButton
-import com.qfs.pagan.composable.button.NumberSelector
+import com.qfs.pagan.composable.NumberSelector
 import com.qfs.pagan.composable.button.TextCMenuButton
+import com.qfs.pagan.composable.effectwidget.DelayEventMenu
+import com.qfs.pagan.composable.effectwidget.PanEventMenu
+import com.qfs.pagan.composable.effectwidget.ReverbEventMenu
+import com.qfs.pagan.composable.effectwidget.TempoEventMenu
+import com.qfs.pagan.composable.effectwidget.VelocityEventMenu
+import com.qfs.pagan.composable.effectwidget.VolumeEventMenu
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
@@ -319,7 +326,7 @@ fun RelativeInputDropDown(ui_facade: ViewModelEditorState, dispatcher: ActionTra
                     )
                 },
                 Pair(RelativeInputMode.Absolute) {
-                    SText(
+                    Text(
                         R.string.absolute_label,
                         modifier = Modifier
                             .padding(vertical = 4.dp)
@@ -402,7 +409,7 @@ fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
 
                 Row {
                     NumberSelector(
-                        progression = 0 until 8,
+                        progression = 0 until Values.OctaveCount,
                         selected = when (ui_facade.active_event_descriptor.value) {
                             ViewModelEditorState.EventDescriptor.Selected,
                             ViewModelEditorState.EventDescriptor.Tail -> octave
@@ -441,7 +448,7 @@ fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
             dispatcher.set_offset(i, mode)
         }
         Column {
-            var count = ceil(ui_facade.radix.value.toFloat() / 12F).toInt()
+            var count = ceil(ui_facade.radix.value.toFloat() / Values.OffsetModulo).toInt()
             for (i in count - 1 downTo 0) {
                 Row(modifier) {
                     NumberSelector(

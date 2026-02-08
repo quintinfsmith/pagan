@@ -74,12 +74,12 @@ import com.qfs.pagan.composable.ColorPicker
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DialogTitle
-import com.qfs.pagan.composable.DropdownMenu
-import com.qfs.pagan.composable.DropdownMenuItem
+import com.qfs.pagan.composable.wrappers.DropdownMenu
+import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.IntegerInput
 import com.qfs.pagan.composable.NumberPicker
-import com.qfs.pagan.composable.SText
-import com.qfs.pagan.composable.Slider
+import com.qfs.pagan.composable.wrappers.Text
+import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.composable.button.Button
@@ -596,7 +596,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                         modifier = Modifier.weight(1F),
                         contentAlignment = Alignment.Center
                     ) {
-                        SText(
+                        Text(
                             when (transition_option) {
                                 EffectTransition.Instant -> R.string.effect_transition_instant
                                 EffectTransition.Linear -> R.string.effect_transition_linear
@@ -1061,7 +1061,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                         Box {
                             Button(
                                 onClick = { expanded.value = !expanded.value },
-                                content = { SText(R.string.jump_to_section) }
+                                content = { Text(R.string.jump_to_section) }
                             )
                             DropdownMenu(
                                 onDismissRequest = { expanded.value = false },
@@ -1445,12 +1445,12 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                 ) {
                     val max_abs = radix - 1
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        SText(R.string.offset_dialog_octaves)
+                        Text(R.string.offset_dialog_octaves)
                         NumberPicker(Modifier, -7..7, octave)
                     }
                     Spacer(Modifier.width(Dimensions.DialogAdjustInnerSpace))
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        SText(R.string.offset_dialog_offset)
+                        Text(R.string.offset_dialog_offset)
                         NumberPicker(Modifier, 0 - max_abs .. max_abs, offset)
                     }
                 }
@@ -1928,7 +1928,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                 val project_name = remember { mutableStateOf(opus_manager.project_name ?: "") }
                 val project_notes = remember { mutableStateOf(opus_manager.project_notes ?: "") }
                 TextInput(
-                    label = { SText(R.string.dlg_project_name) },
+                    label = { Text(R.string.dlg_project_name) },
                     input = project_name,
                     textAlign = TextAlign.Start,
                     modifier = Modifier.fillMaxWidth(),
@@ -1936,7 +1936,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                 ) {}
                 Spacer(modifier = Modifier.height(3.dp))
                 TextInput(
-                    label = { SText(R.string.dlg_project_notes) },
+                    label = { Text(R.string.dlg_project_notes) },
                     input = project_notes,
                     textAlign = TextAlign.Start,
                     lineLimits = TextFieldLineLimits.MultiLine(3),
@@ -1993,7 +1993,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                 ) {
                     IntegerInput(
                         value = value,
-                        label = { SText(title_string_id) },
+                        label = { Text(title_string_id) },
                         modifier = Modifier.focusRequester(focus_requester),
                         contentPadding = PaddingValues(Dimensions.NumberInputDialogPadding),
                         text_align = TextAlign.Center,
@@ -2757,7 +2757,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                SText(R.string.dlg_transpose, maxLines = 1)
+                Text(R.string.dlg_transpose, maxLines = 1)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IntegerInput(
                         value = transpose_numerator,
@@ -2777,7 +2777,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                 }
             }
             Column(horizontalAlignment = Alignment.End) {
-                SText(
+                Text(
                     R.string.dlg_set_radix,
                     maxLines = 1,
                     textAlign = TextAlign.End
@@ -2919,7 +2919,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                     verticalArrangement = Arrangement.Bottom,
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    SText(
+                    Text(
                         R.string.label_tuning,
                         style = Typography.TinyTuningDialogLabel
                     )

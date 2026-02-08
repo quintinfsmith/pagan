@@ -7,11 +7,10 @@
  * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
  * Inquiries can be made to Quintin via email at smith.quintin@protonmail.com
  */
-package com.qfs.pagan.composable.cxtmenu
+package com.qfs.pagan.composable.effectwidget
 
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode

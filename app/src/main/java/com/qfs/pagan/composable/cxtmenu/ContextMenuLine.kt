@@ -24,6 +24,12 @@ import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.button.TextCMenuButton
+import com.qfs.pagan.composable.effectwidget.DelayEventMenu
+import com.qfs.pagan.composable.effectwidget.PanEventMenu
+import com.qfs.pagan.composable.effectwidget.ReverbEventMenu
+import com.qfs.pagan.composable.effectwidget.TempoEventMenu
+import com.qfs.pagan.composable.effectwidget.VelocityEventMenu
+import com.qfs.pagan.composable.effectwidget.VolumeEventMenu
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent

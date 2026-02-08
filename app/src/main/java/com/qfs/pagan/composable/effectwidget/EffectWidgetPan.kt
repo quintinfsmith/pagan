@@ -7,7 +7,7 @@
  * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
  * Inquiries can be made to Quintin via email at smith.quintin@protonmail.com
  */
-package com.qfs.pagan.composable.cxtmenu
+package com.qfs.pagan.composable.effectwidget
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -25,10 +25,9 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
-import com.qfs.pagan.composable.Slider
+import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.viewmodel.ViewModelEditorState

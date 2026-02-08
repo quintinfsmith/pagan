@@ -34,6 +34,7 @@ import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
@@ -62,7 +63,7 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
                 )
             },
             minimum = 1F,
-            contentPadding = PaddingValues(0.dp),
+            contentPadding = Unpadded,
             text_align = TextAlign.Center,
             modifier = Modifier
                 .height(41.dp)

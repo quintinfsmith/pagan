@@ -175,9 +175,12 @@ object Dimensions {
     val DialogAdjustInnerSpace = 64.dp
     val DialogBarButtonHeight = 41.dp
     val DialogBarPaddingVertical = 8.dp
+    val DialogBarSpacing = 12.dp
     val DialogPadding = 16.dp
     val DialogLineHeight = 41.dp
     val DialogLinePadding = PaddingValues(vertical = 5.dp, horizontal = 12.dp)
+    val DialogTitlePadding = PaddingValues(vertical = 16.dp, horizontal = 12.dp)
+    val DialogRadius = 12.dp
 
     val EffectLineHeight = 30.dp
     val EffectDialogIconWidth = 32.dp
@@ -256,5 +259,8 @@ object Dimensions {
     val TransposeDialogInnerPadding = 8.dp
     val TransposeDialogInputPadding = 8.dp
     val TransposeDialogInputWidth = 64.dp
+
+
+    val Unpadded = PaddingValues(0.dp)
 
 }

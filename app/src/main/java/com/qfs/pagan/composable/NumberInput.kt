@@ -33,13 +33,14 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import com.qfs.pagan.ui.theme.Typography
 
 @Composable
 fun <T> NumberInput(
     value: MutableState<T>,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(0.dp),
+    contentPadding: PaddingValues = Unpadded,
     text_align: TextAlign = TextAlign.End,
     prefix: @Composable (() -> Unit)? = null,
     label: (@Composable TextFieldLabelScope.() -> Unit)? = null,

@@ -48,6 +48,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorState
@@ -95,7 +96,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
         key(numerator_key.value) {
             IntegerInput(
                 numerator_label,
-                contentPadding = PaddingValues(0.dp),
+                contentPadding = Unpadded,
                 text_align = TextAlign.Center,
                 on_focus_exit = {
                     event.numerator = numerator_label.value
@@ -133,7 +134,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
                     event.denominator = denominator_label.value
                     submit()
                 },
-                contentPadding = PaddingValues(0.dp),
+                contentPadding = Unpadded,
                 text_align = TextAlign.Center,
                 modifier = Modifier
                     .height(41.dp)
@@ -167,7 +168,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
                     submit()
                 },
                 minimum = 1,
-                contentPadding = PaddingValues(0.dp),
+                contentPadding = Unpadded,
                 text_align = TextAlign.Center,
                 modifier = Modifier
                     .height(41.dp)

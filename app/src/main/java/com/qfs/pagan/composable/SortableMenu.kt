@@ -53,12 +53,13 @@ import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import kotlin.math.roundToInt
 
 @Composable
 fun <T> SortableMenu(
     modifier: Modifier = Modifier,
-    sort_row_padding: PaddingValues = PaddingValues(0.dp),
+    sort_row_padding: PaddingValues = Unpadded,
     default_menu: List<Pair<T, @Composable RowScope.() -> Unit>>,
     sort_options: List<Pair<Int, (Int, Int) -> Int>>,
     active_sort_option: MutableIntState = mutableIntStateOf(-1),
@@ -216,6 +217,6 @@ fun <T> SortableMenu(
 
 @Composable
 fun <T> UnSortableMenu(modifier: Modifier = Modifier, options: List<Pair<T, @Composable RowScope.() -> Unit>>, default_value: T? = null, callback: (T) -> Unit) {
-    SortableMenu(modifier, PaddingValues(0.dp), options, listOf(), default_value = default_value, onClick = callback)
+    SortableMenu(modifier, Unpadded, options, listOf(), default_value = default_value, onClick = callback)
 }
 

@@ -52,7 +52,7 @@ fun DialogCard(
         disabledContainerColor = Color.Green,
     ),
     elevation: CardElevation = CardDefaults.cardElevation(),
-    shape: Shape = RoundedCornerShape(12.dp),
+    shape: Shape = RoundedCornerShape(Dimensions.DialogRadius),
     border: BorderStroke? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -78,11 +78,7 @@ fun DialogTitle(text: String, modifier: Modifier = Modifier) {
     ProvideTextStyle(MaterialTheme.typography.titleLarge) {
         Text(
             text = text,
-            modifier = modifier
-                .padding(
-                    vertical = 16.dp,
-                    horizontal = 12.dp
-                )
+            modifier = modifier.padding(Dimensions.DialogTitlePadding)
         )
     }
 }
@@ -123,7 +119,7 @@ fun ColumnScope.DialogBar(
         }
         neutral?.let {
             if (negative != null) {
-                Spacer(Modifier.width(12.dp))
+                Spacer(Modifier.width(Dimensions.DialogBarSpacing))
             }
             SmallOutlinedButton(
                 modifier = Modifier
@@ -136,7 +132,7 @@ fun ColumnScope.DialogBar(
         }
         positive?.let {
             if (negative != null || neutral != null) {
-                Spacer(Modifier.width(12.dp))
+                Spacer(Modifier.width(Dimensions.DialogBarSpacing))
             }
             SmallButton(
                 modifier = Modifier

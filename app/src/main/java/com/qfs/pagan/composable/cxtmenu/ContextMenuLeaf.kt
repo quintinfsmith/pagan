@@ -59,6 +59,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEve
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorState
@@ -113,7 +114,7 @@ fun DurationButton(
             else -> false
         },
         shape = shape,
-        contentPadding = PaddingValues(0.dp),
+        contentPadding = Unpadded,
         onClick = { dispatcher.set_duration() },
         onLongClick = { dispatcher.set_duration(1) },
         text = when (descriptor) {

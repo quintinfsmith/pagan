@@ -42,6 +42,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.composable.pressable
+import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import com.qfs.pagan.ui.theme.Shadows
 import com.qfs.pagan.ui.theme.Typography
 
@@ -54,7 +55,7 @@ fun OutlinedButton(
     border: BorderStroke = ButtonDefaults.outlinedButtonBorder(),
 
     shape: Shape = ButtonDefaults.shape,
-    outerPadding: PaddingValues = PaddingValues(0.dp),
+    outerPadding: PaddingValues = Unpadded,
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
     content: @Composable RowScope.() -> Unit
 ) {
@@ -84,7 +85,7 @@ fun Button(
     colors: ButtonColors = ButtonDefaults.buttonColors(),
     border: BorderStroke? = null,
     shadow: Shadow? = Shadows.Button,
-    outerPadding: PaddingValues = PaddingValues(0.dp),
+    outerPadding: PaddingValues = Unpadded,
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
     content: @Composable RowScope.() -> Unit
 ) {
@@ -157,8 +158,8 @@ fun SmallButton(
     border: BorderStroke? = null,
 
     shadow: Shadow? = Shadows.Button,
-    outerPadding: PaddingValues = PaddingValues(0.dp),
-    contentPadding: PaddingValues = PaddingValues(0.dp),
+    outerPadding: PaddingValues = Unpadded,
+    contentPadding: PaddingValues = Unpadded,
     content: @Composable RowScope.() -> Unit
 ) {
     ProvideTextStyle(MaterialTheme.typography.bodySmall) {
@@ -185,8 +186,8 @@ fun SmallOutlinedButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     border: BorderStroke = ButtonDefaults.outlinedButtonBorder(),
-    outerPadding: PaddingValues = PaddingValues(0.dp),
-    contentPadding: PaddingValues = PaddingValues(0.dp),
+    outerPadding: PaddingValues = Unpadded,
+    contentPadding: PaddingValues = Unpadded,
     content: @Composable RowScope.() -> Unit
 ) {
     ProvideTextStyle(MaterialTheme.typography.bodySmall) {

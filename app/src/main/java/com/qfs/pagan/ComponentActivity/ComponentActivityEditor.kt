@@ -2958,7 +2958,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val check_line = first_line + std_line_count + ctl_line_count
 
         val gap_size = if (is_dragging_channel) {
-            (this.resources.getDimension(R.dimen.channel_gap_size) + (std_line_count * line_height) + (ctl_line_count * ctl_line_height)).toInt()
+            (toPx(Dimensions.ChannelGapHeight) + (std_line_count * line_height) + (ctl_line_count * ctl_line_height)).toInt()
         } else {
             ((std_line_count * line_height) + (ctl_line_count * ctl_line_height)).toInt()
         }
@@ -2994,7 +2994,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun build_dragging_line_map(): List<Triple<ClosedFloatingPointRange<Float>, IntRange, Boolean>> {
         val line_height = toPx(Dimensions.LineHeight).roundToInt()
         val ctl_line_height = toPx(Dimensions.EffectLineHeight).roundToInt()
-        val gap_height = this.resources.getDimension(R.dimen.channel_gap_size).roundToInt()
+        val gap_height = toPx(Dimensions.ChannelGapHeight).roundToInt()
         val is_dragging_channel = this.state_model.is_dragging_channel()
 
         val output = mutableListOf<Triple<ClosedFloatingPointRange<Float>, IntRange, Boolean>>()

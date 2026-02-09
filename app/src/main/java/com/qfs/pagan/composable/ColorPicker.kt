@@ -32,8 +32,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
-import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.composable.wrappers.Slider
+import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
@@ -188,10 +188,10 @@ fun HexDisplay(modifier: Modifier = Modifier, value: Float) {
     Surface(
         tonalElevation = 1.dp,
         shape = Shapes.Container,
-        border = BorderStroke(1.dp, color = MaterialTheme.colorScheme.onSurface)
+        border = BorderStroke(Dimensions.HexDisplayStrokeWidth, color = MaterialTheme.colorScheme.onSurface)
     ) {
         Box(
-            modifier = Modifier.height(48.dp),
+            modifier = Modifier.height(Dimensions.HexDisplayHeight),
             contentAlignment = Alignment.Center
         ) {
             Text(

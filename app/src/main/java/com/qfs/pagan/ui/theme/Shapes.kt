@@ -13,6 +13,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
+import com.qfs.pagan.ComponentActivity.pow
+import com.qfs.pagan.ComponentActivity.sqrt
 import com.qfs.pagan.ui.theme.Dimensions.ContextMenuButtonRadius
 import com.qfs.pagan.ui.theme.Dimensions.getter
 
@@ -101,6 +103,12 @@ object Shapes {
 
     val LandingButtonShape = RoundedCornerShape(Dimensions.LandingButtonCornerRadius)
 
+    object RadioMenu {
+        val Start = RoundedCornerShape(50F, 0F, 0F, 50F)
+        val Middle = RectangleShape
+        val End = RoundedCornerShape(0F, 50F, 50F, 0F)
+    }
+
     val SectionButtonEnd = RoundedCornerShape(0.dp, 50.dp, 50.dp, 0.dp)
     val SectionButtonCenter = RectangleShape
     val SectionButtonStart = RoundedCornerShape(
@@ -109,6 +117,8 @@ object Shapes {
         0.dp,
         50.dp
     )
+
+    val SettingsBox = RoundedCornerShape((Dimensions.SettingsBoxPadding.pow(2) * 2).sqrt())
 
     val SortableMenuBox = RoundedCornerShape(Dimensions.SortableMenuBoxRadius)
 

@@ -10,7 +10,6 @@
 package com.qfs.pagan.composable.effectwidget
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -36,14 +35,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
-import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.IntegerInput
-import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.cxtmenu.CMPadding
+import com.qfs.pagan.composable.wrappers.DropdownMenu
+import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
@@ -88,7 +86,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
         Icon(
             modifier = Modifier
                 .alpha(.2F)
-                .width(41.dp),
+                .width(Dimensions.EffectWidget.Delay.InputIconWidth),
             painter = painterResource(R.drawable.icon_hz),
             contentDescription = null
         )
@@ -103,17 +101,17 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
                     submit()
                 },
                 modifier = Modifier
-                    .height(41.dp)
-                    .width(54.dp)
+                    .height(Dimensions.EffectWidget.Delay.InputHeight)
+                    .width(Dimensions.EffectWidget.Delay.InputWidth)
             ) {
                 event.numerator = it
                 submit()
             }
         }
     }
-    Spacer(Modifier.width(2.dp))
+    Spacer(Modifier.width(Dimensions.EffectWidget.Delay.HzSpacing))
     Text("/")
-    Spacer(Modifier.width(2.dp))
+    Spacer(Modifier.width(Dimensions.EffectWidget.Delay.HzSpacing))
     Box(
         modifier = Modifier,
         contentAlignment = Alignment.Center
@@ -121,7 +119,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
         Icon(
             modifier = Modifier
                 .alpha(.2F)
-                .width(41.dp),
+                .width(Dimensions.EffectWidget.Delay.InputIconWidth),
             painter = painterResource(R.drawable.icon_hz),
             contentDescription = null
         )
@@ -137,8 +135,8 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
                 contentPadding = Unpadded,
                 text_align = TextAlign.Center,
                 modifier = Modifier
-                    .height(41.dp)
-                    .width(54.dp)
+                    .height(Dimensions.EffectWidget.Delay.InputHeight)
+                    .width(Dimensions.EffectWidget.Delay.InputWidth)
             ) {
                 event.denominator = it
                 submit()
@@ -155,7 +153,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
         Icon(
             modifier = Modifier
                 .alpha(.2F)
-                .width(41.dp),
+                .width(Dimensions.EffectWidget.Delay.InputIconWidth),
             painter = painterResource(R.drawable.icon_echo),
             contentDescription = null
         )
@@ -171,8 +169,8 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
                 contentPadding = Unpadded,
                 text_align = TextAlign.Center,
                 modifier = Modifier
-                    .height(41.dp)
-                    .width(54.dp)
+                    .height(Dimensions.EffectWidget.Delay.InputHeight)
+                    .width(Dimensions.EffectWidget.Delay.InputWidth)
             ) {
                 event.echo = (it - 1)
                 submit()
@@ -214,8 +212,8 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
             onDismissRequest = { fade_expanded.value = false },
             shape = CircleShape,
             modifier = Modifier
-                .height(250.dp)
-                .width(50.dp)
+                .height(Dimensions.EffectWidget.Delay.FadePopupHeight)
+                .width(Dimensions.EffectWidget.Delay.FadePopupWidth)
         ) {
             Slider(
                 value = fade.floatValue,
@@ -223,7 +221,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
                 colors = colors,
                 valueRange = 0F..1F,
                 modifier = Modifier
-                    .padding(vertical = 8.dp)
+                    .padding(vertical = Dimensions.EffectWidget.Delay.FadePopupPadding)
                     .graphicsLayer {
                         rotationZ = 270f
                         transformOrigin = TransformOrigin(0f, 0f)

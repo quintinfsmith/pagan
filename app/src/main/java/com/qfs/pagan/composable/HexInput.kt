@@ -20,7 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
+import com.qfs.pagan.ui.theme.Dimensions
 import kotlin.math.max
 import kotlin.math.min
 
@@ -29,7 +29,7 @@ fun HexInput(
     value: MutableState<Int>,
     maximum: Int? = null,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(12.dp),
+    contentPadding: PaddingValues = Dimensions.NumberInputPadding,
     text_align: TextAlign = TextAlign.End,
     prefix: @Composable (() -> Unit)? = null,
     label: (@Composable TextFieldLabelScope.() -> Unit)? = null,
@@ -54,9 +54,9 @@ fun HexInput(
 
                 var converted_value = try {
                     if (working_string.isEmpty()) {
-                        0
+                        minimum
                     } else {
-                        this.toString().toInt(16)
+                        this.toString().toInt(16) // From Hex
                     }
                 } catch (_: Exception) {
                     this.revertAllChanges()
@@ -76,9 +76,9 @@ fun HexInput(
 
             var converted_value = try {
                 if (working_string.isEmpty()) {
-                    0
+                    minimum
                 } else {
-                    this.toString().toInt(16)
+                    this.toString().toInt(16) // From Hex
                 }
             } catch (_: Exception) {
                 return@NumberInput
@@ -98,7 +98,6 @@ fun HexInput(
                 }
             }
         },
-
         callback = {
             callback(value.value)
         }

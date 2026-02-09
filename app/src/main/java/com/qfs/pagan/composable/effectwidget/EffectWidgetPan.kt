@@ -25,11 +25,11 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
@@ -57,8 +57,8 @@ fun RowScope.PanEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionTra
                 Modifier
                     .align(Alignment.TopCenter)
                     .background(colors.thumbColor, CircleShape)
-                    .height(12.dp)
-                    .width(12.dp)
+                    .height(Dimensions.EffectWidget.Pan.CenterDotDiameter)
+                    .width(Dimensions.EffectWidget.Pan.CenterDotDiameter)
             )
             Slider(
                 value = working_value.floatValue,

@@ -22,8 +22,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardColors
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CardElevation
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Surface
@@ -34,7 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.button.SmallButton
@@ -51,7 +48,6 @@ fun DialogCard(
         disabledContentColor = Color.Gray,
         disabledContainerColor = Color.Green,
     ),
-    elevation: CardElevation = CardDefaults.cardElevation(),
     shape: Shape = RoundedCornerShape(Dimensions.DialogRadius),
     border: BorderStroke? = null,
     content: @Composable ColumnScope.() -> Unit,
@@ -126,7 +122,7 @@ fun ColumnScope.DialogBar(
                     .height(Dimensions.DialogBarButtonHeight)
                     .weight(1F),
                 onClick = it,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface),
+                border = BorderStroke(Dimensions.OutlineButtonStrokeWidth, MaterialTheme.colorScheme.onSurface),
                 content = { Text(neutral_label, maxLines = 1) }
             )
         }

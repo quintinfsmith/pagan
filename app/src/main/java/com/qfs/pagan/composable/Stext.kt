@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -39,16 +38,17 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Shapes
 
 
 @Composable
 fun SettingsBoxWrapper(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Box(
         modifier
-            .border(1.dp, MaterialTheme.colorScheme.onSurface, RoundedCornerShape(12.dp))
+            .border(1.dp, MaterialTheme.colorScheme.onSurface, Shapes.SettingsBox)
             .background(
                 MaterialTheme.colorScheme.surface,
-                shape = RoundedCornerShape(12.dp)
+                shape = Shapes.SettingsBox
             ),
         contentAlignment = Alignment.Center,
         content = {
@@ -62,7 +62,7 @@ fun SettingsBoxWrapper(modifier: Modifier = Modifier, content: @Composable () ->
 @Composable
 fun SettingsColumn(
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(12.dp),
+    contentPadding: PaddingValues = PaddingValues(Dimensions.SettingsBoxPadding),
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     verticalArrangement: Arrangement.Vertical = Arrangement.Center,
     content: @Composable ColumnScope.() -> Unit
@@ -80,7 +80,7 @@ fun SettingsColumn(
 @Composable
 fun SettingsBox(
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(12.dp),
+    contentPadding: PaddingValues = PaddingValues(Dimensions.SettingsBoxPadding),
     contentAlignment: Alignment = Alignment.TopCenter,
     content: @Composable BoxScope.() -> Unit
 ) {
@@ -96,7 +96,7 @@ fun SettingsBox(
 @Composable
 fun SettingsRow(
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(12.dp),
+    contentPadding: PaddingValues = PaddingValues(Dimensions.SettingsBoxPadding),
     horizontalArrangement: Arrangement.Horizontal = Arrangement.Center,
     verticalAlignment: Alignment.Vertical = Alignment.CenterVertically,
     content: @Composable RowScope.() -> Unit

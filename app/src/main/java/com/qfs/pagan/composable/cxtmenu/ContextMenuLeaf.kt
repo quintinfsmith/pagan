@@ -11,7 +11,6 @@ package com.qfs.pagan.composable.cxtmenu
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,17 +29,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
 import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.Values
-import com.qfs.pagan.composable.wrappers.DropdownMenu
-import com.qfs.pagan.composable.RadioMenu
-import com.qfs.pagan.composable.wrappers.Text
-import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.NumberSelector
+import com.qfs.pagan.composable.RadioMenu
+import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.button.TextCMenuButton
 import com.qfs.pagan.composable.effectwidget.DelayEventMenu
 import com.qfs.pagan.composable.effectwidget.PanEventMenu
@@ -48,6 +44,8 @@ import com.qfs.pagan.composable.effectwidget.ReverbEventMenu
 import com.qfs.pagan.composable.effectwidget.TempoEventMenu
 import com.qfs.pagan.composable.effectwidget.VelocityEventMenu
 import com.qfs.pagan.composable.effectwidget.VolumeEventMenu
+import com.qfs.pagan.composable.wrappers.DropdownMenu
+import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
@@ -315,13 +313,13 @@ fun RelativeInputDropDown(ui_facade: ViewModelEditorState, dispatcher: ActionTra
         onDismissRequest = { expanded.value = null}
     ) {
         RadioMenu(
-            modifier = Modifier.padding(8.dp),
+            modifier = Modifier.padding(Dimensions.RelativeInputPopup.Padding),
             options = listOf(
                 Pair(RelativeInputMode.Negative) {
                     Icon(
                         modifier = Modifier
-                            .padding(vertical = 4.dp)
-                            .height(20.dp),
+                            .padding(vertical = Dimensions.RelativeInputPopup.ItemPadding)
+                            .height(Dimensions.RelativeInputPopup.ItemHeight),
                         painter = painterResource(R.drawable.icon_subtract),
                         contentDescription = stringResource(R.string.relative_input_mode_positive)
                     )
@@ -330,16 +328,16 @@ fun RelativeInputDropDown(ui_facade: ViewModelEditorState, dispatcher: ActionTra
                     Text(
                         R.string.absolute_label,
                         modifier = Modifier
-                            .padding(vertical = 4.dp)
-                            .height(20.dp),
+                            .padding(vertical = Dimensions.RelativeInputPopup.ItemPadding)
+                            .height(Dimensions.RelativeInputPopup.ItemHeight),
                         style = Typography.RadioMenu
                     )
                 },
                 Pair(RelativeInputMode.Positive) {
                     Icon(
                         modifier = Modifier
-                            .padding(vertical = 4.dp)
-                            .height(20.dp),
+                            .padding(vertical = Dimensions.RelativeInputPopup.ItemPadding)
+                            .height(Dimensions.RelativeInputPopup.ItemHeight),
                         painter = painterResource(R.drawable.icon_add),
                         contentDescription = stringResource(R.string.relative_input_mode_positive)
                     )
@@ -372,7 +370,7 @@ fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
                 checked.value,
                 thumbContent = {
                     Icon(
-                        modifier = Modifier.padding(4.dp),
+                        modifier = Modifier.padding(Dimensions.PercussionSwitchIconPadding),
                         painter = painterResource(R.drawable.percussion_indicator),
                         contentDescription = null
                     )

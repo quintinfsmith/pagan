@@ -14,25 +14,24 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.enumerate
+import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Shapes
 
 @Composable
 fun <T> RadioMenu(
     modifier: Modifier = Modifier,
     options: List<Pair<T, @Composable (RowScope.() -> Unit)>>,
     active: MutableState<T>,
-    gap_size: Dp = 4.dp,
+    gap_size: Dp = Dimensions.RadioMenu.Gap,
     callback: (T) -> Unit
 ) {
     Row(
@@ -43,9 +42,9 @@ fun <T> RadioMenu(
             val (item, content) = option
 
             val shape = when (i) {
-                0 -> RoundedCornerShape(50F, 0F, 0F, 50F)
-                options.size - 1 -> RoundedCornerShape(0F, 50F, 50F, 0F)
-                else -> RectangleShape
+                0 -> Shapes.RadioMenu.Start
+                options.size - 1 -> Shapes.RadioMenu.End
+                else -> Shapes.RadioMenu.Middle
             }
 
             if (i != 0) {
@@ -66,7 +65,7 @@ fun <T> RadioMenu(
                     }
                 ),
                 border = BorderStroke(
-                    width = 2.dp,
+                    width = Dimensions.RadioMenu.StrokeWidth,
                     color = if (active.value == item) {
                         SwitchDefaults.colors().checkedBorderColor
                     } else {

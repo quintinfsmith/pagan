@@ -12,6 +12,7 @@ package com.qfs.pagan.ComponentActivity
 import android.content.Context
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlin.math.sqrt
 
 fun Context.toDp(float: Float): Dp {
     val pixel_density = this.resources.displayMetrics.density
@@ -21,4 +22,17 @@ fun Context.toDp(float: Float): Dp {
 fun Context.toPx(density_pixel: Dp): Float {
     val pixel_density = this.resources.displayMetrics.density
     return density_pixel.value * pixel_density
+}
+
+fun Dp.pow(exponent: Int): Dp {
+    var output = 1F
+    for (i in 0 until exponent) {
+        output = this.value * output
+    }
+
+    return output.dp
+}
+
+fun Dp.sqrt(): Dp {
+    return sqrt(this.value).dp
 }

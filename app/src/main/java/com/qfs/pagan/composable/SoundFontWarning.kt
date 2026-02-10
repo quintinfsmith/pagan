@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
@@ -29,13 +28,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.find_activity
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
 
 
@@ -47,9 +46,13 @@ fun SoundFontWarning(in_settings: Boolean = false) {
     ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onTertiary) {
         Column(
             Modifier
-                .background(MaterialTheme.colorScheme.tertiary, shape = RoundedCornerShape(24.dp))
-                .border(4.dp, MaterialTheme.colorScheme.tertiaryContainer, shape = RoundedCornerShape(24.dp))
-                .padding(16.dp),
+                .background(MaterialTheme.colorScheme.tertiary, shape = Shapes.SoundFontWarningBox)
+                .border(
+                    Dimensions.SoundFontWarningBorderWidth,
+                    MaterialTheme.colorScheme.tertiaryContainer,
+                    shape = Shapes.SoundFontWarningBox
+                )
+                .padding(Dimensions.SoundFontWarningPadding),
 
         ) {
             ProvideTextStyle(Typography.SoundFontWarning.Title) {
@@ -73,7 +76,7 @@ fun SoundFontWarning(in_settings: Boolean = false) {
                         textAlign = TextAlign.Center,
                         textDecoration = TextDecoration.Underline,
                         modifier = Modifier
-                            .padding(top = 2.dp)
+                            .padding(top = Dimensions.Space.Small)
                             .clickable {
                                 val intent = Intent(Intent.ACTION_VIEW)
                                 intent.data = url.toUri()

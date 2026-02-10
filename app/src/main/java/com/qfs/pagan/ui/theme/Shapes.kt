@@ -103,6 +103,8 @@ object Shapes {
 
     val LandingButtonShape = RoundedCornerShape(Dimensions.LandingButtonCornerRadius)
 
+    val ProjectCardNotes = RoundedCornerShape(4.dp)
+
     object RadioMenu {
         val Start = RoundedCornerShape(50F, 0F, 0F, 50F)
         val Middle = RectangleShape
@@ -121,6 +123,7 @@ object Shapes {
     val SettingsBox = RoundedCornerShape((Dimensions.SettingsBoxPadding.pow(2) * 2).sqrt())
 
     val SortableMenuBox = RoundedCornerShape(Dimensions.SortableMenuBoxRadius)
+    val SoundFontWarningBox = RoundedCornerShape(24.dp)
 
     val TaggedBeat = RoundedCornerShape(12.dp)
     val TopBar = RectangleShape

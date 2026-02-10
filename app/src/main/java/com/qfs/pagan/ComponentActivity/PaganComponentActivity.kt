@@ -32,7 +32,6 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -45,7 +44,6 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerState
@@ -73,7 +71,6 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
@@ -84,15 +81,16 @@ import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogCard
 import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.PaganTheme
-import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.composable.ScaffoldWithTopBar
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.OutlinedButton
 import com.qfs.pagan.composable.dashed_border
+import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.projectmanager.ProjectManager
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.launch
@@ -413,7 +411,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
             @Composable {
                 Column {
                     ProjectCard(modifier = Modifier.fillMaxWidth(), uri = uri)
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(Dimensions.Space.Large))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
@@ -424,7 +422,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                             onClick = close,
                             content = { Text(android.R.string.cancel) }
                         )
-                        Spacer(Modifier.width(4.dp))
+                        Spacer(Modifier.width(Dimensions.Space.Medium))
                         Button(
                             modifier = Modifier.height(Dimensions.ButtonHeight.Small),
                             onClick = {
@@ -457,7 +455,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                 )
                             }
                         )
-                        Spacer(Modifier.width(4.dp))
+                        Spacer(Modifier.width(Dimensions.Space.Medium))
                         Button(
                             modifier = Modifier.height(Dimensions.ButtonHeight.Small),
                             onClick = {
@@ -510,14 +508,14 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 if (is_refreshing.value) {
                     CircularProgressIndicator(
                         Modifier
-                            .height(36.dp)
-                            .width(36.dp),
+                            .height(Dimensions.SortableMenuSortButtonDiameter)
+                            .width(Dimensions.SortableMenuSortButtonDiameter),
                     )
                 } else {
                     Button(
                         modifier = Modifier
-                            .height(36.dp)
-                            .width(36.dp),
+                            .height(Dimensions.SortableMenuSortButtonDiameter)
+                            .width(Dimensions.SortableMenuSortButtonDiameter),
                         colors = ButtonDefaults.buttonColors().copy(
                             containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = MaterialTheme.colorScheme.onPrimary
@@ -529,7 +527,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                             is_refreshing.value = false
                             load_menu_dialog(active_sort, load_callback)
                         },
-                        contentPadding = PaddingValues(6.dp),
+                        contentPadding = Dimensions.SortableMenuSortButtonPadding,
                         content = {
                             Icon(
                                 painter = painterResource(R.drawable.icon_refresh),
@@ -560,7 +558,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
         val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
         val initial_tempo = other_project.get_global_controller<OpusTempoEvent>(EffectType.Tempo).initial_event.value
 
-        val padding = 8.dp
+        val padding = Dimensions.Space.Large
         Column(modifier) {
             ProvideTextStyle(Typography.DialogTitle) {
                 if (other_project.project_name == null) {
@@ -602,13 +600,13 @@ abstract class PaganComponentActivity: ComponentActivity() {
                     Modifier
                         .dashed_border(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            shape = RoundedCornerShape(4.dp),
-                            width = 1.dp
+                            shape = Shapes.ProjectCardNotes,
+                            width = Dimensions.Stroke.Thin
                         )
                 ) {
                     Text(
                         modifier = Modifier
-                            .padding(6.dp)
+                            .padding(Dimensions.ProjectCardNotesPadding)
                             .fillMaxWidth(),
                         text = if (other_project.project_notes != null) {
                             other_project.project_notes!!

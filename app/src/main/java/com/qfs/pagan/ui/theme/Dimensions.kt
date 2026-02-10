@@ -265,6 +265,8 @@ object Dimensions {
 
     val OutlineButtonStrokeWidth = Stroke.Thin
 
+    val ProjectCardNotesPadding = 6.dp
+
     val PercussionSwitchIconPadding = 4.dp
 
     object RadioMenu {
@@ -281,7 +283,7 @@ object Dimensions {
     val SettingsRadioIconHeight = 32.dp
     val SettingsBoxPadding = 12.dp
 
-    val SortableMenuSortButtonSize = 36.dp
+    val SortableMenuSortButtonDiameter = 36.dp
     val SortableMenuSortButtonPadding = PaddingValues(6.dp)
     val SortableMenuHeadSpacing = 4.dp
     val SortableMenuBoxRadius = 8.dp
@@ -290,11 +292,14 @@ object Dimensions {
     object Space {
         val Small = 2.dp
         val Medium = 4.dp
+        val Large = 8.dp
     }
 
     val SoundFontMenuPadding = 12.dp
     val SoundFontMenuIconHeight = 41.dp
     val SFWarningInnerPadding = 10.dp
+    val SoundFontWarningBorderWidth = 4.dp
+    val SoundFontWarningPadding = 16.dp
 
     object Stroke {
         val Thin = 1.dp

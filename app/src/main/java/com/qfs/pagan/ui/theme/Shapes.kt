@@ -124,4 +124,6 @@ object Shapes {
 
     val TaggedBeat = RoundedCornerShape(12.dp)
     val TopBar = RectangleShape
+
+    val TuningDialogBox = Container
 }

@@ -33,7 +33,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
@@ -74,16 +73,17 @@ import com.qfs.pagan.composable.ColorPicker
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DialogTitle
-import com.qfs.pagan.composable.wrappers.DropdownMenu
-import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.IntegerInput
 import com.qfs.pagan.composable.NumberPicker
-import com.qfs.pagan.composable.wrappers.Text
-import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.OutlinedButton
+import com.qfs.pagan.composable.wrappers.DivisorSeparator
+import com.qfs.pagan.composable.wrappers.DropdownMenu
+import com.qfs.pagan.composable.wrappers.DropdownMenuItem
+import com.qfs.pagan.composable.wrappers.Slider
+import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
@@ -583,7 +583,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
             options.add(
                 Pair(transition_option) {
                     Icon(
-                        modifier = Modifier.height(32.dp),
+                        modifier = Modifier.height(Dimensions.EffectTransitionDialogIconHeight),
                         painter = painterResource(when (transition_option) {
                             EffectTransition.Instant -> R.drawable.icon_transition_immediate
                             EffectTransition.Linear -> R.drawable.icon_transition_linear
@@ -1934,7 +1934,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                     modifier = Modifier.fillMaxWidth(),
                     lineLimits = TextFieldLineLimits.Default
                 ) {}
-                Spacer(modifier = Modifier.height(3.dp))
+                Spacer(modifier = Modifier.height(Dimensions.Space.Medium))
                 TextInput(
                     label = { Text(R.string.dlg_project_notes) },
                     input = project_notes,
@@ -2766,7 +2766,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                         modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
                         callback = { }
                     )
-                    Text("/", Modifier.padding(horizontal = 4.dp))
+                    DivisorSeparator()
                     IntegerInput(
                         value = transpose_denominator,
                         minimum = 1,
@@ -2819,32 +2819,31 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
 
         Surface(
             modifier = Modifier.weight(1F, fill = false),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface),
-            shape = RoundedCornerShape(6.dp),
+            border = BorderStroke(Dimensions.TuningDialogStrokeWidth, MaterialTheme.colorScheme.onSurface),
+            shape = Shapes.TuningDialogBox,
             tonalElevation = 1.dp
         ) {
             key(radix.value) {
                 FlowRow(
                     modifier = Modifier
-                        .padding(6.dp)
+                        .padding(Dimensions.TuningDialogBoxPadding)
                         .fillMaxWidth()
                         .verticalScroll(rememberScrollState()),
                 ) {
                     for ((i, state) in mutable_map.enumerate()) {
                         val (numer, denom) = state
                         Surface(
-                            Modifier.padding(vertical = 3.dp),
-                            shape = RoundedCornerShape(6.dp),
+                            modifier = Modifier.padding(Dimensions.TuningDialogBoxPadding),
+                            shape = Shapes.TuningDialogBox,
                             tonalElevation = 2.dp
                         ) {
                             Row(
-                                modifier = Modifier.padding(6.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
                                 Text(
                                     "%02d".format(i),
-                                    modifier = Modifier.padding(horizontal = 4.dp)
+                                    modifier = Modifier.padding(horizontal = Dimensions.TuningDialogLinePadding)
                                 )
                                 Spacer(Modifier.weight(1F))
                                 IntegerInput(
@@ -2854,7 +2853,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                                     contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
                                     callback = {}
                                 )
-                                Text("/", modifier = Modifier.padding(horizontal = 2.dp))
+                                DivisorSeparator()
                                 IntegerInput(
                                     value = denom,
                                     minimum = 1,
@@ -2871,7 +2870,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
 
         Spacer(
             Modifier
-                .height(4.dp)
+                .height(Dimensions.Space.Medium)
                 .fillMaxWidth()
         )
 
@@ -2981,7 +2980,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                                         contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
                                         callback = {}
                                     )
-                                    Text("/", modifier = Modifier.padding(horizontal = 2.dp))
+                                    DivisorSeparator()
                                     IntegerInput(
                                         value = mutable_map[actively_editting_index.value].second,
                                         minimum = 1,
@@ -3002,8 +3001,8 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                 Modifier
                     .fillMaxHeight()
                     .background(color = MaterialTheme.colorScheme.surface, shape = Shapes.Container)
-                    .border(width = 1.dp, color = MaterialTheme.colorScheme.onSurface, shape = Shapes.Container)
-                    .padding(horizontal = 4.dp),
+                    .border(width = Dimensions.TuningDialogStrokeWidth, color = MaterialTheme.colorScheme.onSurface, shape = Shapes.Container)
+                    .padding(horizontal = Dimensions.TuningDialogBoxPadding),
                 verticalArrangement = Arrangement.SpaceEvenly
             ) {
                 OutlinedButton(

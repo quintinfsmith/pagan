@@ -188,8 +188,11 @@ object Dimensions {
     val DialogTitlePadding = PaddingValues(vertical = 16.dp, horizontal = 12.dp)
     val DialogRadius = 12.dp
 
+    val DivisorPadding = 4.dp
+
     val EffectLineHeight = 30.dp
     val EffectDialogIconWidth = 32.dp
+    val EffectTransitionDialogIconHeight = 32.dp
 
     val HexDisplayStrokeWidth = Stroke.Thin
     val HexDisplayHeight = 48.dp
@@ -204,7 +207,6 @@ object Dimensions {
             val FadePopupHeight = 250.dp
             val FadePopupWidth = 50.dp
             val FadePopupPadding = 8.dp
-            val HzSpacing = 2.dp
             val InputHeight = 41.dp
             val InputWidth = 54.dp
             val InputIconWidth = 41.dp
@@ -285,6 +287,11 @@ object Dimensions {
     val SortableMenuBoxRadius = 8.dp
     val SortableMenuLineGap = 4.dp
 
+    object Space {
+        val Small = 2.dp
+        val Medium = 4.dp
+    }
+
     val SoundFontMenuPadding = 12.dp
     val SoundFontMenuIconHeight = 41.dp
     val SFWarningInnerPadding = 10.dp
@@ -318,6 +325,9 @@ object Dimensions {
     val TransposeDialogInputPadding = 8.dp
     val TransposeDialogInputWidth = 64.dp
 
+    val TuningDialogStrokeWidth = Stroke.Thin
+    val TuningDialogBoxPadding = 6.dp
+    val TuningDialogLinePadding = 4.dp
 
     val Unpadded = PaddingValues(0.dp)
 

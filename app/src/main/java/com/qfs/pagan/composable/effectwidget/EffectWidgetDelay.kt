@@ -40,6 +40,7 @@ import com.qfs.pagan.R
 import com.qfs.pagan.composable.IntegerInput
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.cxtmenu.CMPadding
+import com.qfs.pagan.composable.wrappers.DivisorSeparator
 import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
@@ -109,9 +110,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
             }
         }
     }
-    Spacer(Modifier.width(Dimensions.EffectWidget.Delay.HzSpacing))
-    Text("/")
-    Spacer(Modifier.width(Dimensions.EffectWidget.Delay.HzSpacing))
+    DivisorSeparator()
     Box(
         modifier = Modifier,
         contentAlignment = Alignment.Center

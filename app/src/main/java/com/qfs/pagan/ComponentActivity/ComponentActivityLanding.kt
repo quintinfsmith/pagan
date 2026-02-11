@@ -28,7 +28,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -42,10 +41,10 @@ import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
-import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.composable.SettingsRow
 import com.qfs.pagan.composable.SoundFontWarning
 import com.qfs.pagan.composable.button.Button
+import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 import java.io.File
@@ -281,6 +280,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
                 if (this@ComponentActivityLanding.view_model.requires_soundfont.value) {
                     SoundFontWarning()
                 } else {
+                    // TODO: Check this. looks like an artifact and I don't think it matters if it has a height
                     Spacer(Modifier.height(41.dp))
                 }
 
@@ -379,7 +379,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
     fun LayoutSmallLandscapeNeedsSF(modifier: Modifier = Modifier) {
         val has_backup = this.view_model.project_manager?.has_backup_saved() == true
         val has_saved_project = this.view_model.has_saved_project.value
-        val button_shape = RoundedCornerShape(Dimensions.LandingButtonCornerRadius, 0.dp, 0.dp, Dimensions.LandingButtonCornerRadius)
+        val button_shape = Shapes.LandingButtonShapeNeedsSF
         Row(
             modifier.padding(Dimensions.LandingPadding),
             verticalAlignment = Alignment.CenterVertically,
@@ -388,7 +388,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
             Box(
                 modifier = Modifier
                     .weight(2F)
-                    .padding(12.dp),
+                    .padding(Dimensions.Space.Large),
                 contentAlignment = Alignment.Center
             ) {
                 SoundFontWarning()
@@ -403,13 +403,13 @@ class ComponentActivityLanding: PaganComponentActivity() {
                 Spacer(Modifier)
                 Column(horizontalAlignment = Alignment.End) {
                     if (has_backup) {
-                        ButtonRecent(shape = button_shape)
+                        ButtonRecent(shape = Shapes.LandingButtonShapeNeedsSF)
                         Padder()
                     }
                     ButtonNew(shape = button_shape)
                     if (has_saved_project) {
                         Padder()
-                        ButtonLoad(shape = button_shape)
+                        ButtonLoad(shape = Shapes.LandingButtonShapeNeedsSF)
                     }
                 }
                 LayoutSmallIconLinks()
@@ -472,7 +472,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
                 DialogSTitle(R.string.crash_report_save)
                 Text(
                     R.string.crash_report_desc,
-                    modifier = Modifier.padding(vertical = 24.dp)
+                    modifier = Modifier.padding(vertical = Dimensions.BugReportPadding)
                 )
                 DialogBar(
                     negative = {

@@ -49,16 +49,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
-import com.qfs.pagan.composable.wrappers.DropdownMenu
-import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.MenuPadder
 import com.qfs.pagan.composable.RadioMenu
-import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.composable.SettingsColumn
 import com.qfs.pagan.composable.SettingsRow
 import com.qfs.pagan.composable.SoundFontWarning
@@ -67,6 +63,9 @@ import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.button.TopBarIcon
 import com.qfs.pagan.composable.button.TopBarNoIcon
+import com.qfs.pagan.composable.wrappers.DropdownMenu
+import com.qfs.pagan.composable.wrappers.DropdownMenuItem
+import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Typography
@@ -483,7 +482,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                         Spacer(modifier = Modifier.weight(1F))
                         Button(
                             modifier = Modifier.height(Dimensions.SoundFontMenuIconHeight),
-                            contentPadding = PaddingValues(8.dp),
+                            contentPadding = PaddingValues(Dimensions.SoundFontMenuInnerPadding),
                             content = {
                                 Icon(
                                     painter = painterResource(R.drawable.icon_import),
@@ -499,7 +498,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                         MenuPadder()
                         Button(
                             modifier = Modifier.height(Dimensions.SoundFontMenuIconHeight),
-                            contentPadding = PaddingValues(8.dp),
+                            contentPadding = PaddingValues(Dimensions.SoundFontMenuInnerPadding),
                             content = {
                                 Icon(
                                     painter = painterResource(R.drawable.no_soundfont),

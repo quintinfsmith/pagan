@@ -34,6 +34,7 @@ import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
 import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.Values
+import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.NumberSelector
 import com.qfs.pagan.composable.RadioMenu
 import com.qfs.pagan.composable.button.IconCMenuButton
@@ -157,11 +158,11 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewM
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             SplitButton(dispatcher)
-            CMPadding()
+            MediumSpacer()
             InsertButton(dispatcher)
-            CMPadding()
+            MediumSpacer()
             RemoveButton(dispatcher, cursor)
-            CMPadding()
+            MediumSpacer()
             Spacer(Modifier.weight(1F))
             key(active_event?.duration) {
                 DurationButton(
@@ -176,18 +177,18 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewM
                 )
             }
             if (active_line.assigned_offset.value == null) {
-                CMPadding()
+                MediumSpacer()
                 UnsetButton(dispatcher, active_line, active_event, Shapes.ContextMenuButtonPrimaryBottom)
             }
         }
     } else {
         ContextMenuPrimaryRow(modifier) {
             SplitButton(dispatcher)
-            CMPadding()
+            MediumSpacer()
             InsertButton(dispatcher)
-            CMPadding()
+            MediumSpacer()
             RemoveButton(dispatcher, cursor)
-            CMPadding()
+            MediumSpacer()
 
             key(active_event?.duration) {
                 DurationButton(
@@ -202,7 +203,7 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewM
                 )
             }
             if (active_line.assigned_offset.value == null) {
-                CMPadding()
+                MediumSpacer()
                 UnsetButton(dispatcher, active_line, active_event, Shapes.ContextMenuButtonPrimaryEnd)
             }
         }

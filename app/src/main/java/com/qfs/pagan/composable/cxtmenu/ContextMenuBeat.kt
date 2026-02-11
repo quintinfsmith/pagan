@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
+import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.ui.theme.Shapes
@@ -95,9 +96,9 @@ fun ContextMenuColumnPrimary(modifier: Modifier = Modifier, ui_facade: ViewModel
         LayoutSize.SmallLandscape -> {
             Column {
                 InsertBeatButton(dispatcher, Shapes.ContextMenuButtonPrimaryStart)
-                CMPadding()
+                MediumSpacer()
                 RemoveBeatButton(dispatcher, ui_facade.beat_count.value > 1)
-                CMPadding()
+                MediumSpacer()
                 AdjustBeatButton(dispatcher)
                 Spacer(Modifier.weight(1F))
                 TagButton(dispatcher, column_data, beat, Shapes.ContextMenuButtonPrimaryBottom)
@@ -123,11 +124,11 @@ fun ContextMenuColumnSecondary(modifier: Modifier = Modifier, ui_facade: ViewMod
         else -> {
             ContextMenuPrimaryRow(modifier) {
                 TagButton(dispatcher, column_data, beat, Shapes.ContextMenuButtonPrimaryStart)
-                CMPadding()
+                MediumSpacer()
                 AdjustBeatButton(dispatcher)
-                CMPadding()
+                MediumSpacer()
                 RemoveBeatButton(dispatcher, ui_facade.beat_count.value > 1)
-                CMPadding()
+                MediumSpacer()
                 InsertBeatButton(
                     dispatcher,
                     if (!column_data.is_tagged.value) {

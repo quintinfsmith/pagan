@@ -119,6 +119,7 @@ object Dimensions {
     ///////////////////////////////////////////////////////////////////////
 
     val AboutPadding = 12.dp
+    val AboutUrlSectionPadding = 6.dp
 
     object Background {
         val Radius = 12.dp
@@ -128,10 +129,17 @@ object Dimensions {
         val BarLargeHeight = BarSmallHeight * 3
     }
 
+    val BeatLabelPadding = PaddingValues(
+        horizontal = 4.dp,
+        vertical = 8.dp
+    )
+
     object ButtonHeight {
         val Normal = 48.dp
         val Small = 41.dp
     }
+
+    val BugReportPadding = 24.dp
 
     val ChannelGapHeight = 5.dp
 
@@ -150,10 +158,12 @@ object Dimensions {
     val ConfigBottomButtonHeight = 48.dp
     val ConfigBottomButtonWidth = 72.dp
     val ConfigChannelSpacing = 4.dp
+
     val ConfigDrawerPadding = 4.dp
     val ConfigDrawerButtonPadding = 8.dp
     val ConfigDrawerButtonExtraPadding = 16.dp
     val ConfigDrawerButtonRadius = 12.dp
+    val ConfigDrawerChannelLabelPadding = 12.dp
 
     val ContextMenuButtonHeight: Dp
         get() = getter(
@@ -166,10 +176,11 @@ object Dimensions {
         get() = getter(
             small_portrait = 48.dp,
         )
+    val ContextMenuButtonIconWidth = 32.dp
 
     val ContextMenuButtonPadding = PaddingValues(8.dp)
     val ContextMenuButtonRadius = 8.dp
-    val ContextMenuPadding = 4.dp
+    val ContextMenuPadding = Space.Medium
     val ContextMenuRadius = 16.dp
 
     object DashedBorder {
@@ -194,6 +205,8 @@ object Dimensions {
     val EffectDialogIconWidth = 32.dp
     val EffectTransitionDialogIconHeight = 32.dp
 
+    val ExtraTableIconsPadding = 6.dp
+
     val HexDisplayStrokeWidth = Stroke.Thin
     val HexDisplayHeight = 48.dp
 
@@ -207,13 +220,11 @@ object Dimensions {
             val FadePopupHeight = 250.dp
             val FadePopupWidth = 50.dp
             val FadePopupPadding = 8.dp
-            val InputHeight = 41.dp
             val InputWidth = 54.dp
             val InputIconWidth = 41.dp
         }
-        object Tempo {
-
-        }
+        object Tempo {}
+        val InputHeight = 41.dp
     }
 
     val LandingButtonCornerRadius = 12.dp
@@ -247,6 +258,15 @@ object Dimensions {
 
     val LineHeight = 41.dp
     val LineLabelWidth = 41.dp
+    val LineLabelPadding = 4.dp
+    val LineLabelIconPadding = 4.dp
+
+    val SelectionBorderPadding = PaddingValues(
+        top = 2.dp,
+        bottom = 2.dp,
+        end = 3.dp,
+        start = 2.dp
+    )
 
     val NumberInputDialogPadding = 8.dp
     val NumberPickerRowHeight = 41.dp
@@ -283,6 +303,8 @@ object Dimensions {
     val SettingsRadioIconHeight = 32.dp
     val SettingsBoxPadding = 12.dp
 
+    val ShortcutIconPadding = 7.dp
+
     val SortableMenuSortButtonDiameter = 36.dp
     val SortableMenuSortButtonPadding = PaddingValues(6.dp)
     val SortableMenuHeadSpacing = 4.dp
@@ -296,6 +318,7 @@ object Dimensions {
     }
 
     val SoundFontMenuPadding = 12.dp
+    val SoundFontMenuInnerPadding = 8.dp
     val SoundFontMenuIconHeight = 41.dp
     val SFWarningInnerPadding = 10.dp
     val SoundFontWarningBorderWidth = 4.dp

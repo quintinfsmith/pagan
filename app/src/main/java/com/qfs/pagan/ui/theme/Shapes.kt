@@ -102,6 +102,7 @@ object Shapes {
     val Drawer = RoundedCornerShape(topStart = 0.dp, bottomStart = 0.dp, topEnd = 4.dp, bottomEnd = 4.dp)
 
     val LandingButtonShape = RoundedCornerShape(Dimensions.LandingButtonCornerRadius)
+    val LandingButtonShapeNeedsSF = RoundedCornerShape(Dimensions.LandingButtonCornerRadius, 0.dp, 0.dp, Dimensions.LandingButtonCornerRadius)
 
     val ProjectCardNotes = RoundedCornerShape(4.dp)
 

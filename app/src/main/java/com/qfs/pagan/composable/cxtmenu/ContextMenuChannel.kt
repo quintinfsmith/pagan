@@ -21,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
+import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.button.TextCMenuButton
 import com.qfs.pagan.ui.theme.Dimensions
@@ -156,11 +157,11 @@ fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, ui_facade: ViewMode
                         .weight(1F)
                 )
                 AdjustChannelButton(dispatcher)
-                CMPadding()
+                MediumSpacer()
                 RemoveChannelButton(dispatcher)
-                CMPadding()
+                MediumSpacer()
                 AddKitButton(dispatcher)
-                CMPadding()
+                MediumSpacer()
                 AddChannelButton(dispatcher, Shapes.ContextMenuButtonPrimaryEnd)
             }
         }
@@ -169,11 +170,11 @@ fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, ui_facade: ViewMode
         LayoutSize.MediumLandscape -> {
             Column {
                 AddChannelButton(dispatcher, Shapes.ContextMenuButtonPrimaryStart)
-                CMPadding()
+                MediumSpacer()
                 AddKitButton(dispatcher)
-                CMPadding()
+                MediumSpacer()
                 AdjustChannelButton(dispatcher)
-                CMPadding()
+                MediumSpacer()
                 RemoveChannelButton(dispatcher)
                 Spacer(Modifier.weight(1F))
 
@@ -203,7 +204,7 @@ fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
                 Shapes.ContextMenuButtonPrimary
             }
         )
-        CMPadding()
+        MediumSpacer()
         SetPresetButton(
             modifier = Modifier
                 .height(Dimensions.ContextMenuButtonHeight)
@@ -214,7 +215,7 @@ fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
             active_channel,
             Shapes.ContextMenuButtonPrimary
         )
-        CMPadding()
+        MediumSpacer()
         SetChannelColorButton(
             Modifier,
             ui_facade,

@@ -20,7 +20,7 @@ import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.composable.button.TextCMenuButton
-import com.qfs.pagan.composable.cxtmenu.CMPadding
+import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.ui.theme.Dimensions
@@ -49,7 +49,7 @@ fun RowScope.VolumeEventMenu(ui_facade: ViewModelEditorState, dispatcher: Action
             dispatcher.set_effect_at_cursor(event)
         },
     )
-    CMPadding()
+    MediumSpacer()
     Slider(
         modifier = Modifier
             .height(Dimensions.ContextMenuButtonHeight)

@@ -9,7 +9,6 @@
  */
 package com.qfs.pagan.composable.effectwidget
 
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -25,15 +24,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.FloatInput
-import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
+import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
@@ -57,7 +56,7 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
             },
             prefix = {
                 Icon(
-                    modifier = Modifier.width(32.dp),
+                    modifier = Modifier.width(Dimensions.ContextMenuButtonIconWidth),
                     painter = painterResource(R.drawable.icon_tempo),
                     contentDescription = null
                 )
@@ -66,7 +65,7 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
             contentPadding = Unpadded,
             text_align = TextAlign.Center,
             modifier = Modifier
-                .height(41.dp)
+                .height(Dimensions.EffectWidget.InputHeight)
                 .weight(1F, fill = true)
         ) {
             event.value = it
@@ -81,7 +80,7 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
     ProvideContentColorTextStyle(
         contentColor = MaterialTheme.colorScheme.onSurface,
         content = {
-            Text(R.string.bpm, Modifier.padding(start = 4.dp))
+            Text(R.string.bpm, Modifier.padding(start = Dimensions.Space.Medium))
         }
     )
 

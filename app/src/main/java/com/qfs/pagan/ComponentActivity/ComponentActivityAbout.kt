@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,13 +33,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.qfs.pagan.R
-import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.composable.SettingsColumn
 import com.qfs.pagan.composable.button.TopBarIcon
 import com.qfs.pagan.composable.button.TopBarNoIcon
+import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.find_activity
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Typography
@@ -78,15 +76,6 @@ class ComponentActivityAbout: PaganComponentActivity() {
     }
 
     @Composable
-    fun FillRow(modifier: Modifier = Modifier, content: @Composable (RowScope.() -> Unit)) {
-        Row(
-            modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            content = content
-        )
-    }
-
-    @Composable
     fun SectionLicense() {
         val context = LocalContext.current.find_activity() ?: return
         val stream = context.assets.open("LICENSE")
@@ -94,21 +83,19 @@ class ComponentActivityAbout: PaganComponentActivity() {
         stream.read(bytes)
         stream.close()
         Column {
-            Spacer(Modifier.height(12.dp))
-            HorizontalDivider(
-                thickness = 1.dp,
-            )
+            Spacer(Modifier.height(Dimensions.AboutPadding))
+            HorizontalDivider(thickness = Dimensions.Stroke.Thin)
             ProvideTextStyle(Typography.About.License) {
                 SelectionContainer {
                     Text(
                         string_id = R.string.fira_sans_license_blurb,
-                        modifier = Modifier.padding(12.dp)
+                        modifier = Modifier.padding(Dimensions.AboutPadding)
                     )
                 }
             }
 
-            HorizontalDivider(thickness = 1.dp)
-            Spacer(Modifier.height(12.dp))
+            HorizontalDivider(thickness = Dimensions.Stroke.Thin)
+            Spacer(Modifier.height(Dimensions.AboutPadding))
 
             SelectionContainer {
                 Text(
@@ -232,16 +219,16 @@ class ComponentActivityAbout: PaganComponentActivity() {
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalArrangement = Arrangement.Center
         ) {
-            Box(Modifier.padding(6.dp)) {
+            Box(Modifier.padding(Dimensions.AboutUrlSectionPadding)) {
                 UrlManual()
             }
-            Box(Modifier.padding(6.dp)) {
+            Box(Modifier.padding(Dimensions.AboutUrlSectionPadding)) {
                 UrlSource()
             }
-            Box(Modifier.padding(6.dp)) {
+            Box(Modifier.padding(Dimensions.AboutUrlSectionPadding)) {
                 UrlIssueTracker()
             }
-            Box(Modifier.padding(6.dp)) {
+            Box(Modifier.padding(Dimensions.AboutUrlSectionPadding)) {
                 SupportEmail()
             }
         }

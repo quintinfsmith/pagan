@@ -48,7 +48,7 @@ fun IconCMenuButton(
         shape = shape,
         content = {
             Icon(
-                modifier = Modifier.width(32.dp),
+                modifier = Modifier.width(Dimensions.ContextMenuButtonIconWidth),
                 painter = painterResource(icon),
                 contentDescription = stringResource(description),
             )

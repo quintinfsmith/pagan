@@ -22,6 +22,7 @@ import androidx.compose.ui.res.stringResource
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
+import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.button.TextCMenuButton
 import com.qfs.pagan.composable.effectwidget.DelayEventMenu
@@ -210,7 +211,7 @@ fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
                 )
 
                 if (active_line.assigned_offset.value != null) {
-                    CMPadding()
+                    MediumSpacer()
                     PercussionSetInstrumentButton(
                         Modifier.weight(1F),
                         vm_state,
@@ -223,9 +224,9 @@ fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
                     AdjustLineButton(dispatcher)
                 }
 
-                CMPadding()
+                MediumSpacer()
                 RemoveLineButton(dispatcher, active_channel.size.intValue)
-                CMPadding()
+                MediumSpacer()
                 InsertLineButton(dispatcher, Shapes.ContextMenuButtonPrimaryEnd)
             }
         }
@@ -235,11 +236,11 @@ fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
             Column {
                 InsertLineButton(dispatcher)
 
-                CMPadding()
+                MediumSpacer()
                 RemoveLineButton(dispatcher, active_channel.size.intValue)
 
                 if (active_line.assigned_offset.value != null) {
-                    CMPadding()
+                    MediumSpacer()
                     PercussionSetInstrumentButton(
                         Modifier
                             .width(Dimensions.ButtonHeight.Normal)
@@ -250,7 +251,7 @@ fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
                         false
                     )
                 } else {
-                    CMPadding()
+                    MediumSpacer()
                     AdjustLineButton(dispatcher)
                 }
 
@@ -326,9 +327,9 @@ fun ContextMenuLineStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
 
     ContextMenuSecondaryRow {
         MuteButton(dispatcher, line)
-        CMPadding()
+        MediumSpacer()
         VolumeEventMenu(ui_facade, dispatcher, volume_event)
-        CMPadding()
+        MediumSpacer()
         SetLineColorButton(
             Modifier,
             ui_facade,

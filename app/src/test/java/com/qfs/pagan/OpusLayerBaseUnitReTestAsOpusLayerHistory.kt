@@ -15,22 +15,24 @@ import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BadBeatKey
 import com.qfs.pagan.structure.opusmanager.base.BadInsertPosition
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.EventlessTreeException
 import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
 import com.qfs.pagan.structure.opusmanager.base.InvalidChannel
 import com.qfs.pagan.structure.opusmanager.base.NonEventConversion
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
-import com.qfs.pagan.structure.opusmanager.base.RangeOverflow
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase.Companion.get_ordered_beat_key_pair
+import com.qfs.pagan.structure.opusmanager.base.PercussionChannelRequired
+import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
+import com.qfs.pagan.structure.opusmanager.base.RangeOverflow
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.RemovingLastBeatException
 import com.qfs.pagan.structure.opusmanager.base.RemovingRootException
 import com.qfs.pagan.structure.opusmanager.base.TunedInstrumentEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -894,35 +896,36 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         for ((position, events) in full_midi.get_all_events_grouped()) {
             event_map[position] = events
         }
+        println("${event_map.keys}")
         println("${event_map.values}")
         assertEquals(
-            13, // Text, VolumeMSB(x2) SongPositionPointer, BankSelect, ProgramChange, BankSelect, ProgramChange, SetTempo, NoteOn, NoteOn, Balance(msb + lsb)
+            12, // Text, VolumeMSB(x2), BankSelect, ProgramChange, BankSelect, ProgramChange, SetTempo, NoteOn, NoteOn, Balance(msb + lsb)
             event_map[0]!!.size
         )
 
         assertEquals(
             3, // NoteOff, NoteOff, SetTempo
-            event_map[60]!!.size
-        )
-
-        assertEquals(
-            4, // SongPositionPointer, SetTempo, NoteOn, NoteOn
-            event_map[120]!!.size
-        )
-
-        assertEquals(
-            6, // SongPositionPointer, SetTempo, NoteOff, NoteOff, NoteOn, NoteOn
             event_map[240]!!.size
         )
 
         assertEquals(
-            5, // SongPositionPointer, NoteOff, NoteOff, NoteOn, NoteOn
-            event_map[360]!!.size
+            3, // SetTempo, NoteOn, NoteOn
+            event_map[480]!!.size
+        )
+
+        assertEquals(
+            5, // SetTempo, NoteOff, NoteOff, NoteOn, NoteOn
+            event_map[960]!!.size
+        )
+
+        assertEquals(
+            4, // NoteOff, NoteOff, NoteOn, NoteOn
+            event_map[1440]!!.size
         )
 
         assertEquals(
             2, // NoteOff, NoteOff
-            event_map[480]!!.size
+            event_map[1920]!!.size
         )
 
         val partial_midi = manager.get_midi(1, 2)
@@ -937,13 +940,13 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         )
 
         assertEquals(
-            13, // SongPositionPointer, Text, VolumeMSBx2 BankSelect, ProgramChange, BankSelect, ProgramChange, SetTempo, NoteOn, NoteOn, BalanceLSB, BalanceMSB
+            12, // Text, VolumeMSBx2 BankSelect, ProgramChange, BankSelect, ProgramChange, SetTempo, NoteOn, NoteOn, BalanceLSB, BalanceMSB
             event_map_b[0]!!.size
         )
 
         assertEquals(
-            4, // SongPositionPointer, SetTempo, NoteOff, NoteOff
-            event_map[120]!!.size
+            3, // SetTempo, NoteOff, NoteOff
+            event_map[240]!!.size
         )
     }
 
@@ -2099,6 +2102,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         val channel = 0
         val original_value = 12
         manager.set_event(BeatKey(channel,0,0), listOf(), AbsoluteNoteEvent(original_value))
+        manager.set_event(BeatKey(channel, 0 , 1), listOf(), RelativeNoteEvent(3))
+
 
         // First don't modify existing event
         manager.set_tuning_map(
@@ -2133,6 +2138,12 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
             "Should have changed event Value",
             4,
             (manager.get_tree(BeatKey(channel,0,0), listOf()).event!! as AbsoluteNoteEvent).note
+        )
+
+        assertEquals(
+            "Should have changed event Value",
+            1,
+            (manager.get_tree(BeatKey(channel,0,1), listOf()).event!! as RelativeNoteEvent).offset
         )
     }
 
@@ -3354,6 +3365,94 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
 
         manager.remove_beat(tag_position)
         assert(manager.get_marked_sections().isEmpty())
+    }
+
+    @Test
+    fun test_get_percussion_instrument() {
+        val manager = OpusManager()
+        manager._project_change_new()
+        assertThrows(PercussionChannelRequired::class.java) {
+            manager.get_percussion_instrument(0,0)
+        }
+    }
+
+    @Test
+    fun test_get_percussion_tree() {
+        val manager = OpusManager()
+        manager._project_change_new()
+
+        assertThrows(PercussionChannelRequired::class.java) {
+            manager.get_percussion_instrument(0,0)
+        }
+        assertThrows(PercussionChannelRequired::class.java) {
+            manager.percussion_set_instrument(0,1, 1)
+        }
+        assertThrows(PercussionChannelRequired::class.java) {
+            manager.get_percussion_instrument(0,0)
+        }
+
+        assertThrows(BadBeatKey::class.java) {
+            manager.get_percussion_tree(BeatKey(1,1,0), listOf())
+        }
+    }
+
+    @Test
+    fun test_move_line() {
+        val manager = OpusManager()
+        manager._project_change_new()
+        manager.new_channel()
+        manager.new_line(0, 1)
+        manager.new_line(0, 1)
+        manager.new_line(1, 1)
+
+        manager.set_event(BeatKey(0,0,0), listOf(), AbsoluteNoteEvent(24))
+        manager.set_event(BeatKey(0,1,1), listOf(), AbsoluteNoteEvent(24))
+        manager.set_event(BeatKey(0,2,2), listOf(), AbsoluteNoteEvent(24))
+        manager.set_event(BeatKey(1,1,1), listOf(), PercussionEvent())
+
+        assertThrows(IncompatibleChannelException::class.java) {
+            manager.move_line(0, 0, 1, 0)
+        }
+        val first_line = manager.channels[0].lines[0]
+        val second_line = manager.channels[0].lines[1]
+        val third_line = manager.channels[0].lines[2]
+        val fourth_line = manager.channels[1].lines[0]
+        val fifth_line = manager.channels[1].lines[1]
+        val sixth_line = manager.channels[2].lines[0]
+
+        manager.move_line(0,2, 0, 0)
+        assertEquals(third_line, manager.channels[0].lines[0])
+        assertEquals(first_line, manager.channels[0].lines[1])
+        assertEquals(second_line, manager.channels[0].lines[2])
+
+        manager.move_line(0, 0, 0, 3)
+        assertEquals(first_line, manager.channels[0].lines[0])
+        assertEquals(second_line, manager.channels[0].lines[1])
+        assertEquals(third_line, manager.channels[0].lines[2])
+
+        manager.move_line(0, 0, 0, 1)
+        assertEquals(first_line, manager.channels[0].lines[0])
+        assertEquals(second_line, manager.channels[0].lines[1])
+        assertEquals(third_line, manager.channels[0].lines[2])
+
+        manager.move_line(2, 0, 0, 0)
+        assertEquals(2, manager.channels.size)
+    }
+
+
+    @Test
+    fun test_mute() {
+        val manager = OpusManager()
+        manager._project_change_new()
+
+        manager.mute_line(0, 0)
+        assert(manager.channels[0].lines[0].muted)
+        manager.unmute_line(0, 0)
+        assert(!manager.channels[0].lines[0].muted)
+        manager.mute_channel(0)
+        assert(manager.channels[0].muted)
+        manager.unmute_channel(0)
+        assert(!manager.channels[0].muted)
     }
 
     //@Test

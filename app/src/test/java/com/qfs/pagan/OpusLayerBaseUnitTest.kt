@@ -893,35 +893,36 @@ class OpusLayerBaseUnitTest {
         for ((position, events) in full_midi.get_all_events_grouped()) {
             event_map[position] = events
         }
+        println("${event_map.keys}")
         println("${event_map.values}")
         assertEquals(
-            13, // Text, VolumeMSB(x2) SongPositionPointer, BankSelect, ProgramChange, BankSelect, ProgramChange, SetTempo, NoteOn, NoteOn, Balance(msb + lsb)
+            12, // Text, VolumeMSB(x2), BankSelect, ProgramChange, BankSelect, ProgramChange, SetTempo, NoteOn, NoteOn, Balance(msb + lsb)
             event_map[0]!!.size
         )
 
         assertEquals(
             3, // NoteOff, NoteOff, SetTempo
-            event_map[60]!!.size
-        )
-
-        assertEquals(
-            4, // SongPositionPointer, SetTempo, NoteOn, NoteOn
-            event_map[120]!!.size
-        )
-
-        assertEquals(
-            6, // SongPositionPointer, SetTempo, NoteOff, NoteOff, NoteOn, NoteOn
             event_map[240]!!.size
         )
 
         assertEquals(
-            5, // SongPositionPointer, NoteOff, NoteOff, NoteOn, NoteOn
-            event_map[360]!!.size
+            3, // SetTempo, NoteOn, NoteOn
+            event_map[480]!!.size
+        )
+
+        assertEquals(
+            5, // SetTempo, NoteOff, NoteOff, NoteOn, NoteOn
+            event_map[960]!!.size
+        )
+
+        assertEquals(
+            4, // NoteOff, NoteOff, NoteOn, NoteOn
+            event_map[1440]!!.size
         )
 
         assertEquals(
             2, // NoteOff, NoteOff
-            event_map[480]!!.size
+            event_map[1920]!!.size
         )
 
         val partial_midi = manager.get_midi(1, 2)
@@ -936,13 +937,13 @@ class OpusLayerBaseUnitTest {
         )
 
         assertEquals(
-            13, // SongPositionPointer, Text, VolumeMSBx2 BankSelect, ProgramChange, BankSelect, ProgramChange, SetTempo, NoteOn, NoteOn, BalanceLSB, BalanceMSB
+            12, // Text, VolumeMSBx2 BankSelect, ProgramChange, BankSelect, ProgramChange, SetTempo, NoteOn, NoteOn, BalanceLSB, BalanceMSB
             event_map_b[0]!!.size
         )
 
         assertEquals(
-            4, // SongPositionPointer, SetTempo, NoteOff, NoteOff
-            event_map[120]!!.size
+            3, // SetTempo, NoteOff, NoteOff
+            event_map[240]!!.size
         )
     }
 

@@ -7,13 +7,13 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEve
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import io.mockk.every
 import io.mockk.mockk
-import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
 
 class PlaybackFrameMapUnitTests {
     val sample_handle_manager = mockk<SampleHandleManager>()
+
     val opus_manager = OpusLayerBase()
     @Before
     fun setup() {
@@ -22,7 +22,8 @@ class PlaybackFrameMapUnitTests {
         val tempo_controller = this.opus_manager.get_global_controller<OpusTempoEvent>(EffectType.Tempo)
 
         tempo_controller.set_initial_event(OpusTempoEvent(110F))
-
+        every { sample_handle_manager.change_program(any(), any())} returns Unit
+        every { sample_handle_manager.select_bank(any(), any()) } returns Unit
         every { this@PlaybackFrameMapUnitTests.sample_handle_manager.sample_rate } returns 44100
     }
 

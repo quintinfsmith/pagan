@@ -46,8 +46,7 @@ class ActionTrackerUnitTest {
                 ActionTracker.TrackedAction.ShowGlobalController,
                 ActionTracker.TrackedAction.ShowChannelController,
                 ActionTracker.TrackedAction.ImportSong,
-                ActionTracker.TrackedAction.SetCopyMode,
-                ActionTracker.TrackedAction.LoadProject -> {
+                ActionTracker.TrackedAction.SetCopyMode -> {
                     val test_string = "Some String"
                     val test_bytes = test_string.toByteArray()
                     Pair(enum, List(test_bytes.size) { i: Int -> test_bytes[i].toInt() })
@@ -70,7 +69,6 @@ class ActionTrackerUnitTest {
                 ActionTracker.TrackedAction.InsertLeaf,
                 ActionTracker.TrackedAction.RemoveLeaf,
                 ActionTracker.TrackedAction.SetPercussionInstrument,
-                ActionTracker.TrackedAction.SetRelativeMode,
                 ActionTracker.TrackedAction.CursorSelectChannel,
                 ActionTracker.TrackedAction.CursorSelectColumn -> {
                     Pair(enum, listOf(5))
@@ -178,7 +176,7 @@ class ActionTrackerUnitTest {
 
                 ActionTracker.TrackedAction.SetOffset,
                 ActionTracker.TrackedAction.SetOctave -> {
-                    Pair(enum, listOf(0, 0))
+                    Pair(enum, listOf(1, 0))
                 }
                 ActionTracker.TrackedAction.InsertBeatAt,
                 ActionTracker.TrackedAction.CopyChannelCtlToBeat,
@@ -235,8 +233,7 @@ class ActionTrackerUnitTest {
                     ActionTracker.TrackedAction.ShowGlobalController,
                     ActionTracker.TrackedAction.ShowChannelController,
                     ActionTracker.TrackedAction.ImportSong,
-                    ActionTracker.TrackedAction.SetCopyMode,
-                    ActionTracker.TrackedAction.LoadProject -> {
+                    ActionTracker.TrackedAction.SetCopyMode -> {
                         val test_string = "Some String"
                         JSONList(json_name, JSONString(test_string))
                     }
@@ -258,7 +255,6 @@ class ActionTrackerUnitTest {
                     ActionTracker.TrackedAction.InsertLeaf,
                     ActionTracker.TrackedAction.RemoveLeaf,
                     ActionTracker.TrackedAction.SetPercussionInstrument,
-                    ActionTracker.TrackedAction.SetRelativeMode,
                     ActionTracker.TrackedAction.CursorSelectChannel,
                     ActionTracker.TrackedAction.CursorSelectColumn -> {
                         JSONList(json_name, JSONInteger(5))

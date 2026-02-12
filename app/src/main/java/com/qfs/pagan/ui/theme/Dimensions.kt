@@ -280,7 +280,6 @@ object Dimensions {
 
     val NumberSelectorButtonRadius = 4.dp
     val NumberSelectorColumnWidth = 41.dp
-    val NumberSelectorHighlightedBorderPadding = 4.dp
     val NumberSelectorSpacing = 3.dp
 
     val OutlineButtonStrokeWidth = Stroke.Thin

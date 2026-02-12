@@ -212,7 +212,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
 
                     TrackedAction.SetOctave,
                     TrackedAction.SetOffset -> {
-                        listOf(entry.get_int(0), RelativeInputMode.valueOf(entry.get_string(1)).ordinal)
+                        listOf(entry.get_int(1), RelativeInputMode.valueOf(entry.get_string(2)).ordinal)
                     }
 
                     // STRING
@@ -1361,7 +1361,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
 
     fun set_offset(new_offset: Int, mode: RelativeInputMode) {
         this.track(TrackedAction.SetOffset, listOf(new_offset, mode.ordinal))
-
         val opus_manager = this.get_opus_manager()
         opus_manager.set_note_offset_at_cursor(new_offset, mode)
 

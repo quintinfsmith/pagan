@@ -1989,8 +1989,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         scope.launch { this@ComponentActivityEditor.close_drawer() }
 
                         this@ComponentActivityEditor.view_model.create_dialog { close ->
-                            val project_name = opus_manager.project_name ?: "Project"
                             @Composable {
+                                val project_name = opus_manager.project_name ?: stringResource(R.string.untitled_opus)
                                 DialogTitle(stringResource(R.string.dlg_delete_title, project_name))
                                 DialogBar(
                                     neutral = close,

@@ -40,7 +40,7 @@ import com.qfs.pagan.R
 import com.qfs.pagan.composable.IntegerInput
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.MediumSpacer
-import com.qfs.pagan.composable.wrappers.DivisorSeparator
+import com.qfs.pagan.composable.DivisorSeparator
 import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
@@ -102,7 +102,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
                     submit()
                 },
                 modifier = Modifier
-                    .height(Dimensions.EffectWidget.Delay.InputHeight)
+                    .height(Dimensions.EffectWidget.InputHeight)
                     .width(Dimensions.EffectWidget.Delay.InputWidth)
             ) {
                 event.numerator = it
@@ -134,7 +134,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
                 contentPadding = Unpadded,
                 text_align = TextAlign.Center,
                 modifier = Modifier
-                    .height(Dimensions.EffectWidget.Delay.InputHeight)
+                    .height(Dimensions.EffectWidget.InputHeight)
                     .width(Dimensions.EffectWidget.Delay.InputWidth)
             ) {
                 event.denominator = it
@@ -168,7 +168,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
                 contentPadding = Unpadded,
                 text_align = TextAlign.Center,
                 modifier = Modifier
-                    .height(Dimensions.EffectWidget.Delay.InputHeight)
+                    .height(Dimensions.EffectWidget.InputHeight)
                     .width(Dimensions.EffectWidget.Delay.InputWidth)
             ) {
                 event.echo = (it - 1)

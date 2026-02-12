@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,6 +17,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
+import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.ui.theme.Dimensions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -38,11 +40,13 @@ fun ShortcutView(modifier: Modifier, dispatcher: ActionTracker, scope: Coroutine
                 Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    modifier = Modifier.padding(Dimensions.ShortcutIconPadding),
-                    painter = painterResource(R.drawable.icon_shortcut),
-                    contentDescription = stringResource(R.string.jump_to_section)
-                )
+                ProvideContentColorTextStyle(MaterialTheme.colorScheme.onSurfaceVariant) {
+                    Icon(
+                        //modifier = Modifier.padding(Dimensions.ShortcutIconPadding),
+                        painter = painterResource(R.drawable.icon_shortcut),
+                        contentDescription = stringResource(R.string.jump_to_section)
+                    )
+                }
             }
         }
     )

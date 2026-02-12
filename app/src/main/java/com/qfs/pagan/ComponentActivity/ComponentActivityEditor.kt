@@ -639,11 +639,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
             this.state_model.enable_soundfont()
         } catch (_: Riff.InvalidRiff) {
             // Possible if user puts the sf2 in their files manually
-            //this.feedback_msg(this.getString(R.string.invalid_soundfont))
+            this.toast(R.string.invalid_soundfont)
             return
         } catch (_: SoundFont.InvalidSoundFont) {
             // Possible if user puts the sf2 in their files manually
-            //this.feedback_msg("Invalid Soundfont")
+            this.toast(R.string.invalid_soundfont)
             return
         }
     }

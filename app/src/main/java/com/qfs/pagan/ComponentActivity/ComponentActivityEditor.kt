@@ -575,8 +575,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.bind_midi_interface()
         super.onCreate(savedInstanceState)
 
-        // TODO: remember density instead of specific width
-        this.state_model.base_leaf_width.value = toPx(Dimensions.LeafBaseWidth)
+        this.state_model.pixel_density.value = this.resources.displayMetrics.density
 
         thread {
             if (savedInstanceState != null) {
@@ -647,8 +646,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
             //this.feedback_msg("Invalid Soundfont")
             return
         }
-
-        // TODO: Update percussion minimums
     }
 
 
@@ -1674,8 +1671,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 }
                             }
                             .fillMaxHeight()
-                            .widthIn(Dimensions.LeafBaseWidth - 6.dp) // TODO
-                            .padding(Dimensions.BeatLabelPadding)
+                            .widthIn(Dimensions.LeafBaseWidth - (Dimensions.BeatLabelHorizontalPadding * 2))
+                            .padding(
+                                horizontal = Dimensions.BeatLabelHorizontalPadding,
+                                vertical = Dimensions.BeatLabelVerticalPadding
+                            )
                             .then(
                                 if (column_info.is_tagged.value) {
                                     Modifier.dashed_border(

@@ -29,6 +29,7 @@ import com.qfs.pagan.structure.opusmanager.base.ReducibleTreeArray
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
+import com.qfs.pagan.ui.theme.Dimensions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -215,7 +216,7 @@ class ViewModelEditorState: ViewModel() {
     val preset_names = HashMap<Int, HashMap<Int, String>>()
     val bkp_preset_names = Array<String>(128) { "" }
     val available_instruments = HashMap<Pair<Int, Int>, List<Pair<String, Int>>>()
-    val base_leaf_width = mutableStateOf(0F)
+    val pixel_density = mutableStateOf(1F)
 
     val has_global_effects_hidden = mutableStateOf(true)
     val soundfont_active: MutableState<Long?> = mutableStateOf(null) // can use as key if we specify some indicator
@@ -954,7 +955,8 @@ class ViewModelEditorState: ViewModel() {
             Pair(beat, 0)
         } else if (state.layoutInfo.visibleItemsInfo.last().index <= beat) {
             val beat_width = this.column_data[beat].top_weight.value
-            Pair(beat, (0 - state.layoutInfo.viewportSize.width + (beat_width * this.base_leaf_width.value)).toInt())
+            val base_leaf_width = Dimensions.LeafBaseWidth.value * this.pixel_density.value
+            Pair(beat, (0 - state.layoutInfo.viewportSize.width + (beat_width * base_leaf_width)).toInt())
         } else {
             return
         }
@@ -972,7 +974,8 @@ class ViewModelEditorState: ViewModel() {
 
     fun scroll_to_leaf(beat: Int, offset: Rational, width: Rational) {
         val beat_width = this.get_beat_width(beat)
-        val offset_px = (beat_width * offset.toFloat() * this.base_leaf_width.value)
+        val base_leaf_width = Dimensions.LeafBaseWidth.value * this.pixel_density.value
+        val offset_px = (beat_width * offset.toFloat() * base_leaf_width)
 
         val state = this.scroll_state_x.value
         val last_visible_beat = state.layoutInfo.visibleItemsInfo.last().index
@@ -980,7 +983,7 @@ class ViewModelEditorState: ViewModel() {
             beat_width
         } else {
             this.get_beat_width(state.firstVisibleItemIndex)
-        } * this.base_leaf_width.value
+        } * base_leaf_width
 
         val (first_visible_beat, first_visible_offset) = if (state.firstVisibleItemScrollOffset > first_visible_beat_width) {
             Pair(state.firstVisibleItemIndex + 1, (state.firstVisibleItemScrollOffset - first_visible_beat_width).toInt())
@@ -989,7 +992,7 @@ class ViewModelEditorState: ViewModel() {
         }
 
 
-        val end_offset = beat_width * (offset + width).toFloat() * this.base_leaf_width.value
+        val end_offset = beat_width * (offset + width).toFloat() * base_leaf_width
 
         if (first_visible_beat != last_visible_beat && beat in first_visible_beat until last_visible_beat) {
             return

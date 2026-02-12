@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
@@ -28,12 +29,14 @@ fun CellView(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, cell: M
                 .fillMaxSize()
         ) {
             for ((path, leaf_data) in cell.value.leafs) {
+                println("$path")
                 LeafView(
                     line_info.channel.value?.let { ui_facade.channel_data[it] },
                     line_info,
                     leaf_data.value,
                     ui_facade.radix.value,
                     Modifier
+                        .testTag("LeafView: ${line_info.channel.value}|${line_info.line_offset.value}|$x|$path")
                         .weight(leaf_data.value.weight.floatValue)
                         .combinedClickable(
                             onClick = {

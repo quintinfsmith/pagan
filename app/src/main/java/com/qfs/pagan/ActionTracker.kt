@@ -3102,8 +3102,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                listOf(channel_from, line_offset_from, channel_to, adj_to_index)
            )
        } catch (e: IncompatibleChannelException) {
-           // TODO: Toast message
-          //  this.toast(R.string.std_percussion_swap)
+          Toast.makeText(this.context, R.string.std_percussion_swap, Toast.LENGTH_SHORT)
        }
     }
 

@@ -27,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.qfs.pagan.ActionTracker
@@ -71,6 +72,7 @@ fun SplitButton(
     shape: Shape = Shapes.ContextMenuButtonPrimaryStart
 ) {
     IconCMenuButton(
+        modifier = Modifier.testTag("SplitLeaf"),
         onClick = { dispatcher.split(2) },
         onLongClick = { dispatcher.split() },
         icon = R.drawable.icon_split,
@@ -81,6 +83,7 @@ fun SplitButton(
 @Composable
 fun InsertButton(dispatcher: ActionTracker) {
     IconCMenuButton(
+        modifier = Modifier.testTag("InsertLeaf"),
         onClick = { dispatcher.insert_leaf(1) },
         onLongClick = { dispatcher.insert_leaf() },
         icon = R.drawable.icon_add,
@@ -91,6 +94,7 @@ fun InsertButton(dispatcher: ActionTracker) {
 @Composable
 fun RemoveButton(dispatcher: ActionTracker, cursor: ViewModelEditorState.CacheCursor) {
     IconCMenuButton(
+        modifier = Modifier.testTag("RemoveLeaf"),
         enabled = (cursor.ints.size > 2),
         onClick = { dispatcher.remove_at_cursor() },
         icon = R.drawable.icon_subtract,
@@ -106,7 +110,9 @@ fun DurationButton(
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
     TextCMenuButton(
-        modifier = Modifier.width(Dimensions.ButtonHeight.Normal),
+        modifier = Modifier
+            .testTag("EventDuration")
+            .width(Dimensions.ButtonHeight.Normal),
         enabled = when (descriptor) {
             ViewModelEditorState.EventDescriptor.Selected,
             ViewModelEditorState.EventDescriptor.Tail -> true
@@ -132,6 +138,7 @@ fun UnsetButton(
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
     IconCMenuButton(
+        modifier = Modifier.testTag("UnsetEvent"),
         enabled = active_event != null,
         onClick = { dispatcher.unset() },
         onLongClick = { dispatcher.unset_root() },

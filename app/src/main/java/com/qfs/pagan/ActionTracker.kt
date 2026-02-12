@@ -79,7 +79,7 @@ import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.OutlinedButton
-import com.qfs.pagan.composable.wrappers.DivisorSeparator
+import com.qfs.pagan.composable.DivisorSeparator
 import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.wrappers.Slider

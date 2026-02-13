@@ -861,19 +861,19 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     open fun apply_undo(repeat: Int = 1) {
-        this.history_cache.lock()
+        this.history_cache.reverse()
 
         for (i in 0 until repeat) {
             val node = this.history_cache.pop()
             if (node == null) {
-                this.history_cache.unlock()
+                this.history_cache.unreverse()
                 return
             }
 
             this.apply_history_node(node)
         }
 
-        this.history_cache.unlock()
+        this.history_cache.unreverse()
     }
 
     override fun remove_line_repeat(channel: Int, line_offset: Int, count: Int) {

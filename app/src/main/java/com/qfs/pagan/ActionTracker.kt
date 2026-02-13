@@ -418,6 +418,9 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         this.track(TrackedAction.ApplyUndo)
         this.get_opus_manager().apply_undo()
     }
+    fun apply_redo() {
+        this.get_opus_manager().apply_redo()
+    }
 
     fun _move_selection_to_beat(beat_key: BeatKey) {
         this.track(

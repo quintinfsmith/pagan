@@ -1000,6 +1000,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             }
         )
+        TopBarIcon(
+            icon = R.drawable.icon_undo,
+            description = R.string.menu_item_undo,
+            onClick = {
+                if (vm_state.playback_state_midi.value != PlaybackState.Playing && vm_state.playback_state_soundfont.value != PlaybackState.Playing ) {
+                    dispatcher.apply_redo()
+                }
+            }
+        )
         Spacer(Modifier.weight(1F))
     }
     @Composable
@@ -1041,6 +1050,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
             onClick = {
                 if (vm_state.playback_state_midi.value != PlaybackState.Playing && vm_state.playback_state_soundfont.value != PlaybackState.Playing ) {
                     dispatcher.apply_undo()
+                }
+            }
+        )
+        TopBarIcon(
+            icon = R.drawable.icon_undo,
+            description = R.string.menu_item_undo,
+            onClick = {
+                if (vm_state.playback_state_midi.value != PlaybackState.Playing && vm_state.playback_state_soundfont.value != PlaybackState.Playing ) {
+                    dispatcher.apply_redo()
                 }
             }
         )

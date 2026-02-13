@@ -15,13 +15,18 @@ class HistoryCache {
         var parent: HistoryNode? = null
     }
     private val _max_history_size = 100
-    private var _reverse_lock = 0
-    private var _history_lock = 0
+    private var _future_lock = 0 // Applying Redo
+    private var _reverse_lock = 0 // Applying Undo
+    private var _history_lock = 0 // Generic Lock
     private var _history: MutableList<HistoryNode> = mutableListOf()
     private var _future: MutableList<HistoryNode> = mutableListOf()
     private var _working_node: HistoryNode? = null
 
-    fun is_reversed(): Boolean {
+    fun is_applying_redo(): Boolean {
+        return this._future_lock != 0
+    }
+
+    fun is_applying_undo(): Boolean {
         return this._reverse_lock != 0
     }
 
@@ -41,7 +46,7 @@ class HistoryCache {
             new_node.parent = this._working_node
             this._working_node!!.children.add(0, new_node)
         } else {
-            if (this.is_reversed()) {
+            if (this.is_applying_undo()) {
                 this._future.add(0, new_node)
             } else {
                 this._history.add(0, new_node)
@@ -59,7 +64,7 @@ class HistoryCache {
             new_node.parent = this._working_node
             this._working_node!!.children.add(new_node)
         } else {
-            if (this.is_reversed()) {
+            if (this.is_applying_undo()) {
                 this._future.add(new_node)
             } else {
                 this._history.add(new_node)
@@ -104,7 +109,7 @@ class HistoryCache {
             next_node.parent = this._working_node
             this._working_node!!.children.add(next_node)
         } else {
-            if (this.is_reversed()) {
+            if (this.is_applying_undo()) {
                 this._future.add(next_node)
             } else {
                 this._history.add(next_node)
@@ -126,11 +131,13 @@ class HistoryCache {
     }
 
     private fun _check_size() {
-        if (!this.is_reversed()) {
+        if (!this.is_applying_undo()) {
             while (this._history.size > this._max_history_size) {
                 this._history.removeAt(0)
             }
-            this._future.clear()
+            if (!this.is_applying_redo()) {
+                this._future.clear()
+            }
         }
     }
 
@@ -139,23 +146,28 @@ class HistoryCache {
         this._future.clear()
     }
 
-    fun reverse() {
+    fun start_redo() {
+        this._future_lock += 1
+    }
+    fun end_redo() {
+        this._future_lock -= 1
+    }
+    fun start_undo() {
         this._reverse_lock += 1
     }
-    fun unreverse() {
+    fun end_undo() {
         this._reverse_lock -= 1
     }
 
     fun lock() {
         this._history_lock += 1
     }
-
     fun unlock() {
         this._history_lock -= 1
     }
 
     fun pop(): HistoryNode? {
-        return if (!this.is_reversed()) {
+        return if (this.is_applying_undo()) {
             if (this._history.isEmpty()) {
                 null
             } else {

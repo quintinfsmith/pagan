@@ -1358,6 +1358,12 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.recache_line_maps()
     }
 
+    override fun apply_redo(repeat: Int) {
+        super.apply_redo(repeat)
+        this.recache_line_maps()
+    }
+
+
     // HISTORY FUNCTIONS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     // CURSOR FUNCTIONS vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv

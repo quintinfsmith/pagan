@@ -21,5 +21,7 @@ object Values {
     val OffsetModulo = 12
     val MaximumOctaveSize = 36
     val MinimumOctaveSize = 1
+
+    val DisabledTopBarIconAlpha = .3F
 }
 

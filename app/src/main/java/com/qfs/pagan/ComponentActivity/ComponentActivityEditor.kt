@@ -767,6 +767,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     fun NoPlayButton() {
         TopBarIcon(
+            modifier = Modifier.alpha(Values.DisabledTopBarIconAlpha),
             icon = R.drawable.icon_play,
             description = R.string.menu_item_playpause,
             onClick = {
@@ -1002,7 +1003,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 if (vm_state.has_undoable_actions.value) {
                     1F
                 } else {
-                    .3F
+                    Values.DisabledTopBarIconAlpha
                 }
             ),
             onClick = {
@@ -1020,7 +1021,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 if (vm_state.has_redoable_actions.value) {
                     1F
                 } else {
-                    .3F
+                    Values.DisabledTopBarIconAlpha
                 }
             ),
             onClick = {

@@ -18,11 +18,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
+import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.composable.button.TextCMenuButton
 import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
@@ -34,7 +36,9 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
     val is_initial = cursor.type == CursorMode.Line
     val working_value = remember { mutableFloatStateOf(event.value) }
     TextCMenuButton(
-        modifier = Modifier.width(Dimensions.ContextMenuButtonWidth),
+        modifier = Modifier
+            .testTag(TestTag.VelocityButton)
+            .width(Dimensions.ContextMenuButtonWidth),
         text = "%02d".format((event.value * 100).roundToInt()),
         shape = Shapes.ContextMenuSecondaryButtonStart,
         onClick = {
@@ -52,6 +56,7 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
     MediumSpacer()
     Slider(
         modifier = Modifier
+            .testTag(TestTag.VelocitySlider)
             .height(Dimensions.ContextMenuButtonHeight)
             .weight(1F),
         value = working_value.floatValue,

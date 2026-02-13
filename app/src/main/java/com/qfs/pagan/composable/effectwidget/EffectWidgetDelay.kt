@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
+import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.IntegerInput
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.MediumSpacer
@@ -46,6 +47,7 @@ import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import com.qfs.pagan.ui.theme.Shapes
@@ -102,6 +104,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
                     submit()
                 },
                 modifier = Modifier
+                    .testTag(TestTag.DelayHzNumerator)
                     .height(Dimensions.EffectWidget.InputHeight)
                     .width(Dimensions.EffectWidget.Delay.InputWidth)
             ) {
@@ -134,6 +137,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
                 contentPadding = Unpadded,
                 text_align = TextAlign.Center,
                 modifier = Modifier
+                    .testTag(TestTag.DelayHzDenominator)
                     .height(Dimensions.EffectWidget.InputHeight)
                     .width(Dimensions.EffectWidget.Delay.InputWidth)
             ) {
@@ -168,6 +172,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
                 contentPadding = Unpadded,
                 text_align = TextAlign.Center,
                 modifier = Modifier
+                    .testTag(TestTag.DelayEcho)
                     .height(Dimensions.EffectWidget.InputHeight)
                     .width(Dimensions.EffectWidget.Delay.InputWidth)
             ) {
@@ -185,6 +190,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
             contentPadding = Dimensions.ContextMenuButtonPadding,
             shape = Shapes.ContextMenuButtonPrimary,
             modifier = Modifier
+                .testTag(TestTag.DelayFadeButton)
                 .height(Dimensions.ContextMenuButtonHeight)
                 .width(Dimensions.ContextMenuButtonWidth),
             content = {
@@ -220,6 +226,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
                 colors = colors,
                 valueRange = 0F..1F,
                 modifier = Modifier
+                    .testTag(TestTag.DelayFadeSlider)
                     .padding(vertical = Dimensions.EffectWidget.Delay.FadePopupPadding)
                     .graphicsLayer {
                         rotationZ = 270f

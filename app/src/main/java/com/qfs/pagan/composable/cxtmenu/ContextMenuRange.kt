@@ -24,15 +24,18 @@ import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.R
+import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.RadioMenu
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.composable.button.IconCMenuButton
+import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
 fun AdjustRangeButton(dispatcher: ActionTracker) {
     IconCMenuButton(
+        modifier = Modifier.testTag(TestTag.AdjustSelection),
         onClick = { dispatcher.adjust_selection() },
         icon = R.drawable.icon_adjust,
         shape = Shapes.ContextMenuButtonPrimaryStart,
@@ -43,6 +46,7 @@ fun AdjustRangeButton(dispatcher: ActionTracker) {
 @Composable
 fun UnsetRangeButton(dispatcher: ActionTracker) {
     IconCMenuButton(
+        modifier = Modifier.testTag(TestTag.RangeUnset),
         onClick = { dispatcher.unset() },
         icon = R.drawable.icon_erase,
         shape = Shapes.ContextMenuButtonPrimaryEnd,

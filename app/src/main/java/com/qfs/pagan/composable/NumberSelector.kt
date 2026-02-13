@@ -31,6 +31,8 @@ import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontWeight
+import com.qfs.pagan.TestTag
+import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shadows
 import com.qfs.pagan.ui.theme.Shapes
@@ -61,6 +63,13 @@ fun NumberSelectorButton(
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
+            .then(
+                if (alternate) {
+                    Modifier.testTag(TestTag.EventOffset, index)
+                } else {
+                    Modifier.testTag(TestTag.EventOctave, index)
+                }
+            )
             .height(Dimensions.NumberSelectorButtonHeight)
             .pressable(pressed)
             .then(
@@ -177,7 +186,8 @@ fun ColumnScope.NumberSelector(
         }
 
         NumberSelectorButton(
-            modifier = Modifier.weight(1F),
+            modifier = Modifier
+                .weight(1F),
             index = i,
             selected = selected == i,
             highlighted = highlighted == i,

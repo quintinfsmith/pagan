@@ -17,6 +17,8 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import com.qfs.pagan.ActionTracker
+import com.qfs.pagan.TestTag
+import com.qfs.pagan.testTag
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
@@ -34,6 +36,7 @@ fun CellView(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, cell: M
                     leaf_data.value,
                     ui_facade.radix.value,
                     Modifier
+                        .testTag(TestTag.Leaf, line_info.channel.value, line_info.line_offset.value, x, path)
                         .weight(leaf_data.value.weight.floatValue)
                         .combinedClickable(
                             onClick = {

@@ -21,9 +21,11 @@ import androidx.compose.ui.res.stringResource
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
+import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.button.TextCMenuButton
+import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
@@ -31,6 +33,7 @@ import com.qfs.pagan.viewmodel.ViewModelEditorState
 @Composable
 fun ToggleEffectsButton(dispatcher: ActionTracker, shape: Shape = Shapes.ContextMenuButtonPrimaryStart) {
     IconCMenuButton(
+        modifier = Modifier.testTag(TestTag.ChannelEffects),
         onClick = { dispatcher.show_hidden_channel_controller() },
         icon = R.drawable.icon_ctl,
         shape = shape,
@@ -41,6 +44,7 @@ fun ToggleEffectsButton(dispatcher: ActionTracker, shape: Shape = Shapes.Context
 @Composable
 fun AdjustChannelButton(dispatcher: ActionTracker) {
     IconCMenuButton(
+        modifier = Modifier.testTag(TestTag.AdjustSelection),
         onClick = { dispatcher.adjust_selection() },
         icon = R.drawable.icon_adjust,
         description = R.string.cd_adjust_selection
@@ -50,6 +54,7 @@ fun AdjustChannelButton(dispatcher: ActionTracker) {
 @Composable
 fun RemoveChannelButton(dispatcher: ActionTracker) {
     IconCMenuButton(
+        modifier = Modifier.testTag(TestTag.ChannelRemove),
         onClick = { dispatcher.remove_channel() },
         icon = R.drawable.icon_subtract_circle,
         description = R.string.cd_remove_channel
@@ -60,6 +65,7 @@ fun RemoveChannelButton(dispatcher: ActionTracker) {
 @Composable
 fun AddKitButton(dispatcher: ActionTracker) {
     IconCMenuButton(
+        modifier = Modifier.testTag(TestTag.ChannelPercussionInsert),
         onClick = { dispatcher.insert_percussion_channel() },
         icon = R.drawable.icon_add_bang,
         description = R.string.cd_insert_channel_percussion
@@ -69,6 +75,7 @@ fun AddKitButton(dispatcher: ActionTracker) {
 @Composable
 fun AddChannelButton(dispatcher: ActionTracker, shape: Shape = Shapes.ContextMenuButtonPrimaryStart) {
     IconCMenuButton(
+        modifier = Modifier.testTag(TestTag.ChannelInsert),
         onClick = { dispatcher.insert_channel() },
         icon = R.drawable.icon_add_circle,
         shape = shape,
@@ -83,6 +90,7 @@ fun MuteChannelButton(
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
     IconCMenuButton(
+        modifier = Modifier.testTag(TestTag.ChannelMute),
         onClick = {
             if (active_channel.is_mute.value) {
                 dispatcher.channel_unmute()
@@ -107,7 +115,7 @@ fun SetPresetButton(
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
     TextCMenuButton(
-        modifier = modifier,
+        modifier = modifier.testTag(TestTag.ChannelPreset),
         shape = shape,
         onClick = { dispatcher.set_channel_preset(channel_index) },
         text = active_channel.active_name.value ?: if (active_channel.instrument.value.first == 128) {
@@ -133,6 +141,7 @@ fun SetChannelColorButton(
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
     IconCMenuButton(
+        modifier = Modifier.testTag(TestTag.ChannelColor),
         onClick = { dispatcher.set_channel_color(channel_index) },
         shape = shape,
         icon = R.drawable.icon_palette,

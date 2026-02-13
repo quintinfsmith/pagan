@@ -104,6 +104,7 @@ import com.qfs.pagan.PaganBroadcastReceiver
 import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.R
 import com.qfs.pagan.SingleExporterEventHandler
+import com.qfs.pagan.TestTag
 import com.qfs.pagan.Values
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
@@ -147,6 +148,7 @@ import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
+import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
@@ -1367,6 +1369,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 // Key to prevent incongruence between column_width size and content
                 key(ui_facade.beat_count.value) {
                     LazyRow(
+                        modifier = Modifier.testTag(TestTag.MainRow),
                         state = scroll_state_h,
                         contentPadding = PaddingValues(end = toDp(this@ComponentActivityEditor.state_model.table_side_padding.value)),
                         overscrollEffect = null
@@ -1494,6 +1497,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         ProvideContentColorTextStyle(foreground, Typography.LineLabel) {
             HalfBorderBox(
                 modifier
+                    .testTag(TestTag.LineLabel, line_info.channel.value, line_info.line_offset.value, line_info.ctl_type.value)
                     .combinedClickable(
                         onClick = {
                             dispatcher.tap_line(

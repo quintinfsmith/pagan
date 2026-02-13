@@ -39,12 +39,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
+import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.SettingsRow
 import com.qfs.pagan.composable.SoundFontWarning
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.wrappers.Text
+import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 import java.io.File
@@ -118,7 +120,9 @@ class ComponentActivityLanding: PaganComponentActivity() {
         shape: Shape = Shapes.LandingButtonShape
     ) {
         Button(
-            modifier = modifier.height(Dimensions.LandingButtonHeight),
+            modifier = modifier
+                .testTag(TestTag.LandingRecent)
+                .height(Dimensions.LandingButtonHeight),
             content = { Text(stringResource(R.string.btn_landing_most_recent)) },
             shape = shape,
             onClick = {
@@ -137,7 +141,9 @@ class ComponentActivityLanding: PaganComponentActivity() {
         shape: Shape = Shapes.LandingButtonShape
     ) {
         Button(
-            modifier = modifier.height(Dimensions.LandingButtonHeight),
+            modifier = modifier
+                .testTag(TestTag.LandingNewProject)
+                .height(Dimensions.LandingButtonHeight),
             content = { Text(stringResource(R.string.btn_landing_new)) },
             shape = shape,
             onClick = {
@@ -158,7 +164,9 @@ class ComponentActivityLanding: PaganComponentActivity() {
         shape: Shape = Shapes.LandingButtonShape
     ) {
         Button(
-            modifier = modifier.height(Dimensions.LandingButtonHeight),
+            modifier = modifier
+                .testTag(TestTag.LandingLoadProject)
+                .height(Dimensions.LandingButtonHeight),
             content = { Text(stringResource(R.string.btn_landing_load)) },
             shape = shape,
             onClick = {
@@ -194,7 +202,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
     @Composable
     fun ButtonImport(modifier: Modifier = Modifier) {
         SmallIconButton(
-            modifier = modifier,
+            modifier = modifier.testTag(TestTag.LandingImport),
             content =  {
                 Icon(
                     modifier = Modifier.fillMaxSize(),
@@ -216,7 +224,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
     @Composable
     fun ButtonSettings(modifier: Modifier = Modifier) {
         SmallIconButton(
-            modifier = modifier,
+            modifier = modifier.testTag(TestTag.LandingSettings),
             onClick = {
                 this@ComponentActivityLanding.result_launcher_settings.launch(
                     Intent(this@ComponentActivityLanding, ComponentActivitySettings::class.java)
@@ -238,7 +246,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
         shape: Shape = Shapes.LandingButtonShape
     ) {
         SmallIconButton(
-            modifier = modifier,
+            modifier = modifier.testTag(TestTag.LandingAbout),
             onClick = {
                 this@ComponentActivityLanding.startActivity(
                     Intent(this@ComponentActivityLanding, ComponentActivityAbout::class.java)

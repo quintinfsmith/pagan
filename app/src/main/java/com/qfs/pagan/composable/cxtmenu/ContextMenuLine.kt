@@ -22,6 +22,7 @@ import androidx.compose.ui.res.stringResource
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
+import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.button.TextCMenuButton
@@ -38,6 +39,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEv
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
+import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
@@ -45,6 +47,7 @@ import com.qfs.pagan.viewmodel.ViewModelEditorState
 @Composable
 fun AdjustLineButton(dispatcher: ActionTracker) {
     IconCMenuButton(
+        modifier = Modifier.testTag(TestTag.AdjustSelection),
         onClick = { dispatcher.adjust_selection() },
         shape = Shapes.ContextMenuButtonPrimary,
         icon = R.drawable.icon_adjust,
@@ -58,6 +61,7 @@ fun ToggleLineControllerButton(
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
     IconCMenuButton(
+        modifier = Modifier.testTag(TestTag.LineEffectsShow),
         onClick = { dispatcher.show_hidden_line_controller() },
         shape = shape,
         icon = R.drawable.icon_ctl,
@@ -68,6 +72,7 @@ fun ToggleLineControllerButton(
 @Composable
 fun InsertLineButton(dispatcher: ActionTracker, shape: Shape = Shapes.ContextMenuButtonPrimaryStart) {
     IconCMenuButton(
+        modifier = Modifier.testTag(TestTag.LineNew),
         onClick = { dispatcher.insert_line(1) },
         onLongClick = { dispatcher.insert_line() },
         icon = R.drawable.icon_add,
@@ -79,6 +84,7 @@ fun InsertLineButton(dispatcher: ActionTracker, shape: Shape = Shapes.ContextMen
 @Composable
 fun RemoveLineButton(dispatcher: ActionTracker, size: Int) {
     IconCMenuButton(
+        modifier = Modifier.testTag(TestTag.LineRemove),
         enabled = size > 1,
         onClick = { dispatcher.remove_line(1) },
         onLongClick = { dispatcher.remove_line() },
@@ -90,6 +96,7 @@ fun RemoveLineButton(dispatcher: ActionTracker, size: Int) {
 @Composable
 fun RemoveEffectButton(dispatcher: ActionTracker, shape: Shape) {
     IconCMenuButton(
+        modifier = Modifier.testTag(TestTag.LineEffectRemove),
         onClick = { dispatcher.remove_controller() },
         onLongClick = { dispatcher.remove_controller() },
         icon = R.drawable.icon_subtract,
@@ -109,7 +116,7 @@ fun PercussionSetInstrumentButton(modifier: Modifier = Modifier, vm_state: ViewM
     }
     key(vm_state.soundfont_active.value) {
         TextCMenuButton(
-            modifier = modifier,
+            modifier = modifier.testTag(TestTag.InstrumentSet),
             onClick = {
                 dispatcher.set_percussion_instrument(
                     active_line.channel.value!!,
@@ -145,6 +152,7 @@ fun SetLineColorButton(
 ) {
 
     IconCMenuButton(
+        modifier = Modifier.testTag(TestTag.LineColor),
         onClick = { dispatcher.set_line_color(channel, line_offset) },
         shape = shape,
         icon = R.drawable.icon_palette,
@@ -158,6 +166,7 @@ fun MuteButton(
     line: ViewModelEditorState.LineData,
 ) {
     IconCMenuButton(
+        modifier = Modifier.testTag(TestTag.LineMute),
         onClick = {
             if (line.is_mute.value) {
                 dispatcher.line_unmute()
@@ -175,6 +184,7 @@ fun MuteButton(
 @Composable
 fun HideEffectButton(dispatcher: ActionTracker, shape: Shape) {
     IconCMenuButton(
+        modifier = Modifier.testTag(TestTag.EffectHide),
         onClick = { dispatcher.toggle_controller_visibility() },
         icon = R.drawable.icon_hide,
         shape = shape,

@@ -41,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -179,6 +180,7 @@ fun <T> SortableMenu(
                     ) {
                         Row(
                             modifier = Modifier
+                                .testTag("MenuItem $i")
                                 .then(
                                     if (default_index == i) {
                                         Modifier.background(

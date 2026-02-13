@@ -56,6 +56,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -1996,7 +1997,9 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                     IntegerInput(
                         value = value,
                         label = { Text(title_string_id) },
-                        modifier = Modifier.focusRequester(focus_requester),
+                        modifier = Modifier
+                            .testTag("DialogNumberInput")
+                            .focusRequester(focus_requester),
                         contentPadding = PaddingValues(Dimensions.NumberInputDialogPadding),
                         text_align = TextAlign.Center,
                         minimum = min_value,
@@ -3105,8 +3108,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                listOf(channel_from, line_offset_from, channel_to, adj_to_index)
            )
        } catch (e: IncompatibleChannelException) {
-           // TODO: Toast message
-          //  this.toast(R.string.std_percussion_swap)
+          Toast.makeText(this.context, R.string.std_percussion_swap, Toast.LENGTH_SHORT)
        }
     }
 

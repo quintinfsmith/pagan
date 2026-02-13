@@ -2838,11 +2838,12 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                     for ((i, state) in mutable_map.enumerate()) {
                         val (numer, denom) = state
                         Surface(
-                            modifier = Modifier.padding(Dimensions.TuningDialogBoxPadding),
+                            modifier = Modifier.padding(Dimensions.TuningDialogLineSpacing),
                             shape = Shapes.TuningDialogBox,
                             tonalElevation = 2.dp
                         ) {
                             Row(
+                                modifier = Modifier.padding(Dimensions.TuningDialogLinePadding),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween,
                             ) {

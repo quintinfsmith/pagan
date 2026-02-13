@@ -352,7 +352,8 @@ object Dimensions {
 
     val TuningDialogStrokeWidth = Stroke.Thin
     val TuningDialogBoxPadding = 6.dp
-    val TuningDialogLinePadding = 4.dp
+    val TuningDialogLinePadding = 8.dp
+    val TuningDialogLineSpacing = 2.dp
 
     val Unpadded = PaddingValues(0.dp)
 

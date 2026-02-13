@@ -34,8 +34,11 @@ class HistoryCache {
         return this._history_lock != 0
     }
 
-    fun is_empty(): Boolean {
-        return this._history.isEmpty()
+    fun has_undoable_actions(): Boolean {
+        return this._history.isNotEmpty()
+    }
+    fun has_redoable_actions(): Boolean {
+        return this._future.isNotEmpty()
     }
 
     fun prepend_undoer(token: HistoryToken, args: List<Any>) {

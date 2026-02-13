@@ -225,6 +225,9 @@ class ViewModelEditorState: ViewModel() {
     val wide_beat_progress: MutableState<Float> = mutableStateOf(0F)
     val active_wide_beat: MutableState<Int?> = mutableStateOf(null)
 
+    val has_undoable_actions: MutableState<Boolean> = mutableStateOf(false)
+    val has_redoable_actions: MutableState<Boolean> = mutableStateOf(false)
+
     val dragging_line: MutableState<Int?> = mutableStateOf(null)
     val dragging_abs_offset: MutableState<Float?> = mutableStateOf(null)
     val dragging_initial_offset: MutableState<Float> = mutableStateOf(0F)

@@ -68,6 +68,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
@@ -118,6 +119,7 @@ import com.qfs.pagan.composable.button.ConfigDrawerChannelRightButton
 import com.qfs.pagan.composable.button.ConfigDrawerTopButton
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.button.TopBarIcon
+import com.qfs.pagan.composable.button.TopBarNoIcon
 import com.qfs.pagan.composable.conditional_drag
 import com.qfs.pagan.composable.cxtmenu.CMBoxBottom
 import com.qfs.pagan.composable.cxtmenu.CMBoxEnd
@@ -996,21 +998,39 @@ class ComponentActivityEditor: PaganComponentActivity() {
         TopBarIcon(
             icon = R.drawable.icon_undo,
             description = R.string.menu_item_undo,
+            modifier = Modifier.alpha(
+                if (vm_state.has_undoable_actions.value) {
+                    1F
+                } else {
+                    .3F
+                }
+            ),
             onClick = {
-                if (vm_state.playback_state_midi.value != PlaybackState.Playing && vm_state.playback_state_soundfont.value != PlaybackState.Playing ) {
+                if (!vm_state.has_undoable_actions.value) return@TopBarIcon
+                if (vm_state.playback_state_midi.value != PlaybackState.Playing && vm_state.playback_state_soundfont.value != PlaybackState.Playing) {
                     dispatcher.apply_undo()
                 }
             }
         )
+
         TopBarIcon(
-            icon = R.drawable.icon_undo,
-            description = R.string.menu_item_undo,
+            icon = R.drawable.icon_redo,
+            description = R.string.menu_item_redo,
+            modifier = Modifier.alpha(
+                if (vm_state.has_redoable_actions.value) {
+                    1F
+                } else {
+                    .3F
+                }
+            ),
             onClick = {
-                if (vm_state.playback_state_midi.value != PlaybackState.Playing && vm_state.playback_state_soundfont.value != PlaybackState.Playing ) {
+                if (!vm_state.has_redoable_actions.value) return@TopBarIcon
+                if (vm_state.playback_state_midi.value != PlaybackState.Playing && vm_state.playback_state_soundfont.value != PlaybackState.Playing) {
                     dispatcher.apply_redo()
                 }
             }
         )
+
         Spacer(Modifier.weight(1F))
     }
     @Composable
@@ -1049,17 +1069,34 @@ class ComponentActivityEditor: PaganComponentActivity() {
         TopBarIcon(
             icon = R.drawable.icon_undo,
             description = R.string.menu_item_undo,
+            modifier = Modifier.alpha(
+                if (vm_state.has_undoable_actions.value) {
+                    1F
+                } else {
+                    .3F
+                }
+            ),
             onClick = {
-                if (vm_state.playback_state_midi.value != PlaybackState.Playing && vm_state.playback_state_soundfont.value != PlaybackState.Playing ) {
+                if (!vm_state.has_undoable_actions.value) return@TopBarIcon
+                if (vm_state.playback_state_midi.value != PlaybackState.Playing && vm_state.playback_state_soundfont.value != PlaybackState.Playing) {
                     dispatcher.apply_undo()
                 }
             }
         )
+
         TopBarIcon(
-            icon = R.drawable.icon_undo,
-            description = R.string.menu_item_undo,
+            icon = R.drawable.icon_redo,
+            description = R.string.menu_item_redo,
+            modifier = Modifier.alpha(
+                if (vm_state.has_redoable_actions.value) {
+                    1F
+                } else {
+                    .3F
+                }
+            ),
             onClick = {
-                if (vm_state.playback_state_midi.value != PlaybackState.Playing && vm_state.playback_state_soundfont.value != PlaybackState.Playing ) {
+                if (!vm_state.has_redoable_actions.value) return@TopBarIcon
+                if (vm_state.playback_state_midi.value != PlaybackState.Playing && vm_state.playback_state_soundfont.value != PlaybackState.Playing) {
                     dispatcher.apply_redo()
                 }
             }

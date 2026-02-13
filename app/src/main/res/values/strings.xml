@@ -158,6 +158,7 @@
     <string name="menu_item_about">About</string>
     <string name="menu_item_debug">Debug</string>
     <string name="menu_item_undo">undo</string>
+    <string name="menu_item_redo">redo</string>
     <string name="menu_item_playpause">Play/Pause</string>
     <string name="menu_item_playpause_midi">Play / Pause Midi output</string>
     <string name="btn_split">Split</string>

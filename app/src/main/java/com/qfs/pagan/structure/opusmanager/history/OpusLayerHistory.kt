@@ -121,7 +121,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
         }
     }
 
-    fun clear_history() {
+    open fun clear_history() {
         this.history_cache.clear()
     }
 
@@ -299,13 +299,19 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     private fun <T> _remember(callback: () -> T): T {
-        return try {
+        val output = try {
             this.history_cache.remember(callback)
         } catch (e: BlockedActionException) {
             this.apply_undo()
+            this.on_remember()
             throw e
         }
+
+        this.on_remember()
+        return output
     }
+
+    open fun on_remember() { }
 
     private fun <T> _forget(callback: () -> T): T {
         return this.history_cache.forget(callback)

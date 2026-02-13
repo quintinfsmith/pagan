@@ -1180,6 +1180,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 ViewModelEditorState.LineData(null, null, type, null, false, palette = null)
             )
         }
+        this.update_history_state()
         this.vm_state.ready.value = true
     }
 
@@ -1356,11 +1357,19 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     override fun apply_undo(repeat: Int) {
         super.apply_undo(repeat)
         this.recache_line_maps()
+        this.update_history_state()
     }
 
     override fun apply_redo(repeat: Int) {
         super.apply_redo(repeat)
         this.recache_line_maps()
+        this.update_history_state()
+    }
+
+    fun update_history_state() {
+        if (this.ui_lock.is_locked()) return
+        this.vm_state.has_redoable_actions.value = this.history_cache.has_redoable_actions()
+        this.vm_state.has_undoable_actions.value = this.history_cache.has_undoable_actions()
     }
 
 
@@ -2272,5 +2281,15 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         if (this.ui_lock.is_locked()) return
         val y = this.get_visible_row_from_pair(channel, line_offset)
         this.vm_state.line_data[y].palette.value = this.get_channel(channel).lines[line_offset].palette.copy()
+    }
+
+    override fun on_remember() {
+        super.on_remember()
+        this.update_history_state()
+    }
+
+    override fun clear_history() {
+        super.clear_history()
+        this.update_history_state()
     }
 }

@@ -28,12 +28,13 @@ import com.qfs.pagan.ui.theme.Dimensions
 fun TopBarIcon(
     icon: Int,
     description: Int,
+    modifier: Modifier = Modifier,
     contentAlignment: Alignment = Alignment.Center,
     onLongClick: (() -> Unit)? = null,
     onClick: () -> Unit,
 ) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .background(color = Color.Transparent, shape = CircleShape)
             .size(
                 Dimensions.TopBarIconWidth,

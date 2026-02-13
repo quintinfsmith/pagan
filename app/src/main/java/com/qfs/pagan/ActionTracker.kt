@@ -2043,7 +2043,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     private fun needs_save(): Boolean {
         val opus_manager = this.get_opus_manager()
 
-        val active_project = this.vm_controller.active_project ?: return !opus_manager.history_cache.is_empty()
+        val active_project = this.vm_controller.active_project ?: return opus_manager.history_cache.has_undoable_actions()
         val other = this.vm_top.project_manager?.open_project(active_project)
         return (opus_manager as OpusLayerBase) != other
     }

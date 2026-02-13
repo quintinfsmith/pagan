@@ -8,6 +8,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEv
 import com.qfs.pagan.structure.opusmanager.base.TunedInstrumentEvent
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import com.qfs.pagan.structure.opusmanager.history.OpusLayerHistory as OpusManager
@@ -30,9 +31,9 @@ class HistoryCacheUnitTest {
             manager
         )
 
-        assertTrue(
+        assertFalse(
             "Some actions weren't applied",
-            manager.history_cache.is_empty()
+            manager.history_cache.has_undoable_actions()
         )
     }
 

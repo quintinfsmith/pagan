@@ -1,24 +1,15 @@
 package com.qfs.pagan
 
-import android.view.KeyEvent
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.key.NativeKeyEvent
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
-import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performImeAction
-import androidx.compose.ui.test.performKeyPress
 import androidx.compose.ui.test.performScrollToIndex
-import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import com.qfs.pagan.ComponentActivity.ComponentActivityLanding
-import kotlinx.coroutines.delay
 import org.junit.Rule
 import org.junit.Test
 

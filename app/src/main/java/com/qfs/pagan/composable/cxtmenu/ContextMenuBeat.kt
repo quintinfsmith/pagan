@@ -19,14 +19,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
+import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.button.IconCMenuButton
+import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
@@ -39,7 +40,7 @@ fun TagButton(
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
     IconCMenuButton(
-        modifier = Modifier.testTag("ToggleBeatTag"),
+        modifier = Modifier.testTag(TestTag.BeatToggleTag),
         onClick = {
             if (column_data.is_tagged.value) {
                 dispatcher.untag_column(beat)
@@ -59,7 +60,7 @@ fun TagButton(
 @Composable
 fun AdjustBeatButton(dispatcher: ActionTracker) {
     IconCMenuButton(
-        modifier = Modifier.testTag("AdjustSelection"),
+        modifier = Modifier.testTag(TestTag.AdjustSelection),
         onClick = { dispatcher.adjust_selection() },
         icon = R.drawable.icon_adjust,
         shape = Shapes.ContextMenuButtonPrimary,
@@ -70,7 +71,7 @@ fun AdjustBeatButton(dispatcher: ActionTracker) {
 @Composable
 fun RemoveBeatButton(dispatcher: ActionTracker, enabled: Boolean) {
     IconCMenuButton(
-        modifier = Modifier.testTag("RemoveBeat"),
+        modifier = Modifier.testTag(TestTag.BeatRemove),
         enabled = enabled,
         onClick = { dispatcher.remove_beat_at_cursor(1) },
         onLongClick = { dispatcher.remove_beat_at_cursor() },
@@ -82,7 +83,7 @@ fun RemoveBeatButton(dispatcher: ActionTracker, enabled: Boolean) {
 @Composable
 fun InsertBeatButton(dispatcher: ActionTracker, shape: Shape = Shapes.ContextMenuButtonPrimary) {
     IconCMenuButton(
-        modifier = Modifier.testTag("InsertBeat"),
+        modifier = Modifier.testTag(TestTag.BeatInsert),
         onClick = { dispatcher.insert_beat_after_cursor(1) },
         onLongClick = { dispatcher.insert_beat_after_cursor() },
         shape = shape,

@@ -26,12 +26,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
+import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.FloatInput
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import com.qfs.pagan.viewmodel.ViewModelEditorState
@@ -65,6 +67,7 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionT
             contentPadding = Unpadded,
             text_align = TextAlign.Center,
             modifier = Modifier
+                .testTag(TestTag.Tempo)
                 .height(Dimensions.EffectWidget.InputHeight)
                 .weight(1F, fill = true)
         ) {

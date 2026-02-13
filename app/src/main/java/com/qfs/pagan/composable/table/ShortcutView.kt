@@ -24,7 +24,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
+import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
+import com.qfs.pagan.testTag
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -32,6 +34,7 @@ import kotlinx.coroutines.launch
 fun ShortcutView(modifier: Modifier, dispatcher: ActionTracker, scope: CoroutineScope, scroll_state: LazyListState) {
     HalfBorderBox(
         modifier
+            .testTag(TestTag.ShortCut)
             .background(MaterialTheme.colorScheme.surfaceVariant, shape = RectangleShape)
             .combinedClickable(
                 onClick = { dispatcher.cursor_select_column() },

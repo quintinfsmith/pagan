@@ -16,9 +16,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.R
+import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
+import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 
@@ -29,6 +31,7 @@ fun EffectTransitionButton(event: EffectEvent, dispatcher: ActionTracker, is_ini
         Spacer(Modifier.width(Dimensions.ContextMenuPadding))
         IconCMenuButton(
             modifier = modifier
+                .testTag(TestTag.EffectTransition)
                 .height(Dimensions.ContextMenuButtonHeight)
                 .width(Dimensions.ContextMenuButtonWidth),
             onClick = {

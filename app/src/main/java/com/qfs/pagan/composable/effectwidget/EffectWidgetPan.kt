@@ -26,9 +26,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.qfs.pagan.ActionTracker
+import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
@@ -73,6 +75,7 @@ fun RowScope.PanEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionTra
                 steps = 21,
                 colors = colors,
                 modifier = Modifier
+                    .testTag(TestTag.PanSlider)
                     .align(Alignment.Center)
                     .fillMaxWidth()
             )

@@ -30,8 +30,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import com.qfs.pagan.TestTag
+import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shadows
 import com.qfs.pagan.ui.theme.Shapes
@@ -64,9 +65,9 @@ fun NumberSelectorButton(
         modifier = modifier
             .then(
                 if (alternate) {
-                    Modifier.testTag("Offset $index")
+                    Modifier.testTag(TestTag.EventOffset, index)
                 } else {
-                    Modifier.testTag("Octave $index")
+                    Modifier.testTag(TestTag.EventOctave, index)
                 }
             )
             .height(Dimensions.NumberSelectorButtonHeight)

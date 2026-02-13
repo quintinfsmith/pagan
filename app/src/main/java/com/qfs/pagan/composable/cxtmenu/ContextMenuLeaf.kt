@@ -27,13 +27,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.qfs.pagan.ActionTracker
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
 import com.qfs.pagan.RelativeInputMode
+import com.qfs.pagan.TestTag
 import com.qfs.pagan.Values
 import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.NumberSelector
@@ -58,6 +58,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEv
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
+import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import com.qfs.pagan.ui.theme.Shapes
@@ -72,7 +73,7 @@ fun SplitButton(
     shape: Shape = Shapes.ContextMenuButtonPrimaryStart
 ) {
     IconCMenuButton(
-        modifier = Modifier.testTag("SplitLeaf"),
+        modifier = Modifier.testTag(TestTag.LeafSplit),
         onClick = { dispatcher.split(2) },
         onLongClick = { dispatcher.split() },
         icon = R.drawable.icon_split,
@@ -83,7 +84,7 @@ fun SplitButton(
 @Composable
 fun InsertButton(dispatcher: ActionTracker) {
     IconCMenuButton(
-        modifier = Modifier.testTag("InsertLeaf"),
+        modifier = Modifier.testTag(TestTag.LeafInsert),
         onClick = { dispatcher.insert_leaf(1) },
         onLongClick = { dispatcher.insert_leaf() },
         icon = R.drawable.icon_add,
@@ -94,7 +95,7 @@ fun InsertButton(dispatcher: ActionTracker) {
 @Composable
 fun RemoveButton(dispatcher: ActionTracker, cursor: ViewModelEditorState.CacheCursor) {
     IconCMenuButton(
-        modifier = Modifier.testTag("RemoveLeaf"),
+        modifier = Modifier.testTag(TestTag.LeafRemove),
         enabled = (cursor.ints.size > 2),
         onClick = { dispatcher.remove_at_cursor() },
         icon = R.drawable.icon_subtract,
@@ -111,7 +112,7 @@ fun DurationButton(
 ) {
     TextCMenuButton(
         modifier = Modifier
-            .testTag("EventDuration")
+            .testTag(TestTag.EventDuration)
             .width(Dimensions.ButtonHeight.Normal),
         enabled = when (descriptor) {
             ViewModelEditorState.EventDescriptor.Selected,
@@ -138,7 +139,7 @@ fun UnsetButton(
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
     IconCMenuButton(
-        modifier = Modifier.testTag("UnsetEvent"),
+        modifier = Modifier.testTag(TestTag.EventUnset),
         enabled = active_event != null,
         onClick = { dispatcher.unset() },
         onLongClick = { dispatcher.unset_root() },
@@ -376,7 +377,7 @@ fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
         ) {
             Switch(
                 checked.value,
-                modifier = Modifier.testTag("TogglePercussion"),
+                modifier = Modifier.testTag(TestTag.PercussionToggle),
                 thumbContent = {
                     Icon(
                         modifier = Modifier.padding(Dimensions.PercussionSwitchIconPadding),

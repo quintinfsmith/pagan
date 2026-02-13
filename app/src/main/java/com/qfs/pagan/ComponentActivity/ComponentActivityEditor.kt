@@ -75,6 +75,7 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -1349,6 +1350,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 // Key to prevent incongruence between column_width size and content
                 key(ui_facade.beat_count.value) {
                     LazyRow(
+                        modifier = Modifier.testTag("MainField"),
                         state = scroll_state_h,
                         contentPadding = PaddingValues(end = toDp(this@ComponentActivityEditor.state_model.table_side_padding.value)),
                         overscrollEffect = null
@@ -1476,6 +1478,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         ProvideContentColorTextStyle(foreground, Typography.LineLabel) {
             HalfBorderBox(
                 modifier
+                    .testTag("LineLabel: ${line_info.channel.value}|${line_info.line_offset.value}|${line_info.ctl_type.value}")
                     .combinedClickable(
                         onClick = {
                             dispatcher.tap_line(

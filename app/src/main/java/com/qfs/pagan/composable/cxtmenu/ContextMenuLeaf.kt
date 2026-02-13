@@ -376,6 +376,7 @@ fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
         ) {
             Switch(
                 checked.value,
+                modifier = Modifier.testTag("TogglePercussion"),
                 thumbContent = {
                     Icon(
                         modifier = Modifier.padding(Dimensions.PercussionSwitchIconPadding),

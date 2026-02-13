@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
@@ -94,8 +95,7 @@ fun ColumnScope.DialogBar(
     neutral_label: Int = android.R.string.cancel,
     negative_label: Int = R.string.no,
     positive_label: Int = android.R.string.ok,
-
-    ) {
+) {
     Row(
         modifier = modifier
             .padding(
@@ -107,6 +107,7 @@ fun ColumnScope.DialogBar(
         negative?.let {
             SmallButton(
                 modifier = Modifier
+                    .testTag("DialogNegative")
                     .height(Dimensions.DialogBarButtonHeight)
                     .weight(1F),
                 onClick = it,
@@ -119,6 +120,7 @@ fun ColumnScope.DialogBar(
             }
             SmallOutlinedButton(
                 modifier = Modifier
+                    .testTag("DialogNeutral")
                     .height(Dimensions.DialogBarButtonHeight)
                     .weight(1F),
                 onClick = it,
@@ -132,6 +134,7 @@ fun ColumnScope.DialogBar(
             }
             SmallButton(
                 modifier = Modifier
+                    .testTag("DialogPositive")
                     .height(Dimensions.DialogBarButtonHeight)
                     .weight(1F),
                 onClick = it,

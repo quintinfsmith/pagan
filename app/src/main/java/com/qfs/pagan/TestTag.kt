@@ -5,7 +5,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 
 enum class TestTag {
+    MenuItem,
+    OuterInsertBeat,
     DialogNumberInput,
+    DialogNegative,
+    DialogPositive,
+    DialogNeutral,
     LandingImport,
     LandingSettings,
     LandingNewProject,
@@ -58,7 +63,14 @@ enum class TestTag {
     Leaf
 }
 
+fun test_tag_to_string(tag: TestTag, vararg args: Any?): String {
+    var string = tag.name
+    for (arg in args) {
+        string += "|$arg"
+    }
+    return string
+}
 @Composable
-fun Modifier.testTag(tag: TestTag, vararg ints: Any?): Modifier {
-    return this then Modifier.testTag("$tag $ints")
+fun Modifier.testTag(tag: TestTag, vararg args: Any?): Modifier {
+    return this then Modifier.testTag(test_tag_to_string(tag, *args))
 }

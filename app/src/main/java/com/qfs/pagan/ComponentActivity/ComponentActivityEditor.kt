@@ -1416,6 +1416,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onSurfaceVariant) {
                                     Box(
                                         modifier = Modifier
+                                            .testTag(TestTag.OuterInsertBeat)
                                             .width(Dimensions.LeafBaseWidth)
                                             .combinedClickable(
                                                 onClick = { dispatcher.append_beats() },

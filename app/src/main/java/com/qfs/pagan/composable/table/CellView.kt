@@ -36,7 +36,7 @@ fun CellView(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, cell
                     leaf_data.value,
                     ui_facade.radix.value,
                     Modifier
-                        .testTag(TestTag.Leaf, line_info.channel.value, line_info.line_offset.value, x, path)
+                        .testTag(TestTag.Leaf, line_info.channel.value, line_info.line_offset.value, x, *(Array(path.size) { path[it] }))
                         .weight(leaf_data.value.weight.floatValue)
                         .combinedClickable(
                             onClick = {

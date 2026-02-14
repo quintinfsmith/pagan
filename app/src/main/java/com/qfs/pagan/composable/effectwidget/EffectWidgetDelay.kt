@@ -35,7 +35,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
-import com.qfs.pagan.ActionTracker
+import com.qfs.pagan.ActionDispatcher
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.IntegerInput
@@ -56,7 +56,7 @@ import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.roundToInt
 
 @Composable
-fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, event: DelayEvent) {
+fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, event: DelayEvent) {
     val cursor = ui_facade.active_cursor.value ?: return
     val is_initial = cursor.type == CursorMode.Line
     val fade = remember { mutableFloatStateOf(event.fade) }

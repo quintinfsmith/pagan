@@ -96,7 +96,7 @@ import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.soundfont2.Riff
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
-import com.qfs.pagan.ActionTracker
+import com.qfs.pagan.ActionDispatcher
 import com.qfs.pagan.CompatibleFileType
 import com.qfs.pagan.Exportable
 import com.qfs.pagan.LayoutSize
@@ -119,7 +119,6 @@ import com.qfs.pagan.composable.button.ConfigDrawerChannelRightButton
 import com.qfs.pagan.composable.button.ConfigDrawerTopButton
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.button.TopBarIcon
-import com.qfs.pagan.composable.button.TopBarNoIcon
 import com.qfs.pagan.composable.conditional_drag
 import com.qfs.pagan.composable.cxtmenu.CMBoxBottom
 import com.qfs.pagan.composable.cxtmenu.CMBoxEnd
@@ -175,7 +174,7 @@ import kotlin.math.roundToInt
 class ComponentActivityEditor: PaganComponentActivity() {
     val controller_model: ViewModelEditorController by this.viewModels()
     val state_model: ViewModelEditorState by this.viewModels()
-    lateinit var action_interface: ActionTracker
+    lateinit var action_interface: ActionDispatcher
 
     private var broadcast_receiver = PaganBroadcastReceiver()
     private var receiver_intent_filter = IntentFilter("com.qfs.pagan.CANCEL_EXPORT_WAV")
@@ -560,7 +559,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        action_interface = ActionTracker(this, this.controller_model)
+        action_interface = ActionDispatcher(this, this.controller_model)
         val dispatcher = this.action_interface
         this.controller_model.attach_state_model(this.state_model)
 
@@ -1146,7 +1145,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
-    fun get_context_menu_primary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: LayoutSize): (@Composable () -> Unit)? {
+    fun get_context_menu_primary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, layout: LayoutSize): (@Composable () -> Unit)? {
         if (ui_facade.playback_state_midi.value == PlaybackState.Playing || ui_facade.playback_state_soundfont.value == PlaybackState.Playing) return null
         if (ui_facade.dragging_line.value != null) return null
 
@@ -1179,7 +1178,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
-    fun get_context_menu_secondary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: LayoutSize): (@Composable () -> Unit)? {
+    fun get_context_menu_secondary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, layout: LayoutSize): (@Composable () -> Unit)? {
         if (ui_facade.playback_state_midi.value == PlaybackState.Playing || ui_facade.playback_state_soundfont.value == PlaybackState.Playing) return null
         if (ui_facade.dragging_line.value != null) return null
         val cursor = ui_facade.active_cursor.value ?: return null
@@ -1249,7 +1248,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun MainTable(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, length: MutableState<Int>, layout: LayoutSize) {
+    fun MainTable(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, length: MutableState<Int>, layout: LayoutSize) {
         val line_height = Dimensions.LineHeight
         val ctl_line_height = Dimensions.EffectLineHeight
         val leaf_width = Dimensions.LeafBaseWidth
@@ -1516,7 +1515,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     fun LineLabelView(
         modifier: Modifier = Modifier,
-        dispatcher: ActionTracker,
+        dispatcher: ActionDispatcher,
         line_info: ViewModelEditorState.LineData
     ) {
         val ctl_type = line_info.ctl_type.value
@@ -1634,7 +1633,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         modifier: Modifier = Modifier,
         x: Int,
         ui_facade: ViewModelEditorState,
-        dispatcher: ActionTracker,
+        dispatcher: ActionDispatcher,
         column_info: ViewModelEditorState.ColumnData,
         column_width: Dp // Necessary for floating label
     ) {

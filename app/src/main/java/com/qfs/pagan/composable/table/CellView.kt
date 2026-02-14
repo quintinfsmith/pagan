@@ -16,13 +16,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
-import com.qfs.pagan.ActionTracker
+import com.qfs.pagan.ActionDispatcher
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.testTag
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun CellView(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, cell: MutableState<ViewModelEditorState.TreeData>, y: Int, x: Int, modifier: Modifier = Modifier) {
+fun CellView(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, cell: MutableState<ViewModelEditorState.TreeData>, y: Int, x: Int, modifier: Modifier = Modifier) {
     val line_info = ui_facade.line_data[y]
     key(cell.value.key.value, y) {
         Row(

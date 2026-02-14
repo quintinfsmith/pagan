@@ -19,7 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
-import com.qfs.pagan.ActionTracker
+import com.qfs.pagan.ActionDispatcher
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
@@ -45,7 +45,7 @@ import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun AdjustLineButton(dispatcher: ActionTracker) {
+fun AdjustLineButton(dispatcher: ActionDispatcher) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.AdjustSelection),
         onClick = { dispatcher.adjust_selection() },
@@ -57,7 +57,7 @@ fun AdjustLineButton(dispatcher: ActionTracker) {
 
 @Composable
 fun ToggleLineControllerButton(
-    dispatcher: ActionTracker,
+    dispatcher: ActionDispatcher,
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
     IconCMenuButton(
@@ -70,7 +70,7 @@ fun ToggleLineControllerButton(
 }
 
 @Composable
-fun InsertLineButton(dispatcher: ActionTracker, shape: Shape = Shapes.ContextMenuButtonPrimaryStart) {
+fun InsertLineButton(dispatcher: ActionDispatcher, shape: Shape = Shapes.ContextMenuButtonPrimaryStart) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.LineNew),
         onClick = { dispatcher.insert_line(1) },
@@ -82,7 +82,7 @@ fun InsertLineButton(dispatcher: ActionTracker, shape: Shape = Shapes.ContextMen
 }
 
 @Composable
-fun RemoveLineButton(dispatcher: ActionTracker, size: Int) {
+fun RemoveLineButton(dispatcher: ActionDispatcher, size: Int) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.LineRemove),
         enabled = size > 1,
@@ -94,7 +94,7 @@ fun RemoveLineButton(dispatcher: ActionTracker, size: Int) {
 }
 
 @Composable
-fun RemoveEffectButton(dispatcher: ActionTracker, shape: Shape) {
+fun RemoveEffectButton(dispatcher: ActionDispatcher, shape: Shape) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.LineEffectRemove),
         onClick = { dispatcher.remove_controller() },
@@ -105,7 +105,7 @@ fun RemoveEffectButton(dispatcher: ActionTracker, shape: Shape) {
     )
 }
 @Composable
-fun PercussionSetInstrumentButton(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, dispatcher: ActionTracker, y: Int, use_name: Boolean) {
+fun PercussionSetInstrumentButton(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, dispatcher: ActionDispatcher, y: Int, use_name: Boolean) {
     val active_line = vm_state.line_data[y]
     val assigned_offset = active_line.assigned_offset.value ?: return
     val active_channel = vm_state.channel_data[active_line.channel.value!!]
@@ -145,7 +145,7 @@ fun PercussionSetInstrumentButton(modifier: Modifier = Modifier, vm_state: ViewM
 fun SetLineColorButton(
     modifier: Modifier = Modifier,
     ui_facade: ViewModelEditorState,
-    dispatcher: ActionTracker,
+    dispatcher: ActionDispatcher,
     channel: Int,
     line_offset: Int,
     shape: Shape = Shapes.ContextMenuButtonPrimary
@@ -162,7 +162,7 @@ fun SetLineColorButton(
 
 @Composable
 fun MuteButton(
-    dispatcher: ActionTracker,
+    dispatcher: ActionDispatcher,
     line: ViewModelEditorState.LineData,
 ) {
     IconCMenuButton(
@@ -182,7 +182,7 @@ fun MuteButton(
 }
 
 @Composable
-fun HideEffectButton(dispatcher: ActionTracker, shape: Shape) {
+fun HideEffectButton(dispatcher: ActionDispatcher, shape: Shape) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.EffectHide),
         onClick = { dispatcher.toggle_controller_visibility() },
@@ -193,7 +193,7 @@ fun HideEffectButton(dispatcher: ActionTracker, shape: Shape) {
 }
 
 @Composable
-fun ContextMenuLinePrimary(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, dispatcher: ActionTracker, layout: LayoutSize) {
+fun ContextMenuLinePrimary(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, dispatcher: ActionDispatcher, layout: LayoutSize) {
     val cursor = vm_state.active_cursor.value ?: return
     val active_line = vm_state.line_data[cursor.ints[0]]
     if (active_line.ctl_type.value == null) {
@@ -204,7 +204,7 @@ fun ContextMenuLinePrimary(modifier: Modifier = Modifier, vm_state: ViewModelEdi
 }
 
 @Composable
-fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, dispatcher: ActionTracker, layout: LayoutSize) {
+fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, dispatcher: ActionDispatcher, layout: LayoutSize) {
     val cursor = vm_state.active_cursor.value ?: return
     val active_line = vm_state.line_data[cursor.ints[0]]
     val active_channel = vm_state.channel_data[active_line.channel.value!!]
@@ -276,7 +276,7 @@ fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
     }
 }
 @Composable
-fun ContextMenuLineCtlPrimary(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, dispatcher: ActionTracker, layout: LayoutSize) {
+fun ContextMenuLineCtlPrimary(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, dispatcher: ActionDispatcher, layout: LayoutSize) {
     when (layout) {
         LayoutSize.SmallPortrait,
         LayoutSize.MediumPortrait,
@@ -302,7 +302,7 @@ fun ContextMenuLineCtlPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
 }
 
 @Composable
-fun ContextMenuLineSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier, layout: LayoutSize) {
+fun ContextMenuLineSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, modifier: Modifier = Modifier, layout: LayoutSize) {
     val cursor = ui_facade.active_cursor.value ?: return
     val y = cursor.ints[0]
     val line = ui_facade.line_data[y]
@@ -315,7 +315,7 @@ fun ContextMenuLineSecondary(ui_facade: ViewModelEditorState, dispatcher: Action
 }
 
 @Composable
-fun ContextMenuLineCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, initial_event: EffectEvent, modifier: Modifier = Modifier, layout: LayoutSize) {
+fun ContextMenuLineCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, initial_event: EffectEvent, modifier: Modifier = Modifier, layout: LayoutSize) {
     ContextMenuSecondaryRow {
         when (initial_event) {
             is OpusVolumeEvent -> VolumeEventMenu(ui_facade, dispatcher, initial_event)
@@ -330,7 +330,7 @@ fun ContextMenuLineCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
 }
 
 @Composable
-fun ContextMenuLineStdSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, volume_event: OpusVolumeEvent, modifier: Modifier = Modifier, layout: LayoutSize) {
+fun ContextMenuLineStdSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, volume_event: OpusVolumeEvent, modifier: Modifier = Modifier, layout: LayoutSize) {
     val cursor = ui_facade.active_cursor.value ?: return
     val y = cursor.ints[0]
     val line = ui_facade.line_data[y]

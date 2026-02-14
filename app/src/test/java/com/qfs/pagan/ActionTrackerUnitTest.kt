@@ -10,27 +10,27 @@ import org.junit.Test
 class ActionTrackerUnitTest {
     @Test
     fun test_to_json() {
-        for (enum in ActionTracker.TrackedAction.values()) {
+        for (enum in ActionDispatcher.TrackedAction.values()) {
             val input = when (enum) {
                 // -------------- No arguments --------------
-                ActionTracker.TrackedAction.RemoveController,
-                ActionTracker.TrackedAction.ToggleControllerVisibility,
-                ActionTracker.TrackedAction.Unset,
-                ActionTracker.TrackedAction.UnsetRoot,
-                ActionTracker.TrackedAction.SaveProject,
-                ActionTracker.TrackedAction.DeleteProject,
-                ActionTracker.TrackedAction.CopyProject,
-                ActionTracker.TrackedAction.TogglePercussion,
-                ActionTracker.TrackedAction.DrawerOpen,
-                ActionTracker.TrackedAction.DrawerClose,
-                ActionTracker.TrackedAction.NewProject,
-                ActionTracker.TrackedAction.ApplyUndo -> {
+                ActionDispatcher.TrackedAction.RemoveController,
+                ActionDispatcher.TrackedAction.ToggleControllerVisibility,
+                ActionDispatcher.TrackedAction.Unset,
+                ActionDispatcher.TrackedAction.UnsetRoot,
+                ActionDispatcher.TrackedAction.SaveProject,
+                ActionDispatcher.TrackedAction.DeleteProject,
+                ActionDispatcher.TrackedAction.CopyProject,
+                ActionDispatcher.TrackedAction.TogglePercussion,
+                ActionDispatcher.TrackedAction.DrawerOpen,
+                ActionDispatcher.TrackedAction.DrawerClose,
+                ActionDispatcher.TrackedAction.NewProject,
+                ActionDispatcher.TrackedAction.ApplyUndo -> {
                     Pair(enum, listOf())
                 }
 
 
                 // Special C
-                ActionTracker.TrackedAction.SetProjectNameAndNotes -> {
+                ActionDispatcher.TrackedAction.SetProjectNameAndNotes -> {
                     val project_name = "Project Name".toByteArray()
                     val project_notes = "Project Notes".toByteArray()
                     Pair(
@@ -42,40 +42,40 @@ class ActionTrackerUnitTest {
                 }
 
                 // -------- Single String Argument -------------
-                ActionTracker.TrackedAction.ShowLineController,
-                ActionTracker.TrackedAction.ShowGlobalController,
-                ActionTracker.TrackedAction.ShowChannelController,
-                ActionTracker.TrackedAction.ImportSong,
-                ActionTracker.TrackedAction.SetCopyMode -> {
+                ActionDispatcher.TrackedAction.ShowLineController,
+                ActionDispatcher.TrackedAction.ShowGlobalController,
+                ActionDispatcher.TrackedAction.ShowChannelController,
+                ActionDispatcher.TrackedAction.ImportSong,
+                ActionDispatcher.TrackedAction.SetCopyMode -> {
                     val test_string = "Some String"
                     val test_bytes = test_string.toByteArray()
                     Pair(enum, List(test_bytes.size) { i: Int -> test_bytes[i].toInt() })
                 }
 
                 // ------- Single Int Argument ----------------
-                ActionTracker.TrackedAction.UntagColumn,
-                ActionTracker.TrackedAction.AdjustSelection,
-                ActionTracker.TrackedAction.MuteChannel,
-                ActionTracker.TrackedAction.UnMuteChannel,
-                ActionTracker.TrackedAction.CopyGlobalCtlToBeat,
-                ActionTracker.TrackedAction.MoveGlobalCtlToBeat,
-                ActionTracker.TrackedAction.InsertLine,
-                ActionTracker.TrackedAction.RemoveLine,
-                ActionTracker.TrackedAction.RemoveChannel,
-                ActionTracker.TrackedAction.SetDuration,
-                ActionTracker.TrackedAction.RemoveBeat,
-                ActionTracker.TrackedAction.InsertBeat,
-                ActionTracker.TrackedAction.SplitLeaf,
-                ActionTracker.TrackedAction.InsertLeaf,
-                ActionTracker.TrackedAction.RemoveLeaf,
-                ActionTracker.TrackedAction.SetPercussionInstrument,
-                ActionTracker.TrackedAction.CursorSelectChannel,
-                ActionTracker.TrackedAction.CursorSelectColumn -> {
+                ActionDispatcher.TrackedAction.UntagColumn,
+                ActionDispatcher.TrackedAction.AdjustSelection,
+                ActionDispatcher.TrackedAction.MuteChannel,
+                ActionDispatcher.TrackedAction.UnMuteChannel,
+                ActionDispatcher.TrackedAction.CopyGlobalCtlToBeat,
+                ActionDispatcher.TrackedAction.MoveGlobalCtlToBeat,
+                ActionDispatcher.TrackedAction.InsertLine,
+                ActionDispatcher.TrackedAction.RemoveLine,
+                ActionDispatcher.TrackedAction.RemoveChannel,
+                ActionDispatcher.TrackedAction.SetDuration,
+                ActionDispatcher.TrackedAction.RemoveBeat,
+                ActionDispatcher.TrackedAction.InsertBeat,
+                ActionDispatcher.TrackedAction.SplitLeaf,
+                ActionDispatcher.TrackedAction.InsertLeaf,
+                ActionDispatcher.TrackedAction.RemoveLeaf,
+                ActionDispatcher.TrackedAction.SetPercussionInstrument,
+                ActionDispatcher.TrackedAction.CursorSelectChannel,
+                ActionDispatcher.TrackedAction.CursorSelectColumn -> {
                     Pair(enum, listOf(5))
                 }
 
-                ActionTracker.TrackedAction.RepeatSelectionCtlChannel,
-                ActionTracker.TrackedAction.CursorSelectGlobalCtlRange -> {
+                ActionDispatcher.TrackedAction.RepeatSelectionCtlChannel,
+                ActionDispatcher.TrackedAction.CursorSelectGlobalCtlRange -> {
                     val string = "test"
                     val bytes = string.toByteArray()
                     Pair(
@@ -83,8 +83,8 @@ class ActionTrackerUnitTest {
                         listOf(bytes.size) + List(bytes.size) { bytes[it].toInt() } + listOf(0, 1)
                     )
                 }
-                ActionTracker.TrackedAction.RepeatSelectionCtlLine,
-                ActionTracker.TrackedAction.CursorSelectChannelCtlRange -> {
+                ActionDispatcher.TrackedAction.RepeatSelectionCtlLine,
+                ActionDispatcher.TrackedAction.CursorSelectChannelCtlRange -> {
                     val string = "test"
                     val bytes = string.toByteArray()
                     Pair(
@@ -92,7 +92,7 @@ class ActionTrackerUnitTest {
                         listOf(bytes.size) + List(bytes.size) { bytes[it].toInt() } + listOf(0, 1, 2)
                     )
                 }
-                ActionTracker.TrackedAction.CursorSelectLineCtlRange -> {
+                ActionDispatcher.TrackedAction.CursorSelectLineCtlRange -> {
                     val string = "test"
                     val bytes = string.toByteArray()
                     Pair(
@@ -100,9 +100,9 @@ class ActionTrackerUnitTest {
                         listOf(bytes.size) + List(bytes.size) { bytes[it].toInt() } + listOf(0, 1, 2, 3, 4, 5)
                     )
                 }
-                ActionTracker.TrackedAction.CursorSelectLeafCtlGlobal,
-                ActionTracker.TrackedAction.CursorSelectLeafCtlChannel,
-                ActionTracker.TrackedAction.CursorSelectLeafCtlLine -> {
+                ActionDispatcher.TrackedAction.CursorSelectLeafCtlGlobal,
+                ActionDispatcher.TrackedAction.CursorSelectLeafCtlChannel,
+                ActionDispatcher.TrackedAction.CursorSelectLeafCtlLine -> {
                     val string = "test"
                     val bytes = string.toByteArray()
                     Pair(
@@ -110,7 +110,7 @@ class ActionTrackerUnitTest {
                         listOf(bytes.size) + List(bytes.size) { bytes[it].toInt() } + listOf(0, 1, 2, 3, 4, 5)
                     )
                 }
-                ActionTracker.TrackedAction.CursorSelectLineCtlLine -> {
+                ActionDispatcher.TrackedAction.CursorSelectLineCtlLine -> {
                     val string = "Pan"
                     val bytes = string.toByteArray()
                     Pair(
@@ -118,8 +118,8 @@ class ActionTrackerUnitTest {
                         listOf(bytes.size) + List(bytes.size) { bytes[it].toInt() } + listOf(0, 1)
                     )
                 }
-                ActionTracker.TrackedAction.RepeatSelectionCtlGlobal,
-                ActionTracker.TrackedAction.CursorSelectChannelCtlLine -> {
+                ActionDispatcher.TrackedAction.RepeatSelectionCtlGlobal,
+                ActionDispatcher.TrackedAction.CursorSelectChannelCtlLine -> {
                     val string = "Reverb"
                     val bytes = string.toByteArray()
                     Pair(
@@ -128,7 +128,7 @@ class ActionTrackerUnitTest {
                     )
                 }
 
-                ActionTracker.TrackedAction.CursorSelectGlobalCtlLine -> {
+                ActionDispatcher.TrackedAction.CursorSelectGlobalCtlLine -> {
                     val string = "Tempo"
                     val bytes = string.toByteArray()
                     Pair(
@@ -138,7 +138,7 @@ class ActionTrackerUnitTest {
                 }
 
                 //ActionTracker.TrackedAction.UntagColumn -> {
-                ActionTracker.TrackedAction.TagColumn -> {
+                ActionDispatcher.TrackedAction.TagColumn -> {
                     val string = "TAGNAME"
                     val bytes = string.toByteArray()
                     Pair(
@@ -149,213 +149,213 @@ class ActionTrackerUnitTest {
 
 
 
-                ActionTracker.TrackedAction.InsertChannel,
-                ActionTracker.TrackedAction.MuteLine,
-                ActionTracker.TrackedAction.UnMuteLine,
-                ActionTracker.TrackedAction.CursorSelectLine -> {
+                ActionDispatcher.TrackedAction.InsertChannel,
+                ActionDispatcher.TrackedAction.MuteLine,
+                ActionDispatcher.TrackedAction.UnMuteLine,
+                ActionDispatcher.TrackedAction.CursorSelectLine -> {
                     Pair(enum, listOf(0, 1))
                 }
 
 
                 // --------- >= 3 int args ------------------
-                ActionTracker.TrackedAction.CursorSelectLeaf,
-                ActionTracker.TrackedAction.CursorSelectRange -> {
+                ActionDispatcher.TrackedAction.CursorSelectLeaf,
+                ActionDispatcher.TrackedAction.CursorSelectRange -> {
                     Pair(enum, listOf(0, 1, 2, 3, 4, 5))
                 }
 
                 // -------- 3 int args ----------------------
-                ActionTracker.TrackedAction.CopyLineCtlToBeat,
-                ActionTracker.TrackedAction.MoveLineCtlToBeat,
-                ActionTracker.TrackedAction.RepeatSelectionStd,
-                ActionTracker.TrackedAction.MoveSelectionToBeat,
-                ActionTracker.TrackedAction.CopySelectionToBeat,
-                ActionTracker.TrackedAction.MergeSelectionIntoBeat,
-                ActionTracker.TrackedAction.SetChannelPreset -> {
+                ActionDispatcher.TrackedAction.CopyLineCtlToBeat,
+                ActionDispatcher.TrackedAction.MoveLineCtlToBeat,
+                ActionDispatcher.TrackedAction.RepeatSelectionStd,
+                ActionDispatcher.TrackedAction.MoveSelectionToBeat,
+                ActionDispatcher.TrackedAction.CopySelectionToBeat,
+                ActionDispatcher.TrackedAction.MergeSelectionIntoBeat,
+                ActionDispatcher.TrackedAction.SetChannelPreset -> {
                     Pair(enum, listOf(4, 2, 6))
                 }
 
-                ActionTracker.TrackedAction.SetOffset,
-                ActionTracker.TrackedAction.SetOctave -> {
+                ActionDispatcher.TrackedAction.SetOffset,
+                ActionDispatcher.TrackedAction.SetOctave -> {
                     Pair(enum, listOf(1, 0))
                 }
-                ActionTracker.TrackedAction.InsertBeatAt,
-                ActionTracker.TrackedAction.CopyChannelCtlToBeat,
-                ActionTracker.TrackedAction.MoveChannelCtlToBeat -> {
+                ActionDispatcher.TrackedAction.InsertBeatAt,
+                ActionDispatcher.TrackedAction.CopyChannelCtlToBeat,
+                ActionDispatcher.TrackedAction.MoveChannelCtlToBeat -> {
                     Pair(enum, listOf(4, 2))
                 }
 
                 // ------------2 + 2n args ----------------
-                ActionTracker.TrackedAction.SetTuningTable -> {
+                ActionDispatcher.TrackedAction.SetTuningTable -> {
                     Pair(enum, listOf(0, 12, 0, 12, 1, 12, 2, 12, 3, 12, 4, 12, 5, 12, 6, 12, 7, 12, 8, 12, 9, 12, 10, 12, 11, 12))
                 }
 
 
-                ActionTracker.TrackedAction.MoveLine -> {
+                ActionDispatcher.TrackedAction.MoveLine -> {
                     Pair(enum, listOf(0, 0, 1, 0))
                 }
 
-                ActionTracker.TrackedAction.MoveChannel -> {
+                ActionDispatcher.TrackedAction.MoveChannel -> {
                     Pair(enum, listOf(1, 3, 1))
                 }
             }
 
             val json_name = JSONString(enum.name)
-            val json_item = ActionTracker.item_to_json(input)
+            val json_item = ActionDispatcher.item_to_json(input)
 
             assertEquals(
                 "Failed to convert ${enum.name} to json Correctly",
                 when (enum) {
                     // -------------- No arguments --------------
-                    ActionTracker.TrackedAction.RemoveController,
-                    ActionTracker.TrackedAction.ToggleControllerVisibility,
-                    ActionTracker.TrackedAction.Unset,
-                    ActionTracker.TrackedAction.UnsetRoot,
-                    ActionTracker.TrackedAction.SaveProject,
-                    ActionTracker.TrackedAction.DeleteProject,
-                    ActionTracker.TrackedAction.CopyProject,
-                    ActionTracker.TrackedAction.TogglePercussion,
-                    ActionTracker.TrackedAction.DrawerOpen,
-                    ActionTracker.TrackedAction.DrawerClose,
-                    ActionTracker.TrackedAction.NewProject,
-                    ActionTracker.TrackedAction.ApplyUndo -> {
+                    ActionDispatcher.TrackedAction.RemoveController,
+                    ActionDispatcher.TrackedAction.ToggleControllerVisibility,
+                    ActionDispatcher.TrackedAction.Unset,
+                    ActionDispatcher.TrackedAction.UnsetRoot,
+                    ActionDispatcher.TrackedAction.SaveProject,
+                    ActionDispatcher.TrackedAction.DeleteProject,
+                    ActionDispatcher.TrackedAction.CopyProject,
+                    ActionDispatcher.TrackedAction.TogglePercussion,
+                    ActionDispatcher.TrackedAction.DrawerOpen,
+                    ActionDispatcher.TrackedAction.DrawerClose,
+                    ActionDispatcher.TrackedAction.NewProject,
+                    ActionDispatcher.TrackedAction.ApplyUndo -> {
                         JSONList(json_name)
                     }
 
 
-                    ActionTracker.TrackedAction.SetProjectNameAndNotes -> {
+                    ActionDispatcher.TrackedAction.SetProjectNameAndNotes -> {
                         val project_name = "Project Name"
                         val project_notes = "Project Notes"
                         JSONList(json_name, JSONString(project_name), JSONString(project_notes))
                     }
 
                     // -------- Single String Argument -------------
-                    ActionTracker.TrackedAction.ShowLineController,
-                    ActionTracker.TrackedAction.ShowGlobalController,
-                    ActionTracker.TrackedAction.ShowChannelController,
-                    ActionTracker.TrackedAction.ImportSong,
-                    ActionTracker.TrackedAction.SetCopyMode -> {
+                    ActionDispatcher.TrackedAction.ShowLineController,
+                    ActionDispatcher.TrackedAction.ShowGlobalController,
+                    ActionDispatcher.TrackedAction.ShowChannelController,
+                    ActionDispatcher.TrackedAction.ImportSong,
+                    ActionDispatcher.TrackedAction.SetCopyMode -> {
                         val test_string = "Some String"
                         JSONList(json_name, JSONString(test_string))
                     }
 
                     // ------- Single Int Argument ----------------
-                    ActionTracker.TrackedAction.UntagColumn,
-                    ActionTracker.TrackedAction.AdjustSelection,
-                    ActionTracker.TrackedAction.MuteChannel,
-                    ActionTracker.TrackedAction.UnMuteChannel,
-                    ActionTracker.TrackedAction.CopyGlobalCtlToBeat,
-                    ActionTracker.TrackedAction.MoveGlobalCtlToBeat,
-                    ActionTracker.TrackedAction.InsertLine,
-                    ActionTracker.TrackedAction.RemoveLine,
-                    ActionTracker.TrackedAction.RemoveChannel,
-                    ActionTracker.TrackedAction.SetDuration,
-                    ActionTracker.TrackedAction.RemoveBeat,
-                    ActionTracker.TrackedAction.InsertBeat,
-                    ActionTracker.TrackedAction.SplitLeaf,
-                    ActionTracker.TrackedAction.InsertLeaf,
-                    ActionTracker.TrackedAction.RemoveLeaf,
-                    ActionTracker.TrackedAction.SetPercussionInstrument,
-                    ActionTracker.TrackedAction.CursorSelectChannel,
-                    ActionTracker.TrackedAction.CursorSelectColumn -> {
+                    ActionDispatcher.TrackedAction.UntagColumn,
+                    ActionDispatcher.TrackedAction.AdjustSelection,
+                    ActionDispatcher.TrackedAction.MuteChannel,
+                    ActionDispatcher.TrackedAction.UnMuteChannel,
+                    ActionDispatcher.TrackedAction.CopyGlobalCtlToBeat,
+                    ActionDispatcher.TrackedAction.MoveGlobalCtlToBeat,
+                    ActionDispatcher.TrackedAction.InsertLine,
+                    ActionDispatcher.TrackedAction.RemoveLine,
+                    ActionDispatcher.TrackedAction.RemoveChannel,
+                    ActionDispatcher.TrackedAction.SetDuration,
+                    ActionDispatcher.TrackedAction.RemoveBeat,
+                    ActionDispatcher.TrackedAction.InsertBeat,
+                    ActionDispatcher.TrackedAction.SplitLeaf,
+                    ActionDispatcher.TrackedAction.InsertLeaf,
+                    ActionDispatcher.TrackedAction.RemoveLeaf,
+                    ActionDispatcher.TrackedAction.SetPercussionInstrument,
+                    ActionDispatcher.TrackedAction.CursorSelectChannel,
+                    ActionDispatcher.TrackedAction.CursorSelectColumn -> {
                         JSONList(json_name, JSONInteger(5))
                     }
 
 
-                    ActionTracker.TrackedAction.RepeatSelectionCtlChannel,
-                    ActionTracker.TrackedAction.CursorSelectGlobalCtlRange -> {
+                    ActionDispatcher.TrackedAction.RepeatSelectionCtlChannel,
+                    ActionDispatcher.TrackedAction.CursorSelectGlobalCtlRange -> {
                         val string = JSONString("test")
                         val test_ints = listOf(0,1)
                         JSONList(json_name, string, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }
-                    ActionTracker.TrackedAction.RepeatSelectionCtlLine,
-                    ActionTracker.TrackedAction.CursorSelectChannelCtlRange -> {
+                    ActionDispatcher.TrackedAction.RepeatSelectionCtlLine,
+                    ActionDispatcher.TrackedAction.CursorSelectChannelCtlRange -> {
                         val string = JSONString("test")
                         val test_ints = listOf(0,1,2)
                         JSONList(json_name, string, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }
-                    ActionTracker.TrackedAction.CursorSelectLineCtlRange,
-                    ActionTracker.TrackedAction.CursorSelectLeafCtlGlobal,
-                    ActionTracker.TrackedAction.CursorSelectLeafCtlChannel,
-                    ActionTracker.TrackedAction.CursorSelectLeafCtlLine -> {
+                    ActionDispatcher.TrackedAction.CursorSelectLineCtlRange,
+                    ActionDispatcher.TrackedAction.CursorSelectLeafCtlGlobal,
+                    ActionDispatcher.TrackedAction.CursorSelectLeafCtlChannel,
+                    ActionDispatcher.TrackedAction.CursorSelectLeafCtlLine -> {
                         val string = JSONString("test")
                         val test_ints = listOf(0,1,2,3,4,5)
                         JSONList(json_name, string, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }
 
-                    ActionTracker.TrackedAction.CursorSelectLineCtlLine -> {
+                    ActionDispatcher.TrackedAction.CursorSelectLineCtlLine -> {
                         val string = JSONString("Pan")
                         val test_ints = listOf(0,1)
                         JSONList(json_name, string, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }
 
-                    ActionTracker.TrackedAction.RepeatSelectionCtlGlobal,
-                    ActionTracker.TrackedAction.CursorSelectChannelCtlLine -> {
+                    ActionDispatcher.TrackedAction.RepeatSelectionCtlGlobal,
+                    ActionDispatcher.TrackedAction.CursorSelectChannelCtlLine -> {
                         val string = JSONString("Reverb")
                         val test_ints = listOf(0)
                         JSONList(json_name, string, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }
 
-                    ActionTracker.TrackedAction.CursorSelectGlobalCtlLine -> {
+                    ActionDispatcher.TrackedAction.CursorSelectGlobalCtlLine -> {
                         val string = JSONString("Tempo")
                         JSONList(json_name, string)
                     }
 
-                    ActionTracker.TrackedAction.InsertChannel,
-                    ActionTracker.TrackedAction.MuteLine,
-                    ActionTracker.TrackedAction.UnMuteLine,
-                    ActionTracker.TrackedAction.CursorSelectLine -> {
+                    ActionDispatcher.TrackedAction.InsertChannel,
+                    ActionDispatcher.TrackedAction.MuteLine,
+                    ActionDispatcher.TrackedAction.UnMuteLine,
+                    ActionDispatcher.TrackedAction.CursorSelectLine -> {
                         val test_ints = listOf(0, 1)
                         JSONList(json_name, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }
 
                     // --------- >= 3 int args ------------------
-                    ActionTracker.TrackedAction.CursorSelectLeaf,
-                    ActionTracker.TrackedAction.CursorSelectRange -> {
+                    ActionDispatcher.TrackedAction.CursorSelectLeaf,
+                    ActionDispatcher.TrackedAction.CursorSelectRange -> {
                         val test_ints = listOf(0, 1, 2, 3, 4, 5)
                         JSONList(json_name, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }
 
                     // -------- 3 int args ----------------------
-                    ActionTracker.TrackedAction.CopyLineCtlToBeat,
-                    ActionTracker.TrackedAction.MoveLineCtlToBeat,
-                    ActionTracker.TrackedAction.RepeatSelectionStd,
-                    ActionTracker.TrackedAction.MoveSelectionToBeat,
-                    ActionTracker.TrackedAction.CopySelectionToBeat,
-                    ActionTracker.TrackedAction.MergeSelectionIntoBeat,
-                    ActionTracker.TrackedAction.SetChannelPreset -> {
+                    ActionDispatcher.TrackedAction.CopyLineCtlToBeat,
+                    ActionDispatcher.TrackedAction.MoveLineCtlToBeat,
+                    ActionDispatcher.TrackedAction.RepeatSelectionStd,
+                    ActionDispatcher.TrackedAction.MoveSelectionToBeat,
+                    ActionDispatcher.TrackedAction.CopySelectionToBeat,
+                    ActionDispatcher.TrackedAction.MergeSelectionIntoBeat,
+                    ActionDispatcher.TrackedAction.SetChannelPreset -> {
                         val test_ints = listOf(4,2,6)
                         JSONList(json_name, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }
 
-                    ActionTracker.TrackedAction.SetOffset,
-                    ActionTracker.TrackedAction.SetOctave -> {
+                    ActionDispatcher.TrackedAction.SetOffset,
+                    ActionDispatcher.TrackedAction.SetOctave -> {
                         JSONList(json_name, JSONInteger(1), JSONString(RelativeInputMode.Absolute.name))
                     }
-                    ActionTracker.TrackedAction.InsertBeatAt,
-                    ActionTracker.TrackedAction.CopyChannelCtlToBeat,
-                    ActionTracker.TrackedAction.MoveChannelCtlToBeat -> {
+                    ActionDispatcher.TrackedAction.InsertBeatAt,
+                    ActionDispatcher.TrackedAction.CopyChannelCtlToBeat,
+                    ActionDispatcher.TrackedAction.MoveChannelCtlToBeat -> {
                         val test_ints = listOf(4,2)
                         JSONList(json_name, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }
 
                     // ------------2 + 2n args ----------------
-                    ActionTracker.TrackedAction.SetTuningTable -> {
+                    ActionDispatcher.TrackedAction.SetTuningTable -> {
                         val test_ints = listOf(0, 12, 0, 12, 1, 12, 2, 12, 3, 12, 4, 12, 5, 12, 6, 12, 7, 12, 8, 12, 9, 12, 10, 12, 11, 12)
                         JSONList(json_name, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }
 
                     // ----------- Float --------------
-                    ActionTracker.TrackedAction.MoveLine -> {
+                    ActionDispatcher.TrackedAction.MoveLine -> {
                         val test_ints = arrayOf(0, 0, 1, 0)
                         JSONList(json_name, *Array(test_ints.size) { JSONInteger(test_ints[it]) })
                     }
 
                     // ---------- int + string -----------
-                    ActionTracker.TrackedAction.TagColumn -> {
+                    ActionDispatcher.TrackedAction.TagColumn -> {
                         JSONList(json_name, JSONInteger(56), JSONString("TAGNAME"))
                     }
 
-                    ActionTracker.TrackedAction.MoveChannel -> {
+                    ActionDispatcher.TrackedAction.MoveChannel -> {
                         JSONList(json_name, JSONInteger(1), JSONInteger(3), JSONBoolean(true))
                     }
                 },
@@ -365,7 +365,7 @@ class ActionTrackerUnitTest {
             assertEquals(
                 "Incorrect conversion of ${enum.name}",
                 input,
-                ActionTracker.from_json_entry(json_item)
+                ActionDispatcher.from_json_entry(json_item)
             )
         }
     }

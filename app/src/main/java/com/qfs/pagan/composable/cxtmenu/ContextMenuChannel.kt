@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
-import com.qfs.pagan.ActionTracker
+import com.qfs.pagan.ActionDispatcher
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
@@ -31,7 +31,7 @@ import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun ToggleEffectsButton(dispatcher: ActionTracker, shape: Shape = Shapes.ContextMenuButtonPrimaryStart) {
+fun ToggleEffectsButton(dispatcher: ActionDispatcher, shape: Shape = Shapes.ContextMenuButtonPrimaryStart) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.ChannelEffects),
         onClick = { dispatcher.show_hidden_channel_controller() },
@@ -42,7 +42,7 @@ fun ToggleEffectsButton(dispatcher: ActionTracker, shape: Shape = Shapes.Context
 }
 
 @Composable
-fun AdjustChannelButton(dispatcher: ActionTracker) {
+fun AdjustChannelButton(dispatcher: ActionDispatcher) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.AdjustSelection),
         onClick = { dispatcher.adjust_selection() },
@@ -52,7 +52,7 @@ fun AdjustChannelButton(dispatcher: ActionTracker) {
 }
 
 @Composable
-fun RemoveChannelButton(dispatcher: ActionTracker) {
+fun RemoveChannelButton(dispatcher: ActionDispatcher) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.ChannelRemove),
         onClick = { dispatcher.remove_channel() },
@@ -63,7 +63,7 @@ fun RemoveChannelButton(dispatcher: ActionTracker) {
 }
 
 @Composable
-fun AddKitButton(dispatcher: ActionTracker) {
+fun AddKitButton(dispatcher: ActionDispatcher) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.ChannelPercussionInsert),
         onClick = { dispatcher.insert_percussion_channel() },
@@ -73,7 +73,7 @@ fun AddKitButton(dispatcher: ActionTracker) {
 }
 
 @Composable
-fun AddChannelButton(dispatcher: ActionTracker, shape: Shape = Shapes.ContextMenuButtonPrimaryStart) {
+fun AddChannelButton(dispatcher: ActionDispatcher, shape: Shape = Shapes.ContextMenuButtonPrimaryStart) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.ChannelInsert),
         onClick = { dispatcher.insert_channel() },
@@ -85,7 +85,7 @@ fun AddChannelButton(dispatcher: ActionTracker, shape: Shape = Shapes.ContextMen
 
 @Composable
 fun MuteChannelButton(
-    dispatcher: ActionTracker,
+    dispatcher: ActionDispatcher,
     active_channel: ViewModelEditorState.ChannelData,
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
@@ -109,7 +109,7 @@ fun MuteChannelButton(
 fun SetPresetButton(
     modifier: Modifier = Modifier,
     ui_facade: ViewModelEditorState,
-    dispatcher: ActionTracker,
+    dispatcher: ActionDispatcher,
     channel_index: Int,
     active_channel: ViewModelEditorState.ChannelData,
     shape: Shape = Shapes.ContextMenuButtonPrimary
@@ -136,7 +136,7 @@ fun SetPresetButton(
 fun SetChannelColorButton(
     modifier: Modifier = Modifier,
     ui_facade: ViewModelEditorState,
-    dispatcher: ActionTracker,
+    dispatcher: ActionDispatcher,
     channel_index: Int,
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
@@ -150,7 +150,7 @@ fun SetChannelColorButton(
 }
 
 @Composable
-fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: LayoutSize) {
+fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, layout: LayoutSize) {
     when (layout) {
         LayoutSize.SmallPortrait,
         LayoutSize.MediumPortrait,
@@ -194,7 +194,7 @@ fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, ui_facade: ViewMode
 }
 
 @Composable
-fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: LayoutSize, modifier: Modifier = Modifier,) {
+fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, layout: LayoutSize, modifier: Modifier = Modifier,) {
     val cursor = ui_facade.active_cursor.value ?: return
     val channel_index = cursor.ints[0]
     val active_channel = try {

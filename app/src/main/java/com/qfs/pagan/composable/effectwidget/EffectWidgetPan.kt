@@ -25,7 +25,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.qfs.pagan.ActionTracker
+import com.qfs.pagan.ActionDispatcher
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
@@ -35,7 +35,7 @@ import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun RowScope.PanEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, event: OpusPanEvent) {
+fun RowScope.PanEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, event: OpusPanEvent) {
     val cursor = ui_facade.active_cursor.value ?: return
     val is_initial = cursor.type == CursorMode.Line
     val default_colors = SliderDefaults.colors()

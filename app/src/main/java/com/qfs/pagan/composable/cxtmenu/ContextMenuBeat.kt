@@ -20,7 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.style.TextAlign
-import com.qfs.pagan.ActionTracker
+import com.qfs.pagan.ActionDispatcher
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
@@ -34,7 +34,7 @@ import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
 fun TagButton(
-    dispatcher: ActionTracker,
+    dispatcher: ActionDispatcher,
     column_data: ViewModelEditorState.ColumnData,
     beat: Int,
     shape: Shape = Shapes.ContextMenuButtonPrimary
@@ -58,7 +58,7 @@ fun TagButton(
 }
 
 @Composable
-fun AdjustBeatButton(dispatcher: ActionTracker) {
+fun AdjustBeatButton(dispatcher: ActionDispatcher) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.AdjustSelection),
         onClick = { dispatcher.adjust_selection() },
@@ -69,7 +69,7 @@ fun AdjustBeatButton(dispatcher: ActionTracker) {
 }
 
 @Composable
-fun RemoveBeatButton(dispatcher: ActionTracker, enabled: Boolean) {
+fun RemoveBeatButton(dispatcher: ActionDispatcher, enabled: Boolean) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.BeatRemove),
         enabled = enabled,
@@ -81,7 +81,7 @@ fun RemoveBeatButton(dispatcher: ActionTracker, enabled: Boolean) {
 }
 
 @Composable
-fun InsertBeatButton(dispatcher: ActionTracker, shape: Shape = Shapes.ContextMenuButtonPrimary) {
+fun InsertBeatButton(dispatcher: ActionDispatcher, shape: Shape = Shapes.ContextMenuButtonPrimary) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.BeatInsert),
         onClick = { dispatcher.insert_beat_after_cursor(1) },
@@ -92,7 +92,7 @@ fun InsertBeatButton(dispatcher: ActionTracker, shape: Shape = Shapes.ContextMen
     )
 }
 @Composable
-fun ContextMenuColumnPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: LayoutSize) {
+fun ContextMenuColumnPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, layout: LayoutSize) {
     val cursor = ui_facade.active_cursor.value ?: return
     val beat = cursor.ints[0]
     val column_data = ui_facade.column_data[beat]
@@ -117,7 +117,7 @@ fun ContextMenuColumnPrimary(modifier: Modifier = Modifier, ui_facade: ViewModel
 }
 
 @Composable
-fun ContextMenuColumnSecondary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: LayoutSize) {
+fun ContextMenuColumnSecondary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, layout: LayoutSize) {
     val cursor = ui_facade.active_cursor.value ?: return
     val beat = cursor.ints[0]
     val column_data = ui_facade.column_data[beat]
@@ -150,7 +150,7 @@ fun ContextMenuColumnSecondary(modifier: Modifier = Modifier, ui_facade: ViewMod
 }
 
 @Composable
-fun TagDescription(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker) {
+fun TagDescription(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher) {
     val cursor = ui_facade.active_cursor.value ?: return
     val beat = cursor.ints[0]
     val column_data = ui_facade.column_data[beat]

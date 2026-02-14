@@ -1,26 +1,6 @@
 package com.qfs.pagan
 
 
-import android.view.View
-import android.view.ViewGroup
-import androidx.test.ext.junit.rules.ActivityScenarioRule
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.filters.LargeTest
-import androidx.test.platform.app.InstrumentationRegistry
-import androidx.test.rule.GrantPermissionRule
-import com.qfs.json.JSONList
-import com.qfs.json.JSONParser
-import com.qfs.pagan.ActionTracker.TrackedAction
-import junit.framework.TestCase.assertEquals
-import org.hamcrest.Description
-import org.hamcrest.Matcher
-import org.hamcrest.TypeSafeMatcher
-import org.junit.Rule
-import org.junit.Test
-import org.junit.runner.RunWith
-import com.qfs.pagan.OpusLayerInterface as OpusManager
-
-
 // @JvmField
 // @Rule
 // var permissionRead: GrantPermissionRule = GrantPermissionRule.grant(android.Manifest.permission.READ_EXTERNAL_STORAGE)

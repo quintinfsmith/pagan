@@ -21,7 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.qfs.pagan.ActionTracker
+import com.qfs.pagan.ActionDispatcher
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
@@ -33,7 +33,7 @@ import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun AdjustRangeButton(dispatcher: ActionTracker) {
+fun AdjustRangeButton(dispatcher: ActionDispatcher) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.AdjustSelection),
         onClick = { dispatcher.adjust_selection() },
@@ -44,7 +44,7 @@ fun AdjustRangeButton(dispatcher: ActionTracker) {
 }
 
 @Composable
-fun UnsetRangeButton(dispatcher: ActionTracker) {
+fun UnsetRangeButton(dispatcher: ActionDispatcher) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.RangeUnset),
         onClick = { dispatcher.unset() },
@@ -55,7 +55,7 @@ fun UnsetRangeButton(dispatcher: ActionTracker) {
 }
 
 @Composable
-fun ContextMenuRangeSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, move_mode: PaganConfiguration.MoveMode) {
+fun ContextMenuRangeSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, move_mode: PaganConfiguration.MoveMode) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),

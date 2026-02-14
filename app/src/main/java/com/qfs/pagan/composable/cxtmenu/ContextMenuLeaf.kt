@@ -29,7 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import com.qfs.pagan.ActionTracker
+import com.qfs.pagan.ActionDispatcher
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
 import com.qfs.pagan.RelativeInputMode
@@ -69,7 +69,7 @@ import kotlin.math.ceil
 
 @Composable
 fun SplitButton(
-    dispatcher: ActionTracker,
+    dispatcher: ActionDispatcher,
     shape: Shape = Shapes.ContextMenuButtonPrimaryStart
 ) {
     IconCMenuButton(
@@ -82,7 +82,7 @@ fun SplitButton(
     )
 }
 @Composable
-fun InsertButton(dispatcher: ActionTracker) {
+fun InsertButton(dispatcher: ActionDispatcher) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.LeafInsert),
         onClick = { dispatcher.insert_leaf(1) },
@@ -93,7 +93,7 @@ fun InsertButton(dispatcher: ActionTracker) {
 }
 
 @Composable
-fun RemoveButton(dispatcher: ActionTracker, cursor: ViewModelEditorState.CacheCursor) {
+fun RemoveButton(dispatcher: ActionDispatcher, cursor: ViewModelEditorState.CacheCursor) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.LeafRemove),
         enabled = (cursor.ints.size > 2),
@@ -105,7 +105,7 @@ fun RemoveButton(dispatcher: ActionTracker, cursor: ViewModelEditorState.CacheCu
 
 @Composable
 fun DurationButton(
-    dispatcher: ActionTracker,
+    dispatcher: ActionDispatcher,
     descriptor: ViewModelEditorState.EventDescriptor?,
     active_event: OpusEvent?,
     shape: Shape = Shapes.ContextMenuButtonPrimary
@@ -133,7 +133,7 @@ fun DurationButton(
 
 @Composable
 fun UnsetButton(
-    dispatcher: ActionTracker,
+    dispatcher: ActionDispatcher,
     active_line: ViewModelEditorState.LineData,
     active_event: OpusEvent?,
     shape: Shape = Shapes.ContextMenuButtonPrimary
@@ -155,7 +155,7 @@ fun UnsetButton(
 
 
 @Composable
-fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, landscape: Boolean) {
+fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, landscape: Boolean) {
     val active_event = ui_facade.active_event.value
     val cursor = ui_facade.active_cursor.value ?: return
     val active_line = ui_facade.line_data[cursor.ints[0]]
@@ -220,7 +220,7 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewM
 
 
 @Composable
-fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionTracker, layout: LayoutSize) {
+fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, layout: LayoutSize) {
     val active_event = ui_facade.active_event.value
     val cursor = ui_facade.active_cursor.value ?: return
     val active_line = ui_facade.line_data[cursor.ints[0]]
@@ -297,10 +297,10 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEd
 }
 
 @Composable
-fun ContextMenuLeafSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier, layout: LayoutSize) {
+fun ContextMenuLeafSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, modifier: Modifier = Modifier, layout: LayoutSize) {
 }
 @Composable
-fun ContextMenuLeafCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier, layout: LayoutSize) {
+fun ContextMenuLeafCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, modifier: Modifier = Modifier, layout: LayoutSize) {
     val active_event = ui_facade.active_event.value?.copy() ?: return
     ContextMenuSecondaryRow(modifier) {
         when (active_event) {
@@ -316,7 +316,7 @@ fun ContextMenuLeafCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
 }
 
 @Composable
-fun RelativeInputDropDown(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, expanded: MutableState<Int?>, callback: (Int, RelativeInputMode) -> Unit) {
+fun RelativeInputDropDown(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, expanded: MutableState<Int?>, callback: (Int, RelativeInputMode) -> Unit) {
     DropdownMenu(
         expanded = expanded.value != null,
         onDismissRequest = { expanded.value = null}
@@ -363,7 +363,7 @@ fun RelativeInputDropDown(ui_facade: ViewModelEditorState, dispatcher: ActionTra
 }
 
 @Composable
-fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionTracker, modifier: Modifier = Modifier, layout: LayoutSize) {
+fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, modifier: Modifier = Modifier, layout: LayoutSize) {
     val cursor = ui_facade.active_cursor.value ?: return
     val active_line = ui_facade.line_data[cursor.ints[0]]
     val active_event = ui_facade.active_event.value

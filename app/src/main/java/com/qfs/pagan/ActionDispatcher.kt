@@ -10,7 +10,6 @@
 package com.qfs.pagan
 
 import android.content.Context
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -64,11 +63,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.documentfile.provider.DocumentFile
 import com.qfs.apres.VirtualMidiInputDevice
-import com.qfs.json.JSONBoolean
-import com.qfs.json.JSONInteger
-import com.qfs.json.JSONList
-import com.qfs.json.JSONObject
-import com.qfs.json.JSONString
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.composable.ColorPicker
 import com.qfs.pagan.composable.DialogBar
@@ -113,17 +107,13 @@ import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 /**
  * Handle all (or as much of as possible) of the logic between a user action and the OpusManager.
- * This class is meant for recording and playing back UI tests and eventually debugging so
- * not every action directed through here at the moment.
+ * Used to be used in order to record and playback actions for testing and debugging BUT is now a way to separate Compose Components from Activity
  */
-class ActionTracker(val context: Context, var vm_controller: ViewModelEditorController) {
-    class NoActivityException: Exception()
-    class OpusManagerDetached: Exception()
+class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorController) {
     class UnexpectedBranch: Exception()
     class MissingProjectManager: Exception()
     class IncompatibleEffectMerge(type_a: EffectType?, type_b: EffectType?): Exception("Can't merge types $type_a and $type_b")
 
-    private var ignore_flagged: Boolean = false
     lateinit var vm_top: ViewModelPagan
     val persistent_number_input_values = HashMap<Int, Int>()
 
@@ -138,30 +128,18 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         this.get_opus_manager().apply_redo()
     }
 
-    fun _move_selection_to_beat(beat_key: BeatKey) {
-        this.vm_controller.opus_manager.move_to_beat(beat_key)
-    }
-
-    fun _copy_selection_to_beat(beat_key: BeatKey) {
-        this.vm_controller.opus_manager.copy_to_beat(beat_key)
-    }
-
     fun move_selection_to_beat(beat_key: BeatKey) {
         when (this.vm_top.configuration.move_mode.value)  {
             PaganConfiguration.MoveMode.MOVE -> {
-                this._move_selection_to_beat(beat_key)
+                this.vm_controller.opus_manager.move_to_beat(beat_key)
             }
             PaganConfiguration.MoveMode.COPY -> {
-                this._copy_selection_to_beat(beat_key)
+                this.vm_controller.opus_manager.copy_to_beat(beat_key)
             }
             PaganConfiguration.MoveMode.MERGE -> {
-                this._merge_selection_into_beat(beat_key)
+                this.vm_controller.opus_manager.merge_into_beat(beat_key)
             }
         }
-    }
-
-    fun _merge_selection_into_beat(beat_key: BeatKey) {
-        this.vm_controller.opus_manager.merge_into_beat(beat_key)
     }
 
     fun save() {
@@ -171,7 +149,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
             this.vm_controller.active_project = uri
             this.vm_controller.project_exists.value = true
             Toast.makeText(
-                this@ActionTracker.context,
+                this@ActionDispatcher.context,
                 R.string.feedback_project_saved,
                 Toast.LENGTH_SHORT
             ).show()
@@ -185,7 +163,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
             val old_title = opus_manager.project_name
             opus_manager.set_project_name(
                 if (old_title == null) null
-                else "$old_title (Copy)"
+                else this.context.resources.getString(R.string.copied_title, old_title)
             )
             this.vm_controller.active_project = null
             this.vm_controller.project_exists.value = false
@@ -250,15 +228,11 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                 }
             }
             CursorMode.Line -> {
-                val ctl_level = if (ctl_type == null) {
-                    null
-                } else if (channel == null) {
-                    CtlLineLevel.Global
-                } else if (line_offset == null) {
-                    CtlLineLevel.Channel
-                } else {
-                    CtlLineLevel.Line
-                }
+                val ctl_level = if (ctl_type == null) null
+                else if (channel == null) CtlLineLevel.Global
+                else if (line_offset == null) CtlLineLevel.Channel
+                else CtlLineLevel.Line
+
 
                 if (channel == cursor.channel && line_offset == cursor.line_offset && ctl_type == cursor.ctl_type && ctl_level == cursor.ctl_level) {
                     this.cursor_select_channel(channel)
@@ -340,8 +314,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun cursor_clear() {
-        // TODO Track
-        //this.track(TrackedAction.CursorClear)
         this.vm_controller.opus_manager.cursor_clear()
     }
 
@@ -392,14 +364,13 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
             }
         }
     }
+
     fun _move_line_ctl_to_beat(beat_key: BeatKey) {
         this.get_opus_manager().move_line_ctl_to_beat(beat_key)
     }
-
     fun _copy_line_ctl_to_beat(beat_key: BeatKey) {
         this.get_opus_manager().copy_line_ctl_to_beat(beat_key)
     }
-
     fun move_channel_ctl_to_beat(channel: Int, beat: Int) {
         when (this.vm_top.configuration.move_mode.value)  {
             PaganConfiguration.MoveMode.MOVE -> {
@@ -414,11 +385,9 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     fun _move_channel_ctl_to_beat(channel: Int, beat: Int) {
         this.get_opus_manager().move_channel_ctl_to_beat(channel, beat)
     }
-
     fun _copy_channel_ctl_to_beat(channel: Int, beat: Int) {
         this.get_opus_manager().copy_channel_ctl_to_beat(channel, beat)
     }
-
     fun move_global_ctl_to_beat(beat: Int) {
         when (this.vm_top.configuration.move_mode.value)  {
             PaganConfiguration.MoveMode.MOVE -> {
@@ -439,12 +408,10 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun cursor_select_ctl_at_line(type: EffectType, beat_key: BeatKey, position: List<Int>) {
-
         this.get_opus_manager().cursor_select_ctl_at_line(type, beat_key, position)
     }
 
     fun cursor_select_ctl_at_channel(type: EffectType, channel: Int, beat: Int, position: List<Int>) {
-
         this.get_opus_manager().cursor_select_ctl_at_channel(type, channel, beat, position)
     }
 
@@ -461,7 +428,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun cursor_select_line_ctl_line(type: EffectType, channel: Int, line_offset: Int) {
-
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         if (cursor.mode == CursorMode.Line && cursor.channel == channel && cursor.line_offset == line_offset && cursor.ctl_level == CtlLineLevel.Line && type == cursor.ctl_type) {
@@ -675,7 +641,9 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
 
                             CursorMode.Channel,
                             CursorMode.Unset,
-                            CursorMode.Line -> opus_manager.vm_state.scroll_state_x.value.firstVisibleItemIndex
+                            CursorMode.Line -> {
+                                opus_manager.vm_state.scroll_state_x.value.firstVisibleItemIndex
+                            }
                         }.toFloat()
                     )
                 }
@@ -684,7 +652,13 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
-                    DialogTitle(stringResource(R.string.label_shortcut_scrollbar, slider_position.floatValue.toInt(), opus_manager.length - 1))
+                    DialogTitle(
+                        stringResource(
+                            R.string.label_shortcut_scrollbar,
+                            slider_position.floatValue.toInt(),
+                            opus_manager.length - 1
+                        )
+                    )
                 }
 
                 val default_colors = SliderDefaults.colors()
@@ -707,7 +681,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                     valueRange = 0F .. (opus_manager.length - 1).toFloat(),
                     onValueChange = { value ->
                         slider_position.value = value
-                        this@ActionTracker.cursor_select_column(value.toInt())
+                        this@ActionDispatcher.cursor_select_column(value.toInt())
                     }
                 )
 
@@ -732,7 +706,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                                         onClick = {
                                             close()
                                             expanded.value = false
-                                            this@ActionTracker.cursor_select_column(i)
+                                            this@ActionDispatcher.cursor_select_column(i)
                                         },
                                         text = {
                                             if (tag == null) {
@@ -753,35 +727,26 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun cursor_select_range_next(beat_key: BeatKey) {
-        // TODO: Track
         this.vm_controller.opus_manager.cursor_select_range_next(beat_key)
     }
     fun cursor_select_line_ctl_range_next(type: EffectType, beat_key: BeatKey) {
-        // TODO: Track
         this.vm_controller.opus_manager.cursor_select_line_ctl_range_next(type, beat_key)
     }
     fun cursor_select_channel_ctl_range_next(type: EffectType, channel: Int, beat: Int) {
-        // TODO: Track
         this.vm_controller.opus_manager.cursor_select_channel_ctl_range_next(type, channel, beat)
     }
     fun cursor_select_global_ctl_range_next(type: EffectType, beat: Int) {
-        // TODO: Track
         this.vm_controller.opus_manager.cursor_select_global_ctl_range_next(type, beat)
     }
-
     fun cursor_select_range(first_key: BeatKey, second_key: BeatKey) {
         this.vm_controller.opus_manager.cursor_select_range(first_key, second_key)
     }
-
     fun cursor_select_line_ctl_range(type: EffectType, first_key: BeatKey, second_key: BeatKey) {
         this.vm_controller.opus_manager.cursor_select_line_ctl_range(type, first_key, second_key)
     }
-
     fun cursor_select_channel_ctl_range(type: EffectType, channel: Int, first_beat: Int, second_beat: Int) {
         this.vm_controller.opus_manager.cursor_select_channel_ctl_range(type, channel, first_beat, second_beat)
     }
-
-
     fun cursor_select_global_ctl_range(type: EffectType, first_beat: Int, second_beat: Int) {
         this.vm_controller.opus_manager.cursor_select_global_ctl_range(type, first_beat, second_beat)
     }
@@ -797,12 +762,12 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                 opus_manager.percussion_set_instrument(c, l, max(0, i - 27))
             }
         }
+
         this.vm_controller.update_soundfont_instruments()
         opus_manager.clear_history()
     }
 
     fun <T: EffectEvent> set_initial_effect(type: EffectType, event: T, channel: Int?, line_offset: Int?, lock_cursor: Boolean = false) {
-        // TODO: Track
         val opus_manager = this.get_opus_manager()
         val callback = {
             if (channel == null) {
@@ -822,7 +787,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun <T: EffectEvent> set_effect(type: EffectType, event: T, channel: Int?, line_offset: Int?, beat: Int, position: List<Int>, lock_cursor: Boolean = false) {
-        // TODO: Track
         val opus_manager = this.get_opus_manager()
         val callback = {
             if (channel == null) {
@@ -842,7 +806,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun <T: EffectEvent> set_effect_at_cursor(event: T) {
-        // TODO: Track
         val opus_manager = this.get_opus_manager()
         opus_manager.set_event_at_cursor(event)
     }
@@ -899,7 +862,17 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
             Icon(
                 modifier = Modifier.width(Dimensions.EffectDialogIconWidth),
                 painter = painterResource(icon_id),
-                contentDescription = ctl_type.name // TODO: extract string resource
+                contentDescription = stringResource(
+                    when (ctl_type) {
+                        EffectType.Tempo -> R.string.ctl_desc_tempo
+                        EffectType.Velocity -> R.string.ctl_desc_velocity
+                        EffectType.Volume -> R.string.ctl_desc_volume
+                        EffectType.Pan -> R.string.ctl_desc_pan
+                        EffectType.Delay -> R.string.ctl_desc_delay
+                        EffectType.LowPass -> TODO()
+                        EffectType.Reverb -> TODO()
+                    }
+                )
             )
             Text(
                 ctl_type.name,
@@ -1078,7 +1051,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                 DialogBar(
                     positive = {
                         close()
-                        this@ActionTracker.adjust_selection((octave.value * radix) + offset.value)
+                        this@ActionDispatcher.adjust_selection((octave.intValue * radix) + offset.intValue)
                     },
                     neutral = close
                 )
@@ -1228,7 +1201,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     fun set_line_color(channel: Int, line_offset: Int, color: Color? = null) {
         val opus_manager = this.get_opus_manager()
         color?.let {
-            // TODO: Track
             opus_manager.set_line_event_color(channel, line_offset, color)
         }
 
@@ -1245,7 +1217,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         }
     }
     fun unset_line_color(channel: Int, line_offset: Int) {
-        //TODO: Track
         val opus_manager = this.get_opus_manager()
         opus_manager.set_line_event_color(channel, line_offset, null)
     }
@@ -1253,7 +1224,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     fun set_channel_color(channel: Int, color: Color? = null) {
         val opus_manager = this.get_opus_manager()
         color?.let {
-            // TODO: Track
             opus_manager.set_channel_event_color(channel, color)
         }
 
@@ -1266,7 +1236,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         }
     }
     fun unset_channel_color(channel: Int) {
-        //TODO: Track
         val opus_manager = this.get_opus_manager()
         opus_manager.set_channel_event_color(channel, null)
     }
@@ -1406,12 +1375,10 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
 
     fun insert_line(count: Int? = null) {
         val opus_manager = this.get_opus_manager()
-
         count?.let {
             opus_manager.insert_line_at_cursor(it)
             return
         }
-
         this.dialog_number_input(R.string.dlg_insert_lines, 1, 9) {
             this.insert_line(it)
         }
@@ -1426,7 +1393,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
 
         val lines = opus_manager.get_all_channels()[opus_manager.cursor.channel].size
         val max_lines = Integer.min(lines - 1, lines - opus_manager.cursor.line_offset)
-
         this.dialog_number_input(R.string.dlg_remove_lines, 1, max_lines) {
             this.remove_line(it)
         }
@@ -1445,7 +1411,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         }
 
         val default_instrument = opus_manager.get_percussion_instrument(cursor.channel, cursor.line_offset)
-
         val options = mutableListOf<Pair<Int, @Composable RowScope.() -> Unit>>()
         this.dialog_popup_menu(R.string.dropdown_choose_percussion, options, default_instrument) {
             this.set_percussion_instrument(it)
@@ -1543,7 +1508,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                     neutral = close,
                     positive = {
                         close()
-                        this@ActionTracker.set_project_name_and_notes(Pair(project_name.value, project_notes.value))
+                        this@ActionDispatcher.set_project_name_and_notes(Pair(project_name.value, project_notes.value))
                     }
                 )
             }
@@ -1579,7 +1544,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                 val focus_requester = remember { FocusRequester() }
                 val value = remember {
                     mutableStateOf(
-                        default ?: this@ActionTracker.persistent_number_input_values[title_string_id] ?: min_value
+                        default ?: this@ActionDispatcher.persistent_number_input_values[title_string_id] ?: min_value
                     )
                 }
                 Row(
@@ -1598,7 +1563,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                         maximum = max_value
                     ) { new_value ->
                         close()
-                        this@ActionTracker.persistent_number_input_values[title_string_id] = new_value
+                        this@ActionDispatcher.persistent_number_input_values[title_string_id] = new_value
                         callback(new_value)
                     }
                 }
@@ -1607,7 +1572,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                     neutral = close,
                     positive = {
                         close()
-                        this@ActionTracker.persistent_number_input_values[title_string_id] = value.value
+                        this@ActionDispatcher.persistent_number_input_values[title_string_id] = value.value
                         callback(value.value)
                     }
                 )
@@ -1657,7 +1622,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                     neutral = close,
                     positive = {
                         close()
-                        this@ActionTracker.save()
+                        this@ActionDispatcher.save()
 
                         callback(true)
                     }
@@ -1710,11 +1675,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         }
     }
 
-
-    fun ignore(): ActionTracker {
-        this.ignore_flagged = true
-        return this
-    }
 
     fun get_opus_manager(): OpusManager {
         return this.vm_controller.opus_manager
@@ -2033,7 +1993,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
             neutral = close_callback,
             positive = {
                 close_callback()
-                this@ActionTracker.set_tuning_table_and_transpose(
+                this@ActionDispatcher.set_tuning_table_and_transpose(
                     Array(mutable_map.size) { i ->
                         Pair(
                             mutable_map[i].first.value,
@@ -2183,7 +2143,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                     shape = CircleShape,
                     onClick = {
                         close_callback()
-                        this@ActionTracker.set_tuning_table_and_transpose(
+                        this@ActionDispatcher.set_tuning_table_and_transpose(
                             Array(mutable_map.size) { i ->
                                 Pair(
                                     mutable_map[i].first.value,
@@ -2232,7 +2192,7 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                     }
                 }
 
-                if(this@ActionTracker.vm_top.active_layout_size.value == LayoutSize.SmallLandscape) {
+                if(this@ActionDispatcher.vm_top.active_layout_size.value == LayoutSize.SmallLandscape) {
                     TuningDialogTiny(close, transpose_numerator, transpose_denominator, radix, mutable_map)
                 } else {
                     TuningDialogNormal(close, transpose_numerator, transpose_denominator, radix, mutable_map)

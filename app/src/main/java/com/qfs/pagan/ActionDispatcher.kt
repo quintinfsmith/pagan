@@ -55,7 +55,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -116,6 +115,10 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
 
     lateinit var vm_top: ViewModelPagan
     val persistent_number_input_values = HashMap<Int, Int>()
+
+    private fun _gen_string_list(int_list: List<Int>): String {
+        return int_list.joinToString(", ", "listOf(", ")")
+    }
 
     fun attach_top_model(model: ViewModelPagan) {
         this.vm_top = model
@@ -526,7 +529,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         }
     }
 
-    fun repeat_selection_ctl_channel(type: EffectType, channel: Int, repeat: Int? = null) {
+    private fun repeat_selection_ctl_channel(type: EffectType, channel: Int, repeat: Int? = null) {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         if (cursor.ctl_type != type) throw IncompatibleEffectMerge(cursor.ctl_type, type)
@@ -570,7 +573,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         }
     }
 
-    fun repeat_selection_ctl_global(type: EffectType, repeat: Int? = null) {
+    private fun repeat_selection_ctl_global(type: EffectType, repeat: Int? = null) {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         if (type != cursor.ctl_type) throw IncompatibleEffectMerge(type, cursor.ctl_type)
@@ -812,7 +815,6 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
 
     fun set_duration(duration: Int? = null) {
         val opus_manager = this.get_opus_manager()
-
         val cursor = opus_manager.cursor
 
         duration?.let {
@@ -851,7 +853,6 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         }
 
         val event_duration = opus_manager.get_event_at_cursor()?.duration ?: 1
-
         this.dialog_number_input(R.string.dlg_duration, 1, default = event_duration) {
             this.set_duration(it)
         }
@@ -1174,9 +1175,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         val color_state: MutableState<Color> = mutableStateOf(color)
         this.vm_top.create_dialog { close ->
             @Composable {
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                ) {
+                Row(horizontalArrangement = Arrangement.Center) {
                     ColorPicker(
                         modifier = Modifier.fillMaxWidth(),
                         color = color_state
@@ -1342,7 +1341,6 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
     }
 
     fun insert_channel(index: Int? = null) {
-
         val opus_manager = this.get_opus_manager()
         if (index != null) {
             if (index == -1) {
@@ -1555,7 +1553,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                         value = value,
                         label = { Text(title_string_id) },
                         modifier = Modifier
-                            .testTag("DialogNumberInput")
+                            .testTag(TestTag.DialogNumberInput)
                             .focusRequester(focus_requester),
                         contentPadding = PaddingValues(Dimensions.NumberInputDialogPadding),
                         text_align = TextAlign.Center,
@@ -1582,19 +1580,6 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                }
             }
         }
-    }
-
-    /**
-     *  wrapper around MainActivity::dialog_float_input
-     *  will subvert the popup on replay
-     */
-    private fun dialog_float_input(title: String, min_value: Float, max_value: Float, default: Float? = null, stub_output: Float? = null, callback: (value: Float) -> Unit) {
-        // if (stub_output != null) {
-        //     callback(stub_output)
-        // } else {
-        //     val activity = this.get_activity()
-        //     activity.dialog_float_input(title, min_value, max_value, default, callback)
-        // }
     }
 
     private fun needs_save(): Boolean {
@@ -1650,7 +1635,6 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
     }
 
     private fun dialog_text_popup(title: Int, default: String? = null, callback: (String) -> Unit) {
-
         this.vm_top.create_dialog { close ->
             @Composable {
                 val value = remember { mutableStateOf(default ?: "") }
@@ -1674,7 +1658,6 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
             }
         }
     }
-
 
     fun get_opus_manager(): OpusManager {
         return this.vm_controller.opus_manager
@@ -2213,12 +2196,8 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                adj_to_index
            )
        } catch (e: IncompatibleChannelException) {
-          Toast.makeText(this.context, R.string.std_percussion_swap, Toast.LENGTH_SHORT)
+          Toast.makeText(this.context, R.string.std_percussion_swap, Toast.LENGTH_SHORT).show()
        }
-    }
-
-    private fun _gen_string_list(int_list: List<Int>): String {
-        return int_list.joinToString(", ", "listOf(", ")")
     }
 
     fun load_from_bkp() {

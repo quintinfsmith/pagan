@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 
 enum class TestTag {
+    DialogNumberInput,
     LandingImport,
     LandingSettings,
     LandingNewProject,

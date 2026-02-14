@@ -117,297 +117,13 @@ import com.qfs.pagan.OpusLayerInterface as OpusManager
  * not every action directed through here at the moment.
  */
 class ActionTracker(val context: Context, var vm_controller: ViewModelEditorController) {
-    var DEBUG_ON = false
     class NoActivityException: Exception()
     class OpusManagerDetached: Exception()
     class UnexpectedBranch: Exception()
     class MissingProjectManager: Exception()
     class IncompatibleEffectMerge(type_a: EffectType?, type_b: EffectType?): Exception("Can't merge types $type_a and $type_b")
-    enum class TrackedAction {
-        ApplyUndo,
-        NewProject,
-        CursorSelectColumn,
-        CursorSelectGlobalCtlRange,
-        CursorSelectChannelCtlRange,
-        CursorSelectLineCtlRange,
-        CursorSelectRange,
-        CursorSelectLeaf,
-        CursorSelectLeafCtlLine,
-        CursorSelectLeafCtlChannel,
-        CursorSelectLeafCtlGlobal,
-        CursorSelectLine,
-        CursorSelectChannel,
-        CursorSelectLineCtlLine,
-        CursorSelectChannelCtlLine,
-        CursorSelectGlobalCtlLine,
-        RepeatSelectionStd,
-        RepeatSelectionCtlLine,
-        RepeatSelectionCtlChannel,
-        RepeatSelectionCtlGlobal,
-        MoveLineCtlToBeat,
-        MoveChannelCtlToBeat,
-        MoveGlobalCtlToBeat,
-        MoveSelectionToBeat,
-        CopyLineCtlToBeat,
-        CopyChannelCtlToBeat,
-        CopyGlobalCtlToBeat,
-        CopySelectionToBeat,
-        MergeSelectionIntoBeat,
-        SetOffset,
-        SetOctave,
-        SaveProject,
-        DeleteProject,
-        CopyProject,
-        TogglePercussion,
-        SplitLeaf,
-        InsertLeaf,
-        RemoveLeaf,
-        Unset,
-        UnsetRoot,
-        SetDuration,
-        SetChannelPreset,
-        SetPercussionInstrument,
-        ToggleControllerVisibility,
-        ShowLineController,
-        ShowChannelController,
-        ShowGlobalController,
-        RemoveController,
-        InsertLine,
-        RemoveLine,
-        InsertChannel,
-        RemoveChannel,
-        MoveChannel,
-        RemoveBeat,
-        InsertBeat,
-        InsertBeatAt,
-        SetCopyMode,
-        DrawerOpen,
-        DrawerClose,
-        SetProjectNameAndNotes,
-        SetTuningTable,
-        ImportSong,
-        MuteChannel,
-        UnMuteChannel,
-        MuteLine,
-        UnMuteLine,
-        AdjustSelection,
-        TagColumn,
-        UntagColumn,
-        MoveLine
-    }
-
-    companion object {
-        fun from_json_entry(entry: JSONList): Pair<TrackedAction, List<Int?>> {
-            val s = entry.get_string(0)
-            val token = TrackedAction.valueOf(s)
-            return Pair(
-                token,
-                when (token) {
-                    TrackedAction.SetProjectNameAndNotes -> {
-                        val name = entry.get_string(1)
-                        val notes = entry.get_string(2)
-                        val name_ints = this.string_to_ints(name)
-                        listOf(name_ints.size) + name_ints + this.string_to_ints(notes)
-                    }
-
-
-                    TrackedAction.SetOctave,
-                    TrackedAction.SetOffset -> {
-                        listOf(entry.get_int(1), RelativeInputMode.valueOf(entry.get_string(2)).ordinal)
-                    }
-
-                    // STRING
-                    TrackedAction.ImportSong,
-                    TrackedAction.ShowLineController,
-                    TrackedAction.ShowChannelController,
-                    TrackedAction.ShowGlobalController,
-                    TrackedAction.SetCopyMode -> {
-                        val string = entry.get_string(1)
-                        this.string_to_ints(string)
-                    }
-
-                    TrackedAction.CursorSelectChannel -> {
-                        listOf(entry.get_int(1))
-                    }
-                    TrackedAction.UntagColumn -> {
-                        listOf(entry.get_int(1))
-                    }
-                    TrackedAction.TagColumn -> {
-                        val title = entry.get_stringn(2)
-                        listOf(entry.get_int(1)) + if (title == null) {
-                            listOf()
-                        } else {
-                            this.string_to_ints(title)
-                        }
-                    }
-                    TrackedAction.RepeatSelectionCtlLine,
-                    TrackedAction.RepeatSelectionCtlChannel,
-                    TrackedAction.RepeatSelectionCtlGlobal,
-                    TrackedAction.CursorSelectLeafCtlChannel,
-                    TrackedAction.CursorSelectLeafCtlGlobal,
-                    TrackedAction.CursorSelectGlobalCtlLine,
-                    TrackedAction.CursorSelectGlobalCtlRange,
-                    TrackedAction.CursorSelectChannelCtlLine,
-                    TrackedAction.CursorSelectChannelCtlRange,
-                    TrackedAction.CursorSelectLineCtlLine,
-                    TrackedAction.CursorSelectLineCtlRange,
-                    TrackedAction.CursorSelectLeafCtlLine -> {
-                        val name = entry.get_string(1)
-                        val string_ints = this.string_to_ints(name)
-                        listOf(string_ints.size) + string_ints + List(entry.size - 2) { i: Int ->
-                            entry.get_intn(i + 2)
-                        }
-                    }
-
-                    TrackedAction.MoveChannel -> {
-                        listOf(
-                            entry.get_int(1),
-                            entry.get_int(2),
-                            if (entry.get_boolean(3)) 1 else 0
-                        )
-                    }
-                    else -> {
-                        if (entry.size == 1) {
-                            listOf()
-                        } else {
-                            List(entry.size - 1) { i: Int ->
-                                entry.get_intn(i + 1)
-                            }
-                        }
-                    } // PASS
-                }
-            )
-        }
-
-        fun string_from_ints(integers: List<Int?>): String {
-            val path_bytes = ByteArray(integers.size) { i: Int ->
-                integers[i]!!.toByte()
-            }
-            return path_bytes.decodeToString()
-        }
-
-        fun string_to_ints(string: String): List<Int?> {
-            val bytes = string.toByteArray()
-            return List(bytes.size) {
-                bytes[it].toInt()
-            }
-        }
-
-        fun <E : Enum<E>> enum_to_ints(enum_value: Enum<E>): List<Int?> {
-            val initial = this.string_to_ints(enum_value.name)
-            return listOf(initial.size) + initial
-        }
-
-        fun sized_string_from_ints(int_list: List<Int?>, first_index: Int = 0): String {
-            val name = ByteArray(int_list[first_index]!!) { i: Int ->
-                int_list[i + first_index + 1]!!.toByte()
-            }.decodeToString()
-            return name
-        }
-
-        fun type_from_ints(int_list: List<Int?>, first_index: Int = 0): EffectType {
-            val name = ByteArray(int_list[first_index]!!) { i: Int ->
-                int_list[i + first_index + 1]!!.toByte()
-            }.decodeToString()
-            return EffectType.valueOf(name)
-        }
-
-        fun transition_from_ints(int_list: List<Int?>, first_index: Int = 0): EffectTransition {
-            val name = ByteArray(int_list[first_index]!!) { i: Int ->
-                int_list[i + first_index + 1]!!.toByte()
-            }.decodeToString()
-            return EffectTransition.valueOf(name)
-        }
-
-        fun item_to_json(item: Pair<TrackedAction, List<Int?>?>): JSONList {
-            val (token, integers) = item
-
-            val var_args = if (!integers.isNullOrEmpty()) {
-                when (token) {
-                    TrackedAction.SetProjectNameAndNotes -> {
-                        val name_length = integers[0]!!
-                        val name = this.string_from_ints(integers.subList(1, name_length + 1))
-                        val notes = this.string_from_ints(integers.subList(name_length + 1, integers.size))
-                        arrayOf(
-                            JSONString(name),
-                            JSONString(notes)
-                        )
-                    }
-
-                    TrackedAction.SetOctave,
-                    TrackedAction.SetOffset -> {
-                        arrayOf(
-                            JSONInteger(integers[0]!!),
-                            JSONString(RelativeInputMode.values()[integers[1]!!].name)
-                        )
-                    }
-
-                    // STRING
-                    TrackedAction.ShowLineController,
-                    TrackedAction.ShowChannelController,
-                    TrackedAction.ShowGlobalController,
-                    TrackedAction.SetCopyMode,
-                    TrackedAction.ImportSong -> {
-                        arrayOf(JSONString(this.string_from_ints(integers)))
-                    }
-
-                    TrackedAction.TagColumn -> {
-                        arrayOf(
-                            JSONInteger(integers[0]!!),
-                            if (integers.size > 1) {
-                                JSONString(this.string_from_ints(integers.subList(1, integers.size)))
-                            } else {
-                                null
-                            }
-                        )
-                    }
-
-                    TrackedAction.UntagColumn -> {
-                        arrayOf(JSONInteger(integers[0]!!))
-                    }
-                    TrackedAction.MoveChannel -> {
-                        arrayOf(JSONInteger(integers[0]!!), JSONInteger(integers[1]!!), JSONBoolean(integers[2] != 0))
-                    }
-
-                    TrackedAction.RepeatSelectionCtlLine,
-                    TrackedAction.RepeatSelectionCtlChannel,
-                    TrackedAction.RepeatSelectionCtlGlobal,
-                    TrackedAction.CursorSelectLeafCtlChannel,
-                    TrackedAction.CursorSelectLeafCtlGlobal,
-                    TrackedAction.CursorSelectGlobalCtlLine,
-                    TrackedAction.CursorSelectGlobalCtlRange,
-                    TrackedAction.CursorSelectChannelCtlLine,
-                    TrackedAction.CursorSelectChannelCtlRange,
-                    TrackedAction.CursorSelectLineCtlLine,
-                    TrackedAction.CursorSelectLineCtlRange,
-                    TrackedAction.CursorSelectLeafCtlLine -> {
-                        val str_len = integers[0]!!
-                        Array(integers.size - str_len) { i: Int ->
-                            if (i == 0) {
-                                JSONString(this.sized_string_from_ints(integers))
-                            } else {
-                                JSONInteger(integers[i + str_len]!!)
-                            }
-                        }
-                    }
-
-                    else -> {
-                        Array(integers.size) {
-                            JSONInteger(integers[it]!!)
-                        }
-                    }
-                }
-            } else {
-                arrayOf()
-            }
-
-            return JSONList(JSONString(token.name), *var_args)
-        }
-    }
 
     private var ignore_flagged: Boolean = false
-    private val action_queue = mutableListOf<Pair<TrackedAction, List<Int?>?>>()
-    var lock: Boolean = false
     lateinit var vm_top: ViewModelPagan
     val persistent_number_input_values = HashMap<Int, Int>()
 
@@ -416,7 +132,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun apply_undo() {
-        this.track(TrackedAction.ApplyUndo)
         this.get_opus_manager().apply_undo()
     }
     fun apply_redo() {
@@ -424,18 +139,10 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun _move_selection_to_beat(beat_key: BeatKey) {
-        this.track(
-            TrackedAction.MoveSelectionToBeat,
-            beat_key.to_list()
-        )
         this.vm_controller.opus_manager.move_to_beat(beat_key)
     }
 
     fun _copy_selection_to_beat(beat_key: BeatKey) {
-        this.track(
-            TrackedAction.CopySelectionToBeat,
-            beat_key.to_list()
-        )
         this.vm_controller.opus_manager.copy_to_beat(beat_key)
     }
 
@@ -454,15 +161,10 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun _merge_selection_into_beat(beat_key: BeatKey) {
-        this.track(
-            TrackedAction.MergeSelectionIntoBeat,
-            beat_key.to_list()
-        )
         this.vm_controller.opus_manager.merge_into_beat(beat_key)
     }
 
     fun save() {
-        this.track(TrackedAction.SaveProject)
         this.vm_top.project_manager?.let {
             val uri = it.save(this.vm_controller.opus_manager, this.vm_controller.active_project)
             this.vm_top.has_saved_project.value = true
@@ -644,8 +346,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun cursor_select(beat_key: BeatKey, position: List<Int>) {
-        this.track(TrackedAction.CursorSelectLeaf, beat_key.to_list() + position)
-
         val opus_manager = this.vm_controller.opus_manager
         opus_manager.cursor_select(beat_key, position)
 
@@ -693,18 +393,10 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         }
     }
     fun _move_line_ctl_to_beat(beat_key: BeatKey) {
-        this.track(
-            TrackedAction.MoveLineCtlToBeat,
-            beat_key.to_list()
-        )
         this.get_opus_manager().move_line_ctl_to_beat(beat_key)
     }
 
     fun _copy_line_ctl_to_beat(beat_key: BeatKey) {
-        this.track(
-            TrackedAction.CopyLineCtlToBeat,
-            beat_key.to_list()
-        )
         this.get_opus_manager().copy_line_ctl_to_beat(beat_key)
     }
 
@@ -720,18 +412,10 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         }
     }
     fun _move_channel_ctl_to_beat(channel: Int, beat: Int) {
-        this.track(
-            TrackedAction.MoveChannelCtlToBeat,
-            listOf(channel, beat)
-        )
         this.get_opus_manager().move_channel_ctl_to_beat(channel, beat)
     }
 
     fun _copy_channel_ctl_to_beat(channel: Int, beat: Int) {
-        this.track(
-            TrackedAction.CopyChannelCtlToBeat,
-            listOf(channel, beat)
-        )
         this.get_opus_manager().copy_channel_ctl_to_beat(channel, beat)
     }
 
@@ -747,56 +431,36 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         }
     }
     fun _move_global_ctl_to_beat(beat: Int) {
-        this.track(
-            TrackedAction.MoveGlobalCtlToBeat,
-            listOf(beat)
-        )
         this.get_opus_manager().move_global_ctl_to_beat(beat)
     }
 
     fun _copy_global_ctl_to_beat(beat: Int) {
-        this.track(
-            TrackedAction.CopyGlobalCtlToBeat,
-            listOf(beat)
-        )
         this.get_opus_manager().copy_global_ctl_to_beat(beat)
     }
 
     fun cursor_select_ctl_at_line(type: EffectType, beat_key: BeatKey, position: List<Int>) {
-        this.track(
-            TrackedAction.CursorSelectLeafCtlLine,
-                ActionTracker.enum_to_ints(type) + listOf(beat_key.channel, beat_key.line_offset, beat_key.beat) + position
-        )
 
         this.get_opus_manager().cursor_select_ctl_at_line(type, beat_key, position)
     }
 
     fun cursor_select_ctl_at_channel(type: EffectType, channel: Int, beat: Int, position: List<Int>) {
-        this.track(
-            TrackedAction.CursorSelectLeafCtlChannel,
-            ActionTracker.enum_to_ints(type) + listOf(channel, beat) + position
-        )
 
         this.get_opus_manager().cursor_select_ctl_at_channel(type, channel, beat, position)
     }
 
     fun cursor_select_ctl_at_global(type: EffectType, beat: Int, position: List<Int>) {
-        this.track(TrackedAction.CursorSelectLeafCtlGlobal, ActionTracker.enum_to_ints(type) + listOf(beat) + position)
         this.get_opus_manager().cursor_select_ctl_at_global(type, beat, position)
     }
 
     fun cursor_select_channel(channel: Int) {
-        this.track(TrackedAction.CursorSelectChannel, listOf(channel))
         this.vm_controller.opus_manager.cursor_select_channel(channel)
     }
 
     fun cursor_select_line_std(channel: Int, line_offset: Int) {
-        this.track(TrackedAction.CursorSelectLine, listOf(channel, line_offset))
         this.vm_controller.opus_manager.cursor_select_line(channel, line_offset)
     }
 
     fun cursor_select_line_ctl_line(type: EffectType, channel: Int, line_offset: Int) {
-        this.track(TrackedAction.CursorSelectLineCtlLine, ActionTracker.enum_to_ints(type) + listOf(channel, line_offset))
 
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
@@ -808,8 +472,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun cursor_select_channel_ctl_line(type: EffectType, channel: Int) {
-        this.track(TrackedAction.CursorSelectChannelCtlLine, ActionTracker.enum_to_ints(type) + listOf(channel))
-
         val opus_manager = this.get_opus_manager()
 
         val cursor = opus_manager.cursor
@@ -821,7 +483,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun cursor_select_global_ctl_line(type: EffectType) {
-        this.track(TrackedAction.CursorSelectGlobalCtlLine, ActionTracker.enum_to_ints(type))
         val opus_manager = this.get_opus_manager()
         opus_manager.cursor_select_global_ctl_line(type)
     }
@@ -833,8 +494,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
 
         // a value of negative 1 means use default value, where a null would show the dialog
         if (repeat != null && repeat != -1) {
-            this.track(TrackedAction.RepeatSelectionStd, listOf(channel, line_offset, repeat))
-
             if (first_key != second_key) {
                 opus_manager.overwrite_beat_range_horizontally(
                     channel,
@@ -874,7 +533,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val (first, second) = cursor.get_ordered_range()!!
 
         if (repeat != null && repeat != -1) {
-            this.track(TrackedAction.RepeatSelectionCtlLine, ActionTracker.enum_to_ints(type) + listOf(channel, line_offset, repeat))
             if (first != second) {
                 when (cursor.ctl_level!!) {
                     CtlLineLevel.Line -> opus_manager.controller_line_overwrite_range_horizontally(type, channel, line_offset, first, second, repeat)
@@ -909,7 +567,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
 
         val (first, second) = cursor.get_ordered_range()!!
         if (repeat != null && repeat != -1) {
-            this.track(TrackedAction.RepeatSelectionCtlChannel, ActionTracker.enum_to_ints(type) + listOf(channel, repeat))
             when (cursor.ctl_level) {
                 CtlLineLevel.Line -> {
                     if (first != second) {
@@ -955,7 +612,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val (first_key, second_key) = cursor.get_ordered_range()!!
 
         if (repeat != null && repeat != -1) {
-            this.track(TrackedAction.RepeatSelectionCtlGlobal, ActionTracker.enum_to_ints(type) + listOf(repeat))
             when (cursor.ctl_level) {
                 CtlLineLevel.Line -> {
                     if (first_key != second_key) {
@@ -999,7 +655,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val opus_manager = this.get_opus_manager()
 
         beat?.let {
-            this.track(TrackedAction.CursorSelectColumn, listOf(beat))
             opus_manager.cursor_select_column(beat)
             return
         }
@@ -1115,51 +770,23 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun cursor_select_range(first_key: BeatKey, second_key: BeatKey) {
-        this.track(
-            TrackedAction.CursorSelectRange,
-            listOf(
-                first_key.channel,
-                first_key.line_offset,
-                first_key.beat,
-                second_key.channel,
-                second_key.line_offset,
-                second_key.beat
-            )
-        )
-
         this.vm_controller.opus_manager.cursor_select_range(first_key, second_key)
     }
 
     fun cursor_select_line_ctl_range(type: EffectType, first_key: BeatKey, second_key: BeatKey) {
-        this.track(
-            TrackedAction.CursorSelectLineCtlRange,
-            ActionTracker.enum_to_ints(type) +
-            listOf(
-                first_key.channel,
-                first_key.line_offset,
-                first_key.beat,
-                second_key.channel,
-                second_key.line_offset,
-                second_key.beat
-            )
-        )
-
         this.vm_controller.opus_manager.cursor_select_line_ctl_range(type, first_key, second_key)
     }
 
     fun cursor_select_channel_ctl_range(type: EffectType, channel: Int, first_beat: Int, second_beat: Int) {
-        this.track(TrackedAction.CursorSelectChannelCtlRange, ActionTracker.enum_to_ints(type) + listOf(first_beat, second_beat))
         this.vm_controller.opus_manager.cursor_select_channel_ctl_range(type, channel, first_beat, second_beat)
     }
 
 
     fun cursor_select_global_ctl_range(type: EffectType, first_beat: Int, second_beat: Int) {
-        this.track(TrackedAction.CursorSelectGlobalCtlRange, ActionTracker.enum_to_ints(type) + listOf(first_beat, second_beat))
         this.vm_controller.opus_manager.cursor_select_global_ctl_range(type, first_beat, second_beat)
     }
 
     fun new_project() {
-        this.track(TrackedAction.NewProject)
         val opus_manager = this.get_opus_manager()
         opus_manager.project_change_new()
 
@@ -1226,7 +853,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val cursor = opus_manager.cursor
 
         duration?.let {
-            this.track(TrackedAction.SetDuration, listOf(it))
             if (cursor.mode != CursorMode.Single) throw InvalidCursorState()
             when (cursor.ctl_level) {
                 CtlLineLevel.Line -> {
@@ -1287,7 +913,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val cursor = opus_manager.cursor
 
         forced_value?.let {
-            this.track(TrackedAction.ShowLineController, ActionTracker.string_to_ints(it.name))
             opus_manager.toggle_line_controller_visibility(it, cursor.channel, cursor.line_offset)
             return
         }
@@ -1308,7 +933,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val cursor = opus_manager.cursor
 
         forced_value?.let {
-            this.track(TrackedAction.ShowChannelController, ActionTracker.string_to_ints(it.name))
             opus_manager.toggle_channel_controller_visibility(it, cursor.channel)
             return
         }
@@ -1328,7 +952,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val opus_manager = this.get_opus_manager()
 
         forced_value?.let {
-            this.track(TrackedAction.ShowGlobalController, ActionTracker.string_to_ints(it.name))
             opus_manager.toggle_global_controller_visibility(it)
             return
         }
@@ -1346,7 +969,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
 
     fun split(split: Int? = null) {
         split?.let {
-            this.track(TrackedAction.SplitLeaf, listOf(it))
             val opus_manager = this.get_opus_manager()
             val cursor = opus_manager.cursor
             when (cursor.ctl_level) {
@@ -1364,7 +986,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun set_offset(new_offset: Int, mode: RelativeInputMode) {
-        this.track(TrackedAction.SetOffset, listOf(new_offset, mode.ordinal))
         val opus_manager = this.get_opus_manager()
         opus_manager.set_note_offset_at_cursor(new_offset, mode)
 
@@ -1375,8 +996,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun set_octave(new_octave: Int, mode: RelativeInputMode) {
-        this.track(TrackedAction.SetOctave, listOf(new_octave))
-
         val opus_manager = this.get_opus_manager()
         opus_manager.set_note_octave_at_cursor(new_octave, mode)
 
@@ -1432,7 +1051,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val opus_manager = this.get_opus_manager()
 
         amount?.let {
-            this.track(TrackedAction.AdjustSelection, listOf(amount))
             opus_manager.offset_selection(amount)
             return
         }
@@ -1469,12 +1087,10 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun unset() {
-        this.track(TrackedAction.Unset)
         this.vm_controller.opus_manager.unset()
     }
 
     fun unset_root() {
-        this.track(TrackedAction.UnsetRoot)
         val opus_manager = this.vm_controller.opus_manager
         val cursor = opus_manager.cursor
         when (cursor.ctl_level) {
@@ -1496,7 +1112,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun remove_at_cursor() {
-        this.track(TrackedAction.RemoveLeaf)
         val opus_manager = this.get_opus_manager()
         opus_manager.remove_at_cursor()
     }
@@ -1504,8 +1119,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     fun insert_leaf(repeat: Int? = null) {
         val opus_manager = this.get_opus_manager()
         repeat?.let {
-            this.track(TrackedAction.InsertLeaf, listOf(it))
-
             val position = opus_manager.cursor.get_position().toMutableList()
             val cursor = opus_manager.cursor
             if (position.isEmpty()) {
@@ -1532,8 +1145,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun toggle_percussion() {
-        this.track(TrackedAction.TogglePercussion)
-
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         val beat_key = cursor.get_beatkey()
@@ -1554,7 +1165,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val opus_manager = this.get_opus_manager()
 
         instrument?.let {
-            this.track(TrackedAction.SetPercussionInstrument, listOf(channel, line_offset, it))
             opus_manager.percussion_set_instrument(channel, line_offset, it)
             this.play_event(channel, it)
             return
@@ -1665,7 +1275,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val opus_manager = this.get_opus_manager()
 
         instrument?.let {
-            this.track(TrackedAction.SetChannelPreset, listOf(channel, instrument.first, instrument.second))
             opus_manager.channel_set_preset(channel, instrument)
 
             val radix = opus_manager.get_radix()
@@ -1749,7 +1358,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun insert_percussion_channel(index: Int? = null) {
-        this.track(TrackedAction.InsertChannel, listOf(index ?: -1, 1))
         val opus_manager = this.get_opus_manager()
         if (index != null) {
             val adj_index = if (index == -1) {
@@ -1765,7 +1373,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun insert_channel(index: Int? = null) {
-        this.track(TrackedAction.InsertChannel, listOf(index ?: -1, 0))
 
         val opus_manager = this.get_opus_manager()
         if (index != null) {
@@ -1784,7 +1391,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val opus_manager = this.get_opus_manager()
         if (opus_manager.channels.size > 1) {
             val use_index = index ?: opus_manager.cursor.channel
-            this.track(TrackedAction.RemoveChannel, listOf(use_index))
             opus_manager.remove_channel(use_index)
         }
     }
@@ -1794,7 +1400,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val adj_to_index = index_to + if (before) 0 else 1
         if (adj_to_index == index_from) return
 
-        this.track(TrackedAction.MoveChannel, listOf(index_from, adj_to_index))
         opus_manager.move_channel(index_from, min(opus_manager.channels.size, adj_to_index))
     }
 
@@ -1803,7 +1408,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val opus_manager = this.get_opus_manager()
 
         count?.let {
-            this.track(TrackedAction.InsertLine, listOf(it))
             opus_manager.insert_line_at_cursor(it)
             return
         }
@@ -1816,7 +1420,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     fun remove_line(count: Int? = null) {
         val opus_manager = this.get_opus_manager()
         count?.let {
-            this.track(TrackedAction.RemoveLine, listOf(it))
             opus_manager.remove_line_at_cursor(it)
             return
         }
@@ -1834,7 +1437,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val cursor = opus_manager.cursor
 
         value?.let {
-            this.track(TrackedAction.SetPercussionInstrument, listOf(it))
             opus_manager.set_percussion_instrument(it)
             if (value >= 0) {
                 this.play_event(cursor.channel, value)
@@ -1853,7 +1455,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     fun insert_beat(beat: Int, repeat: Int? = null) {
         repeat?.let {
             val opus_manager = this.get_opus_manager()
-            this.track(TrackedAction.InsertBeatAt, listOf(beat, it))
             opus_manager.insert_beats(beat, it)
             return
         }
@@ -1872,7 +1473,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val opus_manager = this.get_opus_manager()
 
         repeat?.let {
-            this.track(TrackedAction.RemoveBeat, listOf(it))
             opus_manager.remove_beat_at_cursor(it)
             return
         }
@@ -1886,7 +1486,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val opus_manager = this.get_opus_manager()
 
         repeat?.let {
-            this.track(TrackedAction.InsertBeat, listOf(it))
             opus_manager.insert_beat_after_cursor(it)
             return
         }
@@ -1900,7 +1499,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val opus_manager = this.get_opus_manager()
 
         repeat?.let {
-            this.track(TrackedAction.RemoveBeat, listOf(it))
             opus_manager.remove_beat_at_cursor(it)
             return
         }
@@ -1913,12 +1511,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     fun set_project_name_and_notes(project_name_and_notes: Pair<String, String>? = null) {
         val opus_manager = this.get_opus_manager()
         project_name_and_notes?.let { (name, notes) ->
-            val name_ints = ActionTracker.string_to_ints(name)
-            this.track(
-                TrackedAction.SetProjectNameAndNotes,
-                listOf(name_ints.size) + name_ints + ActionTracker.string_to_ints(notes)
-            )
-
             opus_manager.set_name_and_notes(
                 if (name == "") null else name,
                 if (notes == "") null else notes
@@ -2124,16 +1716,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         return this
     }
 
-    fun track(token: TrackedAction, args: List<Int?>? = null) {
-        if (!this.DEBUG_ON || this.ignore_flagged || this.lock) {
-            this.ignore_flagged = false
-            return
-        }
-
-        Log.d("PaganTracker", "Tracked $token")
-        this.action_queue.add(Pair(token, args))
-    }
-
     fun get_opus_manager(): OpusManager {
         return this.vm_controller.opus_manager
     }
@@ -2211,411 +1793,9 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
             opus_manager.vm_state.looping_playback.value = loop_playback
         }
     }
+
     fun stop_opus() {
         this.vm_controller.playback_device?.kill()
-    }
-
-    fun playback() {
-        this.lock = true
-        for ((action, integers) in this.action_queue) {
-            this.process_queued_action(action, integers ?: listOf())
-        }
-        this.lock = false
-    }
-
-    fun process_queued_action(token: TrackedAction, integers: List<Int?>) {
-        when (token) {
-            TrackedAction.ApplyUndo -> {
-                this.apply_undo()
-            }
-            TrackedAction.NewProject -> {
-                this.new_project()
-            }
-            TrackedAction.CursorSelectColumn -> {
-                this.cursor_select_column(integers[0]!!)
-            }
-            TrackedAction.CursorSelectGlobalCtlRange -> {
-                this.cursor_select_global_ctl_range(
-                    ActionTracker.type_from_ints(integers),
-                    integers[1]!!,
-                    integers[2]!!
-                )
-            }
-            TrackedAction.CursorSelectChannelCtlRange -> {
-                val offset = integers[0]!!
-                this.cursor_select_channel_ctl_range(
-                    ActionTracker.type_from_ints(integers),
-                    integers[1 + offset]!!,
-                    integers[2 + offset]!!,
-                    integers[3 + offset]!!
-                )
-            }
-            TrackedAction.CursorSelectLineCtlRange -> {
-                val offset = integers[0]!!
-                this.cursor_select_line_ctl_range(
-                    ActionTracker.type_from_ints(integers),
-                    BeatKey(
-                        integers[1 + offset]!!,
-                        integers[2 + offset]!!,
-                        integers[3 + offset]!!
-                    ),
-                    BeatKey(
-                        integers[4 + offset]!!,
-                        integers[5 + offset]!!,
-                        integers[6 + offset]!!
-                    )
-                )
-            }
-            TrackedAction.CursorSelectRange -> {
-                this.cursor_select_range(
-                    BeatKey(
-                        integers[0]!!,
-                        integers[1]!!,
-                        integers[2]!!
-                    ),
-                    BeatKey(
-                        integers[3]!!,
-                        integers[4]!!,
-                        integers[5]!!
-                    )
-                )
-            }
-            TrackedAction.CursorSelectLeaf -> {
-                this.cursor_select(
-                    BeatKey(
-                        integers[0]!!,
-                        integers[1]!!,
-                        integers[2]!!
-                    ),
-                    List(integers.size - 3) { i: Int -> integers[i + 3]!! }
-                )
-            }
-            TrackedAction.CursorSelectLeafCtlLine -> {
-                val offset = integers[0]!!
-                this.cursor_select_ctl_at_line(
-                    ActionTracker.type_from_ints(integers),
-                    BeatKey(
-                        integers[1 + offset]!!,
-                        integers[2 + offset]!!,
-                        integers[3 + offset]!!
-                    ),
-                    List(integers.size - 4 - offset) { i: Int -> integers[i + 4 + offset]!! }
-                )
-            }
-            TrackedAction.CursorSelectLeafCtlChannel -> {
-                val offset = integers[0]!!
-                this.cursor_select_ctl_at_channel(
-                    ActionTracker.type_from_ints(integers),
-                    integers[1 + offset]!!,
-                    integers[2 + offset]!!,
-                    List(integers.size - 3 - offset) { i: Int -> integers[i + 3 + offset]!! }
-                )
-            }
-            TrackedAction.CursorSelectLeafCtlGlobal -> {
-                val offset = integers[0]!!
-                this.cursor_select_ctl_at_global(
-                    ActionTracker.type_from_ints(integers),
-                    integers[1 + offset]!!,
-                    List(integers.size - 2 - offset) { i: Int -> integers[i + 2 + offset]!! }
-                )
-            }
-            TrackedAction.CursorSelectLine -> {
-                this.cursor_select_line_std(
-                    integers[0]!!,
-                    integers[1]!!
-                )
-            }
-            TrackedAction.CursorSelectChannel -> {
-                this.cursor_select_channel(integers[0]!!)
-            }
-            TrackedAction.CursorSelectLineCtlLine -> {
-                val offset = integers[0]!!
-                this.cursor_select_line_ctl_line(
-                    ActionTracker.type_from_ints(integers),
-                    integers[1 + offset]!!,
-                    integers[2 + offset]!!
-                )
-            }
-            TrackedAction.CursorSelectChannelCtlLine -> {
-                val offset = integers[0]!!
-                this.cursor_select_channel_ctl_line(
-                    ActionTracker.type_from_ints(integers),
-                    integers[1 + offset]!!
-                )
-            }
-            TrackedAction.CursorSelectGlobalCtlLine -> {
-                this.cursor_select_global_ctl_line(ActionTracker.type_from_ints(integers))
-            }
-            TrackedAction.RepeatSelectionStd -> {
-                this.repeat_selection_std(
-                    integers[0]!!,
-                    integers[1]!!,
-                    integers[2]
-                )
-            }
-            TrackedAction.RepeatSelectionCtlLine -> {
-                val offset = integers[0]!!
-                this.repeat_selection_ctl_line(
-                    ActionTracker.type_from_ints(integers),
-                    integers[1 + offset]!!,
-                    integers[2 + offset]!!,
-                    integers[3 + offset]
-                )
-            }
-            TrackedAction.RepeatSelectionCtlChannel -> {
-                val offset = integers[0]!!
-                this.repeat_selection_ctl_channel(
-                    ActionTracker.type_from_ints(integers),
-                    integers[1 + offset]!!,
-                    integers[2 + offset]!!
-                )
-            }
-            TrackedAction.RepeatSelectionCtlGlobal -> {
-                val offset = integers[0]!!
-                this.repeat_selection_ctl_global(
-                    ActionTracker.type_from_ints(integers),
-                    integers[1 + offset]!!
-                )
-            }
-            TrackedAction.MoveLineCtlToBeat -> {
-                this._move_line_ctl_to_beat(
-                    BeatKey(
-                        integers[0]!!,
-                        integers[1]!!,
-                        integers[2]!!
-                    )
-                )
-            }
-            TrackedAction.MoveChannelCtlToBeat -> {
-                this._move_channel_ctl_to_beat(
-                    integers[0]!!,
-                    integers[1]!!
-                )
-            }
-            TrackedAction.MoveGlobalCtlToBeat -> {
-                this._move_global_ctl_to_beat(integers[0]!!)
-            }
-            TrackedAction.MoveSelectionToBeat -> {
-                this._move_selection_to_beat(
-                    BeatKey(
-                        integers[0]!!,
-                        integers[1]!!,
-                        integers[2]!!
-                    )
-                )
-            }
-            TrackedAction.CopyLineCtlToBeat -> {
-                this._copy_line_ctl_to_beat(
-                    BeatKey(
-                        integers[0]!!,
-                        integers[1]!!,
-                        integers[2]!!
-                    )
-                )
-            }
-            TrackedAction.CopyChannelCtlToBeat -> {
-                this._copy_channel_ctl_to_beat(
-                    integers[0]!!,
-                    integers[1]!!
-                )
-            }
-            TrackedAction.CopyGlobalCtlToBeat -> {
-                this._copy_global_ctl_to_beat(integers[0]!!)
-            }
-            TrackedAction.CopySelectionToBeat -> {
-                this._copy_selection_to_beat(
-                    BeatKey(
-                        integers[0]!!,
-                        integers[1]!!,
-                        integers[2]!!
-                    )
-                )
-            }
-            TrackedAction.SetOffset -> {
-                this.set_offset(integers[0]!!, RelativeInputMode.values()[integers[1]!!])
-            }
-            TrackedAction.SetOctave -> {
-                this.set_octave(integers[0]!!, RelativeInputMode.values()[integers[1]!!])
-            }
-            TrackedAction.AdjustSelection -> {
-                this.adjust_selection(integers[0])
-            }
-            TrackedAction.TogglePercussion -> {
-                this.toggle_percussion()
-            }
-            TrackedAction.SplitLeaf -> {
-                this.split(integers[0])
-            }
-            TrackedAction.InsertLeaf -> {
-                this.insert_leaf(integers[0])
-            }
-            TrackedAction.RemoveLeaf -> {
-                this.remove_at_cursor()
-            }
-            TrackedAction.Unset -> {
-                this.unset()
-            }
-            TrackedAction.SetDuration -> {
-                this.set_duration(integers[0])
-            }
-            TrackedAction.SetPercussionInstrument -> {
-                this.set_percussion_instrument(integers[0]!!, integers[1]!!, integers[2])
-            }
-            TrackedAction.UnsetRoot -> {
-                this.unset_root()
-            }
-            TrackedAction.InsertLine -> {
-                this.insert_line(integers[0])
-            }
-            TrackedAction.RemoveLine -> {
-                this.remove_line(integers[0])
-            }
-            TrackedAction.SetChannelPreset -> {
-                this.set_channel_preset(integers[0]!!, Pair(integers[1]!!, integers[2]!!))
-            }
-            TrackedAction.RemoveBeat -> {
-                this.remove_beat_at_cursor(integers[0])
-            }
-            TrackedAction.InsertBeat -> {
-                this.insert_beat_after_cursor(integers[0]!!)
-            }
-            TrackedAction.ToggleControllerVisibility -> {
-                this.toggle_controller_visibility()
-            }
-            TrackedAction.RemoveController -> {
-                this.remove_controller()
-            }
-            TrackedAction.InsertChannel -> {
-                // -1 means insert channel at cursor
-                val index = integers[0]!!
-                val is_percussion = integers[1]!! != 0
-                if (index == -1) {
-                    if (is_percussion) {
-                        this.insert_percussion_channel(null)
-                    } else {
-                        this.insert_channel(null)
-                    }
-                } else if (is_percussion) {
-                    this.insert_percussion_channel(index)
-                } else {
-                    this.insert_channel(index)
-                }
-            }
-            TrackedAction.RemoveChannel -> {
-                // -1 means remove channel at cursor
-                val index = integers[0]!!
-                if (index == -1) {
-                    this.remove_channel(null)
-                } else {
-                    this.remove_channel(index)
-                }
-            }
-            TrackedAction.DrawerOpen -> {
-                TODO()
-            }
-            TrackedAction.DrawerClose -> {
-                TODO()
-            }
-            TrackedAction.MergeSelectionIntoBeat -> {
-                this._merge_selection_into_beat(
-                    BeatKey(
-                        integers[0]!!,
-                        integers[1]!!,
-                        integers[2]!!
-                    )
-                )
-            }
-            TrackedAction.SetCopyMode -> {
-                this.set_copy_mode(
-                    PaganConfiguration.MoveMode.valueOf(
-                        ActionTracker.string_from_ints(integers)
-                    )
-                )
-            }
-
-            TrackedAction.SetProjectNameAndNotes -> {
-                val size = integers[0]!!
-                val project_name = ActionTracker.string_from_ints(integers.subList(1, size + 1))
-                val project_notes = ActionTracker.string_from_ints(integers.subList(size + 1, integers.size))
-
-                this.set_project_name_and_notes(Pair(project_name, project_notes))
-            }
-
-            TrackedAction.ShowLineController -> {
-                this.show_hidden_line_controller(
-                    EffectType.valueOf(string_from_ints(integers))
-                )
-            }
-            TrackedAction.ShowChannelController -> {
-                this.show_hidden_channel_controller(
-                    EffectType.valueOf(string_from_ints(integers))
-                )
-            }
-            TrackedAction.ShowGlobalController -> {
-                this.show_hidden_global_controller(
-                    EffectType.valueOf(string_from_ints(integers))
-                )
-            }
-            TrackedAction.SaveProject -> {
-                this.save()
-            }
-            TrackedAction.DeleteProject -> {
-                TODO()
-            }
-            TrackedAction.CopyProject -> {
-                this.project_copy()
-            }
-
-            TrackedAction.SetTuningTable -> {
-                this.set_tuning_table_and_transpose(
-                    Array((integers.size - 2) / 2) { i: Int ->
-                        Pair(integers[i * 2]!!, integers[(i * 2) + 1]!!)
-                    },
-                    Pair(
-                        integers[integers.size - 2]!!,
-                        integers[integers.size - 1]!!
-                    )
-                )
-            }
-
-            TrackedAction.ImportSong -> {
-                //val uri_string = string_from_ints(integers)
-                //val uri = Uri.parse(uri_string)
-                //this.import(uri)
-            }
-
-            TrackedAction.MuteChannel -> {
-                this.channel_mute(integers[0]!!)
-            }
-            TrackedAction.UnMuteChannel -> {
-                this.channel_unmute(integers[0]!!)
-            }
-            TrackedAction.MuteLine -> {
-                this.line_mute(integers[0]!!, integers[1]!!)
-            }
-            TrackedAction.UnMuteLine -> {
-                this.line_unmute(integers[0]!!, integers[1]!!)
-            }
-            TrackedAction.TagColumn -> {
-                if (integers.size > 1) {
-                    this.tag_column(integers[0]!!, ActionTracker.string_from_ints(integers.subList(1, integers.size)))
-                } else {
-                    this.tag_column(integers[0]!!, null, true)
-                }
-            }
-            TrackedAction.UntagColumn -> {
-                this.untag_column(integers[0]!!)
-            }
-            TrackedAction.MoveLine -> {
-                this.move_line(integers[0]!!, integers[1]!!, integers[2]!!, integers[3]!!)
-            }
-            TrackedAction.MoveChannel -> {
-                this.move_channel(integers[0]!!, integers[1]!!)
-            }
-            TrackedAction.InsertBeatAt -> {
-                this.insert_beat(integers[0]!!, integers[1]!!)
-            }
-        }
     }
 
     fun set_copy_mode(mode: PaganConfiguration.MoveMode) {
@@ -2624,7 +1804,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun remove_controller() {
-        this.track(TrackedAction.RemoveController)
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         opus_manager.lock_cursor {
@@ -2637,7 +1816,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     }
 
     fun toggle_controller_visibility() {
-        this.track(TrackedAction.ToggleControllerVisibility)
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         opus_manager.lock_cursor {
@@ -2654,7 +1832,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val cursor = opus_manager.cursor
         val w_channel = channel ?: cursor.channel
 
-        this.track(TrackedAction.MuteChannel, listOf(w_channel))
         opus_manager.lock_cursor {
             opus_manager.mute_channel(w_channel)
         }
@@ -2665,7 +1842,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val cursor = opus_manager.cursor
         val w_channel = channel ?: cursor.channel
 
-        this.track(TrackedAction.UnMuteChannel, listOf(w_channel))
         opus_manager.lock_cursor {
             opus_manager.unmute_channel(w_channel)
         }
@@ -2677,7 +1853,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val w_channel = channel ?: cursor.channel
         val w_line_offset = line_offset ?: cursor.line_offset
 
-        this.track(TrackedAction.MuteLine, listOf(w_channel, w_line_offset))
         opus_manager.mute_line(w_channel, w_line_offset)
     }
 
@@ -2687,7 +1862,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val w_channel = channel ?: cursor.channel
         val w_line_offset = line_offset ?: cursor.line_offset
 
-        this.track(TrackedAction.UnMuteLine, listOf(w_channel, w_line_offset))
         opus_manager.lock_cursor {
             opus_manager.unmute_line(w_channel, w_line_offset)
         }
@@ -2698,15 +1872,11 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         val use_beat = beat ?: opus_manager.cursor.beat
 
         if (force_null_description && description == null) {
-            val integers = mutableListOf(use_beat)
-            this.track(TrackedAction.TagColumn, integers)
             opus_manager.lock_cursor {
                 opus_manager.tag_section(use_beat, null)
             }
             return
         } else if (description != null) {
-            val integers = mutableListOf(use_beat)
-            this.track(TrackedAction.TagColumn, integers)
             opus_manager.lock_cursor {
                 opus_manager.tag_section(use_beat, description)
             }
@@ -2714,12 +1884,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
         }
 
         this.dialog_text_popup(R.string.dialog_mark_section, opus_manager.marked_sections[use_beat]) { result: String ->
-            val integers = mutableListOf(use_beat)
-            for (byte in result.toByteArray()) {
-                integers.add(byte.toInt())
-            }
-
-            this.track(TrackedAction.TagColumn, integers)
             opus_manager.lock_cursor {
                 opus_manager.tag_section(use_beat, if (result == "") null else result)
             }
@@ -2729,24 +1893,9 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     fun untag_column(beat: Int? = null) {
         val opus_manager = this.get_opus_manager()
         val use_beat = beat ?: opus_manager.cursor.beat
-        this.track(TrackedAction.UntagColumn, listOf(use_beat))
         opus_manager.lock_cursor {
             opus_manager.remove_tagged_section(use_beat)
         }
-    }
-
-    internal fun _track_tuning_map_and_transpose(tuning_map: Array<Pair<Int, Int>>, transpose: Pair<Int, Int>) {
-        this.track(
-            TrackedAction.SetTuningTable,
-            List(tuning_map.size * 2) { i: Int ->
-                if (i % 2 == 0) {
-                    tuning_map[i / 2].first
-                } else {
-                    tuning_map[i / 2].second
-                }
-            }
-            + listOf(transpose.first, transpose.second)
-        )
     }
 
     @Composable
@@ -3062,7 +2211,6 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
     fun set_tuning_table_and_transpose(tuning_map: Array<Pair<Int, Int>>? = null, transpose: Pair<Int, Int>? = null) {
         val opus_manager = this.get_opus_manager()
         if (tuning_map != null && transpose != null) {
-            this._track_tuning_map_and_transpose(tuning_map, transpose)
             opus_manager.set_tuning_map_and_transpose(tuning_map, transpose)
             return
         }
@@ -3104,39 +2252,13 @@ class ActionTracker(val context: Context, var vm_controller: ViewModelEditorCont
                channel_to,
                adj_to_index
            )
-           this.track(
-               TrackedAction.MoveLine,
-               listOf(channel_from, line_offset_from, channel_to, adj_to_index)
-           )
        } catch (e: IncompatibleChannelException) {
           Toast.makeText(this.context, R.string.std_percussion_swap, Toast.LENGTH_SHORT)
        }
     }
 
-    fun to_json(): JSONObject {
-        return JSONList(
-            *Array(this.action_queue.size) { i: Int ->
-                item_to_json(this.action_queue[i])
-            }
-        )
-    }
-
-    fun from_json(json_list: JSONList) {
-        this.action_queue.clear()
-        for (i in 0 until json_list.size) {
-            val entry = json_list.get_listn(i) ?: continue
-            val (token, ints) = ActionTracker.from_json_entry(entry)
-            this.track(token, ints)
-        }
-    }
-
-
     private fun _gen_string_list(int_list: List<Int>): String {
         return int_list.joinToString(", ", "listOf(", ")")
-    }
-
-    fun clear() {
-        this.action_queue.clear()
     }
 
     fun load_from_bkp() {

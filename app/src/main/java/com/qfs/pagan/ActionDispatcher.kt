@@ -678,12 +678,12 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                     disabledInactiveTickColor = default_colors.disabledInactiveTickColor
                 )
                 Slider(
-                    value = slider_position.value,
+                    value = slider_position.floatValue,
                     steps = opus_manager.length,
                     colors = colors,
                     valueRange = 0F .. (opus_manager.length - 1).toFloat(),
                     onValueChange = { value ->
-                        slider_position.value = value
+                        slider_position.floatValue = value
                         this@ActionDispatcher.cursor_select_column(value.toInt())
                     }
                 )
@@ -1692,7 +1692,6 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
 
         thread {
             try {
-                //this._midi_interface.open_output_device(this.editor_view_model.active_midi_device!!)
                 this.vm_controller.virtual_midi_device.play_midi(midi, loop_playback) {
                     this.stop_opus_midi()
                 }
@@ -1818,17 +1817,9 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
             opus_manager.lock_cursor {
                 opus_manager.tag_section(use_beat, null)
             }
-            return
         } else if (description != null) {
             opus_manager.lock_cursor {
                 opus_manager.tag_section(use_beat, description)
-            }
-            return
-        }
-
-        this.dialog_text_popup(R.string.dialog_mark_section, opus_manager.marked_sections[use_beat]) { result: String ->
-            opus_manager.lock_cursor {
-                opus_manager.tag_section(use_beat, if (result == "") null else result)
             }
         }
     }

@@ -1760,12 +1760,10 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
     fun toggle_controller_visibility() {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        opus_manager.lock_cursor {
-            when (cursor.ctl_level!!) {
-                CtlLineLevel.Line -> opus_manager.toggle_line_controller_visibility(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
-                CtlLineLevel.Channel -> opus_manager.toggle_channel_controller_visibility(cursor.ctl_type!!, cursor.channel)
-                CtlLineLevel.Global -> opus_manager.toggle_global_controller_visibility(cursor.ctl_type!!)
-            }
+        when (cursor.ctl_level!!) {
+            CtlLineLevel.Line -> opus_manager.toggle_line_controller_visibility(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
+            CtlLineLevel.Channel -> opus_manager.toggle_channel_controller_visibility(cursor.ctl_type!!, cursor.channel)
+            CtlLineLevel.Global -> opus_manager.toggle_global_controller_visibility(cursor.ctl_type!!)
         }
     }
 

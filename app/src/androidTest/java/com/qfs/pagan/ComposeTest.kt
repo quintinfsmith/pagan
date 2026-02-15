@@ -103,31 +103,5 @@ class ComposeTest {
         for (i in 0 until 21) {
             click_elm(TestTag.Redo)
         }
-
-
-        // composeTestRule.onNodeWithTag("LeafView: 1|0|0|[1]").performClick()
-        // composeTestRule.onNodeWithTag("TogglePercussion").performClick()
-        // composeTestRule.onNodeWithTag("LeafView: 1|0|0|[1]").performTouchInput {
-        //     longClick(Offset(this.width / 2F,this.height / 2F))
-        // }
-
-        // composeTestRule.onNodeWithTag("LineLabel: 1|0|null").performClick()
-        // composeTestRule.onNodeWithTag("DialogNumberInput").performTextInput("8")
-        // composeTestRule.onNodeWithTag("DialogPositive").performClick()
-        // for (i in 0 until 4) {
-        //     composeTestRule.onNodeWithTag("MainField").performScrollToIndex((i * 2))
-        //     composeTestRule.onNodeWithTag("LeafView: 1|2|${(i * 2)}|[]").performClick()
-        //     composeTestRule.onNodeWithTag("TogglePercussion").performClick()
-        //     composeTestRule.onNodeWithTag("LeafView: 1|1|${(i * 2) + 1}|[]").performClick()
-        //     composeTestRule.onNodeWithTag("TogglePercussion").performClick()
-        // }
-
-        // //composeTestRule.onNodeWithTag("LeafView: 0|0|0|[]").performClick()
-        // //composeTestRule.onNodeWithTag("SplitLeaf").performClick()
-
-
-        // //composeTestRule.onNodeWithTag("Octave 4").performClick()
-        // //composeTestRule.onNodeWithTag("Offset 3").performClick()
-        // //composeTestRule.onNodeWithText("Welcome").assertIsDisplayed()
     }
 }

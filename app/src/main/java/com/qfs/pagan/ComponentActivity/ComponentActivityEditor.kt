@@ -155,6 +155,7 @@ import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.BufferedOutputStream
 import java.io.BufferedReader
@@ -995,16 +996,25 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
         Spacer(Modifier.weight(1F))
 
+        UndoButton(vm_state, dispatcher)
+
+        Spacer(Modifier.weight(1F))
+    }
+
+    @Composable
+    fun UndoButton(vm_state: ViewModelEditorState, dispatcher: ActionDispatcher) {
         TopBarIcon(
             icon = R.drawable.icon_undo,
             description = R.string.menu_item_undo,
-            modifier = Modifier.alpha(
-                if (vm_state.has_undoable_actions.value) {
-                    1F
-                } else {
-                    Values.DisabledTopBarIconAlpha
-                }
-            ),
+            modifier = Modifier
+                .testTag(TestTag.Undo)
+                .alpha(
+                    if (vm_state.has_undoable_actions.value) {
+                        1F
+                    } else {
+                        Values.DisabledTopBarIconAlpha
+                    }
+                ),
             onClick = {
                 if (!vm_state.has_undoable_actions.value) return@TopBarIcon
                 if (vm_state.playback_state_midi.value != PlaybackState.Playing && vm_state.playback_state_soundfont.value != PlaybackState.Playing) {
@@ -1012,17 +1022,22 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             }
         )
+    }
 
+    @Composable
+    fun RedoButton(vm_state: ViewModelEditorState, dispatcher: ActionDispatcher) {
         TopBarIcon(
             icon = R.drawable.icon_redo,
             description = R.string.menu_item_redo,
-            modifier = Modifier.alpha(
-                if (vm_state.has_redoable_actions.value) {
-                    1F
-                } else {
-                    Values.DisabledTopBarIconAlpha
-                }
-            ),
+            modifier = Modifier
+                .testTag(TestTag.Redo)
+                .alpha(
+                    if (vm_state.has_redoable_actions.value) {
+                        1F
+                    } else {
+                        Values.DisabledTopBarIconAlpha
+                    }
+                ),
             onClick = {
                 if (!vm_state.has_redoable_actions.value) return@TopBarIcon
                 if (vm_state.playback_state_midi.value != PlaybackState.Playing && vm_state.playback_state_soundfont.value != PlaybackState.Playing) {
@@ -1030,9 +1045,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             }
         )
-
-        Spacer(Modifier.weight(1F))
     }
+
     @Composable
     fun RowScope.TopBarWithTitle() {
         val vm_state = this@ComponentActivityEditor.state_model
@@ -1066,41 +1080,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
             )
         }
 
-        TopBarIcon(
-            icon = R.drawable.icon_undo,
-            description = R.string.menu_item_undo,
-            modifier = Modifier.alpha(
-                if (vm_state.has_undoable_actions.value) {
-                    1F
-                } else {
-                    .3F
-                }
-            ),
-            onClick = {
-                if (!vm_state.has_undoable_actions.value) return@TopBarIcon
-                if (vm_state.playback_state_midi.value != PlaybackState.Playing && vm_state.playback_state_soundfont.value != PlaybackState.Playing) {
-                    dispatcher.apply_undo()
-                }
-            }
-        )
-
-        TopBarIcon(
-            icon = R.drawable.icon_redo,
-            description = R.string.menu_item_redo,
-            modifier = Modifier.alpha(
-                if (vm_state.has_redoable_actions.value) {
-                    1F
-                } else {
-                    .3F
-                }
-            ),
-            onClick = {
-                if (!vm_state.has_redoable_actions.value) return@TopBarIcon
-                if (vm_state.playback_state_midi.value != PlaybackState.Playing && vm_state.playback_state_soundfont.value != PlaybackState.Playing) {
-                    dispatcher.apply_redo()
-                }
-            }
-        )
+        UndoButton(vm_state, dispatcher)
+        RedoButton(vm_state, dispatcher)
         Spacer(Modifier.width(Dimensions.TopBarItemSpace))
     }
 

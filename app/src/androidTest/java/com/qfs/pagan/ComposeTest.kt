@@ -20,11 +20,13 @@ class ComposeTest {
     private fun click_elm(tag: TestTag, vararg args: Any?) {
         get_interaction(tag, *args).performClick()
     }
+
     private fun long_click_elm(tag: TestTag, vararg args: Any?) {
         get_interaction(tag, *args).performTouchInput {
             longClick(Offset(this.width / 2F,this.height / 2F))
         }
     }
+
     private fun get_interaction(tag: TestTag, vararg args: Any?): SemanticsNodeInteraction {
         return composeTestRule.onNodeWithTag(test_tag_to_string(tag, *args))
     }
@@ -73,6 +75,7 @@ class ComposeTest {
         long_click_elm(TestTag.Leaf, 1, 1, 1)
         click_elm(TestTag.LineLabel, 1, 1, null)
         get_interaction(TestTag.DialogNumberInput).performTextInput("14")
+        click_elm(TestTag.DialogPositive)
 
         get_interaction(TestTag.MainRow).performScrollToIndex(28)
         click_elm(TestTag.Leaf, 1, 2, 28)
@@ -93,6 +96,14 @@ class ComposeTest {
         click_elm(TestTag.Leaf, 1, 0, 29)
         click_elm(TestTag.LeafSplit)
         click_elm(TestTag.Leaf, 1, 0, 29, 1)
+
+        for (i in 0 until 21) {
+            click_elm(TestTag.Undo)
+        }
+        for (i in 0 until 21) {
+            click_elm(TestTag.Redo)
+        }
+
 
         // composeTestRule.onNodeWithTag("LeafView: 1|0|0|[1]").performClick()
         // composeTestRule.onNodeWithTag("TogglePercussion").performClick()

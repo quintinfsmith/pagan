@@ -5,6 +5,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 
 enum class TestTag {
+    Undo,
+    Redo,
     MenuItem,
     OuterInsertBeat,
     DialogNumberInput,

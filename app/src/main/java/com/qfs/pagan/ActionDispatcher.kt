@@ -2200,5 +2200,4 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
             }
         }
     }
-
 }

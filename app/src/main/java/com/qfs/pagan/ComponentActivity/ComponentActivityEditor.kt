@@ -155,7 +155,6 @@ import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.BufferedOutputStream
 import java.io.BufferedReader
@@ -958,6 +957,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         Box {
             val expanded = remember { mutableStateOf(false) }
             TopBarIcon(
+                modifier = Modifier.testTag(TestTag.TopBarKebab),
                 icon = R.drawable.icon_kebab,
                 description = R.string.menu_item_playpause,
                 contentAlignment = Alignment.CenterEnd,
@@ -1634,6 +1634,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         ProvideContentColorTextStyle(foreground, Typography.BeatLabel) {
             HalfBorderBox(
                 modifier
+                    .testTag(TestTag.BeatLabel, x)
                     .background(
                         color = background,
                         shape = RectangleShape

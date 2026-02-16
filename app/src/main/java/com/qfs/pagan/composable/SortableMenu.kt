@@ -43,6 +43,7 @@ import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
@@ -163,6 +164,7 @@ fun <T> SortableMenu(
         ) {
             Column(
                 modifier = Modifier
+                    .testTag(TestTag.SortableMenu)
                     .padding(Dimensions.SortableMenuLineGap)
                     .verticalScroll(scroll_state)
                     .clip(Shapes.SortableMenuBox)

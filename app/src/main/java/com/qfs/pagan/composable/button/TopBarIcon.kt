@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import com.qfs.pagan.ui.theme.Dimensions
 
 
@@ -29,6 +30,7 @@ fun TopBarIcon(
     icon: Int,
     description: Int,
     modifier: Modifier = Modifier,
+    width: Dp = Dimensions.TopBarIconWidth,
     contentAlignment: Alignment = Alignment.Center,
     onLongClick: (() -> Unit)? = null,
     onClick: () -> Unit,
@@ -36,10 +38,7 @@ fun TopBarIcon(
     Box(
         modifier = modifier
             .background(color = Color.Transparent, shape = CircleShape)
-            .size(
-                Dimensions.TopBarIconWidth,
-                Dimensions.TopBarIconHeight
-            )
+            .size(width, Dimensions.TopBarIconHeight)
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick ?: {}

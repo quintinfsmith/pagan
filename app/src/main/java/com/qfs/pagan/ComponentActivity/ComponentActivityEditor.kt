@@ -960,6 +960,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 modifier = Modifier.testTag(TestTag.TopBarKebab),
                 icon = R.drawable.icon_kebab,
                 description = R.string.menu_item_playpause,
+                width = Dimensions.TopBarIconWidth * 3 / 4,
                 contentAlignment = Alignment.CenterEnd,
                 onClick = { expanded.value = !expanded.value }
             )
@@ -997,6 +998,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         Spacer(Modifier.weight(1F))
 
         UndoButton(vm_state, dispatcher)
+        RedoButton(vm_state, dispatcher)
 
         Spacer(Modifier.weight(1F))
     }
@@ -1094,6 +1096,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         TopBarIcon(
             icon = R.drawable.icon_hamburger_32,
             description = R.string.song_configuration,
+            width = Dimensions.TopBarIconWidth * 3 / 4,
             contentAlignment = Alignment.CenterStart,
             onClick = {
                 scope.launch {

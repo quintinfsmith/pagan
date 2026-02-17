@@ -185,7 +185,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
             controller.remove_beat(index, count)
         }
 
-        this._beat_count -= 1
+        this._beat_count -= count
     }
 
     /* Catch Blocked tree exceptions and upgrade them to exceptions with more context */

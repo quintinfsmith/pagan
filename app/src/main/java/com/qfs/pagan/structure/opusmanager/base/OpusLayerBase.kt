@@ -1759,7 +1759,7 @@ open class OpusLayerBase: Effectable {
      * Add a global [type] effect controller.
      */
     open fun new_global_controller(type: EffectType) {
-        this.controllers.new_controller(type)
+        //this.controllers.new_controller(type)
         this.get_controller<EffectEvent>(type)
         this.recache_line_maps()
     }

@@ -1,6 +1,5 @@
 package com.qfs.pagan
 
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -14,6 +13,7 @@ import androidx.compose.ui.test.performTouchInput
 import com.qfs.pagan.ComponentActivity.ComponentActivityEditor
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Rule
@@ -171,5 +171,13 @@ class ComposeTest {
         assertEquals(204, opus_manager.length)
         assertEquals(204, opus_manager.channels[0].lines[0].beats.size)
 
+    }
+
+    @Test
+    fun test_undo_global_effect_removal() {
+        click_elm(TestTag.LineLabel, null, null, EffectType.Tempo)
+        click_elm(TestTag.LineEffectRemove)
+        click_elm(TestTag.Undo)
+        click_elm(TestTag.LineLabel, null, null, EffectType.Tempo)
     }
 }

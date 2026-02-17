@@ -689,9 +689,11 @@ open class OpusLayerHistory: OpusLayerCursor() {
                     }
                 }
                 HistoryToken.NEW_GLOBAL_CONTROLLER -> {
-                    this.new_global_controller(
-                        current_node.args[0] as EffectType
-                    )
+                    val type = current_node.args[0] as EffectType
+                    this.new_global_controller(type)
+                    if (current_node.args[1] as Boolean) {
+                        this.set_global_controller_visibility(type, true)
+                    }
                 }
 
                 HistoryToken.NEW_CHANNEL_CONTROLLER -> {
@@ -1764,16 +1766,17 @@ open class OpusLayerHistory: OpusLayerCursor() {
     override fun remove_global_controller(type: EffectType) {
         this._remember {
             if (this.has_global_controller(type)) {
+                val controller = this.get_controller<EffectEvent>(type)
                 this.push_to_history_stack(
                     HistoryToken.SET_GLOBAL_CTL_INITIAL_EVENT,
                     listOf(
                         type,
-                        this.get_controller<EffectEvent>(type).initial_event
+                        controller.initial_event
                     )
                 )
                 this.push_to_history_stack(
                     HistoryToken.NEW_GLOBAL_CONTROLLER,
-                    listOf(type)
+                    listOf(type, controller.visible)
                 )
             }
             super.remove_global_controller(type)

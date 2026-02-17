@@ -75,6 +75,7 @@ fun test_tag_to_string(tag: TestTag, vararg args: Any?): String {
     }
     return string
 }
+
 @Composable
 fun Modifier.testTag(tag: TestTag, vararg args: Any?): Modifier {
     return this then Modifier.testTag(test_tag_to_string(tag, *args))

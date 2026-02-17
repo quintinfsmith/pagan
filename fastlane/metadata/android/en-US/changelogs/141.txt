@@ -1,0 +1,3 @@
+ - 'Redo' button added
+ - bugfix: crash when undoing a 'remove line' action
+ - bugfix: can't 'undo' when removing global effect line

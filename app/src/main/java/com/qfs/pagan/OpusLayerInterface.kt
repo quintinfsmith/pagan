@@ -324,12 +324,32 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         super.offset_range(amount, first_key, second_key)
     }
 
+    private fun update_has_available_global_controllers(force_true: Boolean = false) {
+        if (force_true) {
+            this.vm_state.has_global_effects_hidden.value = true
+            return
+        }
+
+        val available_controllers = OpusLayerInterface.global_controller_domain.toMutableList()
+        for ((type, controller) in this.controllers.get_all()) {
+            if (!controller.visible) continue
+            for ((i, value) in available_controllers.enumerate()) {
+                if (type == value.first) {
+                    available_controllers.removeAt(i)
+                    break
+                }
+            }
+        }
+        this.vm_state.has_global_effects_hidden.value = available_controllers.isNotEmpty()
+    }
+
     override fun remove_global_controller(type: EffectType) {
         if (this.is_global_ctl_visible(type)) {
             val abs_line = this.get_visible_row_from_ctl_line_global(type)
             this.vm_state.remove_row(abs_line, 1)
         }
         super.remove_global_controller(type)
+        this.update_has_available_global_controllers(true)
     }
 
     override fun remove_line_repeat(channel: Int, line_offset: Int, count: Int) {
@@ -385,17 +405,22 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     override fun set_global_controller_visibility(type: EffectType, visibility: Boolean) {
         if (visibility) {
             super.set_global_controller_visibility(type, true)
+            if (this.ui_lock.is_locked()) return
+
             val visible_row = this.get_visible_row_from_ctl_line_global(type)
             val controller = this.get_controller<EffectEvent>(type)
             this._add_controller_to_column_width_map(visible_row, controller, null, null, type)
         } else {
             val visible_row = this.get_visible_row_from_ctl_line_global(type)
             super.set_global_controller_visibility(type, false)
+
+            if (this.ui_lock.is_locked()) return
             this.vm_state.remove_row(visible_row, 1)
         }
+
+        this.update_has_available_global_controllers(!visibility)
         this.vm_state.refresh_cursor()
     }
-
 
     override fun set_project_name(new_name: String?) {
         super.set_project_name(new_name)

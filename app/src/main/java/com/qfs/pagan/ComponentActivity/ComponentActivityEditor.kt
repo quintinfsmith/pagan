@@ -29,8 +29,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.foundation.gestures.rememberTransformableState
-import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -66,6 +64,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -1246,6 +1245,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
         val channel_gap_height = Dimensions.ChannelGapHeight
+        val pegged_zoom = ui_facade.get_pegged_zoom()
 
         val scope = rememberCoroutineScope()
         val scroll_state_v = ui_facade.scroll_state_y.value
@@ -1422,7 +1422,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                                 return@itemsIndexed
                             }
-                            val column_width = Dimensions.LeafBaseWidth * max(1F, width * ui_facade.zoom.value)
+                            val column_width = Dimensions.LeafBaseWidth * max(1F, width * pegged_zoom)
                             Column {
                                 Column(
                                     Modifier
@@ -1637,7 +1637,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 MaterialTheme.colorScheme.onTertiary
             )
         }
-
+        val zoom = ui_facade.get_pegged_zoom()
         ProvideContentColorTextStyle(foreground, Typography.BeatLabel) {
             HalfBorderBox(
                 modifier
@@ -1654,7 +1654,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     .fillMaxSize(),
                 border_color = MaterialTheme.colorScheme.onSurfaceVariant,
                 content = {
-                    if (state_model.active_wide_beat.value == x && LocalContext.current.toPx(Dimensions.LeafBaseWidth * ui_facade.zoom.value) * ui_facade.column_data[x].top_weight.value > ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width * 1.5) {
+                    if (state_model.active_wide_beat.value == x && LocalContext.current.toPx(Dimensions.LeafBaseWidth * zoom) * ui_facade.column_data[x].top_weight.value > ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width * 1.5) {
                         LinearProgressIndicator(
                             modifier = Modifier
                                 .width(ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width.dp / 5)
@@ -1720,7 +1720,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 }
                             }
                             .fillMaxHeight()
-                            .widthIn((Dimensions.LeafBaseWidth * state_model.zoom.value) - (Dimensions.BeatLabelHorizontalPadding * 2))
+                            .widthIn((Dimensions.LeafBaseWidth * zoom) - (Dimensions.BeatLabelHorizontalPadding * 2))
                             .padding(
                                 horizontal = Dimensions.BeatLabelHorizontalPadding,
                                 vertical = Dimensions.BeatLabelVerticalPadding
@@ -2298,12 +2298,18 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     fun ScaleBox(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, content: @Composable BoxScope.() -> Unit) {
+        val zoom_state = remember { mutableFloatStateOf(0F) }
+        // TODO: come up with scale to make zoom feel right
         Box(
             modifier
                 .fillMaxSize()
                 .pointerInput(Unit) {
                     detectTransformGestures {  _, _, zoom, _ ->
-                        ui_facade.zoom.value = (zoom * ui_facade.zoom.value).coerceIn(ui_facade.min_zoom.value, 1F)
+                        if (zoom > 0) {
+                            ui_facade.zoom_index.value = max(0, ui_facade.zoom_index.value - 1)
+                        } else {
+                            ui_facade.zoom_index.value = min(ui_facade.zoom_pegs.size - 1, ui_facade.zoom_index.value + 1)
+                        }
                     }
                 },
             contentAlignment = Alignment.BottomCenter,

@@ -61,12 +61,13 @@ class ViewModelEditorState: ViewModel() {
         val palette = mutableStateOf(palette)
     }
 
-    class ColumnData(is_tagged: Boolean, is_selected: Boolean = false, is_secondary: Boolean = false, tag_content: String? = null, max_leaf_count: Int = 1) {
+    class ColumnData(is_tagged: Boolean, is_selected: Boolean = false, is_secondary: Boolean = false, tag_content: String? = null, max_leaf_count: Int = 1, zoom_widths: Set<Int> = setOf()) {
         val is_tagged = mutableStateOf(is_tagged)
         val tag_content = mutableStateOf(tag_content)
         val is_selected = mutableStateOf(is_selected)
         val is_secondary = mutableStateOf(is_secondary)
         val top_weight = mutableStateOf(max_leaf_count)
+        val zoom_widths = zoom_widths.toMutableSet()
     }
 
     class LeafData(event: OpusEvent? = null, is_selected: Boolean = false, is_secondary: Boolean = false, is_valid: Boolean = true, is_spillover: Boolean = false, weight: Float = 1F) {
@@ -236,9 +237,12 @@ class ViewModelEditorState: ViewModel() {
     val dragging_height: Pair<MutableState<Int>, MutableState<Int>> = Pair(mutableStateOf(0), mutableStateOf(0))
     val dragging_line_map = mutableListOf<Triple<ClosedFloatingPointRange<Float>, IntRange, Boolean>>()
 
-    val zoom = mutableStateOf(1F)
-    var min_zoom = mutableStateOf(1F)
+    val zoom_index = mutableIntStateOf(0)
+    val zoom_pegs = mutableListOf<Float>(1F)
 
+    fun get_pegged_zoom(): Float {
+        return this.zoom_pegs[this.zoom_index.value]
+    }
     fun is_dragging_channel(): Boolean {
         val main_line_index = this.dragging_line.value ?: return false
         val main_line = this.line_data[main_line_index]
@@ -342,8 +346,7 @@ class ViewModelEditorState: ViewModel() {
         this.column_data.clear()
         this.cell_map.clear()
         this.channel_data.clear()
-        this.zoom.value = 1F
-        this.min_zoom.value = 1F
+        this.zoom_index.value = 0
 
         this.coroutine_scope.value.launch {
             this@ViewModelEditorState.scroll_state_x.value.requestScrollToItem(0)
@@ -388,7 +391,13 @@ class ViewModelEditorState: ViewModel() {
         this.update_top_weight(coordinate.x)
     }
     fun update_top_weight(x: Int) {
-        this.column_data[x].top_weight.value = Array(this.line_count.value) { this.cell_map[it][x].value.top_weight.value }.max()
+        val zoom_indices = mutableSetOf<Int>()
+        for (y in 0 until this.line_count.value) {
+            zoom_indices.add(this.cell_map[y][x].value.top_weight.value)
+        }
+        this.column_data[x].top_weight.value = zoom_indices.max()
+        this.column_data[x].zoom_widths.clear()
+        this.column_data[x].zoom_widths.addAll(zoom_indices)
     }
 
     fun update_column(column: Int, is_tagged: Boolean, tag_content: String?) {
@@ -430,10 +439,20 @@ class ViewModelEditorState: ViewModel() {
         for (x in 0 until this.beat_count.value) {
             this.update_top_weight(x)
         }
-        this.update_min_zoom()
+        this.collect_zoom_indices()
     }
-    fun update_min_zoom() {
-        this.min_zoom.value = 1F / Array(this.beat_count.value) { this.column_data[it].top_weight.value }.max().toFloat()
+
+    fun collect_zoom_indices() {
+        this.zoom_pegs.clear()
+        this.zoom_pegs.add(1F)
+        val added = mutableSetOf<Int>(1)
+        for (column in this.column_data) {
+            for (w in column.zoom_widths) {
+                if (w in added) continue
+                this.zoom_pegs.add(1F / w.toFloat())
+                added.add(w)
+            }
+        }
     }
 
     fun update_line(y: Int, channel: Int?, line_offset: Int?, ctl_type: EffectType?, assigned_offset: Int?, is_mute: Boolean, is_selected: Boolean) {
@@ -971,7 +990,7 @@ class ViewModelEditorState: ViewModel() {
         } else if (state.layoutInfo.visibleItemsInfo.last().index <= beat) {
             val beat_width = this.column_data[beat].top_weight.value
             val base_leaf_width = Dimensions.LeafBaseWidth.value * this.pixel_density.value
-            Pair(beat, (0 - state.layoutInfo.viewportSize.width + (max(1F, beat_width * this.zoom.value) * base_leaf_width)).toInt())
+            Pair(beat, (0 - state.layoutInfo.viewportSize.width + (max(1F, beat_width * this.get_pegged_zoom()) * base_leaf_width)).toInt())
         } else {
             return
         }
@@ -1004,7 +1023,6 @@ class ViewModelEditorState: ViewModel() {
         } else {
             Pair(state.firstVisibleItemIndex, state.firstVisibleItemScrollOffset)
         }
-
 
         val end_offset = beat_width * (offset + width).toFloat() * base_leaf_width
 

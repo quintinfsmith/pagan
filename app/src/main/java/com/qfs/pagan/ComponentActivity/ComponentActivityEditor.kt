@@ -28,6 +28,9 @@ import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -72,6 +75,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
@@ -169,6 +173,7 @@ import java.time.format.DateTimeFormatter
 import kotlin.concurrent.thread
 import kotlin.math.ceil
 import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 class ComponentActivityEditor: PaganComponentActivity() {
@@ -1235,7 +1240,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun MainTable(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, length: MutableState<Int>, layout: LayoutSize) {
         val line_height = Dimensions.LineHeight
         val ctl_line_height = Dimensions.EffectLineHeight
-        val leaf_width = Dimensions.LeafBaseWidth
         val line_label_width = Dimensions.LineLabelWidth
         val column_widths = Array(ui_facade.beat_count.value) { i ->
             ui_facade.column_data[i].top_weight.value
@@ -1418,11 +1422,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                                 return@itemsIndexed
                             }
-
+                            val column_width = Dimensions.LeafBaseWidth * max(1F, width * ui_facade.zoom.value)
                             Column {
                                 Column(
                                     Modifier
-                                        .width(leaf_width * width)
+                                        .width(column_width)
                                         .height(line_height),
                                 ) {
                                     BeatLabelView(
@@ -1433,7 +1437,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         ui_facade = ui_facade,
                                         dispatcher = dispatcher,
                                         column_info = ui_facade.column_data[x],
-                                        column_width = (leaf_width * width)
+                                        column_width = (column_width)
                                     )
                                     TableLine(MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
@@ -1441,7 +1445,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 Column(
                                     Modifier
                                         .verticalScroll(scroll_state_v, overscrollEffect = null)
-                                        .width(leaf_width * width)
+                                        .width(column_width)
                                 ) {
                                     for (y in 0 until ui_facade.line_count.value) {
                                         val cell = ui_facade.cell_map[y][x]
@@ -1650,7 +1654,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     .fillMaxSize(),
                 border_color = MaterialTheme.colorScheme.onSurfaceVariant,
                 content = {
-                    if (state_model.active_wide_beat.value == x && LocalContext.current.toPx(Dimensions.LeafBaseWidth) * ui_facade.column_data[x].top_weight.value > ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width * 1.5) {
+                    if (state_model.active_wide_beat.value == x && LocalContext.current.toPx(Dimensions.LeafBaseWidth * ui_facade.zoom.value) * ui_facade.column_data[x].top_weight.value > ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width * 1.5) {
                         LinearProgressIndicator(
                             modifier = Modifier
                                 .width(ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width.dp / 5)
@@ -1716,7 +1720,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 }
                             }
                             .fillMaxHeight()
-                            .widthIn(Dimensions.LeafBaseWidth - (Dimensions.BeatLabelHorizontalPadding * 2))
+                            .widthIn((Dimensions.LeafBaseWidth * state_model.zoom.value) - (Dimensions.BeatLabelHorizontalPadding * 2))
                             .padding(
                                 horizontal = Dimensions.BeatLabelHorizontalPadding,
                                 vertical = Dimensions.BeatLabelVerticalPadding
@@ -2109,10 +2113,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             return
         }
 
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.BottomCenter
-        ) {
+        ScaleBox(modifier, ui_facade) {
             Box(Modifier.fillMaxSize()) {
                 MainTable(Modifier, ui_facade, action_interface,  ui_facade.beat_count, LayoutSize.LargePortrait)
             }
@@ -2173,11 +2174,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
         val layout = this.view_model.get_layout_size()
-        Box(
-            modifier = Modifier
-                .fillMaxSize(),
-            contentAlignment = Alignment.BottomCenter
-        ) {
+        ScaleBox(modifier, ui_facade) {
             Box(Modifier.fillMaxSize()) {
                 MainTable(Modifier, ui_facade, action_interface,  ui_facade.beat_count, layout)
             }
@@ -2227,10 +2224,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
         val layout = this.view_model.get_layout_size()
-        Box(
-            modifier = modifier.fillMaxSize(),
-            contentAlignment = Alignment.BottomCenter
-        ) {
+        ScaleBox(modifier, ui_facade) {
             MainTable(Modifier.fillMaxSize(), ui_facade, action_interface, ui_facade.beat_count, layout)
             Row(
                 Modifier.fillMaxSize(),
@@ -2300,6 +2294,21 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             }
         }
+    }
+
+    @Composable
+    fun ScaleBox(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, content: @Composable BoxScope.() -> Unit) {
+        Box(
+            modifier
+                .fillMaxSize()
+                .pointerInput(Unit) {
+                    detectTransformGestures {  _, _, zoom, _ ->
+                        ui_facade.zoom.value = (zoom * ui_facade.zoom.value).coerceIn(ui_facade.min_zoom.value, 1F)
+                    }
+                },
+            contentAlignment = Alignment.BottomCenter,
+            content = content
+        )
     }
 
     @Composable

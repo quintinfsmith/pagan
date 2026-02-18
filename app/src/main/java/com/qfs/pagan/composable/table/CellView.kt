@@ -25,10 +25,7 @@ import com.qfs.pagan.viewmodel.ViewModelEditorState
 fun CellView(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, cell: MutableState<ViewModelEditorState.TreeData>, y: Int, x: Int, modifier: Modifier = Modifier) {
     val line_info = ui_facade.line_data[y]
     key(cell.value.key.value, y) {
-        Row(
-            modifier
-                .fillMaxSize()
-        ) {
+        Row(modifier.fillMaxSize()) {
             for ((path, leaf_data) in cell.value.leafs) {
                 LeafView(
                     line_info.channel.value?.let { ui_facade.channel_data[it] },

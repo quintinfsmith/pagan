@@ -236,6 +236,9 @@ class ViewModelEditorState: ViewModel() {
     val dragging_height: Pair<MutableState<Int>, MutableState<Int>> = Pair(mutableStateOf(0), mutableStateOf(0))
     val dragging_line_map = mutableListOf<Triple<ClosedFloatingPointRange<Float>, IntRange, Boolean>>()
 
+    val zoom = mutableStateOf(1F)
+    var min_zoom = mutableStateOf(1F)
+
     fun is_dragging_channel(): Boolean {
         val main_line_index = this.dragging_line.value ?: return false
         val main_line = this.line_data[main_line_index]
@@ -339,6 +342,8 @@ class ViewModelEditorState: ViewModel() {
         this.column_data.clear()
         this.cell_map.clear()
         this.channel_data.clear()
+        this.zoom.value = 1F
+        this.min_zoom.value = 1F
 
         this.coroutine_scope.value.launch {
             this@ViewModelEditorState.scroll_state_x.value.requestScrollToItem(0)
@@ -380,7 +385,10 @@ class ViewModelEditorState: ViewModel() {
 
         cell.sort_leafs()
         cell.top_weight.value = tree.get_root().weighted_size
-        this.column_data[coordinate.x].top_weight.value = Array(this.line_count.value) { this.cell_map[it][coordinate.x].value.top_weight.value }.max()
+        this.update_top_weight(coordinate.x)
+    }
+    fun update_top_weight(x: Int) {
+        this.column_data[x].top_weight.value = Array(this.line_count.value) { this.cell_map[it][x].value.top_weight.value }.max()
     }
 
     fun update_column(column: Int, is_tagged: Boolean, tag_content: String?) {
@@ -420,8 +428,12 @@ class ViewModelEditorState: ViewModel() {
         }
 
         for (x in 0 until this.beat_count.value) {
-            this.column_data[x].top_weight.value = Array(this.line_count.value) { this.cell_map[it][x].value.top_weight.value }.max()
+            this.update_top_weight(x)
         }
+        this.update_min_zoom()
+    }
+    fun update_min_zoom() {
+        this.min_zoom.value = 1F / Array(this.beat_count.value) { this.column_data[it].top_weight.value }.max().toFloat()
     }
 
     fun update_line(y: Int, channel: Int?, line_offset: Int?, ctl_type: EffectType?, assigned_offset: Int?, is_mute: Boolean, is_selected: Boolean) {
@@ -959,11 +971,10 @@ class ViewModelEditorState: ViewModel() {
         } else if (state.layoutInfo.visibleItemsInfo.last().index <= beat) {
             val beat_width = this.column_data[beat].top_weight.value
             val base_leaf_width = Dimensions.LeafBaseWidth.value * this.pixel_density.value
-            Pair(beat, (0 - state.layoutInfo.viewportSize.width + (beat_width * base_leaf_width)).toInt())
+            Pair(beat, (0 - state.layoutInfo.viewportSize.width + (max(1F, beat_width * this.zoom.value) * base_leaf_width)).toInt())
         } else {
             return
         }
-
 
         // TODO: Animate when not playing
         CoroutineScope(Dispatchers.Default).launch {

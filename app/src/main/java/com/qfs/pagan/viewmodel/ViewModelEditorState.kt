@@ -403,7 +403,7 @@ class ViewModelEditorState: ViewModel() {
             cells.get_proceding_event_position(working_beat, working_position)?.let {
                 working_beat = it.first
                 working_position = it.second
-            } ?: return
+            }
         }
 
         while (true) {

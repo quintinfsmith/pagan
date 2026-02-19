@@ -24,6 +24,8 @@ import com.qfs.pagan.viewmodel.ViewModelEditorState
 @Composable
 fun CellView(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, cell: MutableState<ViewModelEditorState.TreeData>, y: Int, x: Int, modifier: Modifier = Modifier) {
     val line_info = ui_facade.line_data[y]
+    val zoom = ui_facade.get_zoom_notch(x).toInt()
+    val top_weight = cell.value.top_weight.value
     key(cell.value.key.value, y) {
         Row(modifier.fillMaxSize()) {
             for ((path, leaf_data) in cell.value.leafs) {
@@ -32,6 +34,7 @@ fun CellView(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, cell
                     line_info,
                     leaf_data.value,
                     ui_facade.radix.value,
+                    zoom < top_weight,
                     Modifier
                         .testTag(TestTag.Leaf, line_info.channel.value, line_info.line_offset.value, x, *(Array(path.size) { path[it] }))
                         .weight(leaf_data.value.weight.floatValue)

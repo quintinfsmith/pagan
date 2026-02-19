@@ -27,10 +27,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
@@ -59,6 +57,7 @@ fun LeafView(
     line_data: ViewModelEditorState.LineData,
     leaf_data: ViewModelEditorState.LeafData,
     radix: Int,
+    hide_content: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val event = leaf_data.event.value
@@ -98,151 +97,153 @@ fun LeafView(
                         )
                 )
             }
-            when (event) {
-                is AbsoluteNoteEvent -> {
-                    val octave = event.note / radix
-                    val offset = event.note % radix
-                    Row(
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(verticalArrangement = Arrangement.Center) {
-                            Spacer(Modifier.weight(4F))
-                            ProvideTextStyle(Typography.Leaf.Octave) {
-                                Text("$octave")
-                            }
-                            Spacer(Modifier.weight(1F))
-                        }
-
-                        Column(verticalArrangement = Arrangement.Center) {
-                            ProvideTextStyle(Typography.Leaf.Offset) {
-                                Text("$offset")
-                            }
-                        }
-                    }
-                }
-
-                is RelativeNoteEvent -> {
-                    val octave = abs(event.offset) / radix
-                    val offset = abs(event.offset) % radix
-                    Row(
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            contentAlignment = Alignment.Center
+            if (!hide_content) {
+                when (event) {
+                    is AbsoluteNoteEvent -> {
+                        val octave = event.note / radix
+                        val offset = event.note % radix
+                        Row(
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            ProvideTextStyle(MaterialTheme.typography.titleLarge) {
-                                Text(
-                                    text = if (event.offset > 0) "+" else "-",
-                                    modifier = Modifier
-                                        .padding(bottom = 16.dp)
-                                        .align(Alignment.Center)
-                                )
+                            Column(verticalArrangement = Arrangement.Center) {
+                                Spacer(Modifier.weight(4F))
+                                ProvideTextStyle(Typography.Leaf.Octave) {
+                                    Text("$octave")
+                                }
+                                Spacer(Modifier.weight(1F))
                             }
-                            ProvideTextStyle(Typography.Leaf.Octave) {
-                                Text(
-                                    text = "$octave",
-                                    modifier = Modifier
-                                        .padding(top = 12.dp)
-                                        .align(Alignment.Center)
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(1.dp))
-                        ProvideTextStyle(Typography.Leaf.Offset) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                Text("$offset")
+
+                            Column(verticalArrangement = Arrangement.Center) {
+                                ProvideTextStyle(Typography.Leaf.Offset) {
+                                    Text("$offset")
+                                }
                             }
                         }
                     }
-                }
 
-                is PercussionEvent -> Icon(
-                    modifier = Modifier.padding(8.dp),
-                    painter = painterResource(R.drawable.percussion_indicator),
-                    contentDescription = ""
-                )
-
-                else -> {
-                    ProvideTextStyle(Typography.EffectLeaf) {
-                        when (event) {
-                            is OpusVolumeEvent -> Text("${(event.value * 100F).toInt()}%", color = text_color)
-                            is OpusPanEvent -> {
-                                Text(
-                                    text = if (event.value < 0) {
-                                        "<${(abs(event.value) * 10).roundToInt()}"
-                                    } else if (event.value > 0) {
-                                        "${(abs(event.value) * 10).roundToInt()}>"
-                                    } else {
-                                        "-0-"
-                                    },
-                                    color = text_color
-                                )
+                    is RelativeNoteEvent -> {
+                        val octave = abs(event.offset) / radix
+                        val offset = abs(event.offset) % radix
+                        Row(
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                contentAlignment = Alignment.Center
+                            ) {
+                                ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+                                    Text(
+                                        text = if (event.offset > 0) "+" else "-",
+                                        modifier = Modifier
+                                            .padding(bottom = 16.dp)
+                                            .align(Alignment.Center)
+                                    )
+                                }
+                                ProvideTextStyle(Typography.Leaf.Octave) {
+                                    Text(
+                                        text = "$octave",
+                                        modifier = Modifier
+                                            .padding(top = 12.dp)
+                                            .align(Alignment.Center)
+                                    )
+                                }
                             }
+                            Spacer(modifier = Modifier.width(1.dp))
+                            ProvideTextStyle(Typography.Leaf.Offset) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Text("$offset")
+                                }
+                            }
+                        }
+                    }
 
-                            is DelayEvent -> {
-                                if (event.echo == 0 || event.fade == 0F) {
-                                    Canvas(modifier = Modifier.fillMaxSize()) {
-                                        drawCircle(
-                                            color = text_color,
-                                            radius = (size.height * .1F),
-                                            center = Offset(size.width / 2F, size.height / 2F)
-                                        )
-                                    }
-                                } else {
-                                    Box(contentAlignment = Alignment.Center) {
-                                        Canvas(
-                                            modifier = Modifier
-                                                .fillMaxHeight()
-                                                .width(Dimensions.LeafBaseWidth)
-                                        ) {
-                                            drawLine(
-                                                start = Offset((.1F * size.width), (.65F * size.height)),
-                                                end = Offset((size.width * .9F), (.35F * size.height)),
+                    is PercussionEvent -> Icon(
+                        modifier = Modifier.padding(8.dp),
+                        painter = painterResource(R.drawable.percussion_indicator),
+                        contentDescription = ""
+                    )
+
+                    else -> {
+                        ProvideTextStyle(Typography.EffectLeaf) {
+                            when (event) {
+                                is OpusVolumeEvent -> Text("${(event.value * 100F).toInt()}%", color = text_color)
+                                is OpusPanEvent -> {
+                                    Text(
+                                        text = if (event.value < 0) {
+                                            "<${(abs(event.value) * 10).roundToInt()}"
+                                        } else if (event.value > 0) {
+                                            "${(abs(event.value) * 10).roundToInt()}>"
+                                        } else {
+                                            "-0-"
+                                        },
+                                        color = text_color
+                                    )
+                                }
+
+                                is DelayEvent -> {
+                                    if (event.echo == 0 || event.fade == 0F) {
+                                        Canvas(modifier = Modifier.fillMaxSize()) {
+                                            drawCircle(
                                                 color = text_color,
-                                                strokeWidth = 1F
+                                                radius = (size.height * .1F),
+                                                center = Offset(size.width / 2F, size.height / 2F)
                                             )
                                         }
-                                        ProvideTextStyle(MaterialTheme.typography.labelMedium) {
-                                            Row(horizontalArrangement = Arrangement.Center) {
-                                                Column(
-                                                    verticalArrangement = Arrangement.Top,
-                                                    modifier = Modifier.fillMaxHeight(),
-                                                    content = {
-                                                        Text("${event.numerator}")
-                                                    }
+                                    } else {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Canvas(
+                                                modifier = Modifier
+                                                    .fillMaxHeight()
+                                                    .width(Dimensions.LeafBaseWidth)
+                                            ) {
+                                                drawLine(
+                                                    start = Offset((.1F * size.width), (.65F * size.height)),
+                                                    end = Offset((size.width * .9F), (.35F * size.height)),
+                                                    color = text_color,
+                                                    strokeWidth = 1F
                                                 )
-                                                Spacer(Modifier.width(3.dp))
-                                                Column(
-                                                    verticalArrangement = Arrangement.Bottom,
-                                                    modifier = Modifier.fillMaxHeight(),
-                                                    content = {
-                                                        Text("${event.denominator}")
-                                                    }
-                                                )
+                                            }
+                                            ProvideTextStyle(MaterialTheme.typography.labelMedium) {
+                                                Row(horizontalArrangement = Arrangement.Center) {
+                                                    Column(
+                                                        verticalArrangement = Arrangement.Top,
+                                                        modifier = Modifier.fillMaxHeight(),
+                                                        content = {
+                                                            Text("${event.numerator}")
+                                                        }
+                                                    )
+                                                    Spacer(Modifier.width(3.dp))
+                                                    Column(
+                                                        verticalArrangement = Arrangement.Bottom,
+                                                        modifier = Modifier.fillMaxHeight(),
+                                                        content = {
+                                                            Text("${event.denominator}")
+                                                        }
+                                                    )
+                                                }
                                             }
                                         }
                                     }
                                 }
+
+                                is OpusTempoEvent -> Text(
+                                    "${event.value.roundToInt()}",
+                                    color = text_color,
+                                    style = Typography.EffectLeaf
+                                )
+
+                                is OpusVelocityEvent -> Text(
+                                    "${(event.value * 100F).toInt()}%",
+                                    color = text_color,
+                                    style = Typography.EffectLeaf
+                                )
+
+                                null -> {}
                             }
-
-                            is OpusTempoEvent -> Text(
-                                "${event.value.roundToInt()}",
-                                color = text_color,
-                                style = Typography.EffectLeaf
-                            )
-
-                            is OpusVelocityEvent -> Text(
-                                "${(event.value * 100F).toInt()}%",
-                                color = text_color,
-                                style = Typography.EffectLeaf
-                            )
-
-                            null -> {}
                         }
                     }
                 }

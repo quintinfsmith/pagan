@@ -27,7 +27,6 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -65,7 +64,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -175,7 +173,6 @@ import java.time.format.DateTimeFormatter
 import kotlin.concurrent.thread
 import kotlin.math.ceil
 import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.roundToInt
 
 class ComponentActivityEditor: PaganComponentActivity() {
@@ -1424,7 +1421,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                                 return@itemsIndexed
                             }
-                            val column_width = Dimensions.LeafBaseWidth * max(1F, width * ui_facade.get_pegged_zoom(x))
+                            val column_width = Dimensions.LeafBaseWidth * ui_facade.get_zoom_notch(x)
                             Column {
                                 Column(
                                     Modifier
@@ -1639,7 +1636,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 MaterialTheme.colorScheme.onTertiary
             )
         }
-        val zoom = ui_facade.get_pegged_zoom(x)
+        val zoom = ui_facade.get_zoom_notch(x)
         ProvideContentColorTextStyle(foreground, Typography.BeatLabel) {
             HalfBorderBox(
                 modifier
@@ -1656,7 +1653,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     .fillMaxSize(),
                 border_color = MaterialTheme.colorScheme.onSurfaceVariant,
                 content = {
-                    if (state_model.active_wide_beat.value == x && LocalContext.current.toPx(Dimensions.LeafBaseWidth * zoom) * ui_facade.column_data[x].top_weight.value > ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width * 1.5) {
+                    if (state_model.active_wide_beat.value == x && LocalContext.current.toPx(Dimensions.LeafBaseWidth * zoom) > ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width * 1.5) {
                         LinearProgressIndicator(
                             modifier = Modifier
                                 .width(ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width.dp / 5)
@@ -2309,8 +2306,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 .pointerInput(Unit) {
                     detectTransformGestures {  _, _, zoom, _ ->
                         zoom_state.floatValue *= zoom
-
-                        println(" - - - - ${ui_facade.zoom_index.value} | ${ui_facade.max_zoom_index.value} - - - - - ")
                         if (zoom > 1F) {
                             if (ui_facade.zoom_index.value > 0 && zoom_state.floatValue >= 1F) {
                                 ui_facade.zoom_index.intValue -= 1

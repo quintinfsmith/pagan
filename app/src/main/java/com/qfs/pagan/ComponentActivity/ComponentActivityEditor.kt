@@ -10,6 +10,7 @@
 package com.qfs.pagan.ComponentActivity
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -26,6 +27,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -63,6 +65,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -1245,7 +1248,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
         val channel_gap_height = Dimensions.ChannelGapHeight
-        val pegged_zoom = ui_facade.get_pegged_zoom()
 
         val scope = rememberCoroutineScope()
         val scroll_state_v = ui_facade.scroll_state_y.value
@@ -1422,7 +1424,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                                 return@itemsIndexed
                             }
-                            val column_width = Dimensions.LeafBaseWidth * max(1F, width * pegged_zoom)
+                            val column_width = Dimensions.LeafBaseWidth * max(1F, width * ui_facade.get_pegged_zoom(x))
                             Column {
                                 Column(
                                     Modifier
@@ -1637,7 +1639,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 MaterialTheme.colorScheme.onTertiary
             )
         }
-        val zoom = ui_facade.get_pegged_zoom()
+        val zoom = ui_facade.get_pegged_zoom(x)
         ProvideContentColorTextStyle(foreground, Typography.BeatLabel) {
             HalfBorderBox(
                 modifier
@@ -2296,19 +2298,31 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
+    @SuppressLint("AutoboxingStateValueProperty")
     @Composable
     fun ScaleBox(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, content: @Composable BoxScope.() -> Unit) {
-        val zoom_state = remember { mutableFloatStateOf(0F) }
-        // TODO: come up with scale to make zoom feel right
+        val zoom_state = remember { mutableFloatStateOf(1F) }
+        val switch_threshold = .5F
         Box(
             modifier
                 .fillMaxSize()
                 .pointerInput(Unit) {
                     detectTransformGestures {  _, _, zoom, _ ->
-                        if (zoom > 0) {
-                            ui_facade.zoom_index.value = max(0, ui_facade.zoom_index.value - 1)
-                        } else {
-                            ui_facade.zoom_index.value = min(ui_facade.zoom_pegs.size - 1, ui_facade.zoom_index.value + 1)
+                        zoom_state.floatValue *= zoom
+
+                        println(" - - - - ${ui_facade.zoom_index.value} | ${ui_facade.max_zoom_index.value} - - - - - ")
+                        if (zoom > 1F) {
+                            if (ui_facade.zoom_index.value > 0 && zoom_state.floatValue >= 1F) {
+                                ui_facade.zoom_index.intValue -= 1
+                                zoom_state.floatValue = switch_threshold
+                            } else {
+                                zoom_state.floatValue = 1F
+                            }
+                        } else if (zoom < 1F) {
+                            if (zoom_state.floatValue <= switch_threshold && ui_facade.zoom_index.value < ui_facade.max_zoom_index.value) {
+                                ui_facade.zoom_index.intValue += 1
+                                zoom_state.floatValue = 1F
+                            }
                         }
                     }
                 },

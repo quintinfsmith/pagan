@@ -67,7 +67,7 @@ class ViewModelEditorState: ViewModel() {
         val is_selected = mutableStateOf(is_selected)
         val is_secondary = mutableStateOf(is_secondary)
         val top_weight = mutableStateOf(max_leaf_count)
-        val zoom_widths = zoom_widths.toMutableSet()
+        val zoom_pegs = zoom_widths.sorted().toMutableList()
     }
 
     class LeafData(event: OpusEvent? = null, is_selected: Boolean = false, is_secondary: Boolean = false, is_valid: Boolean = true, is_spillover: Boolean = false, weight: Float = 1F) {
@@ -237,12 +237,15 @@ class ViewModelEditorState: ViewModel() {
     val dragging_height: Pair<MutableState<Int>, MutableState<Int>> = Pair(mutableStateOf(0), mutableStateOf(0))
     val dragging_line_map = mutableListOf<Triple<ClosedFloatingPointRange<Float>, IntRange, Boolean>>()
 
+    val current_zoom = mutableFloatStateOf(1F)
     val zoom_index = mutableIntStateOf(0)
-    val zoom_pegs = mutableListOf<Float>(1F)
+    val max_zoom_index = mutableIntStateOf(0)
 
-    fun get_pegged_zoom(): Float {
-        return this.zoom_pegs[this.zoom_index.value]
+    fun get_pegged_zoom(x: Int): Float {
+        val pegs = this.column_data[x].zoom_pegs
+        return 1F / pegs[this.zoom_index.intValue.coerceIn(0, pegs.size - 1)].toFloat()
     }
+
     fun is_dragging_channel(): Boolean {
         val main_line_index = this.dragging_line.value ?: return false
         val main_line = this.line_data[main_line_index]
@@ -389,15 +392,17 @@ class ViewModelEditorState: ViewModel() {
         cell.sort_leafs()
         cell.top_weight.value = tree.get_root().weighted_size
         this.update_top_weight(coordinate.x)
+        this.max_zoom_index.value = Array(this.column_data.size) { this.column_data[it].zoom_pegs.size - 1 }.max()
     }
     fun update_top_weight(x: Int) {
-        val zoom_indices = mutableSetOf<Int>()
+        val pegs = mutableSetOf(1)
         for (y in 0 until this.line_count.value) {
-            zoom_indices.add(this.cell_map[y][x].value.top_weight.value)
+            pegs.add(this.cell_map[y][x].value.top_weight.value)
         }
-        this.column_data[x].top_weight.value = zoom_indices.max()
-        this.column_data[x].zoom_widths.clear()
-        this.column_data[x].zoom_widths.addAll(zoom_indices)
+        this.column_data[x].zoom_pegs.clear()
+        this.column_data[x].zoom_pegs.addAll(pegs)
+        this.column_data[x].zoom_pegs.sort()
+        this.column_data[x].top_weight.value = pegs.max()
     }
 
     fun update_column(column: Int, is_tagged: Boolean, tag_content: String?) {
@@ -439,20 +444,9 @@ class ViewModelEditorState: ViewModel() {
         for (x in 0 until this.beat_count.value) {
             this.update_top_weight(x)
         }
-        this.collect_zoom_indices()
-    }
 
-    fun collect_zoom_indices() {
-        this.zoom_pegs.clear()
-        this.zoom_pegs.add(1F)
-        val added = mutableSetOf<Int>(1)
-        for (column in this.column_data) {
-            for (w in column.zoom_widths) {
-                if (w in added) continue
-                this.zoom_pegs.add(1F / w.toFloat())
-                added.add(w)
-            }
-        }
+        this.max_zoom_index.value = Array(this.column_data.size) { this.column_data[it].zoom_pegs.size - 1 }.max()
+        this.zoom_index.value = this.zoom_index.value.coerceIn(0, this.max_zoom_index.value)
     }
 
     fun update_line(y: Int, channel: Int?, line_offset: Int?, ctl_type: EffectType?, assigned_offset: Int?, is_mute: Boolean, is_selected: Boolean) {
@@ -990,7 +984,7 @@ class ViewModelEditorState: ViewModel() {
         } else if (state.layoutInfo.visibleItemsInfo.last().index <= beat) {
             val beat_width = this.column_data[beat].top_weight.value
             val base_leaf_width = Dimensions.LeafBaseWidth.value * this.pixel_density.value
-            Pair(beat, (0 - state.layoutInfo.viewportSize.width + (max(1F, beat_width * this.get_pegged_zoom()) * base_leaf_width)).toInt())
+            Pair(beat, (0 - state.layoutInfo.viewportSize.width + (max(1F, beat_width * this.get_pegged_zoom(beat) * base_leaf_width)).toInt()))
         } else {
             return
         }

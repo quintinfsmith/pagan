@@ -116,6 +116,7 @@ import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.DrawerCard
 import com.qfs.pagan.composable.MediumSpacer
+import com.qfs.pagan.composable.SettingsBox
 import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.composable.button.ConfigDrawerBottomButton
 import com.qfs.pagan.composable.button.ConfigDrawerChannelLeftButton
@@ -2300,30 +2301,69 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     fun ScaleBox(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, content: @Composable BoxScope.() -> Unit) {
         val zoom_state = remember { mutableFloatStateOf(1F) }
-        val switch_threshold = .5F
+        val single_zoom_enabled = this@ComponentActivityEditor.view_model.configuration.zoom_mode_single.value
+        val switch_threshold = if (single_zoom_enabled) {
+            .9F
+        } else {
+            this@ComponentActivityEditor.view_model.configuration.zoom_sensitivity.value
+        }
+        val zoom_locked = remember { mutableStateOf(false) }
+
         Box(
             modifier
                 .fillMaxSize()
                 .pointerInput(Unit) {
-                    detectTransformGestures {  _, _, zoom, _ ->
-                        zoom_state.floatValue *= zoom
-                        if (zoom > 1F) {
-                            if (ui_facade.zoom_index.value > 0 && zoom_state.floatValue >= 1F) {
-                                ui_facade.zoom_index.intValue -= 1
-                                zoom_state.floatValue = switch_threshold
-                            } else {
-                                zoom_state.floatValue = 1F
+                    awaitPointerEventScope {
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            if (!single_zoom_enabled || event.changes.size < 2) {
+                                zoom_locked.value = false
                             }
-                        } else if (zoom < 1F) {
-                            if (zoom_state.floatValue <= switch_threshold && ui_facade.zoom_index.value < ui_facade.max_zoom_index.value) {
-                                ui_facade.zoom_index.intValue += 1
-                                zoom_state.floatValue = 1F
+                            ui_facade.zoom_bar_visible.value = event.changes.size >= 2
+                        }
+                    }
+                }
+                .pointerInput(Unit) {
+                    detectTransformGestures { _, _, zoom, _ ->
+                        zoom_state.floatValue *= zoom
+                        if (!single_zoom_enabled || !zoom_locked.value) {
+                            if (zoom > 1F) {
+                                if (ui_facade.zoom_index.value > 0 && zoom_state.floatValue >= 1F) {
+                                    ui_facade.zoom_index.intValue -= 1
+                                    zoom_state.floatValue = switch_threshold
+                                    zoom_locked.value = true
+                                } else {
+                                    zoom_state.floatValue = 1F
+                                }
+                            } else if (zoom < 1F) {
+                                if (zoom_state.floatValue <= switch_threshold && ui_facade.zoom_index.value < ui_facade.max_zoom_index.value) {
+                                    ui_facade.zoom_index.intValue += 1
+                                    zoom_state.floatValue = 1F
+                                    zoom_locked.value = true
+                                }
                             }
                         }
                     }
                 },
             contentAlignment = Alignment.BottomCenter,
-            content = content
+            content = {
+                content()
+                if (ui_facade.zoom_bar_visible.value) {
+                    SettingsBox(modifier = Modifier.align(Alignment.TopCenter)) {
+                        Column {
+                            Text("Zoom Level: ${ui_facade.zoom_index.value} / ${ui_facade.max_zoom_index.value}")
+                            LinearProgressIndicator(
+                                progress = {
+                                    (ui_facade.zoom_index.value.toFloat() / ui_facade.max_zoom_index.value.toFloat())
+                                },
+                                color = ProgressIndicatorDefaults.linearColor,
+                                trackColor = ProgressIndicatorDefaults.linearTrackColor,
+                                strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
+                            )
+                        }
+                    }
+                }
+            }
         )
     }
 

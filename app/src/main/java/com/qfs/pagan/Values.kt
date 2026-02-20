@@ -15,6 +15,7 @@ object Values {
 
     object Defaults {
         const val Radix = 12
+        const val ZoomSensitivity = .8F
     }
 
     const val OctaveCount = 8

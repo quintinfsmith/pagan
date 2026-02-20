@@ -33,7 +33,9 @@ class PaganConfiguration(
     soundfont_directory: Uri? = null,
     night_mode: Int = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM,
     indent_json: Boolean = false,
-    latest_input_indicator: Boolean = true
+    latest_input_indicator: Boolean = true,
+    zoom_sensitivity: Float = Values.Defaults.ZoomSensitivity,
+    zoom_mode_single: Boolean = true
 ) {
     val soundfont: MutableState<String?> = mutableStateOf(soundfont)
     val sample_rate: MutableState<Int> = mutableStateOf(sample_rate)
@@ -47,7 +49,8 @@ class PaganConfiguration(
     val night_mode: MutableState<Int> = mutableStateOf(night_mode)
     val indent_json: MutableState<Boolean> = mutableStateOf(indent_json)
     val latest_input_indicator: MutableState<Boolean> = mutableStateOf(latest_input_indicator)
-
+    val zoom_sensitivity: MutableState<Float> = mutableStateOf(zoom_sensitivity)
+    val zoom_mode_single: MutableState<Boolean> = mutableStateOf(zoom_mode_single)
 
     enum class MoveMode {
         MOVE,
@@ -69,7 +72,9 @@ class PaganConfiguration(
                 soundfont_directory = content.get_stringn("soundfont_directory")?.toUri(),
                 night_mode = content.get_int("night_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM),
                 indent_json = content.get_boolean("indent_json", false),
-                latest_input_indicator = content.get_boolean("latest_input_indicator", true)
+                latest_input_indicator = content.get_boolean("latest_input_indicator", true),
+                zoom_sensitivity = content.get_float("zoom_sensitivity", Values.Defaults.ZoomSensitivity),
+                zoom_mode_single = content.get_boolean("zoom_mode_single", true)
             )
         }
 
@@ -99,6 +104,8 @@ class PaganConfiguration(
         this.night_mode.value = config.night_mode.value
         this.indent_json.value = config.indent_json.value
         this.latest_input_indicator.value = config.latest_input_indicator.value
+        this.zoom_sensitivity.value = config.zoom_sensitivity.value
+        this.zoom_mode_single.value = config.zoom_mode_single.value
     }
 
     fun save(path: String) {
@@ -119,6 +126,8 @@ class PaganConfiguration(
         output["night_mode"] = this.night_mode.value
         output["indent_json"] = this.indent_json.value
         output["latest_input_indicator"] = this.latest_input_indicator.value
+        output["zoom_sensitivity"] = this.zoom_sensitivity.value
+        output["zoom_mode_single"] = this.zoom_mode_single.value
         // output["channel_colors"] = JSONList(*Array(this.channel_colors.size) {
         //     JSONString(this.channel_colors[it].toHexString(HexFormat.Default))
         // })

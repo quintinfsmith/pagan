@@ -241,6 +241,8 @@ class ViewModelEditorState: ViewModel() {
 
     val zoom_index = mutableIntStateOf(0)
     val max_zoom_index = mutableIntStateOf(0)
+    val zoom_bar_visible = mutableStateOf(false)
+    var zoom_sensitivity = Values.Defaults.ZoomSensitivity
 
     fun get_zoom_notch(x: Int): Float {
         val pegs = this.column_data[x].zoom_notches

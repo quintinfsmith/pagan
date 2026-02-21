@@ -47,6 +47,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
@@ -75,7 +76,9 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
@@ -985,6 +988,24 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
         }
     }
+    @Composable
+    fun ZoomIndicator(ui_facade: ViewModelEditorState) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                modifier = Modifier.size(
+                    Dimensions.TopBarIconWidth,
+                    Dimensions.TopBarIconHeight
+                ),
+                painter = painterResource(R.drawable.icon_zoom),
+                contentDescription = null
+            )
+            Spacer(Modifier.width(Dimensions.TopBarItemSpace))
+            Text("${ui_facade.zoom_index.intValue} / ${ui_facade.max_zoom_index.intValue}")
+        }
+    }
 
     @Composable
     fun RowScope.TopBarNoTitle() {
@@ -1110,9 +1131,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
         )
 
-        when (vm_top.active_layout_size.value) {
-            LayoutSize.SmallPortrait -> TopBarNoTitle()
-            else -> TopBarWithTitle()
+        if (this@ComponentActivityEditor.state_model.zoom_bar_visible.value) {
+            Spacer( Modifier.weight(1F) )
+            ZoomIndicator(this@ComponentActivityEditor.state_model)
+            Spacer( Modifier.weight(1F) )
+        } else {
+            when (vm_top.active_layout_size.value) {
+                LayoutSize.SmallPortrait -> TopBarNoTitle()
+                else -> TopBarWithTitle()
+            }
         }
 
         TopBarDropDown()
@@ -1466,13 +1493,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         }
 
                                         if ((y == ui_facade.line_data.size - 1 || ui_facade.line_data[y].channel.value != ui_facade.line_data[y + 1].channel.value) && ui_facade.line_data[y].channel.value != null) {
-                                            Row(
+                                            Spacer(
                                                 Modifier
                                                     .draggable_line(y, dragging_to_y, is_after, true)
                                                     .fillMaxWidth()
                                                     .height(channel_gap_height)
                                                     .background(MaterialTheme.colorScheme.onBackground)
-                                            ) { }
+                                            )
                                         }
                                     }
                                     Spacer(Modifier.height(line_height + toDp(this@ComponentActivityEditor.state_model.table_bottom_padding.value)))
@@ -1524,7 +1551,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
         ProvideContentColorTextStyle(foreground, Typography.LineLabel) {
             HalfBorderBox(
                 modifier
-                    .testTag(TestTag.LineLabel, line_info.channel.value, line_info.line_offset.value, line_info.ctl_type.value)
+                    .testTag(
+                        TestTag.LineLabel,
+                        line_info.channel.value,
+                        line_info.line_offset.value,
+                        line_info.ctl_type.value
+                    )
                     .combinedClickable(
                         onClick = {
                             dispatcher.tap_line(
@@ -2297,16 +2329,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
-    @SuppressLint("AutoboxingStateValueProperty")
     @Composable
     fun ScaleBox(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, content: @Composable BoxScope.() -> Unit) {
         val zoom_state = remember { mutableFloatStateOf(1F) }
         val single_zoom_enabled = this@ComponentActivityEditor.view_model.configuration.zoom_mode_single.value
         val switch_threshold = if (single_zoom_enabled) {
-            .9F
+            .72F
         } else {
             this@ComponentActivityEditor.view_model.configuration.zoom_sensitivity.value
         }
+        val consume_events = remember { mutableStateOf(false) }
         val zoom_locked = remember { mutableStateOf(false) }
 
         Box(
@@ -2318,52 +2350,53 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             val event = awaitPointerEvent()
                             if (!single_zoom_enabled || event.changes.size < 2) {
                                 zoom_locked.value = false
+                                zoom_state.floatValue = (1f - switch_threshold) / 2F
                             }
                             ui_facade.zoom_bar_visible.value = event.changes.size >= 2
-                        }
-                    }
-                }
-                .pointerInput(Unit) {
-                    detectTransformGestures { _, _, zoom, _ ->
-                        zoom_state.floatValue *= zoom
-                        if (!single_zoom_enabled || !zoom_locked.value) {
-                            if (zoom > 1F) {
-                                if (ui_facade.zoom_index.value > 0 && zoom_state.floatValue >= 1F) {
-                                    ui_facade.zoom_index.intValue -= 1
-                                    zoom_state.floatValue = switch_threshold
-                                    zoom_locked.value = true
-                                } else {
-                                    zoom_state.floatValue = 1F
+
+                            if (event.changes.size == 2) {
+                                consume_events.value = true
+                                if (event.type == PointerEventType.Move) {
+                                    val (lesser, larger) = if (event.changes[0].position.x < event.changes[1].position.x) {
+                                        Pair(event.changes[0], event.changes[1])
+                                    } else {
+                                        Pair(event.changes[1], event.changes[0])
+                                    }
+                                    val current_diff = larger.position.x - lesser.position.x
+                                    val previous_diff = (larger.position.x - larger.positionChange().x) - (lesser.position.x - lesser.positionChange().x)
+                                    val zoom = current_diff / previous_diff
+                                    if (!single_zoom_enabled || !zoom_locked.value) {
+                                        zoom_state.floatValue *= zoom
+                                        if (zoom > 1F) {
+                                            if (ui_facade.zoom_index.value > 0 && zoom_state.floatValue >= 1F) {
+                                                ui_facade.zoom_index.intValue -= 1
+                                                zoom_state.floatValue = switch_threshold
+                                                zoom_locked.value = true
+                                            } else {
+                                                zoom_state.floatValue = 1F
+                                            }
+                                        } else if (zoom < 1F) {
+                                            if (zoom_state.floatValue <= switch_threshold && ui_facade.zoom_index.value < ui_facade.max_zoom_index.value) {
+                                                ui_facade.zoom_index.intValue += 1
+                                                zoom_state.floatValue = 1F
+                                                zoom_locked.value = true
+                                            }
+                                        }
+                                    }
                                 }
-                            } else if (zoom < 1F) {
-                                if (zoom_state.floatValue <= switch_threshold && ui_facade.zoom_index.value < ui_facade.max_zoom_index.value) {
-                                    ui_facade.zoom_index.intValue += 1
-                                    zoom_state.floatValue = 1F
-                                    zoom_locked.value = true
-                                }
+                            } else if (event.changes.size == 1 && consume_events.value) {
+                                // Consume events until all touches are released
+                                consume_events.value = event.type != PointerEventType.Release
+                            }
+
+                            if (consume_events.value) {
+                                event.changes.forEach { it.consume() }
                             }
                         }
                     }
                 },
             contentAlignment = Alignment.BottomCenter,
-            content = {
-                content()
-                if (ui_facade.zoom_bar_visible.value) {
-                    SettingsBox(modifier = Modifier.align(Alignment.TopCenter)) {
-                        Column {
-                            Text("Zoom Level: ${ui_facade.zoom_index.value} / ${ui_facade.max_zoom_index.value}")
-                            LinearProgressIndicator(
-                                progress = {
-                                    (ui_facade.zoom_index.value.toFloat() / ui_facade.max_zoom_index.value.toFloat())
-                                },
-                                color = ProgressIndicatorDefaults.linearColor,
-                                trackColor = ProgressIndicatorDefaults.linearTrackColor,
-                                strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
-                            )
-                        }
-                    }
-                }
-            }
+            content = content
         )
     }
 
@@ -2820,3 +2853,4 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 }
+

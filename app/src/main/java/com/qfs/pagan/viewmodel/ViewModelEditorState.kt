@@ -132,7 +132,6 @@ class ViewModelEditorState: ViewModel() {
                     return
                 }
             }
-
             this.leafs.add(Pair(path, mutableStateOf(LeafData(event = event, weight = weight))))
             this.key.value = System.currentTimeMillis()
         }
@@ -396,19 +395,29 @@ class ViewModelEditorState: ViewModel() {
         cell.sort_leafs()
         cell.top_weight.value = tree.get_root().weighted_size
         this.update_top_weight(coordinate.x)
+        this.update_zoom_notches(coordinate.x)
         this.max_zoom_index.value = Array(this.column_data.size) { this.column_data[it].zoom_notches.size - 1 }.max()
     }
-    fun update_top_weight(x: Int) {
+
+    fun update_zoom_notches(x: Int) {
         val pegs = mutableSetOf(1F)
         for (y in 0 until this.line_count.value) {
             pegs.add(this.cell_map[y][x].value.top_weight.value.toFloat())
+            for ((_, leaf_data) in this.cell_map[y][x].value.leafs) {
+                val notch = this.column_data[x].top_weight.value / (this.cell_map[y][x].value.top_weight.value * leaf_data.value.weight.value)
+                pegs.add(notch)
+            }
         }
+        println("$pegs")
+
         this.column_data[x].zoom_notches.clear()
         this.column_data[x].zoom_notches.addAll(pegs)
         this.column_data[x].zoom_notches.sort()
         this.column_data[x].zoom_notches.reverse()
+    }
 
-        this.column_data[x].top_weight.value = pegs.max().toInt()
+    fun update_top_weight(x: Int) {
+        this.column_data[x].top_weight.value = Array(this.line_count.value) { this.cell_map[it][x].value.top_weight.value }.max()
     }
 
     fun update_column(column: Int, is_tagged: Boolean, tag_content: String?) {
@@ -449,6 +458,7 @@ class ViewModelEditorState: ViewModel() {
 
         for (x in 0 until this.beat_count.value) {
             this.update_top_weight(x)
+            this.update_zoom_notches(x)
         }
 
         this.max_zoom_index.value = Array(this.column_data.size) { this.column_data[it].zoom_notches.size - 1 }.max()

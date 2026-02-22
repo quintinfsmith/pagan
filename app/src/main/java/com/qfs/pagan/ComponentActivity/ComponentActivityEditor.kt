@@ -10,7 +10,6 @@
 package com.qfs.pagan.ComponentActivity
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -29,7 +28,6 @@ import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -119,7 +117,6 @@ import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.DrawerCard
 import com.qfs.pagan.composable.MediumSpacer
-import com.qfs.pagan.composable.SettingsBox
 import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.composable.button.ConfigDrawerBottomButton
 import com.qfs.pagan.composable.button.ConfigDrawerChannelLeftButton
@@ -616,6 +613,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
         this.state_model.latest_input_indicator.value = this.view_model.configuration.latest_input_indicator.value
         this.state_model.normalize_beat_widths.value = this.view_model.configuration.normalize_beat_widths.value
+        this.state_model.beat_stroke_thickness.value = this.view_model.configuration.beat_stroke_thickness.value
+        println(" - - - - - - -${this.state_model.beat_stroke_thickness.value}")
         this.state_model.update_zoom_levels()
         this.set_soundfont()
     }
@@ -1462,29 +1461,40 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             Column {
                                 Column(
                                     Modifier
-                                        .width(column_width)
+                                        .width(column_width + if (x == 0) { 0.dp } else { ui_facade.beat_stroke_thickness.value })
                                         .height(line_height),
                                 ) {
-                                    BeatLabelView(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .weight(1F),
-                                        x = x,
-                                        ui_facade = ui_facade,
-                                        dispatcher = dispatcher,
-                                        column_info = ui_facade.column_data[x],
-                                        column_width = (column_width)
+                                    Row(Modifier.weight(1F)) {
+                                        if (x > 0 && ui_facade.beat_stroke_thickness.value > 0.dp) {
+                                            TableLine(
+                                                MaterialTheme.colorScheme.onBackground,
+                                                width = ui_facade.beat_stroke_thickness.value
+                                            )
+                                        }
+                                        BeatLabelView(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .weight(1F),
+                                            x = x,
+                                            ui_facade = ui_facade,
+                                            dispatcher = dispatcher,
+                                            column_info = ui_facade.column_data[x],
+                                            column_width = (column_width)
+                                        )
+                                    }
+                                    TableLine(
+                                        MaterialTheme.colorScheme.onSurfaceVariant
                                     )
-                                    TableLine(MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
 
                                 Column(
                                     Modifier
                                         .verticalScroll(scroll_state_v, overscrollEffect = null)
-                                        .width(column_width)
+                                        .width(column_width + if (x == 0) { 0.dp } else { ui_facade.beat_stroke_thickness.value })
                                 ) {
                                     for (y in 0 until ui_facade.line_count.value) {
                                         val cell = ui_facade.cell_map[y][x]
+
                                         Column(
                                             Modifier
                                                 .draggable_line(y, dragging_to_y, is_after)
@@ -1496,15 +1506,23 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                             if (ui_facade.draw_top_line(y)) {
                                                 TableLine(MaterialTheme.colorScheme.onSurfaceVariant)
                                             }
-                                            CellView(
-                                                ui_facade,
-                                                dispatcher,
-                                                cell,
-                                                y,
-                                                x,
-                                                ui_facade.get_zoom_notch(x).toInt(),
-                                                Modifier.weight(1F)
-                                            )
+                                            Row(Modifier.weight(1F)) {
+                                                if (x > 0 && ui_facade.beat_stroke_thickness.value > 0.dp) {
+                                                    TableLine(
+                                                        MaterialTheme.colorScheme.onBackground,
+                                                        width = ui_facade.beat_stroke_thickness.value
+                                                    )
+                                                }
+                                                CellView(
+                                                    ui_facade,
+                                                    dispatcher,
+                                                    cell,
+                                                    y,
+                                                    x,
+                                                    ui_facade.get_zoom_notch(x).toInt(),
+                                                    Modifier.weight(1F)
+                                                )
+                                            }
                                             TableLine(MaterialTheme.colorScheme.onBackground)
                                         }
 

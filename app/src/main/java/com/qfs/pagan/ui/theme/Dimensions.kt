@@ -324,6 +324,8 @@ object Dimensions {
     object Stroke {
         val Thin = 1.dp
         val Medium = 2.dp
+        val Thick = 4.dp
+        val XThick = 8.dp
     }
 
     val TableLineStroke = Stroke.Thin

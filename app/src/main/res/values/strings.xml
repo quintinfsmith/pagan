@@ -208,6 +208,7 @@
     <string name="dlg_project_name">Project Name</string>
     <string name="dlg_project_notes">Project Notes</string>
     <string name="label_settings_allow_std_percussion">Use percussion as standard instrument</string>
+    <string name="label_settings_stroke_beats">Beat Stroke Width</string>
     <string name="cd_mark_section">Tag Section</string>
     <string name="cd_remove_section_mark">Remove Section Tag</string>
     <string name="dialog_mark_section">Tag Section</string>
@@ -294,6 +295,10 @@
     <string name="audio_playback_attribution">This app plays audio.</string>
     <string name="empty"></string>
     <string name="tag_description">Tag Description</string>
+    <string name="settings_beat_stroke_none">No Stroke</string>
+    <string name="settings_beat_stroke_thin">Thin</string>
+    <string name="settings_beat_stroke_medium">Medium</string>
+    <string name="settings_beat_stroke_thick">Thick</string>
 
 
     <string-array name="general_midi_presets">

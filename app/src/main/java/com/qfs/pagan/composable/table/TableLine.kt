@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import com.qfs.pagan.ui.theme.Dimensions
 
 @Composable
@@ -35,12 +36,12 @@ fun ColumnScope.TableLine(color: Color) {
 }
 
 @Composable
-fun RowScope.TableLine(color: Color) {
+fun RowScope.TableLine(color: Color, width: Dp = Dimensions.TableLineStroke) {
     Spacer(
         Modifier
             .background(color = color)
             .fillMaxHeight()
-            .width(Dimensions.TableLineStroke)
+            .width(width)
     )
 }
 

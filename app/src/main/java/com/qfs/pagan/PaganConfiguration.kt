@@ -14,6 +14,8 @@ import android.net.Uri
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONParser
@@ -36,7 +38,8 @@ class PaganConfiguration(
     latest_input_indicator: Boolean = true,
     zoom_sensitivity: Float = Values.Defaults.ZoomSensitivity,
     zoom_mode_single: Boolean = true,
-    normalize_beat_widths: Boolean = false
+    normalize_beat_widths: Boolean = false,
+    beat_stroke_thickness: Dp = 0.dp
 ) {
     val soundfont: MutableState<String?> = mutableStateOf(soundfont)
     val sample_rate: MutableState<Int> = mutableStateOf(sample_rate)
@@ -53,6 +56,7 @@ class PaganConfiguration(
     val zoom_sensitivity: MutableState<Float> = mutableStateOf(zoom_sensitivity)
     val zoom_mode_single: MutableState<Boolean> = mutableStateOf(zoom_mode_single)
     val normalize_beat_widths: MutableState<Boolean> = mutableStateOf(normalize_beat_widths)
+    val beat_stroke_thickness: MutableState<Dp> = mutableStateOf(beat_stroke_thickness)
 
     enum class MoveMode {
         MOVE,
@@ -77,7 +81,8 @@ class PaganConfiguration(
                 latest_input_indicator = content.get_boolean("latest_input_indicator", true),
                 zoom_sensitivity = content.get_float("zoom_sensitivity", Values.Defaults.ZoomSensitivity),
                 zoom_mode_single = content.get_boolean("zoom_mode_single", true),
-                normalize_beat_widths = content.get_boolean("normalize_beat_widths", false)
+                normalize_beat_widths = content.get_boolean("normalize_beat_widths", false),
+                beat_stroke_thickness = content.get_floatn("beat_stroke_thickness")?.dp ?: 0.dp
             )
         }
 
@@ -110,6 +115,7 @@ class PaganConfiguration(
         this.zoom_sensitivity.value = config.zoom_sensitivity.value
         this.zoom_mode_single.value = config.zoom_mode_single.value
         this.normalize_beat_widths.value = config.normalize_beat_widths.value
+        this.beat_stroke_thickness.value = config.beat_stroke_thickness.value
     }
 
     fun save(path: String) {
@@ -133,6 +139,7 @@ class PaganConfiguration(
         output["zoom_sensitivity"] = this.zoom_sensitivity.value
         output["zoom_mode_single"] = this.zoom_mode_single.value
         output["normalize_beat_widths"] = this.normalize_beat_widths.value
+        output["beat_stroke_thickness"] = this.beat_stroke_thickness.value.value
         // output["channel_colors"] = JSONList(*Array(this.channel_colors.size) {
         //     JSONString(this.channel_colors[it].toHexString(HexFormat.Default))
         // })

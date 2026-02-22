@@ -15,6 +15,8 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.Coordinate
@@ -244,6 +246,7 @@ class ViewModelEditorState: ViewModel() {
     var zoom_sensitivity = Values.Defaults.ZoomSensitivity
     val zoom_notches = mutableListOf<Float>(1F) // Used only when beat widths are normalized
     val normalize_beat_widths = mutableStateOf<Boolean>(false)
+    val beat_stroke_thickness = mutableStateOf<Dp>(0.dp)
 
     fun get_zoom_notch(x: Int): Float {
         return if (this.normalize_beat_widths.value) {
@@ -1044,9 +1047,15 @@ class ViewModelEditorState: ViewModel() {
             return
         }
 
+        val beat_stroke = if (beat > 0 && this.beat_stroke_thickness.value > 0.dp) {
+            (this.beat_stroke_thickness.value.value * this.pixel_density.value).toInt()
+        } else {
+            0
+        }
+
         // TODO: Animate when not playing
         CoroutineScope(Dispatchers.Default).launch {
-            this@ViewModelEditorState.scroll_state_x.value.requestScrollToItem(target.first, target.second)
+            this@ViewModelEditorState.scroll_state_x.value.requestScrollToItem(target.first, target.second + beat_stroke)
         }
     }
 
@@ -1075,18 +1084,24 @@ class ViewModelEditorState: ViewModel() {
 
         val end_offset = beat_width * (offset + width).toFloat() * base_leaf_width
 
+        val beat_stroke = if (beat > 0 && this.beat_stroke_thickness.value > 0.dp) {
+            (this.beat_stroke_thickness.value.value * this.pixel_density.value).toInt()
+        } else {
+            0
+        }
+
         if (first_visible_beat != last_visible_beat && beat in first_visible_beat until last_visible_beat) {
             return
         } else if (first_visible_beat > beat || first_visible_beat == beat && first_visible_offset > offset_px.toInt()) {
             CoroutineScope(Dispatchers.Default).launch {
-                state.requestScrollToItem(beat, offset_px.toInt())
+                state.requestScrollToItem(beat, offset_px.toInt() + beat_stroke)
             }
         } else if (last_visible_beat < beat || (state.layoutInfo.visibleItemsInfo.last().offset + end_offset > state.layoutInfo.viewportSize.width - this.table_side_padding.value)) {
             val screen_width = state.layoutInfo.viewportSize.width - this.table_side_padding.value.toInt()
             CoroutineScope(Dispatchers.Default).launch {
                 state.requestScrollToItem(
                     beat,
-                    0 - screen_width + end_offset.toInt()
+                    0 - screen_width + end_offset.toInt() - beat_stroke
                 )
             }
         }

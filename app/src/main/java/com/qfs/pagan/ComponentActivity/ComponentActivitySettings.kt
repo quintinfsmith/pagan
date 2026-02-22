@@ -49,6 +49,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.DialogBar
@@ -801,7 +803,8 @@ class ComponentActivitySettings: PaganComponentActivity() {
         ) {
             Text(
                 stringResource(R.string.label_settings_use_preferred_sf),
-                modifier = Modifier.weight(1F)
+                modifier = Modifier.weight(1F),
+                style = Typography.Settings.Label
             )
             Switch(
                 checked = view_model.configuration.use_preferred_soundfont.value,
@@ -815,15 +818,88 @@ class ComponentActivitySettings: PaganComponentActivity() {
     }
 
     @Composable
+    fun OptionStrokeBeat(modifier: Modifier = Modifier) {
+        val expanded = remember { mutableStateOf(false) }
+        val options: List<Pair<Dp, @Composable (() -> Unit)>> = listOf(
+            Pair(0.dp) { Text(R.string.settings_beat_stroke_none) },
+            Pair(Dimensions.Stroke.Thin) { Text(R.string.settings_beat_stroke_thin) },
+            Pair(Dimensions.Stroke.Medium) { Text(R.string.settings_beat_stroke_medium) },
+            Pair(Dimensions.Stroke.Thick) { Text(R.string.settings_beat_stroke_thick) }
+        )
+        SettingsRow(
+            modifier = modifier,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                stringResource(R.string.label_settings_stroke_beats),
+                modifier = Modifier.weight(1F),
+                style = Typography.Settings.Label
+            )
+
+            Box {
+                Button(
+                    onClick = { expanded.value = !expanded.value },
+                    content = {
+                        Text(
+                            when (view_model.configuration.beat_stroke_thickness.value) {
+                                0.dp -> stringResource(R.string.settings_beat_stroke_none)
+                                Dimensions.Stroke.Thin -> stringResource(R.string.settings_beat_stroke_thin)
+                                Dimensions.Stroke.Medium -> stringResource(R.string.settings_beat_stroke_medium)
+                                Dimensions.Stroke.Thick -> stringResource(R.string.settings_beat_stroke_thick)
+                                else -> view_model.configuration.beat_stroke_thickness.value.toString()
+                            }
+                        )
+                    }
+                )
+                DropdownMenu(
+                    expanded = expanded.value,
+                    onDismissRequest = { expanded.value = false }
+                ) {
+                    for ((value, label) in options) {
+                        DropdownMenuItem(
+                            modifier = Modifier
+                                .then(
+                                    if (value == view_model.configuration.beat_stroke_thickness.value) {
+                                        Modifier.background(color = MaterialTheme.colorScheme.tertiary)
+                                    } else {
+                                        Modifier
+                                    }
+                                ),
+                            text = {
+                                if (value == view_model.configuration.beat_stroke_thickness.value) {
+                                    ProvideContentColorTextStyle(MaterialTheme.colorScheme.onTertiary) {
+                                        label()
+                                    }
+                                } else {
+                                    label()
+                                }
+                            },
+                            onClick = {
+                                view_model.configuration.beat_stroke_thickness.value = value
+                                view_model.save_configuration()
+                                this@ComponentActivitySettings.update_result()
+                                expanded.value = false
+                            }
+                        )
+
+                    }
+                }
+            }
+        }
+    }
+
+    @Composable
     fun OptionAllowStdPercussion(modifier: Modifier = Modifier) {
         SettingsRow(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = modifier,
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 stringResource(R.string.label_settings_allow_std_percussion),
-                modifier = Modifier.weight(1F)
+                modifier = Modifier.weight(1F),
+                style = Typography.Settings.Label
             )
             Switch(
                 checked = view_model.configuration.allow_std_percussion.value,
@@ -881,6 +957,8 @@ class ComponentActivitySettings: PaganComponentActivity() {
             PlaybackRateMenu(Modifier.fillMaxWidth())
             MenuPadder()
             OptionNormalizeBeatWidth(Modifier.fillMaxWidth())
+            MenuPadder()
+            OptionStrokeBeat(Modifier.fillMaxWidth())
             MenuPadder()
             OptionNoteInputMemory(Modifier.fillMaxWidth())
             MenuPadder()

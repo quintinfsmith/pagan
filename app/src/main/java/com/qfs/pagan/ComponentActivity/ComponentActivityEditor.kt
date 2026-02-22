@@ -615,6 +615,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
         }
         this.state_model.latest_input_indicator.value = this.view_model.configuration.latest_input_indicator.value
+        this.state_model.normalize_beat_widths.value = this.view_model.configuration.normalize_beat_widths.value
+        this.state_model.update_zoom_levels()
         this.set_soundfont()
     }
 
@@ -1264,7 +1266,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun MainTable(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, length: MutableState<Int>, layout: LayoutSize) {
+    fun MainTable(
+        modifier: Modifier = Modifier,
+        ui_facade: ViewModelEditorState,
+        dispatcher: ActionDispatcher,
+        length: MutableState<Int>,
+        layout: LayoutSize
+    ) {
         val line_height = Dimensions.LineHeight
         val ctl_line_height = Dimensions.EffectLineHeight
         val line_label_width = Dimensions.LineLabelWidth
@@ -1277,6 +1285,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val scope = rememberCoroutineScope()
         val scroll_state_v = ui_facade.scroll_state_y.value
         val scroll_state_h = ui_facade.scroll_state_x.value
+        val normalize_beat_widths = this.view_model.configuration.normalize_beat_widths.value
 
         Box(
             modifier,
@@ -1449,7 +1458,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                                 return@itemsIndexed
                             }
-
                             val column_width = Dimensions.LeafBaseWidth * ui_facade.get_zoom_notch(x)
                             Column {
                                 Column(
@@ -1488,7 +1496,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                             if (ui_facade.draw_top_line(y)) {
                                                 TableLine(MaterialTheme.colorScheme.onSurfaceVariant)
                                             }
-                                            CellView(ui_facade, dispatcher, cell, y, x, Modifier.weight(1F))
+                                            CellView(
+                                                ui_facade,
+                                                dispatcher,
+                                                cell,
+                                                y,
+                                                x,
+                                                ui_facade.get_zoom_notch(x).toInt(),
+                                                Modifier.weight(1F)
+                                            )
                                             TableLine(MaterialTheme.colorScheme.onBackground)
                                         }
 
@@ -2530,9 +2546,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     override fun on_crash() {
-        // if (this.is_debug_on()) {
-        //     this.save_actions()
-        // }
         this.state_model.clear()
         this.save_to_backup()
     }

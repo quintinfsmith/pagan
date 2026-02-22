@@ -748,6 +748,28 @@ class ComponentActivitySettings: PaganComponentActivity() {
     }
 
     @Composable
+    fun OptionNormalizeBeatWidth(modifier: Modifier = Modifier) {
+        SettingsRow(
+            modifier = modifier,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                R.string.label_settings_normalize_beat_widths,
+                modifier = Modifier.weight(1F),
+                style = Typography.Settings.Label
+            )
+            Switch(
+                checked = view_model.configuration.normalize_beat_widths.value,
+                onCheckedChange = {
+                    view_model.configuration.normalize_beat_widths.value = it
+                    view_model.save_configuration()
+                    this@ComponentActivitySettings.update_result()
+                }
+            )
+        }
+    }
+    @Composable
     fun OptionNoteInputMemory(modifier: Modifier = Modifier) {
         SettingsRow(
             modifier = modifier,
@@ -857,6 +879,8 @@ class ComponentActivitySettings: PaganComponentActivity() {
     fun SettingsSectionB(modifier: Modifier = Modifier) {
         Column {
             PlaybackRateMenu(Modifier.fillMaxWidth())
+            MenuPadder()
+            OptionNormalizeBeatWidth(Modifier.fillMaxWidth())
             MenuPadder()
             OptionNoteInputMemory(Modifier.fillMaxWidth())
             MenuPadder()

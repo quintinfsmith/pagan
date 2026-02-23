@@ -248,6 +248,7 @@ class ViewModelEditorState: ViewModel() {
     val zoom_notches = mutableListOf<Float>(1F) // Used only when beat widths are normalized
     val normalize_beat_widths = mutableStateOf<Boolean>(false)
     val beat_stroke_thickness = mutableStateOf<Dp>(0.dp)
+    val scroll_x_center = mutableStateOf<Float?>(null)
 
     fun get_active_zoom(x: Int): Float {
         return if (this.normalize_beat_widths.value) {
@@ -276,13 +277,47 @@ class ViewModelEditorState: ViewModel() {
         }
     }
 
-    fun increment_zoom() {
-        this.zoom_index.value += 1
-        this.set_normalized_zoom()
+    fun increment_zoom(center: Float? = null) {
+        this.queue_recenter(center) {
+            this.zoom_index.value += 1
+            this.set_normalized_zoom()
+        }
     }
-    fun decrement_zoom() {
-        this.zoom_index.value -= 1
-        this.set_normalized_zoom()
+
+    fun decrement_zoom(center: Float? = null) {
+        this.queue_recenter(center) {
+            this.zoom_index.value -= 1
+            this.set_normalized_zoom()
+        }
+    }
+
+    // TODO: Account for beat stroke
+    fun queue_recenter(initial_center: Float? = null, callback: () -> Unit) {
+        if (initial_center == null) return callback()
+
+        val first_visible_abs_offset = Array(this.scroll_state_x.value.firstVisibleItemIndex) { x ->
+            this.get_active_zoom(x) * (Dimensions.LeafBaseWidth.value * this.pixel_density.value)
+        }.sum()
+
+        var targeted_x = this.scroll_state_x.value.firstVisibleItemIndex
+        var working_offset = initial_center
+        println("Start At $targeted_x  ($initial_center)- - - - - - ")
+        while (working_offset > 0F) {
+            val current_width = this.get_active_zoom(targeted_x)
+            println("$targeted_x: $current_width ($working_offset)")
+            working_offset -= current_width * (Dimensions.LeafBaseWidth.value * this.pixel_density.value)
+            targeted_x += 1
+        }
+        println("TARGET $targeted_x - - - - - - ")
+        callback()
+        // Set the new center after the callback to prevent recentering before the the layout has been redrawn
+        //this.scroll_x_center.value = initial_abs_offset + initial_center
+    }
+
+    fun recenter() {
+        val new_offset = this.scroll_x_center.value ?: return
+        this.scroll_state_x.value.requestScrollToItem(0, new_offset.toInt())
+        this.scroll_x_center.value = null
     }
 
     fun is_dragging_channel(): Boolean {
@@ -1062,10 +1097,6 @@ class ViewModelEditorState: ViewModel() {
             if (index == offset) return name
         }
         return null
-    }
-
-    fun get_first_visible_column_index(): Int {
-        return this.scroll_state_x.value.firstVisibleItemIndex
     }
 
     fun scroll_to_beat(beat: Int) {

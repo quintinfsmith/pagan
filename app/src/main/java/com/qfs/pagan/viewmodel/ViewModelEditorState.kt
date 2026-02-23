@@ -241,6 +241,7 @@ class ViewModelEditorState: ViewModel() {
     val dragging_line_map = mutableListOf<Triple<ClosedFloatingPointRange<Float>, IntRange, Boolean>>()
 
     val zoom_index = mutableIntStateOf(0)
+    val active_zoom = mutableFloatStateOf(1F)
     val max_zoom_index = mutableIntStateOf(0)
     val zoom_bar_visible = mutableStateOf(false)
     var zoom_sensitivity = Values.Defaults.ZoomSensitivity
@@ -248,22 +249,40 @@ class ViewModelEditorState: ViewModel() {
     val normalize_beat_widths = mutableStateOf<Boolean>(false)
     val beat_stroke_thickness = mutableStateOf<Dp>(0.dp)
 
-    fun get_zoom_notch(x: Int): Float {
+    fun get_active_zoom(x: Int): Float {
         return if (this.normalize_beat_widths.value) {
-            this.get_zoom_notch()
+            this.get_active_zoom()
         } else {
-            val pegs = this.column_data[x].zoom_notches
-            if (pegs.isEmpty()) return 1F
-            val i = this.zoom_index.intValue.coerceIn(0, pegs.size - 1)
-            pegs[i]
+            min(
+                this.column_data[x].top_weight.value.toFloat(),
+                this.get_active_zoom()
+            )
+
         }
     }
 
-    fun get_zoom_notch(): Float {
+    fun get_active_zoom(): Float {
+        return this.active_zoom.floatValue
+    }
+
+    private fun set_normalized_zoom() {
         val pegs = this.zoom_notches
-        if (pegs.isEmpty()) return 1F
-        val i = this.zoom_index.intValue.coerceIn(0, pegs.size - 1)
-        return pegs[i]
+        this.active_zoom.value = if (pegs.isEmpty()) {
+            1F
+        } else {
+            val i = this.zoom_index.intValue.coerceIn(0, pegs.size - 1)
+            pegs[i]
+
+        }
+    }
+
+    fun increment_zoom() {
+        this.zoom_index.value += 1
+        this.set_normalized_zoom()
+    }
+    fun decrement_zoom() {
+        this.zoom_index.value -= 1
+        this.set_normalized_zoom()
     }
 
     fun is_dragging_channel(): Boolean {
@@ -415,10 +434,17 @@ class ViewModelEditorState: ViewModel() {
         cell.top_weight.value = tree.get_root().weighted_size
         this.update_top_weight(coordinate.x)
         this.update_zoom_notches(coordinate.x)
-        this.update_zoom_levels()
+        if (this.normalize_beat_widths.value) {
+            this.update_global_zoom_notches()
+        } else {
+            this.update_zoom_levels()
+        }
     }
 
     fun update_global_zoom_notches() {
+        val current_index = this.zoom_index.intValue
+        val current_value = this.active_zoom.value
+
         val pegs = mutableSetOf(1F)
         for (column in this.column_data)  {
             pegs.addAll(column.zoom_notches)
@@ -428,6 +454,15 @@ class ViewModelEditorState: ViewModel() {
         this.zoom_notches.addAll(pegs)
         this.zoom_notches.sort()
         this.zoom_notches.reverse()
+
+        this.max_zoom_index.intValue = max(0, this.zoom_notches.size - 1)
+        if (current_index == 0) {
+            this.active_zoom.floatValue = this.zoom_notches.first()
+        } else if (this.zoom_notches.contains(current_value)) {
+            this.zoom_index.intValue = this.zoom_notches.indexOf(current_value)
+        } else {
+            this.zoom_index.intValue = this.zoom_index.intValue.coerceIn(0, this.max_zoom_index.intValue)
+        }
     }
 
     fun update_zoom_notches(x: Int) {
@@ -491,12 +526,15 @@ class ViewModelEditorState: ViewModel() {
             this.update_zoom_notches(x)
         }
 
-        this.update_global_zoom_notches()
-        this.update_zoom_levels()
+        if (this.normalize_beat_widths.value) {
+            this.update_global_zoom_notches()
+        } else {
+            this.update_zoom_levels()
+        }
     }
 
     fun update_zoom_levels() {
-        this.max_zoom_index.value = if (this.normalize_beat_widths.value) {
+        this.max_zoom_index.intValue = if (this.normalize_beat_widths.value) {
             max(0, this.zoom_notches.size - 1)
         } else {
             if (this.column_data.isNotEmpty()) {
@@ -505,7 +543,7 @@ class ViewModelEditorState: ViewModel() {
                 0
             }
         }
-        this.zoom_index.value = this.zoom_index.value.coerceIn(0, this.max_zoom_index.value)
+        this.zoom_index.intValue = this.zoom_index.intValue.coerceIn(0, this.max_zoom_index.intValue)
     }
 
     fun update_line(y: Int, channel: Int?, line_offset: Int?, ctl_type: EffectType?, assigned_offset: Int?, is_mute: Boolean, is_selected: Boolean) {
@@ -1042,7 +1080,7 @@ class ViewModelEditorState: ViewModel() {
             Pair(beat, 0)
         } else if (state.layoutInfo.visibleItemsInfo.last().index <= beat) {
             val base_leaf_width = Dimensions.LeafBaseWidth.value * this.pixel_density.value
-            Pair(beat, (0 - state.layoutInfo.viewportSize.width + (base_leaf_width * this.get_zoom_notch(beat)).toInt()))
+            Pair(beat, (0 - state.layoutInfo.viewportSize.width + (base_leaf_width * this.get_active_zoom(beat)).toInt()))
         } else {
             return
         }

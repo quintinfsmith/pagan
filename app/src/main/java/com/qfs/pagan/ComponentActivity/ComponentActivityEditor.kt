@@ -614,8 +614,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.state_model.latest_input_indicator.value = this.view_model.configuration.latest_input_indicator.value
         this.state_model.normalize_beat_widths.value = this.view_model.configuration.normalize_beat_widths.value
         this.state_model.beat_stroke_thickness.value = this.view_model.configuration.beat_stroke_thickness.value
-        println(" - - - - - - -${this.state_model.beat_stroke_thickness.value}")
-        this.state_model.update_zoom_levels()
+        if (this.state_model.normalize_beat_widths.value) {
+            this.state_model.update_global_zoom_notches()
+        } else {
+            this.state_model.update_zoom_levels()
+        }
         this.set_soundfont()
     }
 
@@ -1457,7 +1460,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                                 return@itemsIndexed
                             }
-                            val column_width = Dimensions.LeafBaseWidth * ui_facade.get_zoom_notch(x)
+                            val column_width = Dimensions.LeafBaseWidth * ui_facade.get_a/update
+                            ctive_zoom(x)
                             Column {
                                 Column(
                                     Modifier
@@ -1519,7 +1523,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                     cell,
                                                     y,
                                                     x,
-                                                    ui_facade.get_zoom_notch(x).toInt(),
+                                                    ui_facade.get_active_zoom(x).toInt(),
                                                     Modifier.weight(1F)
                                                 )
                                             }
@@ -1704,7 +1708,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 MaterialTheme.colorScheme.onTertiary
             )
         }
-        val zoom = ui_facade.get_zoom_notch(x)
+        val zoom = ui_facade.active_zoom.value
         ProvideContentColorTextStyle(foreground, Typography.BeatLabel) {
             HalfBorderBox(
                 modifier
@@ -2403,7 +2407,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         zoom_state.floatValue *= zoom
                                         if (zoom > 1F) {
                                             if (ui_facade.zoom_index.value > 0 && zoom_state.floatValue >= 1F) {
-                                                ui_facade.zoom_index.intValue -= 1
+                                                ui_facade.decrement_zoom()
                                                 zoom_state.floatValue = switch_threshold
                                                 zoom_locked.value = true
                                             } else {
@@ -2411,7 +2415,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                             }
                                         } else if (zoom < 1F) {
                                             if (zoom_state.floatValue <= switch_threshold && ui_facade.zoom_index.value < ui_facade.max_zoom_index.value) {
-                                                ui_facade.zoom_index.intValue += 1
+                                                ui_facade.increment_zoom()
                                                 zoom_state.floatValue = 1F
                                                 zoom_locked.value = true
                                             }

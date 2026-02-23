@@ -1460,8 +1460,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                                 return@itemsIndexed
                             }
-                            val column_width = Dimensions.LeafBaseWidth * ui_facade.get_a/update
-                            ctive_zoom(x)
+                            val column_width = Dimensions.LeafBaseWidth * ui_facade.get_active_zoom(x)
                             Column {
                                 Column(
                                     Modifier

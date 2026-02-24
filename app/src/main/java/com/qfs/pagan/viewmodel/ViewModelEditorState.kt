@@ -241,6 +241,7 @@ class ViewModelEditorState: ViewModel() {
     val dragging_height: Pair<MutableState<Int>, MutableState<Int>> = Pair(mutableStateOf(0), mutableStateOf(0))
     val dragging_line_map = mutableListOf<Triple<ClosedFloatingPointRange<Float>, IntRange, Boolean>>()
 
+    val queued_zoom_index = mutableIntStateOf(0) // Needed to prevent jitter on zoom
     val zoom_index = mutableIntStateOf(0)
     val active_zoom = mutableFloatStateOf(1F)
     val max_zoom_index = mutableIntStateOf(0)
@@ -280,30 +281,18 @@ class ViewModelEditorState: ViewModel() {
 
     fun increment_zoom(center: Float? = null) {
         this.queue_recenter(center) {
-            this.zoom_index.value += 1
-            this.set_normalized_zoom()
+            this.queued_zoom_index.value = this.zoom_index.value + 1
         }
     }
 
     fun decrement_zoom(center: Float? = null) {
         this.queue_recenter(center) {
-            this.zoom_index.value -= 1
-            this.set_normalized_zoom()
+            this.queued_zoom_index.value = this.zoom_index.value - 1
         }
     }
 
-    fun queue_recenter(beat: Int, position: Rational, callback: () -> Unit) {
-        val base_leaf_width = Dimensions.LeafBaseWidth.value * this.pixel_density.value
-        val abs_beat_offset = (Array(beat) { this.get_active_zoom(it) }.sum() + (position.toFloat() * this.get_active_zoom(beat))) * base_leaf_width
-        val scroll_offset = (Array(this.scroll_state_x.value.firstVisibleItemIndex) { this.get_active_zoom(it) }.sum() * base_leaf_width) - this.scroll_state_x.value.firstVisibleItemScrollOffset
-        callback()
-
-        // Set the new center after the callback to prevent recentering before the the layout has been redrawn
-        this.scroll_x_center.value = Triple(beat, position.toFloat(), abs_beat_offset - scroll_offset)
-    }
-
     // TODO: Account for beat stroke
-    fun queue_recenter(initial_center: Float? = null, callback: () -> Unit) {
+    private fun queue_recenter(initial_center: Float? = null, callback: () -> Unit) {
         if (initial_center == null) return callback()
 
         var targeted_x = this.scroll_state_x.value.firstVisibleItemIndex
@@ -316,15 +305,20 @@ class ViewModelEditorState: ViewModel() {
         }
 
         callback()
+
         // Set the new center after the callback to prevent recentering before the the layout has been redrawn
         this.scroll_x_center.value = Triple(targeted_x, working_offset / working_chunk_size, initial_center)
     }
 
     fun recenter() {
-        val (beat, pivot, center) = this.scroll_x_center.value ?: return
+        val scroll_triple = this.scroll_x_center.value ?: return
+        this.scroll_x_center.value = null
+        val (beat, pivot, center) = scroll_triple
+        this.zoom_index.value = this.queued_zoom_index.value
+        this.set_normalized_zoom()
+
         val pivot_px = this.get_active_zoom(beat) * (Dimensions.LeafBaseWidth.value * this.pixel_density.value) * pivot
         this.scroll_state_x.value.requestScrollToItem(beat, 0 - (center - pivot_px).roundToInt())
-        this.scroll_x_center.value = null
     }
 
     fun is_dragging_channel(): Boolean {

@@ -1093,60 +1093,21 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
     fun insert_leaf(repeat: Int? = null) {
         val opus_manager = this.get_opus_manager()
         repeat?.let {
-            val vm_state = opus_manager.vm_state
             val position = opus_manager.cursor.get_position().toMutableList()
             val cursor = opus_manager.cursor
-            val rational_position = opus_manager.get_tree(cursor.get_beatkey()).get_rational_position(cursor.position)
-            vm_state.queue_recenter(vm_state.get_active_zoom(cursor.beat)) {
-                if (position.isEmpty()) {
-                    when (cursor.ctl_level) {
-                        CtlLineLevel.Global -> opus_manager.controller_global_split_tree(
-                            cursor.ctl_type!!,
-                            cursor.beat,
-                            position,
-                            2
-                        )
-
-                        CtlLineLevel.Channel -> opus_manager.controller_channel_split_tree(
-                            cursor.ctl_type!!,
-                            cursor.channel,
-                            cursor.beat,
-                            position,
-                            2
-                        )
-
-                        CtlLineLevel.Line -> opus_manager.controller_line_split_tree(
-                            cursor.ctl_type!!,
-                            cursor.get_beatkey(),
-                            position,
-                            2
-                        )
-
-                        null -> opus_manager.split_tree_at_cursor(it + 1)
-                    }
-                } else {
-                    when (cursor.ctl_level) {
-                        CtlLineLevel.Global -> opus_manager.controller_global_insert_after(
-                            cursor.ctl_type!!,
-                            cursor.beat,
-                            position
-                        )
-
-                        CtlLineLevel.Channel -> opus_manager.controller_channel_insert_after(
-                            cursor.ctl_type!!,
-                            cursor.channel,
-                            cursor.beat,
-                            position
-                        )
-
-                        CtlLineLevel.Line -> opus_manager.controller_line_insert_after(
-                            cursor.ctl_type!!,
-                            cursor.get_beatkey(),
-                            position
-                        )
-
-                        null -> opus_manager.insert_after_cursor(it)
-                    }
+            if (position.isEmpty()) {
+                when (cursor.ctl_level) {
+                    CtlLineLevel.Global -> opus_manager.controller_global_split_tree(cursor.ctl_type!!, cursor.beat, position, 2)
+                    CtlLineLevel.Channel -> opus_manager.controller_channel_split_tree(cursor.ctl_type!!, cursor.channel, cursor.beat, position, 2)
+                    CtlLineLevel.Line -> opus_manager.controller_line_split_tree(cursor.ctl_type!!, cursor.get_beatkey(), position, 2)
+                    null -> opus_manager.split_tree_at_cursor(it + 1)
+                }
+            } else {
+                when (cursor.ctl_level) {
+                    CtlLineLevel.Global -> opus_manager.controller_global_insert_after(cursor.ctl_type!!, cursor.beat, position)
+                    CtlLineLevel.Channel -> opus_manager.controller_channel_insert_after(cursor.ctl_type!!, cursor.channel, cursor.beat, position)
+                    CtlLineLevel.Line -> opus_manager.controller_line_insert_after(cursor.ctl_type!!, cursor.get_beatkey(), position)
+                    null -> opus_manager.insert_after_cursor(it)
                 }
             }
             return

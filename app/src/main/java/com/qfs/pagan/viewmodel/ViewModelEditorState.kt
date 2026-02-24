@@ -37,6 +37,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 class ViewModelEditorState: ViewModel() {
     enum class SelectionLevel {
@@ -248,7 +249,7 @@ class ViewModelEditorState: ViewModel() {
     val zoom_notches = mutableListOf<Float>(1F) // Used only when beat widths are normalized
     val normalize_beat_widths = mutableStateOf<Boolean>(false)
     val beat_stroke_thickness = mutableStateOf<Dp>(0.dp)
-    val scroll_x_center = mutableStateOf<Float?>(null)
+    val scroll_x_center = mutableStateOf<Triple<Int, Float, Float>?>(null)
 
     fun get_active_zoom(x: Int): Float {
         return if (this.normalize_beat_widths.value) {
@@ -291,32 +292,38 @@ class ViewModelEditorState: ViewModel() {
         }
     }
 
+    fun queue_recenter(beat: Int, position: Rational, callback: () -> Unit) {
+        val base_leaf_width = Dimensions.LeafBaseWidth.value * this.pixel_density.value
+        val abs_beat_offset = (Array(beat) { this.get_active_zoom(it) }.sum() + (position.toFloat() * this.get_active_zoom(beat))) * base_leaf_width
+        val scroll_offset = (Array(this.scroll_state_x.value.firstVisibleItemIndex) { this.get_active_zoom(it) }.sum() * base_leaf_width) - this.scroll_state_x.value.firstVisibleItemScrollOffset
+        callback()
+
+        // Set the new center after the callback to prevent recentering before the the layout has been redrawn
+        this.scroll_x_center.value = Triple(beat, position.toFloat(), abs_beat_offset - scroll_offset)
+    }
+
     // TODO: Account for beat stroke
     fun queue_recenter(initial_center: Float? = null, callback: () -> Unit) {
         if (initial_center == null) return callback()
 
-        val first_visible_abs_offset = Array(this.scroll_state_x.value.firstVisibleItemIndex) { x ->
-            this.get_active_zoom(x) * (Dimensions.LeafBaseWidth.value * this.pixel_density.value)
-        }.sum()
-
         var targeted_x = this.scroll_state_x.value.firstVisibleItemIndex
-        var working_offset = initial_center
-        println("Start At $targeted_x  ($initial_center)- - - - - - ")
-        while (working_offset > 0F) {
-            val current_width = this.get_active_zoom(targeted_x)
-            println("$targeted_x: $current_width ($working_offset)")
-            working_offset -= current_width * (Dimensions.LeafBaseWidth.value * this.pixel_density.value)
-            targeted_x += 1
+        var working_offset = initial_center + this.scroll_state_x.value.firstVisibleItemScrollOffset
+
+        var working_chunk_size = this.get_active_zoom(targeted_x) * (Dimensions.LeafBaseWidth.value * this.pixel_density.value)
+        while (working_offset - working_chunk_size > 0F) {
+            working_offset -= working_chunk_size
+            working_chunk_size = this.get_active_zoom(++targeted_x) * (Dimensions.LeafBaseWidth.value * this.pixel_density.value)
         }
-        println("TARGET $targeted_x - - - - - - ")
+
         callback()
         // Set the new center after the callback to prevent recentering before the the layout has been redrawn
-        //this.scroll_x_center.value = initial_abs_offset + initial_center
+        this.scroll_x_center.value = Triple(targeted_x, working_offset / working_chunk_size, initial_center)
     }
 
     fun recenter() {
-        val new_offset = this.scroll_x_center.value ?: return
-        this.scroll_state_x.value.requestScrollToItem(0, new_offset.toInt())
+        val (beat, pivot, center) = this.scroll_x_center.value ?: return
+        val pivot_px = this.get_active_zoom(beat) * (Dimensions.LeafBaseWidth.value * this.pixel_density.value) * pivot
+        this.scroll_state_x.value.requestScrollToItem(beat, 0 - (center - pivot_px).roundToInt())
         this.scroll_x_center.value = null
     }
 
@@ -478,7 +485,7 @@ class ViewModelEditorState: ViewModel() {
 
     fun update_global_zoom_notches() {
         val current_index = this.zoom_index.intValue
-        val current_value = this.active_zoom.value
+        val current_value = this.active_zoom.floatValue
 
         val pegs = mutableSetOf(1F)
         for (column in this.column_data)  {

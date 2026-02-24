@@ -1546,9 +1546,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     }
                 }
                 LaunchedEffect(ui_facade.scroll_x_center.value) {
-                    scope.launch {
-                        ui_facade.recenter()
-                    }
+                    ui_facade.recenter()
                 }
             }
         }
@@ -2411,7 +2409,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         zoom_state.floatValue *= zoom
                                         if (zoom > 1F) {
                                             if (ui_facade.zoom_index.value > 0 && zoom_state.floatValue >= 1F) {
-                                                ui_facade.decrement_zoom(larger.position.x + (current_diff / 2F) - Dimensions.LineLabelWidth.toPx())
+                                                ui_facade.decrement_zoom(lesser.position.x + (current_diff / 2F) - Dimensions.LineLabelWidth.toPx())
                                                 zoom_state.floatValue = switch_threshold
                                                 zoom_locked.value = true
                                             } else {
@@ -2419,14 +2417,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                             }
                                         } else if (zoom < 1F) {
                                             if (zoom_state.floatValue <= switch_threshold && ui_facade.zoom_index.value < ui_facade.max_zoom_index.value) {
-                                                ui_facade.increment_zoom(larger.position.x + (current_diff / 2F) - Dimensions.LineLabelWidth.toPx())
+                                                ui_facade.increment_zoom(lesser.position.x + (current_diff / 2F) - Dimensions.LineLabelWidth.toPx())
                                                 zoom_state.floatValue = 1F
                                                 zoom_locked.value = true
                                             }
                                         }
-
-
-
                                     }
                                 }
                             } else if (event.changes.size == 1 && consume_events.value) {

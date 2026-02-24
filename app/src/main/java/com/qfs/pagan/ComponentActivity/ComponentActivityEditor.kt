@@ -1429,124 +1429,138 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     }
                 }
 
-                // Key to prevent incongruence between column_width size and content
-                key(ui_facade.beat_count.value) {
-                    LazyRow(
-                        modifier = Modifier.testTag(TestTag.MainRow),
-                        state = scroll_state_h,
-                        contentPadding = PaddingValues(end = toDp(this@ComponentActivityEditor.state_model.table_side_padding.value)),
-                        overscrollEffect = null
-                    ) {
-                        itemsIndexed(column_widths + listOf(1)) { x, width ->
-                            if (x == column_widths.size) {
-                                ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onSurfaceVariant) {
-                                    Box(
-                                        modifier = Modifier
-                                            .testTag(TestTag.OuterInsertBeat)
-                                            .width(Dimensions.LeafBaseWidth)
-                                            .combinedClickable(
-                                                onClick = { dispatcher.append_beats() },
-                                                onLongClick = { dispatcher.append_beats() }
-                                            ),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            modifier = Modifier.padding(Dimensions.ExtraTableIconsPadding),
-                                            painter = painterResource(R.drawable.icon_add),
-                                            contentDescription = stringResource(R.string.cd_insert_beat)
-                                        )
-                                    }
-                                }
-
-                                return@itemsIndexed
-                            }
-                            val column_width = Dimensions.LeafBaseWidth * ui_facade.get_active_zoom(x)
-                            Column {
-                                Column(
-                                    Modifier
-                                        .width(column_width + if (x == 0) { 0.dp } else { ui_facade.beat_stroke_thickness.value })
-                                        .height(line_height),
-                                ) {
-                                    Row(Modifier.weight(1F)) {
-                                        if (x > 0 && ui_facade.beat_stroke_thickness.value > 0.dp) {
-                                            TableLine(
-                                                MaterialTheme.colorScheme.onBackground,
-                                                width = ui_facade.beat_stroke_thickness.value
+                ScaleBox(Modifier, ui_facade) {
+                    // Key to prevent incongruence between column_width size and content
+                    key(ui_facade.beat_count.value) {
+                        LazyRow(
+                            modifier = Modifier.testTag(TestTag.MainRow),
+                            state = scroll_state_h,
+                            contentPadding = PaddingValues(end = toDp(this@ComponentActivityEditor.state_model.table_side_padding.value)),
+                            overscrollEffect = null
+                        ) {
+                            itemsIndexed(column_widths + listOf(1)) { x, width ->
+                                if (x == column_widths.size) {
+                                    ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onSurfaceVariant) {
+                                        Box(
+                                            modifier = Modifier
+                                                .testTag(TestTag.OuterInsertBeat)
+                                                .width(Dimensions.LeafBaseWidth)
+                                                .combinedClickable(
+                                                    onClick = { dispatcher.append_beats() },
+                                                    onLongClick = { dispatcher.append_beats() }
+                                                ),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                modifier = Modifier.padding(Dimensions.ExtraTableIconsPadding),
+                                                painter = painterResource(R.drawable.icon_add),
+                                                contentDescription = stringResource(R.string.cd_insert_beat)
                                             )
                                         }
-                                        BeatLabelView(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .weight(1F),
-                                            x = x,
-                                            ui_facade = ui_facade,
-                                            dispatcher = dispatcher,
-                                            column_info = ui_facade.column_data[x],
-                                            column_width = (column_width)
+                                    }
+
+                                    return@itemsIndexed
+                                }
+                                val column_width = Dimensions.LeafBaseWidth * ui_facade.get_active_zoom(x)
+                                Column {
+                                    Column(
+                                        Modifier
+                                            .width(
+                                                column_width + if (x == 0) {
+                                                    0.dp
+                                                } else {
+                                                    ui_facade.beat_stroke_thickness.value
+                                                }
+                                            )
+                                            .height(line_height),
+                                    ) {
+                                        Row(Modifier.weight(1F)) {
+                                            if (x > 0 && ui_facade.beat_stroke_thickness.value > 0.dp) {
+                                                TableLine(
+                                                    MaterialTheme.colorScheme.onBackground,
+                                                    width = ui_facade.beat_stroke_thickness.value
+                                                )
+                                            }
+                                            BeatLabelView(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .weight(1F),
+                                                x = x,
+                                                ui_facade = ui_facade,
+                                                dispatcher = dispatcher,
+                                                column_info = ui_facade.column_data[x],
+                                                column_width = (column_width)
+                                            )
+                                        }
+                                        TableLine(
+                                            MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
-                                    TableLine(
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
 
-                                Column(
-                                    Modifier
-                                        .verticalScroll(scroll_state_v, overscrollEffect = null)
-                                        .width(column_width + if (x == 0) { 0.dp } else { ui_facade.beat_stroke_thickness.value })
-                                ) {
-                                    for (y in 0 until ui_facade.line_count.value) {
-                                        val cell = ui_facade.cell_map[y][x]
+                                    Column(
+                                        Modifier
+                                            .verticalScroll(scroll_state_v, overscrollEffect = null)
+                                            .width(
+                                                column_width + if (x == 0) {
+                                                    0.dp
+                                                } else {
+                                                    ui_facade.beat_stroke_thickness.value
+                                                }
+                                            )
+                                    ) {
+                                        for (y in 0 until ui_facade.line_count.value) {
+                                            val cell = ui_facade.cell_map[y][x]
 
-                                        Column(
-                                            Modifier
-                                                .draggable_line(y, dragging_to_y, is_after)
-                                                .height(
-                                                    if (ui_facade.line_data[y].ctl_type.value != null) ctl_line_height
-                                                    else line_height
-                                                )
-                                        ) {
-                                            if (ui_facade.draw_top_line(y)) {
-                                                TableLine(MaterialTheme.colorScheme.onSurfaceVariant)
-                                            }
-                                            Row(Modifier.weight(1F)) {
-                                                if (x > 0 && ui_facade.beat_stroke_thickness.value > 0.dp) {
-                                                    TableLine(
-                                                        MaterialTheme.colorScheme.onBackground,
-                                                        width = ui_facade.beat_stroke_thickness.value
+                                            Column(
+                                                Modifier
+                                                    .draggable_line(y, dragging_to_y, is_after)
+                                                    .height(
+                                                        if (ui_facade.line_data[y].ctl_type.value != null) ctl_line_height
+                                                        else line_height
+                                                    )
+                                            ) {
+                                                if (ui_facade.draw_top_line(y)) {
+                                                    TableLine(MaterialTheme.colorScheme.onSurfaceVariant)
+                                                }
+                                                Row(Modifier.weight(1F)) {
+                                                    if (x > 0 && ui_facade.beat_stroke_thickness.value > 0.dp) {
+                                                        TableLine(
+                                                            MaterialTheme.colorScheme.onBackground,
+                                                            width = ui_facade.beat_stroke_thickness.value
+                                                        )
+                                                    }
+                                                    CellView(
+                                                        ui_facade,
+                                                        dispatcher,
+                                                        cell,
+                                                        y,
+                                                        x,
+                                                        ui_facade.get_active_zoom(x).toInt(),
+                                                        Modifier.weight(1F)
                                                     )
                                                 }
-                                                CellView(
-                                                    ui_facade,
-                                                    dispatcher,
-                                                    cell,
-                                                    y,
-                                                    x,
-                                                    ui_facade.get_active_zoom(x).toInt(),
-                                                    Modifier.weight(1F)
+                                                TableLine(MaterialTheme.colorScheme.onBackground)
+                                            }
+
+                                            if ((y == ui_facade.line_data.size - 1 || ui_facade.line_data[y].channel.value != ui_facade.line_data[y + 1].channel.value) && ui_facade.line_data[y].channel.value != null) {
+                                                Spacer(
+                                                    Modifier
+                                                        .draggable_line(y, dragging_to_y, is_after, true)
+                                                        .fillMaxWidth()
+                                                        .height(channel_gap_height)
+                                                        .background(MaterialTheme.colorScheme.onBackground)
                                                 )
                                             }
-                                            TableLine(MaterialTheme.colorScheme.onBackground)
                                         }
-
-                                        if ((y == ui_facade.line_data.size - 1 || ui_facade.line_data[y].channel.value != ui_facade.line_data[y + 1].channel.value) && ui_facade.line_data[y].channel.value != null) {
-                                            Spacer(
-                                                Modifier
-                                                    .draggable_line(y, dragging_to_y, is_after, true)
-                                                    .fillMaxWidth()
-                                                    .height(channel_gap_height)
-                                                    .background(MaterialTheme.colorScheme.onBackground)
-                                            )
-                                        }
+                                        Spacer(Modifier.height(line_height + toDp(this@ComponentActivityEditor.state_model.table_bottom_padding.value)))
                                     }
-                                    Spacer(Modifier.height(line_height + toDp(this@ComponentActivityEditor.state_model.table_bottom_padding.value)))
                                 }
                             }
                         }
                     }
-                }
-                LaunchedEffect(ui_facade.scroll_x_center.value) {
-                    ui_facade.recenter()
+                    LaunchedEffect(ui_facade.scroll_x_center.value) {
+                        ui_facade.recenter()
+                    }
                 }
             }
         }
@@ -2186,7 +2200,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
             return
         }
 
-        ScaleBox(modifier, ui_facade) {
+        Box(
+            modifier,
+            contentAlignment = Alignment.BottomCenter,
+        ) {
             Box(Modifier.fillMaxSize()) {
                 MainTable(Modifier, ui_facade, action_interface,  ui_facade.beat_count, LayoutSize.LargePortrait)
             }
@@ -2247,7 +2264,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
         val layout = this.view_model.get_layout_size()
-        ScaleBox(modifier, ui_facade) {
+        Box(
+            modifier,
+            contentAlignment = Alignment.BottomCenter,
+        ) {
             Box(Modifier.fillMaxSize()) {
                 MainTable(Modifier, ui_facade, action_interface,  ui_facade.beat_count, layout)
             }
@@ -2297,7 +2317,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
         val layout = this.view_model.get_layout_size()
-        ScaleBox(modifier, ui_facade) {
+        Box(
+            modifier,
+            contentAlignment = Alignment.BottomCenter,
+        ) {
             MainTable(Modifier.fillMaxSize(), ui_facade, action_interface, ui_facade.beat_count, layout)
             Row(
                 Modifier.fillMaxSize(),
@@ -2409,7 +2432,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         zoom_state.floatValue *= zoom
                                         if (zoom > 1F) {
                                             if (ui_facade.zoom_index.value > 0 && zoom_state.floatValue >= 1F) {
-                                                ui_facade.decrement_zoom(lesser.position.x + (current_diff / 2F) - Dimensions.LineLabelWidth.toPx())
+                                                ui_facade.decrement_zoom(lesser.position.x + (current_diff / 2F))
                                                 zoom_state.floatValue = switch_threshold
                                                 zoom_locked.value = true
                                             } else {
@@ -2417,7 +2440,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                             }
                                         } else if (zoom < 1F) {
                                             if (zoom_state.floatValue <= switch_threshold && ui_facade.zoom_index.value < ui_facade.max_zoom_index.value) {
-                                                ui_facade.increment_zoom(lesser.position.x + (current_diff / 2F) - Dimensions.LineLabelWidth.toPx())
+                                                ui_facade.increment_zoom(lesser.position.x + (current_diff / 2F))
                                                 zoom_state.floatValue = 1F
                                                 zoom_locked.value = true
                                             }
@@ -2435,7 +2458,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         }
                     }
                 },
-            contentAlignment = Alignment.BottomCenter,
             content = content
         )
     }

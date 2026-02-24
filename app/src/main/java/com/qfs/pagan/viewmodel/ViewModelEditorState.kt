@@ -314,11 +314,13 @@ class ViewModelEditorState: ViewModel() {
         val scroll_triple = this.scroll_x_center.value ?: return
         this.scroll_x_center.value = null
         val (beat, pivot, center) = scroll_triple
+
         this.zoom_index.value = this.queued_zoom_index.value
         this.set_normalized_zoom()
-
-        val pivot_px = this.get_active_zoom(beat) * (Dimensions.LeafBaseWidth.value * this.pixel_density.value) * pivot
-        this.scroll_state_x.value.requestScrollToItem(beat, 0 - (center - pivot_px).roundToInt())
+        val pivot_px = (Dimensions.LeafBaseWidth.value * this.pixel_density.value) * this.get_active_zoom(beat) * pivot
+        println(">> ${center / this.scroll_state_x.value.layoutInfo.viewportSize.width}")
+        println("$beat, $pivot_px($pivot), $center, ${Dimensions.LeafBaseWidth.value * this.pixel_density.value}")
+        this.scroll_state_x.value.requestScrollToItem(beat, (pivot_px - center).roundToInt())
     }
 
     fun is_dragging_channel(): Boolean {

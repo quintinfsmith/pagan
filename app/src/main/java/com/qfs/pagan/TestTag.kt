@@ -65,7 +65,8 @@ enum class TestTag {
     VolumeSlider,
     VolumeButton,
     LineLabel,
-    Leaf
+    Leaf,
+    ZoomSlider
 }
 
 fun test_tag_to_string(tag: TestTag, vararg args: Any?): String {

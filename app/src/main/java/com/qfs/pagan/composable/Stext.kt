@@ -69,7 +69,7 @@ fun SettingsColumn(
 ) {
     SettingsBoxWrapper(modifier) {
         Column(
-            modifier.padding(contentPadding),
+            Modifier.padding(contentPadding),
             horizontalAlignment = horizontalAlignment,
             verticalArrangement = verticalArrangement,
             content = { content() }
@@ -84,9 +84,9 @@ fun SettingsBox(
     contentAlignment: Alignment = Alignment.TopCenter,
     content: @Composable BoxScope.() -> Unit
 ) {
-    SettingsBoxWrapper {
+    SettingsBoxWrapper(modifier) {
         Box(
-            modifier.padding(contentPadding),
+            Modifier.padding(contentPadding),
             contentAlignment = contentAlignment,
             content = { content() }
         )
@@ -101,9 +101,9 @@ fun SettingsRow(
     verticalAlignment: Alignment.Vertical = Alignment.CenterVertically,
     content: @Composable RowScope.() -> Unit
 ) {
-    SettingsBoxWrapper {
+    SettingsBoxWrapper(modifier) {
         Row(
-            modifier.padding(contentPadding),
+            Modifier.padding(contentPadding),
             horizontalArrangement = horizontalArrangement,
             verticalAlignment = verticalAlignment,
             content = { content() }

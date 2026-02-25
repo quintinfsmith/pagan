@@ -1535,6 +1535,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             //
 
             this.vm_state.scroll_to_leaf(beat_key.beat, offset, width)
+            this.vm_state.set_zoom(beat_key.beat, offset, width.denominator.toFloat())
 
             current_tree.event?.let { event ->
                 this.vm_state.relative_input_mode.value = when (event) {

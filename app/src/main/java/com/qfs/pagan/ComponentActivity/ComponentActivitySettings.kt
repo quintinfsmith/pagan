@@ -677,7 +677,11 @@ class ComponentActivitySettings: PaganComponentActivity() {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(R.string.label_settings_playback_quality, style = Typography.Settings.Label)
+            Text(
+                R.string.label_settings_playback_quality,
+                modifier = Modifier.weight(1F),
+                style = Typography.Settings.Label
+            )
 
             Box(contentAlignment = Alignment.Center) {
                 Button(
@@ -955,13 +959,13 @@ class ComponentActivitySettings: PaganComponentActivity() {
     @Composable
     fun SettingsSectionB(modifier: Modifier = Modifier) {
         Column {
-            PlaybackRateMenu(Modifier.fillMaxWidth())
-            MenuPadder()
             OptionNormalizeBeatWidth(Modifier.fillMaxWidth())
             MenuPadder()
             OptionStrokeBeat(Modifier.fillMaxWidth())
             MenuPadder()
             OptionNoteInputMemory(Modifier.fillMaxWidth())
+            MenuPadder()
+            PlaybackRateMenu(Modifier.fillMaxWidth())
             MenuPadder()
             OptionClipNote(Modifier.fillMaxWidth())
             MenuPadder()

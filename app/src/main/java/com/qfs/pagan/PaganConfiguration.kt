@@ -36,7 +36,6 @@ class PaganConfiguration(
     night_mode: Int = AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM,
     indent_json: Boolean = false,
     latest_input_indicator: Boolean = true,
-    zoom_sensitivity: Float = Values.Defaults.ZoomSensitivity,
     normalize_beat_widths: Boolean = false,
     beat_stroke_thickness: Dp = 0.dp
 ) {
@@ -52,7 +51,6 @@ class PaganConfiguration(
     val night_mode: MutableState<Int> = mutableStateOf(night_mode)
     val indent_json: MutableState<Boolean> = mutableStateOf(indent_json)
     val latest_input_indicator: MutableState<Boolean> = mutableStateOf(latest_input_indicator)
-    val zoom_sensitivity: MutableState<Float> = mutableStateOf(zoom_sensitivity)
     val normalize_beat_widths: MutableState<Boolean> = mutableStateOf(normalize_beat_widths)
     val beat_stroke_thickness: MutableState<Dp> = mutableStateOf(beat_stroke_thickness)
 
@@ -77,7 +75,6 @@ class PaganConfiguration(
                 night_mode = content.get_int("night_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM),
                 indent_json = content.get_boolean("indent_json", false),
                 latest_input_indicator = content.get_boolean("latest_input_indicator", true),
-                zoom_sensitivity = content.get_float("zoom_sensitivity", Values.Defaults.ZoomSensitivity),
                 normalize_beat_widths = content.get_boolean("normalize_beat_widths", false),
                 beat_stroke_thickness = content.get_floatn("beat_stroke_thickness")?.dp ?: 0.dp
             )
@@ -109,7 +106,6 @@ class PaganConfiguration(
         this.night_mode.value = config.night_mode.value
         this.indent_json.value = config.indent_json.value
         this.latest_input_indicator.value = config.latest_input_indicator.value
-        this.zoom_sensitivity.value = config.zoom_sensitivity.value
         this.normalize_beat_widths.value = config.normalize_beat_widths.value
         this.beat_stroke_thickness.value = config.beat_stroke_thickness.value
     }
@@ -132,7 +128,6 @@ class PaganConfiguration(
         output["night_mode"] = this.night_mode.value
         output["indent_json"] = this.indent_json.value
         output["latest_input_indicator"] = this.latest_input_indicator.value
-        output["zoom_sensitivity"] = this.zoom_sensitivity.value
         output["normalize_beat_widths"] = this.normalize_beat_widths.value
         output["beat_stroke_thickness"] = this.beat_stroke_thickness.value.value
         // output["channel_colors"] = JSONList(*Array(this.channel_colors.size) {

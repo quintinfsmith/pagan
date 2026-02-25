@@ -245,7 +245,6 @@ class ViewModelEditorState: ViewModel() {
     val zoom_index = mutableIntStateOf(0)
     val active_zoom = mutableFloatStateOf(1F)
     val max_zoom_index = mutableIntStateOf(0)
-    val zoom_bar_visible = mutableStateOf(false)
     var zoom_sensitivity = Values.Defaults.ZoomSensitivity
     val zoom_notches = mutableListOf<Float>(1F) // Used only when beat widths are normalized
     val normalize_beat_widths = mutableStateOf<Boolean>(false)
@@ -277,7 +276,19 @@ class ViewModelEditorState: ViewModel() {
             pegs[i]
 
         }
-        println("ZOOM = ${this.active_zoom.value}")
+    }
+
+    fun set_zoom(beat: Int, position: Rational, new_zoom: Float) {
+        if (new_zoom <= this.active_zoom.value) return
+        val new_zoom_index = this.zoom_notches.indexOf(new_zoom)
+        val base_leaf_width = this.pixel_density.value * Dimensions.LeafBaseWidth.value
+        val beat_stroke_width = this.pixel_density.value * this.beat_stroke_thickness.value.value
+        val target_position = ((Array(beat) { this.get_active_zoom(it) }.sum() + (get_active_zoom(beat) * position.toFloat())) * base_leaf_width) + (beat_stroke_width * beat.toFloat())
+        val first_visible_beat = this.scroll_state_x.value.firstVisibleItemIndex
+        val first_visible_position = (Array(first_visible_beat) { this.get_active_zoom(it) }.sum() * base_leaf_width) + this.scroll_state_x.value.firstVisibleItemScrollOffset + (beat_stroke_width * first_visible_beat.toFloat())
+        this.queue_recenter(target_position - first_visible_position) {
+            this.queued_zoom_index.value = new_zoom_index
+        }
     }
 
     fun increment_zoom(center: Float? = null) {
@@ -292,7 +303,7 @@ class ViewModelEditorState: ViewModel() {
         }
     }
 
-    private fun queue_recenter(initial_center: Float? = null, callback: () -> Unit) {
+    fun queue_recenter(initial_center: Float? = null, callback: () -> Unit) {
         if (initial_center == null) return callback()
 
         var targeted_x = this.scroll_state_x.value.firstVisibleItemIndex
@@ -425,7 +436,6 @@ class ViewModelEditorState: ViewModel() {
         this.cell_map.clear()
         this.channel_data.clear()
         this.zoom_index.intValue = 0
-        this.zoom_bar_visible.value = false
         this.zoom_notches.clear()
 
         this.coroutine_scope.value.launch {

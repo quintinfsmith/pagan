@@ -359,4 +359,5 @@ object Dimensions {
 
     val Unpadded = PaddingValues(0.dp)
 
+    val ZoomBarTitleHeight = 32.dp
 }

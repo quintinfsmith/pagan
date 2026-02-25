@@ -26,6 +26,8 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -71,8 +73,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -85,6 +89,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -117,7 +122,10 @@ import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.DrawerCard
 import com.qfs.pagan.composable.MediumSpacer
+import com.qfs.pagan.composable.SettingsBox
+import com.qfs.pagan.composable.SettingsColumn
 import com.qfs.pagan.composable.UnSortableMenu
+import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.ConfigDrawerBottomButton
 import com.qfs.pagan.composable.button.ConfigDrawerChannelLeftButton
 import com.qfs.pagan.composable.button.ConfigDrawerChannelRightButton
@@ -147,6 +155,7 @@ import com.qfs.pagan.composable.table.ShortcutView
 import com.qfs.pagan.composable.table.TableLine
 import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.DropdownMenuItem
+import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
@@ -156,6 +165,7 @@ import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Shadows
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorController
@@ -2388,6 +2398,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val zoom_state = remember { mutableStateOf(0.dp) }
         val zoom_unit = Dimensions.LeafBaseWidth * 2
         val consume_events = remember { mutableStateOf(false) }
+        val zoom_bar_visible = remember { mutableStateOf(false) }
 
         Box(
             modifier
@@ -2400,7 +2411,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             if (event.changes.size < 2) {
                                 zoom_state.value = 0.dp
                             }
-                            ui_facade.zoom_bar_visible.value = event.changes.size >= 2
+                            zoom_bar_visible.value = event.changes.size >= 2
 
                             if (event.changes.size == 2) {
                                 consume_events.value = true
@@ -2445,7 +2456,43 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         }
                     }
                 },
-            content = content
+            contentAlignment = Alignment.TopCenter,
+            content = {
+                content()
+                AnimatedVisibility(
+                    zoom_bar_visible.value,
+                    enter = fadeIn(),
+                    exit = fadeOut()
+                ) {
+                    SettingsColumn(
+                        modifier = Modifier.dropShadow(
+                            Shapes.SettingsBox,
+                            Shadows.TopBar
+                        )
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                modifier = Modifier.height(Dimensions.ZoomBarTitleHeight),
+                                painter = painterResource(R.drawable.icon_zoom),
+                                contentDescription = null
+                            )
+                            Spacer(Modifier.width(Dimensions.SettingsBoxPadding))
+                            Text(
+                                "x${ui_facade.get_active_zoom().toInt()} (${ui_facade.zoom_index.value} / ${ui_facade.max_zoom_index.value})",
+                                style = Typography.ZoomBarTitle
+                            )
+                        }
+                        Spacer(Modifier.height(Dimensions.SettingsBoxPadding))
+                        LinearProgressIndicator(
+                            progress = { (ui_facade.zoom_index.value.toFloat() / ui_facade.max_zoom_index.value.toFloat()) },
+                            modifier = Modifier.testTag(TestTag.ZoomSlider)
+                        )
+                    }
+                }
+            }
         )
     }
 

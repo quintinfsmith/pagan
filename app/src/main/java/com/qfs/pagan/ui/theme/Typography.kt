@@ -132,4 +132,10 @@ object Typography {
         fontSize = 12.sp,
         lineHeight = 12.sp
     )
+
+    val ZoomBarTitle = TextStyle(
+        fontFamily = Fonts.FiraMono,
+        fontSize = 14.sp,
+        lineHeight = 14.sp
+    )
 }

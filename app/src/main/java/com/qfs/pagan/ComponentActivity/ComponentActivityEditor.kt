@@ -1745,7 +1745,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     if (state_model.active_wide_beat.value == x && LocalContext.current.toPx(Dimensions.LeafBaseWidth * zoom) > ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width * 1.5) {
                         LinearProgressIndicator(
                             modifier = Modifier
-                                .width(ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width.dp / 5)
+                                .width(toDp(ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width.toFloat() / 3F))
                                 .graphicsLayer {
                                     val width_px = column_width.toPx()
                                     val scroll_offset =

@@ -1170,7 +1170,7 @@ class ViewModelEditorState: ViewModel() {
             0
         }
 
-        if (first_visible_beat != last_visible_beat && beat in first_visible_beat until last_visible_beat) {
+        if (first_visible_beat != last_visible_beat && beat in first_visible_beat + 1 until last_visible_beat) {
             return
         } else if (first_visible_beat > beat || first_visible_beat == beat && first_visible_offset > offset_px.toInt()) {
             CoroutineScope(Dispatchers.Default).launch {

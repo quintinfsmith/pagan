@@ -225,6 +225,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             this.get_tree(beat_key, position)
         )
         this.vm_state.refresh_cursor()
+        this.vm_state.update_zoom_notches(beat_key.beat)
+        this.vm_state.update_global_zoom_notches()
     }
 
     // Global

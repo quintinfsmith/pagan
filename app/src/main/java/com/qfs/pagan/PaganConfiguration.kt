@@ -37,7 +37,6 @@ class PaganConfiguration(
     indent_json: Boolean = false,
     latest_input_indicator: Boolean = true,
     zoom_sensitivity: Float = Values.Defaults.ZoomSensitivity,
-    zoom_mode_single: Boolean = true,
     normalize_beat_widths: Boolean = false,
     beat_stroke_thickness: Dp = 0.dp
 ) {
@@ -54,7 +53,6 @@ class PaganConfiguration(
     val indent_json: MutableState<Boolean> = mutableStateOf(indent_json)
     val latest_input_indicator: MutableState<Boolean> = mutableStateOf(latest_input_indicator)
     val zoom_sensitivity: MutableState<Float> = mutableStateOf(zoom_sensitivity)
-    val zoom_mode_single: MutableState<Boolean> = mutableStateOf(zoom_mode_single)
     val normalize_beat_widths: MutableState<Boolean> = mutableStateOf(normalize_beat_widths)
     val beat_stroke_thickness: MutableState<Dp> = mutableStateOf(beat_stroke_thickness)
 
@@ -80,7 +78,6 @@ class PaganConfiguration(
                 indent_json = content.get_boolean("indent_json", false),
                 latest_input_indicator = content.get_boolean("latest_input_indicator", true),
                 zoom_sensitivity = content.get_float("zoom_sensitivity", Values.Defaults.ZoomSensitivity),
-                zoom_mode_single = content.get_boolean("zoom_mode_single", true),
                 normalize_beat_widths = content.get_boolean("normalize_beat_widths", false),
                 beat_stroke_thickness = content.get_floatn("beat_stroke_thickness")?.dp ?: 0.dp
             )
@@ -113,7 +110,6 @@ class PaganConfiguration(
         this.indent_json.value = config.indent_json.value
         this.latest_input_indicator.value = config.latest_input_indicator.value
         this.zoom_sensitivity.value = config.zoom_sensitivity.value
-        this.zoom_mode_single.value = config.zoom_mode_single.value
         this.normalize_beat_widths.value = config.normalize_beat_widths.value
         this.beat_stroke_thickness.value = config.beat_stroke_thickness.value
     }
@@ -137,7 +133,6 @@ class PaganConfiguration(
         output["indent_json"] = this.indent_json.value
         output["latest_input_indicator"] = this.latest_input_indicator.value
         output["zoom_sensitivity"] = this.zoom_sensitivity.value
-        output["zoom_mode_single"] = this.zoom_mode_single.value
         output["normalize_beat_widths"] = this.normalize_beat_widths.value
         output["beat_stroke_thickness"] = this.beat_stroke_thickness.value.value
         // output["channel_colors"] = JSONList(*Array(this.channel_colors.size) {

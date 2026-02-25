@@ -277,6 +277,7 @@ class ViewModelEditorState: ViewModel() {
             pegs[i]
 
         }
+        println("ZOOM = ${this.active_zoom.value}")
     }
 
     fun increment_zoom(center: Float? = null) {
@@ -291,7 +292,6 @@ class ViewModelEditorState: ViewModel() {
         }
     }
 
-    // TODO: Account for beat stroke
     private fun queue_recenter(initial_center: Float? = null, callback: () -> Unit) {
         if (initial_center == null) return callback()
 
@@ -318,8 +318,6 @@ class ViewModelEditorState: ViewModel() {
         this.zoom_index.value = this.queued_zoom_index.value
         this.set_normalized_zoom()
         val pivot_px = (Dimensions.LeafBaseWidth.value * this.pixel_density.value) * this.get_active_zoom(beat) * pivot
-        println(">> ${center / this.scroll_state_x.value.layoutInfo.viewportSize.width}")
-        println("$beat, $pivot_px($pivot), $center, ${Dimensions.LeafBaseWidth.value * this.pixel_density.value}")
         this.scroll_state_x.value.requestScrollToItem(beat, (pivot_px - center).roundToInt())
     }
 
@@ -472,20 +470,24 @@ class ViewModelEditorState: ViewModel() {
         cell.top_weight.value = tree.get_root().weighted_size
         this.update_top_weight(coordinate.x)
         this.update_zoom_notches(coordinate.x)
-        if (this.normalize_beat_widths.value) {
-            this.update_global_zoom_notches()
-        } else {
-            this.update_zoom_levels()
-        }
+        this.update_global_zoom_notches()
     }
 
-    fun update_global_zoom_notches() {
+    fun update_global_zoom_notches(x: Int? = null) {
         val current_index = this.zoom_index.intValue
         val current_value = this.active_zoom.floatValue
 
-        val pegs = mutableSetOf(1F)
-        for (column in this.column_data)  {
-            pegs.addAll(column.zoom_notches)
+
+        val pegs = if (x == null) {
+            mutableSetOf(1F).also {
+                for (column in this.column_data)  {
+                    it.addAll(column.zoom_notches)
+                }
+            }
+        } else {
+            this.zoom_notches.toMutableSet().also {
+                it.addAll(this.column_data[x].zoom_notches)
+            }
         }
 
         this.zoom_notches.clear()
@@ -564,11 +566,7 @@ class ViewModelEditorState: ViewModel() {
             this.update_zoom_notches(x)
         }
 
-        if (this.normalize_beat_widths.value) {
-            this.update_global_zoom_notches()
-        } else {
-            this.update_zoom_levels()
-        }
+        this.update_global_zoom_notches()
     }
 
     fun update_zoom_levels() {

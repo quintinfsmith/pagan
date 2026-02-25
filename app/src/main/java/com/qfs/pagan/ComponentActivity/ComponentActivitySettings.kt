@@ -771,6 +771,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             )
         }
     }
+
     @Composable
     fun OptionNoteInputMemory(modifier: Modifier = Modifier) {
         SettingsRow(

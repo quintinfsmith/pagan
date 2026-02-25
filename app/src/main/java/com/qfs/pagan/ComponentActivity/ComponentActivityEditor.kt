@@ -174,7 +174,9 @@ import java.time.format.DateTimeFormatter
 import kotlin.concurrent.thread
 import kotlin.math.ceil
 import kotlin.math.max
+import kotlin.math.pow
 import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 class ComponentActivityEditor: PaganComponentActivity() {
     val controller_model: ViewModelEditorController by this.viewModels()
@@ -614,11 +616,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.state_model.latest_input_indicator.value = this.view_model.configuration.latest_input_indicator.value
         this.state_model.normalize_beat_widths.value = this.view_model.configuration.normalize_beat_widths.value
         this.state_model.beat_stroke_thickness.value = this.view_model.configuration.beat_stroke_thickness.value
-        if (this.state_model.normalize_beat_widths.value) {
-            this.state_model.update_global_zoom_notches()
-        } else {
-            this.state_model.update_zoom_levels()
-        }
+        this.state_model.update_global_zoom_notches()
         this.set_soundfont()
     }
 
@@ -1135,15 +1133,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
         )
 
-        if (this@ComponentActivityEditor.state_model.zoom_bar_visible.value) {
-            Spacer( Modifier.weight(1F) )
-            ZoomIndicator(this@ComponentActivityEditor.state_model)
-            Spacer( Modifier.weight(1F) )
-        } else {
-            when (vm_top.active_layout_size.value) {
-                LayoutSize.SmallPortrait -> TopBarNoTitle()
-                else -> TopBarWithTitle()
-            }
+        when (vm_top.active_layout_size.value) {
+            LayoutSize.SmallPortrait -> TopBarNoTitle()
+            else -> TopBarWithTitle()
         }
 
         TopBarDropDown()
@@ -1287,7 +1279,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val scope = rememberCoroutineScope()
         val scroll_state_v = ui_facade.scroll_state_y.value
         val scroll_state_h = ui_facade.scroll_state_x.value
-        val normalize_beat_widths = this.view_model.configuration.normalize_beat_widths.value
 
         Box(
             modifier,
@@ -2394,15 +2385,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     fun ScaleBox(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, content: @Composable BoxScope.() -> Unit) {
-        val zoom_state = remember { mutableFloatStateOf(1F) }
-        val single_zoom_enabled = this@ComponentActivityEditor.view_model.configuration.zoom_mode_single.value
-        val switch_threshold = if (single_zoom_enabled) {
-            .72F
-        } else {
-            this@ComponentActivityEditor.view_model.configuration.zoom_sensitivity.value
-        }
+        val zoom_state = remember { mutableStateOf(0.dp) }
+        val zoom_unit = Dimensions.LeafBaseWidth * 2
         val consume_events = remember { mutableStateOf(false) }
-        val zoom_locked = remember { mutableStateOf(false) }
 
         Box(
             modifier
@@ -2411,9 +2396,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     awaitPointerEventScope {
                         while (true) {
                             val event = awaitPointerEvent()
-                            if (!single_zoom_enabled || event.changes.size < 2) {
-                                zoom_locked.value = false
-                                zoom_state.floatValue = (1f - switch_threshold) / 2F
+                            //if (!single_zoom_enabled || event.changes.size < 2) {
+                            if (event.changes.size < 2) {
+                                zoom_state.value = 0.dp
                             }
                             ui_facade.zoom_bar_visible.value = event.changes.size >= 2
 
@@ -2425,25 +2410,27 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     } else {
                                         Pair(event.changes[1], event.changes[0])
                                     }
-                                    val current_diff = larger.position.x - lesser.position.x
-                                    val previous_diff = (larger.position.x - larger.positionChange().x) - (lesser.position.x - lesser.positionChange().x)
-                                    val zoom = current_diff / previous_diff
-                                    if (!single_zoom_enabled || !zoom_locked.value) {
-                                        zoom_state.floatValue *= zoom
-                                        if (zoom > 1F) {
-                                            if (ui_facade.zoom_index.value > 0 && zoom_state.floatValue >= 1F) {
+                                    val current_diff = sqrt((larger.position.x - lesser.position.x).pow(2F) + (larger.position.y - lesser.position.y).pow(2F))
+                                    val previous_diff = sqrt(
+                                        ((larger.position.x - larger.positionChange().x) - (lesser.position.x - lesser.positionChange().x)).pow(2F)
+                                        + ((larger.position.y - larger.positionChange().y) - (lesser.position.y - lesser.positionChange().y)).pow(2F)
+                                    )
+
+                                    val zoom = (current_diff - previous_diff).toDp()
+                                    zoom_state.value += zoom
+                                    if (zoom > 0.dp) {
+                                        if (zoom_state.value >= zoom_unit) {
+                                            if (ui_facade.zoom_index.value > 0) {
                                                 ui_facade.decrement_zoom(lesser.position.x + (current_diff / 2F))
-                                                zoom_state.floatValue = switch_threshold
-                                                zoom_locked.value = true
-                                            } else {
-                                                zoom_state.floatValue = 1F
                                             }
-                                        } else if (zoom < 1F) {
-                                            if (zoom_state.floatValue <= switch_threshold && ui_facade.zoom_index.value < ui_facade.max_zoom_index.value) {
+                                            zoom_state.value = 0.dp // TODO: Include overflow
+                                        }
+                                    } else if (zoom < 0.dp) {
+                                        if (zoom_state.value < zoom_unit * -1) {
+                                            if (ui_facade.zoom_index.value < ui_facade.max_zoom_index.value) {
                                                 ui_facade.increment_zoom(lesser.position.x + (current_diff / 2F))
-                                                zoom_state.floatValue = 1F
-                                                zoom_locked.value = true
                                             }
+                                            zoom_state.value = 0.dp // TODO: Include overflow
                                         }
                                     }
                                 }

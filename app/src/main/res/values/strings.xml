@@ -299,6 +299,8 @@
     <string name="settings_beat_stroke_thin">Thin</string>
     <string name="settings_beat_stroke_medium">Medium</string>
     <string name="settings_beat_stroke_thick">Thick</string>
+    <string name="palette_settings_add_color">Add Channel Color</string>
+    <string name="palette_settings_remove_color">Remove Channel Color</string>
 
 
     <string-array name="general_midi_presets">

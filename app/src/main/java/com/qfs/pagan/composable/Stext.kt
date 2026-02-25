@@ -17,10 +17,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -40,16 +42,19 @@ import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 
+@Composable
+fun Modifier.settings_box_mod(): Modifier {
+    return this then Modifier
+        .border(1.dp, MaterialTheme.colorScheme.onSurface, Shapes.SettingsBox)
+        .background(MaterialTheme.colorScheme.surface, shape = Shapes.SettingsBox)
+        .height(IntrinsicSize.Min)
+        .width(IntrinsicSize.Min)
+}
 
 @Composable
 fun SettingsBoxWrapper(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Box(
-        modifier
-            .border(1.dp, MaterialTheme.colorScheme.onSurface, Shapes.SettingsBox)
-            .background(
-                MaterialTheme.colorScheme.surface,
-                shape = Shapes.SettingsBox
-            ),
+        modifier.settings_box_mod(),
         contentAlignment = Alignment.Center,
         content = {
             ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onSurface) {
@@ -103,7 +108,9 @@ fun SettingsRow(
 ) {
     SettingsBoxWrapper(modifier) {
         Row(
-            Modifier.padding(contentPadding),
+            Modifier
+                .fillMaxSize()
+                .padding(contentPadding),
             horizontalArrangement = horizontalArrangement,
             verticalAlignment = verticalAlignment,
             content = { content() }

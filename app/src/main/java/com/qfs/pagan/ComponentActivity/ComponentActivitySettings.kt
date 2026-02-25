@@ -18,6 +18,7 @@ import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,16 +35,17 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.integerArrayResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -53,6 +55,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.R
+import com.qfs.pagan.composable.ColorPicker
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.MenuPadder
@@ -69,6 +72,7 @@ import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.enumerate
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Typography
 import java.io.FileInputStream
@@ -331,7 +335,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     OptionOrientation(Modifier.weight(1F))
                 }
                 MenuPadder()
-                SettingsSectionB()
+                SettingsSectionB(Modifier, remember { mutableStateOf(true) })
                 MenuPadder()
             }
         }
@@ -371,7 +375,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                         OptionOrientation(Modifier.weight(1F))
                     }
                     MenuPadder()
-                    SettingsSectionB()
+                    SettingsSectionB(Modifier, remember { mutableStateOf(true) })
                     MenuPadder()
                 }
             }
@@ -410,7 +414,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     OptionOrientation(Modifier.weight(1F))
                 }
                 MenuPadder()
-                SettingsSectionB()
+                SettingsSectionB(Modifier, remember { mutableStateOf(true) })
                 MenuPadder()
             }
         }
@@ -421,32 +425,45 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
     @Composable
     override fun LayoutMediumPortrait(modifier: Modifier) {
-        Box(
-            Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(Dimensions.SoundFontMenuPadding),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+        val palette_settings_visibility = remember { mutableStateOf(false) }
+        AnimatedVisibility(!palette_settings_visibility.value) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
             ) {
-                SoundFontWarningWrapper(Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = Dimensions.SoundFontMenuPadding))
-                ActiveSoundfontButton(Modifier.fillMaxWidth())
-                MenuPadder()
-                ActiveSoundfontDirectoryButton(Modifier.fillMaxWidth())
-                MenuPadder()
-                ProjectsDirectoryButton(Modifier.fillMaxWidth())
-                MenuPadder()
-                OptionNightMode(Modifier.fillMaxWidth())
-                MenuPadder()
-                OptionOrientation(Modifier.fillMaxWidth())
-                MenuPadder()
-                SettingsSectionB()
-                MenuPadder()
+                Column(
+                    modifier = Modifier.padding(Dimensions.SoundFontMenuPadding),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    SoundFontWarningWrapper(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = Dimensions.SoundFontMenuPadding)
+                    )
+                    ActiveSoundfontButton(Modifier.fillMaxWidth())
+                    MenuPadder()
+                    ActiveSoundfontDirectoryButton(Modifier.fillMaxWidth())
+                    MenuPadder()
+                    ProjectsDirectoryButton(Modifier.fillMaxWidth())
+                    MenuPadder()
+                    OptionNightMode(Modifier.fillMaxWidth())
+                    MenuPadder()
+                    OptionOrientation(Modifier.fillMaxWidth())
+                    MenuPadder()
+                    SettingsSectionB(Modifier, palette_settings_visibility)
+                    MenuPadder()
+                }
+            }
+        }
+        AnimatedVisibility(palette_settings_visibility.value) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
+            ) {
+                PaletteSettings(Modifier.fillMaxWidth(), palette_settings_visibility)
             }
         }
     }
@@ -731,6 +748,20 @@ class ComponentActivitySettings: PaganComponentActivity() {
     }
 
     @Composable
+    fun OptionShowPaletteSettings(modifier: Modifier = Modifier, palette_settings_visibility: MutableState<Boolean>)  {
+        SettingsRow(
+            modifier = modifier,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Button(
+                onClick = { palette_settings_visibility.value = !palette_settings_visibility.value },
+                content = { Text("Color Palette") }
+            )
+        }
+    }
+
+    @Composable
     fun OptionClipNote(modifier: Modifier = Modifier) {
         SettingsRow(
             modifier = modifier,
@@ -762,7 +793,6 @@ class ComponentActivitySettings: PaganComponentActivity() {
         ) {
             Text(
                 R.string.label_settings_normalize_beat_widths,
-                modifier = Modifier.weight(1F),
                 style = Typography.Settings.Label
             )
             Switch(
@@ -785,7 +815,6 @@ class ComponentActivitySettings: PaganComponentActivity() {
         ) {
             Text(
                 R.string.label_settings_note_memory,
-                modifier = Modifier.weight(1F),
                 style = Typography.Settings.Label
             )
             Switch(
@@ -808,7 +837,6 @@ class ComponentActivitySettings: PaganComponentActivity() {
         ) {
             Text(
                 stringResource(R.string.label_settings_use_preferred_sf),
-                modifier = Modifier.weight(1F),
                 style = Typography.Settings.Label
             )
             Switch(
@@ -824,6 +852,256 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
     @Composable
     fun OptionStrokeBeat(modifier: Modifier = Modifier) {
+        val expanded = remember { mutableStateOf(false) }
+        val options: List<Pair<Dp, @Composable (() -> Unit)>> = listOf(
+            Pair(0.dp) { Text(R.string.settings_beat_stroke_none) },
+            Pair(Dimensions.Stroke.Thin) { Text(R.string.settings_beat_stroke_thin) },
+            Pair(Dimensions.Stroke.Medium) { Text(R.string.settings_beat_stroke_medium) },
+            Pair(Dimensions.Stroke.Thick) { Text(R.string.settings_beat_stroke_thick) }
+        )
+        SettingsRow(
+            modifier = modifier,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                stringResource(R.string.label_settings_stroke_beats),
+                style = Typography.Settings.Label
+            )
+
+            Box {
+                Button(
+                    onClick = { expanded.value = !expanded.value },
+                    content = {
+                        Text(
+                            when (view_model.configuration.beat_stroke_thickness.value) {
+                                0.dp -> stringResource(R.string.settings_beat_stroke_none)
+                                Dimensions.Stroke.Thin -> stringResource(R.string.settings_beat_stroke_thin)
+                                Dimensions.Stroke.Medium -> stringResource(R.string.settings_beat_stroke_medium)
+                                Dimensions.Stroke.Thick -> stringResource(R.string.settings_beat_stroke_thick)
+                                else -> view_model.configuration.beat_stroke_thickness.value.toString()
+                            }
+                        )
+                    }
+                )
+                DropdownMenu(
+                    expanded = expanded.value,
+                    onDismissRequest = { expanded.value = false }
+                ) {
+                    for ((value, label) in options) {
+                        DropdownMenuItem(
+                            modifier = Modifier
+                                .then(
+                                    if (value == view_model.configuration.beat_stroke_thickness.value) {
+                                        Modifier.background(color = MaterialTheme.colorScheme.tertiary)
+                                    } else {
+                                        Modifier
+                                    }
+                                ),
+                            text = {
+                                if (value == view_model.configuration.beat_stroke_thickness.value) {
+                                    ProvideContentColorTextStyle(MaterialTheme.colorScheme.onTertiary) {
+                                        label()
+                                    }
+                                } else {
+                                    label()
+                                }
+                            },
+                            onClick = {
+                                view_model.configuration.beat_stroke_thickness.value = value
+                                view_model.save_configuration()
+                                this@ComponentActivitySettings.update_result()
+                                expanded.value = false
+                            }
+                        )
+
+                    }
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun OptionAllowStdPercussion(modifier: Modifier = Modifier) {
+        SettingsRow(
+            modifier = modifier,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                stringResource(R.string.label_settings_allow_std_percussion),
+                style = Typography.Settings.Label
+            )
+            Switch(
+                checked = view_model.configuration.allow_std_percussion.value,
+                onCheckedChange = {
+                    view_model.configuration.allow_std_percussion.value = it
+                    view_model.save_configuration()
+                    this@ComponentActivitySettings.update_result()
+                }
+            )
+        }
+    }
+
+    @Composable
+    fun OptionOrientation(modifier: Modifier = Modifier) {
+        SettingsColumn(modifier) {
+            Text(
+                R.string.settings_screen_orientation,
+                style = Typography.Settings.Title
+            )
+            MenuPadder()
+            RadioMenu(
+                options = options_orientation,
+                active = view_model.configuration.force_orientation,
+                callback = { mode ->
+                    view_model.save_configuration()
+                    this@ComponentActivitySettings.update_result()
+                }
+            )
+        }
+    }
+
+    @Composable
+    fun OptionNightMode(modifier: Modifier = Modifier) {
+        SettingsColumn(modifier) {
+            Text(
+                R.string.settings_night_mode,
+                style = Typography.Settings.Title
+            )
+            MenuPadder()
+            RadioMenu(
+                options = options_nightmode,
+                active = view_model.configuration.night_mode,
+                callback = { mode ->
+                    view_model.save_configuration()
+                    this@ComponentActivitySettings.update_result()
+                }
+            )
+        }
+    }
+
+    @Composable
+    fun SettingsSectionB(modifier: Modifier = Modifier, palette_settings_visibility: MutableState<Boolean>) {
+        Column {
+            OptionNormalizeBeatWidth(Modifier.fillMaxWidth())
+            MenuPadder()
+            OptionStrokeBeat(Modifier.fillMaxWidth())
+            MenuPadder()
+            OptionNoteInputMemory(Modifier.fillMaxWidth())
+            MenuPadder()
+            PlaybackRateMenu(Modifier.fillMaxWidth())
+            MenuPadder()
+            OptionClipNote(Modifier.fillMaxWidth())
+            MenuPadder()
+            OptionUsePreferredSoundfont(Modifier.fillMaxWidth())
+            MenuPadder()
+            OptionAllowStdPercussion(Modifier.fillMaxWidth())
+            if (!palette_settings_visibility.value) {
+                MenuPadder()
+                OptionShowPaletteSettings(Modifier.fillMaxWidth(), palette_settings_visibility)
+            }
+        }
+    }
+
+    @Composable
+    fun PaletteSettings(modifier: Modifier = Modifier, palette_settings_visibility: MutableState<Boolean>) {
+        Column {
+            OptionPalettePreset(Modifier.fillMaxWidth())
+            MenuPadder()
+            OptionColor(
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Highlight Color") },
+                color_state = remember { mutableStateOf(Colors.SELECTION) }
+            )
+            SettingsRow(
+                Modifier.fillMaxWidth(),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.icon_subtract),
+                    contentDescription = stringResource(R.string.palette_settings_remove_color)
+                )
+            }
+            MenuPadder()
+            OptionColor(
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Note Color") },
+                color_state = remember { mutableStateOf(Colors.LEAF_COLOR) }
+            )
+            MenuPadder()
+            OptionColor(
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Effect Color") },
+                color_state = remember { mutableStateOf(Colors.EFFECT_COLOR) }
+            )
+
+            SettingsRow(
+                Modifier.fillMaxWidth(),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.icon_add),
+                    contentDescription = stringResource(R.string.palette_settings_add_color)
+                )
+            }
+
+            MenuPadder()
+            OptionPaletteExportCurrent(Modifier.fillMaxWidth())
+        }
+    }
+
+    @Composable
+    fun OptionColor(
+        modifier: Modifier = Modifier,
+        label: @Composable () -> Unit,
+        color_state: MutableState<Color?> = mutableStateOf(null),
+        default: Color = Color(0xFFFFFF00)
+    ) {
+        val working_color_state = remember { mutableStateOf(color_state.value ?: default) }
+        SettingsRow(
+            modifier = modifier,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            label()
+            Button(
+                onClick = {
+                    this@ComponentActivitySettings.view_model.create_dialog { close ->
+                        @Composable {
+                            Row(horizontalArrangement = Arrangement.Center) {
+                                ColorPicker(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    color = working_color_state
+                                )
+                            }
+                            DialogBar(
+                                negative = {
+                                    close()
+                                },
+                                negative_label = R.string.use_default_color,
+                                neutral = {
+                                    working_color_state.value = color_state.value ?: default
+                                    close()
+                                },
+                                positive = {
+                                    color_state.value = working_color_state.value
+                                    close()
+                                }
+
+                            )
+                        }
+                    }
+                },
+                content = { Text("TODO") }
+            )
+        }
+    }
+
+    @Composable
+    fun OptionPaletteExportCurrent(modifier: Modifier = Modifier) {
+        Text("TODO")
+    }
+    @Composable
+    fun OptionPalettePreset(modifier: Modifier = Modifier) {
         val expanded = remember { mutableStateOf(false) }
         val options: List<Pair<Dp, @Composable (() -> Unit)>> = listOf(
             Pair(0.dp) { Text(R.string.settings_beat_stroke_none) },
@@ -891,87 +1169,6 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     }
                 }
             }
-        }
-    }
-
-    @Composable
-    fun OptionAllowStdPercussion(modifier: Modifier = Modifier) {
-        SettingsRow(
-            modifier = modifier,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                stringResource(R.string.label_settings_allow_std_percussion),
-                modifier = Modifier.weight(1F),
-                style = Typography.Settings.Label
-            )
-            Switch(
-                checked = view_model.configuration.allow_std_percussion.value,
-                onCheckedChange = {
-                    view_model.configuration.allow_std_percussion.value = it
-                    view_model.save_configuration()
-                    this@ComponentActivitySettings.update_result()
-                }
-            )
-        }
-    }
-
-    @Composable
-    fun OptionOrientation(modifier: Modifier = Modifier) {
-        SettingsColumn(modifier) {
-            Text(
-                R.string.settings_screen_orientation,
-                style = Typography.Settings.Title
-            )
-            MenuPadder()
-            RadioMenu(
-                options = options_orientation,
-                active = view_model.configuration.force_orientation,
-                callback = { mode ->
-                    view_model.save_configuration()
-                    this@ComponentActivitySettings.update_result()
-                }
-            )
-        }
-    }
-
-    @Composable
-    fun OptionNightMode(modifier: Modifier = Modifier) {
-        SettingsColumn(modifier) {
-            Text(
-                R.string.settings_night_mode,
-                style = Typography.Settings.Title
-            )
-            MenuPadder()
-            RadioMenu(
-                options = options_nightmode,
-                active = view_model.configuration.night_mode,
-                callback = { mode ->
-                    view_model.save_configuration()
-                    this@ComponentActivitySettings.update_result()
-                }
-            )
-        }
-    }
-
-    @OptIn(ExperimentalMaterial3Api::class)
-    @Composable
-    fun SettingsSectionB(modifier: Modifier = Modifier) {
-        Column {
-            OptionNormalizeBeatWidth(Modifier.fillMaxWidth())
-            MenuPadder()
-            OptionStrokeBeat(Modifier.fillMaxWidth())
-            MenuPadder()
-            OptionNoteInputMemory(Modifier.fillMaxWidth())
-            MenuPadder()
-            PlaybackRateMenu(Modifier.fillMaxWidth())
-            MenuPadder()
-            OptionClipNote(Modifier.fillMaxWidth())
-            MenuPadder()
-            OptionUsePreferredSoundfont(Modifier.fillMaxWidth())
-            MenuPadder()
-            OptionAllowStdPercussion(Modifier.fillMaxWidth())
         }
     }
 

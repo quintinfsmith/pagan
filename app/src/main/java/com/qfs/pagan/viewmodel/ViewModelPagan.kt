@@ -71,10 +71,10 @@ class ViewModelPagan: ViewModel() {
     var dialog_queue: MutableState<DialogChain?> = mutableStateOf(null)
     val requires_soundfont: MutableState<Boolean> = mutableStateOf(false)
     val has_saved_project: MutableState<Boolean> = mutableStateOf(false)
+    val has_backup_saved: MutableState<Boolean> = mutableStateOf(false)
 
     fun set_layout_size(width: Dp, height: Dp) {
         this.active_layout_size.value = Dimensions.set_active_layout_dimensions(width, height)
-        println("- - - - - - LAYOUT: ${this.active_layout_size} - - - - - -")
     }
 
     fun get_layout_size(): LayoutSize {
@@ -84,6 +84,7 @@ class ViewModelPagan: ViewModel() {
     fun delete_project(uri: Uri) {
         this.project_manager?.delete(uri)
         this.has_saved_project.value = this.project_manager?.has_projects_saved() ?: false
+        this.has_backup_saved.value = this.project_manager?.has_backup_saved() == true
     }
 
     fun load_config(path: String) {
@@ -97,10 +98,13 @@ class ViewModelPagan: ViewModel() {
 
     fun reload_config() {
         this.load_config(this.configuration_path ?: return)
+        this.has_saved_project.value = this.project_manager?.has_projects_saved() ?: false
+        this.has_backup_saved.value = this.project_manager?.has_backup_saved() == true
     }
     fun set_project_manager(project_manager: ProjectManager) {
         this.project_manager = project_manager
         this.has_saved_project.value = this.project_manager?.has_projects_saved() ?: false
+        this.has_backup_saved.value = this.project_manager?.has_backup_saved() == true
     }
 
     fun create_dialog(level: Int = 0, alignment: Alignment = Alignment.Center, dialog_callback: (() -> Unit) -> (@Composable (ColumnScope.() -> Unit))) {

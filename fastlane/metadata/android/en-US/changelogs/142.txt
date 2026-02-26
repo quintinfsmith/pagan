@@ -1,1 +1,5 @@
- Bugfix: Some columns not starting at the correct width
+- Pinch to Zoom
+- New option in settings to normalize beat widths.
+- New optional 'beat stroke' to increase line thickness between beats.
+- Larger buttons on landing screen
+- Bugfix: Some columns not starting at the correct width

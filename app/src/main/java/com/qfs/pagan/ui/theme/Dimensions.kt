@@ -230,7 +230,11 @@ object Dimensions {
         get() = getter(
             small_landscape = 56.dp,
             small_portrait = 64.dp,
-            medium_portrait = 128.dp
+            medium_landscape = 64.dp,
+            medium_portrait = 128.dp,
+            large_portrait = 128.dp,
+            large_landscape = 96.dp,
+            xlarge_portrait = 128.dp
         )
     val LandingPadding: Dp
         get() = getter(
@@ -241,7 +245,7 @@ object Dimensions {
             small_landscape = 32.dp,
             small_portrait = 41.dp,
             medium_portrait = 48.dp,
-            large_landscape = 54.dp
+            large_landscape = 64.dp
         )
     val LandingIconButtonPadding: Dp
         get() = getter(

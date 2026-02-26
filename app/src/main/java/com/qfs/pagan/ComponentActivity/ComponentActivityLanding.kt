@@ -276,44 +276,39 @@ class ComponentActivityLanding: PaganComponentActivity() {
     override fun LayoutLargePortrait(modifier: Modifier) {
         val has_backup = this.view_model.project_manager?.has_backup_saved() == true
         val has_saved_project = this.view_model.has_saved_project.value
-        Box(
+        Column(
             modifier = modifier.padding(Dimensions.LandingPadding),
-            contentAlignment = Alignment.Center
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
+            Spacer(Modifier.height(1.dp))
+
+            if (this@ComponentActivityLanding.view_model.requires_soundfont.value) {
+                SoundFontWarning()
+            }
+
             Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween
+                Modifier.width(Dimensions.Layout.Medium.long),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
-                if (this@ComponentActivityLanding.view_model.requires_soundfont.value) {
-                    SoundFontWarning()
-                } else {
-                    // TODO: Check this. looks like an artifact and I don't think it matters if it has a height
-                    Spacer(Modifier.height(41.dp))
+                if (has_backup) {
+                    ButtonRecent(Modifier.fillMaxWidth())
+                    Padder()
                 }
-
-                Column(
-                    Modifier.width(Dimensions.Layout.Medium.long),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    if (has_backup) {
-                        ButtonRecent(Modifier.fillMaxWidth())
-                        Padder()
-                    }
-                    ButtonNew(Modifier.fillMaxWidth())
-                    if (has_saved_project) {
-                        Padder()
-                        ButtonLoad(Modifier.fillMaxWidth())
-                    }
+                ButtonNew(Modifier.fillMaxWidth())
+                if (has_saved_project) {
+                    Padder()
+                    ButtonLoad(Modifier.fillMaxWidth())
                 }
+            }
 
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    LayoutSmallIconLinks()
-                }
+            Spacer(Modifier.height(1.dp))
+
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                LayoutSmallIconLinks()
             }
         }
 

@@ -67,9 +67,10 @@
 
 ## Contribute or Contact
 
-Pull requests are welcome but if you're not confident with development, feel free to create an issue 
+Pull requests are welcome (no AI please) but if you're not confident with development, feel free to create an issue 
 
 https://github.com/quintinfsmith/pagan/issues
+
 
 If you have a feature request or any questions, you can also email me 
 

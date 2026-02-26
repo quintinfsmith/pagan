@@ -331,12 +331,10 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
             } else {
                 opus_manager.get_absolute_value(beat_key, position) ?: return
             }
-            if (note >= 0) {
-                this.play_event(
-                    beat_key.channel,
-                    note
-                )
-            }
+            this.play_event(
+                beat_key.channel,
+                note
+            )
         }
     }
 
@@ -981,6 +979,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
 
     private fun play_event(channel: Int, event_value: Int, velocity: Float = .5F) {
         if (event_value < 0) return // No sound to play
+        if (this.vm_controller.in_playback()) return // disable feedback during playback
 
         val opus_manager = this.get_opus_manager()
         val midi_channel = opus_manager.get_midi_channel(channel)
@@ -1402,9 +1401,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
 
         value?.let {
             opus_manager.set_percussion_instrument(it)
-            if (value >= 0) {
-                this.play_event(cursor.channel, value)
-            }
+            this.play_event(cursor.channel, value)
             return
         }
 

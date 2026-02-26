@@ -1145,7 +1145,7 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun scroll_to_leaf(beat: Int, offset: Rational, width: Rational) {
-        val beat_width = this.get_beat_width(beat)
+        val beat_width = this.get_active_zoom(beat)
         val base_leaf_width = Dimensions.LeafBaseWidth.value * this.pixel_density.value
         val offset_px = (beat_width * offset.toFloat() * base_leaf_width)
 
@@ -1154,7 +1154,7 @@ class ViewModelEditorState: ViewModel() {
         val first_visible_beat_width = if (state.firstVisibleItemIndex == beat) {
             beat_width
         } else {
-            this.get_beat_width(state.firstVisibleItemIndex)
+            this.get_active_zoom(state.firstVisibleItemIndex)
         } * base_leaf_width
 
         val (first_visible_beat, first_visible_offset) = if (state.firstVisibleItemScrollOffset > first_visible_beat_width) {
@@ -1171,7 +1171,7 @@ class ViewModelEditorState: ViewModel() {
             0
         }
 
-        if (first_visible_beat != last_visible_beat && beat in first_visible_beat + 1 until last_visible_beat) {
+        if ((first_visible_beat != last_visible_beat && beat in first_visible_beat + 1 until last_visible_beat) || (first_visible_beat == beat && first_visible_offset <= offset_px.toInt())) {
             return
         } else if (first_visible_beat > beat || first_visible_beat == beat && first_visible_offset > offset_px.toInt()) {
             CoroutineScope(Dispatchers.Default).launch {

@@ -57,7 +57,7 @@ fun LeafView(
     line_data: ViewModelEditorState.LineData,
     leaf_data: ViewModelEditorState.LeafData,
     radix: Int,
-    hide_content: Boolean = false,
+    zoom: Float = 1F,
     modifier: Modifier = Modifier
 ) {
     val event = leaf_data.event.value
@@ -97,7 +97,7 @@ fun LeafView(
                         )
                 )
             }
-            if (!hide_content) {
+            if (zoom * leaf_data.weight.value >= 1F) {
                 when (event) {
                     is AbsoluteNoteEvent -> {
                         val octave = event.note / radix

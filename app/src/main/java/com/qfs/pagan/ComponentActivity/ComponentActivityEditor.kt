@@ -1540,7 +1540,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                             cell,
                                                             y,
                                                             x,
-                                                            ui_facade.get_active_zoom(x).toInt(),
+                                                            ui_facade.get_active_zoom(x),
                                                             Modifier.weight(1F)
                                                         )
                                                     }

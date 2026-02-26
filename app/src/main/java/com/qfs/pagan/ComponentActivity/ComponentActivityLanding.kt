@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -338,16 +339,9 @@ class ComponentActivityLanding: PaganComponentActivity() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-
+            Spacer(Modifier.height(1.dp))
             if (this@ComponentActivityLanding.view_model.requires_soundfont.value) {
-                Box(
-                    Modifier.weight(1F),
-                    contentAlignment = Alignment.Center
-                ) {
-                    SoundFontWarning()
-                }
-            } else {
-                Spacer(Modifier.weight(1F))
+                SoundFontWarning()
             }
 
 
@@ -363,14 +357,12 @@ class ComponentActivityLanding: PaganComponentActivity() {
                 }
             }
 
-            Spacer(Modifier.weight(1F))
 
             Row(
                 Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                LayoutSmallIconLinks()
-            }
+                horizontalArrangement = Arrangement.End,
+                content = { LayoutSmallIconLinks() }
+            )
         }
     }
 
@@ -431,14 +423,15 @@ class ComponentActivityLanding: PaganComponentActivity() {
         val has_backup = this.view_model.project_manager?.has_backup_saved() == true
         val has_saved_project = this.view_model.has_saved_project.value
 
-        Box(
-            modifier.padding(Dimensions.LandingPadding)
+        Column(
+            modifier.padding(Dimensions.LandingPadding),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
+            Spacer(Modifier.height(1.dp))
+
             Column(
-                Modifier
-                    .width(Dimensions.Layout.Small.short)
-                    .align(Alignment.Center),
-                horizontalAlignment = Alignment.CenterHorizontally
+                Modifier.width(Dimensions.Layout.Small.short)
             ) {
                 if (has_backup) {
                     ButtonRecent(Modifier.fillMaxWidth())
@@ -451,10 +444,15 @@ class ComponentActivityLanding: PaganComponentActivity() {
                 }
             }
 
-            Box(Modifier.align(Alignment.BottomEnd)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 LayoutSmallIconLinks()
             }
         }
+
     }
 
     @Composable

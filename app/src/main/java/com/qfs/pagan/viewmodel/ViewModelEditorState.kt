@@ -310,7 +310,7 @@ class ViewModelEditorState: ViewModel() {
         var working_offset = initial_center + this.scroll_state_x.value.firstVisibleItemScrollOffset
 
         var working_chunk_size = this.get_active_zoom(targeted_x) * (Dimensions.LeafBaseWidth.value * this.pixel_density.value)
-        while (working_offset - working_chunk_size > 0F) {
+        while (working_offset - working_chunk_size > 0F && targeted_x < this.column_data.size - 1) {
             working_offset -= working_chunk_size
             working_chunk_size = this.get_active_zoom(++targeted_x) * (Dimensions.LeafBaseWidth.value * this.pixel_density.value)
         }

@@ -228,9 +228,9 @@ object Dimensions {
     val LandingButtonCornerRadius = 12.dp
     val LandingButtonHeight: Dp
         get() = getter(
-            small_landscape = 41.dp,
-            small_portrait = 48.dp,
-            medium_portrait = 48.dp
+            small_landscape = 56.dp,
+            small_portrait = 64.dp,
+            medium_portrait = 128.dp
         )
     val LandingPadding: Dp
         get() = getter(

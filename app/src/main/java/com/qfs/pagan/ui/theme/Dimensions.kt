@@ -129,7 +129,7 @@ object Dimensions {
         val BarLargeHeight = BarSmallHeight * 3
     }
 
-    val BeatLabelHorizontalPadding = 4.dp
+    val BeatLabelHorizontalPadding = 3.dp
     val BeatLabelVerticalPadding = 8.dp
 
     object ButtonHeight {

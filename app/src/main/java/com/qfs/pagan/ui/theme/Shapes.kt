@@ -126,7 +126,7 @@ object Shapes {
     val SortableMenuBox = RoundedCornerShape(Dimensions.SortableMenuBoxRadius)
     val SoundFontWarningBox = RoundedCornerShape(24.dp)
 
-    val TaggedBeat = RoundedCornerShape(12.dp)
+    val TaggedBeat = RoundedCornerShape(6.dp)
     val TopBar = RectangleShape
 
     val TuningDialogBox = Container

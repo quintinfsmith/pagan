@@ -97,6 +97,7 @@ fun LeafView(
                         )
                 )
             }
+
             if (zoom * leaf_data.weight.value >= 1F) {
                 when (event) {
                     is AbsoluteNoteEvent -> {

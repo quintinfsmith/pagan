@@ -437,6 +437,7 @@ class ViewModelEditorState: ViewModel() {
         this.channel_data.clear()
         this.zoom_index.intValue = 0
         this.zoom_notches.clear()
+        this.active_wide_beat.value = null
 
         this.coroutine_scope.value.launch {
             this@ViewModelEditorState.scroll_state_x.value.requestScrollToItem(0)

@@ -98,6 +98,7 @@ fun RemoveButton(dispatcher: ActionDispatcher, cursor: ViewModelEditorState.Cach
         modifier = Modifier.testTag(TestTag.LeafRemove),
         enabled = (cursor.ints.size > 2),
         onClick = { dispatcher.remove_at_cursor() },
+        onLongClick = { dispatcher.unset_root() },
         icon = R.drawable.icon_subtract,
         description = R.string.btn_remove
     )

@@ -157,6 +157,7 @@ class SoundFont(val context: Context, uri: Uri) {
             for (header in this.riff.sub_chunks[2]) {
                 // '-12' since the sub chunk index is relative to the list chunk, but the list chunk index is absolute
                 val offset = header.index + 8 - pdta_offset - 12
+
                 this.pdta_chunks[header.tag] = ByteArray(header.size) { j ->
                     pdta_chunk[offset + j]
                 }

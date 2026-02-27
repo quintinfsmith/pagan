@@ -17,6 +17,7 @@ import android.provider.DocumentsContract.Document.COLUMN_DOCUMENT_ID
 import android.provider.DocumentsContract.Document.COLUMN_MIME_TYPE
 import android.provider.DocumentsContract.Document.MIME_TYPE_DIR
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
@@ -623,4 +624,13 @@ abstract class PaganComponentActivity: ComponentActivity() {
     fun is_soundfont_available(): Boolean {
         return this.get_existing_soundfonts().isNotEmpty()
     }
+
+    fun toast(id: Int, length: Int = Toast.LENGTH_SHORT) {
+        Toast.makeText(this.baseContext, id, length).show()
+    }
+
+    fun toast(msg: String, length: Int = Toast.LENGTH_SHORT) {
+        Toast.makeText(this.baseContext, msg, length).show()
+    }
+
 }

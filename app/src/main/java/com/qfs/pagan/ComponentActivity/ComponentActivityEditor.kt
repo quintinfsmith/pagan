@@ -100,7 +100,6 @@ import com.qfs.apres.Midi
 import com.qfs.apres.MidiController
 import com.qfs.apres.VirtualMidiOutputDevice
 import com.qfs.apres.event.SongPositionPointer
-import com.qfs.apres.soundfont2.Riff
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.ActionDispatcher
@@ -654,12 +653,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             this.controller_model.playback_device?.activity = this
             this.controller_model.active_soundfont_relative_path = file_path
             this.state_model.enable_soundfont()
-        } catch (_: Riff.InvalidRiff) {
-            // Possible if user puts the sf2 in their files manually
-            this.toast(R.string.invalid_soundfont)
-            return
-        } catch (_: SoundFont.InvalidSoundFont) {
-            // Possible if user puts the sf2 in their files manually
+        } catch (_: Exception) {
             this.toast(R.string.invalid_soundfont)
             return
         }
@@ -2543,14 +2537,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
             val preset_names = this.resources.getStringArray(R.array.general_midi_presets)
             this.resources.getString(R.string.unavailable_preset, preset_names[program])
         }
-    }
-
-    fun toast(id: Int, length: Int = Toast.LENGTH_SHORT) {
-        Toast.makeText(this.baseContext, id, length).show()
-    }
-
-    fun toast(msg: String, length: Int = Toast.LENGTH_SHORT) {
-        Toast.makeText(this.baseContext, msg, length).show()
     }
 
     fun open_settings() {

@@ -20,6 +20,7 @@ import java.io.InputStream
 class Riff(var context: Context, private var uri: Uri) {
     class InvalidRiff(file_path: Uri): Exception("$file_path is not a valid Riff")
     class InputStreamClosed : Exception("Input Stream is Closed")
+    class IndexOutOfBounds(index: Long, size: Long): Exception("Index $index of ouf bounds ($size)")
     data class ListChunkHeader(
         val index: Int,
         val tag: String,
@@ -40,6 +41,7 @@ class Riff(var context: Context, private var uri: Uri) {
     private var _input_stream: InputStream? = null
     private var _input_position: Int = 0
     private var _read_mutex = Mutex()
+    var riff_size: Long = 0L
 
     init {
         this.with {
@@ -48,11 +50,11 @@ class Riff(var context: Context, private var uri: Uri) {
                 this.close_stream()
                 throw InvalidRiff(this.uri)
             }
-            val riff_size = this.get_little_endian(4, 4)
+            this.riff_size = this.get_little_endian(4, 4).toLong()
             this.type_cc = this.get_string(8, 4)
 
             var working_index = 12
-            while (working_index < riff_size - 4) {
+            while (working_index < this.riff_size - 4) {
                 val header_index = working_index - 12
                 val tag = this.get_string(working_index, 4)
                 working_index += 4
@@ -115,11 +117,11 @@ class Riff(var context: Context, private var uri: Uri) {
     }
 
     fun get_chunk_data(header: SubChunkHeader): ByteArray {
-        return this.get_bytes(header.index + 8 + 12, header.size)
+        return this.get_bytes(header.index + 8 + 12, header.size - 4) // index includes tag but size doesn't
     }
 
     fun get_chunk_data(header: ListChunkHeader): ByteArray {
-        return this.get_bytes(header.index + 12 + 12, header.size)
+        return this.get_bytes(header.index + 12 + 12, header.size - 4) // header.index includes LIST but size doesn't
     }
 
     fun get_list_chunk_data(header: ListChunkHeader, inner_offset: Int? = null, cropped_size: Int? = null): ByteArray {
@@ -161,6 +163,7 @@ class Riff(var context: Context, private var uri: Uri) {
     }
 
     private fun move_to_offset(offset: Long) {
+        if (offset > this.riff_size + 8) throw IndexOutOfBounds(offset, this.riff_size + 8)
         val stream: InputStream = this._input_stream ?: throw InputStreamClosed()
 
         if (this._input_position < offset) {
@@ -175,6 +178,7 @@ class Riff(var context: Context, private var uri: Uri) {
     }
 
     private fun get_bytes(offset: Int, size: Int): ByteArray {
+        if (offset + size > this.riff_size + 8) throw IndexOutOfBounds((offset + size).toLong(), this.riff_size + 8)
         this.move_to_offset(offset.toLong())
         val output = ByteArray(size)
         this._input_stream?.read(output)
@@ -183,6 +187,7 @@ class Riff(var context: Context, private var uri: Uri) {
     }
 
     private fun get_string(offset: Int, size: Int): String {
+        if (offset + size > this.riff_size + 8) throw IndexOutOfBounds((offset + size).toLong(), this.riff_size + 8)
         return this.get_bytes(offset, size).toString(Charsets.UTF_8)
     }
 

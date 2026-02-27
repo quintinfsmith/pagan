@@ -472,7 +472,6 @@ class ComponentActivitySettings: PaganComponentActivity() {
             val relative_path_segments = uri.pathSegments.last().split("/")
             soundfonts.add(Pair(uri, { Text(relative_path_segments.last()) }))
         }
-
         this.view_model.create_dialog { close ->
             @Composable {
                 Column {
@@ -523,10 +522,15 @@ class ComponentActivitySettings: PaganComponentActivity() {
                         options = soundfonts,
                         default_value = this@ComponentActivitySettings.coerce_soundfont_uri()
                     ) { uri ->
-                        view_model.set_soundfont_uri(uri)
-                        view_model.save_configuration()
-                        this@ComponentActivitySettings.update_result()
-                        close()
+                        try {
+                            SoundFont(this@ComponentActivitySettings, uri)
+                            view_model.set_soundfont_uri(uri)
+                            view_model.save_configuration()
+                            this@ComponentActivitySettings.update_result()
+                            close()
+                        } catch (_: Exception) {
+                            this@ComponentActivitySettings.toast(R.string.invalid_soundfont)
+                        }
                     }
                     DialogBar(neutral = close)
                 }

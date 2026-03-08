@@ -758,6 +758,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
+    override fun onPause() {
+        this.save_to_backup()
+        super.onPause()
+    }
+
     override fun onStop() {
         this.action_interface.stop_opus_midi()
         this.action_interface.stop_opus()
@@ -765,7 +770,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     override fun onDestroy() {
-        this.save_to_backup()
         this.controller_model.playback_device?.activity = null
         this.unregisterReceiver(this.broadcast_receiver)
         super.onDestroy()

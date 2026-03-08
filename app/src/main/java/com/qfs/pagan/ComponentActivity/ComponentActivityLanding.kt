@@ -273,8 +273,6 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
     @Composable
     override fun LayoutLargePortrait(modifier: Modifier) {
-        val has_backup = this.view_model.project_manager?.has_backup_saved() == true
-        val has_saved_project = this.view_model.has_saved_project.value
         Column(
             modifier = modifier.padding(Dimensions.LandingPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -290,12 +288,12 @@ class ComponentActivityLanding: PaganComponentActivity() {
                 Modifier.width(Dimensions.Layout.Medium.long),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                if (has_backup) {
+                if (view_model.has_backup_saved.value) {
                     ButtonRecent(Modifier.fillMaxWidth())
                     Padder()
                 }
                 ButtonNew(Modifier.fillMaxWidth())
-                if (has_saved_project) {
+                if (view_model.has_saved_project.value) {
                     Padder()
                     ButtonLoad(Modifier.fillMaxWidth())
                 }
@@ -324,8 +322,6 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
     @Composable
     override fun LayoutSmallPortrait(modifier: Modifier) {
-        val has_backup = this.view_model.project_manager?.has_backup_saved() == true
-        val has_saved_project = this.view_model.has_saved_project.value
         Column(
             modifier = modifier
                 .padding(Dimensions.LandingPadding)
@@ -340,12 +336,12 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                if (has_backup) {
+                if (view_model.has_backup_saved.value) {
                     ButtonRecent(Modifier.fillMaxWidth())
                     Padder()
                 }
                 ButtonNew(Modifier.fillMaxWidth())
-                if (has_saved_project) {
+                if (view_model.has_saved_project.value) {
                     Padder()
                     ButtonLoad(Modifier.fillMaxWidth())
                 }
@@ -371,8 +367,6 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
     @Composable
     fun LayoutSmallLandscapeNeedsSF(modifier: Modifier = Modifier) {
-        val has_backup = this.view_model.project_manager?.has_backup_saved() == true
-        val has_saved_project = this.view_model.has_saved_project.value
         val button_shape = Shapes.LandingButtonShapeNeedsSF
         Row(
             modifier.padding(Dimensions.LandingPadding),
@@ -396,12 +390,12 @@ class ComponentActivityLanding: PaganComponentActivity() {
             ) {
                 Spacer(Modifier)
                 Column(horizontalAlignment = Alignment.End) {
-                    if (has_backup) {
+                    if (view_model.has_backup_saved.value) {
                         ButtonRecent(shape = Shapes.LandingButtonShapeNeedsSF)
                         Padder()
                     }
                     ButtonNew(shape = button_shape)
-                    if (has_saved_project) {
+                    if (view_model.has_saved_project.value) {
                         Padder()
                         ButtonLoad(shape = Shapes.LandingButtonShapeNeedsSF)
                     }
@@ -414,9 +408,6 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
     @Composable
     fun LayoutSmallLandscapeNormal(modifier: Modifier = Modifier) {
-        val has_backup = this.view_model.project_manager?.has_backup_saved() == true
-        val has_saved_project = this.view_model.has_saved_project.value
-
         Column(
             modifier.padding(Dimensions.LandingPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -427,12 +418,12 @@ class ComponentActivityLanding: PaganComponentActivity() {
             Column(
                 Modifier.width(Dimensions.Layout.Small.short)
             ) {
-                if (has_backup) {
+                if (view_model.has_backup_saved.value) {
                     ButtonRecent(Modifier.fillMaxWidth())
                     Padder()
                 }
                 ButtonNew(Modifier.fillMaxWidth())
-                if (has_saved_project) {
+                if (view_model.has_saved_project.value) {
                     Padder()
                     ButtonLoad(Modifier.fillMaxWidth())
                 }

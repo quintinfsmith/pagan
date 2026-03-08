@@ -1767,11 +1767,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             .graphicsLayer {
                                 val width_px = column_width.toPx()
                                 val viewport_width = ui_facade.scroll_state_x.value.layoutInfo.viewportSize.width
-                                translationX = if (width_px >= viewport_width) {
+                                translationX = if (width_px >= viewport_width && viewport_width > 0) {
                                     val visible_items = ui_facade.scroll_state_x.value.layoutInfo.visibleItemsInfo
                                     if (ui_facade.scroll_state_x.value.firstVisibleItemIndex == x) {
-                                        val scroll_offset =
-                                            ui_facade.scroll_state_x.value.firstVisibleItemScrollOffset.toFloat()
+                                        val scroll_offset = ui_facade.scroll_state_x.value.firstVisibleItemScrollOffset.toFloat()
                                         val floating_position = ((viewport_width - width_px) / 2F) + scroll_offset
                                         val end_position = ((width_px - viewport_width) / 2F)
                                         if (floating_position < end_position) {

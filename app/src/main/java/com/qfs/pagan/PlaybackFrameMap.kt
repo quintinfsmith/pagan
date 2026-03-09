@@ -32,6 +32,8 @@ import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.ControllerProfile
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.TempoController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.NoteTransitionEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.NoteTransitionType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.plus
 import com.qfs.pagan.structure.rationaltree.ReducibleTree

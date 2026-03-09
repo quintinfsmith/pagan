@@ -18,6 +18,8 @@ enum class EffectType(val apres_type: ApresEffectType?) {
     Delay(ApresEffectType.Delay),
     Pan(ApresEffectType.Pan),
 
+    NoteTransition(null),
+
     Reverb(null)
  //   Equalizer(1024 + 3),
 }

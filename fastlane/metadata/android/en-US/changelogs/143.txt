@@ -1,0 +1,3 @@
+Bugfixes:
+    - oversized beat indicator being drawn unnecessarily sometimes
+    - "Open Last Project" button not being rendered without restarting the app

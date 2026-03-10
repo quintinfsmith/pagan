@@ -32,8 +32,7 @@ import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.ControllerProfile
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.TempoController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.NoteTransitionEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.NoteTransitionType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.BendTransitionEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.plus
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
@@ -308,7 +307,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     private var frame_count = 0
     var is_looping: Boolean = false
 
-    var clip_same_line_release = false
+    private val _ignored_events = HashMap<Pair<BeatKey, List<Int>>, Int>()
 
     override fun get_new_handles(frame: Int): Set<Pair<SampleHandle, IntArray>>? {
         // Check frame a buffer ahead to make sure frames are added as accurately as possible
@@ -460,6 +459,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         this._effect_profiles.clear()
         this._frame_map.clear()
+        this._ignored_events.clear()
 
         for ((_, handle) in this._handle_map) {
             handle.first.destroy()
@@ -766,7 +766,9 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     private fun map_tree(beat_key: BeatKey, position: List<Int>, working_tree: ReducibleTree<out InstrumentEvent>, relative_width: Rational, relative_offset: Rational, bkp_note_value: Int): Int {
-        if (!working_tree.is_leaf()) {
+        if (this._ignored_events.containsKey(Pair(beat_key, position))) {
+            return this._ignored_events[Pair(beat_key, position)]!!
+        } else if (!working_tree.is_leaf()) {
             val new_width = relative_width / working_tree.size
             var new_working_value = bkp_note_value
             for (i in 0 until working_tree.size) {
@@ -780,34 +782,68 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         }
 
         val event = working_tree.get_event()!!.copy()
-        val next_event_frame = if (this.clip_same_line_release) {
-            val next_event_position = this.opus_manager.get_proceeding_event_position(beat_key, position)
-            if (next_event_position != null) {
-                val (next_beat, next_position) = next_event_position
-                val (offset, _) = this.opus_manager.get_leaf_offset_and_width(
-                    BeatKey(
-                        beat_key.channel,
-                        beat_key.line_offset,
-                        next_beat
-                    ), next_position
-                )
 
-                val next_rel_offset = offset - offset.toInt()
-                val (next_start, _) = this.calculate_event_frame_range(
-                    offset.toFloat().toInt(),
-                    1,
-                    Rational(1,1),
-                    next_rel_offset
-                )
-                next_start
+        ////////////////////////////////////////////////
+        var adjusted_relative_width = relative_width
+        var next_event_frame: Int? = null
+        val next_beat_key = beat_key.copy()
+        val (offset, width_denominator) = this.opus_manager.get_leaf_offset_and_width(beat_key, position)
+        var working_note_end = offset + Rational(event.duration, width_denominator)
+        var working_backup_value = bkp_note_value
+
+        while (true) {
+            val next_event_position = this.opus_manager.get_proceeding_event_position(next_beat_key, position) ?: break
+            val (next_beat, next_position) = next_event_position
+            next_beat_key.beat = next_beat
+            val next_event = this.opus_manager.get_tree(next_beat_key, next_position).get_event()!!
+
+            val working_bend_transition = opus_manager.get_current_line_effect<BendTransitionEvent>(
+                PaganEffectType.BendTransition,
+                next_beat_key,
+                next_position
+            ) ?: break
+
+            if (working_bend_transition.transition_duration.numerator == 0) break
+
+            val (offset, next_width_denominator) = this.opus_manager.get_leaf_offset_and_width(
+                next_beat_key,
+                next_position
+            )
+
+            val next_rel_offset = offset - offset.toInt()
+            val (next_start, _) = this.calculate_event_frame_range(
+                offset.toFloat().toInt(),
+                next_event.duration,
+                Rational(1, next_width_denominator),
+                next_rel_offset
+            )
+
+            next_event_frame = next_start
+
+            // overwrite the next note with the current note and add a pitch bend effect
+            if (working_note_end == offset) {
+                TODO("Add Pitch event")
+                adjusted_relative_width += Rational(1, next_width_denominator)
+
+                working_backup_value = when (next_event) {
+                    is RelativeNoteEvent -> next_event.offset + working_backup_value
+                    is AbsoluteNoteEvent -> next_event.note
+                    is PercussionEvent -> bkp_note_value
+                    else -> 0 // Should be unreachable
+                }
+                this._ignored_events[Pair(next_beat_key, next_position)] = working_backup_value
+
+
+                working_note_end = offset + Rational(next_event.duration, next_width_denominator)
             } else {
-                null
+                break
             }
-        } else {
-            null
         }
 
-        val (start_frame, end_frame) = this.calculate_event_frame_range(beat_key.beat, event.duration, relative_width, relative_offset)
+
+
+        ////////////////////////////////////////////////
+        val (start_frame, end_frame) = this.calculate_event_frame_range(beat_key.beat, event.duration, adjusted_relative_width, relative_offset)
 
         // Don't add negative notes since they can't be played, BUT keep track
         // of it so the rest of the song isn't messed up

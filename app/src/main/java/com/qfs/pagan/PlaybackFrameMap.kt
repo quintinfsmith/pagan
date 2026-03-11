@@ -20,6 +20,8 @@ import com.qfs.apres.soundfontplayer.ProfileBuffer
 import com.qfs.apres.soundfontplayer.SampleHandle
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.structure.Rational
+import com.qfs.pagan.structure.greatest_common_denominator
+import com.qfs.pagan.structure.max
 import com.qfs.pagan.structure.minus
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
@@ -32,8 +34,10 @@ import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.ControllerProfile
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.TempoController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.PitchEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.VelocityController
 import com.qfs.pagan.structure.plus
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.structure.times
@@ -788,6 +792,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         val next_beat_key = beat_key.copy()
         val (offset, width_denominator) = this.opus_manager.get_leaf_offset_and_width(beat_key, position)
         var working_note_end = offset + Rational(event.duration, width_denominator)
+        var working_note_start = offset
         var working_backup_value = bkp_note_value
 
         while (true) {
@@ -802,7 +807,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 next_position
             ) ?: break
 
-            if (working_bend_transition.slide_duration == null) break
+            val transition_width = working_bend_transition.slide_duration ?: break
 
             val (offset, next_width_denominator) = this.opus_manager.get_leaf_offset_and_width(
                 next_beat_key,
@@ -823,6 +828,49 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             if (working_note_end == offset) {
                 adjusted_relative_width += Rational(1, next_width_denominator)
 
+                // Add pitch event
+                val transition_offset = max(working_note_start, offset - transition_width)
+                val adj_transition_width = offset - transition_offset
+                val transition_beat = transition_offset.toInt()
+                val transition_relative_offset = transition_offset - transition_beat
+                val pitch_controller = this.opus_manager.get_line_controller<PitchEvent>(PaganEffectType.Pitch, beat_key.channel, beat_key.line_offset)
+
+                // Make room for the transition
+                val pitch_tree = pitch_controller.get_tree(transition_beat)
+                val original_size = pitch_tree.size
+                val new_size = greatest_common_denominator(transition_relative_offset.denominator, original_size)
+                pitch_tree.resize(new_size)
+
+                // Adjust existing events
+                for ((i, child) in pitch_tree.divisions) {
+                    val child_event = child.get_event() ?: continue
+                    child_event.duration = child_event.duration * new_size / original_size
+
+                    val end_point = Rational(
+                        i + (child_event.duration),
+                        new_size
+                    )
+
+                    // Prevent existing Transition from returning to normal
+                    if (end_point == transition_relative_offset) {
+                        child_event.transition = EffectTransition.Linear
+                    }
+                }
+
+                val from_pitch = this.opus_manager.tuning_map[this.opus_manager.get_absolute_value(beat_key, position)!!]
+                val to_pitch = this.opus_manager.tuning_map[this.opus_manager.get_absolute_value(next_beat_key, next_position)!!]
+
+                pitch_controller.set_event(
+                    transition_beat,
+                    listOf(transition_relative_offset.numerator * new_size / transition_relative_offset.denominator),
+                    PitchEvent(
+                        // TODO: I don't think the math here is quite right but it'll do as a placeholder
+                        pitch = (Rational(from_pitch.first, from_pitch.second) / Rational(to_pitch.first, to_pitch.second)).toFloat(),
+                        duration = adj_transition_width.numerator * new_size / adj_transition_width.denominator,
+                        transition = EffectTransition.RLinear
+                    )
+                )
+
                 working_backup_value = when (next_event) {
                     is RelativeNoteEvent -> next_event.offset + working_backup_value
                     is AbsoluteNoteEvent -> next_event.note
@@ -831,7 +879,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 }
                 this._ignored_events[Pair(next_beat_key, next_position)] = working_backup_value
 
-                TODO("Pitch Event")
+                working_note_start = offset
                 working_note_end = offset + Rational(next_event.duration, next_width_denominator)
             } else {
                 break

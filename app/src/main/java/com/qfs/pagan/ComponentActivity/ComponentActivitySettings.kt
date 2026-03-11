@@ -735,29 +735,6 @@ class ComponentActivitySettings: PaganComponentActivity() {
     }
 
     @Composable
-    fun OptionClipNote(modifier: Modifier = Modifier) {
-        SettingsRow(
-            modifier = modifier,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                R.string.label_settings_same_line_release,
-                modifier = Modifier.weight(1F),
-                style = Typography.Settings.Label
-            )
-            Switch(
-                checked = view_model.configuration.clip_same_line_release.value,
-                onCheckedChange = {
-                    view_model.configuration.clip_same_line_release.value = it
-                    view_model.save_configuration()
-                    this@ComponentActivitySettings.update_result()
-                }
-            )
-        }
-    }
-
-    @Composable
     fun OptionNormalizeBeatWidth(modifier: Modifier = Modifier) {
         SettingsRow(
             modifier = modifier,
@@ -970,8 +947,6 @@ class ComponentActivitySettings: PaganComponentActivity() {
             OptionNoteInputMemory(Modifier.fillMaxWidth())
             MenuPadder()
             PlaybackRateMenu(Modifier.fillMaxWidth())
-            MenuPadder()
-            OptionClipNote(Modifier.fillMaxWidth())
             MenuPadder()
             OptionUsePreferredSoundfont(Modifier.fillMaxWidth())
             MenuPadder()

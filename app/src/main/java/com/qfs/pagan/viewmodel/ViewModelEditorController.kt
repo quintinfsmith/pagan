@@ -77,7 +77,6 @@ class ViewModelEditorController(): ViewModel() {
         ignore_line_effects: Boolean = false,
     ) {
         val frame_map = PlaybackFrameMap(opus_manager, sample_handle_manager)
-        frame_map.clip_same_line_release = configuration?.clip_same_line_release?.value != false
         frame_map.parse_opus(
             ignore_global_effects,
             ignore_channel_effects,

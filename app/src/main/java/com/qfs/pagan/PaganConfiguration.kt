@@ -27,7 +27,6 @@ class PaganConfiguration(
     soundfont: String? = null,
     sample_rate: Int = 32000,
     move_mode: MoveMode = MoveMode.COPY,
-    clip_same_line_release: Boolean = true,
     use_preferred_soundfont: Boolean = true,
     force_orientation: Int = ActivityInfo.SCREEN_ORIENTATION_USER,
     allow_std_percussion: Boolean = false,
@@ -42,7 +41,6 @@ class PaganConfiguration(
     val soundfont: MutableState<String?> = mutableStateOf(soundfont)
     val sample_rate: MutableState<Int> = mutableStateOf(sample_rate)
     val move_mode: MutableState<MoveMode> = mutableStateOf(move_mode)
-    val clip_same_line_release: MutableState<Boolean> = mutableStateOf(clip_same_line_release)
     val use_preferred_soundfont: MutableState<Boolean> = mutableStateOf(use_preferred_soundfont)
     val force_orientation: MutableState<Int> = mutableStateOf(force_orientation)
     val allow_std_percussion: MutableState<Boolean> = mutableStateOf(allow_std_percussion)
@@ -66,7 +64,6 @@ class PaganConfiguration(
                 soundfont = content.get_stringn("soundfont2"),
                 sample_rate = content.get_int("sample_rate", 32000),
                 move_mode = MoveMode.valueOf(content.get_string("move_mode", "COPY")),
-                clip_same_line_release = content.get_boolean("clip_same_line_release", true),
                 use_preferred_soundfont = content.get_boolean("use_preferred_soundfont", true),
                 force_orientation = content.get_int("force_orientation", ActivityInfo.SCREEN_ORIENTATION_USER),
                 allow_std_percussion = content.get_boolean("allow_std_percussion", false),
@@ -97,7 +94,6 @@ class PaganConfiguration(
         this.soundfont.value = config.soundfont.value
         this.sample_rate.value = config.sample_rate.value
         this.move_mode.value = config.move_mode.value
-        this.clip_same_line_release.value = config.clip_same_line_release.value
         this.use_preferred_soundfont.value = config.use_preferred_soundfont.value
         this.force_orientation.value = config.force_orientation.value
         this.allow_std_percussion.value = config.allow_std_percussion.value
@@ -119,7 +115,6 @@ class PaganConfiguration(
         output["soundfont2"] = this.soundfont.value
         output["sample_rate"] = this.sample_rate.value
         output["move_mode"] = this.move_mode.value.name
-        output["clip_same_line_release"] = this.clip_same_line_release.value
         output["use_preferred_soundfont"] = this.use_preferred_soundfont.value
         output["force_orientation"] = this.force_orientation.value
         output["allow_std_percussion"] = this.allow_std_percussion.value

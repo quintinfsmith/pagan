@@ -128,8 +128,4 @@ class PlaybackDevice(
         }
         this.play(start_frame)
     }
-
-    fun set_clip_same_line_release(value: Boolean) {
-        (this.sample_frame_map as PlaybackFrameMap).clip_same_line_release = value
-    }
 }

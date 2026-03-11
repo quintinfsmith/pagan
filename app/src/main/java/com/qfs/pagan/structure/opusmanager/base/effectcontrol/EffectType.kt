@@ -19,8 +19,6 @@ enum class EffectType(val apres_type: ApresEffectType?) {
     Pan(ApresEffectType.Pan),
     Pitch(ApresEffectType.Pitch),
 
-    BendTransition(null),
-
     Reverb(null)
  //   Equalizer(1024 + 3),
 }

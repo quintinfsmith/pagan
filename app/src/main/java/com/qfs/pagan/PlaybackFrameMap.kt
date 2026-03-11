@@ -32,8 +32,8 @@ import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.ControllerProfile
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.TempoController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.BendTransitionEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.plus
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.structure.times
@@ -440,16 +440,15 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
     private fun _map_real_handle(handle: Pair<SampleHandle, IntArray>, start_frame: Int) {
         val end_frame = handle.first.release_frame!! + start_frame
-        val sample_start_frame = start_frame
         val sample_end_frame = end_frame + handle.first.get_release_duration()
 
         val uuid = handle.first.uuid
-        this._handle_range_map[uuid] = sample_start_frame .. sample_end_frame
+        this._handle_range_map[uuid] = start_frame..sample_end_frame
         this._handle_map[uuid] = handle
-        if (!this._frame_map.containsKey(sample_start_frame)) {
-            this._frame_map[sample_start_frame] = mutableSetOf()
+        if (!this._frame_map.containsKey(start_frame)) {
+            this._frame_map[start_frame] = mutableSetOf()
         }
-        this._frame_map[sample_start_frame]!!.add(uuid)
+        this._frame_map[start_frame]!!.add(uuid)
     }
 
     fun clear() {
@@ -797,13 +796,13 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             next_beat_key.beat = next_beat
             val next_event = this.opus_manager.get_tree(next_beat_key, next_position).get_event()!!
 
-            val working_bend_transition = opus_manager.get_current_line_effect<BendTransitionEvent>(
-                PaganEffectType.BendTransition,
+            val working_bend_transition = opus_manager.get_current_line_effect<OpusVelocityEvent>(
+                PaganEffectType.Velocity,
                 next_beat_key,
                 next_position
             ) ?: break
 
-            if (working_bend_transition.transition_duration.numerator == 0) break
+            if (working_bend_transition.slide_duration == null) break
 
             val (offset, next_width_denominator) = this.opus_manager.get_leaf_offset_and_width(
                 next_beat_key,
@@ -822,7 +821,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
             // overwrite the next note with the current note and add a pitch bend effect
             if (working_note_end == offset) {
-                TODO("Add Pitch event")
                 adjusted_relative_width += Rational(1, next_width_denominator)
 
                 working_backup_value = when (next_event) {
@@ -833,14 +831,12 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 }
                 this._ignored_events[Pair(next_beat_key, next_position)] = working_backup_value
 
-
+                TODO("Pitch Event")
                 working_note_end = offset + Rational(next_event.duration, next_width_denominator)
             } else {
                 break
             }
         }
-
-
 
         ////////////////////////////////////////////////
         val (start_frame, end_frame) = this.calculate_event_frame_range(beat_key.beat, event.duration, adjusted_relative_width, relative_offset)

@@ -55,6 +55,7 @@ class EffectControlSet(var beat_count: Int, default_enabled: Set<EffectType>? = 
                 EffectType.Velocity -> VelocityController(this.beat_count)
                 EffectType.Delay -> DelayController(this.beat_count)
                 EffectType.LowPass -> LowPassController(this.beat_count)
+                EffectType.Pitch -> TODO()
             }
         } else {
             this.controllers[type] = controller

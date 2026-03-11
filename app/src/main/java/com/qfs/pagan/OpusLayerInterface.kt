@@ -64,6 +64,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         fun get_available_transitions(type: EffectType): Set<EffectTransition> {
             return when (type) {
                 EffectType.Delay,
+                EffectType.Velocity,
                 EffectType.Tempo -> {
                     setOf(
                         EffectTransition.Instant,
@@ -72,7 +73,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 }
 
                 EffectType.Pan,
-                EffectType.Velocity,
                 EffectType.Volume -> {
                     setOf(
                         EffectTransition.Instant,
@@ -84,6 +84,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
                 EffectType.LowPass,
                 EffectType.Reverb -> setOf(EffectTransition.Instant)
+
+                EffectType.Pitch -> TODO()
             }
 
         }

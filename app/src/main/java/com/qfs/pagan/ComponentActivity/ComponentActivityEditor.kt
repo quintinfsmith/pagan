@@ -1674,6 +1674,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             EffectType.Pan -> Pair(R.drawable.icon_pan, R.string.ctl_desc_pan)
                             EffectType.LowPass -> TODO()
                             EffectType.Reverb -> TODO()
+                            EffectType.Pitch -> TODO()
                         }
                         Box(
                             Modifier.fillMaxSize(),

@@ -870,6 +870,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                         EffectType.Delay -> R.string.ctl_desc_delay
                         EffectType.LowPass -> TODO()
                         EffectType.Reverb -> TODO()
+                        EffectType.Pitch -> TODO()
                     }
                 )
             )

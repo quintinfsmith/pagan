@@ -12,6 +12,7 @@ import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.pagan.jsoninterfaces.UnknownEventTypeException
+import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
@@ -35,6 +36,14 @@ object OpusControlEventJSONInterface {
             }
             is OpusVelocityEvent -> {
                 output["velocity"] = input.value
+                output["slide"] = if (input.slide_duration == null) {
+                    null
+                } else {
+                    JSONList(
+                        JSONInteger(input.slide_duration!!.numerator),
+                        JSONInteger(input.slide_duration!!.denominator),
+                    )
+                }
             }
             is OpusReverbEvent -> {
                 output["wetness"] = input.value
@@ -104,8 +113,15 @@ object OpusControlEventJSONInterface {
         } else {
             map.get_float("velocity")
         }
+
         return OpusVelocityEvent(
             value,
+            map.get_listn("slide")?.let {
+                Rational(
+                    it.get_int(0),
+                    it.get_int(1)
+                )
+            },
             map.get_int("duration", 1),
             /* Note: Need the try catch since I initially had transitions as int, but only used 0 */
             try {

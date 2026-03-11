@@ -9,24 +9,60 @@
  */
 package com.qfs.pagan.composable.effectwidget
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Constraints
 import com.qfs.pagan.ActionDispatcher
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
-import com.qfs.pagan.composable.wrappers.Slider
-import com.qfs.pagan.composable.button.TextCMenuButton
+import com.qfs.pagan.Values
+import com.qfs.pagan.composable.DivisorSeparator
+import com.qfs.pagan.composable.IntegerInput
 import com.qfs.pagan.composable.MediumSpacer
+import com.qfs.pagan.composable.wrappers.Slider
+import com.qfs.pagan.composable.button.Button
+import com.qfs.pagan.composable.wrappers.DropdownMenu
+import com.qfs.pagan.structure.Rational
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.roundToInt
 
@@ -35,40 +71,232 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
     val cursor = ui_facade.active_cursor.value ?: return
     val is_initial = cursor.type == CursorMode.Line
     val working_value = remember { mutableFloatStateOf(event.value) }
-    TextCMenuButton(
-        modifier = Modifier
-            .testTag(TestTag.VelocityButton)
-            .width(Dimensions.ContextMenuButtonWidth),
-        text = "%02d".format((event.value * 100).roundToInt()),
-        shape = Shapes.ContextMenuSecondaryButtonStart,
-        onClick = {
-            dispatcher.dialog_number_input(R.string.dlg_set_velocity, 0, 127, default = (event.value * 100).toInt()) {
-                event.value = it.toFloat() / 100F
-                dispatcher.set_effect_at_cursor(event)
+    val numerator_label: MutableState<Int> = remember { mutableStateOf(event.slide_duration?.numerator ?: Values.Defaults.SlideNumerator) }
+    val denominator_label: MutableState<Int> = remember { mutableStateOf(event.slide_duration?.denominator ?: Values.Defaults.SlideDenominator) }
+    val mode_switch: MutableState<Boolean> = remember { mutableStateOf(event.slide_duration != null) }
+    val (channel, line_offset, beat, position) = ui_facade.get_location_ints()
+
+    val default_colors = SliderDefaults.colors()
+    val colors = default_colors.copy(
+        activeTickColor = default_colors.inactiveTickColor,
+        inactiveTickColor = default_colors.activeTickColor
+    )
+
+    val submit = {
+        if (beat != null) {
+            dispatcher.set_effect(EffectType.Velocity, event, channel, line_offset, beat, position!!)
+        } else {
+            dispatcher.set_initial_effect(EffectType.Velocity, event, channel, line_offset)
+        }
+    }
+
+    AnimatedVisibility(
+        visible = mode_switch.value,
+        Modifier.weight(1F)
+    ) {
+        val velocity_expanded = remember { mutableStateOf(false) }
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.weight(1F, fill = false)
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.width(IntrinsicSize.Min)
+            ) {
+                Button(
+                    contentPadding = Dimensions.ContextMenuButtonPadding,
+                    shape = Shapes.ContextMenuButtonPrimary,
+                    modifier = Modifier
+                        .testTag(TestTag.VelocityButton)
+                        .height(Dimensions.ContextMenuButtonHeight)
+                        .width(Dimensions.ContextMenuButtonWidth),
+                    content = {
+                        Box(contentAlignment = Alignment.Center) {
+                            if (!velocity_expanded.value) {
+                                Icon(
+                                    modifier = Modifier.alpha(.2f),
+                                    painter = painterResource(R.drawable.icon_velocity),
+                                    contentDescription = stringResource(R.string.ctl_desc_velocity)
+                                )
+                            }
+                            Text(
+                                text = "${(working_value.floatValue * 100).roundToInt()}%",
+                                style = Typography.ContextMenuButton
+                            )
+                        }
+                    },
+                    onClick = {
+                        velocity_expanded.value = !velocity_expanded.value
+                    }
+                )
+                DropdownMenu(
+                    velocity_expanded.value,
+                    onDismissRequest = { velocity_expanded.value = false },
+                    shape = CircleShape,
+                    modifier = Modifier
+                        .height(Dimensions.EffectWidget.Velocity.FadePopupHeight)
+                        .width(Dimensions.EffectWidget.Velocity.FadePopupWidth)
+                ) {
+                    Slider(
+                        value = working_value.floatValue,
+                        steps = 100,
+                        colors = colors,
+                        valueRange = 0F..1F,
+                        modifier = Modifier
+                            .testTag(TestTag.VelocityVSlider)
+                            .padding(vertical = Dimensions.EffectWidget.Velocity.FadePopupPadding)
+                            .graphicsLayer {
+                                rotationZ = 270f
+                                transformOrigin = TransformOrigin(0f, 0f)
+                            }
+                            .weight(1F)
+                            .layout { measurable, constraints ->
+                                val placeable = measurable.measure(
+                                    Constraints(
+                                        minWidth = constraints.minHeight,
+                                        maxWidth = constraints.maxHeight,
+                                        minHeight = constraints.minWidth,
+                                        maxHeight = constraints.maxHeight,
+                                    )
+                                )
+                                layout(placeable.height, placeable.width) {
+                                    placeable.place(-placeable.width, 0)
+                                }
+                            },
+
+                        onValueChange = {
+                            event.value = it
+                            working_value.floatValue = it
+                        },
+                        onValueChangeFinished = {
+                            if (beat != null) {
+                                dispatcher.set_effect(EffectType.Velocity, event, channel, line_offset, beat, position!!)
+                            } else {
+                                dispatcher.set_initial_effect(EffectType.Velocity, event, channel, line_offset)
+                            }
+                        }
+                    )
+                }
             }
-        },
-        onLongClick = {
-            working_value.floatValue = 1F
-            event.value = 1F
-            dispatcher.set_effect_at_cursor(event)
+        }
+    }
+
+    AnimatedVisibility(
+        visible = !mode_switch.value,
+        Modifier.weight(1F)
+    ) {
+        Slider(
+            modifier = Modifier
+                .testTag(TestTag.VelocityHSlider)
+                .width(IntrinsicSize.Min)
+                .height(Dimensions.ContextMenuButtonHeight),
+            value = working_value.value,
+            valueRange = 0F .. 1.27F,
+            onValueChange = {
+                event.value = it
+                working_value.value = it
+            },
+            onValueChangeFinished = {
+                dispatcher.set_effect_at_cursor(event)
+            },
+        )
+    }
+
+    MediumSpacer()
+
+    Switch(
+        mode_switch.value,
+        onCheckedChange = {
+            mode_switch.value = it
+            if (!it) {
+                event.slide_duration = null
+            } else {
+                event.slide_duration = Rational(
+                    Values.Defaults.SlideNumerator,
+                    Values.Defaults.SlideDenominator
+                )
+            }
+            submit()
         }
     )
+
+    AnimatedVisibility(
+        visible = mode_switch.value,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            MediumSpacer()
+            Box(
+                modifier = Modifier,
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    modifier = Modifier
+                        .alpha(.2F)
+                        .width(Dimensions.EffectWidget.Velocity.InputIconWidth),
+                    painter = painterResource(R.drawable.icon_hz),
+                    contentDescription = null
+                )
+                IntegerInput(
+                    numerator_label,
+                    minimum = 1,
+                    on_focus_exit = {
+                        event.slide_duration = Rational(
+                            numerator_label.value,
+                            denominator_label.value
+                        )
+                        submit()
+                    },
+                    contentPadding = Unpadded,
+                    text_align = TextAlign.Center,
+                    modifier = Modifier
+                        .testTag(TestTag.VelocitySlideNumerator)
+                        .height(Dimensions.EffectWidget.InputHeight)
+                        .width(Dimensions.EffectWidget.Velocity.InputWidth)
+                ) {
+                    event.slide_duration = Rational(it, denominator_label.value)
+                    submit()
+                }
+            }
+            DivisorSeparator()
+            Box(
+                modifier = Modifier,
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    modifier = Modifier
+                        .alpha(.2F)
+                        .width(Dimensions.EffectWidget.Velocity.InputIconWidth),
+                    painter = painterResource(R.drawable.icon_hz),
+                    contentDescription = null
+                )
+                IntegerInput(
+                    denominator_label,
+                    minimum = 1,
+                    on_focus_exit = {
+                        event.slide_duration = Rational(
+                            numerator_label.value,
+                            denominator_label.value
+                        )
+                        submit()
+                    },
+                    contentPadding = Unpadded,
+                    text_align = TextAlign.Center,
+                    modifier = Modifier
+                        .testTag(TestTag.VelocitySlideDenominator)
+                        .height(Dimensions.EffectWidget.InputHeight)
+                        .width(Dimensions.EffectWidget.Velocity.InputWidth)
+                ) {
+                    event.slide_duration = Rational(numerator_label.value, it)
+                    submit()
+                }
+            }
+        }
+    }
+
     MediumSpacer()
-    Slider(
-        modifier = Modifier
-            .testTag(TestTag.VelocitySlider)
-            .height(Dimensions.ContextMenuButtonHeight)
-            .weight(1F),
-        value = working_value.floatValue,
-        valueRange = 0F .. 1.27F,
-        onValueChange = {
-            working_value.value = it
-            event.value = it
-        },
-        onValueChangeFinished = {
-            dispatcher.set_effect_at_cursor(event)
-        },
-    )
 
     EffectTransitionButton(event, dispatcher, is_initial)
 }

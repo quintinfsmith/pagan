@@ -237,11 +237,17 @@ fun LeafView(
                                     style = Typography.EffectLeaf
                                 )
 
-                                is OpusVelocityEvent -> Text(
-                                    "${(event.value * 100F).toInt()}%",
-                                    color = text_color,
-                                    style = Typography.EffectLeaf
-                                )
+                                is OpusVelocityEvent -> {
+                                    var label_string = "${(event.value * 100F).toInt()}"
+                                    if (event.slide_duration != null) {
+                                        label_string += "^"
+                                    }
+                                    Text(
+                                        label_string,
+                                        color = text_color,
+                                        style = Typography.EffectLeaf
+                                    )
+                                }
 
                                 null -> {}
                             }

@@ -214,6 +214,13 @@ object Dimensions {
         object Pan {
             val CenterDotDiameter = 12.dp
         }
+        object Velocity {
+            val FadePopupHeight = 250.dp
+            val FadePopupWidth = 50.dp
+            val FadePopupPadding = 8.dp
+            val InputWidth = 54.dp
+            val InputIconWidth = 41.dp
+        }
         object Delay {
             val FadePopupHeight = 250.dp
             val FadePopupWidth = 50.dp

@@ -127,3 +127,19 @@ fun List<Rational>.sum() = {
     }
     output
 }
+
+
+fun max(a: Rational, b: Rational): Rational {
+    return if (a.toFloat() < b.toFloat()) {
+        b
+    } else {
+        a
+    }
+}
+fun min(a: Rational, b: Rational): Rational {
+    return if (a.toFloat() > b.toFloat()) {
+        b
+    } else {
+        a
+    }
+}

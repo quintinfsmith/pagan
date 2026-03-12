@@ -44,6 +44,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.SingleFloatEvent
 import com.qfs.pagan.structure.opusmanager.utils.checked_cast
@@ -4657,8 +4658,7 @@ open class OpusLayerBase: Effectable {
     }
 
     fun get_current_velocity(beat_key: BeatKey, position: List<Int>): Float {
-        val event: SingleFloatEvent? = this.get_current_line_effect(EffectType.Velocity, beat_key, position) ?: this.get_current_line_effect(EffectType.Volume, beat_key, position)
-        return event?.value ?: 1F
+        return this.get_current_line_effect<OpusVelocityEvent>(EffectType.Velocity, beat_key, position)?.value ?: this.get_current_line_effect<OpusVolumeEvent>(EffectType.Volume, beat_key, position)?.value ?: 1F
     }
 
     internal fun _get_beatkeys_from_range(beat_key: BeatKey, from_key: BeatKey, to_key: BeatKey): List<BeatKey> {

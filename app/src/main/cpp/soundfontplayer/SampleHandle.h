@@ -23,6 +23,7 @@ const int TYPE_VOLUME = 1;
 const int TYPE_LOWPASS = 2;
 const int TYPE_DELAY = 3;
 const int TYPE_PAN = 5;
+const int TYPE_PITCH = 7;
 
 //const int TYPE_FREQUENCY_DOMAIN = 1024;
 //const int TYPE_REVERB = TYPE_FREQUENCY_DOMAIN | 2;
@@ -53,7 +54,7 @@ class SampleHandle {
         int release_frame;
         int kill_frame;
         bool is_dead;
-        int active_buffer;
+        int active_buffer; // startup/loop/decay
 
         Oscillator* vibrato_oscillator;
         int vibrato_delay;

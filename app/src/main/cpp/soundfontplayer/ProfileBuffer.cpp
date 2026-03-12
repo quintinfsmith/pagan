@@ -7,6 +7,7 @@
 #include "VolumeBuffer.h"
 #include "DelayBuffer.h"
 #include "PanBuffer.h"
+#include "PitchEffectBuffer.h"
 
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_qfs_apres_soundfontplayer_ProfileBuffer_00024Companion_create(JNIEnv* env, jobject, jlong cev_ptr, jint start_frame) {

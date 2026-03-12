@@ -40,6 +40,7 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_00024Companion_create(JNIEnv* e
         }
         default: {
             buffer = (EffectProfileBuffer*)malloc(sizeof(EffectProfileBuffer));
+            break;
         }
     }
     return (jlong)buffer;

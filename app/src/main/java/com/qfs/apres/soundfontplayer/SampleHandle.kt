@@ -11,6 +11,7 @@ package com.qfs.apres.soundfontplayer
 
 import android.util.Log
 import com.qfs.apres.soundfont2.SampleData
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.PitchController
 import kotlin.math.abs
 
 class SampleHandle(var ptr: Long) {
@@ -28,7 +29,7 @@ class SampleHandle(var ptr: Long) {
         vibrato_frequency: Float = 0f,
         vibrato_delay: Float = 0f,
         vibrato_pitch: Float = 0f,
-
+        pitch_controller: ProfileBuffer? = null
         // TODO: Modulations
         //modulation_envelope: ModulationEnvelope,
         //modulation_lfo: LFO?,
@@ -47,7 +48,8 @@ class SampleHandle(var ptr: Long) {
             pan,
             vibrato_frequency,
             vibrato_delay,
-            vibrato_pitch
+            vibrato_pitch,
+            pitch_controller?.ptr ?: 0L,
             //modulation_envelope,
             //modulation_lfo,
             //modulators
@@ -70,7 +72,8 @@ class SampleHandle(var ptr: Long) {
             pan: Float,
             vibrato_frequency: Float,
             vibrato_delay: Float,
-            vibrato_pitch: Float
+            vibrato_pitch: Float,
+            pitch_controller: Long
         ): Long
     }
 
@@ -243,6 +246,11 @@ class SampleHandle(var ptr: Long) {
     external fun repitch_jni(ptr: Long, new_pitch: Float)
     fun repitch(adjustment: Float) {
         this.repitch_jni(this.ptr, adjustment)
+    }
+
+    external fun attach_pitch_controller_jni(ptr: Long, controller_ptr: Long)
+    fun attach_pitch_controller(controller: ProfileBuffer) {
+        this.attach_pitch_controller_jni(this.ptr, controller.ptr)
     }
 
     // Need a destroy funciton since PitchedBuffer needs one

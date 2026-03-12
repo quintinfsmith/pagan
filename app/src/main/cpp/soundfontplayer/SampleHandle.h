@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include "PitchedBuffer.h"
 #include "EffectProfileBuffer.h"
+#include "PitchEffectBuffer.h"
 #include "VolumeEnvelope.h"
 #include <cmath>
 #include "Oscillator.h"
@@ -60,6 +61,8 @@ class SampleHandle {
         int vibrato_delay;
         float vibrato_pitch;
 
+        PitchEffectBuffer* pitch_controller;
+
         explicit SampleHandle(
                 SampleData* data,
                 int sample_rate,
@@ -73,7 +76,8 @@ class SampleHandle {
                 float pan,
                 float vibrato_frequency,
                 float vibrato_delay,
-                float vibrato_pitch
+                float vibrato_pitch,
+                PitchEffectBuffer* pitch_controller
         ) {
             this->uuid = SampleHandleUUIDGen++;
             this->data = data;
@@ -88,6 +92,7 @@ class SampleHandle {
             this->pan = pan;
             this->vibrato_delay = (int)(vibrato_delay * this->sample_rate);
             this->vibrato_pitch = vibrato_pitch;
+            this->pitch_controller = pitch_controller;
 
             if (vibrato_frequency != 0 && vibrato_pitch != 1) {
                 this->vibrato_oscillator = new Oscillator(this->sample_rate, vibrato_frequency);
@@ -113,7 +118,8 @@ class SampleHandle {
                 int buffer_count,
                 Oscillator* vibrato_oscillator,
                 float vibrato_delay,
-                float vibrato_pitch
+                float vibrato_pitch,
+                PitchEffectBuffer* pitch_controller
         ) {
             this->uuid = SampleHandleUUIDGen++;
             this->data = data;
@@ -129,6 +135,7 @@ class SampleHandle {
             this->vibrato_oscillator = vibrato_oscillator;
             this->vibrato_delay = (int)(vibrato_delay * this->sample_rate);
             this->vibrato_pitch = vibrato_pitch;
+            this->pitch_controller = pitch_controller;
 
             this->secondary_setup(data_buffers, buffer_count);
         }
@@ -208,6 +215,8 @@ class SampleHandle {
                 this->vibrato_pitch = 0;
                 this->vibrato_delay = 0;
             }
+            this->pitch_controller = (PitchEffectBuffer*)malloc(sizeof(PitchEffectBuffer));
+            new (this->pitch_controller) PitchEffectBuffer(original->pitch_controller);
         }
 
         ~SampleHandle() {
@@ -218,6 +227,9 @@ class SampleHandle {
 
             this->volume_envelope->~VolumeEnvelope();
             free(this->volume_envelope);
+
+            this->pitch_controller->~PitchEffectBuffer();
+            free(this->pitch_controller);
         }
 
         void set_release_frame(int frame) {
@@ -226,6 +238,7 @@ class SampleHandle {
 
         void set_working_frame(int frame) {
             this->working_frame = frame;
+
             if (this->kill_frame > -1 && (this->working_frame >= this->kill_frame || (this->working_frame >= this->release_frame + this->volume_envelope->frames_release))) {
                 this->is_dead = true;
                 return;
@@ -266,6 +279,11 @@ class SampleHandle {
                 this->is_dead = false;
             } catch (PitchedBufferOverflow& e) {
                 this->is_dead = true;
+            }
+
+            if (this->pitch_controller != nullptr) {
+                this->pitch_controller->set_frame(frame);
+                this->get_active_data_buffer()->repitch(this->pitch_controller->peek());
             }
         }
 
@@ -420,8 +438,15 @@ class SampleHandle {
                 throw NoFrameDataException();
             }
 
+            float repitch_value = 1;
+            if (this->pitch_controller != nullptr) {
+                repitch_value *= this->pitch_controller->get_next()[0];
+            }
             if (this->vibrato_oscillator != nullptr && this->vibrato_delay < this->working_frame) {
-                this->get_active_data_buffer()->repitch(1 + ((this->vibrato_pitch - 1) * this->vibrato_oscillator->next()));
+                repitch_value *= 1 + ((this->vibrato_pitch - 1) * this->vibrato_oscillator->next());
+            }
+            if (repitch_value != 1) {
+                this->get_active_data_buffer()->repitch(repitch_value);
             }
 
             return frame_value * frame_factor * MAX_VOLUME;

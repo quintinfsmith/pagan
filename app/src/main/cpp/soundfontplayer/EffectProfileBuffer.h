@@ -7,7 +7,6 @@
 #include "ProfileBufferFrame.h"
 #include <vector>
 #include "ControllerEventData.h"
-#include "SampleHandle.h"
 #include "Complex.h"
 
 class EffectProfileBuffer {

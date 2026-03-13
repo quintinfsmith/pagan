@@ -48,5 +48,6 @@ class ProfileBuffer(var ptr: Long, val type: EffectType) {
     fun get_data(): ControllerEventData {
         return ControllerEventData(this.get_data_ptr_jni(this.ptr), this.type)
     }
+
 }
 

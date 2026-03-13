@@ -38,6 +38,12 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_00024Companion_create(JNIEnv* e
             buffer = derived_buffer;
             break;
         }
+        case TYPE_PITCH: {
+            auto* derived_buffer = (PitchEffectBuffer*)malloc(sizeof(PitchEffectBuffer));
+            new (derived_buffer) PitchEffectBuffer(controller_event_data, start_frame);
+            buffer = derived_buffer;
+            break;
+        }
         default: {
             buffer = (EffectProfileBuffer*)malloc(sizeof(EffectProfileBuffer));
             break;
@@ -76,6 +82,13 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_copy_1jni(JNIEnv* env, jobject,
             auto* original = (LowPassBuffer*)ptr;
             auto* derived_buffer = (LowPassBuffer*)malloc(sizeof(LowPassBuffer));
             new (derived_buffer) LowPassBuffer(original);
+            buffer = derived_buffer;
+            break;
+        }
+        case TYPE_PITCH: {
+            auto* original = (PitchEffectBuffer*)ptr;
+            auto* derived_buffer = (PitchEffectBuffer*)malloc(sizeof(PitchEffectBuffer));
+            new (derived_buffer) PitchEffectBuffer(original);
             buffer = derived_buffer;
             break;
         }
@@ -122,6 +135,12 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_destroy_1jni(JNIEnv* env, jobje
         case TYPE_LOWPASS: {
             auto* original =(LowPassBuffer*)ptr;
             original->~LowPassBuffer();
+            free(original);
+            break;
+        }
+        case TYPE_PITCH: {
+            auto* original = (PitchEffectBuffer*)ptr;
+            original->~PitchEffectBuffer();
             free(original);
             break;
         }

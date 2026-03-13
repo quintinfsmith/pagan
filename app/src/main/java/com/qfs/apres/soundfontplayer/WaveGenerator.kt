@@ -249,12 +249,6 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                     ),
                 )
             }
-
-            // Add Pitch Controller Here TODO
-            new_handle.attach_pitch_controller(
-                ProfileBuffer(
-                )
-            )
         }
     }
 

@@ -149,18 +149,26 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             )
         }
 
-        private fun convert_to_indexed_profile_buffer_frames(sample_rate: Int, tempo_map: List<Pair<Rational, Float>>, beat_map: IntArray, effect_event: ControllerProfile.ProfileEffectEvent, event_type: EffectType): List<ControllerEventData.IndexedProfileBufferFrame> {
+        private fun convert_to_indexed_profile_buffer_frames(sample_rate: Int, tempo_map: List<Pair<Rational, Float>>, beat_map: IntArray, effect_event: ControllerProfile.ProfileEffectEvent, event_type: EffectType, start_offset: Rational = Rational(0,1)): List<ControllerEventData.IndexedProfileBufferFrame> {
             val adjusted_event = when (event_type) {
                 EffectType.LowPass -> {
                     ControllerProfile.ProfileEffectEvent(
-                        effect_event.start_position,
-                        effect_event.end_position,
+                        effect_event.start_position - start_offset,
+                        effect_event.end_position - start_offset,
                         floatArrayOf(sample_rate.toFloat(), effect_event.start_value[0], effect_event.start_value[1]),
                         floatArrayOf(sample_rate.toFloat(), effect_event.end_value[0], effect_event.end_value[1]),
                         effect_event.transition
                     )
                 }
-                else -> effect_event
+                else -> {
+                    ControllerProfile.ProfileEffectEvent(
+                        effect_event.start_position - start_offset,
+                        effect_event.end_position - start_offset,
+                        effect_event.start_value,
+                        effect_event.end_value,
+                        effect_event.transition
+                    )
+                }
             }
             val output = mutableListOf<ControllerEventData.IndexedProfileBufferFrame>()
 
@@ -487,7 +495,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         this._cached_frame_count = null
     }
 
-    private fun _add_handles(start_frame: Int, end_frame: Int, start_event: GeneralMIDIEvent, next_event_frame: Int? = null, merge_keys: IntArray) {
+    private fun _add_handles(start_frame: Int, end_frame: Int, start_event: GeneralMIDIEvent, next_event_frame: Int? = null, merge_keys: IntArray, pitch_controller: ProfileBuffer? = null) {
         val setter_id = this._setter_id_gen++
 
         if (!this._setter_frame_map.containsKey(start_frame)) {
@@ -520,6 +528,9 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             val handle_uuid_set = mutableSetOf<Int>()
             for (handle in handles) {
                 handle.release_frame = end_frame - start_frame
+                pitch_controller?.let {
+                    handle.attach_pitch_controller(pitch_controller.copy())
+                }
                 if (next_event_frame != null) {
                     // Remove release phase. can get noisy on things like tubular bells with long fade outs
                     //handle.volume_envelope.frames_release = min(this._sample_handle_manager.sample_rate / 11, handle.volume_envelope.frames_release)
@@ -806,15 +817,12 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         var adjusted_relative_width = relative_width
         var next_event_frame: Int? = null
         val next_beat_key = beat_key.copy()
-        val (offset, width_denominator) = this.opus_manager.get_leaf_offset_and_width(beat_key, position)
-        var working_note_end = offset + Rational(event.duration, width_denominator)
-        var working_note_start = offset
+        val (initial_offset, width_denominator) = this.opus_manager.get_leaf_offset_and_width(beat_key, position)
+        var working_note_end = initial_offset + Rational(event.duration, width_denominator)
+        var working_note_start = initial_offset
         var working_backup_value = bkp_note_value
 
-        if (!this.artificial_pitch_shifts.containsKey(Pair(beat_key.channel, beat_key.line_offset))) {
-            this.artificial_pitch_shifts[Pair(beat_key.channel, beat_key.line_offset)] = PitchController(this.opus_manager.length)
-        }
-        val pitch_controller = this.artificial_pitch_shifts[Pair(beat_key.channel, beat_key.line_offset)]!!
+        val pitch_controller = PitchController(this.opus_manager.length)
 
         while (true) {
             val next_event_position = this.opus_manager.get_proceeding_event_position(next_beat_key, position) ?: break
@@ -922,19 +930,39 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         // of it so the rest of the song isn't messed up
         this._gen_midi_event(
             when (event) {
-                is RelativeNoteEvent -> {
-                    AbsoluteNoteEvent(
-                        event.offset + bkp_note_value,
-                        event.duration
-                    )
-                }
+                is RelativeNoteEvent -> AbsoluteNoteEvent(event.offset + bkp_note_value, event.duration)
                 else -> event
             },
             beat_key,
             position
         )?.let { start_event ->
             val merge_key_array = PlaybackFrameMap.generate_merge_keys(beat_key.channel, beat_key.line_offset)
-            this._add_handles(start_frame, end_frame, start_event, next_event_frame, merge_key_array)
+
+            // TODO: Check if pitch_controller is empty
+            val profile = pitch_controller.generate_profile()
+            val control_event_data = mutableListOf<ControllerEventData.IndexedProfileBufferFrame>()
+            for (effect_event in profile.get_events()) {
+                control_event_data.addAll(
+                    PlaybackFrameMap.convert_to_indexed_profile_buffer_frames(
+                        this._sample_handle_manager.sample_rate,
+                        this._tempo_ratio_map,
+                        this._cached_beat_frames!!,
+                        effect_event,
+                        EffectType.Pitch,
+                        initial_offset
+                    )
+                )
+            }
+            val profile_buffer = ProfileBuffer(
+                ControllerEventData(
+                    end_frame - start_frame,
+                    control_event_data,
+                    EffectType.Pitch
+                )
+            )
+
+            this._add_handles(start_frame, end_frame, start_event, next_event_frame, merge_key_array, profile_buffer)
+            profile_buffer.destroy()
         }
 
         return when (event) {

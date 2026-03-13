@@ -376,6 +376,7 @@ class SampleHandle {
             bool is_pressed = this->is_pressed();
             if (this->working_frame < this->volume_envelope->frames_delay) {
                 this->working_frame += 1;
+                this->pitch_controller->get_next();
                 return 0;
             }
 

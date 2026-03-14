@@ -893,13 +893,13 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 val pitch_tree = pitch_controller.get_tree(transition_beat)
                 val original_size = pitch_tree.size
 
-                val new_size = get_next_biggest(transition_relative_offset.denominator, original_size)
+                val new_size = get_next_biggest(transition_relative_offset.denominator, original_size, adj_transition_width.denominator)
                 pitch_tree.resize(new_size)
 
                 // Adjust existing events
                 for ((i, child) in pitch_tree.divisions) {
                     val child_event = child.get_event() ?: continue
-                    child_event.duration = child_event.duration * new_size / original_size
+                    child_event.duration = new_size * child_event.duration / original_size
                 }
 
                 val radix = this.opus_manager.get_radix()
@@ -915,9 +915,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 val (to_tuning_offset, to_tuning_radix) = this.opus_manager.tuning_map[to_offset]
                 val to_pitch = 2F.pow((to_tuning_offset + (to_tuning_radix * to_octave)).toFloat() / to_tuning_radix.toFloat())
 
-
-                println("$adj_transition_width, $transition_beat, $transition_relative_offset, $to_pitch, $from_pitch")
-                println(":: ${adj_transition_width * new_size}")
                 pitch_controller.set_event(
                     transition_beat,
                     listOf(transition_relative_offset.numerator * new_size / transition_relative_offset.denominator),
@@ -978,7 +975,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                         )
                     )
                 }
-                println("${control_event_data.size} (${end_frame - start_frame})")
                 ProfileBuffer(
                     ControllerEventData(
                         end_frame - start_frame,

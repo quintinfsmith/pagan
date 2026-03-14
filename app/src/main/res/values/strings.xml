@@ -255,7 +255,7 @@
     <string name="effect_transition_instant">No Transition</string>
     <string name="effect_transition_linear">Linear</string>
     <string name="effect_transition_rlinear_out">Temporary/Linear-Out</string>
-    <string name="effect_transition_rlinearB">Temporary/Linear</string>
+    <string name="effect_transition_linearB">Temporary/Linear</string>
     <string name="effect_transition_rinstant">Temporary</string>
     <string name="midi_device_unset">Midi Device Unspecified</string>
     <string name="playback_device">Playback Device</string>

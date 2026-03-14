@@ -272,7 +272,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                             EffectTransition.Linear -> R.drawable.icon_transition_linear
                             EffectTransition.InstantB -> R.drawable.icon_transition_rimmediate
                             EffectTransition.RLinear -> R.drawable.icon_transition_rlinear
-                            EffectTransition.LinearB -> R.drawable.icon_transition_rlinearb
+                            EffectTransition.LinearB -> R.drawable.icon_transition_linearb
                         }),
                         contentDescription = null
                     )
@@ -286,7 +286,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                                 EffectTransition.Linear -> R.string.effect_transition_linear
                                 EffectTransition.InstantB -> R.string.effect_transition_rinstant
                                 EffectTransition.RLinear -> R.string.effect_transition_rlinear_out
-                                EffectTransition.LinearB -> R.string.effect_transition_rlinearB
+                                EffectTransition.LinearB -> R.string.effect_transition_linearB
                             }
                         )
                     }

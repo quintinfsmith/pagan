@@ -3683,6 +3683,7 @@ open class OpusLayerBase: Effectable {
                         )
                     }
 
+                    EffectTransition.LinearB,
                     EffectTransition.Linear -> {
                         val latest_value = (previous_event?.value ?: 0F)
                         val diff = (event.value - latest_value) / (frames * event.duration).toFloat()
@@ -3695,6 +3696,12 @@ open class OpusLayerBase: Effectable {
                                 working_list.add(Pair(x, BalanceMSB(c, value)))
                             }
                             last_val = value
+                        }
+
+                        // Restore original value after slide
+                        if (event.transition == EffectTransition.LinearB) {
+                            val value = min(((previous_event?.value ?: 64F) * 100).toInt(), 127)
+                            working_list.add(Pair(frames * event.duration, BalanceMSB(c, value)))
                         }
                         working_list
                     }

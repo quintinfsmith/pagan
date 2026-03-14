@@ -150,24 +150,14 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         private fun convert_to_indexed_profile_buffer_frames(sample_rate: Int, tempo_map: List<Pair<Rational, Float>>, beat_map: IntArray, effect_event: ControllerProfile.ProfileEffectEvent, event_type: EffectType, start_offset: Rational = Rational(0,1)): List<ControllerEventData.IndexedProfileBufferFrame> {
             val adjusted_event = when (event_type) {
-                EffectType.LowPass -> {
-                    ControllerProfile.ProfileEffectEvent(
-                        effect_event.start_position - start_offset,
-                        effect_event.end_position - start_offset,
+                EffectType.LowPass -> ControllerProfile.ProfileEffectEvent(
+                        effect_event.start_position,
+                        effect_event.end_position,
                         floatArrayOf(sample_rate.toFloat(), effect_event.start_value[0], effect_event.start_value[1]),
                         floatArrayOf(sample_rate.toFloat(), effect_event.end_value[0], effect_event.end_value[1]),
                         effect_event.transition
                     )
-                }
-                else -> {
-                    ControllerProfile.ProfileEffectEvent(
-                        effect_event.start_position - start_offset,
-                        effect_event.end_position - start_offset,
-                        effect_event.start_value,
-                        effect_event.end_value,
-                        effect_event.transition
-                    )
-                }
+                else -> effect_event
             }
             val output = mutableListOf<ControllerEventData.IndexedProfileBufferFrame>()
 
@@ -282,6 +272,52 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                     }
                 )
             )
+
+            // TODO: This feels sloppy, could probably merge with similar logic at beginning of function
+            if (start_offset > 0) {
+                var working_position = Rational(start_offset.toInt(), 1)
+                var working_tempo = 0f
+                var tempo_index = 0
+
+                for (i in tempo_map.size - 1 downTo 0) {
+                    val (absolute_offset, tempo) = tempo_map[i]
+                    if (absolute_offset <= working_position) {
+                        working_tempo = tempo
+                        tempo_index = i
+                        break
+                    }
+                }
+
+                var frames_per_beat = (frames_per_minute / working_tempo).toInt()
+                // Calculate Start Position
+                var offset_frame = beat_map[start_offset.toInt()]
+                while (tempo_index < tempo_map.size) {
+                    val tempo_change_position = tempo_map[tempo_index].first
+                    if (tempo_change_position < start_offset) {
+                        offset_frame += (frames_per_beat * (tempo_change_position - working_position)).toInt()
+
+                        working_position = tempo_change_position
+                        frames_per_beat = (frames_per_minute / tempo_map[tempo_index].second).toInt()
+
+                        tempo_index += 1
+                    } else {
+                        break
+                    }
+                }
+
+                offset_frame += (frames_per_beat * (start_offset - working_position)).toInt()
+                for (i in 0 until output.size) {
+                    val item = output.removeAt(0)
+                    output.add(
+                        ControllerEventData.IndexedProfileBufferFrame(
+                            first_frame = item.first_frame - offset_frame,
+                            last_frame = item.last_frame - offset_frame,
+                            value = item.value,
+                            increment = item.increment
+                        )
+                    )
+                }
+            }
 
             return output
         }
@@ -782,6 +818,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     private fun map_tree(beat_key: BeatKey, position: List<Int>, working_tree: ReducibleTree<out InstrumentEvent>, relative_width: Rational, relative_offset: Rational, bkp_note_value: Int): Int {
+        println("--------------")
         if (this._ignored_events.containsKey(Pair(beat_key, position))) {
             return this._ignored_events[Pair(beat_key, position)]!!
         } else if (!working_tree.is_leaf()) {
@@ -811,8 +848,9 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         val pitch_controller = PitchController(this.opus_manager.length)
         var has_pitch_shift = false
-
+        println("MAPPING $beat_key, $position")
         while (true) {
+            println("do...")
             val next_event_position = this.opus_manager.get_proceeding_event_position(next_beat_key, next_position) ?: break
             val next_beat = next_event_position.first
             next_position = next_event_position.second
@@ -826,7 +864,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             ) ?: break
 
             val transition_width = working_bend_transition.slide_duration ?: break
-
             val (offset, next_width_denominator) = this.opus_manager.get_leaf_offset_and_width(
                 next_beat_key,
                 next_position
@@ -863,11 +900,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 for ((i, child) in pitch_tree.divisions) {
                     val child_event = child.get_event() ?: continue
                     child_event.duration = child_event.duration * new_size / original_size
-
-                    val end_point = Rational(
-                        i + (child_event.duration),
-                        new_size
-                    )
                 }
 
                 val radix = this.opus_manager.get_radix()
@@ -883,6 +915,9 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 val (to_tuning_offset, to_tuning_radix) = this.opus_manager.tuning_map[to_offset]
                 val to_pitch = 2F.pow((to_tuning_offset + (to_tuning_radix * to_octave)).toFloat() / to_tuning_radix.toFloat())
 
+
+                println("$adj_transition_width, $transition_beat, $transition_relative_offset, $to_pitch, $from_pitch")
+                println(":: ${adj_transition_width * new_size}")
                 pitch_controller.set_event(
                     transition_beat,
                     listOf(transition_relative_offset.numerator * new_size / transition_relative_offset.denominator),
@@ -943,6 +978,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                         )
                     )
                 }
+                println("${control_event_data.size} (${end_frame - start_frame})")
                 ProfileBuffer(
                     ControllerEventData(
                         end_frame - start_frame,

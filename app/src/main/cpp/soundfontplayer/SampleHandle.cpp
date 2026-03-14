@@ -82,15 +82,11 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
         jfloat pan,
         jfloat vibrato_frequency,
         jfloat vibrato_delay,
-        jfloat vibrato_pitch,
-        jlong pitch_controller_ptr
+        jfloat vibrato_pitch
 ) {
 
     auto* volume_envelope = (VolumeEnvelope*)malloc(sizeof(VolumeEnvelope));
     new (volume_envelope) VolumeEnvelope((VolumeEnvelope*) volume_envelope_ptr);
-
-    auto* pitch_controller = (PitchEffectBuffer*)malloc(sizeof(PitchEffectBuffer));
-    new (pitch_controller) PitchEffectBuffer((PitchEffectBuffer*) pitch_controller_ptr);
 
     auto* handle = (SampleHandle*)malloc(sizeof(SampleHandle));
     new (handle) SampleHandle(
@@ -106,8 +102,7 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
             pan,
             vibrato_frequency,
             vibrato_delay,
-            vibrato_pitch,
-            pitch_controller
+            vibrato_pitch
     );
 
     return (jlong)handle;
@@ -115,10 +110,8 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_00024Companion_create(
 
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_copy_1jni(JNIEnv* env, jobject, jlong ptr_long) {
-    auto *ptr = (SampleHandle *) ptr_long;
     auto* new_handle = (SampleHandle*)malloc(sizeof(SampleHandle));
-    new (new_handle) SampleHandle(ptr);
-
+    new (new_handle) SampleHandle((SampleHandle*) ptr_long);
     return (jlong)new_handle;
 }
 
@@ -144,6 +137,6 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_attach_1pitch_1controller_1jni(JNIEnv* env, jobject, jlong ptr_long, jlong controller_ptr_long) {
     auto *ptr = (SampleHandle *) ptr_long;
     auto *controller_ptr = (PitchEffectBuffer *) controller_ptr_long;
-    ptr->pitch_controller = controller_ptr;
+    ptr->attach_pitch_controller(controller_ptr);
 }
 

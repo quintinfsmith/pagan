@@ -32,7 +32,7 @@ fun greatest_common_denominator(first: Int, second: Int): Int {
 
 fun get_prime_factors(n: Int): List<Int> {
     val primes: MutableList<Int> = mutableListOf()
-    for (i in 2 until (n / 2)) {
+    for (i in 2 .. (n / 2)) {
         var is_prime = true
         for (p in primes) {
             if (i % p == 0) {
@@ -81,6 +81,33 @@ fun lowest_common_multiple(number_list: List<Int>): Int {
     var output = 1
     for (key in common_factor_map.keys) {
         output *= key * common_factor_map[key]!!
+    }
+
+    return output
+}
+
+fun get_next_biggest(vararg number_list: Int): Int {
+    val factor_counts = HashMap<Int, Int>()
+    for (n in number_list) {
+        val tmp_counts = HashMap<Int, Int>()
+        for (f in get_prime_factors(n)) {
+            if (f == 1) continue
+            tmp_counts[f] = 0
+            var tmp_n = n
+            while (tmp_n > 1 && tmp_n % f == 0) {
+                tmp_counts[f] = tmp_counts[f]!! + 1
+                tmp_n /= f
+
+            }
+        }
+        for ((f, c) in tmp_counts) {
+            factor_counts[f] = max(factor_counts[f] ?: 0, c)
+        }
+    }
+
+    var output = 1
+    for ((f, c) in factor_counts) {
+        output *= (f * c)
     }
 
     return output

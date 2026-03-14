@@ -76,8 +76,7 @@ class SampleHandle {
                 float pan,
                 float vibrato_frequency,
                 float vibrato_delay,
-                float vibrato_pitch,
-                PitchEffectBuffer* pitch_controller
+                float vibrato_pitch
         ) {
             this->uuid = SampleHandleUUIDGen++;
             this->data = data;
@@ -92,7 +91,7 @@ class SampleHandle {
             this->pan = pan;
             this->vibrato_delay = (int)(vibrato_delay * this->sample_rate);
             this->vibrato_pitch = vibrato_pitch;
-            this->pitch_controller = pitch_controller;
+            this->pitch_controller = nullptr;
 
             if (vibrato_frequency != 0 && vibrato_pitch != 1) {
                 this->vibrato_oscillator = new Oscillator(this->sample_rate, vibrato_frequency);
@@ -118,8 +117,7 @@ class SampleHandle {
                 int buffer_count,
                 Oscillator* vibrato_oscillator,
                 float vibrato_delay,
-                float vibrato_pitch,
-                PitchEffectBuffer* pitch_controller
+                float vibrato_pitch
         ) {
             this->uuid = SampleHandleUUIDGen++;
             this->data = data;
@@ -135,7 +133,7 @@ class SampleHandle {
             this->vibrato_oscillator = vibrato_oscillator;
             this->vibrato_delay = (int)(vibrato_delay * this->sample_rate);
             this->vibrato_pitch = vibrato_pitch;
-            this->pitch_controller = pitch_controller;
+            this->pitch_controller = nullptr;
 
             this->secondary_setup(data_buffers, buffer_count);
         }
@@ -215,8 +213,13 @@ class SampleHandle {
                 this->vibrato_pitch = 0;
                 this->vibrato_delay = 0;
             }
-            this->pitch_controller = (PitchEffectBuffer*)malloc(sizeof(PitchEffectBuffer));
-            new (this->pitch_controller) PitchEffectBuffer(original->pitch_controller);
+
+            if (original->pitch_controller != nullptr) {
+                this->pitch_controller = (PitchEffectBuffer*)malloc(sizeof(PitchEffectBuffer));
+                new (this->pitch_controller) PitchEffectBuffer(original->pitch_controller);
+            } else {
+                this->pitch_controller = nullptr;
+            }
         }
 
         ~SampleHandle() {
@@ -225,11 +228,15 @@ class SampleHandle {
             }
             delete[] this->data_buffers;
 
-            this->volume_envelope->~VolumeEnvelope();
-            free(this->volume_envelope);
+            if (this->volume_envelope != nullptr) {
+                this->volume_envelope->~VolumeEnvelope();
+                free(this->volume_envelope);
+            }
 
-            this->pitch_controller->~PitchEffectBuffer();
-            free(this->pitch_controller);
+            if (this->pitch_controller != nullptr) {
+                this->pitch_controller->~PitchEffectBuffer();
+                free(this->pitch_controller);
+            }
         }
 
         void set_release_frame(int frame) {
@@ -376,7 +383,9 @@ class SampleHandle {
             bool is_pressed = this->is_pressed();
             if (this->working_frame < this->volume_envelope->frames_delay) {
                 this->working_frame += 1;
-                this->pitch_controller->get_next();
+                if (this->pitch_controller != nullptr) {
+                    this->pitch_controller->get_next();
+                }
                 return 0;
             }
 
@@ -440,11 +449,11 @@ class SampleHandle {
             }
 
             float repitch_value = 1;
+            if (this->vibrato_oscillator != nullptr && this->vibrato_delay < this->working_frame) {
+                repitch_value = 1 + ((this->vibrato_pitch - 1) * this->vibrato_oscillator->next());
+            }
             if (this->pitch_controller != nullptr) {
                 repitch_value *= this->pitch_controller->get_next()[0];
-            }
-            if (this->vibrato_oscillator != nullptr && this->vibrato_delay < this->working_frame) {
-                repitch_value *= 1 + ((this->vibrato_pitch - 1) * this->vibrato_oscillator->next());
             }
             if (repitch_value != 1) {
                 this->get_active_data_buffer()->repitch(repitch_value);
@@ -477,6 +486,10 @@ class SampleHandle {
             for (int i = 0; i < this->buffer_count; i++) {
                 this->data_buffers[i]->repitch(adjustment);
             }
+        }
+        void attach_pitch_controller(PitchEffectBuffer* ptr) {
+            this->pitch_controller = ptr;
+            this->pitch_controller->set_frame(this->working_frame);
         }
 };
 

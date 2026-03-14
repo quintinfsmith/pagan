@@ -29,7 +29,6 @@ class SampleHandle(var ptr: Long) {
         vibrato_frequency: Float = 0f,
         vibrato_delay: Float = 0f,
         vibrato_pitch: Float = 0f,
-        pitch_controller: ProfileBuffer? = null
         // TODO: Modulations
         //modulation_envelope: ModulationEnvelope,
         //modulation_lfo: LFO?,
@@ -49,7 +48,6 @@ class SampleHandle(var ptr: Long) {
             vibrato_frequency,
             vibrato_delay,
             vibrato_pitch,
-            pitch_controller?.ptr ?: 0L,
             //modulation_envelope,
             //modulation_lfo,
             //modulators
@@ -72,8 +70,7 @@ class SampleHandle(var ptr: Long) {
             pan: Float,
             vibrato_frequency: Float,
             vibrato_delay: Float,
-            vibrato_pitch: Float,
-            pitch_controller: Long
+            vibrato_pitch: Float
         ): Long
     }
 

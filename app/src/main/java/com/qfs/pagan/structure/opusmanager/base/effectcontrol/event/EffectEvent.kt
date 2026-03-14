@@ -23,7 +23,8 @@ abstract class EffectEvent(duration: Int = 1, var transition: EffectTransition =
 
     fun is_persistent(): Boolean {
         return when (this.transition) {
-            EffectTransition.RInstant,
+            EffectTransition.LinearB,
+            EffectTransition.InstantB,
             EffectTransition.RLinear -> false
             else -> true
         }

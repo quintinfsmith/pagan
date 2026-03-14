@@ -33,6 +33,14 @@ class LowPassEvent(var filter_cutoff: Float?, var resonance: Float?, duration: I
 
         val copy_event = this.copy()
         when (this.transition) {
+            EffectTransition.LinearB -> {
+                if (position <= 1) {
+                    val diff_limit_lower = (this.filter_cutoff ?: 0f) - (preceding_event.filter_cutoff ?: 0f)
+                    val diff_resonance = (this.resonance ?: 0f) - (preceding_event.resonance ?: 0f)
+                    copy_event.filter_cutoff = (preceding_event.filter_cutoff ?: 0F) + (diff_limit_lower * position.toFloat())
+                    copy_event.resonance = (preceding_event.resonance ?: 0F) + (diff_resonance * position.toFloat())
+                }
+            }
             EffectTransition.Linear -> {
                 val diff_limit_lower = (this.filter_cutoff ?: 0f) - (preceding_event.filter_cutoff ?: 0f)
                 val diff_resonance = (this.resonance ?: 0f) - (preceding_event.resonance ?: 0f)
@@ -49,7 +57,7 @@ class LowPassEvent(var filter_cutoff: Float?, var resonance: Float?, duration: I
             }
 
             EffectTransition.Instant -> {}
-            EffectTransition.RInstant -> {}
+            EffectTransition.InstantB -> {}
         }
 
         return copy_event

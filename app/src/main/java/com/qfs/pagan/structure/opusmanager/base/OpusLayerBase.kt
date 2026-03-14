@@ -46,7 +46,6 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.SingleFloatEvent
 import com.qfs.pagan.structure.opusmanager.utils.checked_cast
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import kotlin.math.abs
@@ -3651,7 +3650,7 @@ open class OpusLayerBase: Effectable {
         val tempo_controller = this.get_controller<OpusTempoEvent>(EffectType.Tempo)
         apply_active_controller(tempo_controller) { event: OpusTempoEvent, previous_event: OpusTempoEvent?, frames: Int ->
             when (event.transition) {
-                EffectTransition.RInstant -> {
+                EffectTransition.InstantB -> {
                     listOf(
                         Pair(0, SetTempo.from_bpm((event.value * 1000f).roundToInt() / 1000F)),
                         Pair(frames, SetTempo.from_bpm(((previous_event?.value ?: 120F) * 1000f).roundToInt() / 1000F))
@@ -3675,7 +3674,7 @@ open class OpusLayerBase: Effectable {
                         listOf(Pair(0, BalanceMSB(c, value)))
                     }
 
-                    EffectTransition.RInstant -> {
+                    EffectTransition.InstantB -> {
                         val return_value = min((((previous_event?.value ?: 0F) + 1F) * 64).toInt(), 127)
                         val value = min(((event.value + 1F) * 64).toInt(), 127)
                         listOf(
@@ -3727,7 +3726,7 @@ open class OpusLayerBase: Effectable {
                             listOf(Pair(0, VolumeMSB(c, value.toInt())))
                         }
 
-                        EffectTransition.RInstant -> {
+                        EffectTransition.InstantB -> {
                             val return_value = (previous_event?.value ?: 0F) * 100
                             val value = event.value * 100
                             listOf(
@@ -3736,6 +3735,7 @@ open class OpusLayerBase: Effectable {
                             )
                         }
 
+                        EffectTransition.LinearB,
                         EffectTransition.Linear -> {
                             val working_value = previous_event?.value ?: 64F
                             val diff = (event.value - working_value) / (frames * event.duration).toFloat()
@@ -3749,6 +3749,13 @@ open class OpusLayerBase: Effectable {
                                 }
                                 last_val = value
                             }
+
+                            // Restore original value after slide
+                            if (event.transition == EffectTransition.LinearB) {
+                                val value = min(((previous_event?.value ?: 64F) * 100).toInt(), 127)
+                                working_list.add(Pair(frames * event.duration, VolumeMSB(c, value)))
+                            }
+
                             working_list
                         }
 

@@ -172,6 +172,26 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
                             )
                         )
                         when (working_event.transition) {
+                            EffectTransition.LinearB ->  {
+                                output.add(
+                                    ControllerProfile.ProfileEffectEvent(
+                                        start_position = start_position,
+                                        end_position = end_position,
+                                        start_value = previous_tail.second,
+                                        end_value = working_values,
+                                        transition = EffectTransition.Linear
+                                    )
+                                )
+                                output.add(
+                                    ControllerProfile.ProfileEffectEvent(
+                                        start_position = end_position,
+                                        end_position = end_position,
+                                        start_value = working_values,
+                                        end_value = previous_tail.second,
+                                        transition = EffectTransition.Instant
+                                    )
+                                )
+                            }
                             EffectTransition.RLinear ->  {
                                 output.add(
                                     ControllerProfile.ProfileEffectEvent(
@@ -183,7 +203,7 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
                                     )
                                 )
                             }
-                            EffectTransition.RInstant -> {
+                            EffectTransition.InstantB -> {
                                 output.add(
                                     ControllerProfile.ProfileEffectEvent(
                                         start_position = end_position,

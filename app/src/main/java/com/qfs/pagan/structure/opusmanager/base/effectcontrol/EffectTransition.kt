@@ -12,8 +12,9 @@ package com.qfs.pagan.structure.opusmanager.base.effectcontrol
 enum class EffectTransition(val i: Int) {
     Instant(0),
     Linear(1),
-    RInstant(2),
+    InstantB(2),
     RLinear(3),
+    LinearB(4)
     // EaseIn(4),
     // EaseOut(5)
 }

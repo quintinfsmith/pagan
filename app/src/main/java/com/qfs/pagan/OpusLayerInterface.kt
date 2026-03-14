@@ -68,7 +68,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 EffectType.Tempo -> {
                     setOf(
                         EffectTransition.Instant,
-                        EffectTransition.RInstant
+                        EffectTransition.InstantB
                     )
                 }
 
@@ -76,9 +76,10 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 EffectType.Volume -> {
                     setOf(
                         EffectTransition.Instant,
-                        EffectTransition.RInstant,
+                        EffectTransition.InstantB,
                         EffectTransition.Linear,
                         EffectTransition.RLinear,
+                        EffectTransition.LinearB,
                     )
                 }
 

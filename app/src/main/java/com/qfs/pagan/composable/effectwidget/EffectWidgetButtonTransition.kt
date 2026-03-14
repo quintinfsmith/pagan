@@ -40,8 +40,9 @@ fun EffectTransitionButton(event: EffectEvent, dispatcher: ActionDispatcher, is_
             icon = when (transition) {
                 EffectTransition.Instant -> R.drawable.icon_transition_immediate
                 EffectTransition.Linear -> R.drawable.icon_transition_linear
-                EffectTransition.RInstant -> R.drawable.icon_transition_rimmediate
+                EffectTransition.InstantB -> R.drawable.icon_transition_rimmediate
                 EffectTransition.RLinear -> R.drawable.icon_transition_rlinear
+                EffectTransition.LinearB -> R.drawable.icon_transition_rlinearb
             },
             shape = Shapes.ContextMenuSecondaryButtonEnd,
             description = R.string.cd_show_effect_controls

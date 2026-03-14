@@ -270,8 +270,9 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                         painter = painterResource(when (transition_option) {
                             EffectTransition.Instant -> R.drawable.icon_transition_immediate
                             EffectTransition.Linear -> R.drawable.icon_transition_linear
-                            EffectTransition.RInstant -> R.drawable.icon_transition_rimmediate
+                            EffectTransition.InstantB -> R.drawable.icon_transition_rimmediate
                             EffectTransition.RLinear -> R.drawable.icon_transition_rlinear
+                            EffectTransition.LinearB -> R.drawable.icon_transition_rlinearb
                         }),
                         contentDescription = null
                     )
@@ -283,8 +284,9 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                             when (transition_option) {
                                 EffectTransition.Instant -> R.string.effect_transition_instant
                                 EffectTransition.Linear -> R.string.effect_transition_linear
-                                EffectTransition.RInstant -> R.string.effect_transition_rinstant
+                                EffectTransition.InstantB -> R.string.effect_transition_rinstant
                                 EffectTransition.RLinear -> R.string.effect_transition_rlinear_out
+                                EffectTransition.LinearB -> R.string.effect_transition_rlinearB
                             }
                         )
                     }

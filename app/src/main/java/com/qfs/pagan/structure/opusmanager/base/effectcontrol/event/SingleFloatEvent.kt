@@ -40,8 +40,14 @@ abstract class SingleFloatEvent(var value: Float, duration: Int = 1, transition:
                 val diff = (preceding_event as SingleFloatEvent).value - this.value
                 copy_event.value = this.value + (diff * position.toFloat())
             }
+            EffectTransition.LinearB -> {
+                if (position <= 1) {
+                    val diff = this.value - (preceding_event as SingleFloatEvent).value
+                    copy_event.value = preceding_event.value + (diff * position.toFloat())
+                }
+            }
             EffectTransition.Instant -> {}
-            EffectTransition.RInstant -> {}
+            EffectTransition.InstantB -> {}
         }
 
         return copy_event

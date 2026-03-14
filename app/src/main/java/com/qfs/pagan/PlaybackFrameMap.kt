@@ -21,8 +21,6 @@ import com.qfs.apres.soundfontplayer.SampleHandle
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.get_next_biggest
-import com.qfs.pagan.structure.greatest_common_denominator
-import com.qfs.pagan.structure.lowest_common_multiple
 import com.qfs.pagan.structure.max
 import com.qfs.pagan.structure.minus
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
@@ -40,7 +38,6 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.T
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.PitchEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.VelocityController
 import com.qfs.pagan.structure.plus
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.structure.times
@@ -116,7 +113,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                                 EffectTransition.Instant -> {
                                     working_tempo = event.value
                                 }
-                                EffectTransition.RInstant -> {
+                                EffectTransition.InstantB -> {
                                     output.add(Pair(i + working_offset + (working_ratio * event.duration), working_tempo))
                                 }
                                 else -> {/* TODO: throw exception? */}
@@ -871,11 +868,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                         i + (child_event.duration),
                         new_size
                     )
-
-                    // Prevent existing Transition from returning to normal
-                    if (end_point == transition_relative_offset) {
-                        child_event.transition = EffectTransition.Linear
-                    }
                 }
 
                 val radix = this.opus_manager.get_radix()
@@ -897,7 +889,11 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                     PitchEvent(
                         pitch = to_pitch / from_pitch,
                         duration = adj_transition_width.numerator * new_size / adj_transition_width.denominator,
-                        transition = EffectTransition.Linear
+                        transition = if (adj_transition_width.numerator == 0) {
+                            EffectTransition.Instant
+                        } else {
+                            EffectTransition.Linear
+                        } // Assume temporary, will be set to permanent(Linear) if more transitions follow
                     )
                 )
 

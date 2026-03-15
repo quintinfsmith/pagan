@@ -810,7 +810,9 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
 
     fun <T: EffectEvent> set_effect_at_cursor(event: T) {
         val opus_manager = this.get_opus_manager()
-        opus_manager.set_event_at_cursor(event)
+        opus_manager.lock_cursor {
+            opus_manager.set_event_at_cursor(event)
+        }
     }
 
     fun set_duration(duration: Int? = null) {

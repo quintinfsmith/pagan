@@ -84,9 +84,9 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
 
     val submit = {
         if (beat != null) {
-            dispatcher.set_effect(EffectType.Velocity, event, channel, line_offset, beat, position!!)
+            dispatcher.set_effect(EffectType.Velocity, event, channel, line_offset, beat, position!!, true)
         } else {
-            dispatcher.set_initial_effect(EffectType.Velocity, event, channel, line_offset)
+            dispatcher.set_initial_effect(EffectType.Velocity, event, channel, line_offset, true)
         }
     }
 

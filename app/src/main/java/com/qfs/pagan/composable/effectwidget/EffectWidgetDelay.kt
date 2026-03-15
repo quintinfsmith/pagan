@@ -74,9 +74,9 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionD
 
     val submit = {
         if (beat != null) {
-            dispatcher.set_effect(EffectType.Delay, event, channel, line_offset, beat, position!!)
+            dispatcher.set_effect(EffectType.Delay, event, channel, line_offset, beat, position!!, true)
         } else {
-            dispatcher.set_initial_effect(EffectType.Delay, event, channel, line_offset)
+            dispatcher.set_initial_effect(EffectType.Delay, event, channel, line_offset, true)
         }
     }
 

@@ -58,7 +58,7 @@ class EffectProfileBuffer {
 
             // First set the working frame
             if (this->data->actual_size > 0) {
-                this->current_frame = frame % this->data->actual_size;
+                this->current_frame = min(frame, this->data->actual_size - 1);
             } else {
                 this->current_frame = frame;
             }
@@ -94,6 +94,14 @@ class EffectProfileBuffer {
                     }
                 }
             }
+            // DEBUG
+            // __android_log_print(ANDROID_LOG_DEBUG, "", "-------------------------------------");
+            // __android_log_print(ANDROID_LOG_DEBUG, "", "    %d %d", this->current_index, this->current_frame);
+            // for (int i = 0; i < this->data->frame_count; i++) {
+            //     auto ff = this->data->frames[i];
+            //     __android_log_print(ANDROID_LOG_DEBUG, "", "%d (%d -> %d): %f %f", i, ff->frame, ff->end, ff->initial_value[0], ff->increment[0]);
+            // }
+            // __android_log_print(ANDROID_LOG_DEBUG, "", "-------------------------------------");
         }
 
         void drain(int count) {

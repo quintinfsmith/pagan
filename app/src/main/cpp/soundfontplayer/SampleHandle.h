@@ -288,10 +288,10 @@ class SampleHandle {
                 this->is_dead = true;
             }
 
-            __android_log_print(ANDROID_LOG_DEBUG, "", "SET %d", frame);
             if (this->pitch_controller != nullptr) {
+                __android_log_print(ANDROID_LOG_DEBUG, "", "B>> %d", frame);
                 this->pitch_controller->set_frame(frame);
-                this->get_active_data_buffer()->repitch(this->pitch_controller->peek());
+                __android_log_print(ANDROID_LOG_DEBUG, "", "<<B %d", frame);
             }
         }
 
@@ -455,6 +455,9 @@ class SampleHandle {
             }
             if (this->pitch_controller != nullptr) {
                 float r = this->pitch_controller->get_next()[0];
+                // if (this->working_frame != this->pitch_controller->current_frame) {
+                //     __android_log_print(ANDROID_LOG_DEBUG, "", "%d - %d", this->pitch_controller->current_frame, this->working_frame);
+                // }
                 repitch_value *= r;
             }
             if (repitch_value != 1) {

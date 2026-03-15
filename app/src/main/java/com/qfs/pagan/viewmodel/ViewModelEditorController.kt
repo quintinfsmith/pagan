@@ -47,6 +47,7 @@ class ViewModelEditorController(): ViewModel() {
     var project_exists: MutableState<Boolean> = mutableStateOf(false)
     var active_soundfont_relative_path: String? = null
 
+
     fun update_channel_preset(channel: Int, bank: Int, program: Int) {
         this.audio_interface.update_channel_preset(channel, bank, program)
         this.virtual_midi_device.send_event(BankSelect(channel, bank))
@@ -133,6 +134,10 @@ class ViewModelEditorController(): ViewModel() {
             WaveGenerator.StereoMode.Stereo
         )
         this.update_soundfont_instruments()
+    }
+
+    fun set_sample_rate(new_rate: Int) {
+        this.audio_interface.set_sample_rate(new_rate)
     }
 
     fun destroy_playback_device() {

@@ -69,8 +69,27 @@ class AudioInterface {
 
     fun set_sample_rate(new_rate: Int) {
         if (this.sample_rate == new_rate) return
+
+        this.unset_sample_handle_manager()
+
         this.sample_rate = new_rate
-        this.soundfont?.let { this.set_soundfont(it) }
+
+        this.soundfont?.let {
+            this.playback_sample_handle_manager = SampleHandleManager(
+                it,
+                this.sample_rate,
+                this.sample_rate, // Use Large buffer
+                ignore_lfo = true
+            )
+
+            this.connect_feedback_device()
+        }
+    }
+
+    fun unset_sample_handle_manager() {
+        this.playback_sample_handle_manager?.destroy()
+        this.playback_sample_handle_manager = null
+        this.feedback_revolver.clear()
     }
 
     fun has_soundfont(): Boolean {
@@ -100,10 +119,8 @@ class AudioInterface {
     fun unset_soundfont() {
         this.soundfont?.destroy()
         this.soundfont = null
-        this.playback_sample_handle_manager?.destroy()
-        this.playback_sample_handle_manager = null
-        this.feedback_revolver.clear()
         this.minimum_instrument_index_cache.clear()
+        this.unset_sample_handle_manager()
     }
 
     fun update_channel_preset(channel: Int, bank: Int, program: Int) {

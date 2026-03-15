@@ -104,10 +104,11 @@ class EffectProfileBuffer {
         void _move_to_next_frame() {
             this->current_frame++;
 
-            if (this->data->actual_size > 0 && this->current_frame > this->data->actual_size) {
-                this->set_frame(this->current_frame % this->data->actual_size);
-                return;
-            }
+            // FIXME/ TODO: I Don't think this looping is needed & is actually a problem.
+            // if (this->data->actual_size > 0 && this->current_frame > this->data->actual_size) {
+            //     this->set_frame(this->current_frame % this->data->actual_size);
+            //     return;
+            // }
 
             if (this->current_index >= this->data->frame_count) {
                 // Nothing to be done

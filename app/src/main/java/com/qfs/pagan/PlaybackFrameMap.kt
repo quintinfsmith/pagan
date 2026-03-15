@@ -351,6 +351,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     private val _volume_map = HashMap<Pair<Int, Int>, ControllerEventData>()
     private val _pan_map = HashMap<Pair<Int, Int>, ControllerEventData>()
     private val _percussion_setter_ids = mutableSetOf<Int>()
+    private val _pitch_controllers = mutableSetOf<ProfileBuffer>() // Stored in order to be destroyed in clear()
 
     private val _effect_profiles = mutableListOf<Triple<Int, Int, ProfileBuffer>>()
     private var frame_count = 0
@@ -504,6 +505,10 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         for ((_, _, profile) in this._effect_profiles) {
             profile.destroy(true) // Destroy the buffer AND the data
         }
+        for (controller in this._pitch_controllers) {
+            controller.destroy()
+        }
+        this._pitch_controllers.clear()
 
         this._effect_profiles.clear()
         this._frame_map.clear()
@@ -549,7 +554,9 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         if (is_percussion) {
             this._percussion_setter_ids.add(setter_id)
         }
-
+        pitch_controller?.let {
+            this._pitch_controllers.add(it)
+        }
         this._setter_map[setter_id] = {
             val handles = when (start_event) {
                 is NoteOn -> this._sample_handle_manager.gen_sample_handles(start_event)
@@ -577,7 +584,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 handle_uuid_set.add(handle.uuid)
                 output.add(Pair(handle, merge_keys))
             }
-            pitch_controller?.destroy() // TODO: Destroy unhandled pitch controllers (ie, if stopped)
 
             output
         }
@@ -818,7 +824,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     private fun map_tree(beat_key: BeatKey, position: List<Int>, working_tree: ReducibleTree<out InstrumentEvent>, relative_width: Rational, relative_offset: Rational, bkp_note_value: Int): Int {
-        println("--------------")
         if (this._ignored_events.containsKey(Pair(beat_key, position))) {
             return this._ignored_events[Pair(beat_key, position)]!!
         } else if (!working_tree.is_leaf()) {
@@ -848,9 +853,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         val pitch_controller = PitchController(this.opus_manager.length)
         var has_pitch_shift = false
-        println("MAPPING $beat_key, $position")
         while (true) {
-            println("do...")
             val next_event_position = this.opus_manager.get_proceeding_event_position(next_beat_key, next_position) ?: break
             val next_beat = next_event_position.first
             next_position = next_event_position.second
@@ -863,7 +866,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 next_position
             ) ?: break
 
-            val transition_width = working_bend_transition.slide_duration ?: break
             val (offset, next_width_denominator) = this.opus_manager.get_leaf_offset_and_width(
                 next_beat_key,
                 next_position
@@ -878,6 +880,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             )
 
             next_event_frame = next_start
+
+            val transition_width = working_bend_transition.slide_duration ?: break
 
             // overwrite the next note with the current note and add a pitch bend effect
             if (working_note_end == offset) {
@@ -914,7 +918,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 val to_offset = to_note % radix
                 val (to_tuning_offset, to_tuning_radix) = this.opus_manager.tuning_map[to_offset]
                 val to_pitch = 2F.pow((to_tuning_offset + (to_tuning_radix * to_octave)).toFloat() / to_tuning_radix.toFloat())
-
                 pitch_controller.set_event(
                     transition_beat,
                     listOf(transition_relative_offset.numerator * new_size / transition_relative_offset.denominator),
@@ -959,7 +962,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             position
         )?.let { start_event ->
             val merge_key_array = PlaybackFrameMap.generate_merge_keys(beat_key.channel, beat_key.line_offset)
-
             val profile_buffer = if (has_pitch_shift) {
                 val profile = pitch_controller.generate_profile()
                 val control_event_data = mutableListOf<ControllerEventData.IndexedProfileBufferFrame>()
@@ -975,6 +977,9 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                         )
                     )
                 }
+                for (e in control_event_data) {
+                    println("${e.first_frame} => ${e.last_frame}|  ${e.value.toList()}, ${e.increment.toList()}. ($end_frame)")
+                }
                 ProfileBuffer(
                     ControllerEventData(
                         end_frame - start_frame,
@@ -986,6 +991,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 null
             }
 
+            println("$next_event_frame -- ")
             this._add_handles(start_frame, end_frame, start_event, next_event_frame, merge_key_array, profile_buffer)
         }
 

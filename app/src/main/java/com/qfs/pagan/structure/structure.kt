@@ -107,9 +107,18 @@ fun get_next_biggest(vararg number_list: Int): Int {
 
     var output = 1
     for ((f, c) in factor_counts) {
-        output *= (f * c)
+        output *= f.pow(c)
     }
 
     return output
 }
 
+fun Int.pow(exp: Int): Int {
+    if (exp < 0) throw Exception("Negative exponents unimplemented")
+
+    var output = 1
+    for (i in 0 until exp) {
+        output *= this
+    }
+    return output
+}

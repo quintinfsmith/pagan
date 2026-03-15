@@ -616,6 +616,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             }
         }
+        this.controller_model.set_sample_rate(this.view_model.configuration.sample_rate.value)
         this.state_model.latest_input_indicator.value = this.view_model.configuration.latest_input_indicator.value
         this.state_model.normalize_beat_widths.value = this.view_model.configuration.normalize_beat_widths.value
         this.state_model.beat_stroke_thickness.value = this.view_model.configuration.beat_stroke_thickness.value

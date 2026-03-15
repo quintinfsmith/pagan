@@ -288,6 +288,7 @@ class SampleHandle {
                 this->is_dead = true;
             }
 
+            __android_log_print(ANDROID_LOG_DEBUG, "", "SET %d", frame);
             if (this->pitch_controller != nullptr) {
                 this->pitch_controller->set_frame(frame);
                 this->get_active_data_buffer()->repitch(this->pitch_controller->peek());
@@ -453,7 +454,8 @@ class SampleHandle {
                 repitch_value = 1 + ((this->vibrato_pitch - 1) * this->vibrato_oscillator->next());
             }
             if (this->pitch_controller != nullptr) {
-                repitch_value *= this->pitch_controller->get_next()[0];
+                float r = this->pitch_controller->get_next()[0];
+                repitch_value *= r;
             }
             if (repitch_value != 1) {
                 this->get_active_data_buffer()->repitch(repitch_value);

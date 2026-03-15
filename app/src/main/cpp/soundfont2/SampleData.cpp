@@ -24,6 +24,7 @@ Java_com_qfs_apres_soundfont2_SampleData_set_1data_1jni(JNIEnv* env, jobject, js
 extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfont2_SampleData_destroy_1jni(JNIEnv* env, jobject, jlong ptr_long) {
     auto *ptr = (SampleData *)ptr_long;
-    delete ptr;
+    ptr->~SampleData();
+    free(ptr);
 }
 

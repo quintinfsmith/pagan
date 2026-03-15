@@ -27,10 +27,7 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1volume_1envelope_1ptr(JNIEn
 extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_set_1working_1frame_1jni(JNIEnv* env, jobject, jlong ptr_long, jint frame) {
     auto *ptr = (SampleHandle *)ptr_long;
-    __android_log_print(ANDROID_LOG_DEBUG, "", "A>>: %d", frame);
     ptr->set_working_frame(frame);
-    __android_log_print(ANDROID_LOG_DEBUG, "", "<<A: %d", frame);
-
 }
 
 extern "C" JNIEXPORT void JNICALL

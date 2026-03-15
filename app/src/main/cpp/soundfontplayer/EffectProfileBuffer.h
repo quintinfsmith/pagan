@@ -94,14 +94,6 @@ class EffectProfileBuffer {
                     }
                 }
             }
-            // DEBUG
-            // __android_log_print(ANDROID_LOG_DEBUG, "", "-------------------------------------");
-            // __android_log_print(ANDROID_LOG_DEBUG, "", "    %d %d", this->current_index, this->current_frame);
-            // for (int i = 0; i < this->data->frame_count; i++) {
-            //     auto ff = this->data->frames[i];
-            //     __android_log_print(ANDROID_LOG_DEBUG, "", "%d (%d -> %d): %f %f", i, ff->frame, ff->end, ff->initial_value[0], ff->increment[0]);
-            // }
-            // __android_log_print(ANDROID_LOG_DEBUG, "", "-------------------------------------");
         }
 
         void drain(int count) {

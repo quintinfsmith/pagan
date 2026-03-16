@@ -44,6 +44,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionDispatcher
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
@@ -54,6 +55,7 @@ import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.wrappers.DropdownMenu
+import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
@@ -71,9 +73,9 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
     val cursor = ui_facade.active_cursor.value ?: return
     val is_initial = cursor.type == CursorMode.Line
     val working_value = remember { mutableFloatStateOf(event.value) }
-    val numerator_label: MutableState<Int> = remember { mutableStateOf(event.slide_duration?.numerator ?: Values.Defaults.SlideNumerator) }
-    val denominator_label: MutableState<Int> = remember { mutableStateOf(event.slide_duration?.denominator ?: Values.Defaults.SlideDenominator) }
-    val mode_switch: MutableState<Boolean> = remember { mutableStateOf(event.slide_duration != null) }
+    val velocity_input_value = remember { mutableIntStateOf((event.value * 100F).toInt()) }
+    val slide_width_mode = remember { mutableStateOf<OpusVelocityEvent.SlideMaxWidth?>(null) }
+    val denominator_label: MutableState<Int> = remember { mutableStateOf(event.slide?.second ?: Values.Defaults.SlideDenominator) }
     val (channel, line_offset, beat, position) = ui_facade.get_location_ints()
 
     val default_colors = SliderDefaults.colors()
@@ -83,6 +85,7 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
     )
 
     val submit = {
+        slide_width_mode.value = event.slide?.first
         if (beat != null) {
             dispatcher.set_effect(EffectType.Velocity, event, channel, line_offset, beat, position!!, true)
         } else {
@@ -90,208 +93,217 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
         }
     }
 
-    AnimatedVisibility(
-        visible = mode_switch.value,
-        Modifier.weight(1F)
-    ) {
-        val velocity_expanded = remember { mutableStateOf(false) }
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.weight(1F, fill = false)
+    val velocity_expanded = remember { mutableStateOf(false) }
+     Row(verticalAlignment = Alignment.CenterVertically) {
+         Box(
+             contentAlignment = Alignment.Center,
+             modifier = Modifier.weight(1F, fill = false)
+         ) {
+             Box(
+                 contentAlignment = Alignment.Center,
+                 modifier = Modifier.width(IntrinsicSize.Min)
+             ) {
+                 Button(
+                     contentPadding = Dimensions.ContextMenuButtonPadding,
+                     shape = Shapes.ContextMenuButtonPrimary,
+                     modifier = Modifier
+                         .testTag(TestTag.VelocityButton)
+                         .height(Dimensions.ContextMenuButtonHeight)
+                         .width(Dimensions.ContextMenuButtonWidth),
+                     content = {
+                         Box(contentAlignment = Alignment.Center) {
+                             Icon(
+                                 painter = painterResource(R.drawable.icon_velocity),
+                                 contentDescription = stringResource(R.string.ctl_desc_velocity)
+                             )
+                         }
+                     },
+                     onClick = {
+                         velocity_expanded.value = !velocity_expanded.value
+                     }
+                 )
+                 DropdownMenu(
+                     velocity_expanded.value,
+                     onDismissRequest = { velocity_expanded.value = false },
+                     shape = CircleShape,
+                     modifier = Modifier
+                         .height(Dimensions.EffectWidget.Velocity.FadePopupHeight)
+                         .width(Dimensions.EffectWidget.Velocity.FadePopupWidth)
+                 ) {
+                     Slider(
+                         value = working_value.floatValue,
+                         steps = 100,
+                         colors = colors,
+                         valueRange = 0F..1F,
+                         modifier = Modifier
+                             .testTag(TestTag.VelocityVSlider)
+                             .padding(vertical = Dimensions.EffectWidget.Velocity.FadePopupPadding)
+                             .graphicsLayer {
+                                 rotationZ = 270f
+                                 transformOrigin = TransformOrigin(0f, 0f)
+                             }
+                             .weight(1F)
+                             .layout { measurable, constraints ->
+                                 val placeable = measurable.measure(
+                                     Constraints(
+                                         minWidth = constraints.minHeight,
+                                         maxWidth = constraints.maxHeight,
+                                         minHeight = constraints.minWidth,
+                                         maxHeight = constraints.maxHeight,
+                                     )
+                                 )
+                                 layout(placeable.height, placeable.width) {
+                                     placeable.place(-placeable.width, 0)
+                                 }
+                             },
+
+                         onValueChange = {
+                             event.value = it
+                             working_value.floatValue = it
+                         },
+                         onValueChangeFinished = {
+                             if (beat != null) {
+                                 dispatcher.set_effect(
+                                     EffectType.Velocity,
+                                     event,
+                                     channel,
+                                     line_offset,
+                                     beat,
+                                     position!!,
+                                     true
+                                 )
+                             } else {
+                                 dispatcher.set_initial_effect(
+                                     EffectType.Velocity,
+                                     event,
+                                     channel,
+                                     line_offset,
+                                     true
+                                 )
+                             }
+                         }
+                     )
+                 }
+             }
+         }
+
+         MediumSpacer()
+
+         IntegerInput(
+             velocity_input_value,
+             minimum = 1,
+             on_focus_exit = {
+                 event.value = velocity_input_value.value.toFloat() / 100F
+                 submit()
+             },
+             contentPadding = Unpadded,
+             text_align = TextAlign.Center,
+             modifier = Modifier
+                 .testTag(TestTag.VelocityInput)
+                 .height(Dimensions.EffectWidget.InputHeight)
+                 .width(Dimensions.EffectWidget.Velocity.InputWidth)
+         ) {
+             event.value = it.toFloat() / 100F
+             submit()
+         }
+     }
+
+    Box {
+        val bend_mode_dropdown_visible = remember { mutableStateOf(false) }
+        DropdownMenu(
+            expanded= bend_mode_dropdown_visible.value,
+            onDismissRequest = { bend_mode_dropdown_visible.value = false }
         ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.width(IntrinsicSize.Min)
-            ) {
-                Button(
-                    contentPadding = Dimensions.ContextMenuButtonPadding,
-                    shape = Shapes.ContextMenuButtonPrimary,
-                    modifier = Modifier
-                        .testTag(TestTag.VelocityButton)
-                        .height(Dimensions.ContextMenuButtonHeight)
-                        .width(Dimensions.ContextMenuButtonWidth),
-                    content = {
-                        Box(contentAlignment = Alignment.Center) {
-                            if (!velocity_expanded.value) {
-                                Icon(
-                                    modifier = Modifier.alpha(.2f),
-                                    painter = painterResource(R.drawable.icon_velocity),
-                                    contentDescription = stringResource(R.string.ctl_desc_velocity)
-                                )
-                            }
-                            Text(
-                                text = "${(working_value.floatValue * 100).roundToInt()}%",
-                                style = Typography.ContextMenuButton
-                            )
-                        }
-                    },
-                    onClick = {
-                        velocity_expanded.value = !velocity_expanded.value
+            DropdownMenuItem(
+                text = { Text("NONE") },
+                onClick = {
+                    if (event.slide != null) {
+                        event.slide = null
+                        submit()
                     }
-                )
-                DropdownMenu(
-                    velocity_expanded.value,
-                    onDismissRequest = { velocity_expanded.value = false },
-                    shape = CircleShape,
-                    modifier = Modifier
-                        .height(Dimensions.EffectWidget.Velocity.FadePopupHeight)
-                        .width(Dimensions.EffectWidget.Velocity.FadePopupWidth)
-                ) {
-                    Slider(
-                        value = working_value.floatValue,
-                        steps = 100,
-                        colors = colors,
-                        valueRange = 0F..1F,
-                        modifier = Modifier
-                            .testTag(TestTag.VelocityVSlider)
-                            .padding(vertical = Dimensions.EffectWidget.Velocity.FadePopupPadding)
-                            .graphicsLayer {
-                                rotationZ = 270f
-                                transformOrigin = TransformOrigin(0f, 0f)
-                            }
-                            .weight(1F)
-                            .layout { measurable, constraints ->
-                                val placeable = measurable.measure(
-                                    Constraints(
-                                        minWidth = constraints.minHeight,
-                                        maxWidth = constraints.maxHeight,
-                                        minHeight = constraints.minWidth,
-                                        maxHeight = constraints.maxHeight,
-                                    )
-                                )
-                                layout(placeable.height, placeable.width) {
-                                    placeable.place(-placeable.width, 0)
-                                }
-                            },
-
-                        onValueChange = {
-                            event.value = it
-                            working_value.floatValue = it
-                        },
-                        onValueChangeFinished = {
-                            if (beat != null) {
-                                dispatcher.set_effect(EffectType.Velocity, event, channel, line_offset, beat, position!!)
-                            } else {
-                                dispatcher.set_initial_effect(EffectType.Velocity, event, channel, line_offset)
-                            }
-                        }
-                    )
+                    bend_mode_dropdown_visible.value = false
                 }
-            }
+            )
+            DropdownMenuItem(
+                text = { Text("/Beat") },
+                onClick = {
+                    if (event.slide?.first != OpusVelocityEvent.SlideMaxWidth.Beat) {
+                        event.slide = Pair(
+                            OpusVelocityEvent.SlideMaxWidth.Beat,
+                            event.slide?.second ?: Values.Defaults.SlideDenominator
+                        )
+                        submit()
+                    }
+                    bend_mode_dropdown_visible.value = false
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("/Note") },
+                onClick = {
+                    if (event.slide?.first != OpusVelocityEvent.SlideMaxWidth.Note) {
+                        event.slide = Pair(
+                            OpusVelocityEvent.SlideMaxWidth.Note,
+                            event.slide?.second ?: Values.Defaults.SlideDenominator
+                        )
+                        submit()
+                    }
+                    bend_mode_dropdown_visible.value = false
+                }
+            )
         }
-    }
 
-    AnimatedVisibility(
-        visible = !mode_switch.value,
-        Modifier.weight(1F)
-    ) {
-        Slider(
-            modifier = Modifier
-                .testTag(TestTag.VelocityHSlider)
-                .width(IntrinsicSize.Min)
-                .height(Dimensions.ContextMenuButtonHeight),
-            value = working_value.value,
-            valueRange = 0F .. 1.27F,
-            onValueChange = {
-                event.value = it
-                working_value.value = it
-            },
-            onValueChangeFinished = {
-                dispatcher.set_effect_at_cursor(event)
-            },
-        )
+        Button(
+            onClick = { bend_mode_dropdown_visible.value = !bend_mode_dropdown_visible.value }
+        ) {
+            Text(
+                when (slide_width_mode.value) {
+                    OpusVelocityEvent.SlideMaxWidth.Beat -> {
+                        "beat/"
+                    }
+                    OpusVelocityEvent.SlideMaxWidth.Note -> {
+                        "note/"
+                    }
+                    null -> {
+                        "Never Slide"
+                    }
+                }
+            )
+        }
     }
 
     MediumSpacer()
 
-    Switch(
-        mode_switch.value,
-        onCheckedChange = {
-            mode_switch.value = it
-            if (!it) {
-                event.slide_duration = null
-            } else {
-                event.slide_duration = Rational(
-                    Values.Defaults.SlideNumerator,
-                    Values.Defaults.SlideDenominator
-                )
-            }
-            submit()
-        }
-    )
 
-    AnimatedVisibility(
-        visible = mode_switch.value,
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+        Box(
+            modifier = Modifier,
+            contentAlignment = Alignment.Center
         ) {
-            MediumSpacer()
-            Box(
-                modifier = Modifier,
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    modifier = Modifier
-                        .alpha(.2F)
-                        .width(Dimensions.EffectWidget.Velocity.InputIconWidth),
-                    painter = painterResource(R.drawable.icon_hz),
-                    contentDescription = null
-                )
-                IntegerInput(
-                    numerator_label,
-                    minimum = 1,
-                    on_focus_exit = {
-                        event.slide_duration = Rational(
-                            numerator_label.value,
-                            denominator_label.value
-                        )
-                        submit()
-                    },
-                    contentPadding = Unpadded,
-                    text_align = TextAlign.Center,
-                    modifier = Modifier
-                        .testTag(TestTag.VelocitySlideNumerator)
-                        .height(Dimensions.EffectWidget.InputHeight)
-                        .width(Dimensions.EffectWidget.Velocity.InputWidth)
-                ) {
-                    event.slide_duration = Rational(it, denominator_label.value)
+            IntegerInput(
+                denominator_label,
+                minimum = 1,
+                on_focus_exit = {
+                    event.slide = Pair(
+                        slide_width_mode.value ?: OpusVelocityEvent.SlideMaxWidth.Beat, // TODO should throw error
+                        denominator_label.value
+                    )
                     submit()
-                }
-            }
-            DivisorSeparator()
-            Box(
-                modifier = Modifier,
-                contentAlignment = Alignment.Center
+                },
+                contentPadding = Unpadded,
+                text_align = TextAlign.Center,
+                modifier = Modifier
+                    .testTag(TestTag.VelocitySlideDenominator)
+                    .height(Dimensions.EffectWidget.InputHeight)
+                    .width(Dimensions.EffectWidget.Velocity.InputWidth)
             ) {
-                Icon(
-                    modifier = Modifier
-                        .alpha(.2F)
-                        .width(Dimensions.EffectWidget.Velocity.InputIconWidth),
-                    painter = painterResource(R.drawable.icon_hz),
-                    contentDescription = null
+                event.slide = Pair(
+                    slide_width_mode.value ?: OpusVelocityEvent.SlideMaxWidth.Beat, // TODO should throw error
+                    it
                 )
-                IntegerInput(
-                    denominator_label,
-                    minimum = 1,
-                    on_focus_exit = {
-                        event.slide_duration = Rational(
-                            numerator_label.value,
-                            denominator_label.value
-                        )
-                        submit()
-                    },
-                    contentPadding = Unpadded,
-                    text_align = TextAlign.Center,
-                    modifier = Modifier
-                        .testTag(TestTag.VelocitySlideDenominator)
-                        .height(Dimensions.EffectWidget.InputHeight)
-                        .width(Dimensions.EffectWidget.Velocity.InputWidth)
-                ) {
-                    event.slide_duration = Rational(numerator_label.value, it)
-                    submit()
-                }
+                submit()
             }
         }
     }

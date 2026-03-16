@@ -11,6 +11,7 @@ package com.qfs.pagan.structure.opusmanager
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
+import com.qfs.json.JSONString
 import com.qfs.pagan.jsoninterfaces.UnknownEventTypeException
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
@@ -36,12 +37,10 @@ object OpusControlEventJSONInterface {
             }
             is OpusVelocityEvent -> {
                 output["velocity"] = input.value
-                output["slide"] = if (input.slide_duration == null) {
-                    null
-                } else {
+                output["slide"] = input.slide?.let {
                     JSONList(
-                        JSONInteger(input.slide_duration!!.numerator),
-                        JSONInteger(input.slide_duration!!.denominator),
+                        JSONString(it.first.name),
+                        JSONInteger(it.second)
                     )
                 }
             }
@@ -114,13 +113,17 @@ object OpusControlEventJSONInterface {
             map.get_float("velocity")
         }
 
+        val slide_list = map.get_listn("slide")
+
         return OpusVelocityEvent(
             value,
-            map.get_listn("slide")?.let {
-                Rational(
-                    it.get_int(0),
-                    it.get_int(1)
+            if (slide_list != null) {
+                Pair(
+                    OpusVelocityEvent.SlideMaxWidth.valueOf(slide_list.get_string(0)),
+                    slide_list.get_intn(1) ?: 1
                 )
+            } else {
+                null
             },
             map.get_int("duration", 1),
             /* Note: Need the try catch since I initially had transitions as int, but only used 0 */

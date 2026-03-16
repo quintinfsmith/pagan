@@ -16,8 +16,7 @@ object Values {
     object Defaults {
         const val Radix = 12
         const val ZoomSensitivity = .8F
-        const val SlideNumerator = 1
-        const val SlideDenominator = 4
+        const val SlideDenominator = 1
     }
 
     const val OctaveCount = 8

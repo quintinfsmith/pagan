@@ -239,7 +239,7 @@ fun LeafView(
 
                                 is OpusVelocityEvent -> {
                                     var label_string = "${(event.value * 100F).toInt()}"
-                                    if (event.slide_duration != null) {
+                                    if (event.slide != null) {
                                         label_string += "^"
                                     }
                                     Text(

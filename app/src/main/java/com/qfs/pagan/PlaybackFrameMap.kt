@@ -852,7 +852,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         var working_backup_value = bkp_note_value
 
         val pitch_controller = PitchController(this.opus_manager.length)
-        var first_pitch_shift: Rational? = null
+        var flag_pitch_shift: Boolean = false
+        var working_note_size = Rational(event.duration, width_denominator)
         while (true) {
             val next_event_position = this.opus_manager.get_proceeding_event_position(next_beat_key, next_position) ?: break
             val next_beat = next_event_position.first
@@ -860,7 +861,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             next_beat_key.beat = next_beat
             val next_event = this.opus_manager.get_tree(next_beat_key, next_position).get_event()!!
 
-            val working_bend_transition = opus_manager.get_current_line_effect<OpusVelocityEvent>(
+            val working_velocity_event = opus_manager.get_current_line_effect<OpusVelocityEvent>(
                 PaganEffectType.Velocity,
                 next_beat_key,
                 next_position
@@ -881,14 +882,22 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
             next_event_frame = next_start
 
-            val transition_width = working_bend_transition.slide_duration ?: break
+            val slide = working_velocity_event.slide ?: break
+            val slide_rational = when (slide.first) {
+                OpusVelocityEvent.SlideMaxWidth.Beat -> {
+                    Rational(1, slide.second)
+                }
+                OpusVelocityEvent.SlideMaxWidth.Note -> {
+                    Rational(working_note_size.numerator, working_note_size.denominator * slide.second)
+                }
+            }
 
             // overwrite the next note with the current note and add a pitch bend effect
             if (working_note_end == offset) {
                 adjusted_relative_width += Rational(next_event.duration, next_width_denominator)
 
                 // Add pitch event
-                val transition_offset = max(working_note_start, offset - transition_width)
+                val transition_offset = max(working_note_start, offset - slide_rational)
                 val adj_transition_width = offset - transition_offset
                 val transition_beat = transition_offset.toInt()
                 val transition_relative_offset = transition_offset - transition_beat
@@ -942,13 +951,13 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 this._ignored_events[Pair(next_beat_key.copy(), next_position.toList())] = working_backup_value
 
                 working_note_start = offset
-                working_note_end = offset + Rational(next_event.duration, next_width_denominator)
-                if (first_pitch_shift == null) {
-                    first_pitch_shift = offset
-                }
+                working_note_size = Rational(next_event.duration, next_width_denominator)
+                working_note_end = offset + working_note_size
+                flag_pitch_shift = true
             } else {
                 break
             }
+
         }
 
         ////////////////////////////////////////////////
@@ -965,7 +974,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             position
         )?.let { start_event ->
             val merge_key_array = PlaybackFrameMap.generate_merge_keys(beat_key.channel, beat_key.line_offset)
-            val profile_buffer = if (first_pitch_shift != null) {
+            val profile_buffer = if (flag_pitch_shift) {
                 val profile = pitch_controller.generate_profile()
                 val control_event_data = mutableListOf<ControllerEventData.IndexedProfileBufferFrame>()
                 for (effect_event in profile.get_events()) {

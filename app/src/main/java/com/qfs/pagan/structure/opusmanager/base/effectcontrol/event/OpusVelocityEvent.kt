@@ -13,18 +13,29 @@ import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 
+
 class OpusVelocityEvent(
     var value: Float,
-    var slide_duration: Rational? = null,
+    var slide: Pair<SlideMaxWidth, Int>? = null,
     duration: Int = 1,
     transition: EffectTransition = EffectTransition.Instant
 ): EffectEvent(duration, transition) {
+    enum class SlideMaxWidth {
+        Beat,
+        Note
+    }
+
     override val event_type = EffectType.Velocity
     override fun to_float_array(): FloatArray {
         return floatArrayOf(this.value) // 1.27 == 1
     }
     override fun copy(): OpusVelocityEvent {
-        return OpusVelocityEvent(this.value, this.slide_duration, this.duration, this.transition)
+        return OpusVelocityEvent(
+            this.value,
+            this.slide,
+            this.duration,
+            this.transition
+        )
     }
 
     override fun get_event_instant(
@@ -33,7 +44,7 @@ class OpusVelocityEvent(
     ): EffectEvent {
         return OpusVelocityEvent(
             this.value,
-            this.slide_duration,
+            this.slide,
             this.duration,
             this.transition
         )
@@ -46,6 +57,10 @@ class OpusVelocityEvent(
     }
 
     override fun equals(other: Any?): Boolean {
-        return other is OpusVelocityEvent && this.value == other.value && this.slide_duration == other.slide_duration && this.transition == other.transition && super.equals(other)
+        return other is OpusVelocityEvent
+                && this.value == other.value
+                && this.slide == other.slide
+                && this.transition == other.transition
+                && super.equals(other)
     }
 }

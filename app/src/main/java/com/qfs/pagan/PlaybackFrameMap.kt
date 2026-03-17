@@ -148,6 +148,46 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             )
         }
 
+        /**
+         *  Get Frame (given the sample_rate) and tempo index within give tempo_map
+         */
+        private fun get_position_data(sample_rate: Int, tempo_map: List<Pair<Rational, Float>>, beat_map: IntArray, position: Rational): Pair<Int, Int> {
+            val frames_per_minute = 60F * sample_rate.toFloat()
+            var working_position = Rational(position.toInt(), 1)
+            var working_tempo = 0f
+            var tempo_index = 0
+
+            for (i in tempo_map.size - 1 downTo 0) {
+                val (absolute_offset, tempo) = tempo_map[i]
+                if (absolute_offset <= working_position) {
+                    working_tempo = tempo
+                    tempo_index = i
+                    break
+                }
+            }
+
+            var frames_per_beat = (frames_per_minute / working_tempo).toInt()
+            // Calculate Start Position
+            var frame = beat_map[position.toInt()]
+            while (tempo_index < tempo_map.size) {
+                val tempo_change_position = tempo_map[tempo_index].first
+                if (tempo_change_position < position) {
+                    frame += (frames_per_beat * (tempo_change_position - working_position)).toInt()
+
+                    working_position = tempo_change_position
+                    frames_per_beat = (frames_per_minute / tempo_map[tempo_index].second).toInt()
+
+                    tempo_index += 1
+                } else {
+                    break
+                }
+            }
+
+            frame += (frames_per_beat * (position - working_position)).toInt()
+
+            return Pair(frame, min(tempo_map.size - 1, tempo_index))
+        }
+
         private fun convert_to_indexed_profile_buffer_frames(sample_rate: Int, tempo_map: List<Pair<Rational, Float>>, beat_map: IntArray, effect_event: ControllerProfile.ProfileEffectEvent, event_type: EffectType, start_offset: Rational = Rational(0,1)): List<ControllerEventData.IndexedProfileBufferFrame> {
             val adjusted_event = when (event_type) {
                 EffectType.LowPass -> ControllerProfile.ProfileEffectEvent(
@@ -161,41 +201,16 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             }
             val output = mutableListOf<ControllerEventData.IndexedProfileBufferFrame>()
 
+            var (start_frame, tempo_index) = this.get_position_data(sample_rate, tempo_map, beat_map, adjusted_event.start_position)
+            val (offset_frame, _) = if (start_offset.numerator == 0) {
+                Pair(0, 0)
+            } else {
+                this.get_position_data(sample_rate, tempo_map, beat_map, start_offset)
+            }
+
             val frames_per_minute = 60F * sample_rate.toFloat()
-            // Find the tempo active at the beginning of the beat
-            var working_position = Rational(adjusted_event.start_position.toInt(), 1)
-            var working_tempo = 0f
-            var tempo_index = 0
-            val data_width = adjusted_event.start_value.size
+            var frames_per_beat = (frames_per_minute / tempo_map[tempo_index++].second).toInt()
 
-            for (i in tempo_map.size - 1 downTo 0) {
-                val (absolute_offset, tempo) = tempo_map[i]
-                if (absolute_offset <= working_position) {
-                    working_tempo = tempo
-                    tempo_index = i
-                    break
-                }
-            }
-
-            var frames_per_beat = (frames_per_minute / working_tempo).toInt()
-
-            // Calculate Start Position
-            var start_frame = beat_map[adjusted_event.start_position.toInt()]
-            while (tempo_index < tempo_map.size) {
-                val tempo_change_position = tempo_map[tempo_index].first
-                if (tempo_change_position < adjusted_event.start_position) {
-                    start_frame += (frames_per_beat * (tempo_change_position - working_position)).toInt()
-
-                    working_position = tempo_change_position
-                    frames_per_beat = (frames_per_minute / tempo_map[tempo_index].second).toInt()
-
-                    tempo_index += 1
-                } else {
-                    break
-                }
-            }
-
-            start_frame += (frames_per_beat * (adjusted_event.start_position - working_position)).toInt()
 
             if (adjusted_event.transition == EffectTransition.Instant) {
                 val adj_value = when (event_type) {
@@ -205,16 +220,18 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
                 return listOf(
                     ControllerEventData.IndexedProfileBufferFrame(
-                        first_frame = start_frame,
-                        last_frame = start_frame,
+                        first_frame = start_frame - offset_frame,
+                        last_frame = start_frame - offset_frame,
                         value = adj_value,
                         increment = FloatArray(adj_value.size)
                     )
                 )
             }
 
+
             // Calculate End Position
-            working_position = adjusted_event.start_position
+            var working_position = adjusted_event.start_position
+            val data_width = adjusted_event.start_value.size
             var end_frame = start_frame
             var working_values = adjusted_event.start_value
             // Note: divide duration to keep in-line with 0-1 range
@@ -239,8 +256,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
                     output.add(
                         ControllerEventData.IndexedProfileBufferFrame(
-                            first_frame = end_frame,
-                            last_frame = next_end_frame,
+                            first_frame = end_frame - offset_frame,
+                            last_frame = next_end_frame - offset_frame,
                             value = working_values,
                             increment = increments
                         )
@@ -260,8 +277,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             val next_end_frame = end_frame + (frames_per_beat * (adjusted_event.end_position - working_position)).toInt()
             output.add(
                 ControllerEventData.IndexedProfileBufferFrame(
-                    first_frame = end_frame,
-                    last_frame = next_end_frame,
+                    first_frame = end_frame - offset_frame,
+                    last_frame = next_end_frame - offset_frame,
                     value = working_values,
                     increment = if (!adjusted_event.is_trivial() && next_end_frame != end_frame) {
                         FloatArray(data_width) { i ->
@@ -273,52 +290,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 )
             )
 
-            // TODO: This feels sloppy, could probably merge with similar logic at beginning of function
-            if (start_offset > 0) {
-                var working_position = Rational(start_offset.toInt(), 1)
-                var working_tempo = 0f
-                var tempo_index = 0
-
-                for (i in tempo_map.size - 1 downTo 0) {
-                    val (absolute_offset, tempo) = tempo_map[i]
-                    if (absolute_offset <= working_position) {
-                        working_tempo = tempo
-                        tempo_index = i
-                        break
-                    }
-                }
-
-                var frames_per_beat = (frames_per_minute / working_tempo).toInt()
-                // Calculate Start Position
-                var offset_frame = beat_map[start_offset.toInt()]
-                while (tempo_index < tempo_map.size) {
-                    val tempo_change_position = tempo_map[tempo_index].first
-                    if (tempo_change_position < start_offset) {
-                        offset_frame += (frames_per_beat * (tempo_change_position - working_position)).toInt()
-
-                        working_position = tempo_change_position
-                        frames_per_beat = (frames_per_minute / tempo_map[tempo_index].second).toInt()
-
-                        tempo_index += 1
-                    } else {
-                        break
-                    }
-                }
-
-                offset_frame += (frames_per_beat * (start_offset - working_position)).toInt()
-                for (i in 0 until output.size) {
-                    val item = output.removeAt(0)
-                    println("??$i - ${item.first_frame - offset_frame} -> ${item.last_frame - offset_frame}")
-                    output.add(
-                        ControllerEventData.IndexedProfileBufferFrame(
-                            first_frame = item.first_frame - offset_frame,
-                            last_frame = item.last_frame - offset_frame,
-                            value = item.value,
-                            increment = item.increment
-                        )
-                    )
-                }
-            }
 
             return output
         }
@@ -929,7 +900,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 val (to_tuning_offset, to_tuning_radix) = this.opus_manager.tuning_map[to_offset]
                 val to_pitch = 2F.pow((to_tuning_offset + (to_tuning_radix * to_octave)).toFloat() / to_tuning_radix.toFloat())
 
-                println("PITCH SHIFT @ $next_beat, $next_position")
                 pitch_controller.set_event(
                     transition_beat,
                     listOf(transition_relative_offset.numerator * new_size / transition_relative_offset.denominator),

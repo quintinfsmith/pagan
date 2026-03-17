@@ -489,11 +489,6 @@ class SampleHandle {
         }
         void attach_pitch_controller(PitchEffectBuffer* ptr) {
             this->pitch_controller = ptr;
-            __android_log_print(ANDROID_LOG_DEBUG, "", "::%d", this->pitch_controller->data->frame_count);
-            for (int i = 0; i < this->pitch_controller->data->frame_count; i++) {
-                auto* frame = this->pitch_controller->data->frames[i];
-                __android_log_print(ANDROID_LOG_DEBUG, "", "%d::%d -> %d", i, frame->frame, frame->end);
-            }
             this->pitch_controller->set_frame(this->working_frame);
         }
 };

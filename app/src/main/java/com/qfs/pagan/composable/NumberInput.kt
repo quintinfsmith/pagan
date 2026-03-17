@@ -50,6 +50,7 @@ fun <T> NumberInput(
     output_transformation: OutputTransformation,
     callback: (T) -> Unit
 ) {
+
     val trigger_select_all = remember { mutableStateOf<Boolean?>(null) }
 
     val state = rememberTextFieldState(value.value.toString())
@@ -65,7 +66,6 @@ fun <T> NumberInput(
             on_focus_exit?.let { it(value.value) }
         }
     }
-
     OutlinedTextField(
         state = state,
         label = label,

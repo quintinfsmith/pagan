@@ -12,9 +12,11 @@ package com.qfs.pagan.composable.cxtmenu
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -64,7 +66,9 @@ fun CMBoxEnd(modifier: Modifier = Modifier, content: @Composable ColumnScope.() 
 @Composable
 fun ContextMenuSecondaryRow(modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
     Row(
-        modifier.fillMaxWidth(),
+        modifier
+            .height(IntrinsicSize.Min)
+            .fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
         content = content
@@ -74,7 +78,9 @@ fun ContextMenuSecondaryRow(modifier: Modifier = Modifier, content: @Composable 
 @Composable
 fun ContextMenuPrimaryRow(modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
     Row(
-        modifier.fillMaxWidth(),
+        modifier
+            .height(IntrinsicSize.Min)
+            .fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
         content = content

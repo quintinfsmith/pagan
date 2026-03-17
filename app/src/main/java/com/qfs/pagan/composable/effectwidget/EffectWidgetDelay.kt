@@ -252,11 +252,8 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionD
                     fade.floatValue = it
                 },
                 onValueChangeFinished = {
-                    if (beat != null) {
-                        dispatcher.set_effect(EffectType.Delay, event, channel, line_offset, beat, position!!)
-                    } else {
-                        dispatcher.set_initial_effect(EffectType.Delay, event, channel, line_offset)
-                    }
+                    fade_expanded.value = false
+                    submit()
                 }
             )
         }

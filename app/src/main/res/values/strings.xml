@@ -301,6 +301,13 @@
     <string name="settings_beat_stroke_thin">Thin</string>
     <string name="settings_beat_stroke_medium">Medium</string>
     <string name="settings_beat_stroke_thick">Thick</string>
+    <string name="velocity_widget_enable_sliding">Enable Sliding</string>
+    <string name="velocity_widget_slide_beat">Beat</string>
+    <string name="velocity_widget_slide_note">Note</string>
+    <string name="velocity_widget_relative_to_note">Relative to Note</string>
+    <string name="velocity_widget_relative_to_beat">Relative to Beat</string>
+    <string name="velocity_widget_disable_sliding">Disable Sliding</string>
+    <string name="velocity_widget_slide_duration">Slide Duration</string>
 
 
     <string-array name="general_midi_presets">

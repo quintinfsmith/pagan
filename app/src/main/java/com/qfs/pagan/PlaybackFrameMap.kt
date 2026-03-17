@@ -308,6 +308,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 offset_frame += (frames_per_beat * (start_offset - working_position)).toInt()
                 for (i in 0 until output.size) {
                     val item = output.removeAt(0)
+                    println("??$i - ${item.first_frame - offset_frame} -> ${item.last_frame - offset_frame}")
                     output.add(
                         ControllerEventData.IndexedProfileBufferFrame(
                             first_frame = item.first_frame - offset_frame,
@@ -928,6 +929,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 val (to_tuning_offset, to_tuning_radix) = this.opus_manager.tuning_map[to_offset]
                 val to_pitch = 2F.pow((to_tuning_offset + (to_tuning_radix * to_octave)).toFloat() / to_tuning_radix.toFloat())
 
+                println("PITCH SHIFT @ $next_beat, $next_position")
                 pitch_controller.set_event(
                     transition_beat,
                     listOf(transition_relative_offset.numerator * new_size / transition_relative_offset.denominator),

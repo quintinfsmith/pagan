@@ -4634,7 +4634,6 @@ open class OpusLayerBase: Effectable {
     }
 
     fun <T: EffectEvent> get_current_effects(type: EffectType, beat_key: BeatKey, position: List<Int>): Triple<T?, T?, T?> {
-        // if the velocity controller exists, use that otherwise consider velocity to be volume
         val channel = this.channels[beat_key.channel]
         val line = channel.lines[beat_key.line_offset]
         val event_position = line.get_tree(beat_key.beat).get_rational_position(position)
@@ -4659,13 +4658,15 @@ open class OpusLayerBase: Effectable {
     }
 
     fun <T: EffectEvent> get_current_line_effect(type: EffectType, beat_key: BeatKey, position: List<Int>): T? {
-        // if the velocity controller exists, use that otherwise consider velocity to be volume
         val line = this.channels[beat_key.channel].lines[beat_key.line_offset]
 
         return if (line.controllers.has_controller(type)) {
             val event_position = line.get_tree(beat_key.beat).get_rational_position(position)
             val controller = line.get_controller<T>(type)
-            controller.coerce_event(beat_key.beat, event_position)
+            println("COERCING: ${beat_key.beat} | $position == $event_position")
+            val output = controller.coerce_event(beat_key.beat, event_position)
+            println("${output.to_float_array().toList()}")
+            output
         } else {
             null
         }

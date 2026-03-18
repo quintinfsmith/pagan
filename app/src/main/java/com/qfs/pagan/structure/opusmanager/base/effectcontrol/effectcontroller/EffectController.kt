@@ -66,6 +66,9 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
         return Pair(working_beat, working_position)
     }
 
+    /**
+     * Get an event and its values at the instant given. All event transitions will be Instant.
+     */
     fun coerce_event(beat: Int, target_position: Rational): T {
         val closest_position = this.get_tree(beat).get_closest_position(target_position)
         val (event_beat, event_position) = this.get_latest_event_position(beat, closest_position) ?: return this.initial_event
@@ -93,11 +96,21 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
         var event_end = event_rational.copy()
         event_end += Rational(working_event.duration, width)
 
+        // No need to get_event_instant(), find the actual event
         if (target_position + beat >= event_end) {
-            val event_copy = working_event.copy()
+            val event_copy = if (working_event.is_persistent()) {
+                working_event.copy()
+            } else {
+                this.get_latest_persistent_position(event_beat, event_position)?.let {
+                    this.get_tree(it.first, it.second).get_event()!!.copy()
+                }
+            } ?: this.initial_event.copy()
+
             event_copy.transition = EffectTransition.Instant
             return event_copy as T
         }
+
+
 
         var pair = this.get_preceding_event_position(event_beat, event_position)
         while (pair != null) {
@@ -112,7 +125,6 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
         } else {
             this.get_tree(pair.first, pair.second).get_event()!!
         }
-
         return working_event.get_event_instant(
             ((target_position + beat) - event_rational) / ((event_end - beat) - (event_rational - beat)),
             preceding_event

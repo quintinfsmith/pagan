@@ -4663,9 +4663,7 @@ open class OpusLayerBase: Effectable {
         return if (line.controllers.has_controller(type)) {
             val event_position = line.get_tree(beat_key.beat).get_rational_position(position)
             val controller = line.get_controller<T>(type)
-            println("COERCING: ${beat_key.beat} | $position == $event_position")
             val output = controller.coerce_event(beat_key.beat, event_position)
-            println("${output.to_float_array().toList()}")
             output
         } else {
             null

@@ -860,9 +860,11 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
 
         val output = callback()
 
+        println("f.... ${need_recache.size}")
         for (needs_recache in need_recache) {
             this.cache_tree_overlaps(needs_recache, listOf())
         }
+        println("g.... ${need_recache.size}")
 
         return output
     }
@@ -1077,13 +1079,18 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
     }
 
     fun set_event(beat: Int, position: List<Int>, event: T) {
+        println("a...")
         val blocked_pair = this.is_blocked_set_event(beat, position, event.duration)
+        println("b...")
         if (blocked_pair != null) throw BlockedTreeException(beat, position, blocked_pair.first, blocked_pair.second)
 
         this.recache_blocked_tree_wrapper(beat, position) {
+            println("c....")
             val tree = this.get_tree(beat, position)
             tree.set_event(event)
+            println("d...")
         }
+        println("e....")
     }
 }
 

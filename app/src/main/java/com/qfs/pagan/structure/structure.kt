@@ -30,24 +30,27 @@ fun greatest_common_denominator(first: Int, second: Int): Int {
     }
 }
 
+val PRIME_SIEVE = mutableListOf<Int>()
 fun get_prime_factors(n: Int): List<Int> {
-    val primes: MutableList<Int> = mutableListOf()
-    for (i in 2 .. (n / 2)) {
-        var is_prime = true
-        for (p in primes) {
-            if (i % p == 0) {
-                is_prime = false
-                break
+    if (PRIME_SIEVE.isEmpty() || PRIME_SIEVE.last() < n / 2) {
+        for (i in 2..(n / 2)) {
+            if (PRIME_SIEVE.contains(i)) continue
+
+            var is_prime = true
+            for (p in PRIME_SIEVE) {
+                if (i % p == 0) {
+                    is_prime = false
+                    break
+                }
             }
-        }
-        if (is_prime) {
-            primes.add(i)
+            if (is_prime) {
+                PRIME_SIEVE.add(i)
+            }
         }
     }
 
-
     val factors: MutableList<Int> = mutableListOf()
-    for (p in primes) {
+    for (p in PRIME_SIEVE) {
         if (p > n / 2) {
             break
         } else if (n % p == 0) {

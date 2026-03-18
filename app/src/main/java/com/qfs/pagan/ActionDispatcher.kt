@@ -1750,12 +1750,10 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
     fun remove_controller() {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
-        opus_manager.lock_cursor {
-            when (cursor.ctl_level!!) {
-                CtlLineLevel.Line -> opus_manager.remove_line_controller(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
-                CtlLineLevel.Channel -> opus_manager.remove_channel_controller(cursor.ctl_type!!, cursor.channel)
-                CtlLineLevel.Global -> opus_manager.remove_global_controller(cursor.ctl_type!!)
-            }
+        when (cursor.ctl_level!!) {
+            CtlLineLevel.Line -> opus_manager.remove_line_controller(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
+            CtlLineLevel.Channel -> opus_manager.remove_channel_controller(cursor.ctl_type!!, cursor.channel)
+            CtlLineLevel.Global -> opus_manager.remove_global_controller(cursor.ctl_type!!)
         }
     }
 

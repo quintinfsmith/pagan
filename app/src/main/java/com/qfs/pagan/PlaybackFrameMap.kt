@@ -181,6 +181,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                     break
                 }
             }
+
             frame += (frames_per_beat * (position - working_position)).toInt()
 
             return Pair(frame, min(tempo_map.size - 1, tempo_index))
@@ -208,7 +209,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
             val frames_per_minute = 60F * sample_rate.toFloat()
             var frames_per_beat = (frames_per_minute / tempo_map[tempo_index++].second).toInt()
-
 
             if (adjusted_event.transition == EffectTransition.Instant) {
                 val adj_value = when (event_type) {

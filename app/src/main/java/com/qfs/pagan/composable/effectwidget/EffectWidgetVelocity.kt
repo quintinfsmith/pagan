@@ -76,6 +76,7 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
     val slide_width_mode = remember { mutableStateOf(event.slide?.first ?: OpusVelocityEvent.SlideMaxWidth.Beat) }
     val denominator_label: MutableState<Int> = remember { mutableStateOf(event.slide?.second ?: Values.Defaults.SlideDenominator) }
     val (channel, line_offset, beat, position) = ui_facade.get_location_ints()
+    val is_percussion = channel != null && ui_facade.channel_data[channel].percussion.value
     val active_layout_size = (LocalActivity.current as PaganComponentActivity).view_model.active_layout_size
     val default_colors = SliderDefaults.colors()
     val colors = default_colors.copy(
@@ -221,139 +222,142 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
     }
 
     MediumSpacer()
-
-    if (slide_enabled.value) {
-        Column(
-            Modifier
-                .height(IntrinsicSize.Min)
-                .weight(1F),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(stringResource(R.string.velocity_widget_slide_duration))
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+    if (!is_percussion) {
+        if (slide_enabled.value) {
+            Column(
+                Modifier
+                    .height(IntrinsicSize.Min)
+                    .weight(1F),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Box {
-                    val bend_mode_dropdown_visible = remember { mutableStateOf(false) }
-                    DropdownMenu(
-                        expanded = bend_mode_dropdown_visible.value,
-                        onDismissRequest = { bend_mode_dropdown_visible.value = false }
-                    ) {
-                        if (active_layout_size.value == LayoutSize.SmallPortrait) {
+                Text(stringResource(R.string.velocity_widget_slide_duration))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Box {
+                        val bend_mode_dropdown_visible = remember { mutableStateOf(false) }
+                        DropdownMenu(
+                            expanded = bend_mode_dropdown_visible.value,
+                            onDismissRequest = { bend_mode_dropdown_visible.value = false }
+                        ) {
+                            if (active_layout_size.value == LayoutSize.SmallPortrait) {
+                                DropdownMenuItem(
+                                    text = { Text(R.string.velocity_widget_disable_sliding) },
+                                    onClick = {
+                                        if (event.slide != null) {
+                                            event.slide = null
+                                            submit()
+                                        }
+                                        slide_enabled.value = false
+                                        bend_mode_dropdown_visible.value = false
+                                    }
+                                )
+                            }
                             DropdownMenuItem(
-                                text = { Text(R.string.velocity_widget_disable_sliding) },
+                                text = { Text(R.string.velocity_widget_relative_to_beat) },
                                 onClick = {
-                                    if (event.slide != null) {
-                                        event.slide = null
+                                    if (event.slide?.first != OpusVelocityEvent.SlideMaxWidth.Beat) {
+                                        event.slide = Pair(
+                                            OpusVelocityEvent.SlideMaxWidth.Beat,
+                                            event.slide?.second ?: Values.Defaults.SlideDenominator
+                                        )
                                         submit()
                                     }
-                                    slide_enabled.value = false
+                                    slide_width_mode.value = OpusVelocityEvent.SlideMaxWidth.Beat
+                                    bend_mode_dropdown_visible.value = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(R.string.velocity_widget_relative_to_note) },
+                                onClick = {
+                                    if (event.slide?.first != OpusVelocityEvent.SlideMaxWidth.Note) {
+                                        event.slide = Pair(
+                                            OpusVelocityEvent.SlideMaxWidth.Note,
+                                            event.slide?.second ?: Values.Defaults.SlideDenominator
+                                        )
+                                        submit()
+                                    }
+                                    slide_width_mode.value = OpusVelocityEvent.SlideMaxWidth.Note
                                     bend_mode_dropdown_visible.value = false
                                 }
                             )
                         }
-                        DropdownMenuItem(
-                            text = { Text(R.string.velocity_widget_relative_to_beat) },
+
+                        Button(
                             onClick = {
-                                if (event.slide?.first != OpusVelocityEvent.SlideMaxWidth.Beat) {
-                                    event.slide = Pair(
-                                        OpusVelocityEvent.SlideMaxWidth.Beat,
-                                        event.slide?.second ?: Values.Defaults.SlideDenominator
-                                    )
-                                    submit()
-                                }
-                                slide_width_mode.value = OpusVelocityEvent.SlideMaxWidth.Beat
-                                bend_mode_dropdown_visible.value = false
+                                bend_mode_dropdown_visible.value = !bend_mode_dropdown_visible.value
                             }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(R.string.velocity_widget_relative_to_note) },
-                            onClick = {
-                                if (event.slide?.first != OpusVelocityEvent.SlideMaxWidth.Note) {
-                                    event.slide = Pair(
-                                        OpusVelocityEvent.SlideMaxWidth.Note,
-                                        event.slide?.second ?: Values.Defaults.SlideDenominator
-                                    )
-                                    submit()
-                                }
-                                slide_width_mode.value = OpusVelocityEvent.SlideMaxWidth.Note
-                                bend_mode_dropdown_visible.value = false
+                        ) {
+                            when (slide_width_mode.value) {
+                                OpusVelocityEvent.SlideMaxWidth.Beat -> Text(R.string.velocity_widget_slide_beat)
+                                OpusVelocityEvent.SlideMaxWidth.Note -> Text(R.string.velocity_widget_slide_note)
                             }
-                        )
+                        }
                     }
 
-                    Button(
-                        onClick = {
-                            bend_mode_dropdown_visible.value = !bend_mode_dropdown_visible.value
-                        }
+                    DivisorSeparator()
+
+                    Box(
+                        modifier = Modifier,
+                        contentAlignment = Alignment.Center
                     ) {
-                        when (slide_width_mode.value) {
-                            OpusVelocityEvent.SlideMaxWidth.Beat -> Text(R.string.velocity_widget_slide_beat)
-                            OpusVelocityEvent.SlideMaxWidth.Note -> Text(R.string.velocity_widget_slide_note)
-                        }
-                    }
-                }
-
-                DivisorSeparator()
-
-                Box(
-                    modifier = Modifier,
-                    contentAlignment = Alignment.Center
-                ) {
-                    IntegerInput(
-                        denominator_label,
-                        minimum = 1,
-                        on_focus_exit = {
-                            event.slide = Pair(slide_width_mode.value, denominator_label.value)
+                        IntegerInput(
+                            denominator_label,
+                            minimum = 1,
+                            on_focus_exit = {
+                                event.slide = Pair(slide_width_mode.value, denominator_label.value)
+                                submit()
+                            },
+                            contentPadding = Unpadded,
+                            text_align = TextAlign.Center,
+                            modifier = Modifier
+                                .testTag(TestTag.VelocitySlideDenominator)
+                                .height(Dimensions.EffectWidget.InputHeight)
+                                .width(Dimensions.EffectWidget.Velocity.InputWidth)
+                        ) {
+                            event.slide = Pair(slide_width_mode.value, it)
                             submit()
-                        },
-                        contentPadding = Unpadded,
-                        text_align = TextAlign.Center,
-                        modifier = Modifier
-                            .testTag(TestTag.VelocitySlideDenominator)
-                            .height(Dimensions.EffectWidget.InputHeight)
-                            .width(Dimensions.EffectWidget.Velocity.InputWidth)
-                    ) {
-                        event.slide = Pair(slide_width_mode.value, it)
-                        submit()
+                        }
                     }
                 }
+            }
+        } else {
+            Spacer(Modifier.weight(1F))
+            Text(R.string.velocity_widget_enable_sliding)
+        }
+
+        MediumSpacer()
+
+        Column(
+            Modifier.fillMaxHeight(),
+            verticalArrangement = Arrangement.Bottom
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (active_layout_size.value != LayoutSize.SmallPortrait || !slide_enabled.value) {
+                    Switch(
+                        checked = slide_enabled.value,
+                        onCheckedChange = {
+                            slide_enabled.value = it
+                            if (it) {
+                                event.slide = Pair(
+                                    slide_width_mode.value,
+                                    denominator_label.value
+                                )
+                            } else {
+                                event.slide = null
+                            }
+                            submit()
+                        }
+                    )
+
+                    MediumSpacer()
+                }
+
+                EffectTransitionButton(event, dispatcher, is_initial)
             }
         }
     } else {
-        Spacer(Modifier.weight(1F))
-        Text(R.string.velocity_widget_enable_sliding)
-    }
-
-    MediumSpacer()
-
-    Column(
-        Modifier.fillMaxHeight(),
-        verticalArrangement = Arrangement.Bottom
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (active_layout_size.value != LayoutSize.SmallPortrait || !slide_enabled.value) {
-                Switch(
-                    checked = slide_enabled.value,
-                    onCheckedChange = {
-                        slide_enabled.value = it
-                        if (it) {
-                            event.slide = Pair(
-                                slide_width_mode.value,
-                                denominator_label.value
-                            )
-                        } else {
-                            event.slide = null
-                        }
-                        submit()
-                    }
-                )
-
-                MediumSpacer()
-            }
-
-            EffectTransitionButton(event, dispatcher, is_initial)
-        }
+        EffectTransitionButton(event, dispatcher, is_initial)
     }
 }

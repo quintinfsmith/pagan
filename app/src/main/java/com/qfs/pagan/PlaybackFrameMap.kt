@@ -797,6 +797,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         var working_backup_value = bkp_note_value
 
         val pitch_controller = PitchController(this.opus_manager.length)
+        pitch_controller.flag_ignore_blocking = true
+
         var flag_pitch_shift: Boolean = false
         var working_note_size = Rational(working_event.duration, width_denominator)
         val event_frame_ranges = mutableListOf<Pair<Int, Int>>()
@@ -860,15 +862,12 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 val original_size = pitch_tree.size
 
                 val new_size = get_next_biggest(transition_relative_offset.denominator, original_size, adj_transition_width.denominator)
-                println(">>> RESIZING $beat_key, $position -> $new_size...")
                 pitch_tree.resize(new_size)
-                println("resized.")
                 // Adjust existing events
                 for ((i, child) in pitch_tree.divisions) {
                     val child_event = child.get_event() ?: continue
                     child_event.duration = new_size * child_event.duration / original_size
                 }
-                println("BBBBBBBB")
 
                 val radix = this.opus_manager.get_radix()
                 val from_note = this.opus_manager.get_absolute_value(beat_key, position)!!
@@ -883,7 +882,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 val (to_tuning_offset, to_tuning_radix) = this.opus_manager.tuning_map[to_offset]
                 val to_pitch = 2F.pow((to_tuning_offset + (to_tuning_radix * to_octave)).toFloat() / to_tuning_radix.toFloat())
 
-                println("CCCCCCCCCCCc")
                 pitch_controller.set_event(
                     transition_beat,
                     listOf(transition_relative_offset.numerator * new_size / transition_relative_offset.denominator),
@@ -897,7 +895,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                         } // Assume temporary, will be set to permanent(Linear) if more transitions follow
                     )
                 )
-                println("<<<")
 
                 working_backup_value = when (working_event) {
                     is RelativeNoteEvent -> working_event.offset + working_backup_value
@@ -928,14 +925,11 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             is RelativeNoteEvent -> AbsoluteNoteEvent(initial_event.offset + bkp_note_value, initial_event.duration)
             else -> initial_event
         }
-        println(".....")
         this._gen_midi_event(absolute_event, beat_key, position)?.let { start_event ->
-            println(".....>>>")
             val merge_key_array = PlaybackFrameMap.generate_merge_keys(beat_key.channel, beat_key.line_offset)
             val profile_buffer = if (flag_pitch_shift) {
                 val profile = pitch_controller.generate_profile()
                 val control_event_data = mutableListOf<ControllerEventData.IndexedProfileBufferFrame>()
-                println("AAA")
                 for (effect_event in profile.get_events()) {
                     control_event_data.addAll(
                         PlaybackFrameMap.convert_to_indexed_profile_buffer_frames(
@@ -948,7 +942,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                         )
                     )
                 }
-                println("BBB")
                 ProfileBuffer(
                     ControllerEventData(
                         end_frame - start_frame,

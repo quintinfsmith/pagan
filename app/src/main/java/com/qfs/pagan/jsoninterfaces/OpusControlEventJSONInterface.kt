@@ -15,6 +15,7 @@ import com.qfs.json.JSONString
 import com.qfs.pagan.jsoninterfaces.UnknownEventTypeException
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.asEffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
@@ -84,7 +85,7 @@ object OpusControlEventJSONInterface {
         return OpusTempoEvent(
             map.get_float("tempo"),
             map.get_int("duration", 1),
-            EffectTransition.valueOf(map.get_string("transition", "Instant"))
+            map.get_string("transition", "Instant").asEffectTransition()
         )
     }
 
@@ -99,7 +100,7 @@ object OpusControlEventJSONInterface {
             map.get_int("duration", 1),
             /* Note: Need the try catch since I initially had transitions as int, but only used 0 */
             try {
-                EffectTransition.valueOf(map.get_string("transition", "Instant"))
+                map.get_string("transition", "Instant").asEffectTransition()
             } catch (e: ClassCastException) {
                 EffectTransition.Instant
             }
@@ -128,7 +129,7 @@ object OpusControlEventJSONInterface {
             map.get_int("duration", 1),
             /* Note: Need the try catch since I initially had transitions as int, but only used 0 */
             try {
-                EffectTransition.valueOf(map.get_string("transition", "Instant"))
+                map.get_string("transition", "Instant").asEffectTransition()
             } catch (e: ClassCastException) {
                 EffectTransition.Instant
             }
@@ -145,7 +146,7 @@ object OpusControlEventJSONInterface {
         return OpusPanEvent(
             map.get_float("value"),
             map.get_int("duration", 1),
-            EffectTransition.valueOf(map.get_string("transition", "Instant"))
+            map.get_string("transition", "Instant").asEffectTransition()
         )
     }
     fun delay_event(map: JSONHashMap): DelayEvent {
@@ -156,7 +157,7 @@ object OpusControlEventJSONInterface {
             map.get_int("echo"),
             map.get_float("fade"),
             map.get_int("duration", 1),
-            EffectTransition.valueOf(map.get_string("transition", "Instant"))
+            map.get_string("transition", "Instant").asEffectTransition()
         )
     }
     // ------------------------

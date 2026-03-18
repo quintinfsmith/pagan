@@ -18,3 +18,13 @@ enum class EffectTransition(val i: Int) {
     // EaseIn(4),
     // EaseOut(5)
 }
+
+/**
+ * Needed as a layer in the case that a name is changed.
+ */
+fun String.asEffectTransition(): EffectTransition {
+    return when (this) {
+        "RInstant" -> EffectTransition.InstantB
+        else -> EffectTransition.valueOf(this)
+    }
+}

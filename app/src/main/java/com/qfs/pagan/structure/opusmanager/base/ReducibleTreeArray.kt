@@ -12,6 +12,7 @@ package com.qfs.pagan.structure.opusmanager.base
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.rationaltree.InvalidGetCall
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
+import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<ReducibleTree<T>>) {
     class BlockedTreeException(var beat: Int, var position: List<Int>, var blocker_beat: Int, var blocker_position: List<Int>): Exception("$beat | $position is blocked by event @ $blocker_beat $blocker_position")
@@ -723,7 +724,6 @@ abstract class ReducibleTreeArray<T: OpusEvent>(var beats: MutableList<Reducible
     fun get_preceding_event_position(beat: Int, position: List<Int>): Pair<Int, List<Int>>? {
         var working_beat = beat
         var working_position = position.toList()
-
         while (true) {
             val pair = this.get_preceding_leaf_position(working_beat, working_position) ?: break
             working_beat = pair.first

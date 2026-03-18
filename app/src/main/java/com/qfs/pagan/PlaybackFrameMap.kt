@@ -175,14 +175,11 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                     frame += (frames_per_beat * (tempo_change_position - working_position)).toInt()
 
                     working_position = tempo_change_position
-                    frames_per_beat = (frames_per_minute / tempo_map[tempo_index].second).toInt()
-
-                    tempo_index += 1
+                    frames_per_beat = (frames_per_minute / tempo_map[tempo_index++].second).toInt()
                 } else {
                     break
                 }
             }
-
             frame += (frames_per_beat * (position - working_position)).toInt()
 
             return Pair(frame, min(tempo_map.size - 1, tempo_index))
@@ -737,66 +734,39 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
     }
 
     private fun calculate_event_frame_range(beat: Int, duration: Int, relative_width: Rational, relative_offset: Rational): Pair<Int, Int> {
-        val frames_per_minute = 60F * this._sample_handle_manager.sample_rate
-        // Find the tempo active at the beginning of the beat
-        var working_position = Rational(beat,1)
-        var working_tempo = 0f
-        var tempo_index = 0
+        var (start_frame, tempo_index) = PlaybackFrameMap.get_position_data(
+            this._sample_handle_manager.sample_rate,
+            this._tempo_ratio_map,
+            this._cached_beat_frames!!,
+            beat + relative_offset
+        )
 
-        for (i in this._tempo_ratio_map.size - 1 downTo 0) {
-            val (absolute_offset, tempo) = this._tempo_ratio_map[i]
-            if (absolute_offset <= working_position) {
-                working_tempo = tempo
-                tempo_index = i
-                break
-            }
-        }
-
-        var frames_per_beat = (frames_per_minute / working_tempo).toInt()
-
-        // Calculate Start Position
-        var start_frame = this._cached_beat_frames!![beat]
-        val target_start_position = beat + relative_offset
-        while (tempo_index < this._tempo_ratio_map.size) {
-            val (tempo_change_position, new_tempo) = this._tempo_ratio_map[tempo_index]
-            if (tempo_change_position < target_start_position) {
-                start_frame += (frames_per_beat * (tempo_change_position - working_position)).toInt()
-
-                working_position = tempo_change_position
-                frames_per_beat = (frames_per_minute / new_tempo).toInt()
-
-                tempo_index += 1
-            } else {
-                break
-            }
-        }
-
-        start_frame += (frames_per_beat * (target_start_position - working_position)).toInt()
+        val frames_per_minute = 60F * this._sample_handle_manager.sample_rate.toFloat()
+        var frames_per_beat = (frames_per_minute / this._tempo_ratio_map[tempo_index].second).toInt()
 
         // Calculate End Position
-        working_position = target_start_position
+        var working_position = beat + relative_offset
         var end_frame = start_frame
-        val target_end_position = target_start_position + (duration * relative_width)
+        val target_end_position = working_position + (duration * relative_width)
         while (tempo_index < this._tempo_ratio_map.size) {
             val (tempo_change_position, new_tempo) = this._tempo_ratio_map[tempo_index]
             if (tempo_change_position < target_end_position) {
                 end_frame += (frames_per_beat * (tempo_change_position - working_position)).toInt()
 
                 working_position = tempo_change_position
-                frames_per_beat = (frames_per_minute / new_tempo).toInt()
-
-                tempo_index += 1
+                frames_per_beat = (frames_per_minute / this._tempo_ratio_map[tempo_index++].second).toInt()
             } else {
                 break
             }
         }
+
 
         end_frame += (frames_per_beat * (target_end_position - working_position)).toInt()
         return Pair(start_frame, end_frame)
     }
 
     private fun map_tree(beat_key: BeatKey, position: List<Int>, working_tree: ReducibleTree<out InstrumentEvent>, relative_width: Rational, relative_offset: Rational, bkp_note_value: Int): Int {
-        //TODO: clean up 'working' v 'next' nomanclature
+        //TODO: clean up 'working' v 'next' nomenclature
         if (this._ignored_events.containsKey(Pair(beat_key, position))) {
             return this._ignored_events[Pair(beat_key, position)]!!
         } else if (!working_tree.is_leaf()) {
@@ -829,14 +799,15 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         var flag_pitch_shift: Boolean = false
         var working_note_size = Rational(working_event.duration, width_denominator)
         val event_frame_ranges = mutableListOf<Pair<Int, Int>>()
-
+        var working_relative_offset = relative_offset
+        var i = 0
         while (true) {
             event_frame_ranges.add(
                 this.calculate_event_frame_range(
                     next_beat_key.beat,
                     working_event.duration,
                     working_relative_width,
-                    relative_offset
+                    working_relative_offset
                 )
             )
 
@@ -847,18 +818,15 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
             working_event = this.opus_manager.get_tree(next_beat_key, next_position).get_event()!!
 
-            val working_velocity_event = opus_manager.get_current_line_effect<OpusVelocityEvent>(
-                PaganEffectType.Velocity,
-                next_beat_key,
-                next_position
-            ) ?: break
-
             val (offset, next_width_denominator) = this.opus_manager.get_leaf_offset_and_width(
                 next_beat_key,
                 next_position
             )
-
             val next_rel_offset = offset - offset.toInt()
+
+            val controller  = this.opus_manager.get_line_controller<OpusVelocityEvent>(PaganEffectType.Velocity, next_beat_key.channel, next_beat_key.line_offset)
+            val working_velocity_event = controller.coerce_event(offset.toInt(), next_rel_offset)
+
             val (next_start, _) = this.calculate_event_frame_range(
                 offset.toFloat().toInt(),
                 working_event.duration,
@@ -877,8 +845,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                     Rational(working_note_size.numerator, working_note_size.denominator * slide.second)
                 }
             }
-
-
 
             // overwrite the next note with the current note and add a pitch bend effect
             if (working_note_end == offset) {
@@ -935,12 +901,14 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                     is PercussionEvent -> bkp_note_value
                     else -> 0 // Should be unreachable
                 }
+
                 this._ignored_events[Pair(next_beat_key.copy(), next_position.toList())] = working_backup_value
 
                 working_note_start = offset
                 working_note_size = Rational(working_event.duration, next_width_denominator)
                 working_note_end = offset + working_note_size
                 flag_pitch_shift = true
+                working_relative_offset = next_rel_offset
                 working_relative_width = Rational(1, next_width_denominator)
             } else {
                 break

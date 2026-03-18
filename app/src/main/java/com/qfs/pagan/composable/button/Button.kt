@@ -36,6 +36,7 @@ import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
@@ -89,6 +90,7 @@ fun Button(
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
     content: @Composable RowScope.() -> Unit
 ) {
+    val focus_manager = LocalFocusManager.current
     val pressed = remember { mutableStateOf(false) }
     ProvideContentColorTextStyle(contentColor = colors.contentColor, textStyle = Typography.Button) {
         Box(
@@ -110,8 +112,14 @@ fun Button(
                 .then(
                     if (enabled) {
                         Modifier.combinedClickable(
-                            onClick = onClick,
-                            onLongClick = onLongClick,
+                            onClick = {
+                                focus_manager.clearFocus()
+                                onClick()
+                            },
+                            onLongClick = {
+                                focus_manager.clearFocus()
+                                onLongClick()
+                            },
                         )
                         .background(color = colors.containerColor, shape)
                     } else {

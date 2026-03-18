@@ -28,6 +28,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -161,7 +162,7 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
                             onValueChange = {
                                 event.value = it
                                 working_value.floatValue = it
-                                velocity_input_value.value = (it * 100).toInt()
+                                velocity_input_value.intValue = (it * 100).toInt()
                             },
 
                             onValueChangeFinished = {
@@ -193,23 +194,27 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
 
             MediumSpacer()
 
-            IntegerInput(
-                velocity_input_value,
-                minimum = 0,
-                maximum = 100,
-                on_focus_exit = {
-                    event.value = velocity_input_value.value.toFloat() / 100F
+            key(working_value.floatValue) {
+                IntegerInput(
+                    velocity_input_value,
+                    minimum = 0,
+                    maximum = 100,
+                    on_focus_exit = {
+                        event.value = velocity_input_value.intValue.toFloat() / 100F
+                        working_value.floatValue = velocity_input_value.intValue.toFloat() / 100F
+                        submit()
+                    },
+                    contentPadding = Unpadded,
+                    text_align = TextAlign.Center,
+                    modifier = Modifier
+                        .testTag(TestTag.VelocityInput)
+                        .height(Dimensions.EffectWidget.InputHeight)
+                        .width(Dimensions.EffectWidget.Velocity.InputWidth)
+                ) {
+                    event.value = it.toFloat() / 100F
+                    working_value.floatValue = event.value
                     submit()
-                },
-                contentPadding = Unpadded,
-                text_align = TextAlign.Center,
-                modifier = Modifier
-                    .testTag(TestTag.VelocityInput)
-                    .height(Dimensions.EffectWidget.InputHeight)
-                    .width(Dimensions.EffectWidget.Velocity.InputWidth)
-            ) {
-                event.value = it.toFloat() / 100F
-                submit()
+                }
             }
 
         }

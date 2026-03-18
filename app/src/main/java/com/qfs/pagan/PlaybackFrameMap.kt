@@ -19,6 +19,7 @@ import com.qfs.apres.soundfontplayer.FrameMap
 import com.qfs.apres.soundfontplayer.ProfileBuffer
 import com.qfs.apres.soundfontplayer.SampleHandle
 import com.qfs.apres.soundfontplayer.SampleHandleManager
+import com.qfs.pagan.ComponentActivity.PaganComponentActivity
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.get_next_biggest
 import com.qfs.pagan.structure.max
@@ -782,7 +783,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             return bkp_note_value
         }
 
-        var initial_event = working_tree.get_event()!!.copy()
+        val initial_event = working_tree.get_event()!!.copy()
         var working_event = initial_event
 
         ////////////////////////////////////////////////
@@ -800,7 +801,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         var working_note_size = Rational(working_event.duration, width_denominator)
         val event_frame_ranges = mutableListOf<Pair<Int, Int>>()
         var working_relative_offset = relative_offset
-        var i = 0
         while (true) {
             event_frame_ranges.add(
                 this.calculate_event_frame_range(
@@ -818,25 +818,25 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
             working_event = this.opus_manager.get_tree(next_beat_key, next_position).get_event()!!
 
+            val working_velocity_event = this.opus_manager.get_current_line_effect<OpusVelocityEvent>(PaganEffectType.Velocity, next_beat_key, next_position)
+
             val (offset, next_width_denominator) = this.opus_manager.get_leaf_offset_and_width(
                 next_beat_key,
                 next_position
             )
-            val next_rel_offset = offset - offset.toInt()
 
-            val controller  = this.opus_manager.get_line_controller<OpusVelocityEvent>(PaganEffectType.Velocity, next_beat_key.channel, next_beat_key.line_offset)
-            val working_velocity_event = controller.coerce_event(offset.toInt(), next_rel_offset)
+            working_relative_offset = offset - offset.toInt()
 
             val (next_start, _) = this.calculate_event_frame_range(
                 offset.toFloat().toInt(),
                 working_event.duration,
                 Rational(1, next_width_denominator),
-                next_rel_offset
+                working_relative_offset
             )
 
             next_event_frame = next_start
 
-            val slide = working_velocity_event.slide ?: break
+            val slide = working_velocity_event?.slide ?: break
             val slide_rational = when (slide.first) {
                 OpusVelocityEvent.SlideMaxWidth.Beat -> {
                     Rational(1, slide.second)
@@ -908,7 +908,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 working_note_size = Rational(working_event.duration, next_width_denominator)
                 working_note_end = offset + working_note_size
                 flag_pitch_shift = true
-                working_relative_offset = next_rel_offset
                 working_relative_width = Rational(1, next_width_denominator)
             } else {
                 break
@@ -921,14 +920,12 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
         // Don't add negative notes since they can't be played, BUT keep track
         // of it so the rest of the song isn't messed up
-        this._gen_midi_event(
-            when (initial_event) {
-                is RelativeNoteEvent -> AbsoluteNoteEvent(initial_event.offset + bkp_note_value, initial_event.duration)
-                else -> initial_event
-            },
-            beat_key,
-            position
-        )?.let { start_event ->
+        val absolute_event = when (initial_event) {
+            is RelativeNoteEvent -> AbsoluteNoteEvent(initial_event.offset + bkp_note_value, initial_event.duration)
+            else -> initial_event
+        }
+
+        this._gen_midi_event(absolute_event, beat_key, position)?.let { start_event ->
             val merge_key_array = PlaybackFrameMap.generate_merge_keys(beat_key.channel, beat_key.line_offset)
             val profile_buffer = if (flag_pitch_shift) {
                 val profile = pitch_controller.generate_profile()

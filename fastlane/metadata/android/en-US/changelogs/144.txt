@@ -1,0 +1,1 @@
+New Feature: Pitch bending / sliding (set in velocity effect)

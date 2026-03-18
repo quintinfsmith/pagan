@@ -36,45 +36,19 @@ fun IntegerInput(
     on_focus_exit: ((Int?) -> Unit)? = null,
     callback: (Int) -> Unit
 ) {
-    key(value.value) {
-        NumberInput(
-            value,
-            modifier,
-            contentPadding,
-            text_align,
-            prefix,
-            label,
-            on_focus_enter,
-            on_focus_exit,
-            object : InputTransformation {
-                override fun TextFieldBuffer.transformInput() {
-                    val working_string = this.toString()
-                    if (working_string == "-" && minimum != null && minimum < 0) return
-
-                    var converted_value = try {
-                        if (working_string.isEmpty()) {
-                            0
-                        } else {
-                            this.toString().toInt()
-                        }
-                    } catch (_: Exception) {
-                        this.revertAllChanges()
-                        return
-                    }
-
-                    minimum?.let {
-                        converted_value = max(it, converted_value)
-                    }
-                    maximum?.let {
-                        converted_value = min(it, converted_value)
-                    }
-
-                    value.value = converted_value
-                }
-            },
-            {
+    NumberInput(
+        value,
+        modifier,
+        contentPadding,
+        text_align,
+        prefix,
+        label,
+        on_focus_enter,
+        on_focus_exit,
+        object : InputTransformation {
+            override fun TextFieldBuffer.transformInput() {
                 val working_string = this.toString()
-                if (working_string == "-" && minimum != null && minimum < 0) return@NumberInput
+                if (working_string == "-" && minimum != null && minimum < 0) return
 
                 var converted_value = try {
                     if (working_string.isEmpty()) {
@@ -83,27 +57,51 @@ fun IntegerInput(
                         this.toString().toInt()
                     }
                 } catch (_: Exception) {
-                    return@NumberInput
+                    this.revertAllChanges()
+                    return
                 }
 
                 minimum?.let {
-                    if (it > converted_value) {
-                        converted_value = max(it, converted_value)
-                        val text = this.originalText
-                        this.replace(0, text.length, converted_value.toString())
-                    }
+                    converted_value = max(it, converted_value)
                 }
                 maximum?.let {
-                    if (it < converted_value) {
-                        val text = this.originalText
-                        converted_value = min(it, converted_value)
-                        this.replace(0, text.length, converted_value.toString())
-                    }
+                    converted_value = min(it, converted_value)
                 }
-            },
-            callback
-        )
-    }
+
+                value.value = converted_value
+            }
+        },
+        {
+            val working_string = this.toString()
+            if (working_string == "-" && minimum != null && minimum < 0) return@NumberInput
+
+            var converted_value = try {
+                if (working_string.isEmpty()) {
+                    0
+                } else {
+                    this.toString().toInt()
+                }
+            } catch (_: Exception) {
+                return@NumberInput
+            }
+
+            minimum?.let {
+                if (it > converted_value) {
+                    converted_value = max(it, converted_value)
+                    val text = this.originalText
+                    this.replace(0, text.length, converted_value.toString())
+                }
+            }
+            maximum?.let {
+                if (it < converted_value) {
+                    val text = this.originalText
+                    converted_value = min(it, converted_value)
+                    this.replace(0, text.length, converted_value.toString())
+                }
+            }
+        },
+        callback
+    )
 }
 
 

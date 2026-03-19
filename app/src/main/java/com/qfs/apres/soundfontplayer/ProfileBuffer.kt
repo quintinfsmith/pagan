@@ -10,7 +10,6 @@
 package com.qfs.apres.soundfontplayer
 
 class ProfileBuffer(var ptr: Long, val type: EffectType) {
-    // TODO: Memory Management
     constructor(data: ControllerEventData, start_frame: Int = 0): this(
         ProfileBuffer.create(data.ptr, start_frame),
         data.type
@@ -48,6 +47,5 @@ class ProfileBuffer(var ptr: Long, val type: EffectType) {
     fun get_data(): ControllerEventData {
         return ControllerEventData(this.get_data_ptr_jni(this.ptr), this.type)
     }
-
 }
 

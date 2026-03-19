@@ -944,7 +944,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 }
                 ProfileBuffer(
                     ControllerEventData(
-                        end_frame - start_frame,
+                        0,
                         control_event_data,
                         EffectType.Pitch
                     )

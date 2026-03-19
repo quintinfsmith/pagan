@@ -182,18 +182,18 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
             sustain_attenuation = max(0F, min(mod_env_sustain, 1440F)) / 100F // Centibels -> bels
         )
         // TODO: Make sure delay (and all delays) are correctly converted from timecents
-        val vib_freq: Float = (sample_directive.vib_lfo_freq ?: global_sample_directive.vib_lfo_freq ?: 0F) * (instrument_directive.vib_lfo_freq ?: 1F) * (global_instrument_directive.vib_lfo_freq ?: 1F)
+        val vib_freq: Float = min(13500F, (sample_directive.vib_lfo_freq ?: global_sample_directive.vib_lfo_freq ?: 1652F) * 8.176F) * (instrument_directive.vib_lfo_freq ?: global_instrument_directive.vib_lfo_freq ?: 1F)
         val vib_lfo_delay: Float = (sample_directive.vib_lfo_delay ?: global_sample_directive.vib_lfo_delay ?: 0F) * (instrument_directive.vib_lfo_delay ?: 1F) * (global_instrument_directive.vib_lfo_delay ?: 1F)
         val vib_lfo_pitch: Int = (sample_directive.vib_lfo_pitch ?: global_sample_directive.vib_lfo_pitch ?: 0 ) + (instrument_directive.vib_lfo_pitch ?: 0) + (global_instrument_directive.vib_lfo_pitch ?: 0)
         val vibrato_pitch_rel: Float = (2F).pow((1200F + max(-100f, min(100f, vib_lfo_pitch.toFloat()))) / 1200F) / 2
-
 
         // val mod_lfo_freq: Float = (sample_directive.mod_lfo_freq ?: global_sample_directive.mod_lfo_freq ?: 0F) * (instrument_directive.mod_lfo_freq ?: 1F) * (global_instrument_directive.mod_lfo_freq ?: 1F)
         // val mod_lfo_delay: Float = (sample_directive.mod_lfo_delay ?: global_sample_directive.mod_lfo_delay ?: 0F) * (instrument_directive.mod_lfo_delay ?: 1F) * (global_instrument_directive.mod_lfo_delay ?: 1F)
         // val mod_lfo_to_volume: Float = (sample_directive.mod_lfo_to_volume ?: global_sample_directive.mod_lfo_to_volume ?: 0F ) + (instrument_directive.mod_lfo_to_volume ?: 0F) + (global_instrument_directive.mod_lfo_to_volume ?: 0F)
         // val mod_lfo_pitch: Int = (sample_directive.mod_lfo_pitch ?: global_sample_directive.mod_lfo_pitch ?: 0 ) + (instrument_directive.mod_lfo_pitch ?: 0) + (global_instrument_directive.mod_lfo_pitch ?: 0)
         // val mod_lfo_filter: Int = (sample_directive.mod_lfo_filter ?: global_sample_directive.mod_lfo_filter ?: 0 ) + (instrument_directive.mod_lfo_filter ?: 0) + (global_instrument_directive.mod_lfo_filter ?: 0)
-        val filter_cutoff: Float = max(8.176F, (sample_directive.filter_cutoff ?: global_sample_directive.filter_cutoff ?: 13500F)) * (instrument_directive.filter_cutoff ?: global_instrument_directive.filter_cutoff ?: 1F)
+        val filter_cutoff: Float = min(13500F, (sample_directive.filter_cutoff ?: global_sample_directive.filter_cutoff ?: 1652F) * 8.176F) * (instrument_directive.filter_cutoff ?: global_instrument_directive.filter_cutoff ?: 1F)
+
         this.generated += 1
 
         // TODO what is the priority order of global directives

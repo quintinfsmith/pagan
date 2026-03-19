@@ -116,7 +116,7 @@ abstract class Generated {
                 }
 
                 Operation.ModLFOFrequency -> {
-                    this.mod_lfo_freq = generator.asTimecent() * 8.176F
+                    this.mod_lfo_freq = generator.asTimecent()
                 }
 
                 Operation.VibLFODelay -> {
@@ -124,7 +124,7 @@ abstract class Generated {
                 }
 
                 Operation.VibLFOFrequency -> {
-                    this.vib_lfo_freq = generator.asTimecent() * 8.176F
+                    this.vib_lfo_freq = generator.asTimecent()
                 }
 
                 Operation.ModEnvDelay -> {

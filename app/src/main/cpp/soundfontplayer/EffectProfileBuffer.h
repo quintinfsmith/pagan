@@ -18,7 +18,6 @@ class EffectProfileBuffer {
         float* current_value{};
 
         virtual void apply(float* working_array, int array_size) {};
-
         explicit EffectProfileBuffer(EffectProfileBuffer* original) {
             this->data = original->data;
             this->current_index = original->current_index;

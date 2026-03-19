@@ -30,7 +30,6 @@ public:
 
             this->frames[i] = ptr;
         }
-
     }
 
     explicit ControllerEventData(ControllerEventData* original) {

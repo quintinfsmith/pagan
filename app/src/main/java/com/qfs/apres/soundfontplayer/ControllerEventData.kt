@@ -21,7 +21,6 @@ class ControllerEventData(val ptr: Long, val type: EffectType) {
             val value_width = frames[0].value.size
             val values = FloatArray(frames.size * value_width)
             val increments = FloatArray(frames.size * value_width)
-
             for (i in 0 until frames.size) {
                 for (j in 0 until value_width) {
                     values[(i * value_width) + j] = frames[i].value[j]

@@ -14,6 +14,7 @@ import com.qfs.apres.event.GeneralMIDIEvent
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.soundfontplayer.ControllerEventData
+import com.qfs.apres.soundfontplayer.ControllerEventData.IndexedProfileBufferFrame
 import com.qfs.apres.soundfontplayer.EffectType
 import com.qfs.apres.soundfontplayer.FrameMap
 import com.qfs.apres.soundfontplayer.ProfileBuffer
@@ -218,8 +219,8 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
 
                 return listOf(
                     ControllerEventData.IndexedProfileBufferFrame(
-                        first_frame = start_frame - offset_frame,
-                        last_frame = start_frame - offset_frame,
+                        first_frame = max(0, start_frame - offset_frame),
+                        last_frame = max(0, start_frame - offset_frame),
                         value = adj_value,
                         increment = FloatArray(adj_value.size)
                     )
@@ -288,8 +289,27 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 )
             )
 
+            val filtered_frames = mutableListOf<IndexedProfileBufferFrame>()
+            for (frame in output) {
+                if (frame.last_frame < 0) continue
+                filtered_frames.add(
+                    if (frame.first_frame >= 0) {
+                        frame
+                    } else {
+                        val adj_value = FloatArray(frame.value.size) {
+                            frame.value[it] + (frame.increment[it] * (0 - frame.first_frame))
+                        }
+                        IndexedProfileBufferFrame(
+                            first_frame = 0,
+                            last_frame = frame.last_frame,
+                            value = adj_value,
+                            increment = frame.increment
+                        )
+                    }
+                )
+            }
 
-            return output
+            return filtered_frames
         }
 
         private fun convert_delay_event_values(values: FloatArray, frames_per_beat: Int): FloatArray {
@@ -524,9 +544,11 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         if (is_percussion) {
             this._percussion_setter_ids.add(setter_id)
         }
+
         pitch_controller?.let {
             this._pitch_controllers.add(it)
         }
+
         this._setter_map[setter_id] = {
             val handles = when (start_event) {
                 is NoteOn -> this._sample_handle_manager.gen_sample_handles(start_event)
@@ -942,6 +964,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                         )
                     )
                 }
+
                 ProfileBuffer(
                     ControllerEventData(
                         0,

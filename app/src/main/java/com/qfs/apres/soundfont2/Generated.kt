@@ -79,7 +79,7 @@ abstract class Generated {
                 }
 
                 Operation.FilterCutoff -> {
-                    this.filter_cutoff = generator.asTimecent() * 8.176f
+                    this.filter_cutoff = generator.asTimecent()
                 }
 
                 Operation.FilterResonance -> {

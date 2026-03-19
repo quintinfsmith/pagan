@@ -193,7 +193,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         // val mod_lfo_to_volume: Float = (sample_directive.mod_lfo_to_volume ?: global_sample_directive.mod_lfo_to_volume ?: 0F ) + (instrument_directive.mod_lfo_to_volume ?: 0F) + (global_instrument_directive.mod_lfo_to_volume ?: 0F)
         // val mod_lfo_pitch: Int = (sample_directive.mod_lfo_pitch ?: global_sample_directive.mod_lfo_pitch ?: 0 ) + (instrument_directive.mod_lfo_pitch ?: 0) + (global_instrument_directive.mod_lfo_pitch ?: 0)
         // val mod_lfo_filter: Int = (sample_directive.mod_lfo_filter ?: global_sample_directive.mod_lfo_filter ?: 0 ) + (instrument_directive.mod_lfo_filter ?: 0) + (global_instrument_directive.mod_lfo_filter ?: 0)
-        val filter_cutoff: Float = (sample_directive.filter_cutoff ?: global_sample_directive.filter_cutoff ?: 13500F ) * (instrument_directive.filter_cutoff ?: 1F) * (global_instrument_directive.filter_cutoff ?: 1F)
+        val filter_cutoff: Float = max(8.176F, (sample_directive.filter_cutoff ?: global_sample_directive.filter_cutoff ?: 13500F)) * (instrument_directive.filter_cutoff ?: global_instrument_directive.filter_cutoff ?: 1F)
         this.generated += 1
 
         // TODO what is the priority order of global directives

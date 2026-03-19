@@ -70,7 +70,7 @@ class Generated {
                         break;
                     }
                     case GeneratorOperation::FilterCutoff: {
-                        this->filter_cutoff = generator.get_timecent() * 8.176;
+                        this->filter_cutoff = generator.get_timecent();
                         break;
                     }
                     case GeneratorOperation::FilterResonance: {

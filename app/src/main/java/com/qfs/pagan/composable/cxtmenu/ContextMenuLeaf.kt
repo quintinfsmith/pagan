@@ -236,7 +236,7 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEd
 
     when (layout) {
         LayoutSize.SmallLandscape -> {
-            if (is_percussion) {
+            if (active_line.ctl_type.value != null || is_percussion) {
                 ContextMenuStructureControls(
                     modifier,
                     ui_facade,

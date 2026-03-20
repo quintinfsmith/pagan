@@ -73,7 +73,7 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
     val working_value = remember { mutableFloatStateOf(event.value) }
     val velocity_input_value = remember { mutableIntStateOf((event.value * 100F).toInt()) }
     val slide_enabled = remember { mutableStateOf<Boolean>(event.slide != null) }
-    val slide_width_mode = remember { mutableStateOf(event.slide?.first ?: OpusVelocityEvent.SlideMaxWidth.Beat) }
+    val slide_width_mode = remember { mutableStateOf(event.slide?.first ?: OpusVelocityEvent.SlideMaxWidth.Note) }
     val denominator_label: MutableState<Int> = remember { mutableStateOf(event.slide?.second ?: Values.Defaults.SlideDenominator) }
     val (channel, line_offset, beat, position) = ui_facade.get_location_ints()
     val is_percussion = channel != null && ui_facade.channel_data[channel].percussion.value

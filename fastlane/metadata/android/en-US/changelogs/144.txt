@@ -1,1 +1,6 @@
-New Feature: Pitch bending / sliding (set in velocity effect)
+Feature:
+    - Pitch bending / sliding (set in velocity effect)
+Bugfixes:
+    - Offset picker showing up in effect controls in landscape
+    - Lowpass filter was incorrect in some cases
+    - Had to double-tap away when setting delay values.

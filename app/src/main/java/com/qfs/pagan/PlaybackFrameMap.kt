@@ -496,7 +496,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             profile.destroy(true) // Destroy the buffer AND the data
         }
         for (controller in this._pitch_controllers) {
-            controller.destroy()
+            controller.destroy(true)
         }
         this._pitch_controllers.clear()
 

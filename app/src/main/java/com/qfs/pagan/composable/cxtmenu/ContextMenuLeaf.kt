@@ -302,16 +302,18 @@ fun ContextMenuLeafSecondary(ui_facade: ViewModelEditorState, dispatcher: Action
 }
 @Composable
 fun ContextMenuLeafCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, modifier: Modifier = Modifier, layout: LayoutSize) {
-    val active_event = ui_facade.active_event.value?.copy() ?: return
-    ContextMenuSecondaryRow(modifier) {
-        when (active_event) {
-            is OpusVolumeEvent -> VolumeEventMenu(ui_facade, dispatcher, active_event)
-            is OpusTempoEvent -> TempoEventMenu(ui_facade, dispatcher, active_event)
-            is OpusPanEvent -> PanEventMenu(ui_facade, dispatcher, active_event)
-            is OpusReverbEvent -> ReverbEventMenu(ui_facade, dispatcher, active_event)
-            is DelayEvent -> DelayEventMenu(ui_facade, dispatcher, active_event)
-            is OpusVelocityEvent -> VelocityEventMenu(ui_facade, dispatcher, active_event)
-            else -> {}
+    key(ui_facade.active_event.value) {
+        val active_event = ui_facade.active_event.value?.copy() ?: return
+        ContextMenuSecondaryRow(modifier) {
+            when (active_event) {
+                is OpusVolumeEvent -> VolumeEventMenu(ui_facade, dispatcher, active_event)
+                is OpusTempoEvent -> TempoEventMenu(ui_facade, dispatcher, active_event)
+                is OpusPanEvent -> PanEventMenu(ui_facade, dispatcher, active_event)
+                is OpusReverbEvent -> ReverbEventMenu(ui_facade, dispatcher, active_event)
+                is DelayEvent -> DelayEventMenu(ui_facade, dispatcher, active_event)
+                is OpusVelocityEvent -> VelocityEventMenu(ui_facade, dispatcher, active_event)
+                else -> {}
+            }
         }
     }
 }

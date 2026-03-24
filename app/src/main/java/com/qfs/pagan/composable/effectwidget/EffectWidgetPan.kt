@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
@@ -52,34 +53,35 @@ fun RowScope.PanEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionDis
         disabledInactiveTickColor = default_colors.disabledInactiveTickColor
     )
 
-    key(ui_facade.active_event.value.hashCode()) {
-        val working_value = remember { mutableFloatStateOf(event.value) }
-        Box(modifier = Modifier.weight(1F)) {
-            Box(
-                Modifier
-                    .align(Alignment.TopCenter)
-                    .background(colors.thumbColor, CircleShape)
-                    .height(Dimensions.EffectWidget.Pan.CenterDotDiameter)
-                    .width(Dimensions.EffectWidget.Pan.CenterDotDiameter)
-            )
-            Slider(
-                value = working_value.floatValue,
-                onValueChange = {
-                    working_value.floatValue = it
-                },
-                onValueChangeFinished = {
-                    event.value = working_value.floatValue
-                    dispatcher.set_effect_at_cursor(event)
-                },
-                valueRange = -1F..1F,
-                steps = 21,
-                colors = colors,
-                modifier = Modifier
-                    .testTag(TestTag.PanSlider)
-                    .align(Alignment.Center)
-                    .fillMaxWidth()
-            )
-        }
+    val working_value = remember { mutableFloatStateOf(event.value) }
+    Box(modifier = Modifier.weight(1F)) {
+        Box(
+            Modifier
+                .align(Alignment.TopCenter)
+                .background(colors.thumbColor, CircleShape)
+                .height(Dimensions.EffectWidget.Pan.CenterDotDiameter)
+                .width(Dimensions.EffectWidget.Pan.CenterDotDiameter)
+        )
+        Slider(
+            value = working_value.floatValue,
+            onValueChange = {
+                working_value.floatValue = it
+            },
+            onValueChangeFinished = {
+                event.value = working_value.floatValue
+                dispatcher.set_effect_at_cursor(event)
+            },
+            valueRange = -1F..1F,
+            steps = 21,
+            colors = colors,
+            modifier = Modifier
+                .testTag(TestTag.PanSlider)
+                .align(Alignment.Center)
+                .fillMaxWidth()
+        )
+    }
+    LaunchedEffect(event.value) {
+        working_value.floatValue = event.value
     }
 
     EffectTransitionButton(event, dispatcher, is_initial)

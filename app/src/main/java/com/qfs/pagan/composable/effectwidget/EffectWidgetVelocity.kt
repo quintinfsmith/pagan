@@ -10,6 +10,7 @@
 package com.qfs.pagan.composable.effectwidget
 
 import androidx.activity.compose.LocalActivity
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -35,6 +37,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
@@ -43,6 +47,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ActionDispatcher
 import com.qfs.pagan.ComponentActivity.PaganComponentActivity
 import com.qfs.pagan.LayoutSize
@@ -200,11 +205,7 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
                     velocity_input_value,
                     minimum = 0,
                     maximum = 100,
-                    on_focus_exit = {
-                        event.value = velocity_input_value.intValue.toFloat() / 100F
-                        working_value.floatValue = velocity_input_value.intValue.toFloat() / 100F
-                        submit()
-                    },
+                    on_focus_exit = { working_value.floatValue = event.value },
                     contentPadding = Unpadded,
                     text_align = TextAlign.Center,
                     modifier = Modifier
@@ -306,8 +307,7 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
                             denominator_label,
                             minimum = 1,
                             on_focus_exit = {
-                                event.slide = Pair(slide_width_mode.value, denominator_label.value)
-                                submit()
+                                denominator_label.value = event.slide?.second ?: Values.Defaults.SlideDenominator
                             },
                             contentPadding = Unpadded,
                             text_align = TextAlign.Center,

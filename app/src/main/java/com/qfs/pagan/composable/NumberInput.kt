@@ -22,6 +22,7 @@ import androidx.compose.material3.TextFieldLabelScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -52,7 +53,6 @@ fun <T> NumberInput(
 ) {
 
     val trigger_select_all = remember { mutableStateOf<Boolean?>(null) }
-
     val state = rememberTextFieldState(value.value.toString())
     // Prevent weird focusing behavior causing on_focus_exit to be called without any initial focus
     val was_focused = remember { mutableStateOf(false) }
@@ -100,6 +100,13 @@ fun <T> NumberInput(
     trigger_select_all.value?.let {
         LaunchedEffect(trigger_select_all.value) {
             state.edit { selectAll() }
+        }
+    }
+
+    LaunchedEffect(value.value) {
+        val text = state.text
+        state.edit {
+            this.replace(0, text.length, value.value.toString())
         }
     }
 }

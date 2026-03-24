@@ -100,8 +100,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionD
                 contentPadding = Unpadded,
                 text_align = TextAlign.Center,
                 on_focus_exit = {
-                    event.numerator = numerator_label.value
-                    submit()
+                    numerator_label.value = event.numerator
                 },
                 modifier = Modifier
                     .testTag(TestTag.DelayHzNumerator)
@@ -130,10 +129,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionD
             IntegerInput(
                 denominator_label,
                 minimum = 1,
-                on_focus_exit = {
-                    event.denominator = denominator_label.value
-                    submit()
-                },
+                on_focus_exit = { denominator_label.value = event.denominator },
                 contentPadding = Unpadded,
                 text_align = TextAlign.Center,
                 modifier = Modifier
@@ -165,8 +161,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionD
             IntegerInput(
                 echo_label,
                 on_focus_exit = {
-                    event.echo = echo_label.value -1
-                    submit()
+                    echo_label.value = event.echo + 1
                 },
                 minimum = 1,
                 contentPadding = Unpadded,

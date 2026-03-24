@@ -307,25 +307,29 @@ fun ContextMenuLineSecondary(ui_facade: ViewModelEditorState, dispatcher: Action
     val cursor = ui_facade.active_cursor.value ?: return
     val y = cursor.ints[0]
     val line = ui_facade.line_data[y]
-    val initial_event = ui_facade.active_event.value?.copy()
-    if (line.ctl_type.value == null) {
-        ContextMenuLineStdSecondary(ui_facade, dispatcher, initial_event as OpusVolumeEvent, modifier = modifier, layout = layout)
-    } else {
-        ContextMenuLineCtlSecondary(ui_facade, dispatcher, initial_event as EffectEvent, modifier = modifier, layout = layout)
+    key(ui_facade.active_event.value) {
+        val initial_event = ui_facade.active_event.value?.copy()
+        if (line.ctl_type.value == null) {
+            ContextMenuLineStdSecondary(ui_facade, dispatcher, initial_event as OpusVolumeEvent, modifier = modifier, layout = layout)
+        } else {
+            ContextMenuLineCtlSecondary(ui_facade, dispatcher, initial_event as EffectEvent, modifier = modifier, layout = layout)
+        }
     }
 }
 
 @Composable
 fun ContextMenuLineCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, initial_event: EffectEvent, modifier: Modifier = Modifier, layout: LayoutSize) {
-    ContextMenuSecondaryRow {
-        when (initial_event) {
-            is OpusVolumeEvent -> VolumeEventMenu(ui_facade, dispatcher, initial_event)
-            is OpusTempoEvent -> TempoEventMenu(ui_facade, dispatcher, initial_event)
-            is OpusPanEvent -> PanEventMenu(ui_facade, dispatcher, initial_event)
-            is OpusReverbEvent -> ReverbEventMenu(ui_facade, dispatcher, initial_event)
-            is DelayEvent -> DelayEventMenu(ui_facade, dispatcher, initial_event)
-            is OpusVelocityEvent -> VelocityEventMenu(ui_facade, dispatcher, initial_event)
-            else -> {}
+    key(ui_facade.active_event.value) {
+        ContextMenuSecondaryRow {
+            when (initial_event) {
+                is OpusVolumeEvent -> VolumeEventMenu(ui_facade, dispatcher, initial_event)
+                is OpusTempoEvent -> TempoEventMenu(ui_facade, dispatcher, initial_event)
+                is OpusPanEvent -> PanEventMenu(ui_facade, dispatcher, initial_event)
+                is OpusReverbEvent -> ReverbEventMenu(ui_facade, dispatcher, initial_event)
+                is DelayEvent -> DelayEventMenu(ui_facade, dispatcher, initial_event)
+                is OpusVelocityEvent -> VelocityEventMenu(ui_facade, dispatcher, initial_event)
+                else -> {}
+            }
         }
     }
 }

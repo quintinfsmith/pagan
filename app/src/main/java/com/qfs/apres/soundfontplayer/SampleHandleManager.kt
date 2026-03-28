@@ -21,14 +21,14 @@ import com.qfs.apres.soundfont2.SoundFont
 import kotlin.math.max
 
 class SampleHandleManager(
-        var soundfont: SoundFont,
-        var sample_rate: Int,
-        target_buffer_size: Int = 0,
-        var sample_limit: Int? = null,
-        ignore_lfo: Boolean = false
-    ) {
-    private val loaded_presets = HashMap<Pair<Int, Int>, Preset>()
-    private val preset_channel_map = HashMap<Int, Pair<Int, Int>>()
+    var soundfonts: List<SoundFont>,
+    var sample_rate: Int,
+    target_buffer_size: Int = 0,
+    var sample_limit: Int? = null,
+    ignore_lfo: Boolean = false
+) {
+    private val loaded_presets = Array(soundfonts.size) { HashMap<Pair<Int, Int>, Preset>() }
+    private val preset_channel_map = HashMap<Int, Triple<Int, Int, Int>>()
     private val sample_handle_generator: SampleHandleGenerator
     val buffer_size: Int
 
@@ -51,49 +51,72 @@ class SampleHandleManager(
         )
     }
 
+    fun select_soundfont(channel: Int, soundfont_index: Int) {
+        // NOTE: Changing the soundfont here won't trigger a preset change preset change
+        // until change_program() is called.
+        val (bank, program) = if (this.preset_channel_map.containsKey(channel)) {
+            Pair(
+                this.preset_channel_map[channel]!!.second,
+                this.preset_channel_map[channel]!!.third
+            )
+        } else {
+            Pair(0, 0)
+        }
+        this.preset_channel_map[channel] = Triple(soundfont_index, bank, program)
+    }
+
     fun select_bank(channel: Int, bank: Int) {
         // NOTE: Changing the bank doesn't trigger a preset change
         // That occurs in change_program()
-        val program = if (this.preset_channel_map.containsKey(channel)) {
-            this.preset_channel_map[channel]!!.second
+        val (soundfont_index, program) = if (this.preset_channel_map.containsKey(channel)) {
+            Pair(
+                this.preset_channel_map[channel]!!.first,
+                this.preset_channel_map[channel]!!.third
+            )
         } else {
-            0
+            Pair(0, 0)
         }
-        this.preset_channel_map[channel] = Pair(bank, program)
+
+        this.preset_channel_map[channel] = Triple(soundfont_index, bank, program)
     }
 
     fun change_program(channel: Int, program: Int) {
-        val bank = if (this.preset_channel_map.containsKey(channel)) {
-            this.preset_channel_map[channel]!!.first
+        val (soundfont_index, bank) = if (this.preset_channel_map.containsKey(channel)) {
+            Pair(
+                this.preset_channel_map[channel]!!.first,
+                this.preset_channel_map[channel]!!.second
+            )
         } else {
-            0
+            Pair(0, 0)
         }
 
         val key = Pair(bank, program)
-        if (this.loaded_presets[key] == null) {
-            this.loaded_presets[key] = try {
-                this.soundfont.get_preset(program, bank)
-            } catch (e: SoundFont.InvalidPresetIndex) {
-                if (channel == Midi.PERCUSSION_CHANNEL) {
-                    if (Pair(bank, 0) in this.loaded_presets) {
-                        this.loaded_presets[Pair(bank, 0)]!!
+        if (soundfont_index < this.loaded_presets.size) {
+            val preset_cache = this.loaded_presets[soundfont_index]
+            if (preset_cache[key] == null) {
+                preset_cache[key] = try {
+                    this.soundfonts[soundfont_index].get_preset(program, bank)
+                } catch (e: SoundFont.InvalidPresetIndex) {
+                    if (channel == Midi.PERCUSSION_CHANNEL) {
+                        if (Pair(bank, 0) in preset_cache) {
+                            preset_cache[Pair(bank, 0)]!!
+                        } else {
+                            return
+                        }
                     } else {
-                        return
-                    }
-                } else {
-                    if (Pair(0, program) in this.loaded_presets) {
-                        this.loaded_presets[Pair(0, program)]!!
-                    } else if (Pair(0, 0) in this.loaded_presets) {
-                        this.loaded_presets[Pair(0, 0)]!!
-                    } else {
-                        return
+                        if (Pair(0, program) in preset_cache) {
+                            preset_cache[Pair(0, program)]!!
+                        } else if (Pair(0, 0) in this.loaded_presets) {
+                            preset_cache[Pair(0, 0)]!!
+                        } else {
+                            return
+                        }
                     }
                 }
             }
+            this.preset_channel_map[channel] = Triple(soundfont_index, bank, program)
+            this.decache_unused_presets()
         }
-
-        this.preset_channel_map[channel] = key
-        this.decache_unused_presets()
     }
 
     fun gen_sample_handles(event: NoteOn79): Set<SampleHandle> {
@@ -114,7 +137,7 @@ class SampleHandleManager(
             }
         }
 
-        for ((sample,p_instrument) in sample_pairs) {
+        for ((sample, p_instrument) in sample_pairs) {
             val (new_handle, new_linked_handle) = this.sample_handle_generator.get(
                 event,
                 sample,
@@ -147,9 +170,7 @@ class SampleHandleManager(
             ).toList()
 
             for (sample_directive in sample_directives) {
-                if (sample_directive.sample == null) {
-                    continue
-                }
+                if (sample_directive.sample == null) continue
                 sample_pairs.add(Pair(sample_directive, p_instrument))
             }
         }
@@ -192,6 +213,7 @@ class SampleHandleManager(
     fun get_preset(key: Pair<Int, Int>): Preset? {
         return this.loaded_presets[key]
     }
+
     fun get_preset(channel: Int): Preset? {
         val key = this.get_channel_preset(channel)
         return this.loaded_presets[key]
@@ -203,7 +225,7 @@ class SampleHandleManager(
         } else if (channel == Midi.PERCUSSION_CHANNEL) {
             Pair(128, 0)
         } else {
-            Pair(0,0)
+            Pair(0, 0)
         }
     }
 

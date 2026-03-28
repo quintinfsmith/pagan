@@ -19,7 +19,7 @@ import kotlin.math.min
 
 class AudioInterface {
     var sample_rate: Int = 44100
-    var soundfont: SoundFont? = null
+    var soundfonts: Array<SoundFont> = arrayOf()
     var playback_sample_handle_manager: SampleHandleManager? = null
     var soundfont_supported_instrument_names = HashMap<Pair<Int, Int>, String>()
     var feedback_revolver = FeedbackRevolver(4)
@@ -28,7 +28,7 @@ class AudioInterface {
     class FeedbackRevolver(var size: Int = 4) {
         var sample_handle_manager: SampleHandleManager? = null
         private var current_index: Int = 0
-        private var devices =  Array<FeedbackDevice?>(this.size) { null }
+        private var devices = Array<FeedbackDevice?>(this.size) { null }
 
         fun set_handle_manager(sample_handle_manager: SampleHandleManager) {
             this.clear()
@@ -74,9 +74,9 @@ class AudioInterface {
 
         this.sample_rate = new_rate
 
-        this.soundfont?.let {
+        if (this.has_soundfont()) {
             this.playback_sample_handle_manager = SampleHandleManager(
-                it,
+                this.soundfonts,
                 this.sample_rate,
                 this.sample_rate, // Use Large buffer
                 ignore_lfo = true
@@ -93,7 +93,7 @@ class AudioInterface {
     }
 
     fun has_soundfont(): Boolean {
-        return this.soundfont != null
+        return this.soundfonts.isNotEmpty()
     }
 
     fun reset() {
@@ -113,7 +113,6 @@ class AudioInterface {
 
         this.connect_feedback_device()
     }
-
 
 
     fun unset_soundfont() {
@@ -142,10 +141,15 @@ class AudioInterface {
             SampleHandleManager(
                 this.soundfont!!,
                 this.sample_rate,
-                buffer_size - 2 + (if (buffer_size % 2 == 0) { 2 } else { 1 })
+                buffer_size - 2 + (if (buffer_size % 2 == 0) {
+                    2
+                } else {
+                    1
+                })
             )
         )
     }
+
     fun disconnect_feedback_device() {
         this.feedback_revolver.clear()
     }
@@ -157,6 +161,7 @@ class AudioInterface {
     fun get_preset(channel: Int): Preset? {
         return this.playback_sample_handle_manager?.get_preset(channel)
     }
+
     fun get_preset(key: Pair<Int, Int>): Preset? {
         return this.playback_sample_handle_manager?.get_preset(key)
     }
@@ -173,7 +178,8 @@ class AudioInterface {
 
                 for (sample_directive in preset_instrument.instrument!!.sample_directives.values) {
                     val key_range = sample_directive.key_range ?: Pair(0, 127)
-                    val usable_range = max(key_range.first, instrument_range.first)..min(key_range.second, instrument_range.second)
+                    val usable_range =
+                        max(key_range.first, instrument_range.first)..min(key_range.second, instrument_range.second)
                     for (key in usable_range) {
                         min_key = min(key, min_key)
                     }

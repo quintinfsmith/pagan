@@ -19,11 +19,10 @@ import kotlin.math.min
 
 class AudioInterface {
     var sample_rate: Int = 44100
-    var soundfonts: Array<SoundFont> = arrayOf()
+    var soundfonts: MutableList<SoundFont> = mutableListOf()
     var playback_sample_handle_manager: SampleHandleManager? = null
-    var soundfont_supported_instrument_names = HashMap<Pair<Int, Int>, String>()
     var feedback_revolver = FeedbackRevolver(4)
-    var minimum_instrument_index_cache = HashMap<Pair<Int, Int>, Int>() // <Program, Bank>: index
+    var minimum_instrument_index_cache: MutableList<HashMap<Pair<Int, Int>, Int>> = mutableListOf() // <Program, Bank>: index
 
     class FeedbackRevolver(var size: Int = 4) {
         var sample_handle_manager: SampleHandleManager? = null
@@ -76,7 +75,7 @@ class AudioInterface {
 
         if (this.has_soundfont()) {
             this.playback_sample_handle_manager = SampleHandleManager(
-                this.soundfonts,
+                this.soundfonts.toArray(),
                 this.sample_rate,
                 this.sample_rate, // Use Large buffer
                 ignore_lfo = true
@@ -100,12 +99,28 @@ class AudioInterface {
         this.soundfont?.let { this.set_soundfont(it) }
     }
 
-    fun set_soundfont(soundfont: SoundFont) {
-        this.unset_soundfont()
-        this.soundfont = soundfont
+    fun add_soundfont(vararg soundfonts: Soundfont) {
+        for (soundfont in soundfonts) {
+            this.soundfonts.add(soundfont)
+            this.minimum_instrument_index_cache.add(HashMap<Pair<Int, Int>, Int>())
+        }
+        this.unset_sample_handle_manager()
+        this.playback_sammple_handle_manager = SampleHandleManager(
+            this.soundfonts.toArray(),
+            this.sample_rate,
+            this.sample_rate,
+            ignore_lfo = true
+        )
+
+        this.connect_feedback_device()
+    }
+
+    fun set_soundfont(soundfont: SoundFont, index: Int = 0) {
+        this.unset_soundfont(index)
+        this.soundfonts[index] = soundfont
 
         this.playback_sample_handle_manager = SampleHandleManager(
-            soundfont,
+            this.soundfonts.toArray(),
             this.sample_rate,
             this.sample_rate, // Use Large buffer
             ignore_lfo = true
@@ -114,22 +129,30 @@ class AudioInterface {
         this.connect_feedback_device()
     }
 
+    fun remove_soundfont(index: Int) {
+        this.soundfonts.removeAt(index).destroy()
+        this.minimum_instrument_index_cache.removeAt(index)
+        this.connect_feedback_device()
+    }
 
-    fun unset_soundfont() {
-        this.soundfont?.destroy()
-        this.soundfont = null
+    fun unset_soundfonts() {
+        while (this.soundfonts.isNotEmpty()) {
+            this.soundfonts.removeAt(0).destroy()
+        }
         this.minimum_instrument_index_cache.clear()
         this.unset_sample_handle_manager()
     }
 
-    fun update_channel_preset(channel: Int, bank: Int, program: Int) {
+    fun update_channel_preset(channel: Int, soundfont_index: Int, bank: Int, program: Int) {
         this.feedback_revolver.sample_handle_manager?.let {
+            it.set_soundfont(channel, soundfont_index)
             it.select_bank(channel, bank)
             it.change_program(channel, program)
         }
 
         // Don't need to update anything but percussion in the sample_handle_manager
         this.playback_sample_handle_manager?.let {
+            it.set_soundfont(channel, soundfont_index)
             it.select_bank(channel, bank)
             it.change_program(channel, program)
         }
@@ -139,7 +162,7 @@ class AudioInterface {
         val buffer_size = this.sample_rate / 40
         this.feedback_revolver.set_handle_manager(
             SampleHandleManager(
-                this.soundfont!!,
+                this.soundfonts.toArray(),
                 this.sample_rate,
                 buffer_size - 2 + (if (buffer_size % 2 == 0) {
                     2
@@ -166,11 +189,13 @@ class AudioInterface {
         return this.playback_sample_handle_manager?.get_preset(key)
     }
 
-
-    fun get_minimum_instrument_index(instrument: Pair<Int, Int>): Int {
+    fun get_minimum_instrument_index(instrument: Triple<Int, Int, Int>): Int {
         val preset = this.playback_sample_handle_manager?.get_preset(instrument) ?: return 0
 
-        if (!this.minimum_instrument_index_cache.contains(instrument)) {
+        val soundfont_index = instrument.first
+        val preset_key = Pair(instrument.second, instrument.third)
+
+        if (!this.minimum_instrument_index_cache[soundfont_index].contains(preset_key)) {
             var min_key = 999
             for ((_, preset_instrument) in preset.instruments) {
                 if (preset_instrument.instrument == null) continue
@@ -178,17 +203,16 @@ class AudioInterface {
 
                 for (sample_directive in preset_instrument.instrument!!.sample_directives.values) {
                     val key_range = sample_directive.key_range ?: Pair(0, 127)
-                    val usable_range =
-                        max(key_range.first, instrument_range.first)..min(key_range.second, instrument_range.second)
+                    val usable_range = max(key_range.first, instrument_range.first)..min(key_range.second, instrument_range.second)
                     for (key in usable_range) {
                         min_key = min(key, min_key)
                     }
                 }
-                this.minimum_instrument_index_cache[instrument] = min_key
+                this.minimum_instrument_index_cache[soundfont_index][preset_key] = min_key
             }
         }
 
-        return this.minimum_instrument_index_cache[instrument] ?: 0
+        return this.minimum_instrument_index_cache[soundfont_index][preset_key] ?: 0
     }
 
 }

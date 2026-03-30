@@ -584,7 +584,7 @@ open class OpusLayerBase: Effectable {
     /**
      * Get the midi instrument current used by Channel [channel]
      */
-    fun get_channel_instrument(channel: Int): Pair<Int, Int> {
+    fun get_channel_instrument(channel: Int): Triple<Int, Int, Int> {
         return this.get_channel(channel).get_preset()
     }
 
@@ -1371,11 +1371,12 @@ open class OpusLayerBase: Effectable {
     /**
      * Set the bank of the channel at [channel] to [instrument.first] and the program to [instrument.second].
      */
-    open fun channel_set_preset(channel: Int, instrument: Pair<Int, Int>) {
+    open fun channel_set_preset(channel: Int, instrument: Triple<Int, Int, Int>) {
+        this.get_channel(channel).soundfont_index = instrument.first
         if (!this.is_percussion(channel)) {
-            this.set_channel_bank(channel, instrument.first)
+            this.set_channel_bank(channel, instrument.second)
         }
-        this.set_channel_program(channel, instrument.second)
+        this.set_channel_program(channel, instrument.third)
     }
 
     /**

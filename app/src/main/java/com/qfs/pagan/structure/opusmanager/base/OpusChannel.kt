@@ -53,6 +53,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
     private var _beat_count: Int = 0
     var size: Int = 0
     var muted = false
+    var soundfont_index = 0
 
     override var palette = OpusColorPalette()
 
@@ -151,8 +152,8 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
         this.midi_program = program
     }
 
-    fun get_preset(): Pair<Int, Int> {
-        return Pair(this.get_midi_bank(), this.midi_program)
+    fun get_preset(): Triple<Int, Int, Int> {
+        return Triple(this.soundfont_index, this.get_midi_bank(), this.midi_program)
     }
 
     fun get_line(index: Int): OpusLineAbstract<U> {

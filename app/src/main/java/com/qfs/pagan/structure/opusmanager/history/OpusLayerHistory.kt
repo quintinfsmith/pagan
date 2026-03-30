@@ -219,6 +219,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                     listOf(
                         channel,
                         working_channel.uuid,
+                        working_channel.soundfont_index,
                         working_channel.get_midi_bank(),
                         working_channel.get_midi_program(),
                         working_channel is OpusPercussionChannel
@@ -463,13 +464,20 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
                 HistoryToken.NEW_CHANNEL -> {
                     val channel = current_node.args[0] as Int
-                    val is_percussion = current_node.args[4] as Boolean
+                    val is_percussion = current_node.args[5] as Boolean
                     this.new_channel(
                         channel = channel,
                         uuid = current_node.args[1] as Int,
                         is_percussion = is_percussion
                     )
-                    this.channel_set_preset(channel, Pair(current_node.args[2] as Int, current_node.args[3] as Int))
+                    this.channel_set_preset(
+                        channel,
+                        Triple(
+                            current_node.args[2] as Int,
+                            current_node.args[3] as Int,
+                            current_node.args[4] as Int
+                        )
+                    )
                 }
 
                 HistoryToken.REMOVE -> {
@@ -619,7 +627,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 HistoryToken.SET_CHANNEL_INSTRUMENT -> {
                     this.channel_set_preset(
                         current_node.args[0] as Int,
-                        checked_cast<Pair<Int, Int>>(current_node.args[1])
+                        checked_cast<Triple<Int, Int, Int>>(current_node.args[1])
                     )
                 }
 
@@ -1555,7 +1563,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
         super.set_transpose(new_transpose)
     }
 
-    override fun channel_set_preset(channel: Int, instrument: Pair<Int, Int>) {
+    override fun channel_set_preset(channel: Int, instrument: Triple<Int, Int, Int>) {
         this._remember {
             this.push_to_history_stack(
                 HistoryToken.SET_CHANNEL_INSTRUMENT,

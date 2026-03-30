@@ -198,7 +198,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     private var _result_launcher_export_multi_line_wav =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            val soundfont = this.controller_model.audio_interface.soundfont ?: return@registerForActivityResult
+            if (!this.controller_model.audio_interface.has_soundfont()) return@registerForActivityResult
+            val soundfonts = this.controller_model.audio_interface.soundfonts
 
             this.getNotificationPermission()
             if (result.resultCode != RESULT_OK) return@registerForActivityResult
@@ -260,7 +261,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         }
 
                         tmp_file.deleteOnExit()
-                        val exporter_sample_handle_manager = SampleHandleManager(soundfont, Values.ExportSampleRate, Values.ExportBufferSize)
+                        val exporter_sample_handle_manager = SampleHandleManager(soundfonts.toTypedArray(), Values.ExportSampleRate, Values.ExportBufferSize)
 
                         for (c_b in opus_manager_copy.get_all_channels().indices) {
                             val channel_copy = opus_manager_copy.get_channel(c_b)
@@ -310,8 +311,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     private var _result_launcher_export_multi_channel_wav = this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode != RESULT_OK) return@registerForActivityResult
-        val soundfont = this.controller_model.audio_interface.soundfont ?: return@registerForActivityResult
+        if (!this.controller_model.audio_interface.has_soundfont()) return@registerForActivityResult
         val tree_uri = result.data?.data ?: return@registerForActivityResult
+
+        val soundfonts = this.controller_model.audio_interface.soundfonts
         this.getNotificationPermission()
         thread {
             if (this.controller_model.export_handle != null) return@thread
@@ -366,7 +369,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
 
                 tmp_file.deleteOnExit()
-                val exporter_sample_handle_manager = SampleHandleManager(soundfont, Values.ExportSampleRate, Values.ExportBufferSize)
+                val exporter_sample_handle_manager = SampleHandleManager(soundfonts.toTypedArray(), Values.ExportSampleRate, Values.ExportBufferSize)
 
                 for (c_b in opus_manager_copy.get_all_channels().indices) {
                     val channel_copy = opus_manager_copy.get_channel(c_b)
@@ -406,53 +409,52 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
-    private var _result_launcher_export_wav =
-        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode != RESULT_OK) return@registerForActivityResult
-            val soundfont = this.controller_model.audio_interface.soundfont ?: return@registerForActivityResult
-            val uri = result.data?.data ?: return@registerForActivityResult
+    private var _result_launcher_export_wav = this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode != RESULT_OK) return@registerForActivityResult
+        if (!this.controller_model.audio_interface.has_soundfont()) return@registerForActivityResult
+        val uri = result.data?.data ?: return@registerForActivityResult
+        val soundfonts = this.controller_model.audio_interface.soundfonts
 
-            this.getNotificationPermission()
-            thread {
-                if (this.controller_model.export_handle != null) return@thread
+        this.getNotificationPermission()
+        thread {
+            if (this.controller_model.export_handle != null) return@thread
 
-                /* TMP file is necessary since we can't easily predict the exact frame count. */
-                val tmp_file = File("${this.filesDir}/.tmp_wav_data")
-                if (tmp_file.exists()) {
+            /* TMP file is necessary since we can't easily predict the exact frame count. */
+            val tmp_file = File("${this.filesDir}/.tmp_wav_data")
+            if (tmp_file.exists()) {
+                tmp_file.delete()
+            }
+
+            tmp_file.deleteOnExit()
+            val exporter_sample_handle_manager = SampleHandleManager(
+                soundfonts.toTypedArray(),
+                Values.ExportSampleRate,
+                Values.ExportBufferSize
+            )
+
+            val parcel_file_descriptor = this.applicationContext.contentResolver.openFileDescriptor(uri, "w") ?: return@thread
+            val output_stream = FileOutputStream(parcel_file_descriptor.fileDescriptor)
+            val buffered_output_stream = BufferedOutputStream(output_stream)
+            val data_output_buffer = DataOutputStream(buffered_output_stream)
+
+            this.controller_model.export_wav(
+                this.controller_model.opus_manager,
+                exporter_sample_handle_manager,
+                data_output_buffer,
+                tmp_file,
+                this.view_model.configuration,
+                SingleExporterEventHandler(this, this.state_model, uri) {
+                    data_output_buffer.close()
+                    buffered_output_stream.close()
+                    output_stream.close()
+                    parcel_file_descriptor.close()
                     tmp_file.delete()
                 }
+            )
 
-                tmp_file.deleteOnExit()
-                val exporter_sample_handle_manager = SampleHandleManager(
-                    soundfont,
-                    Values.ExportSampleRate,
-                    Values.ExportBufferSize
-                )
-
-                val parcel_file_descriptor = this.applicationContext.contentResolver.openFileDescriptor(uri, "w") ?: return@thread
-                val output_stream = FileOutputStream(parcel_file_descriptor.fileDescriptor)
-                val buffered_output_stream = BufferedOutputStream(output_stream)
-                val data_output_buffer = DataOutputStream(buffered_output_stream)
-
-                this.controller_model.export_wav(
-                    this.controller_model.opus_manager,
-                    exporter_sample_handle_manager,
-                    data_output_buffer,
-                    tmp_file,
-                    this.view_model.configuration,
-                    SingleExporterEventHandler(this, this.state_model, uri) {
-                        data_output_buffer.close()
-                        buffered_output_stream.close()
-                        output_stream.close()
-                        parcel_file_descriptor.close()
-                        tmp_file.delete()
-                    }
-                )
-
-
-                exporter_sample_handle_manager.destroy()
-            }
+            exporter_sample_handle_manager.destroy()
         }
+    }
 
     private var _result_launcher_export_project =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -648,16 +650,17 @@ class ComponentActivityEditor: PaganComponentActivity() {
         // Possible if user puts the sf2 in their files manually
         if (!soundfont_file.exists()) throw FileNotFoundException()
 
-        try {
-            val soundfont = SoundFont(this, soundfont_file.uri)
-            this.controller_model.set_soundfont(soundfont)
-            this.controller_model.playback_device?.activity = this
-            this.controller_model.active_soundfont_relative_path = file_path
-            this.state_model.enable_soundfont()
+        val soundfont = try {
+            SoundFont(this, soundfont_file.uri)
         } catch (_: Exception) {
             this.toast(R.string.invalid_soundfont)
             return
         }
+
+        this.controller_model.set_soundfont(soundfont)
+        this.controller_model.playback_device?.activity = this
+        this.controller_model.active_soundfont_relative_path = file_path
+        this.state_model.enable_soundfont()
     }
 
 
@@ -2529,7 +2532,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     private fun get_default_preset_name(bank: Int, program: Int): String {
-        return if (this.controller_model.active_midi_device != null || this.controller_model.audio_interface.soundfont == null) {
+        return if (this.controller_model.active_midi_device != null || this.controller_model.audio_interface.soundfonts.isEmpty()) {
             if (bank == 128) {
                 this.resources.getString(R.string.gm_kit)
             } else {
@@ -2777,7 +2780,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             )
         }
 
-        this.controller_model.audio_interface.soundfont?.let {
+        if (this.controller_model.audio_interface.has_soundfont()) {
             export_options.add(
                 Pair(
                     Exportable.WAV_SINGLE,

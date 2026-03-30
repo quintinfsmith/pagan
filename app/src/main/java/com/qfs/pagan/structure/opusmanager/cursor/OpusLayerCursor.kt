@@ -74,7 +74,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor_select(beat_key, position)
     }
 
-    override fun channel_set_preset(channel: Int, instrument: Pair<Int, Int>) {
+    override fun channel_set_preset(channel: Int, instrument: Triple<Int, Int, Int>) {
         super.channel_set_preset(channel, instrument)
         this.cursor_select_channel(channel)
     }

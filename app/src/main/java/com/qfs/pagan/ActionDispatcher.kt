@@ -1150,7 +1150,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
 
         val options = mutableListOf<Pair<Int, @Composable RowScope.() -> Unit>>()
 
-        if (this.vm_controller.active_midi_device == null && this.vm_controller.audio_interface.soundfont != null) {
+        if (this.vm_controller.active_midi_device == null && this.vm_controller.audio_interface.has_soundfont()) {
             val preset = opus_manager.get_channel_instrument(channel)
             val instruments = opus_manager.vm_state.get_available_instruments(preset)
             for ((name, index) in instruments) {
@@ -1243,7 +1243,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         opus_manager.set_channel_event_color(channel, null)
     }
 
-    fun set_channel_preset(channel: Int, instrument: Pair<Int, Int>? = null) {
+    fun set_channel_preset(channel: Int, instrument: Triple<Int, Int, Int>? = null) {
         val opus_manager = this.get_opus_manager()
 
         instrument?.let {
@@ -1268,10 +1268,10 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
 
         val default = opus_manager.get_channel_instrument(channel)
         val preset_names =  mutableListOf<Triple<Int, Int, String?>>()
-        val options = mutableListOf<Pair<Pair<Int, Int>, @Composable RowScope.() -> Unit>>()
+        val options = mutableListOf<Pair<Triple<Int, Int, Int>, @Composable RowScope.() -> Unit>>()
         val is_percussion = opus_manager.is_percussion(channel)
 
-        val pre_option = if (this.vm_controller.audio_interface.soundfont == null || this.vm_controller.active_midi_device != null) {
+        val pre_option = if (!this.vm_controller.audio_interface.has_soundfont() || this.vm_controller.active_midi_device != null) {
             val std_hashmap = HashMap<Int, String?>()
             for (i in 0 until 128) std_hashmap[i] = null
             sortedMapOf<Int, HashMap<Int, String?>>(
@@ -1279,7 +1279,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                 128 to hashMapOf(0 to null)
             )
         } else {
-            opus_manager.vm_state.preset_names.toSortedMap()
+            opus_manager.vm_state.preset_names[default.first].toSortedMap()
         }
 
         for ((bank, bank_map) in pre_option) {
@@ -1290,7 +1290,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                 preset_names.add(Triple(bank, program, name))
                 options.add(
                     Pair(
-                        Pair(bank, program),
+                        Triple(default.first, bank, program),
                         {
                             Text("${padded_hex(bank)} | ${padded_hex(program)}")
                             Text(

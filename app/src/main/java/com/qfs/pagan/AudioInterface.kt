@@ -75,7 +75,7 @@ class AudioInterface {
 
         if (this.has_soundfont()) {
             this.playback_sample_handle_manager = SampleHandleManager(
-                this.soundfonts.toArray(),
+                this.soundfonts.toTypedArray(),
                 this.sample_rate,
                 this.sample_rate, // Use Large buffer
                 ignore_lfo = true
@@ -95,39 +95,35 @@ class AudioInterface {
         return this.soundfonts.isNotEmpty()
     }
 
-    fun reset() {
-        this.soundfont?.let { this.set_soundfont(it) }
-    }
-
-    fun add_soundfont(vararg soundfonts: Soundfont) {
+    fun add_soundfont(vararg soundfonts: SoundFont) {
         for (soundfont in soundfonts) {
             this.soundfonts.add(soundfont)
             this.minimum_instrument_index_cache.add(HashMap<Pair<Int, Int>, Int>())
         }
         this.unset_sample_handle_manager()
-        this.playback_sammple_handle_manager = SampleHandleManager(
-            this.soundfonts.toArray(),
-            this.sample_rate,
-            this.sample_rate,
-            ignore_lfo = true
-        )
-
-        this.connect_feedback_device()
-    }
-
-    fun set_soundfont(soundfont: SoundFont, index: Int = 0) {
-        this.unset_soundfont(index)
-        this.soundfonts[index] = soundfont
-
         this.playback_sample_handle_manager = SampleHandleManager(
-            this.soundfonts.toArray(),
+            this.soundfonts.toTypedArray(),
             this.sample_rate,
-            this.sample_rate, // Use Large buffer
+            this.sample_rate,
             ignore_lfo = true
         )
 
         this.connect_feedback_device()
     }
+
+    //fun set_soundfont(soundfont: SoundFont, index: Int = 0) {
+    //    this.soundfonts[index] = soundfont
+
+    //    this.playback_sample_handle_manager = SampleHandleManager(
+    //        this.soundfonts.toTypedArray(),
+    //        this.sample_rate,
+    //        this.sample_rate, // Use Large buffer
+    //        ignore_lfo = true
+    //    )
+
+    //    this.connect_feedback_device()
+    //}
+
 
     fun remove_soundfont(index: Int) {
         this.soundfonts.removeAt(index).destroy()
@@ -145,14 +141,14 @@ class AudioInterface {
 
     fun update_channel_preset(channel: Int, soundfont_index: Int, bank: Int, program: Int) {
         this.feedback_revolver.sample_handle_manager?.let {
-            it.set_soundfont(channel, soundfont_index)
+            it.select_soundfont_index(channel, soundfont_index)
             it.select_bank(channel, bank)
             it.change_program(channel, program)
         }
 
         // Don't need to update anything but percussion in the sample_handle_manager
         this.playback_sample_handle_manager?.let {
-            it.set_soundfont(channel, soundfont_index)
+            it.select_soundfont_index(channel, soundfont_index)
             it.select_bank(channel, bank)
             it.change_program(channel, program)
         }
@@ -162,7 +158,7 @@ class AudioInterface {
         val buffer_size = this.sample_rate / 40
         this.feedback_revolver.set_handle_manager(
             SampleHandleManager(
-                this.soundfonts.toArray(),
+                this.soundfonts.toTypedArray(),
                 this.sample_rate,
                 buffer_size - 2 + (if (buffer_size % 2 == 0) {
                     2
@@ -185,7 +181,7 @@ class AudioInterface {
         return this.playback_sample_handle_manager?.get_preset(channel)
     }
 
-    fun get_preset(key: Pair<Int, Int>): Preset? {
+    fun get_preset(key: Triple<Int, Int, Int>): Preset? {
         return this.playback_sample_handle_manager?.get_preset(key)
     }
 

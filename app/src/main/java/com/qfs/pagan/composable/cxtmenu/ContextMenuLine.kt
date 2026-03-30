@@ -115,6 +115,7 @@ fun PercussionSetInstrumentButton(modifier: Modifier = Modifier, vm_state: ViewM
     } else {
         "!${"%02d".format(assigned_offset)}"
     }
+
     key(vm_state.soundfont_active.value) {
         TextCMenuButton(
             modifier = modifier.testTag(TestTag.InstrumentSet),

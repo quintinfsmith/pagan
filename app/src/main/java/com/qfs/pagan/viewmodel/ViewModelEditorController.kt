@@ -48,8 +48,8 @@ class ViewModelEditorController(): ViewModel() {
     var active_soundfont_relative_path: String? = null
 
 
-    fun update_channel_preset(channel: Int, bank: Int, program: Int) {
-        this.audio_interface.update_channel_preset(channel, bank, program)
+    fun update_channel_preset(channel: Int, soundfont_index: Int, bank: Int, program: Int) {
+        this.audio_interface.update_channel_preset(channel, soundfont_index, bank, program)
         this.virtual_midi_device.send_event(BankSelect(channel, bank))
         this.virtual_midi_device.send_event(ProgramChange(channel, program))
     }
@@ -106,24 +106,19 @@ class ViewModelEditorController(): ViewModel() {
     }
 
     fun unset_soundfont() {
-        this.audio_interface.unset_soundfont()
+        this.audio_interface.unset_soundfonts()
         this.destroy_playback_device()
-        this.opus_manager.vm_state.populate_presets()
+        this.opus_manager.vm_state.clear_presets()
         this.opus_manager.vm_state.update_channel_names()
-        this.opus_manager.vm_state.available_instruments.clear()
         this.active_soundfont_relative_path = null
     }
 
-    fun get_soundfont(): SoundFont? {
-        return this.audio_interface.soundfont
-    }
-
     fun set_soundfont(soundfont: SoundFont) {
-        this.audio_interface.set_soundfont(soundfont)
+        this.audio_interface.add_soundfont(soundfont)
         this.create_playback_device()
 
         val vm_state = this.opus_manager.vm_state
-        vm_state.populate_presets(soundfont)
+        vm_state.populate_presets(this.audio_interface.soundfonts.size - 1, soundfont)
         vm_state.update_channel_names()
     }
 
@@ -167,8 +162,8 @@ class ViewModelEditorController(): ViewModel() {
     fun update_soundfont_instruments() {
         for ((i, channel) in this.opus_manager.channels.enumerate()) {
             val midi_channel = this.opus_manager.get_midi_channel(i)
-            val (midi_bank, midi_program) = channel.get_preset()
-            this.audio_interface.update_channel_preset(midi_channel, midi_bank, midi_program)
+            val (soundfont_index, midi_bank, midi_program) = channel.get_preset()
+            this.audio_interface.update_channel_preset(midi_channel, soundfont_index, midi_bank, midi_program)
         }
     }
 

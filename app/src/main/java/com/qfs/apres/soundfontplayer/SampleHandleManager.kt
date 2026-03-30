@@ -18,10 +18,11 @@ import com.qfs.apres.soundfont2.InstrumentDirective
 import com.qfs.apres.soundfont2.Preset
 import com.qfs.apres.soundfont2.SampleDirective
 import com.qfs.apres.soundfont2.SoundFont
+import com.qfs.pagan.enumerate
 import kotlin.math.max
 
 class SampleHandleManager(
-    var soundfonts: List<SoundFont>,
+    var soundfonts: Array<SoundFont>,
     var sample_rate: Int,
     target_buffer_size: Int = 0,
     var sample_limit: Int? = null,
@@ -51,7 +52,7 @@ class SampleHandleManager(
         )
     }
 
-    fun select_soundfont(channel: Int, soundfont_index: Int) {
+    fun select_soundfont_index(channel: Int, soundfont_index: Int) {
         // NOTE: Changing the soundfont here won't trigger a preset change preset change
         // until change_program() is called.
         val (bank, program) = if (this.preset_channel_map.containsKey(channel)) {
@@ -106,7 +107,7 @@ class SampleHandleManager(
                     } else {
                         if (Pair(0, program) in preset_cache) {
                             preset_cache[Pair(0, program)]!!
-                        } else if (Pair(0, 0) in this.loaded_presets) {
+                        } else if (Pair(0, 0) in preset_cache) {
                             preset_cache[Pair(0, 0)]!!
                         } else {
                             return
@@ -196,41 +197,43 @@ class SampleHandleManager(
     }
 
     private fun decache_unused_presets() {
-        val loaded_preset_keys = this.loaded_presets.keys.toMutableSet()
-        for ((_, key) in this.preset_channel_map) {
-            if (loaded_preset_keys.contains(key)) {
-                loaded_preset_keys.remove(key)
+        for ((i, loaded_presets) in this.loaded_presets.enumerate()) {
+            val loaded_preset_keys = loaded_presets.keys.toMutableSet()
+            for ((_, key) in this.preset_channel_map) {
+                val adj_key = Pair(key.second, key.third)
+                if (key.first == i && loaded_preset_keys.contains(adj_key)) {
+                    loaded_preset_keys.remove(adj_key)
+                }
             }
-        }
-
-        for (key in loaded_preset_keys) {
-            val preset = this.loaded_presets[key] ?: continue
-            this.sample_handle_generator.decache_sample_data(preset)
-            this.loaded_presets.remove(key)
+            for (key in loaded_preset_keys) {
+                val preset = loaded_presets[key] ?: continue
+                this.sample_handle_generator.decache_sample_data(preset)
+                loaded_presets.remove(key)
+            }
         }
     }
 
-    fun get_preset(key: Pair<Int, Int>): Preset? {
-        return this.loaded_presets[key]
+    fun get_preset(key: Triple<Int, Int, Int>): Preset? {
+        return this.loaded_presets[key.first][Pair(key.second, key.third)]
     }
 
     fun get_preset(channel: Int): Preset? {
         val key = this.get_channel_preset(channel)
-        return this.loaded_presets[key]
+        return this.loaded_presets[key.first][Pair(key.second, key.third)]
     }
 
-    private fun get_channel_preset(channel: Int): Pair<Int, Int> {
+    private fun get_channel_preset(channel: Int): Triple<Int, Int, Int> {
         return if (this.preset_channel_map.containsKey(channel)) {
             this.preset_channel_map[channel]!!
         } else if (channel == Midi.PERCUSSION_CHANNEL) {
-            Pair(128, 0)
+            Triple(0, 128, 0)
         } else {
-            Pair(0, 0)
+            Triple(0, 0, 0)
         }
     }
 
     fun clear() {
-        this.loaded_presets.clear()
+        this.loaded_presets.forEach { it.clear() }
         this.sample_handle_generator.clear()
     }
 

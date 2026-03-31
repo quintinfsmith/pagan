@@ -18,13 +18,15 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONList
 import com.qfs.json.JSONParser
+import com.qfs.json.JSONString
 import kotlinx.serialization.Serializable
 import java.io.File
 
 @Serializable
 class PaganConfiguration(
-    soundfont: String? = null,
+    soundfonts: Array<String> = arrayOf(),
     sample_rate: Int = 32000,
     move_mode: MoveMode = MoveMode.COPY,
     use_preferred_soundfont: Boolean = true,
@@ -38,7 +40,7 @@ class PaganConfiguration(
     normalize_beat_widths: Boolean = false,
     beat_stroke_thickness: Dp = 0.dp
 ) {
-    val soundfont: MutableState<String?> = mutableStateOf(soundfont)
+    val soundfonts: MutableState<Array<String>> = mutableStateOf(soundfonts)
     val sample_rate: MutableState<Int> = mutableStateOf(sample_rate)
     val move_mode: MutableState<MoveMode> = mutableStateOf(move_mode)
     val use_preferred_soundfont: MutableState<Boolean> = mutableStateOf(use_preferred_soundfont)
@@ -60,8 +62,19 @@ class PaganConfiguration(
 
     companion object {
         fun from_json(content: JSONHashMap): PaganConfiguration {
+            var soundfonts = mutableListOf<String>()
+            // Handle old-style single soundfont
+            content.get_stringn("soundfont2")?.let {
+                soundfonts.add(it)
+            }
+            content.get_listn("soundfonts")?.let {
+                for (i in 0 until it.size) {
+                    soundfonts.add(it.get_string(i))
+                }
+            }
+
             return PaganConfiguration(
-                soundfont = content.get_stringn("soundfont2"),
+                soundfonts = soundfonts.toTypedArray(),
                 sample_rate = content.get_int("sample_rate", 32000),
                 move_mode = MoveMode.valueOf(content.get_string("move_mode", "COPY")),
                 use_preferred_soundfont = content.get_boolean("use_preferred_soundfont", true),
@@ -91,7 +104,7 @@ class PaganConfiguration(
 
     fun update_from_path(path: String) {
         val config = PaganConfiguration.from_path(path)
-        this.soundfont.value = config.soundfont.value
+        this.soundfonts.value = Array(config.soundfonts.value.size) { config.soundfonts.value[it] }
         this.sample_rate.value = config.sample_rate.value
         this.move_mode.value = config.move_mode.value
         this.use_preferred_soundfont.value = config.use_preferred_soundfont.value
@@ -112,7 +125,7 @@ class PaganConfiguration(
 
     fun to_json(): JSONHashMap {
         val output = JSONHashMap()
-        output["soundfont2"] = this.soundfont.value
+        output["soundfonts"] = JSONList(*Array(this.soundfonts.value.size) { JSONString(this.soundfonts.value[it]) })
         output["sample_rate"] = this.sample_rate.value
         output["move_mode"] = this.move_mode.value.name
         output["use_preferred_soundfont"] = this.use_preferred_soundfont.value

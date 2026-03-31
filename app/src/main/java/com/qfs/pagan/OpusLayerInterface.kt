@@ -11,6 +11,8 @@ package com.qfs.pagan
 
 import androidx.compose.ui.graphics.Color
 import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONList
+import com.qfs.json.JSONString
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
@@ -1372,8 +1374,12 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     override fun to_json(): JSONHashMap {
         val output = super.to_json()
 
-        this.vm_controller.active_soundfont_relative_path?.let {
-            output.get_hashmap("d")["sf"] = it
+        this.vm_controller.active_soundfont_relative_paths.let { file_names ->
+            output.get_hashmap("d")["sfs"] = JSONList(
+                *Array(file_names.size) {
+                    JSONString(file_names[it])
+                }
+            )
         }
 
         return output

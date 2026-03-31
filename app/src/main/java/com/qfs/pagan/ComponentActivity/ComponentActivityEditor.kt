@@ -631,8 +631,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.action_interface.stop_opus_midi()
         this.action_interface.stop_opus()
 
-        val file_path = this.view_model.configuration.soundfont.value
-        if (file_path == null) {
+        val file_paths = this.view_model.configuration.soundfonts.value
+        if (file_paths.isEmpty()) {
             this.controller_model.unset_soundfont()
             this.state_model.unset_soundfont()
             return
@@ -641,25 +641,35 @@ class ComponentActivityEditor: PaganComponentActivity() {
         // Failed to change playback_state
         if (!this.controller_model.update_playback_state_soundfont(PlaybackState.Ready)) return
 
+        val soundfonts = mutableListOf<SoundFont>()
         val soundfont_directory = this.get_soundfont_directory()
-        var soundfont_file = soundfont_directory
-        for (segment in file_path.split("/")) {
-            soundfont_file = soundfont_file.findFile(segment) ?: throw FileNotFoundException()
+
+        for (file_path in file_paths) {
+            var soundfont_file = soundfont_directory
+            for (segment in file_path.split("/")) {
+                soundfont_file = soundfont_file.findFile(segment) ?: throw FileNotFoundException()
+            }
+
+            // Possible if user puts the sf2 in their files manually
+            if (!soundfont_file.exists()) throw FileNotFoundException()
+
+            soundfonts.add(
+                try {
+                    SoundFont(this, soundfont_file.uri)
+                } catch (_: Exception) {
+                    continue
+                }
+            )
         }
 
-        // Possible if user puts the sf2 in their files manually
-        if (!soundfont_file.exists()) throw FileNotFoundException()
-
-        val soundfont = try {
-            SoundFont(this, soundfont_file.uri)
-        } catch (_: Exception) {
+        if (file_paths.isNotEmpty() && soundfonts.isEmpty()) {
             this.toast(R.string.invalid_soundfont)
             return
         }
 
-        this.controller_model.set_soundfont(soundfont)
+        this.controller_model.set_soundfonts(soundfonts)
         this.controller_model.playback_device?.activity = this
-        this.controller_model.active_soundfont_relative_path = file_path
+        this.controller_model.active_soundfont_relative_paths = file_paths.toList()
         this.state_model.enable_soundfont()
     }
 
@@ -2574,20 +2584,28 @@ class ComponentActivityEditor: PaganComponentActivity() {
             this@ComponentActivityEditor.controller_model.active_project = uri
             this@ComponentActivityEditor.controller_model.project_exists.value = true
             if (this@ComponentActivityEditor.view_model.configuration.use_preferred_soundfont.value) {
+                val file_paths = mutableListOf<String>()
                 json_data.get_hashmap("d").get_stringn("sf")?.let {
-                    val original = this@ComponentActivityEditor.view_model.configuration.soundfont.value
-                    if (it != original) {
-                        this@ComponentActivityEditor.view_model.configuration.soundfont.value = it
-                        // Try opening the assigned soundfont, but if it fails for any reason, go back to the
-                        // Currently active one.
-                        try {
-                            this.set_soundfont()
-                        } catch (_: Exception) {
-                            this@ComponentActivityEditor.view_model.configuration.soundfont.value = original
-                            this@ComponentActivityEditor.set_soundfont()
-                        }
-                        this@ComponentActivityEditor.view_model.save_configuration()
+                    file_paths.add(it)
+                }
+                json_data.get_hashmap("d").get_listn("sfs")?.let {
+                    for (i in 0 until it.size) {
+                        file_paths.add(it.get_string(i))
                     }
+                }
+
+                val original = this@ComponentActivityEditor.view_model.configuration.soundfonts.value
+                if (file_paths != original.toList()) {
+                    this@ComponentActivityEditor.view_model.configuration.soundfonts.value = file_paths.toTypedArray()
+                    // Try opening the assigned soundfont, but if it fails for any reason, go back to the
+                    // Currently active one.
+                    try {
+                        this.set_soundfont()
+                    } catch (_: Exception) {
+                        this@ComponentActivityEditor.view_model.configuration.soundfonts.value = original
+                        this@ComponentActivityEditor.set_soundfont()
+                    }
+                    this@ComponentActivityEditor.view_model.save_configuration()
                 }
             }
         }

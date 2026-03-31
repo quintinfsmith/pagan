@@ -45,7 +45,7 @@ class ViewModelEditorController(): ViewModel() {
     var export_handle: WavConverter? = null
     var active_project: Uri? = null
     var project_exists: MutableState<Boolean> = mutableStateOf(false)
-    var active_soundfont_relative_path: String? = null
+    var active_soundfont_relative_paths: List<String> = listOf()
 
 
     fun update_channel_preset(channel: Int, soundfont_index: Int, bank: Int, program: Int) {
@@ -110,10 +110,10 @@ class ViewModelEditorController(): ViewModel() {
         this.destroy_playback_device()
         this.opus_manager.vm_state.clear_presets()
         this.opus_manager.vm_state.update_channel_names()
-        this.active_soundfont_relative_path = null
+        this.active_soundfont_relative_paths = listOf()
     }
 
-    fun set_soundfont(soundfont: SoundFont) {
+    fun set_soundfonts(soundfont: List<SoundFont>) {
         this.audio_interface.add_soundfont(soundfont)
         this.create_playback_device()
 

@@ -170,7 +170,7 @@ class ViewModelEditorController(): ViewModel() {
     fun update_midi_instruments() {
         for ((i, channel) in this.opus_manager.channels.enumerate()) {
             val midi_channel = this.opus_manager.get_midi_channel(i)
-            val (midi_bank, midi_program) = channel.get_preset()
+            val (soundfont_index, midi_bank, midi_program) = channel.get_preset()
             this.virtual_midi_device.send_event(BankSelect(midi_channel, midi_bank))
             this.virtual_midi_device.send_event(ProgramChange(midi_channel, midi_program))
         }

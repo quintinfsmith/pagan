@@ -1053,6 +1053,10 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun populate_presets(index: Int, soundfont: SoundFont) {
+        while (this.preset_names.size <= index) {
+            this.preset_names.add(HashMap())
+        }
+
         this.preset_names[index].clear()
 
         for (key in this.available_instruments.keys) {
@@ -1100,7 +1104,11 @@ class ViewModelEditorState: ViewModel() {
 
     fun get_preset_name(key: Triple<Int, Int, Int>): String? {
         val (index, bank, program) = key
-        return this.preset_names[index][bank]?.get(program)
+        return if (index >= this.preset_names.size) {
+            null
+        } else {
+            this.preset_names[index][bank]?.get(program)
+        }
     }
 
     fun update_channel_names() {

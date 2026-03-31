@@ -46,7 +46,6 @@ class AudioInterface {
                 velocity = velocity
             )
 
-
             this.devices[this.current_index]?.let {
                 thread {
                     it.new_event(event, duration)
@@ -98,17 +97,9 @@ class AudioInterface {
     fun add_soundfont(vararg soundfonts: SoundFont) {
         for (soundfont in soundfonts) {
             this.soundfonts.add(soundfont)
-            this.minimum_instrument_index_cache.add(HashMap<Pair<Int, Int>, Int>())
+            this.minimum_instrument_index_cache.add(HashMap())
         }
-        this.unset_sample_handle_manager()
-        this.playback_sample_handle_manager = SampleHandleManager(
-            this.soundfonts.toTypedArray(),
-            this.sample_rate,
-            this.sample_rate,
-            ignore_lfo = true
-        )
-
-        this.connect_feedback_device()
+        this.reset_sample_handle_managers()
     }
 
     //fun set_soundfont(soundfont: SoundFont, index: Int = 0) {
@@ -124,11 +115,21 @@ class AudioInterface {
     //    this.connect_feedback_device()
     //}
 
+    private fun reset_sample_handle_managers() {
+        this.unset_sample_handle_manager()
+        this.playback_sample_handle_manager = SampleHandleManager(
+            this.soundfonts.toTypedArray(),
+            this.sample_rate,
+            this.sample_rate,
+            ignore_lfo = true
+        )
+        this.connect_feedback_device()
+    }
 
     fun remove_soundfont(index: Int) {
         this.soundfonts.removeAt(index).destroy()
         this.minimum_instrument_index_cache.removeAt(index)
-        this.connect_feedback_device()
+        this.reset_sample_handle_managers()
     }
 
     fun unset_soundfonts() {
@@ -210,5 +211,4 @@ class AudioInterface {
 
         return this.minimum_instrument_index_cache[soundfont_index][preset_key] ?: 0
     }
-
 }

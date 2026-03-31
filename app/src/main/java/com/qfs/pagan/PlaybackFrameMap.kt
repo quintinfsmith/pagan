@@ -588,8 +588,9 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             val channel = this.opus_manager.get_channel(i)
             val instrument = channel.get_preset()
             val midi_channel =  this.opus_manager.get_midi_channel(i)
-            this._sample_handle_manager.select_bank(midi_channel, instrument.first)
-            this._sample_handle_manager.change_program(midi_channel, instrument.second)
+            this._sample_handle_manager.select_soundfont_index(midi_channel, instrument.first)
+            this._sample_handle_manager.select_bank(midi_channel, instrument.second)
+            this._sample_handle_manager.change_program(midi_channel, instrument.third)
         }
 
         this.map_tempo_changes(this.opus_manager.get_controller<OpusTempoEvent>(PaganEffectType.Tempo) as TempoController)

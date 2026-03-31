@@ -2035,8 +2035,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                 Text(
                                                     channel_data.active_name.value
                                                         ?: this@ComponentActivityEditor.get_default_preset_name(
-                                                            channel_data.instrument.value.first,
-                                                            channel_data.instrument.value.second
+                                                            channel_data.instrument.value.second,
+                                                            channel_data.instrument.value.third
                                                         ),
                                                     textAlign = TextAlign.Center,
                                                     modifier = Modifier.weight(1F),
@@ -2532,7 +2532,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     private fun get_default_preset_name(bank: Int, program: Int): String {
-        return if (this.controller_model.active_midi_device != null || this.controller_model.audio_interface.soundfonts.isEmpty()) {
+        return if (this.controller_model.active_midi_device != null || !this.controller_model.audio_interface.has_soundfont()) {
             if (bank == 128) {
                 this.resources.getString(R.string.gm_kit)
             } else {

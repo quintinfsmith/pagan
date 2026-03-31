@@ -28,7 +28,7 @@ class SampleHandleManager(
     var sample_limit: Int? = null,
     ignore_lfo: Boolean = false
 ) {
-    private val loaded_presets = Array(soundfonts.size) { HashMap<Pair<Int, Int>, Preset>() }
+    private val loaded_presets = Array(this.soundfonts.size) { HashMap<Pair<Int, Int>, Preset>() }
     private val preset_channel_map = HashMap<Int, Triple<Int, Int, Int>>()
     private val sample_handle_generator: SampleHandleGenerator
     val buffer_size: Int
@@ -219,7 +219,11 @@ class SampleHandleManager(
 
     fun get_preset(channel: Int): Preset? {
         val key = this.get_channel_preset(channel)
-        return this.loaded_presets[key.first][Pair(key.second, key.third)]
+        return if (this.loaded_presets.size <= key.first) {
+            null
+        } else {
+            this.loaded_presets[key.first][Pair(key.second, key.third)]
+        }
     }
 
     private fun get_channel_preset(channel: Int): Triple<Int, Int, Int> {

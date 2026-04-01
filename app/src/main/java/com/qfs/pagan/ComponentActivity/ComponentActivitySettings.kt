@@ -543,6 +543,77 @@ class ComponentActivitySettings: PaganComponentActivity() {
     @Composable
     fun ActiveSoundfontButton(modifier: Modifier = Modifier) {
         val no_soundfont_text = stringResource(R.string.no_soundfont)
+        val load_soundfont_text = stringResource(R.string.load_soundfont)
+        val soundfonts = this@ComponentActivitySettings.view_model.configuration.soundfonts.value
+
+        SettingsColumn(modifier) {
+            Text(
+                R.string.label_settings_sfs,
+                style = Typography.Settings.Title
+            )
+
+            MenuPadder()
+            for (soundfont_name in soundfonts) {
+                Row {
+                    Button(
+                        content = {
+                            Text(soundfont_name, maxLines = 1, overflow = TextOverflow.StartEllipsis)
+                        },
+                        onClick = {}
+                    )
+                    Button(
+                        content = {
+                            Icon(
+                                painter = painterResource(R.drawable.icon_x),
+                                contentDescription = stringResource(R.string.unload_soundfont)
+                            )
+                        },
+                        onClick = {}
+                    )
+                }
+                MenuPadder()
+            }
+
+            Button(
+                content = {
+                    Text(
+                        text = if (soundfonts.isEmpty()) {
+                            no_soundfont_text
+                        } else {
+                            load_soundfont_text
+                        },
+                        maxLines = 1,
+                        overflow = TextOverflow.StartEllipsis
+                    )
+                },
+                onClick = {
+                    if (this@ComponentActivitySettings.view_model.configuration.soundfont_directory.value == null) {
+                        this@ComponentActivitySettings.view_model.create_dialog { close ->
+                            @Composable {
+                                DialogSTitle(R.string.settings_need_soundfont_directory)
+                                DialogBar(
+                                    positive = {
+                                        close()
+                                        this@ComponentActivitySettings.result_launcher_set_soundfont_directory_and_import.launch(
+                                            Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also {
+                                                it.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                                            }
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                        return@Button
+                    }
+                    this@ComponentActivitySettings.show_soundfont_menu()
+                }
+            )
+        }
+
+    }
+    @Composable
+    fun OldActiveSoundfontButton(modifier: Modifier = Modifier) {
+        val no_soundfont_text = stringResource(R.string.no_soundfont)
         val soundfonts = this@ComponentActivitySettings.view_model.configuration.soundfonts.value
         SettingsColumn(modifier) {
             Text(
@@ -589,6 +660,8 @@ class ComponentActivitySettings: PaganComponentActivity() {
         }
 
     }
+
+
     @Composable
     fun ActiveSoundfontDirectoryButton(modifier: Modifier = Modifier) {
         SettingsColumn(modifier) {

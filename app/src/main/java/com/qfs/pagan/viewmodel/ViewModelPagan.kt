@@ -190,6 +190,11 @@ class ViewModelPagan: ViewModel() {
     }
 
     fun set_soundfont_uri(uri: Uri) {
-        this.configuration.soundfont.value = this.coerce_relative_soundfont_path(uri)
+        val path = this.coerce_relative_soundfont_path(uri)
+        if (path == null) {
+            this.configuration.soundfonts.value = arrayOf()
+        } else {
+            this.configuration.soundfonts.value = arrayOf(path)
+        }
     }
 }

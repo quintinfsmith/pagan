@@ -148,7 +148,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             val uri = result_data.data ?: return@registerForActivityResult
             val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
             this.contentResolver.takePersistableUriPermission(uri, new_flags)
-            this.view_model.configuration.soundfont.value = null
+            this.view_model.configuration.soundfonts.value = arrayOf()
             this.view_model.configuration.soundfont_directory.value = uri
             this.view_model.save_configuration()
             this.view_model.requires_soundfont.value = !this.is_soundfont_available()
@@ -168,7 +168,9 @@ class ComponentActivitySettings: PaganComponentActivity() {
             val is_within_soundfont_directory = parent_segments.size < child_segments.size && parent_segments == child_segments.subList(0, parent_segments.size)
             //-----------------------------------------------------
             if (is_within_soundfont_directory) {
-                configuration.soundfont.value = child_segments.subList(parent_segments.size, child_segments.size).joinToString("/")
+                configuration.soundfonts.value = arrayOf(
+                    child_segments.subList(parent_segments.size, child_segments.size).joinToString("/")
+                )
             } else {
                 val soundfont_dir = this@ComponentActivitySettings.get_soundfont_directory()
                 val file_name = this.parse_file_name(uri)!!
@@ -182,9 +184,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                             val buffer = ByteArray(4096)
                             while (true) {
                                 val read_size = input_stream.read(buffer)
-                                if (read_size == -1) {
-                                    break
-                                }
+                                if (read_size == -1) break
                                 output_stream?.write(buffer, 0, read_size)
                             }
 
@@ -199,7 +199,9 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
                     try {
                         SoundFont(this, new_file.uri)
-                        this.view_model.configuration.soundfont.value = this.view_model.coerce_relative_soundfont_path(new_file.uri)
+                        this.view_model.configuration.soundfonts.value = this.view_model.coerce_relative_soundfont_path(new_file.uri)?.let {
+                            arrayOf(it)
+                        } ?: arrayOf()
                         this.view_model.save_configuration()
                         this.view_model.requires_soundfont.value = false
                     } catch (e: Exception) {
@@ -222,7 +224,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
             this.contentResolver.takePersistableUriPermission(uri, new_flags)
 
-            this.view_model.configuration.soundfont.value = null
+            this.view_model.configuration.soundfonts.value = arrayOf()
             this.view_model.configuration.soundfont_directory.value = uri
             this.view_model.save_configuration()
             this.view_model.requires_soundfont.value = !this.is_soundfont_available()
@@ -508,7 +510,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                             },
                             shape = CircleShape,
                             onClick = {
-                                view_model.configuration.soundfont.value = null
+                                view_model.configuration.soundfonts.value = arrayOf()
                                 view_model.save_configuration()
                                 this@ComponentActivitySettings.update_result()
                                 close()
@@ -541,6 +543,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
     @Composable
     fun ActiveSoundfontButton(modifier: Modifier = Modifier) {
         val no_soundfont_text = stringResource(R.string.no_soundfont)
+        val soundfonts = this@ComponentActivitySettings.view_model.configuration.soundfonts.value
         SettingsColumn(modifier) {
             Text(
                 R.string.label_settings_sf,
@@ -552,7 +555,11 @@ class ComponentActivitySettings: PaganComponentActivity() {
             Button(
                 content = {
                     Text(
-                        text = view_model.configuration.soundfont.value ?: no_soundfont_text,
+                        text = if (soundfonts.isEmpty()) {
+                            no_soundfont_text
+                        } else {
+                            soundfonts[0]
+                        },
                         maxLines = 1,
                         overflow = TextOverflow.StartEllipsis
                     )

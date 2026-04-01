@@ -113,12 +113,14 @@ class ViewModelEditorController(): ViewModel() {
         this.active_soundfont_relative_paths = listOf()
     }
 
-    fun set_soundfonts(soundfont: List<SoundFont>) {
-        this.audio_interface.add_soundfont(soundfont)
+    fun set_soundfonts(vararg soundfonts: SoundFont) {
+        this.audio_interface.add_soundfont(*soundfonts)
         this.create_playback_device()
 
         val vm_state = this.opus_manager.vm_state
-        vm_state.populate_presets(this.audio_interface.soundfonts.size - 1, soundfont)
+        for ((i, soundfont) in soundfonts.enumerate()) {
+            vm_state.populate_presets(i, soundfont)
+        }
         vm_state.update_channel_names()
     }
 

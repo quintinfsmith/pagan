@@ -386,7 +386,9 @@ abstract class PaganComponentActivity: ComponentActivity() {
         return existing_uris
     }
     fun coerce_soundfont_uri(): Uri? {
-        val file_path = this.view_model.configuration.soundfont.value ?: return null
+        val soundfonts = this.view_model.configuration.soundfonts.value
+        if (soundfonts.isEmpty()) return null
+        val file_path = soundfonts[0] // TODO: At the moment, only using the first entry
         var soundfont_file = this.get_soundfont_directory()
         for (segment in file_path.split("/")) {
             soundfont_file = soundfont_file.findFile(segment) ?: throw FileNotFoundException()

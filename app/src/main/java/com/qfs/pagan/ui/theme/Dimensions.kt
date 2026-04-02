@@ -163,6 +163,7 @@ object Dimensions {
     val ConfigDrawerButtonRadius = 12.dp
     val ConfigDrawerChannelLabelPadding = 12.dp
 
+
     val ContextMenuButtonHeight: Dp
         get() = getter(
             small_portrait = 48.dp,
@@ -325,6 +326,8 @@ object Dimensions {
         val Large = 8.dp
     }
 
+    val SoundFontMenuButtonPadding = 8.dp
+    val SoundFontMenuButtonExtraPadding = 8.dp
     val SoundFontMenuPadding = 12.dp
     val SoundFontMenuInnerPadding = 8.dp
     val SoundFontMenuIconHeight = 41.dp

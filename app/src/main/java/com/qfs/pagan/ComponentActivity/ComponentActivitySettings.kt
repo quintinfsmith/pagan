@@ -22,6 +22,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -70,6 +71,7 @@ import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -547,24 +549,61 @@ class ComponentActivitySettings: PaganComponentActivity() {
         val soundfonts = this@ComponentActivitySettings.view_model.configuration.soundfonts.value
 
         SettingsColumn(modifier) {
-            Text(
-                R.string.label_settings_sfs,
-                style = Typography.Settings.Title
-            )
+            Text(R.string.label_settings_sfs, style = Typography.Settings.Title)
 
             MenuPadder()
+
             for (soundfont_name in soundfonts) {
-                Row {
+                Row(Modifier.height(IntrinsicSize.Min)) {
                     Button(
+                        contentPadding = PaddingValues(
+                            top = Dimensions.SoundFontMenuButtonPadding,
+                            end = Dimensions.SoundFontMenuButtonExtraPadding,
+                            bottom = Dimensions.SoundFontMenuButtonPadding,
+                            start = Dimensions.SoundFontMenuButtonPadding
+                        ),
+                        modifier = Modifier.height(Dimensions.ButtonHeight.Normal),
+                        shape = Shapes.SectionButtonStart,
                         content = {
-                            Text(soundfont_name, maxLines = 1, overflow = TextOverflow.StartEllipsis)
+                            Icon(
+                                modifier = Modifier.height(Dimensions.SoundFontMenuIconHeight),
+                                painter = painterResource(R.drawable.icon_drag),
+                                contentDescription = stringResource(R.string.unload_soundfont)
+                            )
                         },
                         onClick = {}
                     )
                     Button(
+                        modifier = Modifier.height(Dimensions.ButtonHeight.Normal),
+                        shape = Shapes.SectionButtonCenter,
+                        contentPadding = PaddingValues(
+                            top = Dimensions.SoundFontMenuButtonPadding,
+                            start = Dimensions.SoundFontMenuButtonPadding,
+                            bottom = Dimensions.SoundFontMenuButtonPadding,
+                            end = Dimensions.SoundFontMenuButtonPadding
+                        ),
+                        content = {
+                            Text(
+                                soundfont_name,
+                                maxLines = 1,
+                                overflow = TextOverflow.StartEllipsis
+                            )
+                        },
+                        onClick = {}
+                    )
+                    Button(
+                        contentPadding = PaddingValues(
+                            top = Dimensions.SoundFontMenuButtonPadding,
+                            start = Dimensions.SoundFontMenuButtonExtraPadding,
+                            bottom = Dimensions.SoundFontMenuButtonPadding,
+                            end = Dimensions.SoundFontMenuButtonPadding
+                        ),
+                        modifier = Modifier.height(Dimensions.ButtonHeight.Normal),
+                        shape = Shapes.SectionButtonEnd,
                         content = {
                             Icon(
-                                painter = painterResource(R.drawable.icon_x),
+                                modifier = Modifier.height(Dimensions.SoundFontMenuIconHeight),
+                                painter = painterResource(R.drawable.icon_cross_circle),
                                 contentDescription = stringResource(R.string.unload_soundfont)
                             )
                         },
@@ -575,6 +614,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             }
 
             Button(
+                modifier = Modifier.height(Dimensions.ButtonHeight.Normal),
                 content = {
                     Text(
                         text = if (soundfonts.isEmpty()) {
@@ -609,8 +649,8 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 }
             )
         }
-
     }
+
     @Composable
     fun OldActiveSoundfontButton(modifier: Modifier = Modifier) {
         val no_soundfont_text = stringResource(R.string.no_soundfont)
@@ -671,6 +711,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             )
             MenuPadder()
             Button(
+                modifier = Modifier.height(Dimensions.ButtonHeight.Normal),
                 onClick = {
                     this@ComponentActivitySettings._set_soundfont_directory_intent_launcher.launch(
                         Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also { intent ->
@@ -702,6 +743,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             )
             MenuPadder()
             Button(
+                modifier = Modifier.height(Dimensions.ButtonHeight.Normal),
                 onClick = {
                     this@ComponentActivitySettings.result_launcher_set_project_directory.launch(
                         Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also { intent ->

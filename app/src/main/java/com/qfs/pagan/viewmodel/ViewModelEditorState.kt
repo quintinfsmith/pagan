@@ -1059,7 +1059,7 @@ class ViewModelEditorState: ViewModel() {
 
         this.preset_names[index].clear()
 
-        for (key in this.available_instruments.keys) {
+        for (key in this.available_instruments.keys.toList()) {
             if (key.first == index) {
                 this.available_instruments.remove(key)
             }

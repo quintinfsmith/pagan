@@ -114,6 +114,7 @@ class ViewModelEditorController(): ViewModel() {
     }
 
     fun set_soundfonts(vararg soundfonts: SoundFont) {
+        this.audio_interface.unset_soundfonts()
         this.audio_interface.add_soundfont(*soundfonts)
         this.create_playback_device()
 

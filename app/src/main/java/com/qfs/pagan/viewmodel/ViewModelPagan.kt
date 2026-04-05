@@ -189,12 +189,20 @@ class ViewModelPagan: ViewModel() {
         return ViewModelPagan.coerce_relative_path(soundfont_uri, this.configuration.soundfont_directory.value)
     }
 
-    fun set_soundfont_uri(uri: Uri) {
+    fun remove_soundfont(index: Int) {
+        this.configuration.soundfonts.value =  this.configuration.soundfonts.value.sliceArray(0 until index) + this.configuration.soundfonts.value.sliceArray(index + 1 until this.configuration.soundfonts.value.size)
+    }
+    fun add_soundfont_uri(uri: Uri) {
+        this.coerce_relative_soundfont_path(uri)?.let { path ->
+            this.configuration.soundfonts.value += arrayOf(path)
+        }
+    }
+    fun set_soundfont_uri(uri: Uri, index: Int) {
         val path = this.coerce_relative_soundfont_path(uri)
         if (path == null) {
-            this.configuration.soundfonts.value = arrayOf()
+            //TODO: Throw error
         } else {
-            this.configuration.soundfonts.value = arrayOf(path)
+            this.configuration.soundfonts.value[index] = path
         }
     }
 }

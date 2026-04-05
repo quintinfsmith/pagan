@@ -233,7 +233,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
             this.update_result()
 
-            this@ComponentActivitySettings.show_soundfont_menu()
+            this@ComponentActivitySettings.show_soundfont_menu(null)
         }
 
     private var result_launcher_set_project_directory =
@@ -464,18 +464,34 @@ class ComponentActivitySettings: PaganComponentActivity() {
     @Composable
     override fun LayoutSmallLandscape(modifier: Modifier) = LayoutMediumPortrait(modifier)
 
-    fun show_soundfont_menu() {
+    fun show_soundfont_menu(selected_file_name: String?) {
         val file_list = this.get_existing_soundfonts()
         if (file_list.isEmpty()) {
             this.import_soundfont()
             return
         }
 
+        val selected_uri = selected_file_name?.let { this@ComponentActivitySettings.coerce_soundfont_uri(it) }
+        val active_soundfonts = this.view_model.configuration.soundfonts.value
+        val active_soundfont_uris = Array(active_soundfonts.size) {
+            this@ComponentActivitySettings.coerce_soundfont_uri(active_soundfonts[it])
+        }
+
         val soundfonts = mutableListOf<Pair<Uri, @Composable RowScope.() -> Unit>>()
         for (uri in file_list.sortedBy { it.pathSegments.last().split("/").last().lowercase() }) {
             val relative_path_segments = uri.pathSegments.last().split("/")
-            soundfonts.add(Pair(uri, { Text(relative_path_segments.last()) }))
+            var skip_entry = false
+            for (check_uri in active_soundfont_uris) {
+                if (check_uri == uri && selected_uri != check_uri) {
+                    skip_entry = true
+                    break
+                }
+            }
+            if (!skip_entry) {
+                soundfonts.add(Pair(uri, { Text(relative_path_segments.last()) }))
+            }
         }
+
         this.view_model.create_dialog { close ->
             @Composable {
                 Column {
@@ -524,11 +540,16 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     UnSortableMenu(
                         modifier = Modifier.weight(1F),
                         options = soundfonts,
-                        default_value = this@ComponentActivitySettings.coerce_soundfont_uri()
+                        default_value = selected_file_name?.let { this@ComponentActivitySettings.coerce_soundfont_uri(it) }
                     ) { uri ->
                         try {
                             SoundFont(this@ComponentActivitySettings, uri)
-                            view_model.set_soundfont_uri(uri)
+                            if (selected_file_name == null) {
+                                view_model.add_soundfont_uri(uri)
+                            } else {
+                                val index = active_soundfonts.indexOf(selected_file_name)
+                                view_model.set_soundfont_uri(uri, index)
+                            }
                             view_model.save_configuration()
                             this@ComponentActivitySettings.update_result()
                             close()
@@ -553,7 +574,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
             MenuPadder()
 
-            for (soundfont_name in soundfonts) {
+            for ((index, soundfont_name) in soundfonts.enumerate()) {
                 Row(Modifier.height(IntrinsicSize.Min)) {
                     Button(
                         contentPadding = PaddingValues(
@@ -589,7 +610,9 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                 overflow = TextOverflow.StartEllipsis
                             )
                         },
-                        onClick = {}
+                        onClick = {
+                            this@ComponentActivitySettings.show_soundfont_menu(soundfont_name)
+                        }
                     )
                     Button(
                         contentPadding = PaddingValues(
@@ -607,7 +630,11 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                 contentDescription = stringResource(R.string.unload_soundfont)
                             )
                         },
-                        onClick = {}
+                        onClick = {
+                            view_model.remove_soundfont(index)
+                            view_model.save_configuration()
+                            this@ComponentActivitySettings.update_result()
+                        }
                     )
                 }
                 MenuPadder()
@@ -643,9 +670,9 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                 )
                             }
                         }
-                        return@Button
+                    } else {
+                        this@ComponentActivitySettings.show_soundfont_menu(null)
                     }
-                    this@ComponentActivitySettings.show_soundfont_menu()
                 }
             )
         }
@@ -694,7 +721,12 @@ class ComponentActivitySettings: PaganComponentActivity() {
                         }
                         return@Button
                     }
-                    this@ComponentActivitySettings.show_soundfont_menu()
+                    val selected = if (this@ComponentActivitySettings.view_model.configuration.soundfonts.value.isEmpty()) {
+                        null
+                    } else {
+                        this@ComponentActivitySettings.view_model.configuration.soundfonts.value[0]
+                    }
+                    this@ComponentActivitySettings.show_soundfont_menu(selected)
                 }
             )
         }

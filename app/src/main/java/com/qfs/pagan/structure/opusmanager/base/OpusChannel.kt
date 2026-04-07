@@ -9,6 +9,7 @@
  */
 package com.qfs.pagan.structure.opusmanager.base
 
+import com.qfs.pagan.PresetKey
 import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.ColorPalettable
 import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.OpusColorPalette
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectControlSet
@@ -152,8 +153,8 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
         this.midi_program = program
     }
 
-    fun get_preset(): Triple<Int, Int, Int> {
-        return Triple(this.soundfont_index, this.get_midi_bank(), this.midi_program)
+    fun get_preset(): PresetKey {
+        return PresetKey(this.soundfont_index, this.get_midi_bank(), this.midi_program)
     }
 
     fun get_line(index: Int): OpusLineAbstract<U> {

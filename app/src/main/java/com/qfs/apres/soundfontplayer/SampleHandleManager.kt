@@ -18,6 +18,7 @@ import com.qfs.apres.soundfont2.InstrumentDirective
 import com.qfs.apres.soundfont2.Preset
 import com.qfs.apres.soundfont2.SampleDirective
 import com.qfs.apres.soundfont2.SoundFont
+import com.qfs.pagan.PresetKey
 import com.qfs.pagan.enumerate
 import kotlin.math.max
 
@@ -29,7 +30,7 @@ class SampleHandleManager(
     ignore_lfo: Boolean = false
 ) {
     private val loaded_presets = Array(this.soundfonts.size) { HashMap<Pair<Int, Int>, Preset>() }
-    private val preset_channel_map = HashMap<Int, Triple<Int, Int, Int>>()
+    private val preset_channel_map = HashMap<Int, PresetKey>()
     private val sample_handle_generator: SampleHandleGenerator
     val buffer_size: Int
 
@@ -57,13 +58,13 @@ class SampleHandleManager(
         // until change_program() is called.
         val (bank, program) = if (this.preset_channel_map.containsKey(channel)) {
             Pair(
-                this.preset_channel_map[channel]!!.second,
-                this.preset_channel_map[channel]!!.third
+                this.preset_channel_map[channel]!!.bank,
+                this.preset_channel_map[channel]!!.program
             )
         } else {
             Pair(0, 0)
         }
-        this.preset_channel_map[channel] = Triple(soundfont_index, bank, program)
+        this.preset_channel_map[channel] = PresetKey(soundfont_index, bank, program)
     }
 
     fun select_bank(channel: Int, bank: Int) {
@@ -71,21 +72,21 @@ class SampleHandleManager(
         // That occurs in change_program()
         val (soundfont_index, program) = if (this.preset_channel_map.containsKey(channel)) {
             Pair(
-                this.preset_channel_map[channel]!!.first,
-                this.preset_channel_map[channel]!!.third
+                this.preset_channel_map[channel]!!.soundfont_index,
+                this.preset_channel_map[channel]!!.program
             )
         } else {
             Pair(0, 0)
         }
 
-        this.preset_channel_map[channel] = Triple(soundfont_index, bank, program)
+        this.preset_channel_map[channel] = PresetKey(soundfont_index, bank, program)
     }
 
     fun change_program(channel: Int, program: Int) {
         val (soundfont_index, bank) = if (this.preset_channel_map.containsKey(channel)) {
             Pair(
-                this.preset_channel_map[channel]!!.first,
-                this.preset_channel_map[channel]!!.second
+                this.preset_channel_map[channel]!!.soundfont_index,
+                this.preset_channel_map[channel]!!.bank
             )
         } else {
             Pair(0, 0)
@@ -115,7 +116,7 @@ class SampleHandleManager(
                     }
                 }
             }
-            this.preset_channel_map[channel] = Triple(soundfont_index, bank, program)
+            this.preset_channel_map[channel] = PresetKey(soundfont_index, bank, program)
             this.decache_unused_presets()
         }
     }
@@ -200,8 +201,8 @@ class SampleHandleManager(
         for ((i, loaded_presets) in this.loaded_presets.enumerate()) {
             val loaded_preset_keys = loaded_presets.keys.toMutableSet()
             for ((_, key) in this.preset_channel_map) {
-                val adj_key = Pair(key.second, key.third)
-                if (key.first == i && loaded_preset_keys.contains(adj_key)) {
+                val adj_key = Pair(key.bank, key.program)
+                if (key.soundfont_index == i && loaded_preset_keys.contains(adj_key)) {
                     loaded_preset_keys.remove(adj_key)
                 }
             }
@@ -213,26 +214,26 @@ class SampleHandleManager(
         }
     }
 
-    fun get_preset(key: Triple<Int, Int, Int>): Preset? {
-        return this.loaded_presets[key.first][Pair(key.second, key.third)]
+    fun get_preset(key: PresetKey): Preset? {
+        return this.loaded_presets[key.soundfont_index][Pair(key.bank, key.program)]
     }
 
     fun get_preset(channel: Int): Preset? {
         val key = this.get_channel_preset(channel)
-        return if (this.loaded_presets.size <= key.first) {
+        return if (this.loaded_presets.size <= key.soundfont_index) {
             null
         } else {
-            this.loaded_presets[key.first][Pair(key.second, key.third)]
+            this.loaded_presets[key.soundfont_index][Pair(key.bank, key.program)]
         }
     }
 
-    private fun get_channel_preset(channel: Int): Triple<Int, Int, Int> {
+    private fun get_channel_preset(channel: Int): PresetKey {
         return if (this.preset_channel_map.containsKey(channel)) {
             this.preset_channel_map[channel]!!
         } else if (channel == Midi.PERCUSSION_CHANNEL) {
-            Triple(0, 128, 0)
+            PresetKey(0, 128, 0)
         } else {
-            Triple(0, 0, 0)
+            PresetKey(0, 0, 0)
         }
     }
 

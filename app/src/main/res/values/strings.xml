@@ -224,6 +224,7 @@
     <string name="sort_option_abc">ABC...</string>
     <string name="sort_option_bank">Bank...</string>
     <string name="sort_option_program">Program...</string>
+    <string name="sort_option_soundfont">Soundfont...</string>
     <string name="hexcode">HexCode</string>
     <string name="red">Red</string>
     <string name="green">Green</string>

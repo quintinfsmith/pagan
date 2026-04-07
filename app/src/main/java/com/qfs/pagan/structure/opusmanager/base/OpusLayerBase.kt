@@ -29,6 +29,7 @@ import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONParser
 import com.qfs.json.JSONString
+import com.qfs.pagan.PresetKey
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
 import com.qfs.pagan.structure.Rational
@@ -584,7 +585,7 @@ open class OpusLayerBase: Effectable {
     /**
      * Get the midi instrument current used by Channel [channel]
      */
-    fun get_channel_instrument(channel: Int): Triple<Int, Int, Int> {
+    fun get_channel_instrument(channel: Int): PresetKey {
         return this.get_channel(channel).get_preset()
     }
 
@@ -1369,14 +1370,14 @@ open class OpusLayerBase: Effectable {
     }
 
     /**
-     * Set the bank of the channel at [channel] to [instrument.first] and the program to [instrument.second].
+     * Set the bank of the channel at [channel] to [instrument.bank] and the program to [instrument.program].
      */
-    open fun channel_set_preset(channel: Int, instrument: Triple<Int, Int, Int>) {
-        this.get_channel(channel).soundfont_index = instrument.first
+    open fun channel_set_preset(channel: Int, instrument: PresetKey) {
+        this.get_channel(channel).soundfont_index = instrument.soundfont_index
         if (!this.is_percussion(channel)) {
-            this.set_channel_bank(channel, instrument.second)
+            this.set_channel_bank(channel, instrument.bank)
         }
-        this.set_channel_program(channel, instrument.third)
+        this.set_channel_program(channel, instrument.program)
     }
 
     /**

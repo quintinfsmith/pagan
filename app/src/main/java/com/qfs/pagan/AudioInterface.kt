@@ -182,15 +182,15 @@ class AudioInterface {
         return this.playback_sample_handle_manager?.get_preset(channel)
     }
 
-    fun get_preset(key: Triple<Int, Int, Int>): Preset? {
+    fun get_preset(key: PresetKey): Preset? {
         return this.playback_sample_handle_manager?.get_preset(key)
     }
 
-    fun get_minimum_instrument_index(instrument: Triple<Int, Int, Int>): Int {
+    fun get_minimum_instrument_index(instrument: PresetKey): Int {
         val preset = this.playback_sample_handle_manager?.get_preset(instrument) ?: return 0
 
-        val soundfont_index = instrument.first
-        val preset_key = Pair(instrument.second, instrument.third)
+        val soundfont_index = instrument.soundfont_index
+        val preset_key = Pair(instrument.bank, instrument.program)
 
         if (!this.minimum_instrument_index_cache[soundfont_index].contains(preset_key)) {
             var min_key = 999

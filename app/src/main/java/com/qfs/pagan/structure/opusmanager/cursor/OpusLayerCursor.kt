@@ -9,6 +9,7 @@
  */
 package com.qfs.pagan.structure.opusmanager.cursor
 import androidx.compose.ui.graphics.Color
+import com.qfs.pagan.PresetKey
 import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
@@ -74,7 +75,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor_select(beat_key, position)
     }
 
-    override fun channel_set_preset(channel: Int, instrument: Triple<Int, Int, Int>) {
+    override fun channel_set_preset(channel: Int, instrument: PresetKey) {
         super.channel_set_preset(channel, instrument)
         this.cursor_select_channel(channel)
     }

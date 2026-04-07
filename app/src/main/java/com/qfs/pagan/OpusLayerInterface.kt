@@ -1131,9 +1131,9 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             val preset = working_channel.get_preset()
             this.vm_controller.update_channel_preset(
                 this.get_midi_channel(i),
-                preset.first,
-                preset.second,
-                preset.third
+                preset.soundfont_index,
+                preset.bank,
+                preset.program
             )
         }
 
@@ -1199,9 +1199,9 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             val preset = working_channel.get_preset()
             this.vm_controller.update_channel_preset(
                 this.get_midi_channel(i),
-                preset.first,
-                preset.second,
-                preset.third
+                preset.soundfont_index,
+                preset.bank,
+                preset.program
 
             )
         }
@@ -1220,9 +1220,9 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             val instrument = channel.get_preset()
             this.vm_controller.update_channel_preset(
                 this.get_midi_channel(i),
-                instrument.first,
-                instrument.second,
-                instrument.third
+                instrument.soundfont_index,
+                instrument.bank,
+                instrument.program
             )
         }
     }
@@ -1397,9 +1397,9 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             val preset = working_channel.get_preset()
             this.vm_controller.update_channel_preset(
                 this.get_midi_channel(i),
-                preset.first,
-                preset.second,
-                preset.third
+                preset.soundfont_index,
+                preset.bank,
+                preset.program
             )
         }
 
@@ -1431,14 +1431,14 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         }
     }
 
-    override fun channel_set_preset(channel: Int, instrument: Triple<Int, Int, Int>) {
+    override fun channel_set_preset(channel: Int, instrument: PresetKey) {
         super.channel_set_preset(channel, instrument)
 
         this.vm_controller.update_channel_preset(
             this.get_midi_channel(channel),
-            instrument.first,
-            instrument.second,
-            instrument.third
+            instrument.soundfont_index,
+            instrument.bank,
+            instrument.program
         )
 
         if (this.ui_lock.is_locked()) return

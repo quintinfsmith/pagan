@@ -9,6 +9,7 @@
  */
 package com.qfs.pagan.structure.opusmanager.history
 import androidx.compose.ui.graphics.Color
+import com.qfs.pagan.PresetKey
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.BlockedActionException
 import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
@@ -472,7 +473,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                     )
                     this.channel_set_preset(
                         channel,
-                        Triple(
+                        PresetKey(
                             current_node.args[2] as Int,
                             current_node.args[3] as Int,
                             current_node.args[4] as Int
@@ -627,7 +628,11 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 HistoryToken.SET_CHANNEL_INSTRUMENT -> {
                     this.channel_set_preset(
                         current_node.args[0] as Int,
-                        checked_cast<Triple<Int, Int, Int>>(current_node.args[1])
+                        PresetKey(
+                            current_node.args[1] as Int,
+                            current_node.args[2] as Int,
+                            current_node.args[3] as Int,
+                        )
                     )
                 }
 
@@ -1563,11 +1568,12 @@ open class OpusLayerHistory: OpusLayerCursor() {
         super.set_transpose(new_transpose)
     }
 
-    override fun channel_set_preset(channel: Int, instrument: Triple<Int, Int, Int>) {
+    override fun channel_set_preset(channel: Int, instrument: PresetKey) {
         this._remember {
+            val (soundfont_index, bank, program) = this.get_channel_instrument(channel)
             this.push_to_history_stack(
                 HistoryToken.SET_CHANNEL_INSTRUMENT,
-                listOf(channel, this.get_channel_instrument(channel))
+                listOf(channel, soundfont_index, bank, program)
             )
             super.channel_set_preset(channel, instrument)
         }
@@ -2149,7 +2155,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
             if (original_title == null) {
                 this.push_to_history_stack(HistoryToken.UNTAG_SECTION, listOf(beat))
             } else {
-                this.push_to_history_stack(HistoryToken.TAG_SECTION, listOf(beat, original_title!!))
+                this.push_to_history_stack(HistoryToken.TAG_SECTION, listOf(beat, original_title))
             }
         }
     }

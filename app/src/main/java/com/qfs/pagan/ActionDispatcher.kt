@@ -63,6 +63,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.documentfile.provider.DocumentFile
 import com.qfs.apres.VirtualMidiInputDevice
+import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.composable.ColorPicker
 import com.qfs.pagan.composable.DialogBar
@@ -1244,7 +1245,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         opus_manager.set_channel_event_color(channel, null)
     }
 
-    fun set_channel_preset(channel: Int, instrument: Triple<Int, Int, Int>? = null) {
+    fun set_channel_preset(channel: Int, instrument: PresetKey? = null) {
         val opus_manager = this.get_opus_manager()
 
         instrument?.let {
@@ -1267,59 +1268,77 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
             return s.uppercase()
         }
 
-
-        val default = opus_manager.get_channel_instrument(channel)
-        val preset_names =  mutableListOf<Triple<Int, Int, String?>>()
-        val options = mutableListOf<Pair<Triple<Int, Int, Int>, @Composable RowScope.() -> Unit>>()
         val is_percussion = opus_manager.is_percussion(channel)
+        val default = opus_manager.get_channel_instrument(channel)
 
-        val pre_option = if (!this.vm_controller.audio_interface.has_soundfont() || this.vm_controller.active_midi_device != null) {
-            val std_hashmap = HashMap<Int, String?>()
-            for (i in 0 until 128) std_hashmap[i] = null
-            sortedMapOf<Int, HashMap<Int, String?>>(
-                0 to std_hashmap,
-                128 to hashMapOf(0 to null)
-            )
+        val pre_option = mutableListOf<Pair<PresetKey, String?>>()
+        if (!this.vm_controller.audio_interface.has_soundfont() || this.vm_controller.active_midi_device != null) {
+            // Setup default empty preset names
+            for (i in 0 until 128) {
+                pre_option.add(Pair(PresetKey(default.soundfont_index, 0, i), null))
+            }
+            pre_option.add(Pair(PresetKey(default.soundfont_index, 128, 0), null))
         } else {
-            opus_manager.vm_state.preset_names[default.first].toSortedMap()
+            for ((soundfont_index, bank_map) in opus_manager.vm_state.preset_names.enumerate()) {
+                for ((bank, program_map) in bank_map) {
+                    for ((program, name) in program_map) {
+                        pre_option.add(Pair(PresetKey(soundfont_index, bank, program), name))
+                    }
+                }
+            }
+            pre_option.sortBy { it.first.program }
+            pre_option.sortBy { it.first.bank }
+            pre_option.sortBy { it.first.soundfont_index }
         }
 
-        for ((bank, bank_map) in pre_option) {
-            if (is_percussion && bank != 128) continue
-            if (!this.vm_top.configuration.allow_std_percussion.value && !is_percussion && bank == 128) continue
+        val multi_soundfont = opus_manager.vm_state.active_soundfonts.value.size > 1
+        val options = mutableListOf<Pair<PresetKey, @Composable RowScope.() -> Unit>>()
+        val preset_names =  mutableListOf<Pair<PresetKey, String?>>()
+        for ((preset_key, name) in pre_option) {
+            if (is_percussion && preset_key.bank != 128) continue
+            if (!this.vm_top.configuration.allow_std_percussion.value && !is_percussion && preset_key.bank == 128) continue
 
-            for ((program, name) in bank_map.toSortedMap()) {
-                preset_names.add(Triple(bank, program, name))
-                options.add(
-                    Pair(
-                        Triple(default.first, bank, program),
-                        {
-                            Text("${padded_hex(bank)} | ${padded_hex(program)}")
-                            Text(
-                                name ?: if (bank == 128) {
-                                    stringResource(R.string.gm_kit)
-                                } else {
-                                    stringArrayResource(R.array.general_midi_presets)[program]
-                                },
-                                modifier = Modifier.weight(1F),
-                                textAlign = TextAlign.Center,
-                                maxLines = 1
-                            )
+            preset_names.add(Pair(preset_key, name))
+            options.add(
+                Pair(
+                    preset_key,
+                    {
+                        if (multi_soundfont) {
+                            Text("${padded_hex(preset_key.soundfont_index)}:${padded_hex(preset_key.bank)}|${padded_hex(preset_key.program)}")
+                        } else {
+                            Text("${padded_hex(preset_key.bank)}|${padded_hex(preset_key.program)}")
                         }
-                    )
+                        Text(
+                            name ?: if (preset_key.bank == 128) {
+                                stringResource(R.string.gm_kit)
+                            } else {
+                                stringArrayResource(R.array.general_midi_presets)[preset_key.program]
+                            },
+                            modifier = Modifier.weight(1F),
+                            textAlign = TextAlign.Center,
+                            maxLines = 1
+                        )
+                    }
                 )
-            }
+            )
         }
         val default_presets = this.context.resources.getStringArray(R.array.general_midi_presets)
-        val sort_options = listOf(
-            Pair(R.string.sort_option_bank) { a: Int, b: Int -> preset_names[a].first.compareTo(preset_names[b].first) },
-            Pair(R.string.sort_option_program) { a: Int, b: Int -> preset_names[a].second.compareTo(preset_names[b].second) },
+        val sort_options = mutableListOf(
+            Pair(R.string.sort_option_bank) { a: Int, b: Int -> preset_names[a].first.bank.compareTo(preset_names[b].first.bank) },
+            Pair(R.string.sort_option_program) { a: Int, b: Int -> preset_names[a].first.program.compareTo(preset_names[b].first.program) },
             Pair(R.string.sort_option_abc) { a: Int, b: Int ->
-                val a_name = preset_names[a].third ?: default_presets[preset_names[a].second]
-                val b_name = preset_names[b].third ?: default_presets[preset_names[b].second]
+                val a_name = preset_names[a].second ?: default_presets[preset_names[a].first.program]
+                val b_name = preset_names[b].second ?: default_presets[preset_names[b].first.program]
                 a_name.lowercase().compareTo(b_name.lowercase())
             }
         )
+
+        if (multi_soundfont) {
+            sort_options.add(
+                0,
+                Pair(R.string.sort_option_soundfont) { a: Int, b: Int -> preset_names[a].first.soundfont_index}
+            )
+        }
 
         this.vm_top.sortable_list_dialog(
             R.string.dropdown_choose_instrument,
@@ -1327,39 +1346,6 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
             sort_options = sort_options,
             selected_sort = mutableIntStateOf(0),
             default_value = default,
-            other = { c, i ->
-                val expanded = remember { mutableStateOf(false) }
-                DropdownMenu(
-                    expanded = expanded.value,
-                    onDismissRequest = { expanded.value = false }
-                ) {
-                    for ((i, file_path) in opus_manager.vm_state.active_soundfonts.value.enumerate()) {
-                        DropdownMenuItem(
-                            text = { Text(file_path) },
-                            onClick = {
-                                TODO()
-                            }
-                        )
-                    }
-                }
-                Button(
-                    modifier = Modifier
-                        .height(Dimensions.SortableMenuSortButtonDiameter)
-                        .width(Dimensions.SortableMenuSortButtonDiameter),
-                    colors = ButtonDefaults.buttonColors().copy(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    ),
-                    onClick = { expanded.value = !expanded.value },
-                    contentPadding = Dimensions.SortableMenuSortButtonPadding,
-                    content = {
-                        Icon(
-                            painter = painterResource(R.drawable.icon_sort),
-                            contentDescription = stringResource(R.string.cd_sort_options)
-                        )
-                    }
-                )
-            },
             onClick = { this.set_channel_preset(channel, it) }
         )
     }

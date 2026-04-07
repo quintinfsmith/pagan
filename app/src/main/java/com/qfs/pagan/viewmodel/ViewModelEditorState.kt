@@ -21,6 +21,7 @@ import androidx.lifecycle.ViewModel
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.Coordinate
 import com.qfs.pagan.PlaybackState
+import com.qfs.pagan.PresetKey
 import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.Values
 import com.qfs.pagan.enumerate
@@ -84,7 +85,7 @@ class ViewModelEditorState: ViewModel() {
         val is_spillover = mutableStateOf(is_spillover)
     }
 
-    class ChannelData(percussion: Boolean, instrument: Triple<Int, Int, Int>, is_mute: Boolean, is_selected: Boolean = false, name: String?, size: Int = 0, palette: OpusColorPalette) {
+    class ChannelData(percussion: Boolean, instrument: PresetKey, is_mute: Boolean, is_selected: Boolean = false, name: String?, size: Int = 0, palette: OpusColorPalette) {
         val percussion = mutableStateOf(percussion)
         val instrument = mutableStateOf(instrument)
         val is_mute = mutableStateOf(is_mute)
@@ -94,7 +95,7 @@ class ViewModelEditorState: ViewModel() {
         val palette = mutableStateOf(palette)
         val update_key = mutableStateOf(System.currentTimeMillis())
 
-        fun update(percussion: Boolean, instrument: Triple<Int, Int, Int>, is_mute: Boolean, is_selected: Boolean = false, name: String?, size: Int = 0, palette: OpusColorPalette) {
+        fun update(percussion: Boolean, instrument: PresetKey, is_mute: Boolean, is_selected: Boolean = false, name: String?, size: Int = 0, palette: OpusColorPalette) {
             this.percussion.value = percussion
             this.instrument.value = instrument
             this.is_mute.value = is_mute
@@ -219,7 +220,7 @@ class ViewModelEditorState: ViewModel() {
 
     private val working_path = mutableListOf<Int>()
     val preset_names: MutableList<HashMap<Int, HashMap<Int, String>>> = mutableListOf()
-    val available_instruments = HashMap<Triple<Int, Int, Int>, List<Pair<String, Int>>>()
+    val available_instruments = HashMap<PresetKey, List<Pair<String, Int>>>()
     val pixel_density = mutableStateOf(1F)
 
     val has_global_effects_hidden = mutableStateOf(true)
@@ -643,7 +644,7 @@ class ViewModelEditorState: ViewModel() {
         }
     }
 
-    fun add_channel(channel: Int, percussion: Boolean, instrument: Triple<Int, Int, Int>, is_mute: Boolean, size: Int = 0, palette: OpusColorPalette) {
+    fun add_channel(channel: Int, percussion: Boolean, instrument: PresetKey, is_mute: Boolean, size: Int = 0, palette: OpusColorPalette) {
         for (ld in this@ViewModelEditorState.line_data) {
             ld.channel.value?.let {
                 if (it >= channel) {
@@ -767,7 +768,7 @@ class ViewModelEditorState: ViewModel() {
         }
     }
 
-    fun set_channel_data(channel_index: Int, percussion: Boolean, preset: Triple<Int, Int, Int>, is_mute: Boolean, size: Int = 0, palette: OpusColorPalette) {
+    fun set_channel_data(channel_index: Int, percussion: Boolean, preset: PresetKey, is_mute: Boolean, size: Int = 0, palette: OpusColorPalette) {
         val name = this.get_preset_name(preset)
         this.channel_data[channel_index].update(percussion, preset, is_mute, is_selected = false, name = name, size = size, palette = palette)
     }
@@ -1060,7 +1061,7 @@ class ViewModelEditorState: ViewModel() {
         this.preset_names[index].clear()
 
         for (key in this.available_instruments.keys.toList()) {
-            if (key.first == index) {
+            if (key.soundfont_index == index) {
                 this.available_instruments.remove(key)
             }
         }
@@ -1098,11 +1099,11 @@ class ViewModelEditorState: ViewModel() {
                     }
                 }
             }
-            this.available_instruments[Triple(index, bank, program)] = available_keys.sortedBy { it.second }
+            this.available_instruments[PresetKey(index, bank, program)] = available_keys.sortedBy { it.second }
         }
     }
 
-    fun get_preset_name(key: Triple<Int, Int, Int>): String? {
+    fun get_preset_name(key: PresetKey): String? {
         val (index, bank, program) = key
         return if (index >= this.preset_names.size) {
             null
@@ -1117,11 +1118,11 @@ class ViewModelEditorState: ViewModel() {
         }
     }
 
-    fun get_available_instruments(preset_key: Triple<Int, Int, Int>): List<Pair<String, Int>> {
+    fun get_available_instruments(preset_key: PresetKey): List<Pair<String, Int>> {
         return this.available_instruments[preset_key] ?: listOf()
     }
 
-    fun get_instrument_name(preset_key: Triple<Int, Int, Int>, offset: Int): String? {
+    fun get_instrument_name(preset_key: PresetKey, offset: Int): String? {
         for ((name, index) in this.get_available_instruments(preset_key)) {
             if (index == offset) return name
         }

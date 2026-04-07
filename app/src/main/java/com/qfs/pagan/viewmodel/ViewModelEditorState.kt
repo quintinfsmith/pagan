@@ -219,12 +219,12 @@ class ViewModelEditorState: ViewModel() {
 
     private val working_path = mutableListOf<Int>()
     val preset_names: MutableList<HashMap<Int, HashMap<Int, String>>> = mutableListOf()
-    val bkp_preset_names = Array<String>(128) { "" }
     val available_instruments = HashMap<Triple<Int, Int, Int>, List<Pair<String, Int>>>()
     val pixel_density = mutableStateOf(1F)
 
     val has_global_effects_hidden = mutableStateOf(true)
     val soundfont_active: MutableState<Long?> = mutableStateOf(null) // can use as key if we specify some indicator
+    val active_soundfonts: MutableState<Array<String>> = mutableStateOf(arrayOf())
     val table_side_padding: MutableState<Float> = mutableStateOf(0F)
     val table_bottom_padding: MutableState<Float> = mutableStateOf(0F)
     val wide_beat_progress: MutableState<Float> = mutableStateOf(0F)
@@ -1225,19 +1225,15 @@ class ViewModelEditorState: ViewModel() {
         return LocationQuad(channel, line_offset, beat, position)
     }
 
-    fun enable_soundfont() {
+    fun enable_soundfont(soundfonts: Array<String>) {
         this.soundfont_active.value = System.currentTimeMillis()
+        this.active_soundfonts.value = Array(soundfonts.size) { soundfonts[it] }
     }
 
     fun unset_soundfont() {
         this.soundfont_active.value = null
         this.clear_instrument_names()
-    }
-
-    fun set_bkp_preset_names(names: Array<String>) {
-        for ((i, name) in names.enumerate()) {
-            this.bkp_preset_names[i] = name
-        }
+        this.active_soundfonts.value = arrayOf()
     }
 
     // check if we need to draw the lin *above* the cell (when dragging)

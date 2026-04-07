@@ -34,6 +34,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -1266,6 +1267,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
             return s.uppercase()
         }
 
+
         val default = opus_manager.get_channel_instrument(channel)
         val preset_names =  mutableListOf<Triple<Int, Int, String?>>()
         val options = mutableListOf<Pair<Triple<Int, Int, Int>, @Composable RowScope.() -> Unit>>()
@@ -1325,6 +1327,39 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
             sort_options = sort_options,
             selected_sort = mutableIntStateOf(0),
             default_value = default,
+            other = { c, i ->
+                val expanded = remember { mutableStateOf(false) }
+                DropdownMenu(
+                    expanded = expanded.value,
+                    onDismissRequest = { expanded.value = false }
+                ) {
+                    for ((i, file_path) in opus_manager.vm_state.active_soundfonts.value.enumerate()) {
+                        DropdownMenuItem(
+                            text = { Text(file_path) },
+                            onClick = {
+                                TODO()
+                            }
+                        )
+                    }
+                }
+                Button(
+                    modifier = Modifier
+                        .height(Dimensions.SortableMenuSortButtonDiameter)
+                        .width(Dimensions.SortableMenuSortButtonDiameter),
+                    colors = ButtonDefaults.buttonColors().copy(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    onClick = { expanded.value = !expanded.value },
+                    contentPadding = Dimensions.SortableMenuSortButtonPadding,
+                    content = {
+                        Icon(
+                            painter = painterResource(R.drawable.icon_sort),
+                            contentDescription = stringResource(R.string.cd_sort_options)
+                        )
+                    }
+                )
+            },
             onClick = { this.set_channel_preset(channel, it) }
         )
     }

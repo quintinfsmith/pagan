@@ -14,6 +14,7 @@ import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +31,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PageSize
+import androidx.compose.foundation.pager.VerticalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.input.TextFieldLineLimits
@@ -51,6 +56,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -60,6 +66,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.documentfile.provider.DocumentFile
 import com.qfs.apres.VirtualMidiInputDevice
@@ -72,6 +79,7 @@ import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.DivisorSeparator
 import com.qfs.pagan.composable.IntegerInput
 import com.qfs.pagan.composable.NumberPicker
+import com.qfs.pagan.composable.SortableMenu
 import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.composable.button.Button
@@ -98,9 +106,11 @@ import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import java.io.IOException
 import kotlin.concurrent.thread
 import kotlin.math.ceil
+import kotlin.math.exp
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
@@ -1291,23 +1301,25 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
             pre_option.sortBy { it.first.soundfont_index }
         }
 
-        val multi_soundfont = opus_manager.vm_state.active_soundfonts.value.size > 1
-        val options = mutableListOf<Pair<PresetKey, @Composable RowScope.() -> Unit>>()
-        val preset_names =  mutableListOf<Pair<PresetKey, String?>>()
+        val options = mutableListOf<MutableList<Pair<PresetKey, @Composable RowScope.() -> Unit>>>()
+        val preset_names =  mutableListOf<MutableList<Pair<PresetKey, String?>>>()
         for ((preset_key, name) in pre_option) {
             if (is_percussion && preset_key.bank != 128) continue
             if (!this.vm_top.configuration.allow_std_percussion.value && !is_percussion && preset_key.bank == 128) continue
 
-            preset_names.add(Pair(preset_key, name))
-            options.add(
+            while (preset_names.size <= preset_key.soundfont_index) {
+                preset_names.add(mutableListOf())
+            }
+            preset_names[preset_key.soundfont_index].add(Pair(preset_key, name))
+
+            while (options.size <= preset_key.soundfont_index) {
+                options.add(mutableListOf())
+            }
+            options[preset_key.soundfont_index].add(
                 Pair(
                     preset_key,
                     {
-                        if (multi_soundfont) {
-                            Text("${padded_hex(preset_key.soundfont_index)}:${padded_hex(preset_key.bank)}|${padded_hex(preset_key.program)}")
-                        } else {
-                            Text("${padded_hex(preset_key.bank)}|${padded_hex(preset_key.program)}")
-                        }
+                        Text("${padded_hex(preset_key.bank)}|${padded_hex(preset_key.program)}")
                         Text(
                             name ?: if (preset_key.bank == 128) {
                                 stringResource(R.string.gm_kit)
@@ -1323,31 +1335,93 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
             )
         }
         val default_presets = this.context.resources.getStringArray(R.array.general_midi_presets)
-        val sort_options = mutableListOf(
-            Pair(R.string.sort_option_bank) { a: Int, b: Int -> preset_names[a].first.bank.compareTo(preset_names[b].first.bank) },
-            Pair(R.string.sort_option_program) { a: Int, b: Int -> preset_names[a].first.program.compareTo(preset_names[b].first.program) },
-            Pair(R.string.sort_option_abc) { a: Int, b: Int ->
-                val a_name = preset_names[a].second ?: default_presets[preset_names[a].first.program]
-                val b_name = preset_names[b].second ?: default_presets[preset_names[b].first.program]
-                a_name.lowercase().compareTo(b_name.lowercase())
-            }
-        )
 
-        if (multi_soundfont) {
-            sort_options.add(
-                0,
-                Pair(R.string.sort_option_soundfont) { a: Int, b: Int -> preset_names[a].first.soundfont_index}
+        val sort_options = List(preset_names.size) { i ->
+            listOf(
+                Pair(R.string.sort_option_bank) { a: Int, b: Int ->
+                    preset_names[i][a].first.bank.compareTo(preset_names[i][b].first.bank)
+                },
+                Pair(R.string.sort_option_program) { a: Int, b: Int ->
+                    preset_names[i][a].first.program.compareTo(preset_names[i][b].first.program)
+                },
+                Pair(R.string.sort_option_abc) { a: Int, b: Int ->
+                    val a_name = preset_names[i][a].second ?: default_presets[preset_names[i][a].first.program]
+                    val b_name = preset_names[i][b].second ?: default_presets[preset_names[i][b].first.program]
+                    a_name.lowercase().compareTo(b_name.lowercase())
+                }
             )
         }
 
-        this.vm_top.sortable_list_dialog(
-            R.string.dropdown_choose_instrument,
-            default_menu = options,
-            sort_options = sort_options,
-            selected_sort = mutableIntStateOf(0),
-            default_value = default,
-            onClick = { this.set_channel_preset(channel, it) }
-        )
+        this.vm_top.create_dialog { close ->
+            @Composable {
+                val selected_sort = remember { mutableIntStateOf(0) }
+                val scope = rememberCoroutineScope()
+                val state = rememberPagerState(
+                    default.soundfont_index,
+                    pageCount = { opus_manager.vm_state.active_soundfonts.value.size }
+                )
+
+                HorizontalPager(
+                    modifier = Modifier
+                        .weight(1F, fill = false),
+                    state = state,
+                    pageSize = PageSize.Fill,
+                    snapPosition = SnapPosition.Center,
+                    beyondViewportPageCount = 0
+                ) { i ->
+                    SortableMenu(
+                        modifier = Modifier
+                            .padding(horizontal = 12.dp)
+                            .fillMaxWidth(),
+                        title_content = {
+                            if (opus_manager.vm_state.active_soundfonts.value.size > 1) {
+                                val expanded = remember { mutableStateOf(false) }
+                                DropdownMenu(
+                                    expanded = expanded.value,
+                                    onDismissRequest = { expanded.value = false }
+                                ) {
+                                    for ((j, soundfont_name) in opus_manager.vm_state.active_soundfonts.value.enumerate()) {
+                                        DropdownMenuItem(
+                                            text = { Text("$j: $soundfont_name") },
+                                            onClick = {
+                                                expanded.value = false
+                                                scope.launch {
+                                                    state.animateScrollToPage(j)
+                                                }
+                                            }
+                                        )
+                                    }
+                                }
+                                Button(
+                                    onClick = { expanded.value = true },
+                                    content = {
+                                        Text(
+                                            opus_manager.vm_state.active_soundfonts.value[i],
+                                            maxLines = 1,
+                                            overflow = TextOverflow.StartEllipsis
+                                        )
+                                    }
+                                )
+                            } else {
+                                DialogSTitle(R.string.dropdown_choose_instrument)
+                            }
+                        },
+                        default_menu = options[i],
+                        sort_row_padding = PaddingValues(
+                            bottom = Dimensions.DialogBarPaddingVertical,
+                        ),
+                        active_sort_option = selected_sort,
+                        sort_options = sort_options[i],
+                        default_value = default,
+                        onClick = {
+                            close()
+                            this@ActionDispatcher.set_channel_preset(channel, it)
+                        }
+                    )
+                }
+                DialogBar(neutral = close)
+            }
+        }
     }
 
     fun insert_percussion_channel(index: Int? = null) {

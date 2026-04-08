@@ -1237,9 +1237,9 @@ class ViewModelEditorState: ViewModel() {
         return LocationQuad(channel, line_offset, beat, position)
     }
 
-    fun enable_soundfont(soundfonts: Array<String>) {
+    fun enable_soundfont(soundfonts: Array<MutableState<String>>) {
         this.soundfont_active.value = System.currentTimeMillis()
-        this.active_soundfonts.value = Array(soundfonts.size) { soundfonts[it] }
+        this.active_soundfonts.value = Array(soundfonts.size) { soundfonts[it].value }
     }
 
     fun unset_soundfont() {

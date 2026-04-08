@@ -38,9 +38,10 @@ class PaganConfiguration(
     indent_json: Boolean = false,
     latest_input_indicator: Boolean = true,
     normalize_beat_widths: Boolean = false,
-    beat_stroke_thickness: Dp = 0.dp
+    beat_stroke_thickness: Dp = 0.dp,
+    allow_multiple_soundfonts: Boolean = false
 ) {
-    val soundfonts: MutableState<Array<String>> = mutableStateOf(soundfonts)
+    val soundfonts: MutableState<Array<MutableState<String>>> = mutableStateOf(Array(soundfonts.size) { mutableStateOf(soundfonts[it]) })
     val sample_rate: MutableState<Int> = mutableStateOf(sample_rate)
     val move_mode: MutableState<MoveMode> = mutableStateOf(move_mode)
     val use_preferred_soundfont: MutableState<Boolean> = mutableStateOf(use_preferred_soundfont)
@@ -53,6 +54,7 @@ class PaganConfiguration(
     val latest_input_indicator: MutableState<Boolean> = mutableStateOf(latest_input_indicator)
     val normalize_beat_widths: MutableState<Boolean> = mutableStateOf(normalize_beat_widths)
     val beat_stroke_thickness: MutableState<Dp> = mutableStateOf(beat_stroke_thickness)
+    val allow_multiple_soundfonts: MutableState<Boolean> = mutableStateOf(allow_multiple_soundfonts)
 
     enum class MoveMode {
         MOVE,
@@ -62,7 +64,7 @@ class PaganConfiguration(
 
     companion object {
         fun from_json(content: JSONHashMap): PaganConfiguration {
-            var soundfonts = mutableListOf<String>()
+            val soundfonts = mutableListOf<String>()
             // Handle old-style single soundfont
             content.get_stringn("soundfont2")?.let {
                 soundfonts.add(it)
@@ -86,7 +88,8 @@ class PaganConfiguration(
                 indent_json = content.get_boolean("indent_json", false),
                 latest_input_indicator = content.get_boolean("latest_input_indicator", true),
                 normalize_beat_widths = content.get_boolean("normalize_beat_widths", false),
-                beat_stroke_thickness = content.get_floatn("beat_stroke_thickness")?.dp ?: 0.dp
+                beat_stroke_thickness = content.get_floatn("beat_stroke_thickness")?.dp ?: 0.dp,
+                allow_multiple_soundfonts = content.get_boolean("allow_multiple_soundfonts", false)
             )
         }
 
@@ -104,7 +107,7 @@ class PaganConfiguration(
 
     fun update_from_path(path: String) {
         val config = PaganConfiguration.from_path(path)
-        this.soundfonts.value = Array(config.soundfonts.value.size) { config.soundfonts.value[it] }
+        this.soundfonts.value = Array(config.soundfonts.value.size) { mutableStateOf(config.soundfonts.value[it].value) }
         this.sample_rate.value = config.sample_rate.value
         this.move_mode.value = config.move_mode.value
         this.use_preferred_soundfont.value = config.use_preferred_soundfont.value
@@ -117,6 +120,7 @@ class PaganConfiguration(
         this.latest_input_indicator.value = config.latest_input_indicator.value
         this.normalize_beat_widths.value = config.normalize_beat_widths.value
         this.beat_stroke_thickness.value = config.beat_stroke_thickness.value
+        this.allow_multiple_soundfonts.value = config.allow_multiple_soundfonts.value
     }
 
     fun save(path: String) {
@@ -125,7 +129,7 @@ class PaganConfiguration(
 
     fun to_json(): JSONHashMap {
         val output = JSONHashMap()
-        output["soundfonts"] = JSONList(*Array(this.soundfonts.value.size) { JSONString(this.soundfonts.value[it]) })
+        output["soundfonts"] = JSONList(*Array(this.soundfonts.value.size) { JSONString(this.soundfonts.value[it].value) })
         output["sample_rate"] = this.sample_rate.value
         output["move_mode"] = this.move_mode.value.name
         output["use_preferred_soundfont"] = this.use_preferred_soundfont.value
@@ -138,6 +142,7 @@ class PaganConfiguration(
         output["latest_input_indicator"] = this.latest_input_indicator.value
         output["normalize_beat_widths"] = this.normalize_beat_widths.value
         output["beat_stroke_thickness"] = this.beat_stroke_thickness.value.value
+        output["allow_multiple_soundfonts"] = this.allow_multiple_soundfonts.value
         // output["channel_colors"] = JSONList(*Array(this.channel_colors.size) {
         //     JSONString(this.channel_colors[it].toHexString(HexFormat.Default))
         // })

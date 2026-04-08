@@ -26,5 +26,3 @@ fun <T> List<T>.enumerate():  Array<Pair<Int, T>> {
         Pair(i, this[i])
     }
 }
-
-

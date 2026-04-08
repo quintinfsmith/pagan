@@ -1362,8 +1362,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                 )
 
                 HorizontalPager(
-                    modifier = Modifier
-                        .weight(1F, fill = false),
+                    modifier = Modifier.weight(1F, fill = false),
                     state = state,
                     pageSize = PageSize.Fill,
                     snapPosition = SnapPosition.Center,
@@ -1380,7 +1379,8 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                                     expanded = expanded.value,
                                     onDismissRequest = { expanded.value = false }
                                 ) {
-                                    for ((j, soundfont_name) in opus_manager.vm_state.active_soundfonts.value.enumerate()) {
+                                    for ((j, soundfont_path) in opus_manager.vm_state.active_soundfonts.value.enumerate()) {
+                                        val soundfont_name = soundfont_path.split("/").let { it[it.size - 1].trim() }
                                         DropdownMenuItem(
                                             text = { Text("$j: $soundfont_name") },
                                             onClick = {
@@ -1396,7 +1396,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                                     onClick = { expanded.value = true },
                                     content = {
                                         Text(
-                                            opus_manager.vm_state.active_soundfonts.value[i],
+                                            (opus_manager.vm_state.active_soundfonts.value[i]).split("/").let { it[it.size - 1].trim() },
                                             maxLines = 1,
                                             overflow = TextOverflow.StartEllipsis
                                         )

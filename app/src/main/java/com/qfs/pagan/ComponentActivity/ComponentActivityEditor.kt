@@ -177,6 +177,7 @@ import java.time.format.DateTimeFormatter
 import kotlin.concurrent.thread
 import kotlin.math.ceil
 import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
@@ -646,7 +647,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         for (file_path in file_paths) {
             var soundfont_file = soundfont_directory
-            for (segment in file_path.split("/")) {
+            for (segment in file_path.value.split("/")) {
                 soundfont_file = soundfont_file.findFile(segment) ?: throw FileNotFoundException()
             }
 
@@ -669,7 +670,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         this.controller_model.set_soundfonts(*soundfonts.toTypedArray())
         this.controller_model.playback_device?.activity = this
-        this.controller_model.active_soundfont_relative_paths = file_paths.toList()
+        this.controller_model.active_soundfont_relative_paths = List(file_paths.size) { i -> file_paths[i].value }
         this.state_model.enable_soundfont(this.view_model.configuration.soundfonts.value)
     }
 
@@ -2580,10 +2581,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
         reader.close()
         input_stream?.close()
 
-        this@ComponentActivityEditor.controller_model.opus_manager.load(content) { json_data ->
-            this@ComponentActivityEditor.controller_model.active_project = uri
-            this@ComponentActivityEditor.controller_model.project_exists.value = true
-            if (this@ComponentActivityEditor.view_model.configuration.use_preferred_soundfont.value) {
+        this.controller_model.opus_manager.load(content) { json_data ->
+            this.controller_model.active_project = uri
+            this.controller_model.project_exists.value = true
+            if (this.view_model.configuration.use_preferred_soundfont.value) {
                 val file_paths = mutableListOf<String>()
                 json_data.get_hashmap("d").get_stringn("sf")?.let {
                     file_paths.add(it)
@@ -2594,18 +2595,48 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     }
                 }
 
-                val original = this@ComponentActivityEditor.view_model.configuration.soundfonts.value
-                if (file_paths != original.toList()) {
-                    this@ComponentActivityEditor.view_model.configuration.soundfonts.value = file_paths.toTypedArray()
+                if (!this.view_model.configuration.allow_multiple_soundfonts.value) {
+                    while (file_paths.size > 1) {
+                        file_paths.removeAt(file_paths.size - 1)
+                    }
+                }
+
+
+                val soundfonts = this.view_model.configuration.soundfonts
+                val originals = List(soundfonts.value.size) {
+                    soundfonts.value[it].value
+                }
+
+                if (file_paths != originals.toList()) {
+                    for (i in 0 until min(soundfonts.value.size, file_paths.size)) {
+                        soundfonts.value[i].value = file_paths[i]
+                    }
+
+                    soundfonts.value += Array(soundfonts.value.size - file_paths.size) { i -> mutableStateOf(file_paths[i]) }
+
+                    val bkp_values: MutableList<MutableState<String>> = mutableListOf()
+                    if (soundfonts.value.size > file_paths.size) {
+                        bkp_values.addAll(soundfonts.value.sliceArray(file_paths.size until soundfonts.value.size))
+                        soundfonts.value = soundfonts.value.sliceArray(0 until file_paths.size)
+                    }
                     // Try opening the assigned soundfont, but if it fails for any reason, go back to the
                     // Currently active one.
                     try {
                         this.set_soundfont()
                     } catch (_: Exception) {
-                        this@ComponentActivityEditor.view_model.configuration.soundfonts.value = original
-                        this@ComponentActivityEditor.set_soundfont()
+                        // Restore the preexisting MutableState wrappers as well as the values themselves
+                        if (originals.size > soundfonts.value.size) {
+                            soundfonts.value += bkp_values.toTypedArray()
+                        } else if (originals.size < soundfonts.value.size) {
+                            soundfonts.value = soundfonts.value.sliceArray(0 until originals.size)
+                        }
+                        for ((i, value) in originals.enumerate()) {
+                            soundfonts.value[i].value = value
+                        }
+
+                        this.set_soundfont()
                     }
-                    this@ComponentActivityEditor.view_model.save_configuration()
+                    this.view_model.save_configuration()
                 }
             }
         }

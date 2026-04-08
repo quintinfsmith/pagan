@@ -236,6 +236,15 @@ class SoundFont(val context: Context, uri: Uri) {
         )
     }
 
+    fun has_preset(bank: Int, program: Int): Boolean {
+        for ((_, cbank, cprogram) in this.get_available_presets()) {
+            if (cbank == bank && program == cprogram) {
+                return true
+            }
+        }
+        return false
+    }
+
     fun get_available_presets(): Set<Triple<String, Int, Int>> {
         val output = mutableSetOf<Triple<String, Int, Int>>()
         val phdr_bytes = this.pdta_chunks["phdr"]!!

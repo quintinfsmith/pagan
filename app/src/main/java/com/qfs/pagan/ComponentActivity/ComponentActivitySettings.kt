@@ -12,6 +12,7 @@ package com.qfs.pagan.ComponentActivity
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.database.Cursor
+import android.graphics.Paint
 import android.net.Uri
 import android.os.Bundle
 import android.provider.DocumentsContract
@@ -19,6 +20,7 @@ import android.provider.OpenableColumns
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -71,7 +73,6 @@ import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -574,107 +575,106 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
             MenuPadder()
 
-            for ((index, soundfont_name) in soundfonts.enumerate()) {
-                Row(Modifier.height(IntrinsicSize.Min)) {
+            Column(Modifier.width(IntrinsicSize.Min)) {
+                for ((index, soundfont_name) in soundfonts.enumerate()) {
+                    Row(
+                        Modifier.height(IntrinsicSize.Min),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Button(
+                            modifier = Modifier
+                                .weight(1F)
+                                .height(Dimensions.ButtonHeight.Normal),
+                            contentPadding = PaddingValues(
+                                top = Dimensions.SoundFontMenuButtonPadding,
+                                start = Dimensions.SoundFontMenuButtonPadding,
+                                bottom = Dimensions.SoundFontMenuButtonPadding,
+                                end = Dimensions.SoundFontMenuButtonPadding
+                            ),
+                            content = {
+                                Text(
+                                    soundfont_name,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.StartEllipsis
+                                )
+                            },
+                            onClick = {
+                                this@ComponentActivitySettings.show_soundfont_menu(soundfont_name)
+                            }
+                        )
+                        Icon(
+                            modifier = Modifier
+                                .padding(
+                                    top = Dimensions.SoundFontMenuButtonPadding,
+                                    start = Dimensions.SoundFontMenuButtonExtraPadding,
+                                    bottom = Dimensions.SoundFontMenuButtonPadding,
+                                    end = 0.dp
+                                )
+                                .clickable(onClick = {
+                                    view_model.remove_soundfont(index)
+                                    view_model.save_configuration()
+                                    this@ComponentActivitySettings.update_result()
+                                })
+                                .height(Dimensions.SoundFontMenuIconHeight),
+                            painter = painterResource(R.drawable.icon_cross_circle),
+                            contentDescription = stringResource(R.string.unload_soundfont)
+                        )
+                    }
+                    MenuPadder()
+                }
+                Row {
+                    Spacer(Modifier.weight(1F))
                     Button(
-                        contentPadding = PaddingValues(
-                            top = Dimensions.SoundFontMenuButtonPadding,
-                            end = Dimensions.SoundFontMenuButtonExtraPadding,
-                            bottom = Dimensions.SoundFontMenuButtonPadding,
-                            start = Dimensions.SoundFontMenuButtonPadding
-                        ),
-                        modifier = Modifier.height(Dimensions.ButtonHeight.Normal),
-                        shape = Shapes.SectionButtonStart,
-                        content = {
-                            Icon(
-                                modifier = Modifier.height(Dimensions.SoundFontMenuIconHeight),
-                                painter = painterResource(R.drawable.icon_drag),
-                                contentDescription = stringResource(R.string.unload_soundfont)
-                            )
-                        },
-                        onClick = {}
-                    )
-                    Button(
-                        modifier = Modifier.height(Dimensions.ButtonHeight.Normal),
-                        shape = Shapes.SectionButtonCenter,
-                        contentPadding = PaddingValues(
-                            top = Dimensions.SoundFontMenuButtonPadding,
-                            start = Dimensions.SoundFontMenuButtonPadding,
-                            bottom = Dimensions.SoundFontMenuButtonPadding,
-                            end = Dimensions.SoundFontMenuButtonPadding
-                        ),
+                        modifier = Modifier
+                            .width(IntrinsicSize.Max)
+                            .height(Dimensions.ButtonHeight.Normal),
                         content = {
                             Text(
-                                soundfont_name,
-                                maxLines = 1,
-                                overflow = TextOverflow.StartEllipsis
+                                text = if (soundfonts.isEmpty()) {
+                                    no_soundfont_text
+                                } else {
+                                    load_soundfont_text
+                                },
+                                maxLines = 1
                             )
                         },
                         onClick = {
-                            this@ComponentActivitySettings.show_soundfont_menu(soundfont_name)
-                        }
-                    )
-                    Button(
-                        contentPadding = PaddingValues(
-                            top = Dimensions.SoundFontMenuButtonPadding,
-                            start = Dimensions.SoundFontMenuButtonExtraPadding,
-                            bottom = Dimensions.SoundFontMenuButtonPadding,
-                            end = Dimensions.SoundFontMenuButtonPadding
-                        ),
-                        modifier = Modifier.height(Dimensions.ButtonHeight.Normal),
-                        shape = Shapes.SectionButtonEnd,
-                        content = {
-                            Icon(
-                                modifier = Modifier.height(Dimensions.SoundFontMenuIconHeight),
-                                painter = painterResource(R.drawable.icon_cross_circle),
-                                contentDescription = stringResource(R.string.unload_soundfont)
-                            )
-                        },
-                        onClick = {
-                            view_model.remove_soundfont(index)
-                            view_model.save_configuration()
-                            this@ComponentActivitySettings.update_result()
-                        }
-                    )
-                }
-                MenuPadder()
-            }
-
-            Button(
-                modifier = Modifier.height(Dimensions.ButtonHeight.Normal),
-                content = {
-                    Text(
-                        text = if (soundfonts.isEmpty()) {
-                            no_soundfont_text
-                        } else {
-                            load_soundfont_text
-                        },
-                        maxLines = 1,
-                        overflow = TextOverflow.StartEllipsis
-                    )
-                },
-                onClick = {
-                    if (this@ComponentActivitySettings.view_model.configuration.soundfont_directory.value == null) {
-                        this@ComponentActivitySettings.view_model.create_dialog { close ->
-                            @Composable {
-                                DialogSTitle(R.string.settings_need_soundfont_directory)
-                                DialogBar(
-                                    positive = {
-                                        close()
-                                        this@ComponentActivitySettings.result_launcher_set_soundfont_directory_and_import.launch(
-                                            Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also {
-                                                it.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                            if (this@ComponentActivitySettings.view_model.configuration.soundfont_directory.value == null) {
+                                this@ComponentActivitySettings.view_model.create_dialog { close ->
+                                    @Composable {
+                                        DialogSTitle(R.string.settings_need_soundfont_directory)
+                                        DialogBar(
+                                            positive = {
+                                                close()
+                                                this@ComponentActivitySettings.result_launcher_set_soundfont_directory_and_import.launch(
+                                                    Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also {
+                                                        it.flags =
+                                                            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                                                    }
+                                                )
                                             }
                                         )
                                     }
-                                )
+                                }
+                            } else {
+                                this@ComponentActivitySettings.show_soundfont_menu(null)
                             }
                         }
-                    } else {
-                        this@ComponentActivitySettings.show_soundfont_menu(null)
+                    )
+                    Spacer(Modifier.weight(1F))
+                    // Use empty space to align "Load..." button with existing soundfont buttons
+                    if (soundfonts.isNotEmpty()) {
+                        Spacer(
+                            Modifier
+                                .width(Dimensions.SoundFontMenuIconHeight)
+                                .padding(
+                                    start = Dimensions.SoundFontMenuButtonExtraPadding,
+                                    end = 0.dp
+                                )
+                        )
                     }
                 }
-            )
+            }
         }
     }
 

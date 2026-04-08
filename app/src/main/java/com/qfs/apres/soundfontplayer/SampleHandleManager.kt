@@ -149,8 +149,8 @@ class SampleHandleManager(
 
             //new_handle.volume_profile = velocity.toFloat()  * .6F / 128.toFloat()
             output.add(new_handle)
-            if (new_linked_handle != null) {
-                output.add(new_linked_handle)
+            new_linked_handle?.let {
+                output.add(it)
             }
 
             if (this.sample_limit != null && output.size >= this.sample_limit!!) break

@@ -142,14 +142,14 @@ class AudioInterface {
 
     fun update_channel_preset(channel: Int, soundfont_index: Int, bank: Int, program: Int) {
         this.feedback_revolver.sample_handle_manager?.let {
-            it.select_soundfont_index(channel, soundfont_index)
+            it.select_soundfont_index(channel, soundfont_index % this.soundfonts.size)
             it.select_bank(channel, bank)
             it.change_program(channel, program)
         }
 
         // Don't need to update anything but percussion in the sample_handle_manager
         this.playback_sample_handle_manager?.let {
-            it.select_soundfont_index(channel, soundfont_index)
+            it.select_soundfont_index(channel, soundfont_index % this.soundfonts.size)
             it.select_bank(channel, bank)
             it.change_program(channel, program)
         }

@@ -119,6 +119,8 @@ class ViewModelEditorController(): ViewModel() {
         this.create_playback_device()
 
         val vm_state = this.opus_manager.vm_state
+
+        vm_state.preset_names.clear()
         for ((i, soundfont) in soundfonts.enumerate()) {
             vm_state.populate_presets(i, soundfont)
         }

@@ -959,8 +959,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         // set the default instrument to the first available in the soundfont (if applicable)
         if (this.is_percussion(channel)) {
             (this.get_channel(channel) as OpusPercussionChannel).let {
-                it.lines[line_offset ?: (it.size - 1)].instrument =
-                    max(0, this.vm_controller.audio_interface.get_minimum_instrument_index(it.get_preset()) - 27)
+                it.lines[line_offset ?: (it.size - 1)].instrument = max(0, this.vm_controller.audio_interface.get_minimum_instrument_index(it.get_preset()) - 27)
             }
         }
 

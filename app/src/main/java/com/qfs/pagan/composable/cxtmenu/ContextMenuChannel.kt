@@ -125,7 +125,7 @@ fun SetPresetButton(
                 stringResource(R.string.gm_kit)
             }
         } else if (ui_facade.soundfont_active.value != null) {
-            stringResource(R.string.unavailable_preset, stringArrayResource(R.array.general_midi_presets)[active_channel.instrument.value.bank])
+            stringResource(R.string.unavailable_preset, stringArrayResource(R.array.general_midi_presets)[active_channel.instrument.value.program])
         } else {
             stringArrayResource(R.array.general_midi_presets)[active_channel.instrument.value.program]
         }

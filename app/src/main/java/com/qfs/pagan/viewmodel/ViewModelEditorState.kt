@@ -1103,12 +1103,23 @@ class ViewModelEditorState: ViewModel() {
         }
     }
 
-    fun get_preset_name(key: PresetKey): String? {
+    fun get_preset_name(key: PresetKey, fallback: Boolean = false): String? {
         val (index, bank, program) = key
-        return if (index >= this.preset_names.size) {
-            null
-        } else {
+        return if (index < this.preset_names.size) {
             this.preset_names[index][bank]?.get(program)
+        } else if (fallback) {
+            var output: String? = null
+            for (soundfont_preset_map in this.preset_names) {
+                if (soundfont_preset_map.containsKey(bank)) {
+                    if (soundfont_preset_map[bank]!!.containsKey(program)) {
+                        output = soundfont_preset_map[bank]!![program]!!
+                        break
+                    }
+                }
+            }
+            output
+        } else {
+            null
         }
     }
 

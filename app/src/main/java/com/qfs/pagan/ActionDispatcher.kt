@@ -1309,6 +1309,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
 
         val options = mutableListOf<MutableList<Pair<PresetKey, @Composable RowScope.() -> Unit>>>()
         val preset_names =  mutableListOf<MutableList<Pair<PresetKey, String?>>>()
+        val existing_keys = mutableSetOf<Int>()
         for ((preset_key, name) in pre_option) {
             if (is_percussion && preset_key.bank != 128) continue
             if (!this.vm_top.configuration.allow_std_percussion.value && !is_percussion && preset_key.bank == 128) continue
@@ -1321,6 +1322,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
             while (options.size <= preset_key.soundfont_index) {
                 options.add(mutableListOf())
             }
+            existing_keys.add(preset_key.soundfont_index)
             options[preset_key.soundfont_index].add(
                 Pair(
                     preset_key,
@@ -1362,9 +1364,14 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
             @Composable {
                 val selected_sort = remember { mutableIntStateOf(0) }
                 val scope = rememberCoroutineScope()
+                val sorted_pages = existing_keys.toList().sorted()
                 val state = rememberPagerState(
-                    default.soundfont_index,
-                    pageCount = { options.size }
+                    if (sorted_pages.contains(default.soundfont_index)) {
+                        sorted_pages.indexOf(default.soundfont_index)
+                    } else {
+                        0
+                    },
+                    pageCount = { sorted_pages.size }
                 )
 
                 HorizontalPager(
@@ -1372,6 +1379,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                     state = state,
                     pageSize = PageSize.Fill,
                     snapPosition = SnapPosition.Center,
+                    verticalAlignment = Alignment.Top,
                     beyondViewportPageCount = 1
                 ) { i ->
                     SortableMenu(
@@ -1398,7 +1406,6 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                                         )
                                     }
                                 }
-                                Spacer(Modifier.weight(1F))
                                 if (i > 0) {
                                     Icon(
                                         modifier = Modifier
@@ -1410,16 +1417,19 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                                             .width(24.dp)
                                             .height(24.dp),
                                         painter = painterResource(R.drawable.icon_arrow_prev),
-                                        contentDescription = (opus_manager.vm_state.active_soundfonts.value[i - 1]).split("/").let { it[it.size - 1].trim() },
+                                        contentDescription = (opus_manager.vm_state.active_soundfonts.value[sorted_pages[i - 1]]).split("/").let { it[it.size - 1].trim() },
                                     )
                                 }
                                 Text(
-                                    (opus_manager.vm_state.active_soundfonts.value[i]).split("/").let { it[it.size - 1].trim() },
+                                    (opus_manager.vm_state.active_soundfonts.value[sorted_pages[i]]).split("/").let { it[it.size - 1].trim() },
                                     maxLines = 1,
-                                    modifier = Modifier.clickable { expanded.value = true },
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier
+                                        .weight(1F)
+                                        .clickable { expanded.value = true },
                                     overflow = TextOverflow.StartEllipsis
                                 )
-                                if (i < opus_manager.vm_state.active_soundfonts.value.size - 1) {
+                                if (i < sorted_pages.size - 1) {
                                     Icon(
                                         modifier = Modifier
                                             .clickable {
@@ -1430,22 +1440,21 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                                             .width(24.dp)
                                             .height(24.dp),
                                         painter = painterResource(R.drawable.icon_arrow_next),
-                                        contentDescription = (opus_manager.vm_state.active_soundfonts.value[i + 1]).split("/").let { it[it.size - 1].trim() },
+                                        contentDescription = (opus_manager.vm_state.active_soundfonts.value[sorted_pages[i + 1]]).split("/").let { it[it.size - 1].trim() },
                                     )
                                 }
-                                Spacer(Modifier.weight(1F))
                                 Spacer(Modifier.width(Dimensions.Space.Medium))
                             } else {
                                 DialogSTitle(R.string.dropdown_choose_instrument)
                             }
 
                         },
-                        default_menu = options[i],
+                        default_menu = options[sorted_pages[i]],
                         sort_row_padding = PaddingValues(
                             bottom = Dimensions.DialogBarPaddingVertical,
                         ),
                         active_sort_option = selected_sort,
-                        sort_options = sort_options[i],
+                        sort_options = sort_options[sorted_pages[i]],
                         default_value = default,
                         onClick = {
                             close()

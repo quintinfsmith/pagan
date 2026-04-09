@@ -1380,12 +1380,10 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                     pageSize = PageSize.Fill,
                     snapPosition = SnapPosition.Center,
                     verticalAlignment = Alignment.Top,
-                    beyondViewportPageCount = 1
+                    beyondViewportPageCount = sorted_pages.size
                 ) { i ->
                     SortableMenu(
-                        modifier = Modifier
-                            .padding(horizontal = 12.dp)
-                            .fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         title_content = {
                             if (opus_manager.vm_state.active_soundfonts.value.size > 1) {
                                 val expanded = remember { mutableStateOf(false) }
@@ -1414,8 +1412,8 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                                                     state.animateScrollToPage(i - 1)
                                                 }
                                             }
-                                            .width(24.dp)
-                                            .height(24.dp),
+                                            .width(Dimensions.PresetMenuArrowWidth)
+                                            .height(Dimensions.PresetMenuArrowHeight),
                                         painter = painterResource(R.drawable.icon_arrow_prev),
                                         contentDescription = (opus_manager.vm_state.active_soundfonts.value[sorted_pages[i - 1]]).split("/").let { it[it.size - 1].trim() },
                                     )
@@ -1437,8 +1435,8 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                                                     state.animateScrollToPage(i + 1)
                                                 }
                                             }
-                                            .width(24.dp)
-                                            .height(24.dp),
+                                            .width(Dimensions.PresetMenuArrowWidth)
+                                            .height(Dimensions.PresetMenuArrowHeight),
                                         painter = painterResource(R.drawable.icon_arrow_next),
                                         contentDescription = (opus_manager.vm_state.active_soundfonts.value[sorted_pages[i + 1]]).split("/").let { it[it.size - 1].trim() },
                                     )

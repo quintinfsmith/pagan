@@ -294,6 +294,8 @@ object Dimensions {
 
     val OutlineButtonStrokeWidth = Stroke.Thin
 
+    val PresetMenuArrowWidth = 24.dp
+    val PresetMenuArrowHeight = 24.dp
     val ProjectCardNotesPadding = 6.dp
 
     val PercussionSwitchIconPadding = 4.dp

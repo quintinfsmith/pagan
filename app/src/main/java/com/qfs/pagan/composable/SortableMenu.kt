@@ -58,6 +58,7 @@ import com.qfs.pagan.enumerate
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Dimensions.Unpadded
+import com.qfs.pagan.ui.theme.Shadows
 import com.qfs.pagan.ui.theme.Shapes
 import kotlin.math.roundToInt
 
@@ -159,6 +160,7 @@ fun <T> SortableMenu(
                         }
                     }
                 }
+                Spacer(Modifier.width(Shadows.Button.offset.x))
             }
         }
 

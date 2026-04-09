@@ -33,6 +33,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -506,7 +507,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
             items,
             sort_options,
             selected_sort = mutableIntStateOf(current_sort),
-            other = @Composable { close, active_sort ->
+            content = @Composable { close, active_sort ->
                 val is_refreshing = remember { mutableStateOf(false) }
                 if (is_refreshing.value) {
                     CircularProgressIndicator(

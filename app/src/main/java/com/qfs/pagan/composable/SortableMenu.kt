@@ -14,6 +14,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -69,7 +70,6 @@ fun <T> SortableMenu(
     active_sort_option: MutableIntState = mutableIntStateOf(-1),
     default_value: T? = null,
     title_content: @Composable (RowScope.() -> Unit)? = null,
-    other: @Composable (RowScope.() -> Unit)? = null,
     onLongClick: (T) -> Unit = {},
     onClick: (T) -> Unit
 ) {
@@ -110,16 +110,6 @@ fun <T> SortableMenu(
                     Spacer(Modifier.width(Dimensions.SortableMenuHeadSpacing))
                 }
 
-                other?.let {
-                    Row(
-                        modifier = Modifier.weight(1F),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        it()
-                    }
-                    Spacer(Modifier.width(Dimensions.SortableMenuHeadSpacing))
-                }
                 Box {
                     Button(
                         modifier = Modifier

@@ -555,7 +555,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     }
                     MenuPadder()
                     UnSortableMenu(
-                        modifier = Modifier.weight(1F),
+                        modifier = Modifier.weight(1F, fill = false),
                         options = soundfonts,
                         default_value = selected_uri
                     ) { uri ->

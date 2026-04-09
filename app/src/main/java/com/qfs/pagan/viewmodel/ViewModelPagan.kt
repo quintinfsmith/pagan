@@ -142,8 +142,7 @@ class ViewModelPagan: ViewModel() {
         sort_options: List<Pair<Int, (Int, Int) -> Int>>,
         selected_sort: MutableIntState = mutableIntStateOf(-1),
         default_value: T? = null,
-        content: (@Composable RowScope.() -> Unit)? = null,
-        other: (@Composable (() -> Unit, Int) -> Unit)? = null,
+        content: (@Composable RowScope.(() -> Unit, Int) -> Unit)? = null,
         onLongClick: (T, (() -> Unit)) -> Unit = {_, _ -> },
         onClick: (T) -> Unit
     ) {
@@ -155,7 +154,11 @@ class ViewModelPagan: ViewModel() {
                         .fillMaxWidth(),
                     title_content = {
                         DialogSTitle(title)
-                        content?.let { Row(content = it) }
+                        content?.let {
+                            Row {
+                                it(close, selected_sort.intValue)
+                            }
+                        }
                     },
                     default_menu = default_menu,
                     sort_row_padding = PaddingValues(
@@ -165,9 +168,6 @@ class ViewModelPagan: ViewModel() {
                     active_sort_option = selected_sort,
                     onLongClick = {
                         onLongClick(it, close)
-                    },
-                    other = {
-                        other?.let { it(close, selected_sort.value) }
                     },
                     default_value = default_value,
                     onClick = {

@@ -39,6 +39,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.res.painterResource
@@ -99,10 +100,24 @@ fun <T> SortableMenu(
             ) {
                 val expanded = remember { mutableStateOf(false) }
 
-                title_content?.let { it() }
-                Spacer(Modifier.weight(1F))
+                title_content?.let {
+                    Row(
+                        modifier = Modifier.weight(1F),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                        content = { it() }
+                    )
+                    Spacer(Modifier.width(Dimensions.SortableMenuHeadSpacing))
+                }
+
                 other?.let {
-                    it()
+                    Row(
+                        modifier = Modifier.weight(1F),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        it()
+                    }
                     Spacer(Modifier.width(Dimensions.SortableMenuHeadSpacing))
                 }
                 Box {

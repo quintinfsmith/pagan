@@ -671,7 +671,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.controller_model.set_soundfonts(*soundfonts.toTypedArray())
         this.controller_model.playback_device?.activity = this
         this.controller_model.active_soundfont_relative_paths = List(file_paths.size) { i -> file_paths[i].value }
-        this.state_model.enable_soundfont(this.view_model.configuration.soundfonts.value)
+        this.state_model.enable_soundfont(file_paths)
     }
 
 

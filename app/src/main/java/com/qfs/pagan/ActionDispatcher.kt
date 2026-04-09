@@ -14,6 +14,7 @@ import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -1281,6 +1282,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         val is_percussion = opus_manager.is_percussion(channel)
         val default = opus_manager.get_channel_instrument(channel)
 
+        val default_presets = this.context.resources.getStringArray(R.array.general_midi_presets)
         val pre_option = mutableListOf<Pair<PresetKey, String?>>()
         if (!this.vm_controller.audio_interface.has_soundfont() || this.vm_controller.active_midi_device != null) {
             // Setup default empty preset names
@@ -1288,7 +1290,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                 pre_option.add(Pair(PresetKey(default.soundfont_index, 0, i), null))
             }
             pre_option.add(Pair(PresetKey(default.soundfont_index, 128, 0), null))
-        } else {
+        } else if (opus_manager.vm_state.preset_names.isNotEmpty()) {
             for ((soundfont_index, bank_map) in opus_manager.vm_state.preset_names.enumerate()) {
                 for ((bank, program_map) in bank_map) {
                     for ((program, name) in program_map) {
@@ -1299,6 +1301,10 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
             pre_option.sortBy { it.first.program }
             pre_option.sortBy { it.first.bank }
             pre_option.sortBy { it.first.soundfont_index }
+        } else {
+            for ((program, name) in default_presets.enumerate()) {
+                pre_option.add(Pair(PresetKey(0, 0, program), name))
+            }
         }
 
         val options = mutableListOf<MutableList<Pair<PresetKey, @Composable RowScope.() -> Unit>>>()
@@ -1334,7 +1340,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                 )
             )
         }
-        val default_presets = this.context.resources.getStringArray(R.array.general_midi_presets)
+
 
         val sort_options = List(preset_names.size) { i ->
             listOf(
@@ -1358,7 +1364,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                 val scope = rememberCoroutineScope()
                 val state = rememberPagerState(
                     default.soundfont_index,
-                    pageCount = { opus_manager.vm_state.active_soundfonts.value.size }
+                    pageCount = { options.size }
                 )
 
                 HorizontalPager(
@@ -1373,7 +1379,6 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                             .padding(horizontal = 12.dp)
                             .fillMaxWidth(),
                         title_content = {
-
                             if (opus_manager.vm_state.active_soundfonts.value.size > 1) {
                                 val expanded = remember { mutableStateOf(false) }
                                 DropdownMenu(
@@ -1393,32 +1398,43 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                                         )
                                     }
                                 }
-                                Button(
-                                    onClick = { expanded.value = true },
-                                    shape = Shapes.SectionButtonCenter,
-                                    modifier = Modifier.padding(horizontal = 0.dp),
-                                    content = {
-                                        if (i > 0) {
-                                            Icon(
-                                                modifier = Modifier.height(24.dp),
-                                                painter = painterResource(R.drawable.icon_arrow_prev),
-                                                contentDescription = (opus_manager.vm_state.active_soundfonts.value[i - 1]).split("/") .let { it[it.size - 1].trim() },
-                                            )
-                                        }
-                                        Text(
-                                            (opus_manager.vm_state.active_soundfonts.value[i]).split("/").let { it[it.size - 1].trim() },
-                                            maxLines = 1,
-                                            overflow = TextOverflow.StartEllipsis
-                                        )
-                                        if (i < opus_manager.vm_state.active_soundfonts.value.size - 1) {
-                                            Icon(
-                                                modifier = Modifier.height(24.dp),
-                                                painter = painterResource(R.drawable.icon_arrow_next),
-                                                contentDescription = (opus_manager.vm_state.active_soundfonts.value[i + 1]).split("/") .let { it[it.size - 1].trim() },
-                                            )
-                                        }
-                                    }
+                                Spacer(Modifier.weight(1F))
+                                if (i > 0) {
+                                    Icon(
+                                        modifier = Modifier
+                                            .clickable {
+                                                scope.launch {
+                                                    state.animateScrollToPage(i - 1)
+                                                }
+                                            }
+                                            .width(24.dp)
+                                            .height(24.dp),
+                                        painter = painterResource(R.drawable.icon_arrow_prev),
+                                        contentDescription = (opus_manager.vm_state.active_soundfonts.value[i - 1]).split("/").let { it[it.size - 1].trim() },
+                                    )
+                                }
+                                Text(
+                                    (opus_manager.vm_state.active_soundfonts.value[i]).split("/").let { it[it.size - 1].trim() },
+                                    maxLines = 1,
+                                    modifier = Modifier.clickable { expanded.value = true },
+                                    overflow = TextOverflow.StartEllipsis
                                 )
+                                if (i < opus_manager.vm_state.active_soundfonts.value.size - 1) {
+                                    Icon(
+                                        modifier = Modifier
+                                            .clickable {
+                                                scope.launch {
+                                                    state.animateScrollToPage(i + 1)
+                                                }
+                                            }
+                                            .width(24.dp)
+                                            .height(24.dp),
+                                        painter = painterResource(R.drawable.icon_arrow_next),
+                                        contentDescription = (opus_manager.vm_state.active_soundfonts.value[i + 1]).split("/").let { it[it.size - 1].trim() },
+                                    )
+                                }
+                                Spacer(Modifier.weight(1F))
+                                Spacer(Modifier.width(Dimensions.Space.Medium))
                             } else {
                                 DialogSTitle(R.string.dropdown_choose_instrument)
                             }

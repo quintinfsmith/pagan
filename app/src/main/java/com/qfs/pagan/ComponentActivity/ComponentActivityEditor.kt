@@ -645,14 +645,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val soundfonts = mutableListOf<SoundFont>()
         val soundfont_directory = this.get_soundfont_directory()
 
+        // ignore not-existent or corrupt sf2 files
         for (file_path in file_paths) {
             var soundfont_file = soundfont_directory
             for (segment in file_path.value.split("/")) {
-                soundfont_file = soundfont_file.findFile(segment) ?: throw FileNotFoundException()
+                soundfont_file = soundfont_file.findFile(segment) ?: continue
             }
 
             // Possible if user puts the sf2 in their files manually
-            if (!soundfont_file.exists()) throw FileNotFoundException()
+            if (!soundfont_file.exists()) continue
 
             soundfonts.add(
                 try {

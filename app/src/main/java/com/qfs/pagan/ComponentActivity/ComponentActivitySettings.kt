@@ -477,10 +477,21 @@ class ComponentActivitySettings: PaganComponentActivity() {
             return
         }
 
-        val selected_uri = selected_file_name?.let { this@ComponentActivitySettings.coerce_soundfont_uri(it) }
+        val selected_uri = try {
+            selected_file_name?.let { this@ComponentActivitySettings.coerce_soundfont_uri(it) }
+        } catch (e: FileNotFoundException) {
+            null
+        }
         val active_soundfonts = this.view_model.configuration.soundfonts.value
-        val active_soundfont_uris = Array(active_soundfonts.size) {
-            this@ComponentActivitySettings.coerce_soundfont_uri(active_soundfonts[it].value)
+        val active_soundfont_uris = mutableListOf<Uri>()
+        for (file_path in active_soundfonts) {
+            try {
+                active_soundfont_uris.add(
+                    this@ComponentActivitySettings.coerce_soundfont_uri(file_path.value)
+                )
+            } catch (e: FileNotFoundException) {
+                continue
+            }
         }
 
         val soundfonts = mutableListOf<Pair<Uri, @Composable RowScope.() -> Unit>>()

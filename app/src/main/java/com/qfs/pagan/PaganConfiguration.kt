@@ -23,6 +23,7 @@ import com.qfs.json.JSONParser
 import com.qfs.json.JSONString
 import kotlinx.serialization.Serializable
 import java.io.File
+import kotlin.math.min
 
 @Serializable
 class PaganConfiguration(
@@ -41,7 +42,7 @@ class PaganConfiguration(
     beat_stroke_thickness: Dp = 0.dp,
     allow_multiple_soundfonts: Boolean = false
 ) {
-    val soundfonts: MutableState<Array<MutableState<String>>> = mutableStateOf(Array(soundfonts.size) { mutableStateOf(soundfonts[it]) })
+    val soundfonts: MutableState<Array<MutableState<String>>> = mutableStateOf(Array(if (allow_multiple_soundfonts) soundfonts.size else min(1, soundfonts.size)) { mutableStateOf(soundfonts[it]) })
     val sample_rate: MutableState<Int> = mutableStateOf(sample_rate)
     val move_mode: MutableState<MoveMode> = mutableStateOf(move_mode)
     val use_preferred_soundfont: MutableState<Boolean> = mutableStateOf(use_preferred_soundfont)
@@ -107,7 +108,12 @@ class PaganConfiguration(
 
     fun update_from_path(path: String) {
         val config = PaganConfiguration.from_path(path)
-        this.soundfonts.value = Array(config.soundfonts.value.size) { mutableStateOf(config.soundfonts.value[it].value) }
+        val soundfonts_size = if (config.allow_multiple_soundfonts.value) {
+            config.soundfonts.value.size
+        } else {
+            min(1, config.soundfonts.value.size)
+        }
+        this.soundfonts.value = Array(soundfonts_size) { mutableStateOf(config.soundfonts.value[it].value) }
         this.sample_rate.value = config.sample_rate.value
         this.move_mode.value = config.move_mode.value
         this.use_preferred_soundfont.value = config.use_preferred_soundfont.value
@@ -129,7 +135,14 @@ class PaganConfiguration(
 
     fun to_json(): JSONHashMap {
         val output = JSONHashMap()
-        output["soundfonts"] = JSONList(*Array(this.soundfonts.value.size) { JSONString(this.soundfonts.value[it].value) })
+        output["allow_multiple_soundfonts"] = this.allow_multiple_soundfonts.value
+        val soundfonts_size = if (this.allow_multiple_soundfonts.value) {
+            this.soundfonts.value.size
+        } else {
+            min(1, this.soundfonts.value.size)
+        }
+
+        output["soundfonts"] = JSONList(*Array(soundfonts_size) { JSONString(this.soundfonts.value[it].value) })
         output["sample_rate"] = this.sample_rate.value
         output["move_mode"] = this.move_mode.value.name
         output["use_preferred_soundfont"] = this.use_preferred_soundfont.value
@@ -142,7 +155,6 @@ class PaganConfiguration(
         output["latest_input_indicator"] = this.latest_input_indicator.value
         output["normalize_beat_widths"] = this.normalize_beat_widths.value
         output["beat_stroke_thickness"] = this.beat_stroke_thickness.value.value
-        output["allow_multiple_soundfonts"] = this.allow_multiple_soundfonts.value
         // output["channel_colors"] = JSONList(*Array(this.channel_colors.size) {
         //     JSONString(this.channel_colors[it].toHexString(HexFormat.Default))
         // })

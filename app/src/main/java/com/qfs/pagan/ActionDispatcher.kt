@@ -1366,13 +1366,14 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                     state = state,
                     pageSize = PageSize.Fill,
                     snapPosition = SnapPosition.Center,
-                    beyondViewportPageCount = 0
+                    beyondViewportPageCount = 1
                 ) { i ->
                     SortableMenu(
                         modifier = Modifier
                             .padding(horizontal = 12.dp)
                             .fillMaxWidth(),
                         title_content = {
+
                             if (opus_manager.vm_state.active_soundfonts.value.size > 1) {
                                 val expanded = remember { mutableStateOf(false) }
                                 DropdownMenu(
@@ -1394,17 +1395,34 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                                 }
                                 Button(
                                     onClick = { expanded.value = true },
+                                    shape = Shapes.SectionButtonCenter,
+                                    modifier = Modifier.padding(horizontal = 0.dp),
                                     content = {
+                                        if (i > 0) {
+                                            Icon(
+                                                modifier = Modifier.height(24.dp),
+                                                painter = painterResource(R.drawable.icon_arrow_prev),
+                                                contentDescription = (opus_manager.vm_state.active_soundfonts.value[i - 1]).split("/") .let { it[it.size - 1].trim() },
+                                            )
+                                        }
                                         Text(
                                             (opus_manager.vm_state.active_soundfonts.value[i]).split("/").let { it[it.size - 1].trim() },
                                             maxLines = 1,
                                             overflow = TextOverflow.StartEllipsis
                                         )
+                                        if (i < opus_manager.vm_state.active_soundfonts.value.size - 1) {
+                                            Icon(
+                                                modifier = Modifier.height(24.dp),
+                                                painter = painterResource(R.drawable.icon_arrow_next),
+                                                contentDescription = (opus_manager.vm_state.active_soundfonts.value[i + 1]).split("/") .let { it[it.size - 1].trim() },
+                                            )
+                                        }
                                     }
                                 )
                             } else {
                                 DialogSTitle(R.string.dropdown_choose_instrument)
                             }
+
                         },
                         default_menu = options[i],
                         sort_row_padding = PaddingValues(

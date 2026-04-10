@@ -1965,7 +1965,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             val channel_data = state_model.channel_data[i]
                             val is_dragging = remember { mutableStateOf(false) }
                             key(channel_data.update_key.value) {
-
                                 Row(
                                     Modifier
                                         .zIndex(
@@ -2045,11 +2044,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                         )
                                                 )
                                                 Text(
-                                                    channel_data.active_name.value
-                                                        ?: this@ComponentActivityEditor.get_default_preset_name(
+                                                    if (channel_data.active_name.value == null || state_model.use_midi_playback.value) {
+                                                        this@ComponentActivityEditor.get_default_preset_name(
                                                             channel_data.instrument.value.bank,
                                                             channel_data.instrument.value.program
-                                                        ),
+                                                        )
+                                                    } else {
+                                                        channel_data.active_name.value!!
+                                                    },
                                                     textAlign = TextAlign.Center,
                                                     modifier = Modifier.weight(1F),
                                                     maxLines = 1,

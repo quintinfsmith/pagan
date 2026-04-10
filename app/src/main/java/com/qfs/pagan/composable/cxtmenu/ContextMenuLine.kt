@@ -110,8 +110,13 @@ fun PercussionSetInstrumentButton(modifier: Modifier = Modifier, vm_state: ViewM
     val active_line = vm_state.line_data[y]
     val assigned_offset = active_line.assigned_offset.value ?: return
     val active_channel = vm_state.channel_data[active_line.channel.value!!]
+    val midi_instruments = stringArrayResource(R.array.midi_drums)
     val label = if (use_name) {
-        vm_state.get_instrument_name(active_channel.instrument.value, assigned_offset)
+        if (vm_state.soundfont_active.value != null && !vm_state.use_midi_playback.value) {
+            vm_state.get_instrument_name(active_channel.instrument.value, assigned_offset)
+        } else {
+            midi_instruments[assigned_offset]
+        }
     } else {
         "!${"%02d".format(assigned_offset)}"
     }
@@ -126,7 +131,6 @@ fun PercussionSetInstrumentButton(modifier: Modifier = Modifier, vm_state: ViewM
                 )
             },
             text = label ?: if (active_channel.instrument.value.bank == 128) {
-                val midi_instruments = stringArrayResource(R.array.midi_drums)
                 if (assigned_offset < midi_instruments.size) {
                     if (vm_state.soundfont_active.value != null && !vm_state.use_midi_playback.value) {
                         stringResource(R.string.unavailable_preset, midi_instruments[assigned_offset])

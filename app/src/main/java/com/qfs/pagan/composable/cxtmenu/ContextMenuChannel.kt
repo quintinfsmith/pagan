@@ -118,16 +118,20 @@ fun SetPresetButton(
         modifier = modifier.testTag(TestTag.ChannelPreset),
         shape = shape,
         onClick = { dispatcher.set_channel_preset(channel_index) },
-        text = active_channel.active_name.value ?: if (active_channel.instrument.value.bank == 128) {
-            if (ui_facade.soundfont_active.value != null) {
-                stringResource(R.string.unavailable_kit)
+        text = if (ui_facade.use_midi_playback.value || active_channel.active_name.value == null) {
+            if (active_channel.instrument.value.bank == 128) {
+                if (ui_facade.soundfont_active.value != null && !ui_facade.use_midi_playback.value) {
+                    stringResource(R.string.unavailable_kit)
+                } else {
+                    stringResource(R.string.gm_kit)
+                }
+            } else if (ui_facade.soundfont_active.value != null && !ui_facade.use_midi_playback.value) {
+                stringResource(R.string.unavailable_preset, stringArrayResource(R.array.general_midi_presets)[active_channel.instrument.value.program])
             } else {
-                stringResource(R.string.gm_kit)
+                stringArrayResource(R.array.general_midi_presets)[active_channel.instrument.value.program]
             }
-        } else if (ui_facade.soundfont_active.value != null) {
-            stringResource(R.string.unavailable_preset, stringArrayResource(R.array.general_midi_presets)[active_channel.instrument.value.program])
         } else {
-            stringArrayResource(R.array.general_midi_presets)[active_channel.instrument.value.program]
+            active_channel.active_name.value!!
         }
     )
 }

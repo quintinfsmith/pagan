@@ -1385,13 +1385,14 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                     SortableMenu(
                         modifier = Modifier.fillMaxWidth(),
                         title_content = {
-                            if (opus_manager.vm_state.active_soundfonts.value.size > 1) {
+                            if (!opus_manager.vm_state.use_midi_playback.value && opus_manager.vm_state.active_soundfonts.value.size > 1) {
                                 val expanded = remember { mutableStateOf(false) }
                                 DropdownMenu(
                                     expanded = expanded.value,
                                     onDismissRequest = { expanded.value = false }
                                 ) {
-                                    for ((j, soundfont_path) in opus_manager.vm_state.active_soundfonts.value.enumerate()) {
+                                    for (j in sorted_pages) {
+                                        val soundfont_path = opus_manager.vm_state.active_soundfonts.value[sorted_pages[j]]
                                         val soundfont_name = soundfont_path.split("/").let { it[it.size - 1].trim() }
                                         DropdownMenuItem(
                                             text = { Text("$j: $soundfont_name") },

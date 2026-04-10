@@ -25,6 +25,7 @@ import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.button.TextCMenuButton
+import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
@@ -52,11 +53,15 @@ fun AdjustChannelButton(dispatcher: ActionDispatcher) {
 }
 
 @Composable
-fun RemoveChannelButton(dispatcher: ActionDispatcher) {
+fun RemoveChannelButton(dispatcher: ActionDispatcher, is_percussion: Boolean) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.ChannelRemove),
         onClick = { dispatcher.remove_channel() },
-        icon = R.drawable.icon_subtract_circle,
+        icon = if (is_percussion) {
+            R.drawable.icon_subtract_bang
+        } else {
+            R.drawable.icon_subtract_circle
+        },
         description = R.string.cd_remove_channel
     )
 
@@ -155,6 +160,10 @@ fun SetChannelColorButton(
 
 @Composable
 fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, layout: LayoutSize) {
+    val cursor = ui_facade.active_cursor.value ?: return
+    if (cursor.type != CursorMode.Channel) return
+    val active_channel = ui_facade.channel_data[cursor.ints[0]]
+    val is_percussion = active_channel.percussion.value
     when (layout) {
         LayoutSize.SmallPortrait,
         LayoutSize.MediumPortrait,
@@ -171,7 +180,7 @@ fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, ui_facade: ViewMode
                 )
                 AdjustChannelButton(dispatcher)
                 MediumSpacer()
-                RemoveChannelButton(dispatcher)
+                RemoveChannelButton(dispatcher, is_percussion)
                 MediumSpacer()
                 AddKitButton(dispatcher)
                 MediumSpacer()
@@ -188,7 +197,7 @@ fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, ui_facade: ViewMode
                 MediumSpacer()
                 AdjustChannelButton(dispatcher)
                 MediumSpacer()
-                RemoveChannelButton(dispatcher)
+                RemoveChannelButton(dispatcher, is_percussion)
                 Spacer(Modifier.weight(1F))
 
                 ToggleEffectsButton(dispatcher, Shapes.ContextMenuButtonPrimaryBottom)

@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -615,19 +616,16 @@ class ComponentActivitySettings: PaganComponentActivity() {
                         Button(
                             modifier = Modifier
                                 .weight(1F)
-                                .height(Dimensions.ButtonHeight.Normal),
+                                .width(IntrinsicSize.Max)
+                                .defaultMinSize(minHeight = Dimensions.ButtonHeight.Normal),
                             contentPadding = PaddingValues(
                                 top = Dimensions.SoundFontMenuButtonPadding,
-                                start = Dimensions.SoundFontMenuButtonPadding,
+                                start = Dimensions.SoundFontMenuButtonPadding * 2,
                                 bottom = Dimensions.SoundFontMenuButtonPadding,
-                                end = Dimensions.SoundFontMenuButtonPadding
+                                end = Dimensions.SoundFontMenuButtonPadding * 2
                             ),
                             content = {
-                                Text(
-                                    soundfont_name,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.StartEllipsis
-                                )
+                                Text(soundfont_name)
                             },
                             onClick = {
                                 this@ComponentActivitySettings.show_soundfont_menu(soundfont_path.value)

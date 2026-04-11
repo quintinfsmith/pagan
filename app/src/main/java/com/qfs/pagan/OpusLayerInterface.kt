@@ -2270,6 +2270,11 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             )
         ) ?: return // TODO: Throw Exception
         this.vm_state.mute_line(y, true)
+        var i = y
+        for ((type, controller) in this.get_channel(channel).get_line(line_offset).controllers.get_all()) {
+            if (!controller.visible) continue
+            this.vm_state.mute_line(++i, true)
+        }
     }
 
     override fun unmute_line(channel: Int, line_offset: Int) {
@@ -2283,6 +2288,11 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             )
         ) ?: return // TODO: Throw Exception
         this.vm_state.mute_line(y, false)
+        var i = y
+        for ((type, controller) in this.get_channel(channel).get_line(line_offset).controllers.get_all()) {
+            if (!controller.visible) continue
+            this.vm_state.mute_line(++i, false)
+        }
     }
 
     fun get_safe_name(): String? {

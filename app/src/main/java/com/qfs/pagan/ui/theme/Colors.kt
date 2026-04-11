@@ -33,13 +33,13 @@ object Colors {
 
     val MUTED_LEAF_COLOR = Color(0xFF888888)
     val MUTED_LEAF_SELECTED = Color(0xFF444444)
-    val MUTED_LINE_SELECTED = Color(0xFF999999)
-    val MUTED_LINE_COLOR = Color(0xFF454545)
+    val MUTED_LINE_SELECTED = Color(0xFF727272)
+    val MUTED_LINE_COLOR = Color(0xFF9D9D9D)
     val MUTED_SECONDARY = Color(0xFF929292)
 
     val MUTED_LEAF_COLOR_NIGHT = Color(0xFF5E5E5E)
     val MUTED_LEAF_SELECTED_NIGHT = Color(0xFFA9A9A9)
-    val MUTED_LINE_SELECTED_NIGHT = Color(0xFFA9a9a9)
+    val MUTED_LINE_SELECTED_NIGHT = Color(0xFF838383)
     val MUTED_LINE_COLOR_NIGHT = Color(0xFF454545)
     val MUTED_SECONDARY_NIGHT = Color(0xFF929292)
 
@@ -189,7 +189,7 @@ object Colors {
                 red = avg,
                 green = avg,
                 blue = avg,
-                alpha = primary_base?.alpha ?: 1F
+                alpha = primary_base.alpha
             )
         }
 

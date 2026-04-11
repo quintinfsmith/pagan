@@ -1,1 +1,13 @@
-Multiple soundfont support. (enable in settings)
+Features:
+    - Multiple soundfont support. (enable in settings)
+
+Tweaks:
+    - Lightened muted colors in day mode, darkened in night mode
+    - Selected effects show up green instead of that milky grey color.
+    - All text inputs require a confirmation to take. Otherwise will revert on unfocus.
+    - 'Remove Channel' button now using starburst icon rather than circle in percussion channels.
+
+BugFixes:
+    - Tempo input field kept forcing a decimal
+    - Muting/Unmuting a line didn't update effect line colors
+    - 'Undo' actions weren't always reflected in context menus

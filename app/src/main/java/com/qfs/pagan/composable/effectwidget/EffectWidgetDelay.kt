@@ -58,8 +58,9 @@ import kotlin.math.roundToInt
 @Composable
 fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, event: DelayEvent) {
     val cursor = ui_facade.active_cursor.value ?: return
+    val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
-    val fade = remember { mutableFloatStateOf(event.fade) }
+    val fade = remember { mutableFloatStateOf(working_event.fade) }
     val (channel, line_offset, beat, position) = ui_facade.get_location_ints()
 
     val default_colors = SliderDefaults.colors()
@@ -70,9 +71,9 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionD
 
     val submit = {
         if (beat != null) {
-            dispatcher.set_effect(EffectType.Delay, event, channel, line_offset, beat, position!!, true)
+            dispatcher.set_effect(EffectType.Delay, working_event, channel, line_offset, beat, position!!, true)
         } else {
-            dispatcher.set_initial_effect(EffectType.Delay, event, channel, line_offset, true)
+            dispatcher.set_initial_effect(EffectType.Delay, working_event, channel, line_offset, true)
         }
     }
 
@@ -89,21 +90,18 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionD
             painter = painterResource(R.drawable.icon_hz),
             contentDescription = null
         )
-        val numerator_key = remember { mutableStateOf(false) }
-        key(numerator_key.value) {
-            IntegerInput(
-                event.numerator,
-                contentPadding = Unpadded,
-                text_align = TextAlign.Center,
-                revert_on_exit = true,
-                modifier = Modifier
-                    .testTag(TestTag.DelayHzNumerator)
-                    .height(Dimensions.EffectWidget.InputHeight)
-                    .width(Dimensions.EffectWidget.Delay.InputWidth)
-            ) {
-                event.numerator = it
-                submit()
-            }
+        IntegerInput(
+            working_event.numerator,
+            contentPadding = Unpadded,
+            text_align = TextAlign.Center,
+            revert_on_exit = true,
+            modifier = Modifier
+                .testTag(TestTag.DelayHzNumerator)
+                .height(Dimensions.EffectWidget.InputHeight)
+                .width(Dimensions.EffectWidget.Delay.InputWidth)
+        ) {
+            working_event.numerator = it
+            submit()
         }
     }
     DivisorSeparator()
@@ -118,22 +116,19 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionD
             painter = painterResource(R.drawable.icon_hz),
             contentDescription = null
         )
-        val denominator_key = remember { mutableStateOf(false) }
-        key(denominator_key.value) {
-            IntegerInput(
-                event.denominator,
-                minimum = 1,
-                contentPadding = Unpadded,
-                text_align = TextAlign.Center,
-                revert_on_exit = true,
-                modifier = Modifier
-                    .testTag(TestTag.DelayHzDenominator)
-                    .height(Dimensions.EffectWidget.InputHeight)
-                    .width(Dimensions.EffectWidget.Delay.InputWidth)
-            ) {
-                event.denominator = it
-                submit()
-            }
+        IntegerInput(
+            working_event.denominator,
+            minimum = 1,
+            contentPadding = Unpadded,
+            text_align = TextAlign.Center,
+            revert_on_exit = true,
+            modifier = Modifier
+                .testTag(TestTag.DelayHzDenominator)
+                .height(Dimensions.EffectWidget.InputHeight)
+                .width(Dimensions.EffectWidget.Delay.InputWidth)
+        ) {
+            working_event.denominator = it
+            submit()
         }
     }
 
@@ -150,22 +145,19 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionD
             painter = painterResource(R.drawable.icon_echo),
             contentDescription = null
         )
-        val echo_key = remember { mutableStateOf(false) }
-        key(echo_key.value) {
-            IntegerInput(
-                event.echo + 1,
-                minimum = 1,
-                contentPadding = Unpadded,
-                text_align = TextAlign.Center,
-                revert_on_exit = true,
-                modifier = Modifier
-                    .testTag(TestTag.DelayEcho)
-                    .height(Dimensions.EffectWidget.InputHeight)
-                    .width(Dimensions.EffectWidget.Delay.InputWidth)
-            ) {
-                event.echo = (it - 1)
-                submit()
-            }
+        IntegerInput(
+            working_event.echo + 1,
+            minimum = 1,
+            contentPadding = Unpadded,
+            text_align = TextAlign.Center,
+            revert_on_exit = true,
+            modifier = Modifier
+                .testTag(TestTag.DelayEcho)
+                .height(Dimensions.EffectWidget.InputHeight)
+                .width(Dimensions.EffectWidget.Delay.InputWidth)
+        ) {
+            working_event.echo = (it - 1)
+            submit()
         }
     }
 
@@ -235,7 +227,7 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionD
                     },
 
                 onValueChange = {
-                    event.fade = it
+                    working_event.fade = it
                     fade.floatValue = it
                 },
                 onValueChangeFinished = {
@@ -246,6 +238,6 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionD
         }
     }
 
-    EffectTransitionButton(event, dispatcher, is_initial)
+    EffectTransitionButton(working_event, dispatcher, is_initial)
 }
 

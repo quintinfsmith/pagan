@@ -38,6 +38,7 @@ import com.qfs.pagan.viewmodel.ViewModelEditorState
 @Composable
 fun RowScope.PanEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, event: OpusPanEvent) {
     val cursor = ui_facade.active_cursor.value ?: return
+    val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
     val default_colors = SliderDefaults.colors()
     val colors = SliderColors(
@@ -53,7 +54,7 @@ fun RowScope.PanEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionDis
         disabledInactiveTickColor = default_colors.disabledInactiveTickColor
     )
 
-    val working_value = remember { mutableFloatStateOf(event.value) }
+    val working_value = remember { mutableFloatStateOf(working_event.value) }
     Box(modifier = Modifier.weight(1F)) {
         Box(
             Modifier
@@ -68,8 +69,8 @@ fun RowScope.PanEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionDis
                 working_value.floatValue = it
             },
             onValueChangeFinished = {
-                event.value = working_value.floatValue
-                dispatcher.set_effect_at_cursor(event)
+                working_event.value = working_value.floatValue
+                dispatcher.set_effect_at_cursor(working_event)
             },
             valueRange = -1F..1F,
             steps = 21,
@@ -80,9 +81,9 @@ fun RowScope.PanEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionDis
                 .fillMaxWidth()
         )
     }
-    LaunchedEffect(event.value) {
-        working_value.floatValue = event.value
+    LaunchedEffect(working_event.value) {
+        working_value.floatValue = working_event.value
     }
 
-    EffectTransitionButton(event, dispatcher, is_initial)
+    EffectTransitionButton(working_event, dispatcher, is_initial)
 }

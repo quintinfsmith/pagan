@@ -190,6 +190,7 @@ class ViewModelEditorState: ViewModel() {
     val channel_data: MutableList<ChannelData> = mutableListOf()
     var radix: MutableState<Int> = mutableIntStateOf(Values.Defaults.Radix)
 
+    var event_change_key: MutableState<Boolean> = mutableStateOf(false)
     var active_event: MutableState<OpusEvent?> = mutableStateOf(null)
     var active_event_descriptor: MutableState<EventDescriptor?> = mutableStateOf(null)
     var active_cursor: MutableState<CacheCursor?> = mutableStateOf(null)
@@ -422,6 +423,7 @@ class ViewModelEditorState: ViewModel() {
         this.project_name.value = null
         this.beat_count.value = 0
         this.active_event.value = null
+        this.event_change_key.value = !this.event_change_key.value
         this.active_event_descriptor.value = null
         this.active_cursor.value = null
         this.radix.value = 12
@@ -780,6 +782,7 @@ class ViewModelEditorState: ViewModel() {
     fun <T: OpusEvent> set_active_event(event: T? = null, descriptor: EventDescriptor? = null) {
         this.active_event.value = event?.copy()
         this.active_event_descriptor.value = if (event == null) null else descriptor
+        this.event_change_key.value = !this.event_change_key.value
     }
 
     fun refresh_cursor() {

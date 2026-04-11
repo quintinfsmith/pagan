@@ -74,12 +74,13 @@ import com.qfs.pagan.viewmodel.ViewModelEditorState
 @Composable
 fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, event: OpusVelocityEvent) {
     val cursor = ui_facade.active_cursor.value ?: return
+    val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
-    val working_value = remember { mutableFloatStateOf(event.value) }
-    val velocity_input_value = remember { mutableIntStateOf((event.value * 100F).toInt()) }
-    val slide_enabled = remember { mutableStateOf<Boolean>(event.slide != null) }
-    val slide_width_mode = remember { mutableStateOf(event.slide?.first ?: OpusVelocityEvent.SlideMaxWidth.Note) }
-    val denominator_label: MutableState<Int> = remember { mutableStateOf(event.slide?.second ?: Values.Defaults.SlideDenominator) }
+    val working_value = remember { mutableFloatStateOf(working_event.value) }
+    val velocity_input_value = remember { mutableIntStateOf((working_event.value * 100F).toInt()) }
+    val slide_enabled = remember { mutableStateOf<Boolean>(working_event.slide != null) }
+    val slide_width_mode = remember { mutableStateOf(working_event.slide?.first ?: OpusVelocityEvent.SlideMaxWidth.Note) }
+    val denominator_label: MutableState<Int> = remember { mutableStateOf(working_event.slide?.second ?: Values.Defaults.SlideDenominator) }
     val (channel, line_offset, beat, position) = ui_facade.get_location_ints()
     val is_percussion = channel != null && ui_facade.channel_data[channel].percussion.value
     val active_layout_size = (LocalActivity.current as PaganComponentActivity).view_model.active_layout_size
@@ -91,9 +92,9 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
 
     val submit = {
         if (beat != null) {
-            dispatcher.set_effect(EffectType.Velocity, event, channel, line_offset, beat, position!!, true)
+            dispatcher.set_effect(EffectType.Velocity, working_event, channel, line_offset, beat, position!!, true)
         } else {
-            dispatcher.set_initial_effect(EffectType.Velocity, event, channel, line_offset, true)
+            dispatcher.set_initial_effect(EffectType.Velocity, working_event, channel, line_offset, true)
         }
     }
 
@@ -166,7 +167,7 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
                                 },
 
                             onValueChange = {
-                                event.value = it
+                                working_event.value = it
                                 working_value.floatValue = it
                                 velocity_input_value.intValue = (it * 100).toInt()
                             },
@@ -176,7 +177,7 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
                                 if (beat != null) {
                                     dispatcher.set_effect(
                                         EffectType.Velocity,
-                                        event,
+                                        working_event,
                                         channel,
                                         line_offset,
                                         beat,
@@ -186,7 +187,7 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
                                 } else {
                                     dispatcher.set_initial_effect(
                                         EffectType.Velocity,
-                                        event,
+                                        working_event,
                                         channel,
                                         line_offset,
                                         true
@@ -202,7 +203,7 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
 
             key(working_value.floatValue) {
                 IntegerInput(
-                    (event.value * 100F).toInt(),
+                    (working_event.value * 100F).toInt(),
                     minimum = 0,
                     maximum = 100,
                     contentPadding = Unpadded,
@@ -213,8 +214,8 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
                         .height(Dimensions.EffectWidget.InputHeight)
                         .width(Dimensions.EffectWidget.Velocity.InputWidth)
                 ) {
-                    event.value = it.toFloat() / 100F
-                    working_value.floatValue = event.value
+                    working_event.value = it.toFloat() / 100F
+                    working_value.floatValue = working_event.value
                     submit()
                 }
             }
@@ -246,8 +247,8 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
                                 DropdownMenuItem(
                                     text = { Text(R.string.velocity_widget_disable_sliding) },
                                     onClick = {
-                                        if (event.slide != null) {
-                                            event.slide = null
+                                        if (working_event.slide != null) {
+                                            working_event.slide = null
                                             submit()
                                         }
                                         slide_enabled.value = false
@@ -258,10 +259,10 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
                             DropdownMenuItem(
                                 text = { Text(R.string.velocity_widget_relative_to_beat) },
                                 onClick = {
-                                    if (event.slide?.first != OpusVelocityEvent.SlideMaxWidth.Beat) {
-                                        event.slide = Pair(
+                                    if (working_event.slide?.first != OpusVelocityEvent.SlideMaxWidth.Beat) {
+                                        working_event.slide = Pair(
                                             OpusVelocityEvent.SlideMaxWidth.Beat,
-                                            event.slide?.second ?: Values.Defaults.SlideDenominator
+                                            working_event.slide?.second ?: Values.Defaults.SlideDenominator
                                         )
                                         submit()
                                     }
@@ -272,10 +273,10 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
                             DropdownMenuItem(
                                 text = { Text(R.string.velocity_widget_relative_to_note) },
                                 onClick = {
-                                    if (event.slide?.first != OpusVelocityEvent.SlideMaxWidth.Note) {
-                                        event.slide = Pair(
+                                    if (working_event.slide?.first != OpusVelocityEvent.SlideMaxWidth.Note) {
+                                        working_event.slide = Pair(
                                             OpusVelocityEvent.SlideMaxWidth.Note,
-                                            event.slide?.second ?: Values.Defaults.SlideDenominator
+                                            working_event.slide?.second ?: Values.Defaults.SlideDenominator
                                         )
                                         submit()
                                     }
@@ -314,7 +315,7 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
                                 .height(Dimensions.EffectWidget.InputHeight)
                                 .width(Dimensions.EffectWidget.Velocity.InputWidth)
                         ) {
-                            event.slide = Pair(slide_width_mode.value, it)
+                            working_event.slide = Pair(slide_width_mode.value, it)
                             submit()
                         }
                     }
@@ -338,12 +339,12 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
                         onCheckedChange = {
                             slide_enabled.value = it
                             if (it) {
-                                event.slide = Pair(
+                                working_event.slide = Pair(
                                     slide_width_mode.value,
                                     denominator_label.value
                                 )
                             } else {
-                                event.slide = null
+                                working_event.slide = null
                             }
                             submit()
                         }
@@ -352,10 +353,10 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
                     MediumSpacer()
                 }
 
-                EffectTransitionButton(event, dispatcher, is_initial)
+                EffectTransitionButton(working_event, dispatcher, is_initial)
             }
         }
     } else {
-        EffectTransitionButton(event, dispatcher, is_initial)
+        EffectTransitionButton(working_event, dispatcher, is_initial)
     }
 }

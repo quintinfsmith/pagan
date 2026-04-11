@@ -41,12 +41,13 @@ import com.qfs.pagan.viewmodel.ViewModelEditorState
 @Composable
 fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, event: OpusTempoEvent) {
     val cursor = ui_facade.active_cursor.value ?: return
+    val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
     val (channel, line_offset, beat, position) = ui_facade.get_location_ints()
 
     Spacer(Modifier.weight(.5F))
 
-    val tempo_label = remember { mutableFloatStateOf(event.value) }
+    val tempo_label = remember { mutableFloatStateOf(working_event.value) }
     FloatInput(
         tempo_label.value,
         precision = 3,
@@ -66,11 +67,11 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionD
             .height(Dimensions.EffectWidget.InputHeight)
             .weight(1F, fill = true)
     ) {
-        event.value = it
+        working_event.value = it
         if (beat != null) {
-            dispatcher.set_effect(EffectType.Tempo, event, channel, line_offset, beat, position!!, lock_cursor = true)
+            dispatcher.set_effect(EffectType.Tempo, working_event, channel, line_offset, beat, position!!, lock_cursor = true)
         } else {
-            dispatcher.set_initial_effect(EffectType.Tempo, event, channel, line_offset, lock_cursor = true)
+            dispatcher.set_initial_effect(EffectType.Tempo, working_event, channel, line_offset, lock_cursor = true)
         }
     }
 
@@ -83,5 +84,5 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionD
 
     Spacer(Modifier.weight(.5F))
 
-    EffectTransitionButton(event, dispatcher, is_initial)
+    EffectTransitionButton(working_event, dispatcher, is_initial)
 }

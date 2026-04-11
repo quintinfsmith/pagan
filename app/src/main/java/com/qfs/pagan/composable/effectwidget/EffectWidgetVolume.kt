@@ -33,25 +33,26 @@ import kotlin.math.roundToInt
 @Composable
 fun RowScope.VolumeEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, event: OpusVolumeEvent) {
     val cursor = ui_facade.active_cursor.value ?: return
+    val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
-    val working_value = remember { mutableStateOf(event.value) }
+    val working_value = remember { mutableStateOf(working_event.value) }
     TextCMenuButton(
         modifier = Modifier
             .testTag(TestTag.VolumeButton)
             .width(Dimensions.ContextMenuButtonWidth),
-        text = "%02d".format((event.value * 100).roundToInt()),
+        text = "%02d".format((working_value.value * 100).roundToInt()),
         shape = Shapes.ContextMenuSecondaryButtonStart,
         onClick = {
-            dispatcher.dialog_number_input(R.string.dlg_set_volume, 0, 200, default = (event.value * 100).toInt()) {
-                event.value = it.toFloat() / 100F
-                working_value.value = event.value
-                dispatcher.set_effect_at_cursor(event)
+            dispatcher.dialog_number_input(R.string.dlg_set_volume, 0, 200, default = (working_event.value * 100).toInt()) {
+                working_event.value = it.toFloat() / 100F
+                working_value.value = working_event.value
+                dispatcher.set_effect_at_cursor(working_event)
             }
         },
         onLongClick = {
             working_value.value = 1F
-            event.value = 1F
-            dispatcher.set_effect_at_cursor(event)
+            working_event.value = 1F
+            dispatcher.set_effect_at_cursor(working_event)
         },
     )
     MediumSpacer()
@@ -63,13 +64,13 @@ fun RowScope.VolumeEventMenu(ui_facade: ViewModelEditorState, dispatcher: Action
         value = working_value.value,
         valueRange = 0F .. 1.27F,
         onValueChange = {
-            event.value = it
+            working_event.value = it
             working_value.value = it
         },
         onValueChangeFinished = {
-            dispatcher.set_effect_at_cursor(event)
+            dispatcher.set_effect_at_cursor(working_event)
         },
     )
 
-    EffectTransitionButton(event, dispatcher, is_initial)
+    EffectTransitionButton(working_event, dispatcher, is_initial)
 }

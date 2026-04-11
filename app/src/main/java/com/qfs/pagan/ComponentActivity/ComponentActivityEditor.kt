@@ -624,10 +624,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.state_model.normalize_beat_widths.value = this.view_model.configuration.normalize_beat_widths.value
         this.state_model.beat_stroke_thickness.value = this.view_model.configuration.beat_stroke_thickness.value
         this.state_model.update_global_zoom_notches()
-        this.set_soundfont()
+        try {
+            this.set_soundfont(false)
+        } catch (e: Exception) {
+            this.view_model.configuration.soundfonts.value = arrayOf()
+            this.set_soundfont(true)
+        }
     }
 
-    fun set_soundfont() {
+    fun set_soundfont(ignore_bad_soundfonts: Boolean = true) {
         // Ensure playback is stopped
         this.action_interface.stop_opus_midi()
         this.action_interface.stop_opus()
@@ -653,20 +658,25 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
 
             // Possible if user puts the sf2 in their files manually
-            if (!soundfont_file.exists()) continue
+            if (!soundfont_file.exists()) {
+                if (ignore_bad_soundfonts) {
+                    continue
+                } else {
+                    throw FileNotFoundException()
+                }
+            }
 
             soundfonts.add(
                 try {
                     SoundFont(this, soundfont_file.uri)
                 } catch (_: Exception) {
-                    continue
+                    if (ignore_bad_soundfonts) {
+                        continue
+                    } else {
+                        throw SoundFont.InvalidSoundFont(soundfont_file.uri)
+                    }
                 }
             )
-        }
-
-        if (file_paths.isNotEmpty() && soundfonts.isEmpty()) {
-            this.toast(R.string.invalid_soundfont)
-            return
         }
 
         this.controller_model.set_soundfonts(*soundfonts.toTypedArray())
@@ -2615,7 +2625,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         soundfonts.value[i].value = file_paths[i]
                     }
 
-                    soundfonts.value += Array(soundfonts.value.size - file_paths.size) { i -> mutableStateOf(file_paths[i]) }
+                    if (soundfonts.value.size < file_paths.size) {
+                        soundfonts.value += Array(file_paths.size - soundfonts.value.size) { i ->
+                            mutableStateOf(file_paths[i + soundfonts.value.size])
+                        }
+                    }
 
                     val bkp_values: MutableList<MutableState<String>> = mutableListOf()
                     if (soundfonts.value.size > file_paths.size) {
@@ -2625,7 +2639,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     // Try opening the assigned soundfont, but if it fails for any reason, go back to the
                     // Currently active one.
                     try {
-                        this.set_soundfont()
+                        println("TRYING: $file_paths")
+                        this.set_soundfont(false)
                     } catch (_: Exception) {
                         // Restore the preexisting MutableState wrappers as well as the values themselves
                         if (originals.size > soundfonts.value.size) {

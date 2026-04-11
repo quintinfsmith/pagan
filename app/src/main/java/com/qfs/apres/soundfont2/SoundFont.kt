@@ -16,7 +16,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 class SoundFont(val context: Context, uri: Uri) {
-    class InvalidSoundFont(uri: Uri): Exception("Not a soundfont $uri")
+    class InvalidSoundFont(vararg uri: Uri): Exception("Not a valid soundfont ${uri.toList()}")
     class InvalidPresetIndex(index: Int, bank: Int): Exception("Preset Not Found $index:$bank")
     class InvalidSampleIdPosition : Exception("SampleId Generator is not at end of ibag")
     class InvalidSampleType(i: Int): Exception("Unknown Sample Type $i")

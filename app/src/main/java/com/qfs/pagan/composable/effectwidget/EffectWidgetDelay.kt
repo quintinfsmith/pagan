@@ -68,10 +68,6 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionD
         inactiveTickColor = default_colors.activeTickColor
     )
 
-    val echo_label = remember { mutableIntStateOf(event.echo + 1) }
-    val numerator_label = remember { mutableIntStateOf(event.numerator) }
-    val denominator_label = remember { mutableIntStateOf(event.denominator) }
-
     val submit = {
         if (beat != null) {
             dispatcher.set_effect(EffectType.Delay, event, channel, line_offset, beat, position!!, true)
@@ -96,12 +92,10 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionD
         val numerator_key = remember { mutableStateOf(false) }
         key(numerator_key.value) {
             IntegerInput(
-                numerator_label,
+                event.numerator,
                 contentPadding = Unpadded,
                 text_align = TextAlign.Center,
-                on_focus_exit = {
-                    numerator_label.value = event.numerator
-                },
+                revert_on_exit = true,
                 modifier = Modifier
                     .testTag(TestTag.DelayHzNumerator)
                     .height(Dimensions.EffectWidget.InputHeight)
@@ -127,11 +121,11 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionD
         val denominator_key = remember { mutableStateOf(false) }
         key(denominator_key.value) {
             IntegerInput(
-                denominator_label,
+                event.denominator,
                 minimum = 1,
-                on_focus_exit = { denominator_label.value = event.denominator },
                 contentPadding = Unpadded,
                 text_align = TextAlign.Center,
+                revert_on_exit = true,
                 modifier = Modifier
                     .testTag(TestTag.DelayHzDenominator)
                     .height(Dimensions.EffectWidget.InputHeight)
@@ -159,13 +153,11 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionD
         val echo_key = remember { mutableStateOf(false) }
         key(echo_key.value) {
             IntegerInput(
-                echo_label,
-                on_focus_exit = {
-                    echo_label.value = event.echo + 1
-                },
+                event.echo + 1,
                 minimum = 1,
                 contentPadding = Unpadded,
                 text_align = TextAlign.Center,
+                revert_on_exit = true,
                 modifier = Modifier
                     .testTag(TestTag.DelayEcho)
                     .height(Dimensions.EffectWidget.InputHeight)

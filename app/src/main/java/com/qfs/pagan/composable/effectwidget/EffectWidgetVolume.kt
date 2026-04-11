@@ -42,8 +42,9 @@ fun RowScope.VolumeEventMenu(ui_facade: ViewModelEditorState, dispatcher: Action
         text = "%02d".format((event.value * 100).roundToInt()),
         shape = Shapes.ContextMenuSecondaryButtonStart,
         onClick = {
-            dispatcher.dialog_number_input(R.string.dlg_set_volume, 0, default = (event.value * 100).toInt()) {
+            dispatcher.dialog_number_input(R.string.dlg_set_volume, 0, 200, default = (event.value * 100).toInt()) {
                 event.value = it.toFloat() / 100F
+                working_value.value = event.value
                 dispatcher.set_effect_at_cursor(event)
             }
         },

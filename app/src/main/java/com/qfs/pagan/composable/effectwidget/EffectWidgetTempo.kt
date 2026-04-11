@@ -46,37 +46,31 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionD
 
     Spacer(Modifier.weight(.5F))
 
-    val tempo_key = remember { mutableStateOf(false) }
     val tempo_label = remember { mutableFloatStateOf(event.value) }
-    key(tempo_key.value) {
-        FloatInput(
-            tempo_label,
-            precision = 3,
-            on_focus_exit = {
-                tempo_label.floatValue = event.value
-                tempo_key.value = !tempo_key.value
-            },
-            prefix = {
-                Icon(
-                    modifier = Modifier.width(Dimensions.ContextMenuButtonIconWidth),
-                    painter = painterResource(R.drawable.icon_tempo),
-                    contentDescription = null
-                )
-            },
-            minimum = 1F,
-            contentPadding = Unpadded,
-            text_align = TextAlign.Center,
-            modifier = Modifier
-                .testTag(TestTag.Tempo)
-                .height(Dimensions.EffectWidget.InputHeight)
-                .weight(1F, fill = true)
-        ) {
-            event.value = it
-            if (beat != null) {
-                dispatcher.set_effect(EffectType.Tempo, event, channel, line_offset, beat, position!!, lock_cursor = true)
-            } else {
-                dispatcher.set_initial_effect(EffectType.Tempo, event, channel, line_offset, lock_cursor = true)
-            }
+    FloatInput(
+        tempo_label.value,
+        precision = 3,
+        revert_on_exit = true,
+        prefix = {
+            Icon(
+                modifier = Modifier.width(Dimensions.ContextMenuButtonIconWidth),
+                painter = painterResource(R.drawable.icon_tempo),
+                contentDescription = null
+            )
+        },
+        minimum = 1F,
+        contentPadding = Unpadded,
+        text_align = TextAlign.Center,
+        modifier = Modifier
+            .testTag(TestTag.Tempo)
+            .height(Dimensions.EffectWidget.InputHeight)
+            .weight(1F, fill = true)
+    ) {
+        event.value = it
+        if (beat != null) {
+            dispatcher.set_effect(EffectType.Tempo, event, channel, line_offset, beat, position!!, lock_cursor = true)
+        } else {
+            dispatcher.set_initial_effect(EffectType.Tempo, event, channel, line_offset, lock_cursor = true)
         }
     }
 

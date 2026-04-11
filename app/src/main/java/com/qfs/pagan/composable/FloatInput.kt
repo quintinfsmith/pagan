@@ -17,6 +17,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import com.qfs.pagan.enumerate
+import com.qfs.pagan.structure.pow
 import com.qfs.pagan.ui.theme.Dimensions
 import kotlin.math.max
 import kotlin.math.min
@@ -25,7 +27,7 @@ import kotlin.math.roundToInt
 
 @Composable
 fun FloatInput(
-    value: MutableState<Float>,
+    value: Float,
     precision: Int? = null,
     minimum: Float? = null,
     maximum: Float? = null,
@@ -36,8 +38,10 @@ fun FloatInput(
     label: (@Composable TextFieldLabelScope.() -> Unit)? = null,
     on_focus_enter: (() -> Unit)? = null,
     on_focus_exit: ((Float?) -> Unit)? = null,
+    revert_on_exit: Boolean = false,
     callback: (Float) -> Unit
 ) {
+
     NumberInput(
         value,
         modifier,
@@ -47,64 +51,31 @@ fun FloatInput(
         label,
         on_focus_enter,
         on_focus_exit,
-        object : InputTransformation {
-            override fun TextFieldBuffer.transformInput() {
-                val working_string = this.toString()
-                if (working_string == "-" && minimum != null && minimum < 0) return
-
-                var converted_value = try {
-                    if (working_string.isEmpty()) {
-                        0F
-                    } else {
-                        this.toString().toFloat()
-                    }
-                } catch (_: Exception) {
-                    this.revertAllChanges()
-                    return
+        revert_on_exit,
+        { char_sequence ->
+            var working_string = mutableListOf<Char>()
+            var dot_count = 0
+            val current_text = char_sequence.toList().enumerate()
+            for ((i, c) in current_text) {
+                if (c == '.') dot_count++
+                if ((i == 0 && c == '-') || (c == '.' && dot_count == 1) || c.isDigit()) {
+                    working_string.add(c)
                 }
-
+            }
+            val output_string = working_string.joinToString("")
+            val output_value = try {
+                var tmp = output_string.toFloat()
+                maximum?.let { tmp = min(tmp, it) }
+                minimum?.let { tmp = max(tmp, it) }
                 precision?.let {
-                    val p = 10F.pow(it)
-                    converted_value = (converted_value * p).roundToInt().toFloat() / p
+                    val factor = 10.pow(it)
+                    tmp = ((tmp * factor).roundToInt()).toFloat() / factor.toFloat()
                 }
-                minimum?.let {
-                    converted_value = max(it, converted_value)
-                }
-                maximum?.let {
-                    converted_value = min(it, converted_value)
-                }
-
-                value.value = converted_value
-            }
-        },
-        {
-            val working_string = this.toString()
-            if (working_string == "-" && minimum != null && minimum < 0) return@NumberInput
-
-            var converted_value = try {
-                if (working_string.isEmpty()) {
-                    0F
-                } else {
-                    this.toString().toFloat()
-                }
+                tmp
             } catch (_: Exception) {
-                return@NumberInput
+                null
             }
-
-            minimum?.let {
-                if (it > converted_value) {
-                    converted_value = max(it, converted_value)
-                    val text = this.originalText
-                    this.replace(0, text.length, converted_value.toString())
-                }
-            }
-            maximum?.let {
-                if (it < converted_value) {
-                    converted_value = min(it, converted_value)
-                    val text = this.originalText
-                    this.replace(0, text.length, converted_value.toString())
-                }
-            }
+            Pair(output_value, output_string)
         },
         callback
     )

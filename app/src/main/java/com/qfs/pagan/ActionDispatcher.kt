@@ -34,13 +34,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
-import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -71,7 +69,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.documentfile.provider.DocumentFile
 import com.qfs.apres.VirtualMidiInputDevice
-import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.composable.ColorPicker
 import com.qfs.pagan.composable.DialogBar
@@ -111,7 +108,6 @@ import kotlinx.coroutines.launch
 import java.io.IOException
 import kotlin.concurrent.thread
 import kotlin.math.ceil
-import kotlin.math.exp
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
@@ -1689,13 +1685,18 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                     horizontalArrangement = Arrangement.Center
                 ) {
                     IntegerInput(
-                        value = value,
+                        value = value.value,
                         label = { Text(title_string_id) },
                         modifier = Modifier
                             .testTag(TestTag.DialogNumberInput)
                             .focusRequester(focus_requester),
                         contentPadding = PaddingValues(Dimensions.NumberInputDialogPadding),
                         text_align = TextAlign.Center,
+                        on_focus_exit = {
+                            if (it != null) {
+                                value.value = it
+                            }
+                        },
                         minimum = min_value,
                         maximum = max_value
                     ) { new_value ->
@@ -1708,8 +1709,8 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                 DialogBar(
                     neutral = close,
                     positive = {
-                        close()
                         this@ActionDispatcher.persistent_number_input_values[title_string_id] = value.value
+                        close()
                         callback(value.value)
                     }
                 )
@@ -1972,7 +1973,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         transpose_numerator: MutableState<Int>,
         transpose_denominator: MutableState<Int>,
         radix: MutableState<Int>,
-        mutable_map: MutableList<Pair<MutableState<Int>, MutableState<Int>>>
+        note_map: MutableList<Pair<Int, Int>>
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -1983,19 +1984,23 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                 Text(R.string.dlg_transpose, maxLines = 1)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IntegerInput(
-                        value = transpose_numerator,
+                        value = transpose_numerator.value,
                         minimum = 0,
                         contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
                         modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
-                        callback = { }
+                        callback = {
+                            transpose_numerator.value = it
+                        }
                     )
                     DivisorSeparator()
                     IntegerInput(
-                        value = transpose_denominator,
+                        value = transpose_denominator.value,
                         minimum = 1,
                         contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
                         modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
-                        callback = { }
+                        callback = {
+                            transpose_denominator.value = it
+                        }
                     )
                 }
             }
@@ -2006,20 +2011,16 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                     textAlign = TextAlign.End
                 )
                 IntegerInput(
-                    value = radix,
+                    value = radix.value,
                     minimum = 1,
                     maximum = 36,
                     contentPadding = PaddingValues(Dimensions.TransposeDialogInnerPadding),
                     modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
                     callback = {
-                        mutable_map.clear()
+                        note_map.clear()
+                        radix.value = it
                         for (i in 0 until it) {
-                            mutable_map.add(
-                                Pair(
-                                    mutableStateOf(i),
-                                    mutableStateOf(it)
-                                )
-                            )
+                            note_map.add(Pair(i, it))
                         }
                     }
                 )
@@ -2033,10 +2034,10 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         transpose_numerator: MutableState<Int>,
         transpose_denominator: MutableState<Int>,
         radix: MutableState<Int>,
-        mutable_map: MutableList<Pair<MutableState<Int>, MutableState<Int>>>
+        note_map: MutableList<Pair<Int, Int>>
     ) {
 
-        TuningDialogTopLine(transpose_numerator, transpose_denominator, radix, mutable_map)
+        TuningDialogTopLine(transpose_numerator, transpose_denominator, radix, note_map)
 
         Spacer(Modifier.height(Dimensions.TransposeDialogInnerPadding))
 
@@ -2053,7 +2054,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                         .fillMaxWidth()
                         .verticalScroll(rememberScrollState()),
                 ) {
-                    for ((i, state) in mutable_map.enumerate()) {
+                    for ((i, state) in note_map.enumerate()) {
                         val (numer, denom) = state
                         Surface(
                             modifier = Modifier.padding(Dimensions.TuningDialogLineSpacing),
@@ -2075,7 +2076,8 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                                     minimum = 0,
                                     modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
                                     contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
-                                    callback = {}
+                                    revert_on_exit = true,
+                                    callback = { note_map[i] = Pair(it, note_map[i].second) }
                                 )
                                 DivisorSeparator()
                                 IntegerInput(
@@ -2083,7 +2085,8 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                                     minimum = 1,
                                     modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
                                     contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
-                                    callback = { }
+                                    revert_on_exit = true,
+                                    callback = { note_map[i] = Pair(note_map[i].first, it) }
                                 )
                             }
                         }
@@ -2103,10 +2106,10 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
             positive = {
                 close_callback()
                 this@ActionDispatcher.set_tuning_table_and_transpose(
-                    Array(mutable_map.size) { i ->
+                    Array(note_map.size) { i ->
                         Pair(
-                            mutable_map[i].first.value,
-                            mutable_map[i].second.value
+                            note_map[i].first,
+                            note_map[i].second
                         )
                     },
                     Pair(
@@ -2124,7 +2127,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         transpose_numerator: MutableState<Int>,
         transpose_denominator: MutableState<Int>,
         radix: MutableState<Int>,
-        mutable_map: MutableList<Pair<MutableState<Int>, MutableState<Int>>>
+        note_map: MutableList<Pair<Int, Int>>
     ) {
         val actively_editting_index = remember { mutableStateOf(0) }
         val expanded = remember { mutableStateOf(false) }
@@ -2136,7 +2139,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                 verticalArrangement = Arrangement.SpaceAround
             ) {
                 ProvideTextStyle(Typography.TinyTuningDialogLabel) {
-                    TuningDialogTopLine(transpose_numerator, transpose_denominator, radix, mutable_map)
+                    TuningDialogTopLine(transpose_numerator, transpose_denominator, radix, note_map)
                 }
                 Column(
                     verticalArrangement = Arrangement.Bottom,
@@ -2173,7 +2176,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                                             ),
                                         text = {
                                             Text(
-                                                "${"%02d".format(i)}: ${mutable_map[i].first.value} / ${mutable_map[i].second.value}",
+                                                "${"%02d".format(i)}: ${note_map[i].first} / ${note_map[i].second}",
                                                 style = LocalTextStyle.current.copy(
                                                     color = if (i == actively_editting_index.value) {
                                                         MaterialTheme.colorScheme.onTertiary
@@ -2198,19 +2201,31 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                                 Spacer(Modifier.weight(1F))
                                 key(actively_editting_index.value) {
                                     IntegerInput(
-                                        value = mutable_map[actively_editting_index.value].first,
+                                        value = note_map[actively_editting_index.value].first,
                                         minimum = 0,
                                         modifier = Modifier.width(Dimensions.TinyTuningDialogInputWidth),
                                         contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
-                                        callback = {}
+                                        revert_on_exit = true,
+                                        callback = {
+                                            note_map[actively_editting_index.value] = Pair(
+                                                it,
+                                                note_map[actively_editting_index.value].second
+                                            )
+                                        }
                                     )
                                     DivisorSeparator()
                                     IntegerInput(
-                                        value = mutable_map[actively_editting_index.value].second,
+                                        value = note_map[actively_editting_index.value].second,
                                         minimum = 1,
                                         modifier = Modifier.width(Dimensions.TinyTuningDialogInputWidth),
                                         contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
-                                        callback = { }
+                                        revert_on_exit = true,
+                                        callback = {
+                                            note_map[actively_editting_index.value] = Pair(
+                                                note_map[actively_editting_index.value].first,
+                                                it
+                                            )
+                                        }
                                     )
                                 }
                             }
@@ -2253,11 +2268,8 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                     onClick = {
                         close_callback()
                         this@ActionDispatcher.set_tuning_table_and_transpose(
-                            Array(mutable_map.size) { i ->
-                                Pair(
-                                    mutable_map[i].first.value,
-                                    mutable_map[i].second.value
-                                )
+                            Array(note_map.size) { i ->
+                                Pair(note_map[i].first, note_map[i].second)
                             },
                             Pair(
                                 transpose_numerator.value,
@@ -2290,21 +2302,21 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                 val transpose_numerator = remember { mutableIntStateOf(opus_manager.transpose.first) }
                 val transpose_denominator = remember { mutableIntStateOf(opus_manager.transpose.second) }
                 val radix = remember { mutableIntStateOf(original_radix) }
-                val mutable_map = MutableList(radix.intValue) { i ->
+                val note_map = MutableList(radix.intValue) { i ->
                     if (radix.intValue == original_radix) {
                         Pair(
-                            mutableStateOf(opus_manager.tuning_map[i].first),
-                            mutableStateOf(opus_manager.tuning_map[i].second)
+                            opus_manager.tuning_map[i].first,
+                            opus_manager.tuning_map[i].second
                         )
                     } else {
-                        Pair(mutableStateOf(i), mutableStateOf(radix.intValue))
+                        Pair(i, radix.intValue)
                     }
                 }
 
                 if(this@ActionDispatcher.vm_top.active_layout_size.value == LayoutSize.SmallLandscape) {
-                    TuningDialogTiny(close, transpose_numerator, transpose_denominator, radix, mutable_map)
+                    TuningDialogTiny(close, transpose_numerator, transpose_denominator, radix, note_map)
                 } else {
-                    TuningDialogNormal(close, transpose_numerator, transpose_denominator, radix, mutable_map)
+                    TuningDialogNormal(close, transpose_numerator, transpose_denominator, radix, note_map)
                 }
             }
         }

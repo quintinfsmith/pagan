@@ -202,12 +202,12 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
 
             key(working_value.floatValue) {
                 IntegerInput(
-                    velocity_input_value,
+                    (event.value * 100F).toInt(),
                     minimum = 0,
                     maximum = 100,
-                    on_focus_exit = { working_value.floatValue = event.value },
                     contentPadding = Unpadded,
                     text_align = TextAlign.Center,
+                    revert_on_exit = true,
                     modifier = Modifier
                         .testTag(TestTag.VelocityInput)
                         .height(Dimensions.EffectWidget.InputHeight)
@@ -304,11 +304,9 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
                         contentAlignment = Alignment.Center
                     ) {
                         IntegerInput(
-                            denominator_label,
+                            denominator_label.value,
                             minimum = 1,
-                            on_focus_exit = {
-                                denominator_label.value = event.slide?.second ?: Values.Defaults.SlideDenominator
-                            },
+                            revert_on_exit = true,
                             contentPadding = Unpadded,
                             text_align = TextAlign.Center,
                             modifier = Modifier

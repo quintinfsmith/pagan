@@ -20,6 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import com.qfs.pagan.enumerate
 import com.qfs.pagan.ui.theme.Dimensions
 import kotlin.math.max
 import kotlin.math.min
@@ -35,9 +36,10 @@ fun HexInput(
     label: (@Composable TextFieldLabelScope.() -> Unit)? = null,
     on_focus_enter: (() -> Unit)? = null,
     on_focus_exit: ((Int?) -> Unit)? = null,
+    revert_on_exit: Boolean = false,
     callback: (Int) -> Unit
 ) {
-    val minimum = 0x00
+    TODO()
     val hex_state = remember { mutableStateOf(value.value.toHexString()) }
     NumberInput(
         hex_state,
@@ -48,55 +50,24 @@ fun HexInput(
         label,
         on_focus_enter,
         { on_focus_exit?.invoke(value.value) },
-        object : InputTransformation {
-            override fun TextFieldBuffer.transformInput() {
-                val working_string = this.toString()
-
-                var converted_value = try {
-                    if (working_string.isEmpty()) {
-                        minimum
-                    } else {
-                        this.toString().toInt(16) // From Hex
-                    }
-                } catch (_: Exception) {
-                    this.revertAllChanges()
-                    return
+        revert_on_exit,
+        { char_sequence ->
+            val working_string = mutableListOf<Char>()
+            val current_text = char_sequence.toList()
+            for (c in current_text) {
+                if (c.isDigit() || "abcdef".contains(c.lowercase())) {
+                    working_string.add(c)
                 }
-
-                converted_value = max(minimum, converted_value)
-                maximum?.let {
-                    converted_value = min(it, converted_value)
-                }
-
-                value.value = converted_value
             }
-        },
-        {
-            val working_string = this.toString()
-
-            var converted_value = try {
-                if (working_string.isEmpty()) {
-                    minimum
-                } else {
-                    this.toString().toInt(16) // From Hex
-                }
+            val output_string = working_string.joinToString("")
+            val output_value = try {
+                var tmp = output_string.toInt()
+                maximum?.let { tmp = min(tmp, it) }
+                tmp.toHexString()
             } catch (_: Exception) {
-                return@NumberInput
+                null
             }
-
-            if (minimum > converted_value) {
-                converted_value = max(minimum, converted_value)
-                this.delete(0, this.length)
-                this.append(converted_value.toString())
-            }
-
-            maximum?.let {
-                if (it < converted_value) {
-                    converted_value = min(it, converted_value)
-                    this.delete(0, this.length)
-                    this.append(converted_value.toString())
-                }
-            }
+            Pair(output_value, output_string)
         },
         callback = {
             callback(value.value)

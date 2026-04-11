@@ -618,12 +618,6 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                 .weight(1F)
                                 .width(IntrinsicSize.Max)
                                 .defaultMinSize(minHeight = Dimensions.ButtonHeight.Normal),
-                            contentPadding = PaddingValues(
-                                top = Dimensions.SoundFontMenuButtonPadding,
-                                start = Dimensions.SoundFontMenuButtonPadding * 2,
-                                bottom = Dimensions.SoundFontMenuButtonPadding,
-                                end = Dimensions.SoundFontMenuButtonPadding * 2
-                            ),
                             content = {
                                 Text(soundfont_name)
                             },
@@ -726,9 +720,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                             no_soundfont_text
                         } else {
                             soundfonts.value[0].value
-                        },
-                        maxLines = 1,
-                        overflow = TextOverflow.StartEllipsis
+                        }
                     )
                 },
                 onClick = {

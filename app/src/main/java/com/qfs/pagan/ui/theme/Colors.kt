@@ -19,7 +19,7 @@ object Colors {
     val LEAF_COLOR_INVALID_SELECTED = Color(0xFF890E21)
 
     val EFFECT_COLOR = Color(0xFFCB9C20)
-    val EFFECT_COLOR_SELECTED = Color(0xFF095660)
+    val EFFECT_SELECTION = Color(0xFF16500F)
     val EFFECT_COLOR_SECONDARY = Color(0xFF567B80)
     val EFFECT_LINE_COLOR = Color(0xFFFFFFFF)
     val EFFECT_LINE_COLOR_NIGHT = Color(0xFF000000)
@@ -174,11 +174,19 @@ object Colors {
                 LeafSelection.Unselected -> {}
                 else -> {
                     val weight = .5F
-                    primary_base = Color(
-                        red = ((primary_base.red * .8F) * weight) + (SELECTION.red * (1F - weight)),
-                        green = ((primary_base.green * .8F) * weight) + (SELECTION.green * (1F - weight)),
-                        blue = ((primary_base.blue * .8F) * weight) + (SELECTION.blue * (1F - weight)),
-                    )
+                    primary_base = if (is_effect_line) {
+                        Color(
+                            red = ((primary_base.red * .8F) * weight) + (EFFECT_SELECTION.red * (1F - weight)),
+                            green = ((primary_base.green * .8F) * weight) + (EFFECT_SELECTION.green * (1F - weight)),
+                            blue = ((primary_base.blue * .8F) * weight) + (EFFECT_SELECTION.blue * (1F - weight)),
+                        )
+                    } else {
+                        Color(
+                            red = ((primary_base.red * .8F) * weight) + (SELECTION.red * (1F - weight)),
+                            green = ((primary_base.green * .8F) * weight) + (SELECTION.green * (1F - weight)),
+                            blue = ((primary_base.blue * .8F) * weight) + (SELECTION.blue * (1F - weight)),
+                        )
+                    }
                 }
             }
         }

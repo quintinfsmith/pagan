@@ -48,6 +48,9 @@ import kotlin.math.min
 import kotlin.math.pow
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType as PaganEffectType
 
+/**
+ * FrameMap object wherein the OpusManager object is converted to SampleHandles mapped to Frames
+ */
 class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_handle_manager: SampleHandleManager): FrameMap {
     companion object {
         var merge_offset_gen = 1

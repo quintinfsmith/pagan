@@ -9,6 +9,9 @@
  */
 package com.qfs.pagan
 
+/**
+ * Available formats to which a Project can be exported.
+ */
 enum class Exportable {
     JSON,
     MIDI1,

@@ -14,6 +14,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import com.qfs.pagan.viewmodel.ViewModelPagan
 
+/**
+ * A structure to keep track of Dialogs opened in the UI.
+ * @param parent A reference to the Dialog from which this one was opened
+ * @param alignment Where to align the dialog
+ * @param dialog content of the current dialog
+ * @param level a key to make sure no sibling/duplicate dialogs are opened (eg. via a quick double tap)
+ */
 class DialogChain(
     var parent: DialogChain? = null,
     val alignment: Alignment = Alignment.Center,

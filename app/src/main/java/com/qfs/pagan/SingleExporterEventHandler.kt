@@ -22,8 +22,8 @@ import com.qfs.pagan.viewmodel.ViewModelEditorState
 class SingleExporterEventHandler(val context: ComponentActivityEditor, val state_model: ViewModelEditorState, val uri: Uri, val callback: () -> Unit): WavConverter.ExporterEventHandler {
     val notification_manager = NotificationManagerCompat.from(this.context)
     companion object {
-        val MAX_PROGRESS = 100
-        val timeout_millis = 5000L
+        const val MAX_PROGRESS = 100
+        const val TIMEOUT = 5000L
     }
 
     override fun on_start() {
@@ -64,7 +64,7 @@ class SingleExporterEventHandler(val context: ComponentActivityEditor, val state
                 .clearActions()
                 .setAutoCancel(true)
                 .setProgress(0, 0, false)
-                .setTimeoutAfter(timeout_millis)
+                .setTimeoutAfter(TIMEOUT)
                 .setSilent(false)
                 .setContentIntent(pending_go_to_intent)
 
@@ -104,7 +104,7 @@ class SingleExporterEventHandler(val context: ComponentActivityEditor, val state
         builder.setContentText(this.context.getString(R.string.export_cancelled))
             .setProgress(0, 0, false)
             .setAutoCancel(true)
-            .setTimeoutAfter(timeout_millis)
+            .setTimeoutAfter(TIMEOUT)
             .clearActions()
 
         @SuppressLint("MissingPermission")

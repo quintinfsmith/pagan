@@ -26,7 +26,7 @@ class AudioInterface {
 
     class FeedbackRevolver(var size: Int = 4) {
         var sample_handle_manager: SampleHandleManager? = null
-        private var current_index: Int = 0
+        private var _current_index: Int = 0
         private var devices = Array<FeedbackDevice?>(this.size) { null }
 
         fun set_handle_manager(sample_handle_manager: SampleHandleManager) {
@@ -39,19 +39,19 @@ class AudioInterface {
 
         fun play(channel: Int, note: Int, bend: Int, velocity: Int, duration: Int = 250) {
             val event = NoteOn79(
-                index = this.current_index++,
+                index = this._current_index++,
                 channel = channel,
                 note = note,
                 bend = bend,
                 velocity = velocity
             )
 
-            this.devices[this.current_index]?.let {
+            this.devices[this._current_index]?.let {
                 thread {
                     it.new_event(event, duration)
                 }
             }
-            this.current_index = (this.current_index + 1) % this.size
+            this._current_index = (this._current_index + 1) % this.size
         }
 
         fun clear() {
@@ -61,7 +61,7 @@ class AudioInterface {
                 this.devices[i]?.destroy()
                 this.devices[i] = null
             }
-            this.current_index = 0
+            this._current_index = 0
         }
     }
 

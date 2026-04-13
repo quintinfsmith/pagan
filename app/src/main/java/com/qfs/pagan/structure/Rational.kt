@@ -9,6 +9,7 @@
  */
 package com.qfs.pagan.structure
 
+import androidx.compose.ui.Modifier
 import kotlin.math.abs
 
 /**
@@ -120,12 +121,12 @@ data class Rational(var numerator: Int, var denominator: Int) : Comparable<Any> 
 operator fun Int.plus(b: Rational) = Rational(this, 1) + b
 operator fun Int.minus(b: Rational) = Rational(this, 1) - b
 operator fun Int.times(b: Rational) = Rational(this, 1) * b
-fun List<Rational>.sum() = {
+fun List<Rational>.sum(): Rational {
     var output = Rational(0, 1)
     for (x in this) {
         output += x
     }
-    output
+    return output
 }
 
 

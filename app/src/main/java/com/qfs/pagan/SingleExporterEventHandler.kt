@@ -20,9 +20,11 @@ import com.qfs.pagan.ComponentActivity.ComponentActivityEditor
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 class SingleExporterEventHandler(val context: ComponentActivityEditor, val state_model: ViewModelEditorState, val uri: Uri, val callback: () -> Unit): WavConverter.ExporterEventHandler {
-    val MAX_PROGRESS = 100
-    val timeout_millis = 5000L
     val notification_manager = NotificationManagerCompat.from(this.context)
+    companion object {
+        val MAX_PROGRESS = 100
+        val timeout_millis = 5000L
+    }
 
     override fun on_start() {
         this.state_model.export_progress.value = 0F
@@ -62,7 +64,7 @@ class SingleExporterEventHandler(val context: ComponentActivityEditor, val state
                 .clearActions()
                 .setAutoCancel(true)
                 .setProgress(0, 0, false)
-                .setTimeoutAfter(this.timeout_millis)
+                .setTimeoutAfter(timeout_millis)
                 .setSilent(false)
                 .setContentIntent(pending_go_to_intent)
 
@@ -102,7 +104,7 @@ class SingleExporterEventHandler(val context: ComponentActivityEditor, val state
         builder.setContentText(this.context.getString(R.string.export_cancelled))
             .setProgress(0, 0, false)
             .setAutoCancel(true)
-            .setTimeoutAfter(this.timeout_millis)
+            .setTimeoutAfter(timeout_millis)
             .clearActions()
 
         @SuppressLint("MissingPermission")
@@ -116,11 +118,11 @@ class SingleExporterEventHandler(val context: ComponentActivityEditor, val state
     }
 
     override fun on_progress_update(progress: Double) {
-        val progress_rounded = (progress * this.MAX_PROGRESS).toInt()
+        val progress_rounded = (progress * MAX_PROGRESS).toInt()
         this.state_model.export_progress.value = progress.toFloat()
 
         val builder = this.context.get_notification() ?: return
-        builder.setProgress(this.MAX_PROGRESS, progress_rounded, false)
+        builder.setProgress(MAX_PROGRESS, progress_rounded, false)
 
         @SuppressLint("MissingPermission")
         if (this.context.has_notification_permission()) {

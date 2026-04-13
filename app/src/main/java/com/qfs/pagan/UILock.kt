@@ -7,7 +7,7 @@
  * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
  * Inquiries can be made to Quintin via email at smith.quintin@protonmail.com
  */
-package com.qfs.pagan.uibill
+package com.qfs.pagan
 
 class UILock {
     var level = 0

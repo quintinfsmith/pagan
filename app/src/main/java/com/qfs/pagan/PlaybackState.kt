@@ -10,13 +10,13 @@
 package com.qfs.pagan
 
 enum class PlaybackState {
-
     NotReady,
     Ready,
     Playing,
     Queued,
     Stopping
 }
+
 fun get_next_playback_state(input_state: PlaybackState, next_state: PlaybackState): PlaybackState? {
     return when (input_state) {
         PlaybackState.NotReady -> {

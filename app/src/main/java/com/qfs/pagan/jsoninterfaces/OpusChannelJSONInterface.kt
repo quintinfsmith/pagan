@@ -15,17 +15,6 @@ import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONString
-import com.qfs.pagan.CH_ADD
-import com.qfs.pagan.CH_CLOSE
-import com.qfs.pagan.CH_DOWN
-import com.qfs.pagan.CH_HOLD
-import com.qfs.pagan.CH_NEXT
-import com.qfs.pagan.CH_OPEN
-import com.qfs.pagan.CH_SUBTRACT
-import com.qfs.pagan.CH_UP
-import com.qfs.pagan.REL_CHARS
-import com.qfs.pagan.SPECIAL_CHARS
-import com.qfs.pagan.char_to_int
 import com.qfs.pagan.jsoninterfaces.ExpectedCharacterException
 import com.qfs.pagan.jsoninterfaces.OpusTreeJSONInterface
 import com.qfs.pagan.jsoninterfaces.UnknownChannelTypeException
@@ -37,6 +26,19 @@ import com.qfs.apres.Midi
 import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.OpusColorPalette
 
 object OpusChannelJSONInterface {
+    // Characters for V0 string encoded projects ------------------------------
+    const val CH_OPEN = '['
+    const val CH_CLOSE = ']'
+    const val CH_NEXT = ','
+    const val CH_ADD = '+'
+    const val CH_SUBTRACT = '-'
+    const val CH_UP = '^'
+    const val CH_DOWN = 'v'
+    const val CH_HOLD = '~'
+    val REL_CHARS = listOf(CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD)
+    val SPECIAL_CHARS = listOf(CH_OPEN, CH_CLOSE, CH_NEXT, CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD)
+    // -------------------------------------------------------------------------
+
     fun generalize(channel: OpusChannelAbstract<*, *>): JSONHashMap {
         val channel_map = JSONHashMap()
         val lines = JSONList(channel.size) { i: Int ->
@@ -150,16 +152,16 @@ object OpusChannelJSONInterface {
                 var odd_note = 0
                 when (relative_flag) {
                     CH_SUBTRACT -> {
-                        odd_note -= char_to_int(character, radix)
+                        odd_note -= character.digitToInt(radix)
                     }
                     CH_ADD -> {
-                        odd_note += char_to_int(character, radix)
+                        odd_note += character.digitToInt(radix)
                     }
                     CH_UP -> {
-                        odd_note += char_to_int(character, radix) * radix
+                        odd_note += character.digitToInt(radix) * radix
                     }
                     CH_DOWN -> {
-                        odd_note -= char_to_int(character, radix) * radix
+                        odd_note -= character.digitToInt(radix) * radix
                     }
                 }
 
@@ -180,10 +182,10 @@ object OpusChannelJSONInterface {
                 relative_flag = character
             } else if (!SPECIAL_CHARS.contains(character)) {
                 register = if (register == null) {
-                    char_to_int(character, radix)
+                    character.digitToInt(radix)
                 } else {
 
-                    val odd_note = (register * radix) + char_to_int(character, radix)
+                    val odd_note = (register * radix) + character.digitToInt(radix)
                     if (tree_stack.last().is_leaf()) {
                         tree_stack.last().set_size(1)
                     }

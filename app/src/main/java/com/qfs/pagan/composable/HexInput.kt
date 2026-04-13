@@ -10,9 +10,6 @@
 package com.qfs.pagan.composable
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.text.input.InputTransformation
-import androidx.compose.foundation.text.input.TextFieldBuffer
-import androidx.compose.foundation.text.input.delete
 import androidx.compose.material3.TextFieldLabelScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -20,9 +17,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import com.qfs.pagan.enumerate
 import com.qfs.pagan.ui.theme.Dimensions
-import kotlin.math.max
 import kotlin.math.min
 
 @Composable

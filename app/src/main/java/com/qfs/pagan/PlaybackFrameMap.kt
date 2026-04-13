@@ -20,7 +20,6 @@ import com.qfs.apres.soundfontplayer.FrameMap
 import com.qfs.apres.soundfontplayer.ProfileBuffer
 import com.qfs.apres.soundfontplayer.SampleHandle
 import com.qfs.apres.soundfontplayer.SampleHandleManager
-import com.qfs.pagan.ComponentActivity.PaganComponentActivity
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.get_next_biggest
 import com.qfs.pagan.structure.max
@@ -789,24 +788,24 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         return Pair(start_frame, end_frame)
     }
 
-    private fun map_tree(beat_key: BeatKey, position: List<Int>, working_tree: ReducibleTree<out InstrumentEvent>, relative_width: Rational, relative_offset: Rational, bkp_note_value: Int): Int {
+    private fun map_tree(beat_key: BeatKey, position: List<Int>, tree: ReducibleTree<out InstrumentEvent>, relative_width: Rational, relative_offset: Rational, bkp_note_value: Int): Int {
         //TODO: clean up 'working' v 'next' nomenclature
         if (this._ignored_events.containsKey(Pair(beat_key, position))) {
             return this._ignored_events[Pair(beat_key, position)]!!
-        } else if (!working_tree.is_leaf()) {
-            val new_width = relative_width / working_tree.size
+        } else if (!tree.is_leaf()) {
+            val new_width = relative_width / tree.size
             var new_working_value = bkp_note_value
-            for (i in 0 until working_tree.size) {
+            for (i in 0 until tree.size) {
                 val new_position = position.toMutableList()
                 new_position.add(i)
-                new_working_value = this.map_tree(beat_key, new_position, working_tree[i], new_width, relative_offset + (new_width * i), new_working_value)
+                new_working_value = this.map_tree(beat_key, new_position, tree[i], new_width, relative_offset + (new_width * i), new_working_value)
             }
             return new_working_value
-        } else if (!working_tree.has_event()) {
+        } else if (!tree.has_event()) {
             return bkp_note_value
         }
 
-        val initial_event = working_tree.get_event()!!.copy()
+        val initial_event = tree.get_event()!!.copy()
         var working_event = initial_event
 
         ////////////////////////////////////////////////

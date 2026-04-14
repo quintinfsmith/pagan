@@ -33,7 +33,6 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -73,7 +72,6 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
@@ -100,7 +98,11 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileNotFoundException
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Date
+import java.util.TimeZone
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 
@@ -559,8 +561,12 @@ abstract class PaganComponentActivity: ComponentActivity() {
     fun ProjectCard(modifier: Modifier = Modifier, uri: Uri) {
         val other_project = this.view_model.project_manager?.open_project(uri) ?: return
         val document_file = DocumentFile.fromSingleUri(this@PaganComponentActivity, uri) ?: return
-        val time = Date(document_file.lastModified())
-        val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        val last_modified = LocalDateTime.ofInstant(
+            Instant.ofEpochMilli(document_file.lastModified()),
+            TimeZone.getDefault().toZoneId()
+        )
+        val date_created = other_project.get_date_created()
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         val initial_tempo = other_project.get_global_controller<OpusTempoEvent>(EffectType.Tempo).initial_event.value
 
         val padding = Dimensions.Space.Large
@@ -580,9 +586,18 @@ abstract class PaganComponentActivity: ComponentActivity() {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    Text(R.string.date_created)
+                    Spacer(Modifier.width(padding))
+                    Text(date_created.format(formatter))
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(R.string.last_modified)
                     Spacer(Modifier.width(padding))
-                    Text(formatter.format(time))
+                    Text(last_modified.format(formatter))
                 }
                 Spacer(Modifier.height(padding))
                 Row(

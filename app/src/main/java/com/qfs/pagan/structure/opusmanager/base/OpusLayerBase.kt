@@ -49,6 +49,8 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocity
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.utils.checked_cast
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
+import java.time.LocalDateTime
+import java.util.TimeZone
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -56,6 +58,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
+import kotlin.time.Instant
 
 /**
  * The logic of the Opus Manager.
@@ -306,6 +309,7 @@ open class OpusLayerBase: Effectable {
         }
     }
 
+    var timestamp: Long = System.currentTimeMillis() / 1000
     var length: Int = 1
     var controllers = EffectControlSet(this.length, setOf(EffectType.Tempo))
     var channels: MutableList<OpusChannelAbstract<out InstrumentEvent, out OpusLineAbstract<out InstrumentEvent>>> = mutableListOf()
@@ -4155,6 +4159,8 @@ open class OpusLayerBase: Effectable {
             JSONString(this.project_notes!!)
         }
 
+        output["ts00"] = this.timestamp.toString()
+
         return JSONHashMap(
             "d" to output,
             "v" to JSONInteger(OpusManagerJSONInterface.LATEST_VERSION)
@@ -4299,6 +4305,7 @@ open class OpusLayerBase: Effectable {
                 }
             }
         }
+        this.timestamp = inner_map.get_stringn("timestamp")?.toLong() ?: (System.currentTimeMillis() / 1000)
     }
 
     fun project_change_midi(midi: Midi) {
@@ -5122,5 +5129,12 @@ open class OpusLayerBase: Effectable {
     }
     open fun set_line_effect_bg_color(channel: Int, line_offset: Int, color: Color? = null) {
         this.channels[channel].lines[line_offset].set_effect_bg_color(color)
+    }
+
+    fun get_date_created(): LocalDateTime {
+        return LocalDateTime.ofInstant(
+            java.time.Instant.ofEpochMilli(this.timestamp * 1000),
+            TimeZone.getDefault().toZoneId()
+        )
     }
 }

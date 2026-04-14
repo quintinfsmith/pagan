@@ -202,7 +202,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
      * Generate a default project name.
      */
     private fun generate_file_project_name(uri: Uri? = null): String {
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         return if (uri == null) {
             val now = LocalDateTime.now()
             this.context.getString(R.string.untitled_op, now.format(formatter))
@@ -288,7 +288,23 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         return when (version) {
             0, 1, 2 -> json_obj.get_string("name")
             else -> {
-                json_obj.get_hashmap("d").get_string("title", this.generate_file_project_name(uri))
+                var title = json_obj.get_hashmap("d").get_stringn("title")
+
+                if (title == null) {
+                    json_obj.get_stringn("ts00")?.let {
+                        val local_date_time = LocalDateTime.ofInstant(
+                            Instant.ofEpochMilli(it.toLong() * 1000),
+                            TimeZone.getDefault().toZoneId()
+                        )
+                        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                        title = this.context.getString(
+                            R.string.untitled_op,
+                            local_date_time.format(formatter)
+                        )
+                    }
+                }
+
+                title ?: this.generate_file_project_name(uri)
             }
         }
     }

@@ -150,7 +150,7 @@
     <string name="invalid_soundfont">Invalid Soundfont</string>
     <string name="std_percussion_swap">Can\'t swap percussion with other instruments</string>
     <string name="corrupted_project">Corrupted Project</string>
-    <string name="untitled_op">Untitled Op. - %1$s</string>
+    <string name="untitled_op">Op. %1$s</string>
     <string name="repeat_selection">Repeat Selection</string>
     <string name="dialog_transition">Transition</string>
     <string name="show_line_controls">Show Line Effects...</string>
@@ -290,6 +290,7 @@
     <string name="remove_channel">Remove Channel %1$d</string>
     <string name="no">No</string>
     <string name="last_modified">Last Modified</string>
+    <string name="date_created">Date Created</string>
     <string name="unsorted">Unsorted</string>
     <string name="unavailable_preset">Unavailable %s</string>
     <string name="unavailable_kit">Unavailable Kit</string>

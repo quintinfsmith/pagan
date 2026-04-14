@@ -2660,14 +2660,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
-    private fun get_export_name(): String? {
-        return this.controller_model.opus_manager.get_safe_name() ?: this.get_default_export_name()
+    private fun get_export_name(): String {
+        return this.controller_model.opus_manager.get_safe_name() ?: this.get_default_export_name(this.controller_model.opus_manager)
     }
 
-    private fun get_default_export_name(): String {
-        val now = LocalDateTime.now()
+    private fun get_default_export_name(opus_manager: OpusLayerBase): String {
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-        return this.resources.getString(R.string.default_export_name, now.format(formatter))
+        return this.resources.getString(
+            R.string.default_export_name,
+            opus_manager.get_date_created().format(formatter)
+        )
     }
 
     fun export_multi_lines_wav() {

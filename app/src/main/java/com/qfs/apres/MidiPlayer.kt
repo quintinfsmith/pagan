@@ -12,6 +12,7 @@ package com.qfs.apres
 import android.util.Log
 import com.qfs.apres.event.AllSoundOff
 import com.qfs.apres.event.GeneralMIDIEvent
+import com.qfs.apres.event.MIDIEvent
 import com.qfs.apres.event.MIDIStop
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
@@ -159,7 +160,7 @@ class MidiPlayer: VirtualMidiInputDevice() {
 
     }
 
-    fun play_midi(midi: Midi, loop_playback: Boolean = false, callback: (() -> Unit)? = null) {
+    fun play_midi_events(midi_events: List<Pair<Int, GeneralMIDIEvent>>, ppqn: Int, loop_playback: Boolean = false, callback: (() -> Unit)? = null) {
         if (this.playing) return
 
         if (! this.is_connected()) {
@@ -170,17 +171,13 @@ class MidiPlayer: VirtualMidiInputDevice() {
         val notes_on = mutableSetOf<Triple<Int, Int, Boolean>>()
 
         this.playing = true
-        val grouped_events = midi.get_all_events_grouped()
-        val ppqn = midi.get_ppqn()
         while (true) {
             var us_per_tick = 60000000 / (ppqn * 120)
             var previous_tick = 0
             val start_time = System.currentTimeMillis()
             var delay_accum = 0
 
-            for ((tick, events) in grouped_events) {
-                if (!this.playing && notes_on.isEmpty()) break
-
+            for ((tick, event) in midi_events) {
                 if (this.playing && (tick - previous_tick) > 0) {
                     val delay = ((tick - previous_tick) * us_per_tick) / 1000
                     val drift = delay_accum - (System.currentTimeMillis() - start_time)
@@ -192,52 +189,50 @@ class MidiPlayer: VirtualMidiInputDevice() {
                     previous_tick = tick
                 }
 
-                for (event in events) {
-                    if (!this.playing) {
-                        when (event) {
-                            is NoteOff -> {
-                                notes_on.remove(Triple(event.channel, event.get_note(), false))
-                            }
-
-                            is NoteOff79 -> {
-                                val elm = Triple(event.channel, event.index, true)
-                                notes_on.remove(elm)
-                            }
-
-                            else -> continue
+                if (!this.playing) {
+                    when (event) {
+                        is NoteOff -> {
+                            notes_on.remove(Triple(event.channel, event.get_note(), false))
                         }
-                    } else {
-                        when (event) {
-                            is NoteOn -> {
-                                val elm = Triple(event.channel, event.get_note(), false)
-                                if (event.get_velocity() > 0) {
-                                    notes_on.add(elm)
-                                } else {
-                                    notes_on.remove(elm)
-                                }
-                            }
 
-                            is NoteOff -> {
-                                notes_on.remove(Triple(event.channel, event.get_note(), false))
-                            }
+                        is NoteOff79 -> {
+                            val elm = Triple(event.channel, event.index, true)
+                            notes_on.remove(elm)
+                        }
 
-                            is NoteOn79 -> {
-                                val elm = Triple(event.channel, event.index, true)
+                        else -> continue
+                    }
+                } else {
+                    when (event) {
+                        is NoteOn -> {
+                            val elm = Triple(event.channel, event.get_note(), false)
+                            if (event.get_velocity() > 0) {
                                 notes_on.add(elm)
-                            }
-
-                            is NoteOff79 -> {
-                                val elm = Triple(event.channel, event.index, true)
+                            } else {
                                 notes_on.remove(elm)
                             }
+                        }
 
-                            is SetTempo -> {
-                                us_per_tick = event.get_uspqn() / ppqn
-                            }
+                        is NoteOff -> {
+                            notes_on.remove(Triple(event.channel, event.get_note(), false))
+                        }
+
+                        is NoteOn79 -> {
+                            val elm = Triple(event.channel, event.index, true)
+                            notes_on.add(elm)
+                        }
+
+                        is NoteOff79 -> {
+                            val elm = Triple(event.channel, event.index, true)
+                            notes_on.remove(elm)
+                        }
+
+                        is SetTempo -> {
+                            us_per_tick = event.get_uspqn() / ppqn
                         }
                     }
-                    this@MidiPlayer.send_event(event)
                 }
+                this@MidiPlayer.send_event(event)
             }
 
             if (!loop_playback || !this.playing) break
@@ -270,6 +265,10 @@ class MidiPlayer: VirtualMidiInputDevice() {
         if (callback != null) {
             callback()
         }
+    }
+
+    fun play_midi(midi: Midi, loop_playback: Boolean = false, callback: (() -> Unit)? = null) {
+        this.play_midi_events(midi.get_all_events(), midi.ppqn, loop_playback, callback)
     }
 
     fun stop() {

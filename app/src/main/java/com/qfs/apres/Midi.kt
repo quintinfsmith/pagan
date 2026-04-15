@@ -804,12 +804,14 @@ class Midi {
         }
 
         return output.sortedBy {
-            (it.first * 10) + when (it.second) {
-                is TimeSignature -> { 6 }
-                is SongPositionPointer -> { 6 }
-                is NoteOff -> { 7 }
-                is NoteOn -> { 8 }
-                else -> { 9 }
+            (it.first * 10) + 5 + when (it.second) {
+                is NoteOn,
+                is NoteOn79 -> { 1 }
+                is NoteOff,
+                is NoteOff79 -> { -1 }
+                is TimeSignature,
+                is SongPositionPointer -> { -2 }
+                else -> { 0 }
             }
         }
     }
@@ -825,10 +827,11 @@ class Midi {
                         working_pair.first,
                         working_pair.second.sortedBy {
                             return@sortedBy when (it) {
-                                is NoteOn -> { 1 }
+                                is NoteOn,
                                 is NoteOn79 -> { 1 }
-                                is NoteOff -> { -1 }
+                                is NoteOff,
                                 is NoteOff79 -> { -1 }
+                                is TimeSignature,
                                 is SongPositionPointer -> { -2 }
                                 else -> { 0 }
                             }

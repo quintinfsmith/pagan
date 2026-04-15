@@ -17,6 +17,7 @@ import android.media.midi.MidiDeviceStatus
 import android.media.midi.MidiInputPort
 import android.media.midi.MidiManager
 import android.media.midi.MidiManager.TRANSPORT_MIDI_BYTE_STREAM
+import android.media.midi.MidiManager.TRANSPORT_UNIVERSAL_MIDI_PACKETS
 import android.media.midi.MidiOutputPort
 import android.media.midi.MidiReceiver
 import android.os.Build
@@ -79,7 +80,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
         if (this.midi_manager != null) {
             if (Build.VERSION.SDK_INT > Build.VERSION_CODES.TIRAMISU) {
                 this.midi_manager!!.registerDeviceCallback(
-                    TRANSPORT_MIDI_BYTE_STREAM,
+                    TRANSPORT_UNIVERSAL_MIDI_PACKETS,
                     { runnable: Runnable ->
                         runnable.run()
                     },
@@ -193,7 +194,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
         return if (this.midi_manager == null) {
             listOf()
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            this.midi_manager!!.getDevicesForTransport(MidiManager.TRANSPORT_MIDI_BYTE_STREAM).toList()
+            this.midi_manager!!.getDevicesForTransport(MidiManager.TRANSPORT_UNIVERSAL_MIDI_PACKETS).toList()
         } else {
             this.midi_manager!!.devices.toList()
         }
@@ -203,7 +204,7 @@ open class MidiController(var context: Context, var auto_connect: Boolean = true
         if (this.midi_manager == null) return listOf()
 
         val devices_info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            this.midi_manager!!.getDevicesForTransport(MidiManager.TRANSPORT_MIDI_BYTE_STREAM)
+            this.midi_manager!!.getDevicesForTransport(MidiManager.TRANSPORT_UNIVERSAL_MIDI_PACKETS)
         } else {
             this.midi_manager!!.devices.toList()
         }

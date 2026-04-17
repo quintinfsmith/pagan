@@ -49,7 +49,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
      */
     fun check() {
         this.ucheck_recache_external_storage_projects()
-        this.scan_and_update_project_list()
+        this.scan_and_update_project_list(full_refresh = true)
     }
 
     /**
@@ -99,7 +99,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
             project.delete()
         }
 
-        this.scan_and_update_project_list()
+        this.scan_and_update_project_list(full_refresh = true)
         return output
     }
 
@@ -115,7 +115,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         this.uri = new_uri
 
         this.ucheck_update_move_project_files(active_project_uri)
-        this.scan_and_update_project_list()
+        this.scan_and_update_project_list(full_refresh = true)
     }
 
     /**
@@ -140,7 +140,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
             document_file.delete()
         }
 
-        this.scan_and_update_project_list()
+        this.scan_and_update_project_list(full_refresh = false)
     }
 
     /**
@@ -341,11 +341,17 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         }
     }
 
-    fun scan_and_update_project_list() {
-        val cached_list = this.get_json_project_list()
+    fun scan_and_update_project_list(full_refresh: Boolean = false) {
+        val cached_list = if (full_refresh) {
+            JSONList()
+        } else {
+            this.get_json_project_list()
+        }
+
         // Check for new
         val uris = this.get_existing_uris()
         val cached_uri_to_remove = mutableListOf<Int>()
+
         // Create list of cached uris, remove none existing ones while we're here.
         val cached_uris_list = Array(cached_list.size) { i: Int ->
             val uri = cached_list.get_list(i).get_string(0).toUri()
@@ -373,7 +379,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
             ))
         }
 
-        cached_list.sort_by { it ->
+        cached_list.sort_by {
             (it as JSONList).get_string(1)
         }
 
@@ -489,7 +495,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
                     output_stream?.close()
                 }
 
-                this.scan_and_update_project_list()
+                this.scan_and_update_project_list(full_refresh = true)
                 old_directory.deleteRecursively()
             }
         } catch (_: SecurityException) {

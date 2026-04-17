@@ -25,6 +25,13 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -55,6 +62,8 @@ import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,7 +74,9 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -75,6 +86,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.qfs.pagan.DialogChain
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
@@ -94,6 +106,7 @@ import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelPagan
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileNotFoundException
@@ -511,38 +524,27 @@ abstract class PaganComponentActivity: ComponentActivity() {
             sort_options,
             selected_sort = mutableIntStateOf(current_sort),
             content = @Composable { close, active_sort ->
-                val is_refreshing = remember { mutableStateOf(false) }
-                if (is_refreshing.value) {
-                    CircularProgressIndicator(
-                        Modifier
-                            .height(Dimensions.SortableMenuSortButtonDiameter)
-                            .width(Dimensions.SortableMenuSortButtonDiameter),
-                    )
-                } else {
-                    Button(
-                        modifier = Modifier
-                            .height(Dimensions.SortableMenuSortButtonDiameter)
-                            .width(Dimensions.SortableMenuSortButtonDiameter),
-                        colors = ButtonDefaults.buttonColors().copy(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        ),
-                        onClick = {
-                            is_refreshing.value = true
-                            this@PaganComponentActivity.view_model.project_manager?.scan_and_update_project_list()
-                            close()
-                            is_refreshing.value = false
-                            load_menu_dialog(active_sort, load_callback)
-                        },
-                        contentPadding = Dimensions.SortableMenuSortButtonPadding,
-                        content = {
-                            Icon(
-                                painter = painterResource(R.drawable.icon_refresh),
-                                contentDescription = stringResource(R.string.cd_sort_options)
-                            )
-                        }
-                    )
-                }
+                Button(
+                    modifier = Modifier
+                        .height(Dimensions.SortableMenuSortButtonDiameter)
+                        .width(Dimensions.SortableMenuSortButtonDiameter),
+                    colors = ButtonDefaults.buttonColors().copy(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    onClick = {
+                        this@PaganComponentActivity.view_model.project_manager?.scan_and_update_project_list(full_refresh = true)
+                        close()
+                        load_menu_dialog(active_sort, load_callback)
+                    },
+                    contentPadding = Dimensions.SortableMenuSortButtonPadding,
+                    content = {
+                        Icon(
+                            painter = painterResource(R.drawable.icon_refresh),
+                            contentDescription = stringResource(R.string.cd_sort_options)
+                        )
+                    }
+                )
             },
             onClick = load_callback,
             onLongClick = { it, close_callback ->
@@ -580,7 +582,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
             }
             Spacer(Modifier.height(padding))
 
-            ProvideTextStyle(Typography.DialogBody) {
+            ProvideTextStyle(Typography.DialogBodyMono) {
                 if (other_project.timestamp != 0L) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),

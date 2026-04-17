@@ -289,8 +289,8 @@
     <string name="move_mode_merge">Merge</string>
     <string name="remove_channel">Remove Channel %1$d</string>
     <string name="no">No</string>
-    <string name="last_modified">Last Modified</string>
-    <string name="date_created">Date Created</string>
+    <string name="last_modified">Modified</string>
+    <string name="date_created">Created</string>
     <string name="unsorted">Unsorted</string>
     <string name="unavailable_preset">Unavailable %s</string>
     <string name="unavailable_kit">Unavailable Kit</string>

@@ -4305,7 +4305,9 @@ open class OpusLayerBase: Effectable {
                 }
             }
         }
-        this.timestamp = inner_map.get_stringn("timestamp")?.toLong() ?: (System.currentTimeMillis() / 1000)
+
+        // Default to zero to differentiate pre/post existance of timestamp
+        this.timestamp = inner_map.get_stringn("ts00")?.toLong() ?: 0L
     }
 
     fun project_change_midi(midi: Midi) {

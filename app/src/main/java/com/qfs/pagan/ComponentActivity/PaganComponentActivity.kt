@@ -581,14 +581,16 @@ abstract class PaganComponentActivity: ComponentActivity() {
             Spacer(Modifier.height(padding))
 
             ProvideTextStyle(Typography.DialogBody) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(R.string.date_created)
-                    Spacer(Modifier.width(padding))
-                    Text(date_created.format(formatter))
+                if (other_project.timestamp != 0L) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(R.string.date_created)
+                        Spacer(Modifier.width(padding))
+                        Text(date_created.format(formatter))
+                    }
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),

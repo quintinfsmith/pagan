@@ -288,10 +288,11 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         return when (version) {
             0, 1, 2 -> json_obj.get_string("name")
             else -> {
-                var title = json_obj.get_hashmap("d").get_stringn("title")
+                val hashmap = json_obj.get_hashmap("d")
+                var title = hashmap.get_stringn("title")
 
                 if (title == null) {
-                    json_obj.get_stringn("ts00")?.let {
+                    hashmap.get_stringn("ts00")?.let {
                         val local_date_time = LocalDateTime.ofInstant(
                             Instant.ofEpochMilli(it.toLong() * 1000),
                             TimeZone.getDefault().toZoneId()

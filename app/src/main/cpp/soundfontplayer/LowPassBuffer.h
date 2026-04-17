@@ -109,7 +109,6 @@ class LowPassBuffer: public EffectProfileBuffer {
                 this->previous_filtered_left[0] = output_left;
                 this->previous_filtered_right[0] = output_right;
 
-
                 working_array[i] = output_left;
                 working_array[i + array_size] = output_right;
             }

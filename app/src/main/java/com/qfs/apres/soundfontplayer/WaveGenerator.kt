@@ -239,8 +239,8 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                         0,
                         listOf(
                             ControllerEventData.IndexedProfileBufferFrame(
-                                initial_frame + offset,
-                                initial_frame + offset,
+                                0,
+                                0,
                                 floatArrayOf(this.sample_rate.toFloat(), filter_cutoff, 0F),
                                 FloatArray(3)
                             )

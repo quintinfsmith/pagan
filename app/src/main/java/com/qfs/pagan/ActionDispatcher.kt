@@ -1159,21 +1159,25 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
 
         val options = mutableListOf<Pair<Int, @Composable RowScope.() -> Unit>>()
 
+        var use_defaults = true
         if (this.vm_controller.active_midi_device == null && this.vm_controller.audio_interface.has_soundfont()) {
             val preset = opus_manager.get_channel_instrument(channel)
-            val instruments = opus_manager.vm_state.get_available_instruments(preset)
-            for ((name, index) in instruments) {
-                if (index < 0) continue
-                options.add(Pair(index, { Text("$index: $name") }))
+            opus_manager.vm_state.get_available_instruments(preset)?.let { instruments ->
+                for ((name, index) in instruments) {
+                    if (index < 0) continue
+                    options.add(Pair(index, { Text("$index: $name") }))
+                }
+                use_defaults = false
             }
-        } else {
+        }
+
+        if (use_defaults) {
             for (i in 0 .. 60) {
                 options.add(
                     Pair(i, { Text("$i: ${stringArrayResource(R.array.midi_drums)[i]}")})
                 )
             }
         }
-
 
         val current_instrument = (opus_manager.get_channel(channel).lines[line_offset] as OpusLinePercussion).instrument
 

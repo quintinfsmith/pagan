@@ -1132,13 +1132,15 @@ class ViewModelEditorState: ViewModel() {
         }
     }
 
-    fun get_available_instruments(preset_key: PresetKey): List<Pair<String, Int>> {
-        return this.available_instruments[preset_key] ?: listOf()
+    fun get_available_instruments(preset_key: PresetKey): List<Pair<String, Int>>? {
+        return this.available_instruments[preset_key]
     }
 
     fun get_instrument_name(preset_key: PresetKey, offset: Int): String? {
-        for ((name, index) in this.get_available_instruments(preset_key)) {
-            if (index == offset) return name
+        this.get_available_instruments(preset_key)?.let { instruments ->
+            for ((name, index) in instruments) {
+                if (index == offset) return name
+            }
         }
         return null
     }

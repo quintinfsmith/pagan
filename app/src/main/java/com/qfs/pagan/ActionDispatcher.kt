@@ -1198,7 +1198,20 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
             opus_manager.vm_state.get_available_instruments(preset)?.let { instruments ->
                 for ((name, index) in instruments) {
                     if (index < 0) continue
-                    options.add(Pair(index, { Text("$index: $name") }))
+                    options.add(
+                        Pair(index) {
+                            Text("$index: $name")
+                            Icon(
+                                painter = painterResource(R.drawable.icon_volume),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .height(Dimensions.PreviewIconHeight)
+                                    .clickable {
+                                        this@ActionDispatcher.play_event(channel, index, .7F)
+                                    }
+                            )
+                        }
+                    )
                 }
                 use_defaults = false
             }
@@ -1296,11 +1309,11 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         instrument?.let {
             opus_manager.channel_set_preset(channel, instrument)
             val radix = opus_manager.get_radix()
-            this.play_event(it, is_percussion, (radix .. radix * 6).random())
-            // Thread.sleep(200)
-            // this.play_event(it, is_percussion, (3 * radix) + (4 * radix / 12))
-            // Thread.sleep(200)
-            // this.play_event(it, is_percussion,(3 * radix) + (7 * radix / 12))
+            this.play_event(it, is_percussion, (2 * radix))
+            Thread.sleep(200)
+            this.play_event(it, is_percussion, (3 * radix) + (4 * radix / 12))
+            Thread.sleep(200)
+            this.play_event(it, is_percussion,(3 * radix) + (7 * radix / 12))
             return
         }
 
@@ -1316,6 +1329,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
 
         val default_presets = this.context.resources.getStringArray(R.array.general_midi_presets)
         val pre_option = mutableListOf<Pair<PresetKey, String?>>()
+        val can_preview = this.vm_controller.audio_interface.has_soundfont() || this.vm_controller.active_midi_device != null
         if (!this.vm_controller.audio_interface.has_soundfont() || this.vm_controller.active_midi_device != null) {
             // Setup default empty preset names
             for (i in 0 until 128) {
@@ -1370,15 +1384,22 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                             textAlign = TextAlign.Center,
                             maxLines = 1
                         )
-                        // TODO: draw preview icon
-                        // Icon(
-                        //     painter = painterResource(R.drawable.icon_arrow_prev),
-                        //     contentDescription = null,
-                        //     modifier = Modifier.clickable {
-                        //         val radix = opus_manager.get_radix()
-                        //         this@ActionDispatcher.play_event(preset_key, is_percussion, (radix .. radix * 6).random())
-                        //     }
-                        // )
+                        if (can_preview) {
+                            Icon(
+                                painter = painterResource(R.drawable.icon_volume),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .height(Dimensions.PreviewIconHeight)
+                                    .clickable {
+                                        val radix = opus_manager.get_radix()
+                                        this@ActionDispatcher.play_event(preset_key, is_percussion, (2 * radix))
+                                        Thread.sleep(200)
+                                        this@ActionDispatcher.play_event(preset_key, is_percussion, (3 * radix) + (4 * radix / 12))
+                                        Thread.sleep(200)
+                                        this@ActionDispatcher.play_event(preset_key, is_percussion,(3 * radix) + (7 * radix / 12))
+                                    }
+                            )
+                        }
                     }
                 )
             )

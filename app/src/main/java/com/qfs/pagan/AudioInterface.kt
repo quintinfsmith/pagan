@@ -25,6 +25,7 @@ class AudioInterface {
     var minimum_instrument_index_cache: MutableList<HashMap<Pair<Int, Int>, Int>> = mutableListOf() // <Program, Bank>: index
 
     class FeedbackRevolver(var size: Int = 4) {
+        data class Event(val channel: Int, val note: Int, val bend: Int, val velocity: Int, val duration: Int)
         var sample_handle_manager: SampleHandleManager? = null
         private var _current_index: Int = 0
         private var devices = Array<FeedbackDevice?>(this.size) { null }
@@ -35,6 +36,40 @@ class AudioInterface {
             for (i in 0 until this.size) {
                 this.devices[i] = FeedbackDevice(sample_handle_manager)
             }
+        }
+
+        //fun play(events: List<FeedbackRevolver.Event>) {
+        //    val event = NoteOn79(
+        //        index = this._current_index++,
+        //        channel = channel,
+        //        note = note,
+        //        bend = bend,
+        //        velocity = velocity
+        //    )
+
+        //    this.devices[this._current_index]?.let {
+        //        thread {
+        //            it.new_event(event, duration)
+        //        }
+        //    }
+        //    this._current_index = (this._current_index + 1) % this.size
+        //}
+
+        fun play(preset: PresetKey, note: Int, bend: Int, velocity: Int, duration: Int = 250) {
+            val event = NoteOn79(
+                index = this._current_index++,
+                channel = 0, // channel will not be considered with forced preset
+                note = note,
+                bend = bend,
+                velocity = velocity
+            )
+
+            this.devices[this._current_index]?.let {
+                thread {
+                    it.new_event(event, duration, preset)
+                }
+            }
+            this._current_index = (this._current_index + 1) % this.size
         }
 
         fun play(channel: Int, note: Int, bend: Int, velocity: Int, duration: Int = 250) {
@@ -172,6 +207,14 @@ class AudioInterface {
 
     fun disconnect_feedback_device() {
         this.feedback_revolver.clear()
+    }
+
+    fun play_feedback(channel: Int, events: List<Triple<Int, Int, Int>>) {
+
+    }
+
+    fun play_feedback(preset: PresetKey, note: Int, bend: Int, velocity: Int) {
+        this.feedback_revolver.play(preset, note, bend, velocity, 250)
     }
 
     fun play_feedback(channel: Int, note: Int, bend: Int, velocity: Int) {

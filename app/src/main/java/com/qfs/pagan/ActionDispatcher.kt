@@ -990,33 +990,66 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         val event_note = opus_manager.get_absolute_value(beat_key, position) ?: return
         this.play_event(beat_key.channel, event_note)
     }
+    // TODO: This doesn't belong *here*
+    private fun _calculate_note_bend(channel: Int, event_value: Int) : Pair<Int, Int> {
+        val opus_manager = this.get_opus_manager()
+        val radix = opus_manager.get_radix()
+        val octave = event_value / radix
+        val offset = opus_manager.tuning_map[event_value % radix]
 
-    private fun play_event(channel: Int, event_value: Int, velocity: Float = .5F) {
+        val transpose_offset = 12.0 * opus_manager.transpose.first.toDouble() / opus_manager.transpose.second.toDouble()
+        val std_offset = 12.0 * offset.first.toDouble() / offset.second.toDouble()
+
+        val bend = (((std_offset - floor(std_offset)) + (transpose_offset - floor(transpose_offset))) * 512.0).toInt()
+        val new_note = (octave * 12) + std_offset.toInt() + transpose_offset.toInt() + 21
+
+        return Pair(new_note, bend)
+    }
+
+    private fun play_event(preset: PresetKey, is_percussion: Boolean, event_value: Int, velocity: Float = .5f) {
         if (event_value < 0) return // No sound to play
         if (this.vm_controller.in_playback()) return // disable feedback during playback
-
-        val opus_manager = this.get_opus_manager()
-        val midi_channel = opus_manager.get_midi_channel(channel)
-
-        val radix = opus_manager.get_radix()
-        val (note, bend) = if (opus_manager.is_percussion(channel)) { // Ignore the event data and use percussion map
+        val (note, bend) = if (is_percussion) {
             Pair(event_value + 27, 0)
         } else {
-            val octave = event_value / radix
-            val offset = opus_manager.tuning_map[event_value % radix]
-
-            val transpose_offset = 12.0 * opus_manager.transpose.first.toDouble() / opus_manager.transpose.second.toDouble()
-            val std_offset = 12.0 * offset.first.toDouble() / offset.second.toDouble()
-
-            val bend = (((std_offset - floor(std_offset)) + (transpose_offset - floor(transpose_offset))) * 512.0).toInt()
-            val new_note = (octave * 12) + std_offset.toInt() + transpose_offset.toInt() + 21
-
-            Pair(new_note, bend)
+            this._calculate_note_bend(0, event_value)
         }
 
         if (note > 127) return
 
         val audio_interface = this.vm_controller.audio_interface
+        if (this.vm_controller.active_midi_device != null) {
+            // TODO()
+            //try {
+            //    this.vm_controller.virtual_midi_device.play_note(
+            //        note,
+            //        bend,
+            //        (velocity * 127F).toInt(),
+            //        !this.get_opus_manager().is_tuning_standard()
+            //    )
+            //} catch (_: VirtualMidiInputDevice.DisconnectedException) {
+            //    // Feedback shouldn't be necessary here. But i'm sure that'll come back to bite me
+            //}
+        } else if (audio_interface.has_soundfont()) {
+            audio_interface.play_feedback(preset, note, bend, (velocity * 127F).toInt() shl 8)
+        }
+
+    }
+
+    private fun play_event(channel: Int, event_value: Int, velocity: Float = .5F) {
+        if (event_value < 0) return // No sound to play
+        if (this.vm_controller.in_playback()) return // disable feedback during playback
+        val opus_manager = this.get_opus_manager()
+        val (note, bend) = if (opus_manager.is_percussion(channel)) {
+            Pair(event_value + 27, 0)
+        } else {
+            this._calculate_note_bend(channel, event_value)
+        }
+
+        if (note > 127) return
+
+        val audio_interface = this.vm_controller.audio_interface
+        val midi_channel = this.get_opus_manager().get_midi_channel(channel)
         if (this.vm_controller.active_midi_device != null) {
             try {
                 this.vm_controller.virtual_midi_device.play_note(
@@ -1258,16 +1291,16 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
 
     fun set_channel_preset(channel: Int, instrument: PresetKey? = null) {
         val opus_manager = this.get_opus_manager()
+        val is_percussion = opus_manager.is_percussion(channel)
 
         instrument?.let {
             opus_manager.channel_set_preset(channel, instrument)
-
             val radix = opus_manager.get_radix()
-            this.play_event(channel, (3 * radix))
-            Thread.sleep(200)
-            this.play_event(channel, (3 * radix) + (4 * radix / 12))
-            Thread.sleep(200)
-            this.play_event(channel, (3 * radix) + (7 * radix / 12))
+            this.play_event(it, is_percussion, (radix .. radix * 6).random())
+            // Thread.sleep(200)
+            // this.play_event(it, is_percussion, (3 * radix) + (4 * radix / 12))
+            // Thread.sleep(200)
+            // this.play_event(it, is_percussion,(3 * radix) + (7 * radix / 12))
             return
         }
 
@@ -1279,7 +1312,6 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
             return s.uppercase()
         }
 
-        val is_percussion = opus_manager.is_percussion(channel)
         val default = opus_manager.get_channel_instrument(channel)
 
         val default_presets = this.context.resources.getStringArray(R.array.general_midi_presets)
@@ -1338,6 +1370,15 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                             textAlign = TextAlign.Center,
                             maxLines = 1
                         )
+                        // TODO: draw preview icon
+                        // Icon(
+                        //     painter = painterResource(R.drawable.icon_arrow_prev),
+                        //     contentDescription = null,
+                        //     modifier = Modifier.clickable {
+                        //         val radix = opus_manager.get_radix()
+                        //         this@ActionDispatcher.play_event(preset_key, is_percussion, (radix .. radix * 6).random())
+                        //     }
+                        // )
                     }
                 )
             )

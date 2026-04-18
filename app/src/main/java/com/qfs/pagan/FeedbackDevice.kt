@@ -26,7 +26,7 @@ import kotlin.math.max
 
 class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): MappedPlaybackDevice(ImmediateFrameMap(), _sample_handle_manager.sample_rate, _sample_handle_manager.buffer_size, WaveGenerator.StereoMode.Mono), VirtualMidiOutputDevice {
     class ImmediateFrameMap: FrameMap {
-        private val _handles = mutableSetOf<SampleHandle>()
+        private val _handles = mutableSetOf<Pair<SampleHandle, Long>>()
         private val _mutex = Mutex()
         var max_frame = -1
         var volume = .6F
@@ -42,16 +42,19 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
         )
         override fun get_new_handles(frame: Int): Set<Pair<SampleHandle, IntArray>>? {
             if (this._handles.isEmpty()) return null
+            val now = System.currentTimeMillis()
 
             val output = mutableSetOf<Pair<SampleHandle, IntArray>>()
-            for (handle in this._handles) {
+
+            val usable_handles = this._handles.filter { it.second < now }
+            for ((handle, _) in usable_handles) {
                 this.max_frame = max(frame + handle.release_frame!! + handle.get_release_duration(), this.max_frame)
                 output.add(Pair(handle, intArrayOf(handle.uuid)))
             }
 
             runBlocking {
                 this@ImmediateFrameMap._mutex.withLock {
-                    this@ImmediateFrameMap._handles.clear()
+                    this@ImmediateFrameMap._handles.removeIf { it.second < now }
                 }
             }
 
@@ -81,10 +84,10 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
             return setOf()
         }
 
-        fun add(handle: SampleHandle) {
+        fun add(handle: SampleHandle, delay: Int = 0) {
             runBlocking {
                 this@ImmediateFrameMap._mutex.withLock {
-                    this@ImmediateFrameMap._handles.add(handle)
+                    this@ImmediateFrameMap._handles.add(Pair(handle, System.currentTimeMillis() + delay))
                 }
             }
         }
@@ -111,16 +114,37 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
     //    this.play()
     //}
 
-    fun new_event(event: NoteOn79, duration_millis: Int) {
-        val t = System.currentTimeMillis()
-        for (handle in this._sample_handle_manager.gen_sample_handles(event)) {
+    fun new_events(events: List<Pair<NoteOn79?, Int>>) {
+        var position = 0
+        for ((event, duration_millis) in events) {
+            event?.let {
+                for (handle in this._sample_handle_manager.gen_sample_handles(event)) {
+                    handle.release_frame = duration_millis * this.sample_rate / 1000
+
+                    // Remove release phase. can get noisy on things like tubular bells with long fade outs
+                    handle.volume_envelope.frames_release = 0
+                    handle.volume_envelope.release = 0F
+
+                    (this.sample_frame_map as ImmediateFrameMap).add(handle, position)
+                }
+            }
+            position += duration_millis
+        }
+
+        if (this.in_playable_state()) {
+            this.play(0)
+        }
+    }
+
+    fun new_event(event: NoteOn79, duration_millis: Int, forced_preset: PresetKey? = null) {
+        for (handle in this._sample_handle_manager.gen_sample_handles(event, forced_preset)) {
             handle.release_frame = duration_millis * this.sample_rate / 1000
 
             // Remove release phase. can get noisy on things like tubular bells with long fade outs
             handle.volume_envelope.frames_release = 0
             handle.volume_envelope.release = 0F
 
-            (this.sample_frame_map as ImmediateFrameMap).add(handle)
+            (this.sample_frame_map as ImmediateFrameMap).add(handle, 0)
         }
 
         if (this.in_playable_state()) {

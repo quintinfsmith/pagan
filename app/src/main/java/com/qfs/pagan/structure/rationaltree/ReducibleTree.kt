@@ -306,11 +306,11 @@ class ReducibleTree<T> {
         return copied
     }
 
-    fun <K> copy(copy_func: ((event: T?) -> K?)): ReducibleTree<K> {
-        val copied = ReducibleTree<K>()
+    fun copy(copy_func: ((event: T?) -> T?)): ReducibleTree<T> {
+        val copied = ReducibleTree<T>()
         for (key in this.divisions.keys) {
             this[key].let { subdivision ->
-                val subcopy: ReducibleTree<K> = subdivision.copy(copy_func)
+                val subcopy: ReducibleTree<T> = subdivision.copy(copy_func)
                 subcopy.parent = copied
                 copied[key] = subcopy
             }

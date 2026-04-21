@@ -115,5 +115,7 @@ abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<Reducible
         if (this.controllers != other.controllers) return false
         return super.equals(other)
     }
+
+    abstract fun copy(): OpusLineAbstract<T>
 }
 

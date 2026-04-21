@@ -9,6 +9,7 @@
  */
 package com.qfs.pagan.structure.opusmanager.base
 
+import com.qfs.pagan.structure.opusmanager.OpusLineJSONInterface
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
 class OpusLinePercussion(var instrument: Int, beats: MutableList<ReducibleTree<PercussionEvent>>): OpusLineAbstract<PercussionEvent>(beats){
@@ -18,5 +19,12 @@ class OpusLinePercussion(var instrument: Int, beats: MutableList<ReducibleTree<P
         return other is OpusLinePercussion
                 && other.instrument == this.instrument
                 &&super.equals(other)
+    }
+
+    override fun copy(): OpusLinePercussion {
+        return OpusLineJSONInterface.percussion_line(
+            OpusLineJSONInterface.to_json(this),
+            this.beat_count()
+        )
     }
 }

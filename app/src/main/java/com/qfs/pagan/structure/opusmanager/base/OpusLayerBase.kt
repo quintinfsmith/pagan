@@ -5139,4 +5139,13 @@ open class OpusLayerBase: Effectable {
             TimeZone.getDefault().toZoneId()
         )
     }
+
+    open fun duplicate_line(channel: Int, line_offset: Int) {
+        this.channels[channel].duplicate_line(line_offset)
+    }
+
+    open fun duplicate_channel(channel: Int) {
+        val new_channel = this.channels[channel].copy()
+        this.channels.add(channel)
+    }
 }

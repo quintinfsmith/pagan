@@ -5142,10 +5142,15 @@ open class OpusLayerBase: Effectable {
 
     open fun duplicate_line(channel: Int, line_offset: Int) {
         this.channels[channel].duplicate_line(line_offset)
+        this.recache_line_maps()
     }
 
-    open fun duplicate_channel(channel: Int) {
+    open fun duplicate_channel(channel: Int): Int {
         val new_channel = this.channels[channel].copy()
-        this.channels.add(channel)
+        new_channel.uuid = OpusLayerBase.gen_channel_uuid()
+        this.channels.add(channel, new_channel)
+        this._channel_uuid_map[new_channel.uuid] = new_channel
+        this.recache_line_maps()
+        return new_channel.uuid
     }
 }

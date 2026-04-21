@@ -2413,4 +2413,30 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
             }
         }
     }
+
+    fun duplicate_line() {
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        when (cursor.mode) {
+            CursorMode.Single,
+            CursorMode.Line -> {
+                opus_manager.duplicate_line(cursor.channel, cursor.line_offset)
+            }
+            else -> return // TODO: Throw exception?
+        }
+
+    }
+
+    fun duplicate_channel() {
+        val opus_manager = this.get_opus_manager()
+        val cursor = opus_manager.cursor
+        when (cursor.mode) {
+            CursorMode.Channel,
+            CursorMode.Single,
+            CursorMode.Line -> {
+                opus_manager.duplicate_channel(cursor.channel)
+            }
+            else -> return // TODO: Throw exception?
+        }
+    }
 }

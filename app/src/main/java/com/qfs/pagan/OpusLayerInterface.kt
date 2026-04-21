@@ -2529,4 +2529,39 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         super.clear_history()
         this.update_history_state()
     }
+
+    override fun duplicate_line(channel: Int, line_offset: Int) {
+        super.duplicate_line(channel, line_offset)
+        this._update_after_new_line(channel, line_offset)
+        this.vm_state.refresh_cursor()
+    }
+
+    override fun duplicate_channel(channel: Int): Int {
+        val new_uuid = super.duplicate_channel(channel)
+
+        for (i in channel until this.channels.size) {
+            val working_channel = this.get_channel(i)
+            val preset = working_channel.get_preset()
+            this.vm_controller.update_channel_preset(
+                this.get_midi_channel(i),
+                preset.soundfont_index,
+                preset.bank,
+                preset.program
+            )
+        }
+
+        if (this.ui_lock.is_locked()) return new_uuid
+
+        this.vm_state.add_channel(
+            channel,
+            this.is_percussion(channel),
+            this.channels[channel].get_preset(),
+            this.channels[channel].muted,
+            palette = this.channels[channel].palette
+        )
+        this._post_new_channel(channel, this.get_channel(channel).lines.size)
+        this.vm_state.refresh_cursor()
+
+        return new_uuid
+    }
 }

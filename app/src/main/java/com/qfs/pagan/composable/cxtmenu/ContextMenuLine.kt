@@ -55,6 +55,16 @@ fun AdjustLineButton(dispatcher: ActionDispatcher) {
         description = R.string.cd_adjust_selection
     )
 }
+@Composable
+fun DuplicateLineButton(dispatcher: ActionDispatcher) {
+    IconCMenuButton(
+        modifier = Modifier.testTag(TestTag.LineDuplicate),
+        onClick = { dispatcher.duplicate_line() },
+        shape = Shapes.ContextMenuButtonPrimary,
+        icon = R.drawable.icon_ic_baseline_content_copy_24,
+        description = R.string.cd_adjust_selection
+    )
+}
 
 @Composable
 fun ToggleLineControllerButton(
@@ -241,6 +251,8 @@ fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
                 }
 
                 MediumSpacer()
+                DuplicateLineButton(dispatcher)
+                MediumSpacer()
                 RemoveLineButton(dispatcher, active_channel.size.intValue)
                 MediumSpacer()
                 InsertLineButton(dispatcher, Shapes.ContextMenuButtonPrimaryEnd)
@@ -255,12 +267,15 @@ fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
                 MediumSpacer()
                 RemoveLineButton(dispatcher, active_channel.size.intValue)
 
+                MediumSpacer()
+                DuplicateLineButton(dispatcher)
+
                 if (active_line.assigned_offset.value != null) {
                     MediumSpacer()
                     PercussionSetInstrumentButton(
                         Modifier
-                            .width(Dimensions.ButtonHeight.Normal)
-                            .height(Dimensions.ButtonHeight.Normal),
+                            .width(Dimensions.ContextMenuButtonWidth)
+                            .height(Dimensions.ContextMenuButtonHeight),
                         vm_state,
                         dispatcher,
                         cursor.ints[0],

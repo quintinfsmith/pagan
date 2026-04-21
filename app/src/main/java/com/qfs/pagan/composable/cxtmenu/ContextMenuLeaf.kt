@@ -246,6 +246,7 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEd
             } else {
                 Row {
                     ContextMenuStructureControls(Modifier, ui_facade, dispatcher, true)
+                    MediumSpacer()
                     Column(Modifier.width(Dimensions.NumberSelectorColumnWidth)) {
                         val octave_dropdown_visible: MutableState<Int?> = remember { mutableStateOf(null) }
                         NumberSelector(

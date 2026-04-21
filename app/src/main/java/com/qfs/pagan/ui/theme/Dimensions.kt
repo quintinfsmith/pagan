@@ -177,9 +177,20 @@ object Dimensions {
         )
     val ContextMenuButtonIconWidth = 32.dp
 
-    val ContextMenuButtonPadding = PaddingValues(8.dp)
+    val ContextMenuButtonPadding: PaddingValues
+        get() = getter(
+            small_portrait = PaddingValues(8.dp),
+            small_landscape = PaddingValues(6.dp),
+            medium_portrait = PaddingValues(8.dp)
+        )
     val ContextMenuButtonRadius = 8.dp
     val ContextMenuPadding = Space.Medium
+    val ContextMenuSpacing: Dp
+        get() = getter(
+            small_portrait = Space.Medium,
+            small_landscape = Space.Small,
+            medium_portrait = Space.Medium,
+        )
     val ContextMenuRadius = 16.dp
 
     object DashedBorder {

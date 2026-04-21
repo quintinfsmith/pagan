@@ -1185,22 +1185,22 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
-    fun get_context_menu_primary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, layout: LayoutSize): (@Composable () -> Unit)? {
+    fun get_context_menu_primary(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, layout: LayoutSize): (@Composable () -> Unit)? {
         if (ui_facade.playback_state_midi.value == PlaybackState.Playing || ui_facade.playback_state_soundfont.value == PlaybackState.Playing) return null
         if (ui_facade.dragging_line.value != null) return null
 
         val cursor = ui_facade.active_cursor.value
         return when (cursor?.type) {
             CursorMode.Line -> {
-                @Composable { ContextMenuLinePrimary(modifier, ui_facade, dispatcher, layout) }
+                @Composable { ContextMenuLinePrimary(Modifier, ui_facade, dispatcher, layout) }
             }
             CursorMode.Column -> {
-                @Composable { ContextMenuColumnPrimary(modifier, ui_facade, dispatcher, layout) }
+                @Composable { ContextMenuColumnPrimary(Modifier, ui_facade, dispatcher, layout) }
             }
             CursorMode.Single -> {
                 @Composable {
                     ContextMenuLeafPrimary(
-                        modifier,
+                        Modifier,
                         ui_facade,
                         dispatcher,
                         layout
@@ -1208,7 +1208,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             }
             CursorMode.Channel -> {
-                @Composable { ContextMenuChannelPrimary(modifier, ui_facade, dispatcher, layout) }
+                @Composable { ContextMenuChannelPrimary(Modifier, ui_facade, dispatcher, layout) }
             }
             CursorMode.Range,
             CursorMode.Unset,
@@ -2235,7 +2235,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
 
             val primary = this@ComponentActivityEditor.get_context_menu_primary(
-                Modifier,
                 ui_facade,
                 action_interface,
                 LayoutSize.LargePortrait
@@ -2299,7 +2298,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
 
             val primary = this@ComponentActivityEditor.get_context_menu_primary(
-                Modifier,
                 ui_facade,
                 action_interface,
                 layout
@@ -2349,7 +2347,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
         ) {
             MainTable(Modifier.fillMaxSize(), ui_facade, action_interface, ui_facade.beat_count, layout)
             Row(
-                Modifier.fillMaxSize(),
+                Modifier
+                    .fillMaxSize(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Bottom
             ) {
@@ -2384,21 +2383,19 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                 AnimatedVisibility(!keyboardAsState().value && ui_facade.active_cursor.value != null) {
                     this@ComponentActivityEditor.get_context_menu_primary(
-                        Modifier
-                            .verticalScroll(rememberScrollState())
-                            .fillMaxHeight(),
                         ui_facade,
                         action_interface,
                         layout
                     )?.let {
                         Row(
-                            Modifier
-                                .fillMaxHeight(),
+                            Modifier.fillMaxHeight(),
                             horizontalArrangement = Arrangement.End,
                             verticalAlignment = Alignment.CenterVertically,
                             content = {
                                 CMBoxEnd(
-                                    Modifier.update_side_padding()
+                                    Modifier
+                                        .fillMaxHeight()
+                                        .update_side_padding()
                                 ) { it() }
                             }
                         )

@@ -2197,6 +2197,24 @@ open class OpusLayerHistory: OpusLayerCursor() {
         super.on_action_blocked(blocker_key, blocker_position)
     }
 
+    override fun duplicate_line(channel: Int, line_offset: Int) {
+        this._remember {
+            this.push_remove_line(channel, line_offset)
+            super.duplicate_line(channel, line_offset)
+        }
+    }
+
+    override fun duplicate_channel(channel: Int): Int {
+        return this._remember {
+            val uuid = super.duplicate_channel(channel)
+            this.push_to_history_stack(
+                HistoryToken.REMOVE_CHANNEL,
+                listOf(uuid)
+            )
+            uuid
+        }
+    }
+
     // HISTORY FUNCTIONS vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     // HISTORY FUNCTIONS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

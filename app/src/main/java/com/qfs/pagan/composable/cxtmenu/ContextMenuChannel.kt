@@ -9,9 +9,12 @@
  */
 package com.qfs.pagan.composable.cxtmenu
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -22,7 +25,6 @@ import com.qfs.pagan.ActionDispatcher
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
-import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.button.TextCMenuButton
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
@@ -32,9 +34,9 @@ import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun ToggleEffectsButton(dispatcher: ActionDispatcher, shape: Shape = Shapes.ContextMenuButtonPrimaryStart) {
+fun ToggleEffectsButton(dispatcher: ActionDispatcher, modifier: Modifier = Modifier, shape: Shape = Shapes.ContextMenuButtonPrimaryStart) {
     IconCMenuButton(
-        modifier = Modifier.testTag(TestTag.ChannelEffects),
+        modifier = modifier.testTag(TestTag.ChannelEffects),
         onClick = { dispatcher.show_hidden_channel_controller() },
         icon = R.drawable.icon_ctl,
         shape = shape,
@@ -43,9 +45,9 @@ fun ToggleEffectsButton(dispatcher: ActionDispatcher, shape: Shape = Shapes.Cont
 }
 
 @Composable
-fun AdjustChannelButton(dispatcher: ActionDispatcher) {
+fun AdjustChannelButton(dispatcher: ActionDispatcher, modifier: Modifier = Modifier) {
     IconCMenuButton(
-        modifier = Modifier.testTag(TestTag.AdjustSelection),
+        modifier = modifier.testTag(TestTag.AdjustSelection),
         onClick = { dispatcher.adjust_selection() },
         icon = R.drawable.icon_adjust,
         description = R.string.cd_adjust_selection
@@ -53,9 +55,19 @@ fun AdjustChannelButton(dispatcher: ActionDispatcher) {
 }
 
 @Composable
-fun RemoveChannelButton(dispatcher: ActionDispatcher, is_percussion: Boolean) {
+fun DuplicateChannelButton(dispatcher: ActionDispatcher, modifier: Modifier = Modifier) {
     IconCMenuButton(
-        modifier = Modifier.testTag(TestTag.ChannelRemove),
+        modifier = modifier.testTag(TestTag.ChannelDuplicate),
+        onClick = { dispatcher.duplicate_channel() },
+        icon = R.drawable.icon_ic_baseline_content_copy_24,
+        description = R.string.cd_adjust_selection
+    )
+}
+
+@Composable
+fun RemoveChannelButton(dispatcher: ActionDispatcher, is_percussion: Boolean, modifier: Modifier = Modifier) {
+    IconCMenuButton(
+        modifier = modifier.testTag(TestTag.ChannelRemove),
         onClick = { dispatcher.remove_channel() },
         icon = if (is_percussion) {
             R.drawable.icon_subtract_bang
@@ -68,9 +80,9 @@ fun RemoveChannelButton(dispatcher: ActionDispatcher, is_percussion: Boolean) {
 }
 
 @Composable
-fun AddKitButton(dispatcher: ActionDispatcher) {
+fun AddKitButton(dispatcher: ActionDispatcher, modifier: Modifier = Modifier) {
     IconCMenuButton(
-        modifier = Modifier.testTag(TestTag.ChannelPercussionInsert),
+        modifier = modifier.testTag(TestTag.ChannelPercussionInsert),
         onClick = { dispatcher.insert_percussion_channel() },
         icon = R.drawable.icon_add_bang,
         description = R.string.cd_insert_channel_percussion
@@ -78,9 +90,9 @@ fun AddKitButton(dispatcher: ActionDispatcher) {
 }
 
 @Composable
-fun AddChannelButton(dispatcher: ActionDispatcher, shape: Shape = Shapes.ContextMenuButtonPrimaryStart) {
+fun AddChannelButton(dispatcher: ActionDispatcher, modifier: Modifier = Modifier, shape: Shape = Shapes.ContextMenuButtonPrimaryStart) {
     IconCMenuButton(
-        modifier = Modifier.testTag(TestTag.ChannelInsert),
+        modifier = modifier.testTag(TestTag.ChannelInsert),
         onClick = { dispatcher.insert_channel() },
         icon = R.drawable.icon_add_circle,
         shape = shape,
@@ -92,10 +104,11 @@ fun AddChannelButton(dispatcher: ActionDispatcher, shape: Shape = Shapes.Context
 fun MuteChannelButton(
     dispatcher: ActionDispatcher,
     active_channel: ViewModelEditorState.ChannelData,
+    modifier: Modifier = Modifier,
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
     IconCMenuButton(
-        modifier = Modifier.testTag(TestTag.ChannelMute),
+        modifier = modifier.testTag(TestTag.ChannelMute),
         onClick = {
             if (active_channel.is_mute.value) {
                 dispatcher.channel_unmute()
@@ -150,7 +163,7 @@ fun SetChannelColorButton(
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
     IconCMenuButton(
-        modifier = Modifier.testTag(TestTag.ChannelColor),
+        modifier = modifier.testTag(TestTag.ChannelColor),
         onClick = { dispatcher.set_channel_color(channel_index) },
         shape = shape,
         icon = R.drawable.icon_palette,
@@ -172,35 +185,52 @@ fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, ui_facade: ViewMode
         LayoutSize.LargeLandscape,
         LayoutSize.XLargeLandscape -> {
             ContextMenuPrimaryRow(modifier) {
-                ToggleEffectsButton(dispatcher, Shapes.ContextMenuButtonPrimaryStart)
+                ToggleEffectsButton(
+                    dispatcher,
+                    Modifier,
+                    Shapes.ContextMenuButtonPrimaryStart
+                )
                 Spacer(
                     Modifier
                         .width(Dimensions.ContextMenuPadding)
                         .weight(1F)
                 )
                 AdjustChannelButton(dispatcher)
-                MediumSpacer()
+                ContextMenuSpacer()
+                DuplicateChannelButton(dispatcher)
+                ContextMenuSpacer()
                 RemoveChannelButton(dispatcher, is_percussion)
-                MediumSpacer()
+                ContextMenuSpacer()
                 AddKitButton(dispatcher)
-                MediumSpacer()
-                AddChannelButton(dispatcher, Shapes.ContextMenuButtonPrimaryEnd)
+                ContextMenuSpacer()
+                AddChannelButton(
+                    dispatcher,
+                    Modifier,
+                    Shapes.ContextMenuButtonPrimaryEnd
+                )
             }
         }
 
         LayoutSize.SmallLandscape,
         LayoutSize.MediumLandscape -> {
-            Column {
-                AddChannelButton(dispatcher, Shapes.ContextMenuButtonPrimaryStart)
-                MediumSpacer()
+            Column(
+                modifier = modifier.fillMaxHeight(),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                AddChannelButton(
+                    dispatcher,
+                    Modifier,
+                    Shapes.ContextMenuButtonPrimaryStart
+                )
                 AddKitButton(dispatcher)
-                MediumSpacer()
+                DuplicateChannelButton(dispatcher)
                 AdjustChannelButton(dispatcher)
-                MediumSpacer()
                 RemoveChannelButton(dispatcher, is_percussion)
-                Spacer(Modifier.weight(1F))
-
-                ToggleEffectsButton(dispatcher, Shapes.ContextMenuButtonPrimaryBottom)
+                ToggleEffectsButton(
+                    dispatcher,
+                    Modifier.weight(1F, fill = false),
+                    Shapes.ContextMenuButtonPrimaryBottom
+                )
             }
         }
     }
@@ -220,13 +250,14 @@ fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
         MuteChannelButton(
             dispatcher,
             active_channel,
+            Modifier,
             if (layout == LayoutSize.SmallLandscape || layout == LayoutSize.MediumLandscape) {
                 Shapes.ContextMenuButtonPrimaryStart
             } else {
                 Shapes.ContextMenuButtonPrimary
             }
         )
-        MediumSpacer()
+        ContextMenuSpacer()
         SetPresetButton(
             modifier = Modifier
                 .height(Dimensions.ContextMenuButtonHeight)
@@ -237,7 +268,7 @@ fun ContextMenuChannelSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
             active_channel,
             Shapes.ContextMenuButtonPrimary
         )
-        MediumSpacer()
+        ContextMenuSpacer()
         SetChannelColorButton(
             Modifier,
             ui_facade,

@@ -133,11 +133,11 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         this.vm_top = model
     }
 
-    fun apply_undo() {
-        this.get_opus_manager().apply_undo()
+    fun apply_undo(repeat: Int = 1) {
+        this.get_opus_manager().apply_undo(repeat)
     }
-    fun apply_redo() {
-        this.get_opus_manager().apply_redo()
+    fun apply_redo(repeat: Int = 1) {
+        this.get_opus_manager().apply_redo(repeat)
     }
 
     fun move_selection_to_beat(beat_key: BeatKey) {

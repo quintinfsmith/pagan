@@ -22,6 +22,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.DocumentsContract
 import android.provider.OpenableColumns
+import android.view.KeyEvent.ACTION_DOWN
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -76,6 +77,7 @@ import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
@@ -105,6 +107,7 @@ import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.ActionDispatcher
 import com.qfs.pagan.CompatibleFileType
 import com.qfs.pagan.Exportable
+import com.qfs.pagan.KeyboardInputInterface
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.MultiExporterEventHandler
 import com.qfs.pagan.PaganBroadcastReceiver
@@ -186,6 +189,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     val controller_model: ViewModelEditorController by this.viewModels()
     val state_model: ViewModelEditorState by this.viewModels()
     lateinit var action_interface: ActionDispatcher
+    lateinit var keyboard_interface: KeyboardInputInterface
 
     private var broadcast_receiver = PaganBroadcastReceiver()
     private var receiver_intent_filter = IntentFilter("com.qfs.pagan.CANCEL_EXPORT_WAV")
@@ -572,7 +576,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        action_interface = ActionDispatcher(this, this.controller_model)
+        this.action_interface = ActionDispatcher(this, this.controller_model)
+        this.keyboard_interface = KeyboardInputInterface(this.action_interface)
         val dispatcher = this.action_interface
         this.controller_model.attach_state_model(this.state_model)
 
@@ -3004,6 +3009,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
         if (is_current) {
             this.action_interface.new_project()
         }
+    }
+    override fun on_key_press(e: KeyEvent): Boolean {
+        return this.keyboard_interface.input(e)
     }
 }
 

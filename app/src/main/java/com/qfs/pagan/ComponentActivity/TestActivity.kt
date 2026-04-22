@@ -14,6 +14,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.KeyEvent
 import androidx.lifecycle.ViewModel
 
 class TestActivity: PaganComponentActivity() {
@@ -28,6 +29,10 @@ class TestActivity: PaganComponentActivity() {
     override fun Drawer(modifier: Modifier) { }
     override fun on_back_press_check(): Boolean {
         TODO("Not yet implemented")
+    }
+
+    override fun on_key_press(e: KeyEvent): Boolean {
+        return false
     }
 
     @Composable

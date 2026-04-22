@@ -47,6 +47,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.res.integerArrayResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -1158,5 +1159,9 @@ class ComponentActivitySettings: PaganComponentActivity() {
         } else {
             TODO("would only be used for debug atm anyway.")
         }
+    }
+
+    override fun on_key_press(e: KeyEvent): Boolean {
+        return false
     }
 }

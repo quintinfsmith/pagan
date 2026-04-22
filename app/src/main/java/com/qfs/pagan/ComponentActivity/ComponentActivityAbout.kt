@@ -30,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -268,4 +269,8 @@ class ComponentActivityAbout: PaganComponentActivity() {
     override fun LayoutSmallPortrait(modifier: Modifier) = Layout(modifier)
     @Composable
     override fun LayoutSmallLandscape(modifier: Modifier) = Layout(modifier)
+
+    override fun on_key_press(e: KeyEvent): Boolean {
+        return false
+    }
 }

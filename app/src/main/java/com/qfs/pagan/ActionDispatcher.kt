@@ -1214,15 +1214,19 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                                     }
                                     .height(Dimensions.PreviewIconHeight)
                                     .width(Dimensions.PreviewIconHeight),
-                                contentAlignment = Alignment.Center
+                                contentAlignment = Alignment.CenterEnd
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.icon_volume),
                                     contentDescription = null,
                                     modifier = Modifier
-                                        .padding(Dimensions.PreviewIconPadding)
-                                        .height(Dimensions.PreviewIconHeight - Dimensions.PreviewIconPadding)
-                                        .width(Dimensions.PreviewIconHeight - Dimensions.PreviewIconPadding)
+                                        .padding(
+                                            top = Dimensions.PreviewIconPadding,
+                                            bottom = Dimensions.PreviewIconPadding,
+                                            start = Dimensions.PreviewIconPadding
+                                        )
+                                        .height(Dimensions.PreviewIconHeight - (Dimensions.PreviewIconPadding * 2))
+                                        .width(Dimensions.PreviewIconHeight - (Dimensions.PreviewIconPadding))
                                 )
                             }
                         }
@@ -1412,15 +1416,19 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                                     }
                                     .height(Dimensions.PreviewIconHeight)
                                     .width(Dimensions.PreviewIconHeight),
-                                contentAlignment = Alignment.Center
+                                contentAlignment = Alignment.CenterEnd
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.icon_volume),
                                     contentDescription = null,
                                     modifier = Modifier
-                                        .padding(Dimensions.PreviewIconPadding)
-                                        .height(Dimensions.PreviewIconHeight - Dimensions.PreviewIconPadding)
-                                        .width(Dimensions.PreviewIconHeight - Dimensions.PreviewIconPadding)
+                                        .padding(
+                                            top = Dimensions.PreviewIconPadding,
+                                            bottom = Dimensions.PreviewIconPadding,
+                                            start = Dimensions.PreviewIconPadding
+                                        )
+                                        .height(Dimensions.PreviewIconHeight - (Dimensions.PreviewIconPadding * 2))
+                                        .width(Dimensions.PreviewIconHeight - (Dimensions.PreviewIconPadding))
                                 )
                             }
                         }

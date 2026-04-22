@@ -309,7 +309,7 @@ object Dimensions {
     val PresetMenuArrowWidth = 24.dp
     val PresetMenuArrowHeight = 24.dp
     val PreviewIconHeight = 41.dp
-    val PreviewIconPadding = 4.dp
+    val PreviewIconPadding = 8.dp
     val ProjectCardNotesPadding = 6.dp
 
     object RadioMenu {

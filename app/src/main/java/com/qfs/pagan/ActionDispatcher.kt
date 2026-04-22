@@ -1200,16 +1200,31 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                     if (index < 0) continue
                     options.add(
                         Pair(index) {
-                            Text("$index: $name")
-                            Icon(
-                                painter = painterResource(R.drawable.icon_volume),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .height(Dimensions.PreviewIconHeight)
+                            Text("$index:")
+                            Text(
+                                "$name",
+                                modifier = Modifier.weight(1F),
+                                textAlign = TextAlign.Center,
+                                maxLines = 1
+                            )
+                            Box(
+                                Modifier
                                     .clickable {
                                         this@ActionDispatcher.play_event(channel, index, .7F)
                                     }
-                            )
+                                    .height(Dimensions.PreviewIconHeight)
+                                    .width(Dimensions.PreviewIconHeight),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.icon_volume),
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .padding(Dimensions.PreviewIconPadding)
+                                        .height(Dimensions.PreviewIconHeight - Dimensions.PreviewIconPadding)
+                                        .width(Dimensions.PreviewIconHeight - Dimensions.PreviewIconPadding)
+                                )
+                            }
                         }
                     )
                 }
@@ -1385,11 +1400,8 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                             maxLines = 1
                         )
                         if (can_preview) {
-                            Icon(
-                                painter = painterResource(R.drawable.icon_volume),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .height(Dimensions.PreviewIconHeight)
+                            Box(
+                                Modifier
                                     .clickable {
                                         val radix = opus_manager.get_radix()
                                         this@ActionDispatcher.play_event(preset_key, is_percussion, (2 * radix))
@@ -1398,7 +1410,19 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                                         Thread.sleep(200)
                                         this@ActionDispatcher.play_event(preset_key, is_percussion,(3 * radix) + (7 * radix / 12))
                                     }
-                            )
+                                    .height(Dimensions.PreviewIconHeight)
+                                    .width(Dimensions.PreviewIconHeight),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.icon_volume),
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .padding(Dimensions.PreviewIconPadding)
+                                        .height(Dimensions.PreviewIconHeight - Dimensions.PreviewIconPadding)
+                                        .width(Dimensions.PreviewIconHeight - Dimensions.PreviewIconPadding)
+                                )
+                            }
                         }
                     }
                 )

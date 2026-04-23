@@ -76,6 +76,7 @@ import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.DivisorSeparator
 import com.qfs.pagan.composable.IntegerInput
+import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.NumberPicker
 import com.qfs.pagan.composable.SortableMenu
 import com.qfs.pagan.composable.TextInput
@@ -874,23 +875,22 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
             Icon(
                 modifier = Modifier.width(Dimensions.EffectDialogIconWidth),
                 painter = painterResource(icon_id),
-                contentDescription = stringResource(
-                    when (ctl_type) {
-                        EffectType.Tempo -> R.string.ctl_desc_tempo
-                        EffectType.Velocity -> R.string.ctl_desc_velocity
-                        EffectType.Volume -> R.string.ctl_desc_volume
-                        EffectType.Pan -> R.string.ctl_desc_pan
-                        EffectType.Delay -> R.string.ctl_desc_delay
-                        EffectType.LowPass -> TODO()
-                        EffectType.Reverb -> TODO()
-                        EffectType.Pitch -> TODO()
-                    }
-                )
+                contentDescription = stringResource(EffectResourceMap[ctl_type].name)
             )
             Text(
                 ctl_type.name,
                 Modifier.weight(1F)
             )
+        }
+    }
+
+    fun show_all_hidden_line_controller(effect_type: EffectType, all_channels: Boolean = false) {
+        val opus_manager = this.get_opus_manager()
+        if (all_channels) {
+            opus_manager.set_all_line_controller_visibility(effect_type)
+        } else {
+            val cursor = opus_manager.cursor
+            opus_manager.set_all_line_controller_visibility(effect_type, cursor.channel)
         }
     }
 
@@ -904,14 +904,81 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         }
 
         val options = mutableListOf<Pair<EffectType, @Composable RowScope.() -> Unit>>( )
-        for ((ctl_type, icon_id) in OpusLayerInterface.line_controller_domain) {
+        for (ctl_type in OpusLayerInterface.line_controller_domain) {
             if (opus_manager.is_line_ctl_visible(ctl_type, cursor.channel, cursor.line_offset)) continue
-            options.add(this.generate_effect_menu_option(ctl_type, icon_id))
+            options.add(this.generate_effect_menu_option(ctl_type, EffectResourceMap[ctl_type].icon))
         }
 
-        this.dialog_popup_menu(R.string.show_line_controls, options) { ctl_type: EffectType ->
-            this.show_hidden_line_controller(ctl_type)
-        }
+        this.dialog_popup_menu(
+            title = R.string.show_line_controls,
+            options = options,
+            long_click_callback = { ctl_type: EffectType ->
+                this@ActionDispatcher.vm_top.create_dialog { close ->
+                    @Composable {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            DialogTitle("Show")
+                            Icon(
+                                modifier = Modifier.height(Dimensions.EffectDialogIconHeight),
+                                painter = painterResource(EffectResourceMap[ctl_type].icon),
+                                contentDescription = stringResource(EffectResourceMap[ctl_type].name)
+                            )
+                        }
+                        MediumSpacer()
+                        Button(
+                            modifier = Modifier.width(IntrinsicSize.Max),
+                            onClick = {
+                                close()
+                                this@ActionDispatcher.show_hidden_line_controller(ctl_type)
+                            },
+                            content = { Text(stringResource(R.string.show_line_controls_this)) },
+                        )
+                        MediumSpacer()
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Button(
+                                modifier = Modifier
+                                    .weight(1F, fill = false)
+                                    .width(IntrinsicSize.Max),
+                                onClick = {
+                                    close()
+                                    this@ActionDispatcher.show_all_hidden_line_controller(
+                                        ctl_type,
+                                        false
+                                    )
+                                },
+                                content = { Text(stringResource(R.string.show_line_controls_channel)) },
+                            )
+                            MediumSpacer()
+                            Button(
+                                modifier = Modifier
+                                    .weight(1F, fill = false)
+                                    .width(IntrinsicSize.Max),
+                                onClick = {
+                                    close()
+                                    this@ActionDispatcher.show_all_hidden_line_controller(
+                                        ctl_type,
+                                        true
+                                    )
+                                },
+                                content = { Text(stringResource(R.string.show_line_controls_all)) },
+                            )
+                        }
+                        MediumSpacer()
+                        OutlinedButton(
+                            modifier = Modifier.width(IntrinsicSize.Max),
+                            onClick = { close() },
+                            content = { Text(android.R.string.cancel) },
+                        )
+                    }
+                }
+            },
+            callback = { ctl_type: EffectType ->
+                this.show_hidden_line_controller(ctl_type)
+            }
+        )
     }
 
     fun show_hidden_channel_controller(forced_value: EffectType? =  null) {
@@ -924,9 +991,9 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         }
 
         val options = mutableListOf<Pair<EffectType, @Composable RowScope.() -> Unit>>( )
-        for ((ctl_type, icon_id) in OpusLayerInterface.channel_controller_domain) {
+        for (ctl_type in OpusLayerInterface.channel_controller_domain) {
             if (opus_manager.is_channel_ctl_visible(ctl_type, cursor.channel)) continue
-            options.add(this.generate_effect_menu_option(ctl_type, icon_id))
+            options.add(this.generate_effect_menu_option(ctl_type, EffectResourceMap[ctl_type].icon))
         }
 
         this.dialog_popup_menu(R.string.show_channel_controls, options) {
@@ -943,9 +1010,9 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         }
 
         val options = mutableListOf<Pair<EffectType, @Composable RowScope.() -> Unit>>( )
-        for ((ctl_type, icon_id) in OpusLayerInterface.global_controller_domain) {
+        for (ctl_type in OpusLayerInterface.global_controller_domain) {
             if (opus_manager.is_global_ctl_visible(ctl_type)) continue
-            options.add(this.generate_effect_menu_option(ctl_type, icon_id))
+            options.add(this.generate_effect_menu_option(ctl_type, EffectResourceMap[ctl_type].icon))
         }
 
         this.dialog_popup_menu(R.string.show_global_controls, options) {
@@ -990,6 +1057,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         val event_note = opus_manager.get_absolute_value(beat_key, position) ?: return
         this.play_event(beat_key.channel, event_note)
     }
+
     // TODO: This doesn't belong *here*
     private fun _calculate_note_bend(channel: Int, event_value: Int) : Pair<Int, Int> {
         val opus_manager = this.get_opus_manager()
@@ -1408,11 +1476,23 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                                 Modifier
                                     .clickable {
                                         val radix = opus_manager.get_radix()
-                                        this@ActionDispatcher.play_event(preset_key, is_percussion, (2 * radix))
+                                        this@ActionDispatcher.play_event(
+                                            preset_key,
+                                            is_percussion,
+                                            (2 * radix)
+                                        )
                                         Thread.sleep(200)
-                                        this@ActionDispatcher.play_event(preset_key, is_percussion, (3 * radix) + (4 * radix / 12))
+                                        this@ActionDispatcher.play_event(
+                                            preset_key,
+                                            is_percussion,
+                                            (3 * radix) + (4 * radix / 12)
+                                        )
                                         Thread.sleep(200)
-                                        this@ActionDispatcher.play_event(preset_key, is_percussion,(3 * radix) + (7 * radix / 12))
+                                        this@ActionDispatcher.play_event(
+                                            preset_key,
+                                            is_percussion,
+                                            (3 * radix) + (7 * radix / 12)
+                                        )
                                     }
                                     .height(Dimensions.PreviewIconHeight)
                                     .width(Dimensions.PreviewIconHeight),
@@ -1859,14 +1939,25 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
      * wrapper around MainActivity::dialog_popup_menu
      * will subvert popup on replay
      */
-    private fun <T> dialog_popup_menu(title: Int, options: List<Pair<T, @Composable RowScope.() -> Unit>>, default: T? = null, callback: (value: T) -> Unit) {
+    private fun <T> dialog_popup_menu(title: Int, options: List<Pair<T, @Composable RowScope.() -> Unit>>, default: T? = null, long_click_callback: ((T) -> Unit)? = null, callback: (value: T) -> Unit) {
         this.vm_top.create_dialog(0) { close ->
             @Composable {
                 DialogSTitle(title)
-                UnSortableMenu(Modifier, options, default) { value ->
-                    close()
-                    callback(value)
-                }
+                UnSortableMenu(
+                    Modifier,
+                    options,
+                    default,
+                    long_click_callback = { value ->
+                        long_click_callback?.let {
+                            close()
+                            it(value)
+                        }
+                    },
+                    callback = { value ->
+                        close()
+                        callback(value)
+                    }
+                )
                 DialogBar(neutral = close)
             }
         }
@@ -2338,7 +2429,11 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                 Modifier
                     .fillMaxHeight()
                     .background(color = MaterialTheme.colorScheme.surface, shape = Shapes.Container)
-                    .border(width = Dimensions.TuningDialogStrokeWidth, color = MaterialTheme.colorScheme.onSurface, shape = Shapes.Container)
+                    .border(
+                        width = Dimensions.TuningDialogStrokeWidth,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        shape = Shapes.Container
+                    )
                     .padding(horizontal = Dimensions.TuningDialogBoxPadding),
                 verticalArrangement = Arrangement.SpaceEvenly
             ) {

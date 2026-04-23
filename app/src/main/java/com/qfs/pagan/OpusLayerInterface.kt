@@ -46,21 +46,21 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     companion object {
         val global_controller_domain = listOf(
-            Pair(EffectType.Tempo, R.drawable.icon_tempo),
-            Pair(EffectType.Delay, R.drawable.icon_echo)
+            EffectType.Tempo,
+            EffectType.Delay,
         )
 
         val channel_controller_domain = listOf(
-            Pair(EffectType.Volume, R.drawable.icon_volume),
-            Pair(EffectType.Pan, R.drawable.icon_pan),
-            Pair(EffectType.Delay, R.drawable.icon_echo)
+            EffectType.Volume,
+            EffectType.Pan,
+            EffectType.Delay,
         )
 
         val line_controller_domain = listOf(
-            Pair(EffectType.Volume, R.drawable.icon_volume),
-            Pair(EffectType.Velocity, R.drawable.icon_velocity),
-            Pair(EffectType.Pan, R.drawable.icon_pan),
-            Pair(EffectType.Delay, R.drawable.icon_echo)
+            EffectType.Volume,
+            EffectType.Velocity,
+            EffectType.Pan,
+            EffectType.Delay,
         )
 
         fun get_available_transitions(type: EffectType): Set<EffectTransition> {
@@ -351,7 +351,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         for ((type, controller) in this.controllers.get_all()) {
             if (!controller.visible) continue
             for ((i, value) in available_controllers.enumerate()) {
-                if (type == value.first) {
+                if (type == value) {
                     available_controllers.removeAt(i)
                     break
                 }
@@ -1183,7 +1183,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     }
 
     fun all_global_controllers_visible(): Boolean {
-        for ((type, _) in OpusLayerInterface.global_controller_domain) {
+        for (type in OpusLayerInterface.global_controller_domain) {
             if (!this.has_global_controller(type) || !this.get_controller<EffectEvent>(type).visible) return false
         }
         return true

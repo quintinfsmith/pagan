@@ -108,7 +108,7 @@ class ViewModelPagan: ViewModel() {
         this.has_backup_saved.value = this.project_manager?.has_backup_saved() == true
     }
 
-    fun create_dialog(level: Int = 0, alignment: Alignment = Alignment.Center, dialog_callback: (() -> Unit) -> (@Composable (ColumnScope.() -> Unit))) {
+    fun create_dialog(level: Int = 0, alignment: Alignment.Horizontal = Alignment.CenterHorizontally, dialog_callback: (() -> Unit) -> (@Composable (ColumnScope.() -> Unit))) {
         // Use level to block Dup dialogs. set it to allow for dialogs opened from other dialogs
         if (this.dialog_queue.value?.level == level) return
         this.dialog_queue.value = DialogChain(

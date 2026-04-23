@@ -2100,9 +2100,20 @@ open class OpusLayerHistory: OpusLayerCursor() {
         }
     }
 
+    override fun set_all_line_controller_visibility(type: EffectType, channel: Int) {
+        this._remember {
+            super.set_all_line_controller_visibility(type, channel)
+        }
+    }
     override fun set_all_line_controller_visibility(type: EffectType) {
         this._remember {
             super.set_all_line_controller_visibility(type)
+        }
+    }
+
+    override fun unset_all_line_controller_visibility(type: EffectType, channel: Int) {
+        this._remember {
+            super.unset_all_line_controller_visibility(type, channel)
         }
     }
 

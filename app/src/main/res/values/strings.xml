@@ -315,6 +315,9 @@
     <string name="velocity_widget_relative_to_beat">Relative to Beat</string>
     <string name="velocity_widget_disable_sliding">Disable Sliding</string>
     <string name="velocity_widget_slide_duration">Slide Duration</string>
+    <string name="show_line_controls_this">This Line</string>
+    <string name="show_line_controls_channel">Channel Lines</string>
+    <string name="show_line_controls_all">All Lines</string>
 
 
     <string-array name="general_midi_presets">

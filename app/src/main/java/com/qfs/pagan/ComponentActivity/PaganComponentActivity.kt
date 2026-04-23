@@ -251,6 +251,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                             focus_manager.clearFocus()
                                         }
                                     },
+                                alignment = dialog.alignment,
                                 content = dialog.dialog
                             )
                         }

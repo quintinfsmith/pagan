@@ -52,6 +52,7 @@ fun DialogCard(
     ),
     shape: Shape = RoundedCornerShape(Dimensions.DialogRadius),
     border: BorderStroke? = null,
+    alignment: Alignment.Horizontal,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     ProvideContentColorTextStyle(contentColor = colors.contentColor) {
@@ -64,7 +65,7 @@ fun DialogCard(
                 modifier = Modifier
                     .wrapContentSize()
                     .padding(Dimensions.DialogPadding),
-                horizontalAlignment = Alignment.Start,
+                horizontalAlignment = alignment,
                 content = content
             )
         }

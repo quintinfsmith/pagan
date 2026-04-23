@@ -3236,6 +3236,13 @@ open class OpusLayerBase: Effectable {
         }
     }
 
+    open fun set_all_line_controller_visibility(type: EffectType, channel: Int) {
+        for (l in this.channels[channel].lines.indices) {
+            if (!this.has_line_controller(type, channel, l) || !this.get_line_controller<EffectEvent>(type, channel, l).visible) {
+                this.toggle_line_controller_visibility(type, channel, l)
+            }
+        }
+    }
     open fun set_all_line_controller_visibility(type: EffectType) {
        for (c in this.channels.indices) {
            for (l in this.channels[c].lines.indices) {
@@ -3244,6 +3251,16 @@ open class OpusLayerBase: Effectable {
                }
            }
        }
+    }
+
+    open fun unset_all_line_controller_visibility(type: EffectType, channel: Int) {
+        for (channel in this.channels.indices) {
+            for (l in this.channels[channel].lines.indices) {
+                if (this.has_line_controller(type, channel, l) && this.get_line_controller<EffectEvent>(type, channel, l).visible) {
+                    this.toggle_line_controller_visibility(type, channel, l)
+                }
+            }
+        }
     }
     open fun unset_all_line_controller_visibility(type: EffectType) {
         for (c in this.channels.indices) {

@@ -213,6 +213,7 @@ object Dimensions {
 
     val EffectLineHeight = 30.dp
     val EffectDialogIconWidth = 32.dp
+    val EffectDialogIconHeight = 32.dp
     val EffectTransitionDialogIconHeight = 32.dp
 
     val ExtraTableIconsPadding = 6.dp

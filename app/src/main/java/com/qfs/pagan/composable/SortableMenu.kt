@@ -230,6 +230,7 @@ fun <T> UnSortableMenu(
     modifier: Modifier = Modifier,
     options: List<Pair<T, @Composable RowScope.() -> Unit>>,
     default_value: T? = null,
+    long_click_callback: (T) -> Unit = {},
     callback: (T) -> Unit
 ) {
     SortableMenu(
@@ -238,6 +239,7 @@ fun <T> UnSortableMenu(
         options,
         listOf(),
         default_value = default_value,
+        onLongClick = long_click_callback,
         onClick = callback
     )
 }

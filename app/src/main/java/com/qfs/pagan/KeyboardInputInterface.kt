@@ -9,78 +9,68 @@
  */
 package com.qfs.pagan
 import android.view.KeyEvent.*
-import android.view.KeyEvent as AndroidKeyEvent
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isShiftPressed
-import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
-import com.qfs.pagan.structure.opusmanager.base.BlockedTreeException
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
-import com.qfs.pagan.structure.opusmanager.base.NoteOutOfRange
-import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import kotlin.math.max
 import kotlin.math.min
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 class KeyboardInputInterface(var dispatcher: ActionDispatcher) {
-    abstract class KeyStrokeNode(val keyboard_interface: KeyboardInputInterface) {
-        abstract fun call(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean = false): Boolean
-        internal fun get_buffer_value(default: Int = 0, minimum: Int? = null, maximum: Int? = null): Int {
-            return this.keyboard_interface.get_buffer_value(default, minimum, maximum)
-        }
-    }
-
-    abstract class CursorSpecificKeyStrokeNode(keyboard_interface: KeyboardInputInterface): KeyStrokeNode(keyboard_interface) {
-        /*
-            NOTE: When overriding functions, don't call super().
-            the super only raises a flag to return false in the call()
-         */
-        var _no_function_called = false
-        override fun call(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean): Boolean {
-            when (opus_manager.cursor.mode) {
-                CursorMode.Line -> this.line(dispatcher, opus_manager, ctrl_pressed)
-                CursorMode.Column -> this.column(dispatcher, opus_manager, ctrl_pressed)
-                CursorMode.Single -> this.single(dispatcher, opus_manager, ctrl_pressed)
-                CursorMode.Range -> this.range(dispatcher, opus_manager, ctrl_pressed)
-                CursorMode.Unset -> this.unset(dispatcher, opus_manager, ctrl_pressed)
-                CursorMode.Channel -> this.channel(dispatcher, opus_manager, ctrl_pressed)
-            }
-
-            val output = this._no_function_called
-
-            this._no_function_called = false
-
-            return output
-        }
-        open fun channel(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-            this._no_function_called = true
-        }
-
-        open fun column(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-            this._no_function_called = true
-        }
-
-        open fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-            this._no_function_called = true
-        }
-
-        open fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-            this._no_function_called = true
-        }
-
-        open fun unset(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-            this._no_function_called = true
-        }
-
-        open fun range(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-            this._no_function_called = true
-        }
+    enum class Context {
+        Global,
+        Unset,
+        Channel,
+        Beat,
+        LineStandard,
+        LinePercussion,
+        Line,
+        EffectLine,
+        EffectChannel,
+        EffectGlobal,
+        Leaf,
+        LeafStandard,
+        LeafPercussion,
+        LeafLineEffect,
+        LeafChannelEffect,
+        LeafGlobalEffect,
+        Range
     }
 
     var input_buffer_value: Int? = null
     val ctl_pressed: Boolean = false
+
+    fun go_to_column(dispatcher: ActionDispatcher, opus_manager: OpusManager): Boolean {
+        val beat = this.get_buffer_value(0, 0, opus_manager.length - 1)
+        dispatcher.cursor_select_column(beat)
+        return true
+    }
+
+    fun go_to_channel(dispatcher: ActionDispatcher, opus_manager: OpusManager): Boolean {
+        val visible_channels = opus_manager.get_visible_channels()
+        val channel = this.get_buffer_value(visible_channels.size - 1, 0, visible_channels.size - 1)
+        dispatcher.cursor_select_channel(channel)
+        return true
+    }
+
+    fun go_to_first_line_in_channel(dispatcher: ActionDispatcher, opus_manager: OpusManager): Boolean {
+        val visible_channels = opus_manager.get_visible_channels()
+        val channel = this.get_buffer_value(visible_channels.size - 1, 0, visible_channels.size - 1)
+        dispatcher.cursor_select_line(channel, 0, null)
+        return true
+    }
+
+    fun clear_buffer_or_cursor(dispatcher: ActionDispatcher): Boolean {
+        if (this.input_buffer_value == null) {
+            dispatcher.cursor_clear()
+        } else {
+            this.input_buffer_value = null
+        }
+        return true
+    }
 
     fun get_buffer_value(default: Int = 0, minimum: Int? = null, maximum: Int? = null): Int {
         var output = this.input_buffer_value ?: default
@@ -100,648 +90,127 @@ class KeyboardInputInterface(var dispatcher: ActionDispatcher) {
         this.input_buffer_value = null
     }
 
-    val key_code_map = hashMapOf(
-        Pair(KEYCODE_ESCAPE, false) to object: KeyStrokeNode(this) {
-            override fun call(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean): Boolean {
-                return if (this@KeyboardInputInterface.input_buffer_value == null) {
-                    false
-                } else {
-                    this@KeyboardInputInterface.input_buffer_value = null
-                    true
-                }
-            }
-        },
-
-        Pair(KEYCODE_LEFT_BRACKET, false) to object: CursorSpecificKeyStrokeNode(this) {
-            override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-
-                if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
-                    opus_manager.set_percussion_event_at_cursor()
-                } else {
-                   // opus_manager.set_note_octave_at_cursor(
-                   //     this.get_buffer_value(0, 0, 7)
-                   // )
-                }
-            }
-        },
-
-        Pair(KEYCODE_RIGHT_BRACKET, false) to object: CursorSpecificKeyStrokeNode(this) {
-            override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                // opus_manager.set_note_offset_at_cursor(
-                //     this.get_buffer_value(0, 0, opus_manager.tuning_map.size - 1)
-                // )
-            }
-        },
-
-        Pair(KEYCODE_A, false) to object: CursorSpecificKeyStrokeNode(this) {
-            override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val repeat = this.get_buffer_value(1, maximum=9999)
-                opus_manager.insert_line_at_cursor(repeat)
-            }
-            override fun column(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val repeat = this.get_buffer_value(1, maximum=9999)
-                opus_manager.insert_beat_after_cursor(repeat)
-            }
-
-            override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                var repeat = this.get_buffer_value(1, maximum=64)
-                if (repeat > 0) {
-                    val tree = opus_manager.get_tree() ?: return
-                    if (tree.parent == null) {
-                        try {
-                            opus_manager.split_tree_at_cursor(repeat + 1)
-                        } catch (e: BlockedTreeException) {
-                            // pass
-                        }
-                    } else {
-                        opus_manager.insert_after_cursor(repeat)
-                    }
-                }
-            }
-        },
-
-        Pair(KEYCODE_B, false) to object: CursorSpecificKeyStrokeNode(this) {
-            override fun unset(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                this.column(dispatcher, opus_manager, ctrl_pressed)
-            }
-
-            override fun column(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val beat = this.get_buffer_value(0, 0, opus_manager.length - 1)
-                opus_manager.cursor_select_column(beat)
-            }
-
-            override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                this.single(dispatcher,opus_manager, ctrl_pressed)
-            }
-
-            override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val beat = this.get_buffer_value(0, 0, opus_manager.length - 1)
-                val new_beat_key = BeatKey(
-                    opus_manager.cursor.channel,
-                    opus_manager.cursor.line_offset,
-                    beat
-                )
-                val new_position = opus_manager.get_first_position(new_beat_key)
-                opus_manager.cursor_select(new_beat_key, new_position)
-            }
-
-            override fun range(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val beat = this.get_buffer_value(0, 0, opus_manager.length - 1)
-                val new_beat_key = opus_manager.cursor.range!!.second
-                new_beat_key.beat = beat
-
-                opus_manager.cursor_select_range(
-                    opus_manager.cursor.range!!.first,
-                    new_beat_key
-                )
-            }
-        },
-
-        Pair(KEYCODE_B, true) to object: KeyStrokeNode(this) {
-            override fun call(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean): Boolean {
-                val default = if (opus_manager.cursor.mode == CursorMode.Single) {
-                    opus_manager.cursor.beat
-                } else {
-                    opus_manager.length - 1
-                }
-                val beat = this.get_buffer_value(default, 0, opus_manager.length - 1)
-
-                opus_manager.cursor_select_column(beat)
-                return true
-            }
-        },
-
-        Pair(KEYCODE_C, false) to object: CursorSpecificKeyStrokeNode(this) {
-            override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                when (opus_manager.cursor.ctl_level) {
-                    CtlLineLevel.Line -> TODO()
-                    CtlLineLevel.Channel -> TODO()
-                    CtlLineLevel.Global -> TODO()
-                    null -> {
-                        if (opus_manager.cursor.range != null) {
-                            opus_manager.overwrite_beat_range(
-                                opus_manager.cursor.get_beatkey(),
-                                opus_manager.cursor.range!!.first,
-                                opus_manager.cursor.range!!.second,
-                            )
-                            opus_manager.cursor.range = null
-                        }
-                    }
-                }
-            }
-        },
-        Pair(KEYCODE_C, true) to object: KeyStrokeNode(this) {
-            override fun call(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean): Boolean {
+    val cursor_map: HashMap<Context, HashMap<Triple<Int, Boolean, Boolean>, (ActionDispatcher, OpusManager) -> Boolean>> = hashMapOf(
+        Context.Global to hashMapOf(
+            Triple(KEYCODE_BACK, false, false) to { dispatcher, opus_manager ->
+                this.clear_buffer_or_cursor(dispatcher)
+            },
+        ),
+        Context.Unset to hashMapOf(
+            Triple(KEYCODE_B, true, false) to { dispatcher, opus_manager ->
+                this.go_to_column(dispatcher, opus_manager)
+            },
+            Triple(KEYCODE_C, true, false) to { dispatcher, opus_manager ->
+                this.go_to_channel(dispatcher, opus_manager)
+            },
+            Triple(KEYCODE_C, false, false) to { dispatcher, opus_manager ->
+                this.go_to_first_line_in_channel(dispatcher, opus_manager)
+            },
+        ),
+        Context.Beat to hashMapOf(
+            Triple(KEYCODE_L, false, false) to { dispatcher, opus_manager ->
                 val visible_channels = opus_manager.get_visible_channels()
                 val channel = this.get_buffer_value(visible_channels.size - 1, 0, visible_channels.size - 1)
-                opus_manager.cursor_select_channel(channel)
-                return true
+                val beat_key = BeatKey(channel, 0, opus_manager.cursor.beat)
+                dispatcher.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
+
+                true
             }
-        },
+        ),
+        Context.Channel to hashMapOf(
+            Triple(KEYCODE_L, false, false) to { dispatcher, opus_manager ->
+                val channel = opus_manager.cursor.channel
+                val default_value = opus_manager.get_channel(channel).lines.size - 1
+                val line_offset = this.get_buffer_value(default_value, 0, default_value)
+                this.dispatcher.cursor_select_line(channel, line_offset, null)
 
-        Pair(KEYCODE_D, true) to object: CursorSpecificKeyStrokeNode(this) {
-            override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val beatkey = opus_manager.cursor.get_beatkey()
-                opus_manager.cursor_select_range(beatkey, beatkey)
+                true
             }
-        },
+        ),
+        Context.LineStandard to hashMapOf(
+            Triple(KEYCODE_L, false, false) to { dispatcher, opus_manager ->
+                val visible_channels = opus_manager.get_visible_channels()
+                val beat = this.get_buffer_value(opus_manager.length - 1, 0, opus_manager.length - 1)
+                val beat_key = BeatKey(opus_manager.cursor.channel, opus_manager.cursor.line_offset, beat)
+                dispatcher.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
 
-        //Pair(KEYCODE_E, true) to object: CursorSpecificKeyStrokeNode(this) {
-        //    override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-        //        val ctl_type_map = EffectType.entries.associateBy { it.i }
-        //        val ctl_type = ctl_type_map [this.get_buffer_value(EffectType.Volume.i)] ?: return
-        //        for ((check_type, _) in OpusLayerInterface.line_controller_domain) {
-        //            if (check_type == ctl_type) {
-        //                val channel = opus_manager.cursor.channel
-        //                val line_offset = opus_manager.cursor.line_offset
-        //                opus_manager.toggle_line_controller_visibility(ctl_type, channel, line_offset)
-        //                break
-        //            }
-        //        }
-
-        //    }
-
-        //    override fun channel(dispatcher: ActionDispatcher, ctrl_pressed: Boolean) {
-        //        val ctl_type_map = EffectType.entries.associateBy { it.i }
-        //        val ctl_type = ctl_type_map [this.get_buffer_value(EffectType.Volume.i)] ?: return
-        //        for ((check_type, _) in OpusLayerInterface.channel_controller_domain) {
-        //            if (check_type == ctl_type) {
-        //                val channel = opus_manager.cursor.channel
-        //                opus_manager.toggle_channel_controller_visibility(ctl_type, channel)
-        //                break
-        //            }
-        //        }
-        //    }
-        //},
-
-        Pair(KEYCODE_H, false) to object: CursorSpecificKeyStrokeNode(this) {
-            override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val movement_value = this.get_buffer_value(1, minimum=0)
-                if (movement_value != 0) {
-                    val beat_key = BeatKey(
-                        opus_manager.cursor.channel,
-                        opus_manager.cursor.line_offset,
-                        max(0, opus_manager.cursor.beat - movement_value)
-                    )
-
-                    opus_manager.cursor_select(
-                        beat_key,
-                        opus_manager.get_first_position(beat_key)
-                    )
-                }
+                true
             }
-
-            override fun range(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                opus_manager.cursor_select_range(
-                    opus_manager.cursor.range!!.first,
-                    BeatKey(
-                        opus_manager.cursor.range!!.second.channel,
-                        opus_manager.cursor.range!!.second.line_offset,
-                        max(0, opus_manager.cursor.range!!.second.beat - this.get_buffer_value(1, minimum=0))
-                    )
-                )
+        ),
+        Context.LeafStandard to hashMapOf(
+            Triple(KEYCODE_S, false, false) to { dispatcher, opus_manager ->
+                dispatcher.split(this.get_buffer_value(2, 1, 64))
+                true
             }
-
-            override fun column(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val movement_value = this.get_buffer_value(1, minimum=0)
-                val new_beat = max(0, opus_manager.cursor.beat - movement_value)
-                opus_manager.cursor_select_column(new_beat)
-            }
-
-            override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                opus_manager.select_previous_leaf(this.get_buffer_value(1, minimum=0))
-            }
-        },
-
-        Pair(KEYCODE_H, true) to object: CursorSpecificKeyStrokeNode(this) {
-            override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val movement_value = this.get_buffer_value(1)
-                opus_manager.select_first_leaf_in_previous_beat(movement_value)
-            }
-        },
-
-        Pair(KEYCODE_I, false) to object: CursorSpecificKeyStrokeNode(this) {
-            override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val repeat = this.get_buffer_value(1, maximum=9999, minimum=0)
-                opus_manager.new_line_repeat(opus_manager.cursor.channel, opus_manager.cursor.line_offset, repeat)
-            }
-
-            override fun column(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val repeat = this.get_buffer_value(1, maximum=9999)
-                opus_manager.insert_beat_at_cursor(repeat)
-            }
-
-            override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val repeat = this.get_buffer_value(1, maximum=64, minimum=0)
-                if (repeat > 0) {
-                    val tree = opus_manager.get_tree() ?: return
-                    if (tree.parent == null) {
-                        try {
-                            opus_manager.split_tree_at_cursor(repeat + 1, true)
-                        } catch (e: BlockedTreeException) {
-                            // pass
-                        }
-                    } else {
-                        opus_manager.insert_at_cursor(repeat)
-                    }
-                }
-            }
-        },
-
-        //Pair(KEYCODE_J, false) to object: CursorSpecificKeyStrokeNode(this) {
-        //    override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-        //        val movement_value = this.get_buffer_value(1, minimum=0)
-        //        opus_manager.move_to_next_visible_line(movement_value)
-        //    }
-
-        //    override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-        //        this.keyboard_interface._cursor_select_next_leaf_down()
-        //    }
-        //},
-
-        Pair(KEYCODE_J, true) to object: CursorSpecificKeyStrokeNode(this) {
-            override fun column(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val repeat = this.get_buffer_value(1, minimum=0)
-                val new_channel = opus_manager.get_nth_next_channel_at_cursor(repeat) ?: return
-                val new_key = BeatKey(new_channel, 0, opus_manager.cursor.beat)
-
-                opus_manager.cursor_select(new_key, opus_manager.get_first_position(new_key))
-            }
-            override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val repeat = this.get_buffer_value(1, minimum=0)
-                val new_channel = opus_manager.get_nth_next_channel_at_cursor(repeat) ?: return
-                opus_manager.cursor_select_line(new_channel, 0)
-            }
-
-            override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val repeat = this.get_buffer_value(1, minimum=0)
-                val new_channel = opus_manager.get_nth_next_channel_at_cursor(repeat) ?: return
-
-                val new_key = opus_manager.cursor.get_beatkey()
-                new_key.line_offset = 0
-                new_key.channel = new_channel
-
-                opus_manager.cursor_select(new_key, opus_manager.get_first_position(new_key))
-            }
-        },
-
-        // Pair(KEYCODE_K, false) to object: CursorSpecificKeyStrokeNode(this) {
-        //     override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-        //         val movement_value = this.get_buffer_value(1, minimum=0)
-        //         opus_manager.move_to_previous_visible_line(movement_value)
-
-        //     }
-
-        //     override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-        //         this.keyboard_interface._cursor_select_next_leaf_up()
-        //     }
-
-        //     override fun range(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-        //         val new_beat_key = opus_manager.cursor.range!!.second
-        //         val movement_value = this.get_buffer_value(1, maximum=new_beat_key.beat, minimum=0)
-        //         val visible_line = (movement_value % (opus_manager.get_row_count() - 1)) - 1
-        //         val (channel, line_offset) = opus_manager.get_channel_and_line_offset(
-        //             opus_manager.get_ctl_line_from_row(visible_line)
-        //         )
-
-        //         opus_manager.cursor_select_range(
-        //             opus_manager.cursor.range!!.first,
-        //             new_beat_key
-        //         )
-        //     }
-        // },
-
-        Pair(KEYCODE_K, true) to object: CursorSpecificKeyStrokeNode(this) {
-            override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val repeat = this.get_buffer_value(1) * -1
-                val new_channel = opus_manager.get_nth_next_channel_at_cursor(repeat) ?: return
-                opus_manager.cursor_select_line(new_channel, 0)
-            }
-            override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val repeat = this.get_buffer_value(1) * -1
-                val new_channel = opus_manager.get_nth_next_channel_at_cursor(repeat) ?: return
-
-                val new_key = opus_manager.cursor.get_beatkey()
-                new_key.line_offset = 0
-                new_key.channel = new_channel
-
-                opus_manager.cursor_select(new_key, opus_manager.get_first_position(new_key))
-            }
-        },
-
-        Pair(KEYCODE_L, false) to object: CursorSpecificKeyStrokeNode(this) {
-
-            override fun column(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val movement_value = this.get_buffer_value(1, minimum=0)
-                val new_beat = min(opus_manager.length - 1, opus_manager.cursor.beat + movement_value)
-                opus_manager.cursor_select_column(new_beat)
-            }
-
-            override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                opus_manager.select_next_leaf(this.get_buffer_value(1, minimum=0))
-            }
-
-            override fun range(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val movement_value = this.get_buffer_value(1, minimum=0)
-
-                opus_manager.cursor_select_range(
-                    opus_manager.cursor.range!!.first,
-                    BeatKey(
-                        opus_manager.cursor.range!!.second.channel,
-                        opus_manager.cursor.range!!.second.line_offset,
-                        min(opus_manager.length - 1, opus_manager.cursor.range!!.second.beat + movement_value)
-                    )
-                )
-            }
-        },
-
-        Pair(KEYCODE_L, true) to object: CursorSpecificKeyStrokeNode(this) {
-            override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val movement_value = this.get_buffer_value(1, minimum=0)
-                if (movement_value != 0) {
-                    val beat_key = BeatKey(
-                        opus_manager.cursor.channel,
-                        opus_manager.cursor.line_offset,
-                        min(movement_value - 1, opus_manager.length - 1)
-                    )
-
-                    opus_manager.cursor_select(
-                        beat_key,
-                        opus_manager.get_first_position(beat_key)
-                    )
-                }
-            }
-            override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val movement_value = this.get_buffer_value(1, minimum=0)
-                val cursor = opus_manager.cursor
-                var beat = min(opus_manager.length - 1, cursor.beat + movement_value)
-                opus_manager.select_first_in_beat(beat)
-            }
-        },
-
-        Pair(KEYCODE_M, false) to object: CursorSpecificKeyStrokeNode(this) {
-            override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                when (opus_manager.cursor.ctl_level) {
-                    CtlLineLevel.Line -> TODO()
-                    CtlLineLevel.Channel -> TODO()
-                    CtlLineLevel.Global -> TODO()
-                    null -> {
-                        if (opus_manager.cursor.range != null) {
-                            opus_manager.move_beat_range(
-                                opus_manager.cursor.get_beatkey(),
-                                opus_manager.cursor.range!!.first,
-                                opus_manager.cursor.range!!.second,
-                            )
-                            opus_manager.cursor.range = null
-                        }
-                    }
-                }
-            }
-
-            override fun range(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                when (opus_manager.cursor.ctl_level) {
-                    CtlLineLevel.Line -> TODO()
-                    CtlLineLevel.Channel -> TODO()
-                    CtlLineLevel.Global -> TODO()
-                    null -> {
-                        val range = opus_manager.cursor.range
-                        opus_manager.cursor.range = range
-                        val beat_key = opus_manager.cursor.range!!.second
-                        val position = opus_manager.get_first_position(beat_key)
-                        opus_manager.cursor_select(beat_key, position)
-                    }
-                }
-            }
-        },
-
-        Pair(KEYCODE_R, true) to object: CursorSpecificKeyStrokeNode(this) {
-           //  private fun _set_relative_mode(dispatcher: ActionDispatcher, opus_manager: OpusManager, force_mode: RelativeInputMode = RelativeInputMode.Absolute) {
-           //     if (opus_manager.relative_mode == RelativeInputMode.Absolute) {
-           //         //val activity = opus_manager.get_activity()
-           //         //if (activity != null) {
-           //         //    activity.configuration.relative_mode = true
-           //         //    activity.save_configuration()
-           //         //}
-           //     }
-
-           //     if (opus_manager.relative_mode != force_mode) {
-           //         opus_manager.force_relative_mode(force_mode)
-           //     }
-           //  }
-
-           //  override fun column(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-           //      this._set_relative_mode(opus_manager)
-           //      opus_manager.convert_events_in_beat_to_relative(opus_manager.cursor.beat)
-           //  }
-
-           //  override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-           //      if (opus_manager.is_percussion(opus_manager.cursor.channel)) return
-           //
-           //      val tree = opus_manager.get_tree() ?: return
-
-           //      if (tree.has_event()) {
-           //          val event = tree.get_event()
-           //          if (event is AbsoluteNoteEvent) {
-           //              opus_manager.convert_event_to_relative(
-           //                  opus_manager.cursor.get_beatkey(),
-           //                  opus_manager.cursor.get_position()
-           //              )
-
-           //              val force_mode = if ((tree.get_event() as RelativeNoteEvent).offset >= 0) {
-           //                  RelativeInputMode.Negative
-           //              } else {
-           //                  RelativeInputMode.Positive
-           //              }
-
-           //              this._set_relative_mode(opus_manager, force_mode)
-           //          } else if (event is RelativeNoteEvent) {
-           //              opus_manager.set_event(
-           //                  opus_manager.cursor.get_beatkey(),
-           //                  opus_manager.cursor.get_position(),
-           //                  RelativeNoteEvent(0 - event.offset, event.duration)
-           //              )
-           //          }
-           //      } else {
-           //          //this._set_relative_mode(
-           //          //    opus_manager,
-           //          //    if (opus_manager.relative_mode == RelativeInputMode.Positive) {
-           //          //        RelativeInputMode.Negative
-           //          //    } else {
-           //          //        RelativeInputMode.Positive
-           //          //    }
-           //          //)
-           //      }
-           //  }
-
-           //  override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-           //      this._set_relative_mode(opus_manager)
-           //      opus_manager.convert_events_in_line_to_relative(opus_manager.cursor.channel, opus_manager.cursor.line_offset)
-           //  }
-        },
-
-        Pair(KEYCODE_R, false) to object: CursorSpecificKeyStrokeNode(this) {
-            override fun column(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                opus_manager.convert_events_in_beat_to_absolute(opus_manager.cursor.beat)
-            }
-            override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
-                    return
-                }
-
-                try {
-                    opus_manager.convert_event_to_absolute(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
-                } catch (e: NoteOutOfRange) {
-                    val tree = opus_manager.get_tree() ?: return
-                    val event = tree.get_event()!! as RelativeNoteEvent
-                    opus_manager.set_event_at_cursor(
-                        AbsoluteNoteEvent(
-                            min((opus_manager.tuning_map.size * 8) - 1, max(0, e.n)),
-                            event.duration
-                        )
-                    )
-                }
-            }
-
-            override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                opus_manager.convert_events_in_line_to_absolute(opus_manager.cursor.channel, opus_manager.cursor.line_offset)
-            }
-        },
-
-        Pair(KEYCODE_S, false) to object: CursorSpecificKeyStrokeNode(this) {
-            override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val splits = this.get_buffer_value(2, minimum=2, maximum=64)
-                val cursor = opus_manager.cursor
-                when (cursor.ctl_level) {
-                    null -> {
-                        try {
-                            opus_manager.split_tree_at_cursor(splits)
-                        } catch (e: BlockedTreeException) {
-                            // ignore
-                        }
-                    }
-                    CtlLineLevel.Line -> TODO()
-                    CtlLineLevel.Channel -> TODO()
-                    CtlLineLevel.Global -> {
-                        opus_manager.controller_global_split_tree(
-                            cursor.ctl_type!!,
-                            cursor.beat,
-                            cursor.get_position(),
-                            splits
-                        )
-                    }
-                }
-            }
-        },
-
-        Pair(KEYCODE_U, false) to object: KeyStrokeNode(this) {
-            fun apply_undo(dispatcher: ActionDispatcher) {
-                val repeat = this.get_buffer_value(1)
-                dispatcher.apply_undo(repeat)
-            }
-
-            override fun call(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean): Boolean {
-                this.apply_undo(dispatcher)
-                return true
-            }
-        },
-
-        // Pair(KEYCODE_V, true) to object: CursorSpecificKeyStrokeNode(this) {
-        //     /* All the methods call cursor_select_line, but choose the channel differently */
-        //     override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-        //         val channel = opus_manager.cursor.channel
-        //         val default = opus_manager.get_visible_channels()[channel].lines.size - 1
-        //         opus_manager.cursor_select_line(
-        //             channel,
-        //             this.get_buffer_value(default, 0, default)
-        //         )
-        //     }
-        //     override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-        //         this.line(opus_manager, ctrl_pressed)
-        //     }
-        //     override fun column(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-        //         val channels = opus_manager.get_visible_channels()
-        //         val channel = channels.size // Last channel that is also visible
-        //         val default = channels[channel].lines.size - 1
-        //         opus_manager.cursor_select_line(
-        //             channel,
-        //             this.get_buffer_value(default, 0, default)
-        //         )
-        //     }
-        //     override fun unset(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-        //         this.column(opus_manager, ctrl_pressed)
-        //     }
-
-        //     override fun range(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-        //         val channel = opus_manager.cursor.range!!.first.channel
-        //         val default = opus_manager.get_visible_channels()[channel].lines.size - 1
-        //         opus_manager.cursor_select_line(
-        //             channel,
-        //             this.get_buffer_value(default, 0, default)
-        //         )
-        //     }
-        // },
-
-        Pair(KEYCODE_W, true) to object: KeyStrokeNode(this) {
-            override fun call(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean): Boolean {
-                println("???")
-                //opus_manager.get_activity()?.project_save()
-                return true
-            }
-        },
-
-        Pair(KEYCODE_X, false) to object: KeyStrokeNode(this) {
-            override fun call(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean): Boolean {
-                opus_manager.unset()
-                return true
-            }
-        },
-
-        Pair(KEYCODE_X, true) to object: CursorSpecificKeyStrokeNode(this) {
-            override fun column(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val repeat = this.get_buffer_value(1, minimum=0, maximum=opus_manager.length - 1)
-                if (repeat > 0) {
-                    opus_manager.remove_beat_at_cursor(repeat)
-                }
-            }
-
-            override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val repeat = this.get_buffer_value(1)
-                if (repeat > 0) {
-                    opus_manager.remove_at_cursor(repeat)
-                }
-            }
-
-            override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                val cursor = opus_manager.cursor
-                val line_count = opus_manager.get_visible_channels()[cursor.channel].lines.size
-                val repeat = this.get_buffer_value(1, maximum=line_count - 1, minimum=0)
-                if (repeat > 0) {
-                    opus_manager.remove_line_at_cursor(repeat)
-                }
-            }
-
-            override fun range(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
-                opus_manager.unset()
-            }
-        }
+        ),
+        Context.Range to hashMapOf()
     )
 
     fun input(event: KeyEvent): Boolean {
         val key_code = event.nativeKeyEvent.keyCode
         val current_buffer = this.input_buffer_value
-        val output = if (this.key_code_map.containsKey(Pair(key_code, event.isShiftPressed))) {
-            this.key_code_map[Pair(key_code, event.isShiftPressed)]!!.call(this.dispatcher, this.dispatcher.get_opus_manager(), event.isCtrlPressed)
-        } else {
-            when (key_code) {
-                KEYCODE_0, KEYCODE_1, KEYCODE_2, KEYCODE_3, KEYCODE_4,
-                KEYCODE_5, KEYCODE_6, KEYCODE_7, KEYCODE_8, KEYCODE_9 -> {
-                    this.input_buffer_value = ((this.input_buffer_value ?: 0) * 10) + key_code - KEYCODE_0
-                    true
-                }
-                else -> {
-                    false
+        val opus_manager = this.dispatcher.get_opus_manager()
+        val cursor_mode = opus_manager.cursor.mode
+
+        val input_contexts: Array<Context> = when (cursor_mode) {
+            CursorMode.Line -> {
+                when (opus_manager.cursor.ctl_level) {
+                    CtlLineLevel.Line -> arrayOf(Context.EffectLine)
+                    CtlLineLevel.Channel -> arrayOf(Context.EffectChannel)
+                    CtlLineLevel.Global -> arrayOf(Context.EffectGlobal)
+                    null -> {
+                        arrayOf(
+                            if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
+                                Context.LinePercussion
+                            } else {
+                                Context.LineStandard
+                            },
+                            Context.Line
+                        )
+                    }
                 }
             }
+            CursorMode.Single -> {
+                arrayOf(
+                    when (opus_manager.cursor.ctl_level) {
+                        CtlLineLevel.Line -> Context.LeafLineEffect
+                        CtlLineLevel.Channel -> Context.LeafChannelEffect
+                        CtlLineLevel.Global -> Context.LeafGlobalEffect
+                        null -> if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
+                            Context.LeafPercussion
+                        } else {
+                            Context.LeafStandard
+                        }
+                    },
+                    Context.Leaf
+                )
+            }
+            CursorMode.Column -> arrayOf(Context.Beat)
+            CursorMode.Channel -> arrayOf(Context.Channel)
+            CursorMode.Unset -> arrayOf(Context.Unset)
+            CursorMode.Range -> TODO()
+        }
+
+        val node_key = Triple(key_code, event.isShiftPressed, event.isCtrlPressed)
+
+        var output: Boolean? = null
+        for (input_context in input_contexts + arrayOf(Context.Global)) {
+            this.cursor_map[input_context]?.let { mode_map ->
+                mode_map[node_key]?.let {
+                    output = it(this.dispatcher, opus_manager)
+                    break
+                }
+            }
+        }
+
+        // If no function was assigned, check for buffer input, otherwise return false
+        output = output ?: when (key_code) {
+            KEYCODE_0, KEYCODE_1, KEYCODE_2, KEYCODE_3, KEYCODE_4,
+            KEYCODE_5, KEYCODE_6, KEYCODE_7, KEYCODE_8, KEYCODE_9 -> {
+                this.input_buffer_value = ((this.input_buffer_value ?: 0) * 10) + key_code - KEYCODE_0
+                true
+            }
+            else -> false
         }
 
         // clear the buffer if a function was found and the buffer wasn't modified
@@ -752,50 +221,656 @@ class KeyboardInputInterface(var dispatcher: ActionDispatcher) {
         return output
     }
 
-    // private fun _cursor_select_next_prev_leaf(direction_up: Boolean = false) {
-    //     val repeat = this.get_buffer_value(1)
-    //     val cursor = this.opus_manager.cursor
-    //     val current_line = when (cursor.ctl_level) {
-    //         null -> {
-    //             this.opus_manager.get_visible_row_from_ctl_line(
-    //                 this.opus_manager.get_actual_line_index(
-    //                     this.opus_manager.get_instrument_line_index(
-    //                         cursor.channel,
-    //                         cursor.line_offset
-    //                     )
-    //                 )
-    //             )!!
-    //         }
-    //         CtlLineLevel.Global -> this.opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
-    //         CtlLineLevel.Line -> this.opus_manager.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
-    //         CtlLineLevel.Channel -> this.opus_manager.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.channel)
-    //     }
-
-    //     val line_count = this.opus_manager.get_row_count()
-    //     val direction_mod = if (direction_up) {
-    //         -1
-    //     } else {
-    //         1
-    //     }
-
-    //     val next_line = max(0, min(line_count - 1, current_line + (repeat * direction_mod)))
-    //     val next_ctl_line = this.opus_manager.get_ctl_line_from_row(next_line)
-    //     val (target, ctl_level, ctl_type) = this.opus_manager.get_ctl_line_info(next_ctl_line)
-    //     when (ctl_level) {
-    //         CtlLineLevel.Global -> {
-    //             val beat = this.opus_manager.cursor.beat
-    //             val target_position = this.opus_manager.get_first_position_global_ctl(ctl_type!!, beat)
-    //             this.opus_manager.cursor_select_ctl_at_global(ctl_type, beat, target_position)
-    //         }
-    //         null -> {
-    //             val (channel, offset) = this.opus_manager.get_channel_and_line_offset(target)
-    //             val target_beat_key = BeatKey(channel, offset, this.opus_manager.cursor.beat)
-    //             val target_position = this.opus_manager.get_first_position(target_beat_key, listOf())
-    //             this.opus_manager.cursor_select(target_beat_key, target_position)
-    //         }
-    //         CtlLineLevel.Line -> TODO()
-    //         CtlLineLevel.Channel -> TODO()
-    //     }
-    // }
-
+//    val key_code_map = hashMapOf(
+//        Pair(KEYCODE_LEFT_BRACKET, false) to object: CursorSpecificKeyStrokeNode(this) {
+//            override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+//
+//                if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
+//                    opus_manager.set_percussion_event_at_cursor()
+//                } else {
+//                   // opus_manager.set_note_octave_at_cursor(
+//                   //     this.get_buffer_value(0, 0, 7) // )
+//                }
+//            }
+//        },
+//
+//        Pair(KEYCODE_RIGHT_BRACKET, false) to object: CursorSpecificKeyStrokeNode(this) {
+//            override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+//                // opus_manager.set_note_offset_at_cursor(
+//                //     this.get_buffer_value(0, 0, opus_manager.tuning_map.size - 1)
+//                // )
+//            }
+//        },
+//
+//        Pair(KEYCODE_A, false) to object: CursorSpecificKeyStrokeNode(this) {
+//            override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+//                val repeat = this.get_buffer_value(1, maximum=9999)
+//                opus_manager.insert_line_at_cursor(repeat)
+//            }
+//            override fun column(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+//                val repeat = this.get_buffer_value(1, maximum=9999)
+//                opus_manager.insert_beat_after_cursor(repeat)
+//            }
+//
+//            override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+//                var repeat = this.get_buffer_value(1, maximum=64)
+//                if (repeat > 0) {
+//                    val tree = opus_manager.get_tree() ?: return
+//                    if (tree.parent == null) {
+//                        try {
+//                            opus_manager.split_tree_at_cursor(repeat + 1)
+//                        } catch (e: BlockedTreeException) {
+//                            // pass
+//                        }
+//                    } else {
+//                        opus_manager.insert_after_cursor(repeat)
+//                    }
+//                }
+//            }
+//        },
+//
+//        Pair(KEYCODE_B, false) to object: CursorSpecificKeyStrokeNode(this) {
+//            override fun unset(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+//                this.column(dispatcher, opus_manager, ctrl_pressed)
+//            }
+//
+//            override fun column(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+//                val beat = this.get_buffer_value(0, 0, opus_manager.length - 1)
+//                opus_manager.cursor_select_column(beat)
+//            }
+//
+//            override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+//                this.single(dispatcher,opus_manager, ctrl_pressed)
+//            }
+//
+//            override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+//                val beat = this.get_buffer_value(0, 0, opus_manager.length - 1)
+//                val new_beat_key = BeatKey(
+//                    opus_manager.cursor.channel,
+//                    opus_manager.cursor.line_offset,
+//                    beat
+//                )
+//                val new_position = opus_manager.get_first_position(new_beat_key)
+//                opus_manager.cursor_select(new_beat_key, new_position)
+//            }
+//
+//            override fun range(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+//                val beat = this.get_buffer_value(0, 0, opus_manager.length - 1)
+//                val new_beat_key = opus_manager.cursor.range!!.second
+//                new_beat_key.beat = beat
+//
+//                opus_manager.cursor_select_range(
+//                    opus_manager.cursor.range!!.first,
+//                    new_beat_key
+//                )
+//            }
+//        },
+//
+//        Pair(KEYCODE_B, true) to object: KeyStrokeNode(this) {
+//            override fun call(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean): Boolean {
+//                val default = if (opus_manager.cursor.mode == CursorMode.Single) {
+//                    opus_manager.cursor.beat
+//                } else {
+//                    opus_manager.length - 1
+//                }
+//                val beat = this.get_buffer_value(default, 0, opus_manager.length - 1)
+//
+//                opus_manager.cursor_select_column(beat)
+//                return true
+//            }
+//        },
+//
+//        Pair(KEYCODE_C, false) to object: CursorSpecificKeyStrokeNode(this) {
+//            override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+//                when (opus_manager.cursor.ctl_level) {
+//                    CtlLineLevel.Line -> TODO()
+//                    CtlLineLevel.Channel -> TODO()
+//                    CtlLineLevel.Global -> TODO()
+//                    null -> {
+//                        if (opus_manager.cursor.range != null) {
+//                            opus_manager.overwrite_beat_range(
+//                                opus_manager.cursor.get_beatkey(),
+//                                opus_manager.cursor.range!!.first,
+//                                opus_manager.cursor.range!!.second,
+//                            )
+//                            opus_manager.cursor.range = null
+//                        }
+//                    }
+//                }
+//            }
+//        },
+//        Pair(KEYCODE_D, true) to object: CursorSpecificKeyStrokeNode(this) {
+//            override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+//                val beatkey = opus_manager.cursor.get_beatkey()
+//                opus_manager.cursor_select_range(beatkey, beatkey)
+//            }
+//        },
+//
+//        //Pair(KEYCODE_E, true) to object: CursorSpecificKeyStrokeNode(this) {
+//        //    override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+//        //        val ctl_type_map = EffectType.entries.associateBy { it.i }
+//        //        val ctl_type = ctl_type_map [this.get_buffer_value(EffectType.Volume.i)] ?: return
+//        //        for ((check_type, _) in OpusLayerInterface.line_controller_domain) {
+//        //            if (check_type == ctl_type) {
+//        //                val channel = opus_manager.cursor.channel
+//        //                val line_offset = opus_manager.cursor.line_offset
+//        //                opus_manager.toggle_line_controller_visibility(ctl_type, channel, line_offset)
+//        //                break
+//        //            }
+//        //        }
+//
+//        //    }
+//
+//        //    override fun channel(dispatcher: ActionDispatcher, ctrl_pressed: Boolean) {
+//        //        val ctl_type_map = EffectType.entries.associateBy { it.i }
+//        //        val ctl_type = ctl_type_map [this.get_buffer_value(EffectType.Volume.i)] ?: return
+//        //        for ((check_type, _) in OpusLayerInterface.channel_controller_domain) {
+//        //            if (check_type == ctl_type) {
+//        //                val channel = opus_manager.cursor.channel
+//        //                opus_manager.toggle_channel_controller_visibility(ctl_type, channel)
+//        //                break
+//        //            }
+//        //        }
+//        //    }
+//        //},
+//
+////         Pair(KEYCODE_H, false) to object: CursorSpecificKeyStrokeNode(this) {
+////             override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 val movement_value = this.get_buffer_value(1, minimum=0)
+////                 if (movement_value != 0) {
+////                     val beat_key = BeatKey(
+////                         opus_manager.cursor.channel,
+////                         opus_manager.cursor.line_offset,
+////                         max(0, opus_manager.cursor.beat - movement_value)
+////                     )
+////
+////                     opus_manager.cursor_select(
+////                         beat_key,
+////                         opus_manager.get_first_position(beat_key)
+////                     )
+////                 }
+////             }
+////
+////             override fun range(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 opus_manager.cursor_select_range(
+////                     opus_manager.cursor.range!!.first,
+////                     BeatKey(
+////                         opus_manager.cursor.range!!.second.channel,
+////                         opus_manager.cursor.range!!.second.line_offset,
+////                         max(0, opus_manager.cursor.range!!.second.beat - this.get_buffer_value(1, minimum=0))
+////                     )
+////                 )
+////             }
+////
+////             override fun column(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 val movement_value = this.get_buffer_value(1, minimum=0)
+////                 val new_beat = max(0, opus_manager.cursor.beat - movement_value)
+////                 opus_manager.cursor_select_column(new_beat)
+////             }
+////
+////             override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 opus_manager.select_previous_leaf(this.get_buffer_value(1, minimum=0))
+////             }
+////         },
+////
+////         Pair(KEYCODE_H, true) to object: CursorSpecificKeyStrokeNode(this) {
+////             override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 val movement_value = this.get_buffer_value(1)
+////                 opus_manager.select_first_leaf_in_previous_beat(movement_value)
+////             }
+////         },
+////
+////         Pair(KEYCODE_I, false) to object: CursorSpecificKeyStrokeNode(this) {
+////             override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 val repeat = this.get_buffer_value(1, maximum=9999, minimum=0)
+////                 opus_manager.new_line_repeat(opus_manager.cursor.channel, opus_manager.cursor.line_offset, repeat)
+////             }
+////
+////             override fun column(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 val repeat = this.get_buffer_value(1, maximum=9999)
+////                 opus_manager.insert_beat_at_cursor(repeat)
+////             }
+////
+////             override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 val repeat = this.get_buffer_value(1, maximum=64, minimum=0)
+////                 if (repeat > 0) {
+////                     val tree = opus_manager.get_tree() ?: return
+////                     if (tree.parent == null) {
+////                         try {
+////                             opus_manager.split_tree_at_cursor(repeat + 1, true)
+////                         } catch (e: BlockedTreeException) {
+////                             // pass
+////                         }
+////                     } else {
+////                         opus_manager.insert_at_cursor(repeat)
+////                     }
+////                 }
+////             }
+////         },
+////
+////         //Pair(KEYCODE_J, false) to object: CursorSpecificKeyStrokeNode(this) {
+////         //    override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////         //        val movement_value = this.get_buffer_value(1, minimum=0)
+////         //        opus_manager.move_to_next_visible_line(movement_value)
+////         //    }
+////
+////         //    override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////         //        this.keyboard_interface._cursor_select_next_leaf_down()
+////         //    }
+////         //},
+////
+////         Pair(KEYCODE_J, true) to object: CursorSpecificKeyStrokeNode(this) {
+////             override fun column(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 val repeat = this.get_buffer_value(1, minimum=0)
+////                 val new_channel = opus_manager.get_nth_next_channel_at_cursor(repeat) ?: return
+////                 val new_key = BeatKey(new_channel, 0, opus_manager.cursor.beat)
+////
+////                 opus_manager.cursor_select(new_key, opus_manager.get_first_position(new_key))
+////             }
+////             override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 val repeat = this.get_buffer_value(1, minimum=0)
+////                 val new_channel = opus_manager.get_nth_next_channel_at_cursor(repeat) ?: return
+////                 opus_manager.cursor_select_line(new_channel, 0)
+////             }
+////
+////             override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 val repeat = this.get_buffer_value(1, minimum=0)
+////                 val new_channel = opus_manager.get_nth_next_channel_at_cursor(repeat) ?: return
+////
+////                 val new_key = opus_manager.cursor.get_beatkey()
+////                 new_key.line_offset = 0
+////                 new_key.channel = new_channel
+////
+////                 opus_manager.cursor_select(new_key, opus_manager.get_first_position(new_key))
+////             }
+////         },
+////
+////         // Pair(KEYCODE_K, false) to object: CursorSpecificKeyStrokeNode(this) {
+////         //     override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////         //         val movement_value = this.get_buffer_value(1, minimum=0)
+////         //         opus_manager.move_to_previous_visible_line(movement_value)
+////
+////         //     }
+////
+////         //     override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////         //         this.keyboard_interface._cursor_select_next_leaf_up()
+////         //     }
+////
+////         //     override fun range(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////         //         val new_beat_key = opus_manager.cursor.range!!.second
+////         //         val movement_value = this.get_buffer_value(1, maximum=new_beat_key.beat, minimum=0)
+////         //         val visible_line = (movement_value % (opus_manager.get_row_count() - 1)) - 1
+////         //         val (channel, line_offset) = opus_manager.get_channel_and_line_offset(
+////         //             opus_manager.get_ctl_line_from_row(visible_line)
+////         //         )
+////
+////         //         opus_manager.cursor_select_range(
+////         //             opus_manager.cursor.range!!.first,
+////         //             new_beat_key
+////         //         )
+////         //     }
+////         // },
+////
+////         Pair(KEYCODE_K, true) to object: CursorSpecificKeyStrokeNode(this) {
+////             override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 val repeat = this.get_buffer_value(1) * -1
+////                 val new_channel = opus_manager.get_nth_next_channel_at_cursor(repeat) ?: return
+////                 opus_manager.cursor_select_line(new_channel, 0)
+////             }
+////             override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 val repeat = this.get_buffer_value(1) * -1
+////                 val new_channel = opus_manager.get_nth_next_channel_at_cursor(repeat) ?: return
+////
+////                 val new_key = opus_manager.cursor.get_beatkey()
+////                 new_key.line_offset = 0
+////                 new_key.channel = new_channel
+////
+////                 opus_manager.cursor_select(new_key, opus_manager.get_first_position(new_key))
+////             }
+////         },
+////
+////         Pair(KEYCODE_L, false) to object: CursorSpecificKeyStrokeNode(this) {
+////
+////             override fun column(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 val movement_value = this.get_buffer_value(1, minimum=0)
+////                 val new_beat = min(opus_manager.length - 1, opus_manager.cursor.beat + movement_value)
+////                 opus_manager.cursor_select_column(new_beat)
+////             }
+////
+////             override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 opus_manager.select_next_leaf(this.get_buffer_value(1, minimum=0))
+////             }
+////
+////             override fun range(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 val movement_value = this.get_buffer_value(1, minimum=0)
+////
+////                 opus_manager.cursor_select_range(
+////                     opus_manager.cursor.range!!.first,
+////                     BeatKey(
+////                         opus_manager.cursor.range!!.second.channel,
+////                         opus_manager.cursor.range!!.second.line_offset,
+////                         min(opus_manager.length - 1, opus_manager.cursor.range!!.second.beat + movement_value)
+////                     )
+////                 )
+////             }
+////         },
+////
+////         Pair(KEYCODE_L, true) to object: CursorSpecificKeyStrokeNode(this) {
+////             override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 val movement_value = this.get_buffer_value(1, minimum=0)
+////                 if (movement_value != 0) {
+////                     val beat_key = BeatKey(
+////                         opus_manager.cursor.channel,
+////                         opus_manager.cursor.line_offset,
+////                         min(movement_value - 1, opus_manager.length - 1)
+////                     )
+////
+////                     opus_manager.cursor_select(
+////                         beat_key,
+////                         opus_manager.get_first_position(beat_key)
+////                     )
+////                 }
+////             }
+////             override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 val movement_value = this.get_buffer_value(1, minimum=0)
+////                 val cursor = opus_manager.cursor
+////                 var beat = min(opus_manager.length - 1, cursor.beat + movement_value)
+////                 opus_manager.select_first_in_beat(beat)
+////             }
+////         },
+////
+////         Pair(KEYCODE_M, false) to object: CursorSpecificKeyStrokeNode(this) {
+////             override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 when (opus_manager.cursor.ctl_level) {
+////                     CtlLineLevel.Line -> TODO()
+////                     CtlLineLevel.Channel -> TODO()
+////                     CtlLineLevel.Global -> TODO()
+////                     null -> {
+////                         if (opus_manager.cursor.range != null) {
+////                             opus_manager.move_beat_range(
+////                                 opus_manager.cursor.get_beatkey(),
+////                                 opus_manager.cursor.range!!.first,
+////                                 opus_manager.cursor.range!!.second,
+////                             )
+////                             opus_manager.cursor.range = null
+////                         }
+////                     }
+////                 }
+////             }
+////
+////             override fun range(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 when (opus_manager.cursor.ctl_level) {
+////                     CtlLineLevel.Line -> TODO()
+////                     CtlLineLevel.Channel -> TODO()
+////                     CtlLineLevel.Global -> TODO()
+////                     null -> {
+////                         val range = opus_manager.cursor.range
+////                         opus_manager.cursor.range = range
+////                         val beat_key = opus_manager.cursor.range!!.second
+////                         val position = opus_manager.get_first_position(beat_key)
+////                         opus_manager.cursor_select(beat_key, position)
+////                     }
+////                 }
+////             }
+////         },
+////
+////         Pair(KEYCODE_R, true) to object: CursorSpecificKeyStrokeNode(this) {
+////            //  private fun _set_relative_mode(dispatcher: ActionDispatcher, opus_manager: OpusManager, force_mode: RelativeInputMode = RelativeInputMode.Absolute) {
+////            //     if (opus_manager.relative_mode == RelativeInputMode.Absolute) {
+////            //         //val activity = opus_manager.get_activity()
+////            //         //if (activity != null) {
+////            //         //    activity.configuration.relative_mode = true
+////            //         //    activity.save_configuration()
+////            //         //}
+////            //     }
+////
+////            //     if (opus_manager.relative_mode != force_mode) {
+////            //         opus_manager.force_relative_mode(force_mode)
+////            //     }
+////            //  }
+////
+////            //  override fun column(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////            //      this._set_relative_mode(opus_manager)
+////            //      opus_manager.convert_events_in_beat_to_relative(opus_manager.cursor.beat)
+////            //  }
+////
+////            //  override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////            //      if (opus_manager.is_percussion(opus_manager.cursor.channel)) return
+////            //
+////            //      val tree = opus_manager.get_tree() ?: return
+////
+////            //      if (tree.has_event()) {
+////            //          val event = tree.get_event()
+////            //          if (event is AbsoluteNoteEvent) {
+////            //              opus_manager.convert_event_to_relative(
+////            //                  opus_manager.cursor.get_beatkey(),
+////            //                  opus_manager.cursor.get_position()
+////            //              )
+////
+////            //              val force_mode = if ((tree.get_event() as RelativeNoteEvent).offset >= 0) {
+////            //                  RelativeInputMode.Negative
+////            //              } else {
+////            //                  RelativeInputMode.Positive
+////            //              }
+////
+////            //              this._set_relative_mode(opus_manager, force_mode)
+////            //          } else if (event is RelativeNoteEvent) {
+////            //              opus_manager.set_event(
+////            //                  opus_manager.cursor.get_beatkey(),
+////            //                  opus_manager.cursor.get_position(),
+////            //                  RelativeNoteEvent(0 - event.offset, event.duration)
+////            //              )
+////            //          }
+////            //      } else {
+////            //          //this._set_relative_mode(
+////            //          //    opus_manager,
+////            //          //    if (opus_manager.relative_mode == RelativeInputMode.Positive) {
+////            //          //        RelativeInputMode.Negative
+////            //          //    } else {
+////            //          //        RelativeInputMode.Positive
+////            //          //    }
+////            //          //)
+////            //      }
+////            //  }
+////
+////            //  override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////            //      this._set_relative_mode(opus_manager)
+////            //      opus_manager.convert_events_in_line_to_relative(opus_manager.cursor.channel, opus_manager.cursor.line_offset)
+////            //  }
+////         },
+////
+////         Pair(KEYCODE_R, false) to object: CursorSpecificKeyStrokeNode(this) {
+////             override fun column(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 opus_manager.convert_events_in_beat_to_absolute(opus_manager.cursor.beat)
+////             }
+////             override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 if (opus_manager.is_percussion(opus_manager.cursor.channel)) {
+////                     return
+////                 }
+////
+////                 try {
+////                     opus_manager.convert_event_to_absolute(opus_manager.cursor.get_beatkey(), opus_manager.cursor.get_position())
+////                 } catch (e: NoteOutOfRange) {
+////                     val tree = opus_manager.get_tree() ?: return
+////                     val event = tree.get_event()!! as RelativeNoteEvent
+////                     opus_manager.set_event_at_cursor(
+////                         AbsoluteNoteEvent(
+////                             min((opus_manager.tuning_map.size * 8) - 1, max(0, e.n)),
+////                             event.duration
+////                         )
+////                     )
+////                 }
+////             }
+////
+////             override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 opus_manager.convert_events_in_line_to_absolute(opus_manager.cursor.channel, opus_manager.cursor.line_offset)
+////             }
+////         },
+////
+////         Pair(KEYCODE_S, false) to object: CursorSpecificKeyStrokeNode(this) {
+////             override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 val splits = this.get_buffer_value(2, minimum=2, maximum=64)
+////                 val cursor = opus_manager.cursor
+////                 when (cursor.ctl_level) {
+////                     null -> {
+////                         try {
+////                             opus_manager.split_tree_at_cursor(splits)
+////                         } catch (e: BlockedTreeException) {
+////                             // ignore
+////                         }
+////                     }
+////                     CtlLineLevel.Line -> TODO()
+////                     CtlLineLevel.Channel -> TODO()
+////                     CtlLineLevel.Global -> {
+////                         opus_manager.controller_global_split_tree(
+////                             cursor.ctl_type!!,
+////                             cursor.beat,
+////                             cursor.get_position(),
+////                             splits
+////                         )
+////                     }
+////                 }
+////             }
+////         },
+////
+////         Pair(KEYCODE_U, false) to object: KeyStrokeNode(this) {
+////             fun apply_undo(dispatcher: ActionDispatcher) {
+////                 val repeat = this.get_buffer_value(1)
+////                 dispatcher.apply_undo(repeat)
+////             }
+////
+////             override fun call(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean): Boolean {
+////                 this.apply_undo(dispatcher)
+////                 return true
+////             }
+////         },
+////
+////         // Pair(KEYCODE_V, true) to object: CursorSpecificKeyStrokeNode(this) {
+////         //     /* All the methods call cursor_select_line, but choose the channel differently */
+////         //     override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////         //         val channel = opus_manager.cursor.channel
+////         //         val default = opus_manager.get_visible_channels()[channel].lines.size - 1
+////         //         opus_manager.cursor_select_line(
+////         //             channel,
+////         //             this.get_buffer_value(default, 0, default)
+////         //         )
+////         //     }
+////         //     override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////         //         this.line(opus_manager, ctrl_pressed)
+////         //     }
+////         //     override fun column(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////         //         val channels = opus_manager.get_visible_channels()
+////         //         val channel = channels.size // Last channel that is also visible
+////         //         val default = channels[channel].lines.size - 1
+////         //         opus_manager.cursor_select_line(
+////         //             channel,
+////         //             this.get_buffer_value(default, 0, default)
+////         //         )
+////         //     }
+////         //     override fun unset(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////         //         this.column(opus_manager, ctrl_pressed)
+////         //     }
+////
+////         //     override fun range(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////         //         val channel = opus_manager.cursor.range!!.first.channel
+////         //         val default = opus_manager.get_visible_channels()[channel].lines.size - 1
+////         //         opus_manager.cursor_select_line(
+////         //             channel,
+////         //             this.get_buffer_value(default, 0, default)
+////         //         )
+////         //     }
+////         // },
+////
+////         Pair(KEYCODE_W, true) to object: KeyStrokeNode(this) {
+////             override fun call(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean): Boolean {
+////                 println("???")
+////                 //opus_manager.get_activity()?.project_save()
+////                 return true
+////             }
+////         },
+////
+////         Pair(KEYCODE_X, false) to object: KeyStrokeNode(this) {
+////             override fun call(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean): Boolean {
+////                 opus_manager.unset()
+////                 return true
+////             }
+////         },
+////
+////         Pair(KEYCODE_X, true) to object: CursorSpecificKeyStrokeNode(this) {
+////             override fun column(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 val repeat = this.get_buffer_value(1, minimum=0, maximum=opus_manager.length - 1)
+////                 if (repeat > 0) {
+////                     opus_manager.remove_beat_at_cursor(repeat)
+////                 }
+////             }
+////
+////             override fun single(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 val repeat = this.get_buffer_value(1)
+////                 if (repeat > 0) {
+////                     opus_manager.remove_at_cursor(repeat)
+////                 }
+////             }
+////
+////             override fun line(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 val cursor = opus_manager.cursor
+////                 val line_count = opus_manager.get_visible_channels()[cursor.channel].lines.size
+////                 val repeat = this.get_buffer_value(1, maximum=line_count - 1, minimum=0)
+////                 if (repeat > 0) {
+////                     opus_manager.remove_line_at_cursor(repeat)
+////                 }
+////             }
+////
+////             override fun range(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean) {
+////                 opus_manager.unset()
+////             }
+////         }
+////     )
+////
+//
+//    // private fun _cursor_select_next_prev_leaf(direction_up: Boolean = false) {
+//    //     val repeat = this.get_buffer_value(1)
+//    //     val cursor = this.opus_manager.cursor
+//    //     val current_line = when (cursor.ctl_level) {
+//    //         null -> {
+//    //             this.opus_manager.get_visible_row_from_ctl_line(
+//    //                 this.opus_manager.get_actual_line_index(
+//    //                     this.opus_manager.get_instrument_line_index(
+//    //                         cursor.channel,
+//    //                         cursor.line_offset
+//    //                     )
+//    //                 )
+//    //             )!!
+//    //         }
+//    //         CtlLineLevel.Global -> this.opus_manager.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
+//    //         CtlLineLevel.Line -> this.opus_manager.get_visible_row_from_ctl_line_line(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
+//    //         CtlLineLevel.Channel -> this.opus_manager.get_visible_row_from_ctl_line_channel(cursor.ctl_type!!, cursor.channel)
+//    //     }
+//
+//    //     val line_count = this.opus_manager.get_row_count()
+//    //     val direction_mod = if (direction_up) {
+//    //         -1
+//    //     } else {
+//    //         1
+//    //     }
+//
+//    //     val next_line = max(0, min(line_count - 1, current_line + (repeat * direction_mod)))
+//    //     val next_ctl_line = this.opus_manager.get_ctl_line_from_row(next_line)
+//    //     val (target, ctl_level, ctl_type) = this.opus_manager.get_ctl_line_info(next_ctl_line)
+//    //     when (ctl_level) {
+//    //         CtlLineLevel.Global -> {
+//    //             val beat = this.opus_manager.cursor.beat
+//    //             val target_position = this.opus_manager.get_first_position_global_ctl(ctl_type!!, beat)
+//    //             this.opus_manager.cursor_select_ctl_at_global(ctl_type, beat, target_position)
+//    //         }
+//    //         null -> {
+//    //             val (channel, offset) = this.opus_manager.get_channel_and_line_offset(target)
+//    //             val target_beat_key = BeatKey(channel, offset, this.opus_manager.cursor.beat)
+//    //             val target_position = this.opus_manager.get_first_position(target_beat_key, listOf())
+//    //             this.opus_manager.cursor_select(target_beat_key, target_position)
+//    //         }
+//    //         CtlLineLevel.Line -> TODO()
+//    //         CtlLineLevel.Channel -> TODO()
+//    //     }
+//    // }
+//
 }

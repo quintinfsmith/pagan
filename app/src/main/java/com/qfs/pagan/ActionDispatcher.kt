@@ -76,6 +76,7 @@ import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.DivisorSeparator
 import com.qfs.pagan.composable.IntegerInput
+import com.qfs.pagan.composable.LargeSpacer
 import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.NumberPicker
 import com.qfs.pagan.composable.SortableMenu
@@ -884,6 +885,16 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         }
     }
 
+    fun hide_all_hidden_line_controller(effect_type: EffectType, all_channels: Boolean = false) {
+        val opus_manager = this.get_opus_manager()
+        if (all_channels) {
+            opus_manager.unset_all_line_controller_visibility(effect_type)
+        } else {
+            val cursor = opus_manager.cursor
+            opus_manager.unset_all_line_controller_visibility(effect_type, cursor.channel)
+        }
+    }
+
     fun show_all_hidden_line_controller(effect_type: EffectType, all_channels: Boolean = false) {
         val opus_manager = this.get_opus_manager()
         if (all_channels) {
@@ -915,60 +926,57 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
             long_click_callback = { ctl_type: EffectType ->
                 this@ActionDispatcher.vm_top.create_dialog { close ->
                     @Composable {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            DialogTitle("Show")
-                            Icon(
-                                modifier = Modifier.height(Dimensions.EffectDialogIconHeight),
-                                painter = painterResource(EffectResourceMap[ctl_type].icon),
-                                contentDescription = stringResource(EffectResourceMap[ctl_type].name)
-                            )
-                        }
-                        MediumSpacer()
+                        Icon(
+                            modifier = Modifier.height(Dimensions.EffectDialogIconHeight),
+                            painter = painterResource(EffectResourceMap[ctl_type].icon),
+                            contentDescription = stringResource(EffectResourceMap[ctl_type].name)
+                        )
+                        LargeSpacer()
                         Button(
-                            modifier = Modifier.width(IntrinsicSize.Max),
+                            modifier = Modifier.fillMaxWidth(),
                             onClick = {
                                 close()
                                 this@ActionDispatcher.show_hidden_line_controller(ctl_type)
                             },
                             content = { Text(stringResource(R.string.show_line_controls_this)) },
                         )
-                        MediumSpacer()
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Button(
-                                modifier = Modifier
-                                    .weight(1F, fill = false)
-                                    .width(IntrinsicSize.Max),
-                                onClick = {
-                                    close()
-                                    this@ActionDispatcher.show_all_hidden_line_controller(
-                                        ctl_type,
-                                        false
-                                    )
-                                },
-                                content = { Text(stringResource(R.string.show_line_controls_channel)) },
-                            )
-                            MediumSpacer()
-                            Button(
-                                modifier = Modifier
-                                    .weight(1F, fill = false)
-                                    .width(IntrinsicSize.Max),
-                                onClick = {
-                                    close()
-                                    this@ActionDispatcher.show_all_hidden_line_controller(
-                                        ctl_type,
-                                        true
-                                    )
-                                },
-                                content = { Text(stringResource(R.string.show_line_controls_all)) },
-                            )
-                        }
-                        MediumSpacer()
+                        LargeSpacer()
+                        Button(
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                close()
+                                this@ActionDispatcher.show_all_hidden_line_controller(
+                                    ctl_type,
+                                    false
+                                )
+                            },
+                            content = {
+                                Text(
+                                    stringResource(R.string.show_line_controls_channel),
+                                    maxLines = 1
+                                )
+                            },
+                        )
+                        LargeSpacer()
+                        Button(
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                close()
+                                this@ActionDispatcher.show_all_hidden_line_controller(
+                                    ctl_type,
+                                    true
+                                )
+                            },
+                            content = {
+                                Text(
+                                    stringResource(R.string.show_line_controls_all),
+                                    maxLines = 1
+                                )
+                            },
+                        )
+                        LargeSpacer()
                         OutlinedButton(
-                            modifier = Modifier.width(IntrinsicSize.Max),
+                            modifier = Modifier.fillMaxWidth(),
                             onClick = { close() },
                             content = { Text(android.R.string.cancel) },
                         )
@@ -979,6 +987,11 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                 this.show_hidden_line_controller(ctl_type)
             }
         )
+    }
+
+    fun show_all_hidden_channel_controllers(value: EffectType) {
+        val opus_manager = this.get_opus_manager()
+        opus_manager.set_all_channel_controller_visibility(value)
     }
 
     fun show_hidden_channel_controller(forced_value: EffectType? =  null) {
@@ -996,9 +1009,48 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
             options.add(this.generate_effect_menu_option(ctl_type, EffectResourceMap[ctl_type].icon))
         }
 
-        this.dialog_popup_menu(R.string.show_channel_controls, options) {
-            this.show_hidden_channel_controller(it)
-        }
+        this.dialog_popup_menu(
+            R.string.show_channel_controls,
+            options,
+            long_click_callback = { ctl_type: EffectType ->
+                this@ActionDispatcher.vm_top.create_dialog { close ->
+                    @Composable {
+                        Icon(
+                            modifier = Modifier.height(Dimensions.EffectDialogIconHeight),
+                            painter = painterResource(EffectResourceMap[ctl_type].icon),
+                            contentDescription = stringResource(EffectResourceMap[ctl_type].name)
+                        )
+                        LargeSpacer()
+                        Button(
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                close()
+                                this@ActionDispatcher.show_hidden_channel_controller(ctl_type)
+                            },
+                            content = { Text(stringResource(R.string.show_channel_controls_single)) },
+                        )
+                        LargeSpacer()
+                        Button(
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                close()
+                                this@ActionDispatcher.show_all_hidden_channel_controllers(ctl_type)
+                            },
+                            content = { Text(stringResource(R.string.show_channel_controls_all)) },
+                        )
+                        LargeSpacer()
+                        OutlinedButton(
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = { close() },
+                            content = { Text(android.R.string.cancel) },
+                        )
+                    }
+                }
+            },
+            callback = {
+                this.show_hidden_channel_controller(it)
+            }
+        )
     }
 
     fun show_hidden_global_controller(forced_value: EffectType? =  null) {
@@ -2089,7 +2141,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         val cursor = opus_manager.cursor
         when (cursor.ctl_level!!) {
             CtlLineLevel.Line -> opus_manager.toggle_line_controller_visibility(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
-            CtlLineLevel.Channel -> opus_manager.toggle_channel_controller_visibility(cursor.ctl_type!!, cursor.channel)
+            CtlLineLevel.Channel -> { opus_manager.toggle_channel_controller_visibility(cursor.ctl_type!!, cursor.channel) }
             CtlLineLevel.Global -> opus_manager.toggle_global_controller_visibility(cursor.ctl_type!!)
         }
     }

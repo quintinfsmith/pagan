@@ -18,3 +18,13 @@ fun RowScope.MediumSpacer() {
 fun ColumnScope.MediumSpacer() {
     Spacer(Modifier.height(Dimensions.Space.Medium))
 }
+
+@Composable
+fun RowScope.LargeSpacer() {
+    Spacer(Modifier.width(Dimensions.Space.Large))
+}
+
+@Composable
+fun ColumnScope.LargeSpacer() {
+    Spacer(Modifier.height(Dimensions.Space.Large))
+}

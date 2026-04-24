@@ -1811,8 +1811,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         val end_position = ((width_px - viewport_width) / 2F)
                                         if (floating_position < end_position) {
                                             state_model.active_wide_beat.value = x
-                                            state_model.wide_beat_progress.value =
-                                                scroll_offset / (width_px - viewport_width)
+                                            state_model.wide_beat_progress.value = scroll_offset / (width_px - viewport_width)
                                             floating_position
                                         } else {
                                             if (state_model.active_wide_beat.value == x) {
@@ -1832,6 +1831,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         0F
                                     }
                                 } else {
+                                    if (x == state_model.active_wide_beat.value) {
+                                        state_model.active_wide_beat.value = null
+                                    }
                                     0F
                                 }
                             }

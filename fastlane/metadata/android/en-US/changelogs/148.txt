@@ -1,0 +1,4 @@
+- Fixed samples' pitch corrections being added instead of subtracted.
+- Added preview button on presets and percussion instruments
+- Added "Duplicate Line" & "Duplicate Channel" buttons.
+- Added ability to 'show all' when enabling effect controllers (tap-and-hold) 

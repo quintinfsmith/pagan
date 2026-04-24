@@ -3011,7 +3011,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
     override fun on_key_press(e: KeyEvent): Boolean {
-        return this.keyboard_interface.input(e)
+        return false
+        // In Progress
+        //return this.keyboard_interface.input(e)
     }
 }
 

@@ -1,106 +1,147 @@
 flowchart LR
+  subgraph Context:Global
     Context:Unset([Unset])
 
-  subgraph B[_]
-    Context:Column([Column])
-    Function:Column:Insert>Insert]
-    Function:Column:Remove>Remove]
-  end
-
-  subgraph C[_]
-    Context:Channel([Channel])
-    Function:Channel:InsertStandard>InsertStandard]
-    Function:Channel:InsertPercussion>InsertPercussion]
-    Function:Channel:Duplicate>Duplicate]
-    Function:Channel:Remove>Remove]
-    Function:Channel:SetPresetByIndex>SetPresetByIndex]
-    Function:Channel:SetSoundfontIndex>SetSoundfontIndex]
-    Function:Channel:SetBank>SetBank]
-    Function:Channel:SetProgram>SetProgram]
-  end
-
-  subgraph D[_]
-    subgraph Context:Line[Line]
-      Context:Line:Standard([Standard])
-      Context:Line:Percussion([Percussion])
-      Function:Line:Percussion:SetInstrument>SetInstrument]
+    subgraph B[_]
+      Context:Column([Column])
+      Function:Column:InsertAfter>InsertAfter]
+      Function:Column:InsertBefore>InsertBefore]
+      Function:Column:Remove>Remove]
+      Function:Column:AdjustOffset>AdjustOffset]
+      Function:Column:AdjustOctave>AdjustOctave]
+      Function:Column:Tag>Tag]
+      Function:Column:SetTagName>SetTagName]
+      Function:Column:UnTag>UnTag]
     end
-    Function:Line:Insert>Insert]
-    Function:Line:Duplicate>Duplicate]
-    Function:Line:Remove>Remove]
-  end
 
-  subgraph E[_]
-    subgraph Context:EffectControl[EffectControl]
-        Context:EffectControl:Volume([Volume])
-        Context:EffectControl:Delay([Delay])
-        Context:EffectControl:Pan([Pan])
-        Context:EffectControl:Velocity([Velocity])
+    subgraph C[_]
+      Context:Channel([Channel])
+      Function:Channel:InsertStandard>InsertStandard]
+      Function:Channel:InsertPercussion>InsertPercussion]
+      Function:Channel:MoveTo>MoveTo]
+      Function:Channel:Duplicate>Duplicate]
+      Function:Channel:Remove>Remove]
+      Function:Channel:SetPresetByIndex>SetPresetByIndex]
+      Function:Channel:SetSoundfontIndex>SetSoundfontIndex]
+      Function:Channel:SetBank>SetBank]
+      Function:Channel:SetProgram>SetProgram]
+      Function:Channel:AdjustOffset>AdjustOffset]
+      Function:Channel:AdjustOctave>AdjustOctave]
+      Function:Channel:Mute>Mute]
+      Function:Channel:UnMute>UnMute]
+      Function:Channel:SetLeafColor>SetLeafColor]
     end
-  end
 
-  subgraph F[_]
-    Function:Leaf:Unset>Unset]
-    Function:Leaf:Split>Split]
-    Function:Leaf:Remove>Remove]
-    Function:Leaf:Append>Append]
-    Function:Leaf:SetDuration>SetDuration]
-    subgraph Context:Leaf[Leaf]
-      Context:LeafStandard([Standard])
-      Context:LeafPercussion([Percussion])
+    subgraph D[_]
+      subgraph Context:Line[Line]
+        Context:Line:Standard([Standard])
+        Context:Line:Percussion([Percussion])
+        Function:Line:Percussion:SetInstrument>SetInstrument]
+      end
+      Function:Line:Insert>Insert]
+      Function:Line:Duplicate>Duplicate]
+      Function:Line:Remove>Remove]
+      Function:Line:AdjustOffset>AdjustOffset]
+      Function:Line:AdjustOctave>AdjustOctave]
+      Function:Line:MoveTo>MoveTo]
+      Function:Line:Mute>Mute]
+      Function:Line:UnMute>UnMute]
+      Function:Line:SetLeafColor>SetLeafColor]
+    end
 
-      Function:LeafStandard:SetOctave>SetOctave]
-      Function:LeafStandard:SetOffset>SetOffset]
-      Function:LeafPercussion:Toggle>Toggle]
-      Function:LeafEffect:SetTransition>SetTransition]
-
-      subgraph Context:LeafEffect
-        Context:LeafEffect:Volume([Volume])
-        Context:LeafEffect:Delay([Delay])
-        Context:LeafEffect:Pan([Pan])
-        Context:LeafEffect:Velocity([Velocity])
+    subgraph E[_]
+      subgraph Context:EffectControl[EffectControl]
+          Context:EffectControl:Volume([Volume])
+          Context:EffectControl:Delay([Delay])
+          Context:EffectControl:Pan([Pan])
+          Context:EffectControl:Velocity([Velocity])
       end
     end
+
+    subgraph F[_]
+      Function:Leaf:Unset>Unset]
+      Function:Leaf:Split>Split]
+      Function:Leaf:Remove>Remove]
+      Function:Leaf:Append>Append]
+      Function:Leaf:SetDuration>SetDuration]
+      Function:Leaf:AdjustOffset>AdjustOffset]
+      Function:Leaf:AdjustOctave>AdjustOctave]
+      subgraph Context:Leaf[Leaf]
+        Context:LeafStandard([Standard])
+        Context:LeafPercussion([Percussion])
+
+        Function:LeafStandard:SetOctave>SetOctave]
+        Function:LeafStandard:SetOffset>SetOffset]
+        Function:LeafPercussion:Toggle>Toggle]
+        Function:LeafEffect:SetTransition>SetTransition]
+
+        subgraph Context:LeafEffect
+          Context:LeafEffect:Volume([Volume])
+          Context:LeafEffect:Delay([Delay])
+          Context:LeafEffect:Pan([Pan])
+          Context:LeafEffect:Velocity([Velocity])
+        end
+      end
+    end
+
+    subgraph ContextRange[_]
+      Context:Range([Range])
+      subgraph Functions
+        Function:Range:Unset>Unset]
+        Function:Range:Copy>Copy]
+        Function:Range:Move>Move]
+        Function:Range:AdjustOffset>AdjustOffset]
+        Function:Range:AdjustOctave>AdjustOctave]
+        Function:Range:Repeat>Repeat]
+      end
+    end
+
+
+    Context:Column --Esc--> Context:Unset
+    Context:Channel --Esc--> Context:Unset
+    Context:EffectControl --Esc--> Context:Unset
+
+    Context:Unset --*B--> Context:Column
+    Context:Unset --*Shift+C--> Context:Channel
+    Context:Unset --*C--> Context:Line
+
+    Context:Channel --*L--> Context:Line
+    Context:Channel --*I--> Function:Channel:InsertPercussion
+    Context:Channel --*Shift+I--> Function:Channel:InsertStandard
+    Context:Channel --*X--> Function:Channel:Remove
+    Context:Channel --*??--> Function:Channel:SetPresetByIndex
+    Context:Channel --*??--> Function:Channel:SetSoundfontIndex
+    Context:Channel --*??--> Function:Channel:SetBank
+    Context:Channel --*??--> Function:Channel:SetProgram
+    Context:Channel --*D--> Function:Channel:Duplicate
+
+    Context:Column --*C--> Context:Leaf
+    Context:Column --*??--> Function:Column:InsertBefore
+    Context:Column --*??--> Function:Column:InsertAfter
+    Context:Column --*X--> Function:Column:Remove
+
+    Context:Leaf --Esc--> Context:Unset
+    Context:Leaf --*U--> Function:Leaf:Unset
+    Context:Leaf --*S--> Function:Leaf:Split
+    Context:Leaf --*X--> Function:Leaf:Remove
+    Context:Leaf --*A--> Function:Leaf:Append
+    Context:Leaf --*??--> Function:Leaf:SetDuration
+    Context:LeafEffect --*T--> Function:LeafEffect:SetTransition
+    Context:LeafStandard --*??--> Function:LeafStandard:SetOctave
+    Context:LeafStandard --*??--> Function:LeafStandard:SetOffset
+    Context:LeafPercussion --*??--> Function:LeafPercussion:Toggle
+
+    Context:Line --*B--> Context:Leaf
+    Context:Line --Esc--> Context:Unset
+    Context:Line --*I--> Function:Line:Insert
+    Context:Line --*D--> Function:Line:Duplicate
+    Context:Line --*R--> Function:Line:Remove
+
+    Context:Line:Percussion --*??--> Function:Line:Percussion:SetInstrument
   end
 
-  Context:Column --Esc--> Context:Unset
-  Context:Channel --Esc--> Context:Unset
-  Context:EffectControl --Esc--> Context:Unset
 
-  Context:Unset --*B--> Context:Column
-  Context:Unset --*Shift+C--> Context:Channel
-  Context:Unset --*C--> Context:Line
-
-  Context:Channel --*L--> Context:Line
-  Context:Channel --*I--> Function:Channel:InsertPercussion
-  Context:Channel --*Shift+I--> Function:Channel:InsertStandard
-  Context:Channel --*X--> Function:Channel:Remove
-  Context:Channel --*??--> Function:Channel:SetPresetByIndex
-  Context:Channel --*??--> Function:Channel:SetSoundfontIndex
-  Context:Channel --*??--> Function:Channel:SetBank
-  Context:Channel --*??--> Function:Channel:SetProgram
-  Context:Channel --*D--> Function:Channel:Duplicate
-
-  Context:Column --*C--> Context:Leaf
-  Context:Column --*I--> Function:Column:Insert
-  Context:Column --*X--> Function:Column:Remove
-
-  Context:Leaf --Esc--> Context:Unset
-  Context:Leaf --*U--> Function:Leaf:Unset
-  Context:Leaf --*S--> Function:Leaf:Split
-  Context:Leaf --*X--> Function:Leaf:Remove
-  Context:Leaf --*A--> Function:Leaf:Append
-  Context:Leaf --*??--> Function:Leaf:SetDuration
-  Context:LeafEffect --*T--> Function:LeafEffect:SetTransition
-  Context:LeafStandard --*??--> Function:LeafStandard:SetOctave
-  Context:LeafStandard --*??--> Function:LeafStandard:SetOffset
-  Context:LeafPercussion --*??--> Function:LeafPercussion:Toggle
-
-  Context:Line --*B--> Context:Leaf
-  Context:Line --Esc--> Context:Unset
-  Context:Line --*I--> Function:Line:Insert
-  Context:Line --*D--> Function:Line:Duplicate
-  Context:Line --*R--> Function:Line:Remove
-
-  Context:Line:Percussion --*??--> Function:Line:Percussion:SetInstrument
-
+  Context:Global --*??--> Function:Global:Undo>Undo]
+  Context:Global --*??--> Function:Global:Redo>Redo]
+  Context:Global --*??--> Function:Global:Save>Save]
+  Context:Global --??--> Function:Global:Playback>PlayBack]

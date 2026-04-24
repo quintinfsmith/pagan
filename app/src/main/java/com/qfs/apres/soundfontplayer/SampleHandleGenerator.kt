@@ -118,7 +118,7 @@ class SampleHandleGenerator(var sample_rate: Int, var buffer_size: Int, var igno
         var pitch_shift = 1F
 
         val original_note = sample_directive.root_key ?: sample_directive.sample!!.first().original_pitch
-
+        println("${sample_directive.root_key} | ${sample_directive.sample!!.first().original_pitch} | ${sample_directive.sample!!.first().pitch_correction}")
         // 255 Means its an unpitched note and needs no correction.
         if (original_note != 255) {
             var tuning_cent: Int = (sample_directive.tuning_cent ?: global_sample_directive.tuning_cent ?: 0 ) + (instrument_directive.tuning_cent ?: 0) + (global_instrument_directive.tuning_cent ?: 0)

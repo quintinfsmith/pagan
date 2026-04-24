@@ -212,24 +212,25 @@ class SoundFont(val context: Context, uri: Uri) {
 
         return Pair(
             Sample(
-                sample_name,
-                toUInt(shdr_bytes[offset + 28])
+                name = sample_name,
+                loop_start = toUInt(shdr_bytes[offset + 28])
                         + (toUInt(shdr_bytes[offset + 29]) * 256)
                         + (toUInt(shdr_bytes[offset + 30]) * 65536)
                         + (toUInt(shdr_bytes[offset + 31]) * 16777216)
                         - start,
-                toUInt(shdr_bytes[offset + 32])
+                loop_end = toUInt(shdr_bytes[offset + 32])
                         + (toUInt(shdr_bytes[offset + 33]) * 256)
                         + (toUInt(shdr_bytes[offset + 34]) * 65536)
                         + (toUInt(shdr_bytes[offset + 35]) * 16777216)
                         - start,
-                toUInt(shdr_bytes[offset + 36])
+                sample_rate = toUInt(shdr_bytes[offset + 36])
                         + (toUInt(shdr_bytes[offset + 37]) * 256)
                         + (toUInt(shdr_bytes[offset + 38]) * 65536)
                         + (toUInt(shdr_bytes[offset + 39]) * 16777216),
-                toUInt(shdr_bytes[offset + 40]),
-                toUInt(shdr_bytes[offset + 41]),
-                sample_type,
+                original_pitch = toUInt(shdr_bytes[offset + 40]),
+                // NOTE: The spec says this shouldn't need to be *-1, however that doesn't seem to be the defactor case
+                pitch_correction = -1 * shdr_bytes[offset + 41].toInt(),
+                sample_type = sample_type,
                 data_placeholder = Pair(start, end)
             ),
             linked_addr

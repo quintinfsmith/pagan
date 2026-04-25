@@ -247,7 +247,6 @@ class ViewModelEditorState: ViewModel() {
     val zoom_index = mutableIntStateOf(0)
     val active_zoom = mutableFloatStateOf(1F)
     val max_zoom_index = mutableIntStateOf(0)
-    var zoom_sensitivity = Values.Defaults.ZoomSensitivity
     val zoom_notches = mutableListOf<Float>(1F) // Used only when beat widths are normalized
     val normalize_beat_widths = mutableStateOf<Boolean>(false)
     val beat_stroke_thickness = mutableStateOf<Dp>(0.dp)
@@ -1272,6 +1271,5 @@ class ViewModelEditorState: ViewModel() {
             y == dragging_to_line && !after_line || (y == dragging_to_line + selection_height && after_line)
         }
     }
-
 
 }

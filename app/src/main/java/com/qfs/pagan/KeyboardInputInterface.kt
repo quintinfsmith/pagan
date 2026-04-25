@@ -8,11 +8,19 @@
  * Inquiries can be made to Quintin via email at smith.quintin@protonmail.com
  */
 package com.qfs.pagan
-import android.view.KeyEvent.*
+import android.view.KeyEvent.KEYCODE_0
+import android.view.KeyEvent.KEYCODE_1
+import android.view.KeyEvent.KEYCODE_2
+import android.view.KeyEvent.KEYCODE_3
+import android.view.KeyEvent.KEYCODE_4
+import android.view.KeyEvent.KEYCODE_5
+import android.view.KeyEvent.KEYCODE_6
+import android.view.KeyEvent.KEYCODE_7
+import android.view.KeyEvent.KEYCODE_8
+import android.view.KeyEvent.KEYCODE_9
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isShiftPressed
-import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import kotlin.math.max
@@ -39,8 +47,23 @@ class KeyboardInputInterface(var dispatcher: ActionDispatcher) {
         LeafGlobalEffect,
         Range
     }
+    enum class FunctionAlias {
+        Delete,
+        EscapeContext,
+        SelectColumn,
+        SelectLine,
+        SelectChannel,
+        SetOctave,
+        SetOffset,
+        TogglePercussion,
+        LeafUnset,
+        LeafAdd,
+        LeafRemove,
+        LeafSplit
+    }
 
     var input_buffer_value: Int? = null
+    val running_buffer: MutableList<Int> = mutableListOf()
     val ctl_pressed: Boolean = false
 
     fun go_to_column(dispatcher: ActionDispatcher, opus_manager: OpusManager): Boolean {
@@ -90,60 +113,77 @@ class KeyboardInputInterface(var dispatcher: ActionDispatcher) {
         this.input_buffer_value = null
     }
 
-    val cursor_map: HashMap<Context, HashMap<Triple<Int, Boolean, Boolean>, (ActionDispatcher, OpusManager) -> Boolean>> = hashMapOf(
-        Context.Global to hashMapOf(
-            Triple(KEYCODE_BACK, false, false) to { dispatcher, opus_manager ->
-                this.clear_buffer_or_cursor(dispatcher)
-            },
-        ),
-        Context.Unset to hashMapOf(
-            Triple(KEYCODE_B, true, false) to { dispatcher, opus_manager ->
-                this.go_to_column(dispatcher, opus_manager)
-            },
-            Triple(KEYCODE_C, true, false) to { dispatcher, opus_manager ->
-                this.go_to_channel(dispatcher, opus_manager)
-            },
-            Triple(KEYCODE_C, false, false) to { dispatcher, opus_manager ->
-                this.go_to_first_line_in_channel(dispatcher, opus_manager)
-            },
-        ),
-        Context.Beat to hashMapOf(
-            Triple(KEYCODE_L, false, false) to { dispatcher, opus_manager ->
-                val visible_channels = opus_manager.get_visible_channels()
-                val channel = this.get_buffer_value(visible_channels.size - 1, 0, visible_channels.size - 1)
-                val beat_key = BeatKey(channel, 0, opus_manager.cursor.beat)
-                dispatcher.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
+    val cursor_map: HashMap<FunctionAlias, (ActionDispatcher, OpusManager) -> Boolean> = hashMapOf(
+        FunctionAlias.EscapeContext to { dispatcher, opus_manager ->
+            this.clear_buffer_or_cursor(dispatcher)
+        },
+        FunctionAlias.SelectColumn to { dispatcher, opus_manager ->
+            this.go_to_column(dispatcher, opus_manager)
+        },
+        FunctionAlias.SelectChannel to { dispatcher, opus_manager ->
+            this.go_to_channel(dispatcher, opus_manager)
+        },
+        FunctionAlias.SelectLine to { dispatcher, opus_manager ->
+            val channel = opus_manager.cursor.channel
+            val default_value = opus_manager.get_channel(channel).lines.size - 1
+            val line_offset = this.get_buffer_value(default_value, 0, default_value)
+            this.dispatcher.cursor_select_line(channel, line_offset, null)
 
-                true
-            }
-        ),
-        Context.Channel to hashMapOf(
-            Triple(KEYCODE_L, false, false) to { dispatcher, opus_manager ->
-                val channel = opus_manager.cursor.channel
-                val default_value = opus_manager.get_channel(channel).lines.size - 1
-                val line_offset = this.get_buffer_value(default_value, 0, default_value)
-                this.dispatcher.cursor_select_line(channel, line_offset, null)
+            true
+        },
+        FunctionAlias.SetOctave to { dispatcher, opus_manager ->
+            val default_octave = opus_manager.latest_set_octave ?: 0
+            dispatcher.set_octave(this.get_buffer_value(default_octave, 0, 7), RelativeInputMode.Absolute)
+            true
+        },
+        FunctionAlias.SetOffset to { dispatcher, opus_manager ->
+            val default_offset = opus_manager.latest_set_offset ?: 0
+            val max_offset = opus_manager.get_radix() - 1
+            dispatcher.set_offset(this.get_buffer_value(default_offset, 0, max_offset), RelativeInputMode.Absolute)
+            true
+        },
+        FunctionAlias.TogglePercussion to { dispatcher, opus_manager ->
+            dispatcher.toggle_percussion()
+            true
+        },
+        FunctionAlias.LeafSplit to { dispatcher, opus_manager ->
+            dispatcher.split(this.get_buffer_value(2, 1, 64))
+            true
+        },
+        FunctionAlias.LeafUnset to  { dispatcher, opus_manager ->
+            dispatcher.unset()
+            true
+        },
+        FunctionAlias.LeafRemove to { dispatcher, opus_manager ->
+            dispatcher.remove_at_cursor()
+            true
+        },
+        FunctionAlias.LeafAdd to { dispatcher, opus_manager ->
+            dispatcher.insert_leaf(this.get_buffer_value(1, 1, 64))
+            true
+        }
+        //SelectLine to { dispatcher, opus_manager ->
+        //    this.go_to_first_line_in_channel(dispatcher, opus_manager)
+        //},
+        //Context.Beat to hashMapOf(
+        //    Triple(KEYCODE_L, false, false) to { dispatcher, opus_manager ->
+        //        val visible_channels = opus_manager.get_visible_channels()
+        //        val channel = this.get_buffer_value(visible_channels.size - 1, 0, visible_channels.size - 1)
+        //        val beat_key = BeatKey(channel, 0, opus_manager.cursor.beat)
+        //        dispatcher.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
 
-                true
-            }
-        ),
-        Context.LineStandard to hashMapOf(
-            Triple(KEYCODE_L, false, false) to { dispatcher, opus_manager ->
-                val visible_channels = opus_manager.get_visible_channels()
-                val beat = this.get_buffer_value(opus_manager.length - 1, 0, opus_manager.length - 1)
-                val beat_key = BeatKey(opus_manager.cursor.channel, opus_manager.cursor.line_offset, beat)
-                dispatcher.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
-
-                true
-            }
-        ),
-        Context.LeafStandard to hashMapOf(
-            Triple(KEYCODE_S, false, false) to { dispatcher, opus_manager ->
-                dispatcher.split(this.get_buffer_value(2, 1, 64))
-                true
-            }
-        ),
-        Context.Range to hashMapOf()
+        //        true
+        //    }
+        //),
+        //Context.LineStandard to hashMapOf(
+        //    //Triple(KEYCODE_L, false, false) to { dispatcher, opus_manager ->
+        //    //    val beat = this.get_buffer_value(opus_manager.length - 1, 0, opus_manager.length - 1)
+        //    //    val beat_key = BeatKey(opus_manager.cursor.channel, opus_manager.cursor.line_offset, beat)
+        //    //    dispatcher.cursor_select(beat_key, opus_manager.get_first_position(beat_key))
+        //    //    true
+        //    //}
+        //),
+        //Context.Range to hashMapOf()
     )
 
     fun input(event: KeyEvent): Boolean {
@@ -191,17 +231,16 @@ class KeyboardInputInterface(var dispatcher: ActionDispatcher) {
             CursorMode.Range -> TODO()
         }
 
-        val node_key = Triple(key_code, event.isShiftPressed, event.isCtrlPressed)
-
         var output: Boolean? = null
         for (input_context in input_contexts + arrayOf(Context.Global)) {
-            this.cursor_map[input_context]?.let { mode_map ->
-                mode_map[node_key]?.let {
-                    output = it(this.dispatcher, opus_manager)
-                    break
+            KeyboardMap[input_context, this.running_buffer + listOf(key_code), event.isShiftPressed, event.isCtrlPressed]?.let { alias ->
+                this.cursor_map[alias]?.let {
+                    it(this.dispatcher, opus_manager)
                 }
+                break
             }
         }
+
 
         // If no function was assigned, check for buffer input, otherwise return false
         output = output ?: when (key_code) {

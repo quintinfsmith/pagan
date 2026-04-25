@@ -63,7 +63,7 @@ class KeyboardInputInterface(var dispatcher: ActionDispatcher) {
     }
 
     var input_buffer_value: Int? = null
-    val running_buffer: MutableList<Int> = mutableListOf()
+    val running_buffer: MutableList<KeyboardMap.AliasKey> = mutableListOf()
     val ctl_pressed: Boolean = false
 
     fun go_to_column(dispatcher: ActionDispatcher, opus_manager: OpusManager): Boolean {
@@ -232,24 +232,43 @@ class KeyboardInputInterface(var dispatcher: ActionDispatcher) {
         }
 
         var output: Boolean? = null
+        var clear_running_buffer = true
+        val key_node = KeyboardMap.AliasKey(key_code, event.isShiftPressed, event.isCtrlPressed)
+        this.running_buffer.add(key_node)
         for (input_context in input_contexts + arrayOf(Context.Global)) {
-            KeyboardMap[input_context, this.running_buffer + listOf(key_code), event.isShiftPressed, event.isCtrlPressed]?.let { alias ->
-                this.cursor_map[alias]?.let {
-                    it(this.dispatcher, opus_manager)
+            KeyboardMap[input_context, this.running_buffer].let { (keep_alive, alias) ->
+                alias?.let {
+                    this.cursor_map[alias]?.let {
+                        output = it(this.dispatcher, opus_manager)
+                        break
+                    }
                 }
-                break
+
+                if (keep_alive) {
+                    clear_running_buffer = false
+                    break
+                }
             }
         }
 
 
-        // If no function was assigned, check for buffer input, otherwise return false
-        output = output ?: when (key_code) {
-            KEYCODE_0, KEYCODE_1, KEYCODE_2, KEYCODE_3, KEYCODE_4,
-            KEYCODE_5, KEYCODE_6, KEYCODE_7, KEYCODE_8, KEYCODE_9 -> {
-                this.input_buffer_value = ((this.input_buffer_value ?: 0) * 10) + key_code - KEYCODE_0
-                true
+        if (clear_running_buffer) {
+            this.running_buffer.clear()
+        }
+
+        output = output ?: if (this.running_buffer.isEmpty()) {
+            // If no function was assigned, check for buffer input, otherwise return false
+            when (key_code) {
+                KEYCODE_0, KEYCODE_1, KEYCODE_2, KEYCODE_3, KEYCODE_4,
+                KEYCODE_5, KEYCODE_6, KEYCODE_7, KEYCODE_8, KEYCODE_9 -> {
+                    println("${key_code - KEYCODE_0} ????")
+                    this.input_buffer_value = ((this.input_buffer_value ?: 0) * 10) + key_code - KEYCODE_0
+                    true
+                }
+                else -> false
             }
-            else -> false
+        } else {
+            false
         }
 
         // clear the buffer if a function was found and the buffer wasn't modified
@@ -822,7 +841,6 @@ class KeyboardInputInterface(var dispatcher: ActionDispatcher) {
 ////
 ////         Pair(KEYCODE_W, true) to object: KeyStrokeNode(this) {
 ////             override fun call(dispatcher: ActionDispatcher, opus_manager: OpusManager, ctrl_pressed: Boolean): Boolean {
-////                 println("???")
 ////                 //opus_manager.get_activity()?.project_save()
 ////                 return true
 ////             }

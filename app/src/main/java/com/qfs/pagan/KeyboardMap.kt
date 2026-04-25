@@ -9,6 +9,20 @@ object KeyboardMap {
     class SearchTree {
         val branches = hashMapOf<AliasKey, SearchTree>()
         var value: FunctionAlias? = null
+
+        /**
+         * find the FunctionAlias.
+         */
+        fun find(key_codes: List<AliasKey>): Pair<Boolean, FunctionAlias?> {
+            return if (key_codes.isEmpty()) {
+                Pair(true, this.value)
+            } else if (this.branches.containsKey(key_codes[0])) {
+                val sub_key_codes = key_codes.subList(1, key_codes.size)
+                this.branches[key_codes[0]]!!.find(sub_key_codes)
+            } else {
+                Pair(false, null)
+            }
+        }
     }
 
     private val quick_map = listOf(
@@ -16,11 +30,14 @@ object KeyboardMap {
             Global,
             listOf(AliasKey(KEYCODE_ESCAPE)),
             FunctionAlias.EscapeContext
+        ),
+        Triple(
+            Global,
+            listOf(AliasKey(KEYCODE_B)),
+            FunctionAlias.SelectColumn,
         )
     )
 
-    //    AliasKey(listOf(KEYCODE_ESCAPE), Global) to FunctionAlias.EscapeContext,
-    //    AliasKey(listOf(KEYCODE_B), Global, true) to FunctionAlias.SelectColumn,
     //    AliasKey(listOf(KEYCODE_C), Global, true) to FunctionAlias.SelectChannel,
     //    AliasKey(listOf(KEYCODE_SPACE), Leaf) to FunctionAlias.LeafUnset,
     //    AliasKey(listOf(KEYCODE_A), Leaf) to FunctionAlias.LeafAdd,
@@ -49,7 +66,11 @@ object KeyboardMap {
 
     }
 
-    operator fun get(context: Context, key_code: List<Int>, is_shift_pressed: Boolean, is_ctrl_pressed: Boolean): Pair<Boolean, FunctionAlias?> {
-        return this.map[AliasKey(key_code, context, is_shift_pressed, is_ctrl_pressed)]
+    operator fun get(context: Context, key_codes: List<AliasKey>): Pair<Boolean, FunctionAlias?> {
+        this.search_trees[context]?.let { search_tree ->
+            return search_tree.find(key_codes)
+        }
+
+        return Pair(false, null)
     }
 }

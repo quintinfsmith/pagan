@@ -54,7 +54,7 @@ fun RowScope.PanEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionDis
         disabledInactiveTickColor = default_colors.disabledInactiveTickColor
     )
 
-    val working_value = remember { mutableFloatStateOf(working_event.value) }
+    val working_value = remember { mutableFloatStateOf(working_event.value * -1) }
     Box(modifier = Modifier.weight(1F)) {
         Box(
             Modifier
@@ -69,7 +69,7 @@ fun RowScope.PanEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionDis
                 working_value.floatValue = it
             },
             onValueChangeFinished = {
-                working_event.value = working_value.floatValue
+                working_event.value = working_value.floatValue * -1
                 dispatcher.set_effect_at_cursor(working_event)
             },
             valueRange = -1F..1F,
@@ -82,7 +82,7 @@ fun RowScope.PanEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionDis
         )
     }
     LaunchedEffect(working_event.value) {
-        working_value.floatValue = working_event.value
+        working_value.floatValue = working_event.value * -1
     }
 
     EffectTransitionButton(working_event, dispatcher, is_initial)

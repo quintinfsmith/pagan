@@ -646,59 +646,44 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     }
                     MenuPadder()
                 }
+            }
 
-                Row {
-                    Spacer(Modifier.weight(1F))
-                    Button(
-                        modifier = Modifier
-                            .width(IntrinsicSize.Max)
-                            .height(Dimensions.ButtonHeight.Normal),
-                        content = {
-                            Text(
-                                text = if (soundfonts.value.isEmpty()) {
-                                    no_soundfont_text
-                                } else {
-                                    load_soundfont_text
-                                },
-                                maxLines = 1
-                            )
+            Button(
+                modifier = Modifier
+                    .width(IntrinsicSize.Max)
+                    .height(Dimensions.ButtonHeight.Normal),
+                content = {
+                    Text(
+                        text = if (soundfonts.value.isEmpty()) {
+                            no_soundfont_text
+                        } else {
+                            load_soundfont_text
                         },
-                        onClick = {
-                            if (this@ComponentActivitySettings.view_model.configuration.soundfont_directory.value == null) {
-                                this@ComponentActivitySettings.view_model.create_dialog { close ->
-                                    @Composable {
-                                        DialogSTitle(R.string.settings_need_soundfont_directory)
-                                        DialogBar(
-                                            positive = {
-                                                close()
-                                                this@ComponentActivitySettings.result_launcher_set_soundfont_directory_and_import.launch(
-                                                    Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also {
-                                                        it.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                                                    }
-                                                )
+                        maxLines = 1
+                    )
+                },
+                onClick = {
+                    if (this@ComponentActivitySettings.view_model.configuration.soundfont_directory.value == null) {
+                        this@ComponentActivitySettings.view_model.create_dialog { close ->
+                            @Composable {
+                                DialogSTitle(R.string.settings_need_soundfont_directory)
+                                DialogBar(
+                                    positive = {
+                                        close()
+                                        this@ComponentActivitySettings.result_launcher_set_soundfont_directory_and_import.launch(
+                                            Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also {
+                                                it.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                                             }
                                         )
                                     }
-                                }
-                            } else {
-                                this@ComponentActivitySettings.show_soundfont_menu(null)
+                                )
                             }
                         }
-                    )
-                    Spacer(Modifier.weight(1F))
-                    // Use empty space to align "Load..." button with existing soundfont buttons
-                    if (soundfonts.value.isNotEmpty()) {
-                        Spacer(
-                            Modifier
-                                .width(Dimensions.SoundFontMenuIconHeight)
-                                .padding(
-                                    start = Dimensions.SoundFontMenuButtonExtraPadding,
-                                    end = 0.dp
-                                )
-                        )
+                    } else {
+                        this@ComponentActivitySettings.show_soundfont_menu(null)
                     }
                 }
-            }
+            )
         }
     }
 

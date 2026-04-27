@@ -620,7 +620,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                 .width(IntrinsicSize.Max)
                                 .defaultMinSize(minHeight = Dimensions.ButtonHeight.Normal),
                             content = {
-                                Text(soundfont_name)
+                                Text(soundfont_name, textAlign = TextAlign.Center)
                             },
                             onClick = {
                                 this@ComponentActivitySettings.show_soundfont_menu(soundfont_path.value)
@@ -721,7 +721,8 @@ class ComponentActivitySettings: PaganComponentActivity() {
                             no_soundfont_text
                         } else {
                             soundfonts.value[0].value
-                        }
+                        },
+                        textAlign = TextAlign.Center
                     )
                 },
                 onClick = {

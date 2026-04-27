@@ -226,18 +226,28 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         }
     }
 
+    private fun _tap_line_repeatable(channel: Int?, line_offset: Int?, ctl_type: EffectType?): Boolean {
+        val opus_manager = this.get_opus_manager()
+        return if (ctl_type == null) opus_manager.is_line_selected_secondary(channel!!, line_offset!!)
+        else if (channel == null) opus_manager.is_global_control_line_selected_secondary(ctl_type)
+        else if (line_offset == null) opus_manager.is_channel_control_line_selected_secondary(ctl_type, channel)
+        else opus_manager.is_line_control_line_selected_secondary(ctl_type, channel, line_offset)
+    }
 
     fun tap_line(channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
         when (cursor.mode) {
             CursorMode.Range -> {
-                try {
-                    if (ctl_type == null) this.repeat_selection_std(channel!!, line_offset!!)
-                    else if (line_offset != null) this.repeat_selection_ctl_line(ctl_type, channel!!, line_offset)
-                    else if (channel != null) this.repeat_selection_ctl_channel(ctl_type, channel)
-                    else this.repeat_selection_ctl_global(ctl_type)
-                } catch (e: Exception) {
+                if (this._tap_line_repeatable(channel, line_offset, ctl_type)) {
+                    val (beat_key, _ ) = cursor.get_ordered_range()!!
+                    when (cursor.ctl_level) {
+                        CtlLineLevel.Line -> this.repeat_selection_ctl_line(cursor.ctl_type!!, beat_key.channel, beat_key.line_offset)
+                        CtlLineLevel.Channel -> this.repeat_selection_ctl_channel(cursor.ctl_type!!, beat_key.channel)
+                        CtlLineLevel.Global -> this.repeat_selection_ctl_global(cursor.ctl_type!!)
+                        null -> this.repeat_selection_std(beat_key.channel, beat_key.line_offset)
+                    }
+                } else {
                     this.cursor_select_line(channel, line_offset, ctl_type)
                 }
             }
@@ -315,12 +325,15 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         val cursor = opus_manager.cursor
         when (cursor.mode) {
             CursorMode.Range -> {
-                try {
-                    if (ctl_type == null) this.repeat_selection_std(channel!!, line_offset!!, -1)
-                    else if (line_offset != null) this.repeat_selection_ctl_line(ctl_type, channel!!, line_offset, -1)
-                    else if (channel != null) this.repeat_selection_ctl_channel(ctl_type, channel, -1)
-                    else this.repeat_selection_ctl_global(ctl_type, -1)
-                } catch (e: Exception) {
+                if (this._tap_line_repeatable(channel, line_offset, ctl_type)) {
+                    val (beat_key, _ ) = cursor.get_ordered_range()!!
+                    when (cursor.ctl_level) {
+                        CtlLineLevel.Line -> this.repeat_selection_ctl_line(cursor.ctl_type!!, beat_key.channel, beat_key.line_offset, -1)
+                        CtlLineLevel.Channel -> this.repeat_selection_ctl_channel(cursor.ctl_type!!, beat_key.channel, -1)
+                        CtlLineLevel.Global -> this.repeat_selection_ctl_global(cursor.ctl_type!!, -1)
+                        null -> this.repeat_selection_std(beat_key.channel, beat_key.line_offset, -1)
+                    }
+                } else {
                     this.cursor_select_line(channel, line_offset, ctl_type)
                 }
             }

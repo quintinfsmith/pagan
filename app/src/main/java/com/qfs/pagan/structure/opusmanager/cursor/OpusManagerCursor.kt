@@ -219,9 +219,7 @@ data class OpusManagerCursor(
     }
 
     fun get_ordered_range(): Pair<BeatKey, BeatKey>? {
-        if (this.mode != CursorMode.Range) {
-            return null
-        }
+        if (this.mode != CursorMode.Range) return null
 
         return OpusLayerBase.get_ordered_beat_key_pair(this.range!!.first, this.range!!.second)
     }

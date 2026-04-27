@@ -1671,6 +1671,25 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
+                        if (cursor?.type == CursorMode.Range && (line_info.is_selected.value || line_info.is_secondary.value)) {
+                            Icon(
+                                modifier = Modifier.fillMaxSize(),
+                                painter = painterResource(R.drawable.icon_repeat),
+                                contentDescription = stringResource(R.string.repeat_selection_in_line),
+                                tint = Color(0x55FFFFFF)
+                            )
+                        } else if (line_info.is_selected.value) {
+                            Spacer(
+                                Modifier
+                                    .padding(Dimensions.SelectionBorderPadding)
+                                    .fillMaxSize()
+                                    .dashed_border(
+                                        color = foreground,
+                                        shape = RectangleShape
+                                    )
+                            )
+                        }
+
                         if (ctl_type == null) {
                             val (label_a, label_b) = if (line_info.assigned_offset.value != null) {
                                 Pair(
@@ -1745,23 +1764,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     contentDescription = stringResource(description_id)
                                 )
                             }
-                        }
-
-                        if (cursor?.type == CursorMode.Range && (line_info.is_selected.value || line_info.is_secondary.value)) {
-                            Icon(
-                                painter = painterResource(R.drawable.icon_ic_baseline_content_copy_24),
-                                contentDescription = "Repeat selection in line"
-                            )
-                        } else if (line_info.is_selected.value) {
-                            Spacer(
-                                Modifier
-                                    .padding(Dimensions.SelectionBorderPadding)
-                                    .fillMaxSize()
-                                    .dashed_border(
-                                        color = foreground,
-                                        shape = RectangleShape
-                                    )
-                            )
                         }
 
                     }
@@ -1842,12 +1844,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 translationX = if (width_px >= viewport_width && viewport_width > 0) {
                                     val visible_items = ui_facade.scroll_state_x.value.layoutInfo.visibleItemsInfo
                                     if (ui_facade.scroll_state_x.value.firstVisibleItemIndex == x) {
-                                        val scroll_offset = ui_facade.scroll_state_x.value.firstVisibleItemScrollOffset.toFloat()
+                                        val scroll_offset =
+                                            ui_facade.scroll_state_x.value.firstVisibleItemScrollOffset.toFloat()
                                         val floating_position = ((viewport_width - width_px) / 2F) + scroll_offset
                                         val end_position = ((width_px - viewport_width) / 2F)
                                         if (floating_position < end_position) {
                                             state_model.active_wide_beat.value = x
-                                            state_model.wide_beat_progress.value = scroll_offset / (width_px - viewport_width)
+                                            state_model.wide_beat_progress.value =
+                                                scroll_offset / (width_px - viewport_width)
                                             floating_position
                                         } else {
                                             if (state_model.active_wide_beat.value == x) {
@@ -2487,10 +2491,18 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     } else {
                                         Pair(event.changes[1], event.changes[0])
                                     }
-                                    val current_diff = sqrt((larger.position.x - lesser.position.x).pow(2F) + (larger.position.y - lesser.position.y).pow(2F))
+                                    val current_diff = sqrt(
+                                        (larger.position.x - lesser.position.x).pow(2F) + (larger.position.y - lesser.position.y).pow(
+                                            2F
+                                        )
+                                    )
                                     val previous_diff = sqrt(
-                                        ((larger.position.x - larger.positionChange().x) - (lesser.position.x - lesser.positionChange().x)).pow(2F)
-                                        + ((larger.position.y - larger.positionChange().y) - (lesser.position.y - lesser.positionChange().y)).pow(2F)
+                                        ((larger.position.x - larger.positionChange().x) - (lesser.position.x - lesser.positionChange().x)).pow(
+                                            2F
+                                        )
+                                                + ((larger.position.y - larger.positionChange().y) - (lesser.position.y - lesser.positionChange().y)).pow(
+                                            2F
+                                        )
                                     )
 
                                     val zoom = (current_diff - previous_diff).toDp()

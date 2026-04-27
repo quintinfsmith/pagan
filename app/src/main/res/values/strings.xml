@@ -320,6 +320,7 @@
     <string name="show_line_controls_all">All Lines</string>
     <string name="show_channel_controls_all">All Channels</string>
     <string name="show_channel_controls_single">This Channel</string>
+    <string name="repeat_selection_in_line">Repeat selection in line</string>
 
 
     <string-array name="general_midi_presets">

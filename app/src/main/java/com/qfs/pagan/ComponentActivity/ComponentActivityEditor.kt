@@ -2643,7 +2643,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     // Try opening the assigned soundfont, but if it fails for any reason, go back to the
                     // Currently active one.
                     try {
-                        println("TRYING: $file_paths")
                         this.set_soundfont(false)
                     } catch (_: Exception) {
                         // Restore the preexisting MutableState wrappers as well as the values themselves

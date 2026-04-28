@@ -22,6 +22,10 @@ class JSONHashMap(vararg args: Pair<String, Any?>): JSONObject {
         }
     }
 
+    fun contains_key(key: String): Boolean {
+        return this.keys.contains(key)
+    }
+
     operator fun get(key: String): JSONObject? {
         return this.hash_map[key]
     }

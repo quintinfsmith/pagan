@@ -52,6 +52,7 @@ object OpusChannelJSONInterface {
         }
         channel_map["lines"] = lines
         channel_map["midi_bank"] = channel.get_midi_bank()
+        channel_map["soundfont_index"] = channel.soundfont_index
         channel_map["midi_program"] = channel.midi_program
         channel_map["controllers"] = ActiveControlSetJSONInterface.to_json(channel.controllers)
         channel_map["muted"] = channel.muted
@@ -97,7 +98,8 @@ object OpusChannelJSONInterface {
 
         channel.size = channel.lines.size
         channel.set_beat_count(beat_count)
-        channel.midi_program = input_map.get_int("midi_program")
+        channel.soundfont_index = input_map.get_int("soundfont_index", 0)
+        channel.midi_program = input_map.get_int("midi_program", 0)
         channel.controllers = ActiveControlSetJSONInterface.from_json(input_map.get_hashmap("controllers"), beat_count)
         channel.muted = input_map.get_boolean("muted", false)
         channel.palette = input_map.get_hashmapn("palette")?.let { OpusColorPalette.from_json(it) } ?: OpusColorPalette()

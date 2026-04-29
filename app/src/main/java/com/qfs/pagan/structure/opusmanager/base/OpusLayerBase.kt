@@ -4177,6 +4177,7 @@ open class OpusLayerBase: Effectable {
         }
 
         output["ts00"] = this.timestamp.toString()
+        output["ts01"] = (System.currentTimeMillis() / 1000L).toString()
 
         return JSONHashMap(
             "d" to output,

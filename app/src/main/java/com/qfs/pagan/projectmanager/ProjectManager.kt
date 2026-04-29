@@ -11,7 +11,6 @@ package com.qfs.pagan.projectmanager
 
 import android.content.Context
 import android.net.Uri
-import androidx.compose.ui.Modifier
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.qfs.json.InvalidJSON
@@ -256,14 +255,17 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         }
     }
 
-    fun get_project_timestamp(json_obj: JSONHashMap): Long? {
+    fun get_project_created_timestamp(json_obj: JSONHashMap): Long? {
         return json_obj.get_hashmapn("d")?.get_stringn("ts00")?.toLong()?.times(1000)
+    }
+    fun get_project_modified_timestamp(json_obj: JSONHashMap, uri: Uri): Long {
+        return json_obj.get_hashmap("d").get_stringn("ts01")?.toLong()?.times(1000)
+            ?: DocumentFile.fromSingleUri(this.context, uri)?.lastModified()
+            ?: 0L
     }
 
     fun get_file_timestamp(json_obj: JSONHashMap, uri: Uri): Long {
-        return this.get_project_timestamp(json_obj)
-            ?: DocumentFile.fromSingleUri(this.context, uri)?.lastModified()
-            ?: 0L
+        return this.get_project_created_timestamp(json_obj) ?: this.get_project_modified_timestamp(json_obj, uri)
     }
 
     /**
@@ -300,16 +302,22 @@ class ProjectManager(val context: Context, var uri: Uri?) {
                     val entry = project_list.get_list(i)
                     needs_save = true
                     val uri = entry.get_string(0).toUri()
-                    val modified = DocumentFile.fromSingleUri(this.context, uri)?.lastModified().toString()
-                    val created: String? = this.get_json(uri)?.let {
-                        this.get_project_timestamp(it)?.toString()
-                    }
+
+                    val (modified, created) = this.get_json(uri)?.let {
+                        Pair(
+                            this.get_project_modified_timestamp(it, uri).toString(),
+                            this.get_project_created_timestamp(it)?.toString()
+                        )
+                    } ?: Pair(
+                        DocumentFile.fromSingleUri(this.context, uri)?.lastModified().toString(),
+                        null
+                    )
 
                     project_list[i] = JSONHashMap(
                         "uri" to entry[0],
                         "title" to entry[1],
                         "modified" to JSONString(modified),
-                        "created" to JSONString(created ?: modified)
+                        "created" to created?.let { JSONString(it) }
                     )
                 }
             }
@@ -355,17 +363,13 @@ class ProjectManager(val context: Context, var uri: Uri?) {
             val json_obj = this.get_json(uri) ?: continue
             val project_name = this.get_file_project_name(json_obj, uri)
 
-            val modified = DocumentFile.fromSingleUri(this.context, uri)?.lastModified().toString()
+            val modified = this.get_project_modified_timestamp(json_obj, uri).toString()
             cached_list.add(JSONHashMap(
                 "uri" to JSONString(uri.toString()),
                 "title" to JSONString(project_name),
                 "modified" to JSONString(modified),
-                "created" to JSONString(this.get_project_timestamp(json_obj)?.toString() ?: modified),
+                "created" to this.get_project_created_timestamp(json_obj)?.let { JSONString(it.toString()) }
             ))
-        }
-
-        cached_list.sort_by {
-            (it as JSONHashMap).get_string("title")
         }
 
         val file = File(this._cache_path)
@@ -402,20 +406,15 @@ class ProjectManager(val context: Context, var uri: Uri?) {
 
         val json_obj = this.get_json(uri) ?: return
         val project_name = this.get_file_project_name(json_obj, uri)
-        val created: String? = this.get_project_timestamp(json_obj)?.toString()
-        val modified = DocumentFile.fromSingleUri(this.context, uri)?.lastModified().toString()
+        val modified = this.get_project_modified_timestamp(json_obj, uri).toString()
         project_list.add(
             JSONHashMap(
                 "uri" to JSONString(uri.toString()),
                 "title" to JSONString(project_name),
                 "modified" to JSONString(modified),
-                "created" to JSONString(created ?: modified)
+                "created" to this.get_project_created_timestamp(json_obj)?.let { JSONString(it.toString()) }
             )
         )
-
-        project_list.sort_by {
-            (it as JSONHashMap).get_string("title")
-        }
 
         val file = File(this._cache_path)
         file.writeText(project_list.to_string())
@@ -435,9 +434,6 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         if (index_to_pop == project_list.size) return
 
         project_list.remove_at(index_to_pop)
-        project_list.sort_by {
-            (it as JSONHashMap).get_string("title")
-        }
 
         val file = File(this._cache_path)
         file.writeText(project_list.to_string())

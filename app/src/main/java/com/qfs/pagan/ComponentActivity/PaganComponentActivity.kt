@@ -490,7 +490,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
 
     open fun on_delete_project(uri: Uri) { }
 
-    fun load_menu_dialog(current_sort: Int? = null, load_callback: (Uri) -> Unit) {
+    fun load_menu_dialog(current_sort: Int? = -3, load_callback: (Uri) -> Unit) {
         val project_list = this.view_model.project_manager?.get_project_list() ?: return
         val items = mutableListOf<Pair<Uri, @Composable RowScope.() -> Unit>>()
         for ((uri, title) in project_list) {

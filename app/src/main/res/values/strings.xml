@@ -222,12 +222,14 @@
     <string name="section_spinner_item">%02$d: Section %1$02d</string>
     <string name="sorted_list_desc">%1$s desc.</string>
     <string name="sorting_by">Sorting By:</string>
-    <string name="sort_option_date_created">Date Created</string>
-    <string name="sort_option_date_modified">Date Modified</string>
+    <string name="sort_option_date_created">Date Created...</string>
+    <string name="sort_option_date_modified">Date Modified...</string>
     <string name="sort_option_abc">ABC...</string>
     <string name="sort_option_bank">Bank...</string>
     <string name="sort_option_program">Program...</string>
     <string name="sort_option_soundfont">Soundfont...</string>
+    <string name="sorted_option">&#8593; %s</string>
+    <string name="reversed_sorted_option">&#8595; %s</string>
     <string name="hexcode">HexCode</string>
     <string name="red">Red</string>
     <string name="green">Green</string>

@@ -140,9 +140,9 @@ class ViewModelPagan: ViewModel() {
         title: Int,
         default_menu: List<Pair<T, @Composable RowScope.() -> Unit>>,
         sort_options: List<Pair<Int, (Int, Int) -> Int>>,
-        selected_sort: MutableIntState = mutableIntStateOf(-1),
+        selected_sort: MutableState<Int?> = mutableStateOf(null),
         default_value: T? = null,
-        content: (@Composable RowScope.(() -> Unit, Int) -> Unit)? = null,
+        content: (@Composable RowScope.(() -> Unit, Int?) -> Unit)? = null,
         onLongClick: (T, (() -> Unit)) -> Unit = {_, _ -> },
         onClick: (T) -> Unit
     ) {
@@ -156,7 +156,7 @@ class ViewModelPagan: ViewModel() {
                         DialogSTitle(title)
                         content?.let {
                             Row {
-                                it(close, selected_sort.intValue)
+                                it(close, selected_sort.value)
                             }
                         }
                     },

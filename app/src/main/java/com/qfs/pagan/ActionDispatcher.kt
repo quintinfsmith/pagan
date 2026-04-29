@@ -1601,7 +1601,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
 
         this.vm_top.create_dialog { close ->
             @Composable {
-                val selected_sort = remember { mutableIntStateOf(0) }
+                val selected_sort: MutableState<Int?> = remember { mutableStateOf(null) }
                 val scope = rememberCoroutineScope()
                 val sorted_pages = existing_keys.toList().sorted()
                 val state = rememberPagerState(

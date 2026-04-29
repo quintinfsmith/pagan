@@ -31,8 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableIntState
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -51,12 +50,14 @@ import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.wrappers.Text
+import androidx.compose.material3.Text
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import com.qfs.pagan.ui.theme.Shadows
 import com.qfs.pagan.ui.theme.Shapes
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @Composable
@@ -65,16 +66,27 @@ fun <T> SortableMenu(
     sort_row_padding: PaddingValues = Unpadded,
     default_menu: List<Pair<T, @Composable RowScope.() -> Unit>>,
     sort_options: List<Pair<Int, (Int, Int) -> Int>>,
-    active_sort_option: MutableIntState = mutableIntStateOf(-1),
+    active_sort_option: MutableState<Int?> = mutableStateOf(null),
     default_value: T? = null,
     title_content: @Composable (RowScope.() -> Unit)? = null,
     onLongClick: (T) -> Unit = {},
     onClick: (T) -> Unit
 ) {
-    val sorted_menu = if (sort_options.isEmpty() || active_sort_option.intValue == -1) {
+    val sorted_menu = if (sort_options.isEmpty() || active_sort_option.value == null) {
         default_menu
     } else {
-        val indices = default_menu.indices.sortedWith(sort_options[active_sort_option.intValue].second)
+        val (abs_sort_index, reversed) = if (active_sort_option.value!! >= 0) {
+            Pair(active_sort_option.value!!, false)
+        } else {
+            Pair(abs(active_sort_option.value!! + 1), true)
+        }
+
+        val indices = if (reversed) {
+            default_menu.indices.sortedWith(sort_options[abs_sort_index].second).reversed()
+        } else {
+            default_menu.indices.sortedWith(sort_options[abs_sort_index].second)
+        }
+
         List(default_menu.size) { i -> default_menu[indices[i]] }
     }
 
@@ -141,17 +153,51 @@ fun <T> SortableMenu(
                                         }
                                     ),
                                 text = {
+                                    val label_string = stringResource(
+                                        R.string.sorted_option,
+                                        stringResource(sort_options[x].first)
+                                    )
                                     if (x == active_sort_option.value) {
                                         ProvideContentColorTextStyle(MaterialTheme.colorScheme.onTertiary) {
-                                            Text(sort_options[x].first)
+                                            Text(label_string)
                                         }
                                     } else {
-                                        Text(sort_options[x].first)
+                                        Text(label_string)
                                     }
                                 },
                                 onClick = {
                                     expanded.value = false
                                     active_sort_option.value = x
+                                }
+                            )
+
+                            // Same, but reversed
+                            val rev_x = (x * -1) - 1
+                            DropdownMenuItem(
+                                modifier = Modifier
+                                    .then(
+                                        if (rev_x == active_sort_option.value) {
+                                            Modifier.background(color = MaterialTheme.colorScheme.tertiary)
+                                        } else {
+                                            Modifier
+                                        }
+                                    ),
+                                text = {
+                                    val label_string = stringResource(
+                                        R.string.reversed_sorted_option,
+                                        stringResource(sort_options[x].first)
+                                    )
+                                    if (rev_x == active_sort_option.value) {
+                                        ProvideContentColorTextStyle(MaterialTheme.colorScheme.onTertiary) {
+                                            Text(label_string)
+                                        }
+                                    } else {
+                                        Text(label_string)
+                                    }
+                                },
+                                onClick = {
+                                    expanded.value = false
+                                    active_sort_option.value = rev_x
                                 }
                             )
                         }

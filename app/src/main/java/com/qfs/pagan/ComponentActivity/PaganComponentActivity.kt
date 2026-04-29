@@ -490,7 +490,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
 
     open fun on_delete_project(uri: Uri) { }
 
-    fun load_menu_dialog(current_sort: Int = 0, load_callback: (Uri) -> Unit) {
+    fun load_menu_dialog(current_sort: Int? = null, load_callback: (Uri) -> Unit) {
         val project_list = this.view_model.project_manager?.get_project_list() ?: return
         val items = mutableListOf<Pair<Uri, @Composable RowScope.() -> Unit>>()
         for ((uri, title) in project_list) {
@@ -510,14 +510,14 @@ abstract class PaganComponentActivity: ComponentActivity() {
             },
             Pair(R.string.sort_option_date_modified) { a: Int, b: Int ->
                 (project_list[a].modified ?: 0L).compareTo(project_list[b].modified ?: 0L)
-            },
+            }
         )
 
         this.view_model.sortable_list_dialog(
             R.string.menu_item_load_project,
             items,
             sort_options,
-            selected_sort = mutableIntStateOf(current_sort),
+            selected_sort = mutableStateOf(current_sort),
             content = @Composable { close, active_sort ->
                 Button(
                     modifier = Modifier

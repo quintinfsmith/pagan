@@ -4324,7 +4324,7 @@ open class OpusLayerBase: Effectable {
             }
         }
 
-        // Default to zero to differentiate pre/post existance of timestamp
+        // Default to zero to differentiate pre/post existence of timestamp
         this.timestamp = inner_map.get_stringn("ts00")?.toLong() ?: 0L
     }
 

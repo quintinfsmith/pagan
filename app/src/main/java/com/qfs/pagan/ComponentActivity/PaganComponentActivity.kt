@@ -502,11 +502,14 @@ abstract class PaganComponentActivity: ComponentActivity() {
         }
 
         val sort_options = listOf(
-            Pair(R.string.sort_option_abc) { a: Int, b: Int -> project_list[a].second.lowercase().compareTo(project_list[b].second.lowercase()) },
+            Pair(R.string.sort_option_abc) { a: Int, b: Int ->
+                project_list[a].title.lowercase().compareTo(project_list[b].title.lowercase())
+            },
+            Pair(R.string.sort_option_date_created) { a: Int, b: Int ->
+                project_list[a].created.compareTo(project_list[b].created)
+            },
             Pair(R.string.sort_option_date_modified) { a: Int, b: Int ->
-                val df_a = DocumentFile.fromSingleUri(this, project_list[a].first) ?: return@Pair -1
-                val df_b = DocumentFile.fromSingleUri(this, project_list[b].first) ?: return@Pair 1
-                df_a.lastModified().compareTo(df_b.lastModified())
+                (project_list[a].modified ?: 0L).compareTo(project_list[b].modified ?: 0L)
             },
         )
 
@@ -575,15 +578,17 @@ abstract class PaganComponentActivity: ComponentActivity() {
             Spacer(Modifier.height(padding))
 
             ProvideTextStyle(Typography.DialogBodyMono) {
-                if (other_project.timestamp != 0L) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(R.string.date_created)
-                        Spacer(Modifier.width(padding))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(R.string.date_created)
+                    Spacer(Modifier.width(padding))
+                    if (other_project.timestamp != 0L) {
                         Text(date_created.format(formatter))
+                    } else {
+                        Text(R.string.created_before_tracked)
                     }
                 }
                 Row(

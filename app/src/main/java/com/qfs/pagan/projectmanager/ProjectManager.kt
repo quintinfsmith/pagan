@@ -38,6 +38,7 @@ import java.util.TimeZone
  * Handles project file management. ie caching files, generating file names, etc
  */
 class ProjectManager(val context: Context, var uri: Uri?) {
+    data class CachedProjectData(var uri: Uri, var title: String, var modified: Long?, var created: Long)
     // Where the cached list of projects is stored
     private val _cache_path = "${this.context.cacheDir}/project_list.json"
     // Where backup data is stored
@@ -49,7 +50,6 @@ class ProjectManager(val context: Context, var uri: Uri?) {
      * Call before showing Load Projects menu
      */
     fun check() {
-        this.ucheck_recache_external_storage_projects()
         this.scan_and_update_project_list(full_refresh = true)
     }
 
@@ -214,47 +214,6 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         }
     }
 
-    /**
-     * Temporary Function.
-     * Move projects from external storage (where projects were stored before v1.7.7) to
-     * the current uri
-     */
-    fun ucheck_recache_external_storage_projects(): Boolean {
-        // V1.7.7, moved project storage out of ExternalFilesDir
-        val old_directory = try {
-            val external_path = this.context.getExternalFilesDir(null) ?: return false
-            File("$external_path/projects")
-        } catch (_: SecurityException) {
-            return false
-        }
-        if (!old_directory.isDirectory || old_directory.listFiles()?.isEmpty() ?: false) return false
-
-        val working_directory = DocumentFile.fromFile(old_directory)
-
-        val project_list = JSONList()
-        for (json_file in working_directory.listFiles()) {
-            val project_name = try {
-                this.get_file_project_name(json_file.uri)
-            } catch (_: Exception) {
-                continue
-            }
-
-            project_list.add(
-                JSONList(
-                    JSONString(json_file.uri.toString()),
-                    JSONString(project_name)
-                )
-            )
-        }
-
-        project_list.sort_by { it ->
-            (it as JSONList).get_string(1)
-        }
-
-        val file = File(this._cache_path)
-        file.writeText(project_list.to_string())
-        return true
-    }
 
     /**
      * Get the stored project's title given the projects location at [uri]
@@ -297,8 +256,12 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         }
     }
 
-    fun get_file_timestamp(json_obj: JSONHashMap, uri: Uri): Long {
+    fun get_project_timestamp(json_obj: JSONHashMap): Long? {
         return json_obj.get_hashmapn("d")?.get_stringn("ts00")?.toLong()?.times(1000)
+    }
+
+    fun get_file_timestamp(json_obj: JSONHashMap, uri: Uri): Long {
+        return this.get_project_timestamp(json_obj)
             ?: DocumentFile.fromSingleUri(this.context, uri)?.lastModified()
             ?: 0L
     }
@@ -306,14 +269,15 @@ class ProjectManager(val context: Context, var uri: Uri?) {
     /**
      * Get a List of Uris paired with their Projects' titles.
      */
-    fun get_project_list(): List<Triple<Uri, String, Long>> {
+    fun get_project_list(): List<CachedProjectData> {
         val json_list = this.get_json_project_list()
         return List(json_list.size) { i: Int ->
-            val entry = json_list.get_list(i)
-            Triple(
-                entry.get_string(0).toUri(),
-                entry.get_string(1),
-                entry.get_stringn(2)?.toLong() ?: 0L
+            val entry = json_list.get_hashmap(i)
+            CachedProjectData(
+                entry.get_string("uri").toUri(),
+                entry.get_string("title"),
+                entry.get_stringn("modified")?.toLong(),
+                entry.get_stringn("created")?.toLong() ?: 0L
             )
         }
     }
@@ -332,16 +296,20 @@ class ProjectManager(val context: Context, var uri: Uri?) {
             var needs_save = false
             // Check if timestamp is included in project list, if not, add it.
             for (i in 0 until (project_list as JSONList).size) {
-                val entry = project_list.get_list(i)
-                if (entry.size == 2) {
+                if (project_list[i] is JSONList) {
+                    val entry = project_list.get_list(i)
                     needs_save = true
                     val uri = entry.get_string(0).toUri()
-                    project_list[i] = JSONList(
-                        entry[0],
-                        entry[1],
-                        this.get_json(uri)?.let {
-                            JSONString(this.get_file_timestamp(it, uri).toString())
-                        } ?: JSONString(0L.toString())
+                    val modified = DocumentFile.fromSingleUri(this.context, uri)?.lastModified().toString()
+                    val created: String? = this.get_json(uri)?.let {
+                        this.get_project_timestamp(it)?.toString()
+                    }
+
+                    project_list[i] = JSONHashMap(
+                        "uri" to entry[0],
+                        "title" to entry[1],
+                        "modified" to JSONString(modified),
+                        "created" to JSONString(created ?: modified)
                     )
                 }
             }
@@ -371,12 +339,13 @@ class ProjectManager(val context: Context, var uri: Uri?) {
 
         // Create list of cached uris, remove none existing ones while we're here.
         val cached_uris_list = Array(cached_list.size) { i: Int ->
-            val uri = cached_list.get_list(i).get_string(0).toUri()
+            val uri = cached_list.get_hashmap(i).get_string("uri").toUri()
             if (!uris.contains(uri)) {
                 cached_uri_to_remove.add(i)
             }
             uri
         }
+
         for (i in cached_uri_to_remove.reversed()) {
             cached_list.remove_at(i)
         }
@@ -386,15 +355,17 @@ class ProjectManager(val context: Context, var uri: Uri?) {
             val json_obj = this.get_json(uri) ?: continue
             val project_name = this.get_file_project_name(json_obj, uri)
 
-            cached_list.add(JSONList(
-                JSONString(uri.toString()),
-                JSONString(project_name),
-                JSONString(this.get_file_timestamp(json_obj, uri).toString())
+            val modified = DocumentFile.fromSingleUri(this.context, uri)?.lastModified().toString()
+            cached_list.add(JSONHashMap(
+                "uri" to JSONString(uri.toString()),
+                "title" to JSONString(project_name),
+                "modified" to JSONString(modified),
+                "created" to JSONString(this.get_project_timestamp(json_obj)?.toString() ?: modified),
             ))
         }
 
         cached_list.sort_by {
-            (it as JSONList).get_string(1)
+            (it as JSONHashMap).get_string("title")
         }
 
         val file = File(this._cache_path)
@@ -421,7 +392,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         var is_tracking = false
 
         for (i in 0 until project_list.size) {
-            if (project_list.get_list(i).get_string(0).toUri() == uri) {
+            if (project_list.get_hashmap(i).get_string("uri").toUri() == uri) {
                 is_tracking = true
                 break
             }
@@ -431,17 +402,19 @@ class ProjectManager(val context: Context, var uri: Uri?) {
 
         val json_obj = this.get_json(uri) ?: return
         val project_name = this.get_file_project_name(json_obj, uri)
-        val timestamp = this.get_file_timestamp(json_obj, uri).toString()
+        val created: String? = this.get_project_timestamp(json_obj)?.toString()
+        val modified = DocumentFile.fromSingleUri(this.context, uri)?.lastModified().toString()
         project_list.add(
-            JSONList(
-                JSONString(uri.toString()),
-                JSONString(project_name),
-                JSONString(timestamp)
+            JSONHashMap(
+                "uri" to JSONString(uri.toString()),
+                "title" to JSONString(project_name),
+                "modified" to JSONString(modified),
+                "created" to JSONString(created ?: modified)
             )
         )
 
         project_list.sort_by {
-            (it as JSONList).get_string(1)
+            (it as JSONHashMap).get_string("title")
         }
 
         val file = File(this._cache_path)
@@ -455,7 +428,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         val project_list = this.get_json_project_list()
         var index_to_pop = 0
         for (i in 0 until project_list.size) {
-            if (project_list.get_list(i).get_string(0).toUri() == uri) break
+            if (project_list.get_hashmap(i).get_string("uri").toUri() == uri) break
             index_to_pop += 1
         }
 
@@ -463,7 +436,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
 
         project_list.remove_at(index_to_pop)
         project_list.sort_by {
-            (it as JSONList).get_string(1)
+            (it as JSONHashMap).get_string("title")
         }
 
         val file = File(this._cache_path)

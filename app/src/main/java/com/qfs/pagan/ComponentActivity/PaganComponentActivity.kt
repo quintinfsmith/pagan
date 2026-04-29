@@ -506,7 +506,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 project_list[a].title.lowercase().compareTo(project_list[b].title.lowercase())
             },
             Pair(R.string.sort_option_date_created) { a: Int, b: Int ->
-                project_list[a].created.compareTo(project_list[b].created)
+                (project_list[a].created ?: 0L).compareTo(project_list[b].created ?: 0L)
             },
             Pair(R.string.sort_option_date_modified) { a: Int, b: Int ->
                 (project_list[a].modified ?: 0L).compareTo(project_list[b].modified ?: 0L)
@@ -540,6 +540,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                         )
                     }
                 )
+                Spacer(Modifier.width(Dimensions.Space.Large))
             },
             onClick = load_callback,
             onLongClick = { it, close_callback ->

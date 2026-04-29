@@ -37,7 +37,7 @@ import java.util.TimeZone
  * Handles project file management. ie caching files, generating file names, etc
  */
 class ProjectManager(val context: Context, var uri: Uri?) {
-    data class CachedProjectData(var uri: Uri, var title: String, var modified: Long?, var created: Long)
+    data class CachedProjectData(var uri: Uri, var title: String, var modified: Long?, var created: Long?)
     // Where the cached list of projects is stored
     private val _cache_path = "${this.context.cacheDir}/project_list.json"
     // Where backup data is stored
@@ -279,7 +279,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
                 entry.get_string("uri").toUri(),
                 entry.get_string("title"),
                 entry.get_stringn("modified")?.toLong(),
-                entry.get_stringn("created")?.toLong() ?: 0L
+                entry.get_stringn("created")?.toLong()
             )
         }
     }

@@ -47,6 +47,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
@@ -97,6 +98,7 @@ import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelPagan
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileNotFoundException
@@ -519,28 +521,39 @@ abstract class PaganComponentActivity: ComponentActivity() {
             sort_options,
             selected_sort = mutableStateOf(current_sort),
             content = @Composable { close, active_sort ->
-                Button(
-                    modifier = Modifier
-                        .height(Dimensions.SortableMenuSortButtonDiameter)
-                        .width(Dimensions.SortableMenuSortButtonDiameter),
-                    colors = ButtonDefaults.buttonColors().copy(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    ),
-                    onClick = {
-                        this@PaganComponentActivity.view_model.project_manager?.scan_and_update_project_list(full_refresh = true)
-                        close()
-                        load_menu_dialog(active_sort, load_callback)
-                    },
-                    contentPadding = Dimensions.SortableMenuSortButtonPadding,
-                    content = {
-                        Icon(
-                            painter = painterResource(R.drawable.icon_refresh),
-                            contentDescription = stringResource(R.string.cd_sort_options)
-                        )
-                    }
-                )
-                Spacer(Modifier.width(Dimensions.Space.Large))
+                val scope = rememberCoroutineScope()
+                val is_refreshing = remember { mutableStateOf(false) }
+                if (is_refreshing.value) {
+                    CircularProgressIndicator()
+                } else {
+                    Button(
+                        modifier = Modifier
+                            .height(Dimensions.SortableMenuSortButtonDiameter)
+                            .width(Dimensions.SortableMenuSortButtonDiameter),
+                        colors = ButtonDefaults.buttonColors().copy(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
+                        onClick = {
+                            is_refreshing.value = true
+                            scope.launch(Dispatchers.IO) {
+                                this@PaganComponentActivity.view_model.project_manager?.scan_and_update_project_list(
+                                    full_refresh = true
+                                )
+                                close()
+                                load_menu_dialog(active_sort, load_callback)
+                                is_refreshing.value = false
+                            }
+                        },
+                        contentPadding = Dimensions.SortableMenuSortButtonPadding,
+                        content = {
+                            Icon(
+                                painter = painterResource(R.drawable.icon_refresh),
+                                contentDescription = stringResource(R.string.cd_sort_options)
+                            )
+                        }
+                    )
+                }
             },
             onClick = load_callback,
             onLongClick = { it, close_callback ->

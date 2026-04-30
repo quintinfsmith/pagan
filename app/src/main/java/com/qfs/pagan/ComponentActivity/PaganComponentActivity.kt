@@ -496,11 +496,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
         val project_list = this.view_model.project_manager?.get_project_list() ?: return
         val items = mutableListOf<Pair<Uri, @Composable RowScope.() -> Unit>>()
         for ((uri, title) in project_list) {
-            items.add(
-                Pair(uri, {
-                    Text(text = title)
-                })
-            )
+            items.add(Pair(uri, { Text(text = title) }))
         }
 
         val sort_options = listOf(

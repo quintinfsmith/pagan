@@ -37,14 +37,18 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.KeyEvent
@@ -75,6 +79,8 @@ import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Typography
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import kotlin.math.min
@@ -479,40 +485,16 @@ class ComponentActivitySettings: PaganComponentActivity() {
             return
         }
 
-        val selected_uri = try {
-            selected_file_name?.let { this@ComponentActivitySettings.coerce_soundfont_uri(it) }
-        } catch (e: FileNotFoundException) {
-            null
-        }
-        val active_soundfonts = this.view_model.configuration.soundfonts.value
-        val active_soundfont_uris = mutableListOf<Uri>()
-        for (file_path in active_soundfonts) {
-            try {
-                active_soundfont_uris.add(
-                    this@ComponentActivitySettings.coerce_soundfont_uri(file_path.value)
-                )
-            } catch (e: FileNotFoundException) {
-                continue
-            }
-        }
 
+        val active_soundfonts = this.view_model.configuration.soundfonts.value
         val soundfonts = mutableListOf<Pair<Uri, @Composable RowScope.() -> Unit>>()
-        for (uri in file_list.sortedBy { it.pathSegments.last().split("/").last().lowercase() }) {
-            val relative_path_segments = uri.pathSegments.last().split("/")
-            var skip_entry = false
-            for (check_uri in active_soundfont_uris) {
-                if (check_uri == uri && selected_uri != check_uri) {
-                    skip_entry = true
-                    break
-                }
-            }
-            if (!skip_entry) {
-                soundfonts.add(Pair(uri, { Text(relative_path_segments.last()) }))
-            }
-        }
 
         this.view_model.create_dialog { close ->
             @Composable {
+                val selected_uri: MutableState<Uri?> = remember { mutableStateOf(null) }
+                val scope = rememberCoroutineScope()
+                val loading_soundfonts = remember { mutableStateOf(true) }
+
                 Column {
                     Row(
                         horizontalArrangement = Arrangement.End,
@@ -556,33 +538,78 @@ class ComponentActivitySettings: PaganComponentActivity() {
                         MenuPadder()
                     }
                     MenuPadder()
-                    UnSortableMenu(
-                        modifier = Modifier.weight(1F, fill = false),
-                        options = soundfonts,
-                        default_value = selected_uri
-                    ) { uri ->
-                        try {
-                            SoundFont(this@ComponentActivitySettings, uri)
-                            if (selected_file_name == null) {
-                                view_model.add_soundfont_uri(uri)
-                            } else {
-                                var index = 0
-                                for ((i, mutable_path) in active_soundfonts.enumerate()) {
-                                    if (mutable_path.value == selected_file_name) {
-                                        index = i
-                                        break
+                    if (loading_soundfonts.value) {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    } else {
+                        UnSortableMenu(
+                            modifier = Modifier.weight(1F, fill = false),
+                            options = soundfonts,
+                            default_value = selected_uri.value
+                        ) { uri ->
+                            try {
+                                SoundFont(this@ComponentActivitySettings, uri)
+                                if (selected_file_name == null) {
+                                    view_model.add_soundfont_uri(uri)
+                                } else {
+                                    var index = 0
+                                    for ((i, mutable_path) in active_soundfonts.enumerate()) {
+                                        if (mutable_path.value == selected_file_name) {
+                                            index = i
+                                            break
+                                        }
                                     }
+                                    view_model.set_soundfont_uri(uri, index)
                                 }
-                                view_model.set_soundfont_uri(uri, index)
+                                view_model.save_configuration()
+                                this@ComponentActivitySettings.update_result()
+                                close()
+                            } catch (_: Exception) {
+                                this@ComponentActivitySettings.toast(R.string.invalid_soundfont)
                             }
-                            view_model.save_configuration()
-                            this@ComponentActivitySettings.update_result()
-                            close()
-                        } catch (_: Exception) {
-                            this@ComponentActivitySettings.toast(R.string.invalid_soundfont)
                         }
                     }
                     DialogBar(neutral = close)
+                }
+
+                LaunchedEffect(null) {
+                    scope.launch(Dispatchers.IO) {
+                        selected_uri.value = try {
+                            selected_file_name?.let { this@ComponentActivitySettings.coerce_soundfont_uri(it) }
+                        } catch (e: FileNotFoundException) {
+                            null
+                        }
+
+                        val active_soundfont_uris = mutableListOf<Uri>()
+                        for (file_path in active_soundfonts) {
+                            try {
+                                active_soundfont_uris.add(
+                                    this@ComponentActivitySettings.coerce_soundfont_uri(file_path.value)
+                                )
+                            } catch (e: FileNotFoundException) {
+                                continue
+                            }
+                        }
+
+                        for (uri in file_list.sortedBy { it.pathSegments.last().split("/").last().lowercase() }) {
+                            val relative_path_segments = uri.pathSegments.last().split("/")
+                            var skip_entry = false
+                            for (check_uri in active_soundfont_uris) {
+                                if (check_uri == uri && selected_uri != check_uri) {
+                                    skip_entry = true
+                                    break
+                                }
+                            }
+                            if (!skip_entry) {
+                                soundfonts.add(Pair(uri, { Text(relative_path_segments.last()) }))
+                            }
+                        }
+                        loading_soundfonts.value = false
+                    }
                 }
             }
         }

@@ -657,7 +657,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.state_model.soundfont_ready.value = false
 
         this.state_model.viewModelScope.launch(Dispatchers.IO) {
-            Thread.sleep(3000)
             val soundfonts = mutableListOf<SoundFont>()
             val soundfont_directory = this@ComponentActivityEditor.get_soundfont_directory()
 

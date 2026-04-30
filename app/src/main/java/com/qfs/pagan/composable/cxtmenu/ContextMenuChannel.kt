@@ -10,13 +10,14 @@
 package com.qfs.pagan.composable.cxtmenu
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.stringArrayResource
@@ -25,6 +26,7 @@ import com.qfs.pagan.ActionDispatcher
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
+import com.qfs.pagan.composable.SoundfontLoadingIndicator
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.button.TextCMenuButton
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
@@ -132,26 +134,38 @@ fun SetPresetButton(
     active_channel: ViewModelEditorState.ChannelData,
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
-    TextCMenuButton(
-        modifier = modifier.testTag(TestTag.ChannelPreset),
-        shape = shape,
-        onClick = { dispatcher.set_channel_preset(channel_index) },
-        text = if (ui_facade.use_midi_playback.value || active_channel.active_name.value == null) {
-            if (active_channel.instrument.value.bank == 128) {
-                if (ui_facade.soundfont_active.value != null && !ui_facade.use_midi_playback.value) {
-                    stringResource(R.string.unavailable_kit)
+    if (ui_facade.soundfont_ready.value) {
+        TextCMenuButton(
+            modifier = modifier.testTag(TestTag.ChannelPreset),
+            shape = shape,
+            onClick = { dispatcher.set_channel_preset(channel_index) },
+            text = if (ui_facade.use_midi_playback.value || active_channel.active_name.value == null) {
+                if (active_channel.instrument.value.bank == 128) {
+                    if (ui_facade.soundfont_active.value != null && !ui_facade.use_midi_playback.value) {
+                        stringResource(R.string.unavailable_kit)
+                    } else {
+                        stringResource(R.string.gm_kit)
+                    }
+                } else if (ui_facade.soundfont_active.value != null && !ui_facade.use_midi_playback.value) {
+                    stringResource(
+                        R.string.unavailable_preset,
+                        stringArrayResource(R.array.general_midi_presets)[active_channel.instrument.value.program]
+                    )
                 } else {
-                    stringResource(R.string.gm_kit)
+                    stringArrayResource(R.array.general_midi_presets)[active_channel.instrument.value.program]
                 }
-            } else if (ui_facade.soundfont_active.value != null && !ui_facade.use_midi_playback.value) {
-                stringResource(R.string.unavailable_preset, stringArrayResource(R.array.general_midi_presets)[active_channel.instrument.value.program])
             } else {
-                stringArrayResource(R.array.general_midi_presets)[active_channel.instrument.value.program]
+                active_channel.active_name.value!!
             }
-        } else {
-            active_channel.active_name.value!!
+        )
+    } else {
+        Box(
+            modifier = modifier,
+            contentAlignment = Alignment.Center
+        ) {
+            SoundfontLoadingIndicator()
         }
-    )
+    }
 }
 
 @Composable

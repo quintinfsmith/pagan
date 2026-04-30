@@ -1142,6 +1142,8 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
     private fun play_event(preset: PresetKey, is_percussion: Boolean, event_value: Int, velocity: Float = .5f) {
         if (event_value < 0) return // No sound to play
         if (this.vm_controller.in_playback()) return // disable feedback during playback
+        if (!this.vm_controller.opus_manager.vm_state.soundfont_ready.value) return
+
         val (note, bend) = if (is_percussion) {
             Pair(event_value + 27, 0)
         } else {
@@ -1173,6 +1175,8 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         if (event_value < 0) return // No sound to play
         if (this.vm_controller.in_playback()) return // disable feedback during playback
         val opus_manager = this.get_opus_manager()
+        if (!opus_manager.vm_state.soundfont_ready.value) return
+
         val (note, bend) = if (opus_manager.is_percussion(channel)) {
             Pair(event_value + 27, 0)
         } else {

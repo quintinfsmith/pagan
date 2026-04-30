@@ -554,6 +554,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                         }
                     )
                 }
+                Spacer(Modifier.width(Dimensions.Space.Large))
             },
             onClick = load_callback,
             onLongClick = { it, close_callback ->

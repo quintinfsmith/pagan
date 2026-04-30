@@ -202,6 +202,7 @@ class ViewModelEditorState: ViewModel() {
     var blocker_leaf: List<Int>? = null
     val use_midi_playback: MutableState<Boolean> = mutableStateOf(false)
     val midi_device_connected: MutableState<Boolean> = mutableStateOf(false)
+    val soundfont_ready: MutableState<Boolean> = mutableStateOf(false)
     val playback_state_soundfont: MutableState<PlaybackState> = mutableStateOf(PlaybackState.NotReady)
     val looping_playback: MutableState<Boolean> = mutableStateOf(false)
     val playback_state_midi: MutableState<PlaybackState> = mutableStateOf(PlaybackState.NotReady)

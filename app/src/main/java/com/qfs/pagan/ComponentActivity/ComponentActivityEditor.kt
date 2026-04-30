@@ -22,7 +22,6 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.DocumentsContract
 import android.provider.OpenableColumns
-import android.view.KeyEvent.ACTION_DOWN
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -97,6 +96,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.documentfile.provider.DocumentFile
+import androidx.lifecycle.viewModelScope
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
 import com.qfs.apres.MidiController
@@ -142,6 +142,7 @@ import com.qfs.pagan.composable.cxtmenu.ContextMenuLeafStdSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuLinePrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuLineSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuRangeSecondary
+import com.qfs.pagan.composable.SoundfontLoadingIndicator
 import com.qfs.pagan.composable.dashed_border
 import com.qfs.pagan.composable.dragging_scroll
 import com.qfs.pagan.composable.keyboardAsState
@@ -166,6 +167,7 @@ import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.BufferedOutputStream
 import java.io.BufferedReader
@@ -175,7 +177,6 @@ import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.InputStreamReader
-import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.concurrent.thread
 import kotlin.math.ceil
@@ -646,48 +647,56 @@ class ComponentActivityEditor: PaganComponentActivity() {
         if (file_paths.isEmpty()) {
             this.controller_model.unset_soundfont()
             this.state_model.unset_soundfont()
+            this.state_model.soundfont_ready.value = true
             return
         }
 
         // Failed to change playback_state
         if (!this.controller_model.update_playback_state_soundfont(PlaybackState.Ready)) return
 
-        val soundfonts = mutableListOf<SoundFont>()
-        val soundfont_directory = this.get_soundfont_directory()
+        this.state_model.soundfont_ready.value = false
 
-        // ignore not-existent or corrupt sf2 files
-        for (file_path in file_paths) {
-            var soundfont_file = soundfont_directory
-            for (segment in file_path.value.split("/")) {
-                soundfont_file = soundfont_file.findFile(segment) ?: continue
-            }
+        this.state_model.viewModelScope.launch(Dispatchers.IO) {
+            Thread.sleep(3000)
+            val soundfonts = mutableListOf<SoundFont>()
+            val soundfont_directory = this@ComponentActivityEditor.get_soundfont_directory()
 
-            // Possible if user puts the sf2 in their files manually
-            if (!soundfont_file.exists()) {
-                if (ignore_bad_soundfonts) {
-                    continue
-                } else {
-                    throw FileNotFoundException()
+            // ignore not-existent or corrupt sf2 files
+            for (file_path in file_paths) {
+                var soundfont_file = soundfont_directory
+                for (segment in file_path.value.split("/")) {
+                    soundfont_file = soundfont_file.findFile(segment) ?: continue
                 }
-            }
 
-            soundfonts.add(
-                try {
-                    SoundFont(this, soundfont_file.uri)
-                } catch (_: Exception) {
+                // Possible if user puts the sf2 in their files manually
+                if (!soundfont_file.exists()) {
                     if (ignore_bad_soundfonts) {
                         continue
                     } else {
-                        throw SoundFont.InvalidSoundFont(soundfont_file.uri)
+                        throw FileNotFoundException()
                     }
                 }
-            )
-        }
 
-        this.controller_model.set_soundfonts(*soundfonts.toTypedArray())
-        this.controller_model.playback_device?.activity = this
-        this.controller_model.active_soundfont_relative_paths = List(file_paths.size) { i -> file_paths[i].value }
-        this.state_model.enable_soundfont(file_paths)
+                soundfonts.add(
+                    try {
+                        SoundFont(this@ComponentActivityEditor, soundfont_file.uri)
+                    } catch (_: Exception) {
+                        if (ignore_bad_soundfonts) {
+                            continue
+                        } else {
+                            throw SoundFont.InvalidSoundFont(soundfont_file.uri)
+                        }
+                    }
+                )
+            }
+
+            controller_model.set_soundfonts(*soundfonts.toTypedArray())
+            controller_model.playback_device?.activity = this@ComponentActivityEditor
+            controller_model.active_soundfont_relative_paths = List(file_paths.size) { i -> file_paths[i].value }
+            state_model.enable_soundfont(file_paths)
+
+            state_model.soundfont_ready.value = true
+        }
     }
 
 
@@ -1049,12 +1058,19 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         Spacer(Modifier.weight(1F))
 
-        if (vm_state.use_midi_playback.value) {
-            PlayMidiButton()
-        } else if (vm_state.soundfont_active.value != null) {
-            PlaySFButton()
+        if (vm_state.soundfont_ready.value) {
+            if (vm_state.use_midi_playback.value) {
+                PlayMidiButton()
+            } else if (vm_state.soundfont_active.value != null) {
+                PlaySFButton()
+            } else {
+                NoPlayButton()
+            }
         } else {
-            NoPlayButton()
+            Box(contentAlignment = Alignment.Center) {
+                NoPlayButton()
+                SoundfontLoadingIndicator()
+            }
         }
         Spacer(Modifier.weight(1F))
 
@@ -1116,12 +1132,19 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val dispatcher = this@ComponentActivityEditor.action_interface
 
         Spacer(Modifier.width(Dimensions.TopBarItemSpace))
-        if (vm_state.use_midi_playback.value) {
-            PlayMidiButton()
-        } else if (vm_state.soundfont_active.value != null) {
-            PlaySFButton()
+        if (vm_state.soundfont_ready.value) {
+            if (vm_state.use_midi_playback.value) {
+                PlayMidiButton()
+            } else if (vm_state.soundfont_active.value != null) {
+                PlaySFButton()
+            } else {
+                NoPlayButton()
+            }
         } else {
-            NoPlayButton()
+            Box(contentAlignment = Alignment.Center) {
+                NoPlayButton()
+                SoundfontLoadingIndicator()
+            }
         }
         Spacer(Modifier.width(Dimensions.TopBarItemSpace))
         Row(
@@ -2004,138 +2027,147 @@ class ComponentActivityEditor: PaganComponentActivity() {
             Surface(
                 tonalElevation = 1.dp,
                 shape = Shapes.Container,
-                modifier = Modifier.weight(1F)
+                modifier = Modifier.weight(1F),
             ) {
                 if (state_model.ready.value) {
-                    Column(
-                        Modifier
-                            .padding(Dimensions.ConfigDrawerPadding)
-                            .dragging_scroll(
-                                dragging_row_index.value != null,
-                                scroll_state,
-                            )
-                    ) {
-                        val row_height = Dimensions.ConfigChannelButtonHeight
-                        val padding_height_px = this@ComponentActivityEditor.toPx(Dimensions.ConfigChannelSpacing)
-                        val row_height_px = this@ComponentActivityEditor.toPx(row_height)
-                        for (i in 0 until state_model.channel_count.value) {
-                            val channel_data = state_model.channel_data[i]
-                            val is_dragging = remember { mutableStateOf(false) }
-                            key(channel_data.update_key.value) {
-                                Row(
-                                    Modifier
-                                        .zIndex(
-                                            if (is_dragging.value) {
-                                                2F
-                                            } else {
-                                                0F
-                                            }
-                                        )
-                                        .offset(
-                                            x = 0.dp,
-                                            y = if (dragging_row_index.value == null || dragging_row_offset.value == null) {
-                                                0.dp
-                                            } else if (dragging_row_index.value!! == i) {
-                                                context.toDp(dragging_row_offset.value!!)
-                                            } else if (dragging_row_index.value!! < i) {
-                                                val dragged_position =
-                                                    (padding_height_px * dragging_row_index.value!!) + (row_height_px * dragging_row_index.value!!) + dragging_row_offset.value!!
-                                                if (((padding_height_px + row_height_px) * i) < dragged_position) {
-                                                    (row_height * -1)
+                    if (state_model.soundfont_ready.value) {
+                        Column(
+                            Modifier
+                                .padding(Dimensions.ConfigDrawerPadding)
+                                .dragging_scroll(
+                                    dragging_row_index.value != null,
+                                    scroll_state,
+                                )
+                        ) {
+                            val row_height = Dimensions.ConfigChannelButtonHeight
+                            val padding_height_px = this@ComponentActivityEditor.toPx(Dimensions.ConfigChannelSpacing)
+                            val row_height_px = this@ComponentActivityEditor.toPx(row_height)
+                            for (i in 0 until state_model.channel_count.value) {
+                                val channel_data = state_model.channel_data[i]
+                                val is_dragging = remember { mutableStateOf(false) }
+                                key(channel_data.update_key.value) {
+                                    Row(
+                                        Modifier
+                                            .zIndex(
+                                                if (is_dragging.value) {
+                                                    2F
                                                 } else {
-                                                    0.dp
+                                                    0F
                                                 }
-                                            } else {
-                                                val dragged_position =
-                                                    (padding_height_px * dragging_row_index.value!!) + (row_height_px * dragging_row_index.value!!) + dragging_row_offset.value!!
-                                                if (((padding_height_px + row_height_px) * i) > dragged_position) {
-                                                    row_height
-                                                } else {
-                                                    0.dp
-                                                }
-                                            }
-                                        )
-                                        .long_press(
-                                            onPress = { is_dragging.value = true },
-                                            onRelease = { is_dragging.value = false }
-                                        )
-                                        .conditional_drag(
-                                            is_dragging,
-                                            on_drag_start = { position ->
-                                                dragging_row_offset.value = 0F
-                                                dragging_row_index.value = i
-                                            },
-
-                                            on_drag_stop = {
-                                                dragging_row_index.value?.let {
-                                                    val dragged_position =
-                                                        (padding_height_px * it) + (row_height_px * it) + dragging_row_offset.value!!
-                                                    val new_channel_position =
-                                                        max(0F, ceil(dragged_position / row_height_px))
-                                                    dispatcher.move_channel(i, new_channel_position.toInt(), true)
-                                                }
-                                                dragging_row_offset.value = null
-                                                dragging_row_index.value = null
-                                            },
-
-                                            on_drag = { delta ->
-                                                dragging_row_offset.value = dragging_row_offset.value!! + delta
-                                            },
-                                            scroll_state = scroll_state
-                                        )
-                                ) {
-                                    ConfigDrawerChannelLeftButton(
-                                        modifier = Modifier.weight(1F),
-                                        onClick = { dispatcher.set_channel_preset(i) },
-                                        content = {
-                                            Row(
-                                                Modifier.weight(1F),
-                                                horizontalArrangement = Arrangement.SpaceBetween
-                                            ) {
-                                                Text(
-                                                    text = if (channel_data.percussion.value) "!%02d:".format(i)
-                                                    else "%02d:".format(i),
-                                                    modifier = Modifier
-                                                        .padding(
-                                                            horizontal = Dimensions.ConfigDrawerChannelLabelPadding,
-                                                        )
-                                                )
-                                                Text(
-                                                    if (channel_data.active_name.value == null || state_model.use_midi_playback.value) {
-                                                        this@ComponentActivityEditor.get_default_preset_name(
-                                                            channel_data.instrument.value.bank,
-                                                            channel_data.instrument.value.program
-                                                        )
-                                                    } else {
-                                                        channel_data.active_name.value!!
-                                                    },
-                                                    textAlign = TextAlign.Center,
-                                                    modifier = Modifier.weight(1F),
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis
-                                                )
-                                            }
-                                        }
-                                    )
-                                    DrawerPadder()
-                                    ConfigDrawerChannelRightButton(
-                                        onClick = { dispatcher.remove_channel(i) },
-                                        content = {
-                                            Icon(
-                                                painter = painterResource(
-                                                    if (channel_data.percussion.value) {
-                                                        R.drawable.icon_subtract_bang
-                                                    } else {
-                                                        R.drawable.icon_subtract_circle
-                                                    }
-                                                ),
-                                                contentDescription = stringResource(R.string.remove_channel, i)
                                             )
-                                        }
-                                    )
+                                            .offset(
+                                                x = 0.dp,
+                                                y = if (dragging_row_index.value == null || dragging_row_offset.value == null) {
+                                                    0.dp
+                                                } else if (dragging_row_index.value!! == i) {
+                                                    context.toDp(dragging_row_offset.value!!)
+                                                } else if (dragging_row_index.value!! < i) {
+                                                    val dragged_position =
+                                                        (padding_height_px * dragging_row_index.value!!) + (row_height_px * dragging_row_index.value!!) + dragging_row_offset.value!!
+                                                    if (((padding_height_px + row_height_px) * i) < dragged_position) {
+                                                        (row_height * -1)
+                                                    } else {
+                                                        0.dp
+                                                    }
+                                                } else {
+                                                    val dragged_position =
+                                                        (padding_height_px * dragging_row_index.value!!) + (row_height_px * dragging_row_index.value!!) + dragging_row_offset.value!!
+                                                    if (((padding_height_px + row_height_px) * i) > dragged_position) {
+                                                        row_height
+                                                    } else {
+                                                        0.dp
+                                                    }
+                                                }
+                                            )
+                                            .long_press(
+                                                onPress = { is_dragging.value = true },
+                                                onRelease = { is_dragging.value = false }
+                                            )
+                                            .conditional_drag(
+                                                is_dragging,
+                                                on_drag_start = { position ->
+                                                    dragging_row_offset.value = 0F
+                                                    dragging_row_index.value = i
+                                                },
+
+                                                on_drag_stop = {
+                                                    dragging_row_index.value?.let {
+                                                        val dragged_position =
+                                                            (padding_height_px * it) + (row_height_px * it) + dragging_row_offset.value!!
+                                                        val new_channel_position =
+                                                            max(0F, ceil(dragged_position / row_height_px))
+                                                        dispatcher.move_channel(i, new_channel_position.toInt(), true)
+                                                    }
+                                                    dragging_row_offset.value = null
+                                                    dragging_row_index.value = null
+                                                },
+
+                                                on_drag = { delta ->
+                                                    dragging_row_offset.value = dragging_row_offset.value!! + delta
+                                                },
+                                                scroll_state = scroll_state
+                                            )
+                                    ) {
+                                        ConfigDrawerChannelLeftButton(
+                                            modifier = Modifier.weight(1F),
+                                            onClick = { dispatcher.set_channel_preset(i) },
+                                            content = {
+                                                Row(
+                                                    Modifier.weight(1F),
+                                                    horizontalArrangement = Arrangement.SpaceBetween
+                                                ) {
+                                                    Text(
+                                                        text = if (channel_data.percussion.value) "!%02d:".format(i)
+                                                        else "%02d:".format(i),
+                                                        modifier = Modifier
+                                                            .padding(
+                                                                horizontal = Dimensions.ConfigDrawerChannelLabelPadding,
+                                                            )
+                                                    )
+                                                    Text(
+                                                        if (channel_data.active_name.value == null || state_model.use_midi_playback.value) {
+                                                            this@ComponentActivityEditor.get_default_preset_name(
+                                                                channel_data.instrument.value.bank,
+                                                                channel_data.instrument.value.program
+                                                            )
+                                                        } else {
+                                                            channel_data.active_name.value!!
+                                                        },
+                                                        textAlign = TextAlign.Center,
+                                                        modifier = Modifier.weight(1F),
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+                                                }
+                                            }
+                                        )
+                                        DrawerPadder()
+                                        ConfigDrawerChannelRightButton(
+                                            onClick = { dispatcher.remove_channel(i) },
+                                            content = {
+                                                Icon(
+                                                    painter = painterResource(
+                                                        if (channel_data.percussion.value) {
+                                                            R.drawable.icon_subtract_bang
+                                                        } else {
+                                                            R.drawable.icon_subtract_circle
+                                                        }
+                                                    ),
+                                                    contentDescription = stringResource(R.string.remove_channel, i)
+                                                )
+                                            }
+                                        )
+                                    }
                                 }
+                                DrawerPadder()
                             }
-                            DrawerPadder()
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            SoundfontLoadingIndicator()
                         }
                     }
                 }

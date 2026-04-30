@@ -324,6 +324,7 @@
     <string name="show_channel_controls_single">This Channel</string>
     <string name="repeat_selection_in_line">Repeat selection in line</string>
     <string name="created_before_tracked">[Pre v1.8.7]</string>
+    <string name="soundfont_loading">Soundfont Loading...</string>
 
 
     <string-array name="general_midi_presets">

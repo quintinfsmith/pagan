@@ -9,6 +9,7 @@
  */
 package com.qfs.pagan.composable.cxtmenu
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -25,6 +26,7 @@ import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.MediumSpacer
+import com.qfs.pagan.composable.SoundfontLoadingIndicator
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.button.TextCMenuButton
 import com.qfs.pagan.composable.effectwidget.DelayEventMenu
@@ -117,43 +119,53 @@ fun RemoveEffectButton(dispatcher: ActionDispatcher, shape: Shape) {
 }
 @Composable
 fun PercussionSetInstrumentButton(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, dispatcher: ActionDispatcher, y: Int, use_name: Boolean) {
-    val active_line = vm_state.line_data[y]
-    val assigned_offset = active_line.assigned_offset.value ?: return
-    val active_channel = vm_state.channel_data[active_line.channel.value!!]
-    val midi_instruments = stringArrayResource(R.array.midi_drums)
-    val label = if (use_name) {
-        if (vm_state.soundfont_active.value != null && !vm_state.use_midi_playback.value) {
-            vm_state.get_instrument_name(active_channel.instrument.value, assigned_offset)
-        } else {
-            midi_instruments[assigned_offset]
-        }
-    } else {
-        "!${"%02d".format(assigned_offset)}"
-    }
+    if (vm_state.soundfont_ready.value) {
 
-    key(vm_state.soundfont_active.value) {
-        TextCMenuButton(
-            modifier = modifier.testTag(TestTag.InstrumentSet),
-            onClick = {
-                dispatcher.set_percussion_instrument(
-                    active_line.channel.value!!,
-                    active_line.line_offset.value!!
-                )
-            },
-            text = label ?: if (active_channel.instrument.value.bank == 128) {
-                if (assigned_offset < midi_instruments.size) {
-                    if (vm_state.soundfont_active.value != null && !vm_state.use_midi_playback.value) {
-                        stringResource(R.string.unavailable_preset, midi_instruments[assigned_offset])
+        val active_line = vm_state.line_data[y]
+        val assigned_offset = active_line.assigned_offset.value ?: return
+        val active_channel = vm_state.channel_data[active_line.channel.value!!]
+        val midi_instruments = stringArrayResource(R.array.midi_drums)
+        val label = if (use_name) {
+            if (vm_state.soundfont_active.value != null && !vm_state.use_midi_playback.value) {
+                vm_state.get_instrument_name(active_channel.instrument.value, assigned_offset)
+            } else {
+                midi_instruments[assigned_offset]
+            }
+        } else {
+            "!${"%02d".format(assigned_offset)}"
+        }
+
+        key(vm_state.soundfont_active.value) {
+            TextCMenuButton(
+                modifier = modifier.testTag(TestTag.InstrumentSet),
+                onClick = {
+                    dispatcher.set_percussion_instrument(
+                        active_line.channel.value!!,
+                        active_line.line_offset.value!!
+                    )
+                },
+                text = label ?: if (active_channel.instrument.value.bank == 128) {
+                    if (assigned_offset < midi_instruments.size) {
+                        if (vm_state.soundfont_active.value != null && !vm_state.use_midi_playback.value) {
+                            stringResource(R.string.unavailable_preset, midi_instruments[assigned_offset])
+                        } else {
+                            midi_instruments[assigned_offset]
+                        }
                     } else {
-                        midi_instruments[assigned_offset]
+                        stringResource(R.string.unknown_instrument, assigned_offset)
                     }
                 } else {
-                    stringResource(R.string.unknown_instrument, assigned_offset)
+                    "${stringArrayResource(R.array.general_midi_presets)[active_channel.instrument.value.bank]} @${assigned_offset}"
                 }
-            } else {
-                "${stringArrayResource(R.array.general_midi_presets)[active_channel.instrument.value.bank]} @${assigned_offset}"
-            }
-        )
+            )
+        }
+    } else {
+        Box(
+            modifier = modifier,
+            contentAlignment = Alignment.Center
+        ) {
+            SoundfontLoadingIndicator()
+        }
     }
 }
 

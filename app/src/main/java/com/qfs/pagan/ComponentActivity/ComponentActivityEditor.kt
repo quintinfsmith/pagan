@@ -838,84 +838,130 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun PlaySFButton() {
         val dispatcher = this@ComponentActivityEditor.action_interface
         val scope = rememberCoroutineScope()
-        TopBarIcon(
-            icon = when (this@ComponentActivityEditor.state_model.playback_state_soundfont.value) {
-                PlaybackState.Queued,
-                PlaybackState.NotReady -> R.drawable.baseline_play_disabled_24
+        Box(contentAlignment = Alignment.Center) {
+            TopBarIcon(
+                icon = when (this@ComponentActivityEditor.state_model.playback_state_soundfont.value) {
+                    PlaybackState.NotReady -> R.drawable.baseline_play_disabled_24
 
-                PlaybackState.Ready -> R.drawable.icon_play
-                PlaybackState.Stopping,
-                PlaybackState.Playing -> if (this@ComponentActivityEditor.state_model.looping_playback.value) {
-                    R.drawable.icon_pause_loop
-                } else {
-                    R.drawable.icon_pause
-                }
-            },
-            description = R.string.menu_item_playpause,
-            onClick = {
-                scope.launch {
+                    PlaybackState.Queued,
+                    PlaybackState.Ready -> R.drawable.icon_play
+
+                    PlaybackState.Stopping,
+                    PlaybackState.Playing -> if (this@ComponentActivityEditor.state_model.looping_playback.value) {
+                        R.drawable.icon_pause_loop
+                    } else {
+                        R.drawable.icon_pause
+                    }
+                },
+                description = R.string.menu_item_playpause,
+                onClick = {
                     when (this@ComponentActivityEditor.controller_model.playback_state_soundfont) {
                         PlaybackState.Queued,
                         PlaybackState.Stopping,
-                        PlaybackState.NotReady -> {}
+                        PlaybackState.NotReady -> { }
+
                         PlaybackState.Ready -> {
-                            dispatcher.play_opus(this, false)
+                            scope.launch(Dispatchers.IO) {
+                                dispatcher.play_opus(this, false)
+                            }
                         }
 
                         PlaybackState.Playing -> {
-                            dispatcher.stop_opus()
+                            scope.launch(Dispatchers.IO) {
+                                dispatcher.stop_opus()
+                            }
                         }
                     }
-                }
-            },
-            onLongClick = {
-                scope.launch {
+                },
+                onLongClick = {
                     when (this@ComponentActivityEditor.controller_model.playback_state_soundfont) {
                         PlaybackState.Queued,
                         PlaybackState.Stopping,
-                        PlaybackState.NotReady -> {}
-                        PlaybackState.Ready -> { dispatcher.play_opus(this, true) }
-                        PlaybackState.Playing -> { dispatcher.stop_opus() }
+                        PlaybackState.NotReady -> { }
+
+                        PlaybackState.Ready -> {
+                            scope.launch(Dispatchers.IO) {
+                                dispatcher.play_opus(this, true)
+                            }
+                        }
+
+                        PlaybackState.Playing -> {
+                            scope.launch(Dispatchers.IO) {
+                                dispatcher.stop_opus()
+                            }
+                        }
                     }
                 }
+            )
+
+            if (PlaybackState.Queued == this@ComponentActivityEditor.controller_model.playback_state_soundfont) {
+                CircularProgressIndicator()
             }
-        )
+        }
     }
     @Composable
     fun PlayMidiButton() {
         val dispatcher = this@ComponentActivityEditor.action_interface
         val scope = rememberCoroutineScope()
-        TopBarIcon(
-            icon = when (this@ComponentActivityEditor.state_model.playback_state_midi.value) {
-                PlaybackState.Queued,
-                PlaybackState.NotReady -> R.drawable.baseline_play_disabled_24
+        Box(contentAlignment = Alignment.Center) {
+            TopBarIcon(
+                icon = when (this@ComponentActivityEditor.state_model.playback_state_midi.value) {
+                    PlaybackState.Queued,
+                    PlaybackState.NotReady -> R.drawable.baseline_play_disabled_24
 
-                PlaybackState.Ready -> R.drawable.icon_play
-                PlaybackState.Stopping,
-                PlaybackState.Playing -> if (this@ComponentActivityEditor.state_model.looping_playback.value) {
-                    R.drawable.icon_pause_loop
-                } else {
-                    R.drawable.icon_pause
-                }
-            },
-            description = R.string.menu_item_playpause,
-            onClick = {
-                scope.launch {
+                    PlaybackState.Ready -> R.drawable.icon_play
+
+                    PlaybackState.Stopping,
+                    PlaybackState.Playing -> if (this@ComponentActivityEditor.state_model.looping_playback.value) {
+                        R.drawable.icon_pause_loop
+                    } else {
+                        R.drawable.icon_pause
+                    }
+                },
+                description = R.string.menu_item_playpause,
+                onLongClick = {
                     when (this@ComponentActivityEditor.controller_model.playback_state_midi) {
                         PlaybackState.Queued,
                         PlaybackState.Stopping,
-                        PlaybackState.NotReady -> {}
+                        PlaybackState.NotReady -> { }
+
                         PlaybackState.Ready -> {
-                            dispatcher.play_opus_midi()
+                            scope.launch(Dispatchers.IO) {
+                                dispatcher.play_opus_midi(true)
+                            }
                         }
 
                         PlaybackState.Playing -> {
-                            dispatcher.stop_opus_midi()
+                            scope.launch(Dispatchers.IO) {
+                                dispatcher.stop_opus_midi()
+                            }
+                        }
+                    }
+                },
+                onClick = {
+                    when (this@ComponentActivityEditor.controller_model.playback_state_midi) {
+                        PlaybackState.Queued,
+                        PlaybackState.Stopping,
+                        PlaybackState.NotReady -> { }
+
+                        PlaybackState.Ready -> {
+                            scope.launch(Dispatchers.IO) {
+                                dispatcher.play_opus_midi()
+                            }
+                        }
+
+                        PlaybackState.Playing -> {
+                            scope.launch(Dispatchers.IO) {
+                                dispatcher.stop_opus_midi()
+                            }
                         }
                     }
                 }
+            )
+            if (PlaybackState.Queued == this@ComponentActivityEditor.controller_model.playback_state_midi) {
+                CircularProgressIndicator()
             }
-        )
+        }
     }
 
     @Composable

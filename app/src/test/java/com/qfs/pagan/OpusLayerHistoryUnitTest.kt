@@ -768,7 +768,7 @@ class HistoryCacheUnitTest {
         val manager = OpusManager()
         manager._project_change_new()
         this.undo_and_check(manager) {
-            manager.channel_set_preset(0, Pair(0, 12))
+            manager.channel_set_preset(0, PresetKey(0,5,2))
         }
     }
 

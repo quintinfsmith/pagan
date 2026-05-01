@@ -1,18 +1,18 @@
 plugins {
     id 'com.android.application'
-    id "org.jetbrains.kotlin.android" version "2.3.0"
-    id "org.jetbrains.kotlin.plugin.compose" version "2.3.0"
-    id 'org.jetbrains.kotlinx.kover' version '0.9.4'
+    id "org.jetbrains.kotlin.android" version "2.3.21"
+    id "org.jetbrains.kotlin.plugin.compose" version "2.3.21"
+    id 'org.jetbrains.kotlinx.kover' version '0.9.8'
 }
 
 android {
     namespace 'com.qfs.pagan'
-    compileSdk 36
+    compileSdk 37
 
     defaultConfig {
         applicationId "com.qfs.pagandev"
         minSdk 27
-        targetSdk 35
+        targetSdk 37
         versionCode 149
         versionName "1.8.8"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -25,8 +25,9 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
-            testCoverageEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            enableUnitTestCoverage true
+            enableAndroidTestCoverage true
         }
     }
     compileOptions {
@@ -50,28 +51,16 @@ android {
 
 dependencies {
     implementation "com.google.android.material:material:1.13.0"
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0'
-    implementation 'androidx.core:core-ktx:1.17.0'
-    implementation 'androidx.appcompat:appcompat:1.7.1'
-    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
+    implementation 'androidx.core:core-ktx:1.18.0'
     implementation "androidx.test:core:1.7.0"
-    implementation 'androidx.navigation:navigation-fragment-ktx:2.9.6'
-    implementation 'androidx.navigation:navigation-ui-ktx:2.9.6'
-    implementation 'androidx.drawerlayout:drawerlayout:1.2.0'
-    implementation 'androidx.recyclerview:recyclerview:1.4.0'
     implementation 'androidx.test:rules:1.7.0'
-    implementation 'androidx.fragment:fragment-ktx:1.8.9'
-    implementation 'androidx.compose.material3:material3:1.4.0'
-    implementation 'androidx.databinding:databinding-runtime:8.13.2'
-    implementation 'androidx.compose.runtime:runtime:1.10.0'
-    implementation 'androidx.graphics:graphics-shapes:1.1.0'
+    implementation 'androidx.compose.runtime:runtime:1.11.0'
     implementation 'androidx.documentfile:documentfile:1.1.0'
-    testImplementation 'junit:junit:4.13.2'
 
-    testImplementation "io.mockk:mockk:1.14.7"
-    testImplementation "io.mockk:mockk-bdd:1.14.7"
+    testImplementation "io.mockk:mockk:1.14.9"
+    testImplementation "io.mockk:mockk-bdd:1.14.9"
 
-    def composeBom = platform('androidx.compose:compose-bom:2025.12.01')
+    def composeBom = platform('androidx.compose:compose-bom:2026.04.01')
     implementation composeBom
     androidTestImplementation composeBom
 
@@ -90,11 +79,5 @@ dependencies {
     implementation 'androidx.compose.material3.adaptive:adaptive'
 
     // Optional - Integration with activities
-    implementation 'androidx.activity:activity-compose:1.12.2'
-    // Optional - Integration with ViewModels
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0'
-    // Optional - Integration with LiveData
-    implementation 'androidx.compose.runtime:runtime-livedata'
-    // Optional - Integration with RxJava
-    implementation 'androidx.compose.runtime:runtime-rxjava2'
+    implementation 'androidx.activity:activity-compose:1.13.0'
 }

@@ -1373,11 +1373,13 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         val output = super.to_json()
 
         this.vm_controller.active_soundfont_relative_paths.let { file_names ->
-            output.get_hashmap("d")["sfs"] = JSONList(
-                *Array(file_names.size) {
-                    JSONString(file_names[it])
-                }
-            )
+            if (file_names.isNotEmpty()) {
+                output.get_hashmap("d")["sfs"] = JSONList(
+                    *Array(file_names.size) {
+                        JSONString(file_names[it])
+                    }
+                )
+            }
         }
 
         return output

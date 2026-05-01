@@ -630,15 +630,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.state_model.normalize_beat_widths.value = this.view_model.configuration.normalize_beat_widths.value
         this.state_model.beat_stroke_thickness.value = this.view_model.configuration.beat_stroke_thickness.value
         this.state_model.update_global_zoom_notches()
-        try {
-            this.set_soundfont(false)
-        } catch (e: Exception) {
+        this.set_soundfont {
             this.view_model.configuration.soundfonts.value = arrayOf()
-            this.set_soundfont(true)
+            this.set_soundfont()
         }
     }
 
-    fun set_soundfont(ignore_bad_soundfonts: Boolean = true) {
+    fun set_soundfont(bad_soundfont_callback: ((Uri) -> Unit)? = null) {
         // Ensure playback is stopped
         this.action_interface.stop_opus_midi()
         this.action_interface.stop_opus()
@@ -669,32 +667,35 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                 // Possible if user puts the sf2 in their files manually
                 if (!soundfont_file.exists()) {
-                    if (ignore_bad_soundfonts) {
+                    if (bad_soundfont_callback == null) {
                         continue
                     } else {
-                        throw FileNotFoundException()
+                        bad_soundfont_callback(soundfont_file.uri)
+                        return@launch
                     }
                 }
 
-                soundfonts.add(
-                    try {
-                        SoundFont(this@ComponentActivityEditor, soundfont_file.uri)
-                    } catch (_: Exception) {
-                        if (ignore_bad_soundfonts) {
-                            continue
-                        } else {
-                            throw SoundFont.InvalidSoundFont(soundfont_file.uri)
-                        }
+                try {
+                    soundfonts.add(SoundFont(this@ComponentActivityEditor, soundfont_file.uri))
+                } catch (_: Exception) {
+                    if (bad_soundfont_callback == null) {
+                        continue
+                    } else {
+                        bad_soundfont_callback(soundfont_file.uri)
+                        return@launch
                     }
-                )
+                }
             }
 
             controller_model.set_soundfonts(*soundfonts.toTypedArray())
             controller_model.playback_device?.activity = this@ComponentActivityEditor
-            controller_model.active_soundfont_relative_paths = List(file_paths.size) { i -> file_paths[i].value }
-            state_model.enable_soundfont(file_paths)
+            controller_model.active_soundfont_relative_paths = List(file_paths.size) { i ->
+                file_paths[i].value
+            }
 
+            state_model.enable_soundfont(file_paths)
             state_model.soundfont_ready.value = true
+            view_model.save_configuration()
         }
     }
 
@@ -2743,13 +2744,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     }
                 }
 
-
                 val soundfonts = this.view_model.configuration.soundfonts
                 val originals = List(soundfonts.value.size) {
                     soundfonts.value[it].value
                 }
 
-                if (file_paths != originals.toList()) {
+                // Don't change soundfonts if no soundfont is associated with the project
+                if (file_paths.isNotEmpty() && file_paths != originals.toList()) {
                     for (i in 0 until min(soundfonts.value.size, file_paths.size)) {
                         soundfonts.value[i].value = file_paths[i]
                     }
@@ -2765,11 +2766,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         bkp_values.addAll(soundfonts.value.sliceArray(file_paths.size until soundfonts.value.size))
                         soundfonts.value = soundfonts.value.sliceArray(0 until file_paths.size)
                     }
+
                     // Try opening the assigned soundfont, but if it fails for any reason, go back to the
                     // Currently active one.
-                    try {
-                        this.set_soundfont(false)
-                    } catch (_: Exception) {
+                    this.set_soundfont {
                         // Restore the preexisting MutableState wrappers as well as the values themselves
                         if (originals.size > soundfonts.value.size) {
                             soundfonts.value += bkp_values.toTypedArray()
@@ -2782,7 +2782,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                         this.set_soundfont()
                     }
-                    this.view_model.save_configuration()
                 }
             }
         }

@@ -1,2 +1,4 @@
 - Fixed inverted Pan
 - Fixed wide-beat progress indicator being displayed incorrectly sometimes
+- Added icon-indication that line labels can be tapped while selecting range.
+- Showing loading indicator in multiple places where its needed

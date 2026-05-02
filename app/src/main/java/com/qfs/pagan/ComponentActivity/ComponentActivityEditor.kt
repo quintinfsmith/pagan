@@ -66,6 +66,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -143,6 +144,8 @@ import com.qfs.pagan.composable.cxtmenu.ContextMenuLinePrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuLineSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuRangeSecondary
 import com.qfs.pagan.composable.SoundfontLoadingIndicator
+import com.qfs.pagan.composable.TuningDialogNormal
+import com.qfs.pagan.composable.TuningDialogTiny
 import com.qfs.pagan.composable.dashed_border
 import com.qfs.pagan.composable.dragging_scroll
 import com.qfs.pagan.composable.keyboardAsState
@@ -912,9 +915,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
         Box(contentAlignment = Alignment.Center) {
             TopBarIcon(
                 icon = when (this@ComponentActivityEditor.state_model.playback_state_midi.value) {
-                    PlaybackState.Queued,
                     PlaybackState.NotReady -> R.drawable.baseline_play_disabled_24
 
+                    PlaybackState.Queued,
                     PlaybackState.Ready -> R.drawable.icon_play
 
                     PlaybackState.Stopping,
@@ -2048,7 +2051,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 ConfigDrawerTopButton(
-                    onClick = { dispatcher.set_tuning_table_and_transpose() },
+                    onClick = { this@ComponentActivityEditor.create_tuning_table_dialog() },
                     content = { Text(R.string.label_tuning) }
                 )
                 Spacer(Modifier.weight(1F))
@@ -3147,5 +3150,38 @@ class ComponentActivityEditor: PaganComponentActivity() {
         return false
         // return this.keyboard_interface.input(e)
     }
+
+    fun create_tuning_table_dialog() {
+        val opus_manager = this.controller_model.opus_manager
+        this.create_dialog { close ->
+            @Composable {
+                val original_radix = opus_manager.get_radix()
+                val transpose_numerator = remember { mutableIntStateOf(opus_manager.transpose.first) }
+                val transpose_denominator = remember { mutableIntStateOf(opus_manager.transpose.second) }
+                val radix = remember { mutableIntStateOf(original_radix) }
+                val note_map = MutableList(radix.intValue) { i ->
+                    if (radix.intValue == original_radix) {
+                        Pair(
+                            opus_manager.tuning_map[i].first,
+                            opus_manager.tuning_map[i].second
+                        )
+                    } else {
+                        Pair(i, radix.intValue)
+                    }
+                }
+
+                if(this@ComponentActivityEditor.view_model.active_layout_size.value == LayoutSize.SmallLandscape) {
+                    TuningDialogTiny(close, transpose_numerator, transpose_denominator, radix, note_map) { new_table, new_transpose ->
+                        opus_manager.set_tuning_map_and_transpose(new_table, new_transpose)
+                    }
+                } else {
+                    TuningDialogNormal(close, transpose_numerator, transpose_denominator, radix, note_map) { new_table, new_transpose ->
+                        opus_manager.set_tuning_map_and_transpose(new_table, new_transpose)
+                    }
+                }
+            }
+        }
+    }
+
 }
 

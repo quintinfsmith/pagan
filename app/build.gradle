@@ -13,7 +13,7 @@ android {
         applicationId "com.qfs.pagan"
         minSdk 27
         targetSdk 37
-        versionCode 149
+        versionCode 150
         versionName "1.8.8"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         ndk.abiFilters 'armeabi-v7a','arm64-v8a','x86','x86_64'

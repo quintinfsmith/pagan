@@ -725,23 +725,28 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     fun import_midi(uri: Uri) {
         this.state_model.ready.value = false
-        val bytes = this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
-            FileInputStream(it.fileDescriptor).readBytes()
-        } ?: throw InvalidMIDIFile(uri.toString())
+        this.controller_model.viewModelScope.launch(Dispatchers.IO) {
+            val bytes = applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
+                FileInputStream(it.fileDescriptor).readBytes()
+            } ?: throw InvalidMIDIFile(uri.toString())
 
-        val midi = try {
-            Midi.from_bytes(bytes)
-        } catch (_: Exception) {
-            throw InvalidMIDIFile(uri.toString())
+            val midi = try {
+                Midi.from_bytes(bytes)
+            } catch (_: Exception) {
+                throw InvalidMIDIFile(uri.toString())
+            }
+
+            val opus_manager = controller_model.opus_manager
+            opus_manager.project_change_midi(midi)
+            val filename = parse_file_name(uri)
+            opus_manager.set_project_name(
+                filename?.substring(0, filename.lastIndexOf("."))
+                    ?: getString(R.string.default_imported_midi_title)
+            )
+            opus_manager.clear_history()
+            controller_model.active_project = null
+            controller_model.project_exists.value = false
         }
-
-        val opus_manager = this.controller_model.opus_manager
-        opus_manager.project_change_midi(midi)
-        val filename = this.parse_file_name(uri)
-        opus_manager.set_project_name(filename?.substring(0, filename.lastIndexOf(".")) ?: this.getString( R.string.default_imported_midi_title))
-        opus_manager.clear_history()
-        this.controller_model.active_project = null
-        this.controller_model.project_exists.value = false
     }
 
     fun parse_file_name(uri: Uri): String? {
@@ -2717,70 +2722,73 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.action_interface.stop_opus_midi()
 
         this.controller_model.opus_manager.vm_state.ready.value = false
-        val input_stream = this@ComponentActivityEditor.contentResolver.openInputStream(uri)
-        val reader = BufferedReader(InputStreamReader(input_stream))
-        val content = reader.readText().toByteArray(Charsets.UTF_8)
 
-        reader.close()
-        input_stream?.close()
+        this.controller_model.viewModelScope.launch(Dispatchers.IO) {
+            val input_stream = this@ComponentActivityEditor.contentResolver.openInputStream(uri)
+            val reader = BufferedReader(InputStreamReader(input_stream))
+            val content = reader.readText().toByteArray(Charsets.UTF_8)
 
-        this.controller_model.opus_manager.load(content) { json_data ->
-            this.controller_model.active_project = uri
-            this.controller_model.project_exists.value = true
-            if (this.view_model.configuration.use_preferred_soundfont.value) {
-                val file_paths = mutableListOf<String>()
-                json_data.get_hashmap("d").get_stringn("sf")?.let {
-                    file_paths.add(it)
-                }
-                json_data.get_hashmap("d").get_listn("sfs")?.let {
-                    for (i in 0 until it.size) {
-                        file_paths.add(it.get_string(i))
+            reader.close()
+            input_stream?.close()
+
+            controller_model.opus_manager.load(content) { json_data ->
+                controller_model.active_project = uri
+                controller_model.project_exists.value = true
+                if (view_model.configuration.use_preferred_soundfont.value) {
+                    val file_paths = mutableListOf<String>()
+                    json_data.get_hashmap("d").get_stringn("sf")?.let {
+                        file_paths.add(it)
                     }
-                }
-
-                if (!this.view_model.configuration.allow_multiple_soundfonts.value) {
-                    while (file_paths.size > 1) {
-                        file_paths.removeAt(file_paths.size - 1)
-                    }
-                }
-
-                val soundfonts = this.view_model.configuration.soundfonts
-                val originals = List(soundfonts.value.size) {
-                    soundfonts.value[it].value
-                }
-
-                // Don't change soundfonts if no soundfont is associated with the project
-                if (file_paths.isNotEmpty() && file_paths != originals.toList()) {
-                    for (i in 0 until min(soundfonts.value.size, file_paths.size)) {
-                        soundfonts.value[i].value = file_paths[i]
-                    }
-
-                    if (soundfonts.value.size < file_paths.size) {
-                        soundfonts.value += Array(file_paths.size - soundfonts.value.size) { i ->
-                            mutableStateOf(file_paths[i + soundfonts.value.size])
+                    json_data.get_hashmap("d").get_listn("sfs")?.let {
+                        for (i in 0 until it.size) {
+                            file_paths.add(it.get_string(i))
                         }
                     }
 
-                    val bkp_values: MutableList<MutableState<String>> = mutableListOf()
-                    if (soundfonts.value.size > file_paths.size) {
-                        bkp_values.addAll(soundfonts.value.sliceArray(file_paths.size until soundfonts.value.size))
-                        soundfonts.value = soundfonts.value.sliceArray(0 until file_paths.size)
+                    if (!view_model.configuration.allow_multiple_soundfonts.value) {
+                        while (file_paths.size > 1) {
+                            file_paths.removeAt(file_paths.size - 1)
+                        }
                     }
 
-                    // Try opening the assigned soundfont, but if it fails for any reason, go back to the
-                    // Currently active one.
-                    this.set_soundfont {
-                        // Restore the preexisting MutableState wrappers as well as the values themselves
-                        if (originals.size > soundfonts.value.size) {
-                            soundfonts.value += bkp_values.toTypedArray()
-                        } else if (originals.size < soundfonts.value.size) {
-                            soundfonts.value = soundfonts.value.sliceArray(0 until originals.size)
-                        }
-                        for ((i, value) in originals.enumerate()) {
-                            soundfonts.value[i].value = value
+                    val soundfonts = view_model.configuration.soundfonts
+                    val originals = List(soundfonts.value.size) {
+                        soundfonts.value[it].value
+                    }
+
+                    // Don't change soundfonts if no soundfont is associated with the project
+                    if (file_paths.isNotEmpty() && file_paths != originals.toList()) {
+                        for (i in 0 until min(soundfonts.value.size, file_paths.size)) {
+                            soundfonts.value[i].value = file_paths[i]
                         }
 
-                        this.set_soundfont()
+                        if (soundfonts.value.size < file_paths.size) {
+                            soundfonts.value += Array(file_paths.size - soundfonts.value.size) { i ->
+                                mutableStateOf(file_paths[i + soundfonts.value.size])
+                            }
+                        }
+
+                        val bkp_values: MutableList<MutableState<String>> = mutableListOf()
+                        if (soundfonts.value.size > file_paths.size) {
+                            bkp_values.addAll(soundfonts.value.sliceArray(file_paths.size until soundfonts.value.size))
+                            soundfonts.value = soundfonts.value.sliceArray(0 until file_paths.size)
+                        }
+
+                        // Try opening the assigned soundfont, but if it fails for any reason, go back to the
+                        // Currently active one.
+                        this@ComponentActivityEditor.set_soundfont {
+                            // Restore the preexisting MutableState wrappers as well as the values themselves
+                            if (originals.size > soundfonts.value.size) {
+                                soundfonts.value += bkp_values.toTypedArray()
+                            } else if (originals.size < soundfonts.value.size) {
+                                soundfonts.value = soundfonts.value.sliceArray(0 until originals.size)
+                            }
+                            for ((i, value) in originals.enumerate()) {
+                                soundfonts.value[i].value = value
+                            }
+
+                            this@ComponentActivityEditor.set_soundfont()
+                        }
                     }
                 }
             }
@@ -3136,7 +3144,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
     override fun on_key_press(e: KeyEvent): Boolean {
-        return this.keyboard_interface.input(e)
+        return false
+        // return this.keyboard_interface.input(e)
     }
 }
 

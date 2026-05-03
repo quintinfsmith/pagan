@@ -11,23 +11,14 @@ package com.qfs.pagan
 
 import android.content.Context
 import android.widget.Toast
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -35,24 +26,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.input.TextFieldLineLimits
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -60,25 +42,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import androidx.documentfile.provider.DocumentFile
 import com.qfs.apres.VirtualMidiInputDevice
 import com.qfs.pagan.OpusLayerInterface
-import com.qfs.pagan.composable.ColorPicker
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DialogTitle
-import com.qfs.pagan.composable.DivisorSeparator
 import com.qfs.pagan.composable.IntegerInput
 import com.qfs.pagan.composable.LargeSpacer
-import com.qfs.pagan.composable.MediumSpacer
-import com.qfs.pagan.composable.NumberPicker
 import com.qfs.pagan.composable.SortableMenu
 import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.UnSortableMenu
@@ -90,7 +66,6 @@ import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
-import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
 import com.qfs.pagan.structure.opusmanager.base.MixedInstrumentException
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
@@ -98,11 +73,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
-import com.qfs.pagan.structure.opusmanager.cursor.InvalidCursorState
-import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Shapes
-import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.CoroutineScope
@@ -112,7 +83,6 @@ import kotlin.concurrent.thread
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
-import kotlin.math.min
 import com.qfs.pagan.OpusLayerInterface as OpusManager
 
 /**
@@ -840,52 +810,7 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         }
     }
 
-    fun set_duration(duration: Int? = null) {
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-
-        duration?.let {
-            if (cursor.mode != CursorMode.Single) throw InvalidCursorState()
-            when (cursor.ctl_level) {
-                CtlLineLevel.Line -> {
-                    val (beat_key, position) = opus_manager.controller_line_get_actual_position(
-                        cursor.ctl_type!!,
-                        cursor.get_beatkey(),
-                        cursor.get_position()
-                    )
-                    opus_manager.set_duration(cursor.ctl_type!!, beat_key, position, duration)
-                }
-                CtlLineLevel.Channel -> {
-                    val (beat, position) = opus_manager.controller_channel_get_actual_position(
-                        cursor.ctl_type!!,
-                        cursor.channel,
-                        cursor.beat,
-                        cursor.get_position()
-                    )
-                    opus_manager.set_duration(cursor.ctl_type!!, cursor.channel, beat, position, duration)
-                }
-                CtlLineLevel.Global -> {
-                    val (beat, position) = opus_manager.controller_global_get_actual_position(cursor.ctl_type!!, cursor.beat, cursor.get_position())
-                    opus_manager.set_duration(cursor.ctl_type!!, beat, position, duration)
-                }
-                null -> {
-                    val (beat_key, position) = opus_manager.get_actual_position(
-                        cursor.get_beatkey(),
-                        cursor.get_position()
-                    )
-                    opus_manager.set_duration(beat_key, position, max(1, it))
-                }
-            }
-            return
-        }
-
-        val event_duration = opus_manager.get_event_at_cursor()?.duration ?: 1
-        this.dialog_number_input(R.string.dlg_duration, 1, default = event_duration) {
-            this.set_duration(it)
-        }
-    }
-
-    private fun generate_effect_menu_option(ctl_type: EffectType, icon_id: Int): Pair<EffectType, @Composable RowScope.() -> Unit> {
+    fun generate_effect_menu_option(ctl_type: EffectType, icon_id: Int): Pair<EffectType, @Composable RowScope.() -> Unit> {
         return Pair(ctl_type) {
             Icon(
                 modifier = Modifier.width(Dimensions.EffectDialogIconWidth),
@@ -1067,42 +992,10 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         )
     }
 
-    fun show_hidden_global_controller(forced_value: EffectType? =  null) {
-        val opus_manager = this.get_opus_manager()
-
-        forced_value?.let {
-            opus_manager.toggle_global_controller_visibility(it)
-            return
-        }
-
-        val options = mutableListOf<Pair<EffectType, @Composable RowScope.() -> Unit>>( )
-        for (ctl_type in OpusLayerInterface.global_controller_domain) {
-            if (opus_manager.is_global_ctl_visible(ctl_type)) continue
-            options.add(this.generate_effect_menu_option(ctl_type, EffectResourceMap[ctl_type].icon))
-        }
-
-        this.dialog_popup_menu(R.string.show_global_controls, options) {
-            this.show_hidden_global_controller(it)
-        }
+    fun show_hidden_global_controller(forced_value: EffectType) {
+        this.get_opus_manager().toggle_global_controller_visibility(forced_value)
     }
 
-    fun split(split: Int? = null) {
-        split?.let {
-            val opus_manager = this.get_opus_manager()
-            val cursor = opus_manager.cursor
-            when (cursor.ctl_level) {
-                CtlLineLevel.Global -> opus_manager.controller_global_split_tree(cursor.ctl_type!!, cursor.beat, cursor.get_position(), it)
-                CtlLineLevel.Channel -> opus_manager.controller_channel_split_tree(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.get_position(), it)
-                CtlLineLevel.Line -> opus_manager.controller_line_split_tree(cursor.ctl_type!!, cursor.get_beatkey(), cursor.get_position(), it)
-                null -> opus_manager.split_tree_at_cursor(it)
-            }
-            return
-        }
-
-        this.dialog_number_input(R.string.dlg_split, 2, 32) {
-            this.split(it)
-        }
-    }
 
     fun set_offset(new_offset: Int, mode: RelativeInputMode) {
         val opus_manager = this.get_opus_manager()
@@ -1205,102 +1098,17 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         }
     }
 
-    fun adjust_selection(amount: Int? = null) {
-        val opus_manager = this.get_opus_manager()
-
-        amount?.let {
-            opus_manager.offset_selection(amount)
-            return
-        }
-
-        val radix = opus_manager.get_radix()
-        this.vm_top.create_dialog { close ->
-            @Composable {
-                val octave = remember { mutableIntStateOf(0) }
-                val offset = remember { mutableIntStateOf(0) }
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    val max_abs = radix - 1
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(R.string.offset_dialog_octaves)
-                        NumberPicker(Modifier, -7..7, octave)
-                    }
-                    Spacer(Modifier.width(Dimensions.DialogAdjustInnerSpace))
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(R.string.offset_dialog_offset)
-                        NumberPicker(Modifier, 0 - max_abs .. max_abs, offset)
-                    }
-                }
-                DialogBar(
-                    positive = {
-                        close()
-                        this@ActionDispatcher.adjust_selection((octave.intValue * radix) + offset.intValue)
-                    },
-                    neutral = close
-                )
-            }
-        }
-    }
 
     fun unset() {
         this.vm_controller.opus_manager.unset()
     }
 
-    fun unset_root() {
-        val opus_manager = this.vm_controller.opus_manager
-        val cursor = opus_manager.cursor
-        when (cursor.ctl_level) {
-            CtlLineLevel.Global -> {
-                opus_manager.cursor_select_ctl_at_global(cursor.ctl_type!!, cursor.beat, listOf())
-            }
-            CtlLineLevel.Channel -> {
-                opus_manager.cursor_select_ctl_at_channel(cursor.ctl_type!!, cursor.channel, cursor.beat, listOf())
-            }
-            CtlLineLevel.Line -> {
-                val beat_key = cursor.get_beatkey()
-                opus_manager.cursor_select_ctl_at_line(cursor.ctl_type!!, beat_key, listOf())
-            }
-            null -> {
-                val beat_key = cursor.get_beatkey()
-                opus_manager.unset(beat_key, listOf())
-            }
-        }
-    }
 
     fun remove_at_cursor() {
         val opus_manager = this.get_opus_manager()
         opus_manager.remove_at_cursor()
     }
 
-    fun insert_leaf(repeat: Int? = null) {
-        val opus_manager = this.get_opus_manager()
-        repeat?.let {
-            val position = opus_manager.cursor.get_position().toMutableList()
-            val cursor = opus_manager.cursor
-            if (position.isEmpty()) {
-                when (cursor.ctl_level) {
-                    CtlLineLevel.Global -> opus_manager.controller_global_split_tree(cursor.ctl_type!!, cursor.beat, position, 2)
-                    CtlLineLevel.Channel -> opus_manager.controller_channel_split_tree(cursor.ctl_type!!, cursor.channel, cursor.beat, position, 2)
-                    CtlLineLevel.Line -> opus_manager.controller_line_split_tree(cursor.ctl_type!!, cursor.get_beatkey(), position, 2)
-                    null -> opus_manager.split_tree_at_cursor(it + 1)
-                }
-            } else {
-                when (cursor.ctl_level) {
-                    CtlLineLevel.Global -> opus_manager.controller_global_insert_after(cursor.ctl_type!!, cursor.beat, position)
-                    CtlLineLevel.Channel -> opus_manager.controller_channel_insert_after(cursor.ctl_type!!, cursor.channel, cursor.beat, position)
-                    CtlLineLevel.Line -> opus_manager.controller_line_insert_after(cursor.ctl_type!!, cursor.get_beatkey(), position)
-                    null -> opus_manager.insert_after_cursor(it)
-                }
-            }
-            return
-        }
-
-        this.dialog_number_input(R.string.dlg_insert, 1, 63) {
-            this.insert_leaf(it)
-        }
-    }
 
     fun toggle_percussion() {
         val opus_manager = this.get_opus_manager()
@@ -1391,69 +1199,12 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         }
     }
 
-    private fun color_picker_dialog(color: Color, callback: (Color?) -> Unit) {
-        val color_state: MutableState<Color> = mutableStateOf(color)
-        this.vm_top.create_dialog { close ->
-            @Composable {
-                Row(horizontalArrangement = Arrangement.Center) {
-                    ColorPicker(
-                        modifier = Modifier.fillMaxWidth(),
-                        color = color_state
-                    )
-                }
-                DialogBar(
-                    negative = {
-                        close()
-                        callback(null)
-                    },
-                    negative_label = R.string.use_default_color,
-                    neutral = close,
-                    positive = {
-                        callback(color_state.value)
-                        close()
-                    }
 
-                )
-            }
-        }
-    }
-    fun set_line_color(channel: Int, line_offset: Int, color: Color? = null) {
-        val opus_manager = this.get_opus_manager()
-        color?.let {
-            opus_manager.set_line_event_color(channel, line_offset, color)
-        }
-
-        val default_color = opus_manager.get_channel(channel).lines[line_offset].palette.event
-            ?: opus_manager.get_channel(channel).palette.event
-            ?: Colors.LEAF_COLOR
-
-        this.color_picker_dialog(default_color) { new_color: Color? ->
-            if (new_color == null) {
-                this.unset_line_color(channel, line_offset)
-            } else {
-                this.set_line_color(channel, line_offset, new_color)
-            }
-        }
-    }
     fun unset_line_color(channel: Int, line_offset: Int) {
         val opus_manager = this.get_opus_manager()
         opus_manager.set_line_event_color(channel, line_offset, null)
     }
 
-    fun set_channel_color(channel: Int, color: Color? = null) {
-        val opus_manager = this.get_opus_manager()
-        color?.let {
-            opus_manager.set_channel_event_color(channel, color)
-        }
-
-        this.color_picker_dialog(opus_manager.get_channel(channel).palette.event ?: Colors.LEAF_COLOR) { new_color: Color? ->
-            if (new_color == null) {
-                this.unset_channel_color(channel)
-            } else {
-                this.set_channel_color(channel, new_color)
-            }
-        }
-    }
     fun unset_channel_color(channel: Int) {
         val opus_manager = this.get_opus_manager()
         opus_manager.set_channel_event_color(channel, null)
@@ -1710,20 +1461,6 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         }
     }
 
-    fun insert_percussion_channel(index: Int? = null) {
-        val opus_manager = this.get_opus_manager()
-        if (index != null) {
-            val adj_index = if (index == -1) {
-                opus_manager.channels.size
-            } else {
-                index
-            }
-            opus_manager.new_channel(adj_index, is_percussion = true)
-        } else {
-            val channel = opus_manager.cursor.channel
-            opus_manager.new_channel(channel + 1, is_percussion = true)
-        }
-    }
 
     fun insert_channel(index: Int? = null) {
         val opus_manager = this.get_opus_manager()
@@ -1746,15 +1483,6 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
             opus_manager.remove_channel(use_index)
         }
     }
-
-    fun move_channel(index_from: Int, index_to: Int, before: Boolean = true) {
-        val opus_manager = this.get_opus_manager()
-        val adj_to_index = index_to + if (before) 0 else 1
-        if (adj_to_index == index_from) return
-
-        opus_manager.move_channel(index_from, min(opus_manager.channels.size, adj_to_index))
-    }
-
 
     fun insert_line(count: Int? = null) {
         val opus_manager = this.get_opus_manager()
@@ -2144,25 +1872,6 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         this.vm_top.save_configuration()
     }
 
-    fun remove_controller() {
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        when (cursor.ctl_level!!) {
-            CtlLineLevel.Line -> opus_manager.remove_line_controller(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
-            CtlLineLevel.Channel -> opus_manager.remove_channel_controller(cursor.ctl_type!!, cursor.channel)
-            CtlLineLevel.Global -> opus_manager.remove_global_controller(cursor.ctl_type!!)
-        }
-    }
-
-    fun toggle_controller_visibility() {
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        when (cursor.ctl_level!!) {
-            CtlLineLevel.Line -> opus_manager.toggle_line_controller_visibility(cursor.ctl_type!!, cursor.channel, cursor.line_offset)
-            CtlLineLevel.Channel -> { opus_manager.toggle_channel_controller_visibility(cursor.ctl_type!!, cursor.channel) }
-            CtlLineLevel.Global -> opus_manager.toggle_global_controller_visibility(cursor.ctl_type!!)
-        }
-    }
 
     fun channel_mute(channel: Int? = null) {
         val opus_manager = this.get_opus_manager()
@@ -2225,22 +1934,6 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         opus_manager.lock_cursor {
             opus_manager.remove_tagged_section(use_beat)
         }
-    }
-
-    fun move_line(channel_from: Int, line_offset_from: Int, channel_to: Int, line_offset_to: Int, before: Boolean = true) {
-       try {
-           val adj_to_index = line_offset_to + if (before) 0 else 1
-           if (adj_to_index == line_offset_from && channel_from == channel_to) return
-
-           this.get_opus_manager().move_line(
-               channel_from,
-               line_offset_from,
-               channel_to,
-               adj_to_index
-           )
-       } catch (e: IncompatibleChannelException) {
-          Toast.makeText(this.context, R.string.std_percussion_swap, Toast.LENGTH_SHORT).show()
-       }
     }
 
     fun load_from_bkp() {

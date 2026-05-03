@@ -1960,19 +1960,13 @@ open class OpusLayerBase: Effectable {
     }
 
     open fun remove_line_repeat(channel: Int, line_offset: Int, count: Int) {
+        val working_channel = this.get_channel(channel)
         for (i in 0 until count) {
-            val working_channel = this.get_channel(channel)
-            if (working_channel.size == 0) {
-                break
-            }
-            try {
-                this.remove_line(
-                    channel,
-                    min(line_offset, working_channel.size - 1)
-                )
-            } catch (_: OpusChannelAbstract.LastLineException) {
-                break
-            }
+            if (working_channel.size <= 1) break
+            this.remove_line(
+                channel,
+                min(line_offset, working_channel.size - 1)
+            )
         }
     }
 

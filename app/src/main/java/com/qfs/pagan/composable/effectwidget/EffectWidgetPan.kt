@@ -21,12 +21,11 @@ import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.qfs.pagan.ActionDispatcher
+import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
@@ -36,8 +35,8 @@ import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun RowScope.PanEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, event: OpusPanEvent) {
-    val cursor = ui_facade.active_cursor.value ?: return
+fun RowScope.PanEventMenu(vm_state: ViewModelEditorState, dispatcher: OpusLayerInterface, event: OpusPanEvent) {
+    val cursor = vm_state.active_cursor.value ?: return
     val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
     val default_colors = SliderDefaults.colors()

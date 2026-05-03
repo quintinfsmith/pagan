@@ -16,7 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import com.qfs.pagan.ActionDispatcher
+import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.wrappers.Slider
@@ -31,11 +31,12 @@ import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.roundToInt
 
 @Composable
-fun RowScope.VolumeEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, event: OpusVolumeEvent) {
-    val cursor = ui_facade.active_cursor.value ?: return
+fun RowScope.VolumeEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, event: OpusVolumeEvent) {
+    val cursor = vm_state.active_cursor.value ?: return
     val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
     val working_value = remember { mutableStateOf(working_event.value) }
+
     TextCMenuButton(
         modifier = Modifier
             .testTag(TestTag.VolumeButton)
@@ -43,16 +44,16 @@ fun RowScope.VolumeEventMenu(ui_facade: ViewModelEditorState, dispatcher: Action
         text = "%02d".format((working_value.value * 100).roundToInt()),
         shape = Shapes.ContextMenuSecondaryButtonStart,
         onClick = {
-            dispatcher.dialog_number_input(R.string.dlg_set_volume, 0, 200, default = (working_event.value * 100).toInt()) {
+            opus_manager.dialog_number_input(R.string.dlg_set_volume, 0, 200, default = (working_event.value * 100).toInt()) {
                 working_event.value = it.toFloat() / 100F
                 working_value.value = working_event.value
-                dispatcher.set_effect_at_cursor(working_event)
+                opus_manager.set_effect_at_cursor(working_event)
             }
         },
         onLongClick = {
             working_value.value = 1F
             working_event.value = 1F
-            dispatcher.set_effect_at_cursor(working_event)
+            opus_manager.set_effect_at_cursor(working_event)
         },
     )
     MediumSpacer()
@@ -68,9 +69,9 @@ fun RowScope.VolumeEventMenu(ui_facade: ViewModelEditorState, dispatcher: Action
             working_value.value = it
         },
         onValueChangeFinished = {
-            dispatcher.set_effect_at_cursor(working_event)
+            opus_manager.set_effect_at_cursor(working_event)
         },
     )
 
-    EffectTransitionButton(working_event, dispatcher, is_initial)
+    EffectTransitionButton(working_event, opus_manager, is_initial)
 }

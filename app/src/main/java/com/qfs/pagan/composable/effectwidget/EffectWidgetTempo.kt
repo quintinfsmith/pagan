@@ -17,14 +17,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
-import com.qfs.pagan.ActionDispatcher
+import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.FloatInput
@@ -39,7 +37,7 @@ import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, event: OpusTempoEvent) {
+fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, opus_manager: OpusLayerInterface, event: OpusTempoEvent) {
     val cursor = ui_facade.active_cursor.value ?: return
     val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
@@ -69,9 +67,9 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionD
     ) {
         working_event.value = it
         if (beat != null) {
-            dispatcher.set_effect(EffectType.Tempo, working_event, channel, line_offset, beat, position!!, lock_cursor = true)
+            opus_manager.set_effect(EffectType.Tempo, working_event, channel, line_offset, beat, position!!, lock_cursor = true)
         } else {
-            dispatcher.set_initial_effect(EffectType.Tempo, working_event, channel, line_offset, lock_cursor = true)
+            opus_manager.set_initial_effect(EffectType.Tempo, working_event, channel, line_offset, lock_cursor = true)
         }
     }
 
@@ -84,5 +82,5 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionD
 
     Spacer(Modifier.weight(.5F))
 
-    EffectTransitionButton(working_event, dispatcher, is_initial)
+    EffectTransitionButton(working_event, opus_manager, is_initial)
 }

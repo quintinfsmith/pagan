@@ -9,23 +9,36 @@
  */
 package com.qfs.pagan.composable.cxtmenu
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
-import com.qfs.pagan.ActionDispatcher
+import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
+import com.qfs.pagan.composable.ColorPickerDialog
+import com.qfs.pagan.composable.DialogBar
+import com.qfs.pagan.composable.IntegerInputDialog
 import com.qfs.pagan.composable.MediumSpacer
+import com.qfs.pagan.composable.NumberInput
+import com.qfs.pagan.composable.NumberPicker
+import com.qfs.pagan.composable.PaganDialog
 import com.qfs.pagan.composable.SoundfontLoadingIndicator
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.button.TextCMenuButton
@@ -35,33 +48,79 @@ import com.qfs.pagan.composable.effectwidget.ReverbEventMenu
 import com.qfs.pagan.composable.effectwidget.TempoEventMenu
 import com.qfs.pagan.composable.effectwidget.VelocityEventMenu
 import com.qfs.pagan.composable.effectwidget.VolumeEventMenu
+import com.qfs.pagan.composable.wrappers.Text
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.testTag
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun AdjustLineButton(dispatcher: ActionDispatcher) {
+fun AdjustSelectionDialog(visibility: MutableState<Boolean>, radix: Int, callback: (Int) -> Unit) {
+    PaganDialog(visibility) {
+        val octave = remember { mutableIntStateOf(0) }
+        val offset = remember { mutableIntStateOf(0) }
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            val max_abs = radix - 1
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(R.string.offset_dialog_octaves)
+                NumberPicker(Modifier, -7..7, octave)
+            }
+            Spacer(Modifier.width(Dimensions.DialogAdjustInnerSpace))
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(R.string.offset_dialog_offset)
+                NumberPicker(Modifier, 0 - max_abs .. max_abs, offset)
+            }
+        }
+        DialogBar(
+            positive = {
+                visibility.value = false
+                callback((octave.intValue * radix) + offset.intValue)
+            },
+            neutral = {
+                visibility.value = false
+            }
+        )
+    }
+}
+@Composable
+fun AdjustLineButton(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface) {
+    val visibility = remember { mutableStateOf(false) }
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.AdjustSelection),
-        onClick = { dispatcher.adjust_selection() },
+        onClick = {
+            visibility.value = !visibility.value
+        },
         shape = Shapes.ContextMenuButtonPrimary,
         icon = R.drawable.icon_adjust,
         description = R.string.cd_adjust_selection
     )
+
+    if (visibility.value) {
+        AdjustSelectionDialog(visibility, vm_state.radix.value) { offset ->
+            opus_manager.offset_selection(offset)
+        }
+    }
 }
 @Composable
-fun DuplicateLineButton(dispatcher: ActionDispatcher) {
+fun DuplicateLineButton(active_line: ViewModelEditorState.LineData, opus_manager: OpusLayerInterface) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.LineDuplicate),
-        onClick = { dispatcher.duplicate_line() },
+        onClick = {
+            val channel = active_line.channel.value ?: return@IconCMenuButton
+            val line_offset = active_line.line_offset.value ?: return@IconCMenuButton
+            opus_manager.duplicate_line(channel, line_offset)
+        },
         shape = Shapes.ContextMenuButtonPrimary,
         icon = R.drawable.icon_ic_baseline_content_copy_24,
         description = R.string.cd_adjust_selection
@@ -70,12 +129,12 @@ fun DuplicateLineButton(dispatcher: ActionDispatcher) {
 
 @Composable
 fun ToggleLineControllerButton(
-    dispatcher: ActionDispatcher,
+    opus_manager: OpusLayerInterface,
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.LineEffectsShow),
-        onClick = { dispatcher.show_hidden_line_controller() },
+        onClick = { opus_manager.toggle_controller_visibility_at_cursor() },
         shape = shape,
         icon = R.drawable.icon_ctl,
         description = R.string.cd_show_effect_controls
@@ -83,11 +142,17 @@ fun ToggleLineControllerButton(
 }
 
 @Composable
-fun InsertLineButton(dispatcher: ActionDispatcher, shape: Shape = Shapes.ContextMenuButtonPrimaryStart) {
+fun InsertLineButton(active_line: ViewModelEditorState.LineData, opus_manager: OpusLayerInterface, shape: Shape = Shapes.ContextMenuButtonPrimaryStart) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.LineNew),
-        onClick = { dispatcher.insert_line(1) },
-        onLongClick = { dispatcher.insert_line() },
+        onClick = {
+            val channel = active_line.channel.value ?: return@IconCMenuButton
+            val line_offset = active_line.line_offset.value ?: return@IconCMenuButton
+            opus_manager.new_line(channel, line_offset + 1)
+        },
+        onLongClick = {
+            TODO("NUMBER DIALOG")
+        },
         icon = R.drawable.icon_add,
         shape = shape,
         description = R.string.cd_insert_line
@@ -95,32 +160,49 @@ fun InsertLineButton(dispatcher: ActionDispatcher, shape: Shape = Shapes.Context
 }
 
 @Composable
-fun RemoveLineButton(dispatcher: ActionDispatcher, size: Int) {
+fun RemoveLineButton(active_line: ViewModelEditorState.LineData, opus_manager: OpusLayerInterface, size: Int) {
+    val visibility = remember { mutableStateOf(false) }
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.LineRemove),
         enabled = size > 1,
-        onClick = { dispatcher.remove_line(1) },
-        onLongClick = { dispatcher.remove_line() },
+        onClick = {
+            val channel = active_line.channel.value ?: return@IconCMenuButton
+            val line_offset = active_line.line_offset.value ?: return@IconCMenuButton
+            opus_manager.remove_line_repeat(channel, line_offset, 1)
+        },
+        onLongClick = {
+            visibility.value = true
+        },
         icon = R.drawable.icon_subtract,
         description = R.string.cd_remove_line
     )
+
+    IntegerInputDialog(visibility, R.string.dlg_remove_lines, 0) { i ->
+        val channel = active_line.channel.value ?: return@IntegerInputDialog
+        val line_offset = active_line.line_offset.value ?: return@IntegerInputDialog
+        opus_manager.remove_line_repeat(channel, line_offset, i)
+    }
 }
 
 @Composable
-fun RemoveEffectButton(dispatcher: ActionDispatcher, shape: Shape) {
+fun RemoveEffectButton(active_line: ViewModelEditorState.LineData, opus_manager: OpusLayerInterface, shape: Shape) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.LineEffectRemove),
-        onClick = { dispatcher.remove_controller() },
-        onLongClick = { dispatcher.remove_controller() },
+        onClick = {
+            active_line.ctl_type.value?.let { type ->
+                val channel = active_line.channel.value ?: return@let
+                val line_offset = active_line.line_offset.value ?: return@let
+                opus_manager.remove_line_controller(type, channel, line_offset)
+            }
+        },
         icon = R.drawable.icon_subtract,
         shape = shape,
         description = R.string.cd_remove_line
     )
 }
 @Composable
-fun PercussionSetInstrumentButton(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, dispatcher: ActionDispatcher, y: Int, use_name: Boolean) {
+fun PercussionSetInstrumentButton(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, y: Int, use_name: Boolean) {
     if (vm_state.soundfont_ready.value) {
-
         val active_line = vm_state.line_data[y]
         val assigned_offset = active_line.assigned_offset.value ?: return
         val active_channel = vm_state.channel_data[active_line.channel.value!!]
@@ -139,7 +221,7 @@ fun PercussionSetInstrumentButton(modifier: Modifier = Modifier, vm_state: ViewM
             TextCMenuButton(
                 modifier = modifier.testTag(TestTag.InstrumentSet),
                 onClick = {
-                    dispatcher.set_percussion_instrument(
+                    opus_manager.set_percussion_instrument(
                         active_line.channel.value!!,
                         active_line.line_offset.value!!
                     )
@@ -173,33 +255,43 @@ fun PercussionSetInstrumentButton(modifier: Modifier = Modifier, vm_state: ViewM
 fun SetLineColorButton(
     modifier: Modifier = Modifier,
     ui_facade: ViewModelEditorState,
-    dispatcher: ActionDispatcher,
+    opus_manager: OpusLayerInterface,
     channel: Int,
     line_offset: Int,
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
+    val visibility = remember { mutableStateOf(false) }
 
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.LineColor),
-        onClick = { dispatcher.set_line_color(channel, line_offset) },
+        onClick = { visibility.value = true },
         shape = shape,
         icon = R.drawable.icon_palette,
         description = R.string.cd_line_mute
     )
+
+    if (visibility.value) {
+        val default_color = opus_manager.get_channel(channel).lines[line_offset].palette.event
+            ?: opus_manager.get_channel(channel).palette.event
+            ?: Colors.LEAF_COLOR
+        ColorPickerDialog(default_color, visibility) { new_color ->
+            opus_manager.set_line_event_color(channel, line_offset, new_color)
+        }
+    }
 }
 
 @Composable
 fun MuteButton(
-    dispatcher: ActionDispatcher,
+    opus_manager: OpusLayerInterface,
     line: ViewModelEditorState.LineData,
 ) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.LineMute),
         onClick = {
             if (line.is_mute.value) {
-                dispatcher.line_unmute()
+                opus_manager.unmute_line_at_cursor()
             } else {
-                dispatcher.line_mute()
+                opus_manager.mute_line_at_cursor()
             }
         },
         icon = if (!line.is_mute.value) R.drawable.icon_unmute
@@ -210,10 +302,17 @@ fun MuteButton(
 }
 
 @Composable
-fun HideEffectButton(dispatcher: ActionDispatcher, shape: Shape) {
+fun HideEffectButton(active_line: ViewModelEditorState.LineData, opus_manager: OpusLayerInterface, shape: Shape) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.EffectHide),
-        onClick = { dispatcher.toggle_controller_visibility() },
+        onClick = {
+            opus_manager.toggle_controller_visibility_at_cursor()
+            active_line.ctl_type.value?.let { type ->
+                val channel = active_line.channel.value ?: return@let
+                val line_offset = active_line.line_offset.value ?: return@let
+                opus_manager.set_line_controller_visibility(type, channel, line_offset, false)
+            }
+        },
         icon = R.drawable.icon_hide,
         shape = shape,
         description = R.string.cd_hide_control_line
@@ -221,18 +320,18 @@ fun HideEffectButton(dispatcher: ActionDispatcher, shape: Shape) {
 }
 
 @Composable
-fun ContextMenuLinePrimary(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, dispatcher: ActionDispatcher, layout: LayoutSize) {
+fun ContextMenuLinePrimary(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, layout: LayoutSize) {
     val cursor = vm_state.active_cursor.value ?: return
     val active_line = vm_state.line_data[cursor.ints[0]]
     if (active_line.ctl_type.value == null) {
-        ContextMenuLineStdPrimary(modifier, vm_state, dispatcher, layout)
+        ContextMenuLineStdPrimary(modifier, vm_state, opus_manager, layout)
     } else {
-        ContextMenuLineCtlPrimary(modifier, vm_state, dispatcher, layout)
+        ContextMenuLineCtlPrimary(modifier, vm_state, opus_manager, layout)
     }
 }
 
 @Composable
-fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, dispatcher: ActionDispatcher, layout: LayoutSize) {
+fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, layout: LayoutSize) {
     val cursor = vm_state.active_cursor.value ?: return
     val active_line = vm_state.line_data[cursor.ints[0]]
     val active_channel = vm_state.channel_data[active_line.channel.value!!]
@@ -244,7 +343,7 @@ fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
         LayoutSize.XLargeLandscape -> {
             ContextMenuPrimaryRow(modifier) {
                 ToggleLineControllerButton(
-                    dispatcher,
+                    opus_manager,
                     shape = Shapes.ContextMenuButtonPrimaryStart
                 )
 
@@ -253,34 +352,34 @@ fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
                     PercussionSetInstrumentButton(
                         Modifier.weight(1F),
                         vm_state,
-                        dispatcher,
+                        opus_manager,
                         cursor.ints[0],
                         true
                     )
                 } else {
                     Spacer(Modifier.weight(1F))
-                    AdjustLineButton(dispatcher)
+                    AdjustLineButton(vm_state, opus_manager)
                 }
 
                 MediumSpacer()
-                DuplicateLineButton(dispatcher)
+                DuplicateLineButton(active_line, opus_manager)
                 MediumSpacer()
-                RemoveLineButton(dispatcher, active_channel.size.intValue)
+                RemoveLineButton(active_line, opus_manager, active_channel.size.intValue)
                 MediumSpacer()
-                InsertLineButton(dispatcher, Shapes.ContextMenuButtonPrimaryEnd)
+                InsertLineButton(active_line, opus_manager, Shapes.ContextMenuButtonPrimaryEnd)
             }
         }
         LayoutSize.SmallLandscape,
         LayoutSize.LargeLandscape,
         LayoutSize.MediumLandscape -> {
             Column {
-                InsertLineButton(dispatcher)
+                InsertLineButton(active_line, opus_manager)
 
                 MediumSpacer()
-                RemoveLineButton(dispatcher, active_channel.size.intValue)
+                RemoveLineButton(active_line, opus_manager, active_channel.size.intValue)
 
                 MediumSpacer()
-                DuplicateLineButton(dispatcher)
+                DuplicateLineButton(active_line, opus_manager)
 
                 if (active_line.assigned_offset.value != null) {
                     MediumSpacer()
@@ -289,19 +388,19 @@ fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
                             .width(Dimensions.ContextMenuButtonWidth)
                             .height(Dimensions.ContextMenuButtonHeight),
                         vm_state,
-                        dispatcher,
+                        opus_manager,
                         cursor.ints[0],
                         false
                     )
                 } else {
                     MediumSpacer()
-                    AdjustLineButton(dispatcher)
+                    AdjustLineButton(vm_state, opus_manager)
                 }
 
                 Spacer(Modifier.weight(1F))
 
                 ToggleLineControllerButton(
-                    dispatcher,
+                    opus_manager,
                     shape = Shapes.ContextMenuButtonPrimaryBottom
                 )
             }
@@ -309,7 +408,10 @@ fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
     }
 }
 @Composable
-fun ContextMenuLineCtlPrimary(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, dispatcher: ActionDispatcher, layout: LayoutSize) {
+fun ContextMenuLineCtlPrimary(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, layout: LayoutSize) {
+    val cursor = vm_state.active_cursor.value ?: return
+    val active_line = vm_state.line_data[cursor.ints[0]]
+
     when (layout) {
         LayoutSize.SmallPortrait,
         LayoutSize.MediumPortrait,
@@ -317,67 +419,67 @@ fun ContextMenuLineCtlPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
         LayoutSize.XLargePortrait,
         LayoutSize.XLargeLandscape -> {
             ContextMenuPrimaryRow(modifier) {
-                HideEffectButton(dispatcher, Shapes.ContextMenuButtonPrimaryStart)
+                HideEffectButton(active_line, opus_manager, Shapes.ContextMenuButtonPrimaryStart)
                 Spacer(Modifier.weight(1F))
-                RemoveEffectButton(dispatcher, Shapes.ContextMenuButtonPrimaryEnd)
+                RemoveEffectButton(active_line, opus_manager, Shapes.ContextMenuButtonPrimaryEnd)
             }
         }
         LayoutSize.SmallLandscape,
         LayoutSize.LargeLandscape,
         LayoutSize.MediumLandscape -> {
             Column {
-                RemoveEffectButton(dispatcher, Shapes.ContextMenuButtonPrimaryStart)
+                RemoveEffectButton(active_line, opus_manager, Shapes.ContextMenuButtonPrimaryStart)
                 Spacer(Modifier.weight(1F))
-                HideEffectButton(dispatcher, Shapes.ContextMenuButtonPrimaryBottom)
+                HideEffectButton(active_line, opus_manager, Shapes.ContextMenuButtonPrimaryBottom)
             }
         }
     }
 }
 
 @Composable
-fun ContextMenuLineSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, modifier: Modifier = Modifier, layout: LayoutSize) {
+fun ContextMenuLineSecondary(ui_facade: ViewModelEditorState, opus_manager: OpusLayerInterface, modifier: Modifier = Modifier, layout: LayoutSize) {
     val cursor = ui_facade.active_cursor.value ?: return
     val y = cursor.ints[0]
     val line = ui_facade.line_data[y]
     key(ui_facade.event_change_key.value, ui_facade.active_event.value) {
         if (line.ctl_type.value == null) {
-            ContextMenuLineStdSecondary(ui_facade, dispatcher, modifier = modifier, layout = layout)
+            ContextMenuLineStdSecondary(ui_facade, opus_manager, modifier = modifier, layout = layout)
         } else {
-            ContextMenuLineCtlSecondary(ui_facade, dispatcher, modifier = modifier, layout = layout)
+            ContextMenuLineCtlSecondary(ui_facade, opus_manager, modifier = modifier, layout = layout)
         }
     }
 }
 
 @Composable
-fun ContextMenuLineCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, modifier: Modifier = Modifier, layout: LayoutSize) {
+fun ContextMenuLineCtlSecondary(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, modifier: Modifier = Modifier, layout: LayoutSize) {
     ContextMenuSecondaryRow {
-        when (val initial_event = ui_facade.active_event.value) {
-            is OpusVolumeEvent -> VolumeEventMenu(ui_facade, dispatcher, initial_event)
-            is OpusTempoEvent -> TempoEventMenu(ui_facade, dispatcher, initial_event)
-            is OpusPanEvent -> PanEventMenu(ui_facade, dispatcher, initial_event)
-            is OpusReverbEvent -> ReverbEventMenu(ui_facade, dispatcher, initial_event)
-            is DelayEvent -> DelayEventMenu(ui_facade, dispatcher, initial_event)
-            is OpusVelocityEvent -> VelocityEventMenu(ui_facade, dispatcher, initial_event)
+        when (val initial_event = vm_state.active_event.value) {
+            is OpusVolumeEvent -> VolumeEventMenu(vm_state, opus_manager, initial_event)
+            is OpusTempoEvent -> TempoEventMenu(vm_state, opus_manager, initial_event)
+            is OpusPanEvent -> PanEventMenu(vm_state, opus_manager, initial_event)
+            is OpusReverbEvent -> ReverbEventMenu(vm_state, opus_manager, initial_event)
+            is DelayEvent -> DelayEventMenu(vm_state, opus_manager, initial_event)
+            is OpusVelocityEvent -> VelocityEventMenu(vm_state, opus_manager, initial_event)
             else -> {}
         }
     }
 }
 
 @Composable
-fun ContextMenuLineStdSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, modifier: Modifier = Modifier, layout: LayoutSize) {
-    val cursor = ui_facade.active_cursor.value ?: return
+fun ContextMenuLineStdSecondary(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, modifier: Modifier = Modifier, layout: LayoutSize) {
+    val cursor = vm_state.active_cursor.value ?: return
     val y = cursor.ints[0]
-    val line = ui_facade.line_data[y]
+    val line = vm_state.line_data[y]
 
     ContextMenuSecondaryRow {
-        MuteButton(dispatcher, line)
+        MuteButton(opus_manager, line)
         MediumSpacer()
-        VolumeEventMenu(ui_facade, dispatcher, ui_facade.active_event.value!! as OpusVolumeEvent)
+        VolumeEventMenu(vm_state, opus_manager, vm_state.active_event.value!! as OpusVolumeEvent)
         MediumSpacer()
         SetLineColorButton(
             Modifier,
-            ui_facade,
-            dispatcher,
+            vm_state,
+            opus_manager,
             line.channel.value!!,
             line.line_offset.value!!,
             shape = Shapes.ContextMenuSecondaryButtonEnd

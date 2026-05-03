@@ -28,8 +28,6 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,7 +43,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -57,7 +54,6 @@ import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -70,27 +66,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import com.qfs.pagan.DialogChain
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
+import com.qfs.pagan.composable.ColorScheme
 import com.qfs.pagan.composable.DialogBar
-import com.qfs.pagan.composable.DialogCard
 import com.qfs.pagan.composable.DialogTitle
+import com.qfs.pagan.composable.PaganDialog
 import com.qfs.pagan.composable.PaganTheme
 import com.qfs.pagan.composable.ScaffoldWithTopBar
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.OutlinedButton
 import com.qfs.pagan.composable.dashed_border
-import com.qfs.pagan.composable.keyboardAsState
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.projectmanager.ProjectManager
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
@@ -223,45 +214,12 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 LocalWindowInfo.current.containerDpSize.height,
             )
 
-            PaganTheme(is_night_mode) {
-                // Popup Dialogs --------------------------------
-                var current_dialog = view_model.dialog_queue.value
-                val dialogs = mutableListOf<DialogChain>()
-                while (current_dialog != null) {
-                    dialogs.add(current_dialog)
-                    current_dialog = current_dialog.parent
-                }
-                for (dialog in dialogs.reversed()) {
-                    Dialog(
-                        onDismissRequest = { view_model.dialog_queue.value = dialog.parent }
-                    ) {
-                        val keyboard_controller = LocalSoftwareKeyboardController.current
-                        val focus_manager = LocalFocusManager.current
-                        // Extra Box prevents weird dialog jumping on focus
-                        Box(
-                            Modifier
-                                .clickable { view_model.dialog_queue.value = dialog.parent }
-                                .fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            DialogCard(
-                                modifier = Modifier
-                                    // Allow click-away from text fields
-                                    .wrapContentSize()
-                                    .pointerInput(Unit) {
-                                        detectTapGestures { offset ->
-                                            keyboard_controller?.hide()
-                                            focus_manager.clearFocus()
-                                        }
-                                    },
-                                alignment = dialog.alignment,
-                                content = dialog.dialog
-                            )
-                        }
-                    }
-                }
-                // -----------------------------------------------
-
+            val color_scheme = if (is_night_mode) {
+                ColorScheme.Dark
+            } else {
+                ColorScheme.Light
+            }
+            PaganTheme(color_scheme) {
                 Box(
                     Modifier
                         .onKeyEvent { e ->

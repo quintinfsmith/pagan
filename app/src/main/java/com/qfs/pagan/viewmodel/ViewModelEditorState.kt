@@ -261,7 +261,6 @@ class ViewModelEditorState: ViewModel() {
                 this.column_data[x].top_weight.value.toFloat(),
                 this.get_active_zoom()
             )
-
         }
     }
 

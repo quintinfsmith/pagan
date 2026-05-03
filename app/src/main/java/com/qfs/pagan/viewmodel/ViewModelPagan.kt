@@ -75,6 +75,15 @@ class ViewModelPagan: ViewModel() {
     val has_saved_project: MutableState<Boolean> = mutableStateOf(false)
     val has_backup_saved: MutableState<Boolean> = mutableStateOf(false)
 
+    val dialog_states = HashMap<String, MutableState<Boolean>>()
+
+    fun get_dialog_state(key: String): MutableState<Boolean> {
+        if (!this.dialog_states.contains(key)) {
+            this.dialog_states[key] = mutableStateOf(false)
+        }
+        return this.dialog_states[key]!!
+    }
+
     fun set_layout_size(width: Dp, height: Dp) {
         this.active_layout_size.value = Dimensions.set_active_layout_dimensions(width, height)
     }

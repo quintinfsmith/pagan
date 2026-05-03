@@ -20,7 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.style.TextAlign
-import com.qfs.pagan.ActionDispatcher
+import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
@@ -34,7 +34,7 @@ import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
 fun TagButton(
-    dispatcher: ActionDispatcher,
+    opus_manager: OpusLayerInterface,
     column_data: ViewModelEditorState.ColumnData,
     beat: Int,
     shape: Shape = Shapes.ContextMenuButtonPrimary
@@ -43,12 +43,11 @@ fun TagButton(
         modifier = Modifier.testTag(TestTag.BeatToggleTag),
         onClick = {
             if (column_data.is_tagged.value) {
-                dispatcher.untag_column(beat)
+                opus_manager.remove_tagged_section(beat)
             } else {
-                dispatcher.tag_column(beat, null, true)
+                opus_manager.tag_section(beat, null)
             }
         },
-        onLongClick = { dispatcher.tag_column(beat) },
         shape = shape,
         icon = if (column_data.is_tagged.value) R.drawable.icon_untag
         else R.drawable.icon_tag,
@@ -58,85 +57,92 @@ fun TagButton(
 }
 
 @Composable
-fun AdjustBeatButton(dispatcher: ActionDispatcher) {
+fun AdjustBeatButton(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface) {
+    val dialog_visibility = remember { mutableStateOf(false) }
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.AdjustSelection),
-        onClick = { dispatcher.adjust_selection() },
+        onClick = { dialog_visibility.value = ! dialog_visibility.value },
         icon = R.drawable.icon_adjust,
         shape = Shapes.ContextMenuButtonPrimary,
         description = R.string.cd_adjust_selection
     )
+
+    AdjustSelectionDialog(dialog_visibility, vm_state.radix.value) {
+        opus_manager.offset_selection(it)
+    }
 }
 
 @Composable
-fun RemoveBeatButton(dispatcher: ActionDispatcher, enabled: Boolean) {
+fun RemoveBeatButton(opus_manager: OpusLayerInterface, enabled: Boolean) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.BeatRemove),
         enabled = enabled,
-        onClick = { dispatcher.remove_beat_at_cursor(1) },
-        onLongClick = { dispatcher.remove_beat_at_cursor() },
+        onClick = { opus_manager.remove_beat_at_cursor(1) },
+        onLongClick = { opus_manager.remove_beat_at_cursor() },
         icon = R.drawable.icon_subtract,
         description = R.string.cd_remove_beat
     )
+     // TODO: Dialog
 }
 
 @Composable
-fun InsertBeatButton(dispatcher: ActionDispatcher, shape: Shape = Shapes.ContextMenuButtonPrimary) {
+fun InsertBeatButton(opus_manager: OpusLayerInterface, shape: Shape = Shapes.ContextMenuButtonPrimary) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.BeatInsert),
-        onClick = { dispatcher.insert_beat_after_cursor(1) },
-        onLongClick = { dispatcher.insert_beat_after_cursor() },
+        onClick = { opus_manager.insert_beat_after_cursor(1) },
+        onLongClick = { opus_manager.insert_beat_after_cursor() },
         shape = shape,
         icon = R.drawable.icon_add,
         description = R.string.cd_insert_beat
     )
+    // TODO: Dialog
 }
 @Composable
-fun ContextMenuColumnPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, layout: LayoutSize) {
-    val cursor = ui_facade.active_cursor.value ?: return
+fun ContextMenuColumnPrimary(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, layout: LayoutSize) {
+    val cursor = vm_state.active_cursor.value ?: return
     val beat = cursor.ints[0]
-    val column_data = ui_facade.column_data[beat]
+    val column_data = vm_state.column_data[beat]
 
     when (layout) {
         LayoutSize.MediumLandscape,
         LayoutSize.SmallLandscape -> {
             Column {
-                InsertBeatButton(dispatcher, Shapes.ContextMenuButtonPrimaryStart)
+                InsertBeatButton(opus_manager, Shapes.ContextMenuButtonPrimaryStart)
                 MediumSpacer()
-                RemoveBeatButton(dispatcher, ui_facade.beat_count.value > 1)
+                RemoveBeatButton(opus_manager, vm_state.beat_count.value > 1)
                 MediumSpacer()
-                AdjustBeatButton(dispatcher)
+                AdjustBeatButton(vm_state, opus_manager)
                 Spacer(Modifier.weight(1F))
-                TagButton(dispatcher, column_data, beat, Shapes.ContextMenuButtonPrimaryBottom)
+                TagButton(opus_manager, column_data, beat, Shapes.ContextMenuButtonPrimaryBottom)
             }
         }
         else -> {
-            TagDescription(modifier, ui_facade, dispatcher)
+            TagDescription(modifier, vm_state, opus_manager)
         }
     }
 }
 
 @Composable
-fun ContextMenuColumnSecondary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, layout: LayoutSize) {
-    val cursor = ui_facade.active_cursor.value ?: return
+fun ContextMenuColumnSecondary(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, layout: LayoutSize) {
+    val cursor = vm_state.active_cursor.value ?: return
     val beat = cursor.ints[0]
-    val column_data = ui_facade.column_data[beat]
+    val column_data = vm_state.column_data[beat]
 
     when (layout) {
         LayoutSize.MediumLandscape,
         LayoutSize.SmallLandscape -> {
-            TagDescription(modifier, ui_facade, dispatcher)
+            TagDescription(modifier, vm_state, opus_manager)
         }
         else -> {
             ContextMenuPrimaryRow(modifier) {
-                TagButton(dispatcher, column_data, beat, Shapes.ContextMenuButtonPrimaryStart)
+                TagButton(opus_manager, column_data, beat, Shapes.ContextMenuButtonPrimaryStart)
                 MediumSpacer()
-                AdjustBeatButton(dispatcher)
+                AdjustBeatButton(vm_state, opus_manager)
                 MediumSpacer()
-                RemoveBeatButton(dispatcher, ui_facade.beat_count.value > 1)
+                RemoveBeatButton(opus_manager, vm_state.beat_count.value > 1)
                 MediumSpacer()
                 InsertBeatButton(
-                    dispatcher,
+                    opus_manager,
                     if (!column_data.is_tagged.value) {
                         Shapes.ContextMenuButtonPrimaryEnd
                     } else {
@@ -150,16 +156,12 @@ fun ContextMenuColumnSecondary(modifier: Modifier = Modifier, ui_facade: ViewMod
 }
 
 @Composable
-fun TagDescription(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher) {
-    val cursor = ui_facade.active_cursor.value ?: return
+fun TagDescription(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface) {
+    val cursor = vm_state.active_cursor.value ?: return
     val beat = cursor.ints[0]
-    val column_data = ui_facade.column_data[beat]
+    val column_data = vm_state.column_data[beat]
     key(column_data.tag_content.value) {
         if (!column_data.is_tagged.value) return
-        val callback: (String) -> Unit = {
-            val description = it.trim().ifEmpty { null }
-            dispatcher.tag_column(beat, description = description, description == null)
-        }
         TextInput(
             input = remember { mutableStateOf(column_data.tag_content.value ?: "") },
             textAlign = TextAlign.Start,
@@ -170,7 +172,10 @@ fun TagDescription(modifier: Modifier = Modifier, ui_facade: ViewModelEditorStat
             ),
             shape = Shapes.ContextMenuButtonFull,
             callback_on_return = true,
-            callback = callback
+            callback = {
+                val description = it.trim().ifEmpty { null }
+                opus_manager.tag_section(beat, description)
+            }
         )
     }
 }

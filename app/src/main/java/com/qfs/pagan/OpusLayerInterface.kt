@@ -1391,6 +1391,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     }
 
     override fun move_channel(channel_index: Int, new_channel_index: Int) {
+        if (channel_index == new_channel_index) return
         super.move_channel(channel_index, new_channel_index)
         for (i in min(channel_index, new_channel_index) until this.channels.size) {
             val working_channel = this.get_channel(i)

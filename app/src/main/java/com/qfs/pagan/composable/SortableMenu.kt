@@ -284,6 +284,7 @@ fun <T> UnSortableMenu(
     long_click_callback: (T) -> Unit = {},
     callback: (T) -> Unit
 ) {
+    println("DRAW!!!")
     SortableMenu(
         modifier,
         Unpadded,

@@ -20,9 +20,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -36,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
 import com.qfs.pagan.ActionDispatcher
+import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.IntegerInput
@@ -56,12 +55,12 @@ import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.roundToInt
 
 @Composable
-fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, event: DelayEvent) {
-    val cursor = ui_facade.active_cursor.value ?: return
+fun RowScope.DelayEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, event: DelayEvent) {
+    val cursor = vm_state.active_cursor.value ?: return
     val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
     val fade = remember { mutableFloatStateOf(working_event.fade) }
-    val (channel, line_offset, beat, position) = ui_facade.get_location_ints()
+    val (channel, line_offset, beat, position) = vm_state.get_location_ints()
 
     val default_colors = SliderDefaults.colors()
     val colors = default_colors.copy(
@@ -71,9 +70,9 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionD
 
     val submit = {
         if (beat != null) {
-            dispatcher.set_effect(EffectType.Delay, working_event, channel, line_offset, beat, position!!, true)
+            opus_manager.set_effect(EffectType.Delay, working_event, channel, line_offset, beat, position!!, true)
         } else {
-            dispatcher.set_initial_effect(EffectType.Delay, working_event, channel, line_offset, true)
+            opus_manager.set_initial_effect(EffectType.Delay, working_event, channel, line_offset, true)
         }
     }
 
@@ -238,6 +237,6 @@ fun RowScope.DelayEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionD
         }
     }
 
-    EffectTransitionButton(working_event, dispatcher, is_initial)
+    EffectTransitionButton(working_event, opus_manager, is_initial)
 }
 

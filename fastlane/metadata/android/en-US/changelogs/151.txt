@@ -1,0 +1,1 @@
+Fixed crash when copying multi-line selection that overflows the project's height

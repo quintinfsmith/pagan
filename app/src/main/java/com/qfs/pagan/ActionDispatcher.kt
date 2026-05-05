@@ -94,6 +94,7 @@ import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
 import com.qfs.pagan.structure.opusmanager.base.MixedInstrumentException
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
+import com.qfs.pagan.structure.opusmanager.base.RangeOverflow
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
@@ -200,6 +201,8 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                 } else {
                     this.move_global_ctl_to_beat(beat)
                 }
+            } catch (e: RangeOverflow) {
+                Toast.makeText(this.context, R.string.range_overflow, Toast.LENGTH_SHORT).show()
             } catch (e: MixedInstrumentException) {
                 Toast.makeText(this.context, R.string.feedback_mixed_copy, Toast.LENGTH_SHORT).show()
             }

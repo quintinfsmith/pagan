@@ -248,10 +248,12 @@ class ViewModelEditorState: ViewModel() {
     val zoom_index = mutableIntStateOf(0)
     val active_zoom = mutableFloatStateOf(1F)
     val max_zoom_index = mutableIntStateOf(0)
-    val zoom_notches = mutableListOf<Float>(1F) // Used only when beat widths are normalized
-    val normalize_beat_widths = mutableStateOf<Boolean>(false)
-    val beat_stroke_thickness = mutableStateOf<Dp>(0.dp)
+    val zoom_notches = mutableListOf(1F) // Used only when beat widths are normalized
+    val normalize_beat_widths = mutableStateOf(false)
+    val beat_stroke_thickness = mutableStateOf(0.dp)
     val scroll_x_center = mutableStateOf<Triple<Int, Float, Float>?>(null)
+
+    val confirm_action_callback: MutableState<(() -> Unit)?> = mutableStateOf(null)
 
     fun get_active_zoom(x: Int): Float {
         return if (this.normalize_beat_widths.value) {
@@ -270,7 +272,7 @@ class ViewModelEditorState: ViewModel() {
 
     private fun set_normalized_zoom() {
         val pegs = this.zoom_notches
-        this.active_zoom.value = if (pegs.isEmpty()) {
+        this.active_zoom.floatValue = if (pegs.isEmpty()) {
             1F
         } else {
             val i = this.zoom_index.intValue.coerceIn(0, pegs.size - 1)
@@ -280,7 +282,7 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun set_zoom(beat: Int, position: Rational, new_zoom: Float) {
-        if (new_zoom <= this.active_zoom.value) return
+        if (new_zoom <= this.active_zoom.floatValue) return
         val new_zoom_index = this.zoom_notches.indexOf(new_zoom)
         val base_leaf_width = this.pixel_density.value * Dimensions.LeafBaseWidth.value
         val beat_stroke_width = this.pixel_density.value * this.beat_stroke_thickness.value.value
@@ -288,7 +290,7 @@ class ViewModelEditorState: ViewModel() {
         val first_visible_beat = this.scroll_state_x.value.firstVisibleItemIndex
         val first_visible_position = (Array(first_visible_beat) { this.get_active_zoom(it) }.sum() * base_leaf_width) + this.scroll_state_x.value.firstVisibleItemScrollOffset + (beat_stroke_width * first_visible_beat.toFloat())
         this.queue_recenter(target_position - first_visible_position) {
-            this.queued_zoom_index.value = new_zoom_index
+            this.queued_zoom_index.intValue = new_zoom_index
         }
     }
 

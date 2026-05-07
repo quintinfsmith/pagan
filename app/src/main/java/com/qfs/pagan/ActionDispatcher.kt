@@ -127,35 +127,6 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         }
     }
 
-    fun save() {
-        this.vm_top.project_manager?.let {
-            val uri = it.save(this.vm_controller.opus_manager, this.vm_controller.active_project)
-            this.vm_top.has_saved_project.value = true
-            this.vm_controller.active_project = uri
-            this.vm_controller.project_exists.value = true
-            Toast.makeText(
-                this@ActionDispatcher.context,
-                R.string.feedback_project_saved,
-                Toast.LENGTH_SHORT
-            ).show()
-        }
-    }
-
-    fun project_copy() {
-        this.vm_controller.active_project ?: return
-        this.save_before {
-            val opus_manager = this.vm_controller.opus_manager
-            val old_title = opus_manager.project_name
-            opus_manager.set_project_name(
-                if (old_title == null) null
-                else this.context.resources.getString(R.string.copied_title, old_title)
-            )
-            this.vm_controller.active_project = null
-            this.vm_controller.project_exists.value = false
-            Toast.makeText(this.context, R.string.feedback_on_copy, Toast.LENGTH_SHORT).show()
-        }
-    }
-
     fun tap_leaf(beat: Int, position: List<Int>, channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
         val opus_manager = this.get_opus_manager()
         val cursor = opus_manager.cursor
@@ -1701,40 +1672,6 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         }
     }
 
-    private fun needs_save(): Boolean {
-        val opus_manager = this.get_opus_manager()
-
-        val active_project = this.vm_controller.active_project ?: return opus_manager.history_cache.has_undoable_actions()
-        val other = this.vm_top.project_manager?.open_project(active_project)
-        return (opus_manager as OpusLayerBase) != other
-    }
-
-    fun save_before(callback: (Boolean) -> Unit) {
-        if (!this.needs_save()) {
-            callback(false)
-            return
-        }
-
-        this.vm_top.create_dialog { close ->
-            @Composable {
-                Row { DialogSTitle(R.string.dialog_save_warning_title, modifier = Modifier.weight(1F)) }
-                DialogBar(
-                    negative = {
-                        close()
-                        callback(false)
-                    },
-                    neutral = close,
-                    positive = {
-                        close()
-                        this@ActionDispatcher.save()
-
-                        callback(true)
-                    }
-                )
-            }
-        }
-    }
-
 
     /**
      * wrapper around MainActivity::dialog_popup_menu
@@ -1868,110 +1805,5 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
 
     fun stop_opus() {
         this.vm_controller.playback_device?.kill()
-    }
-
-    fun set_copy_mode(mode: PaganConfiguration.MoveMode) {
-        this.vm_top.configuration.move_mode.value = mode
-        this.vm_top.save_configuration()
-    }
-
-
-    fun channel_mute(channel: Int? = null) {
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        val w_channel = channel ?: cursor.channel
-
-        opus_manager.lock_cursor {
-            opus_manager.mute_channel(w_channel)
-        }
-    }
-
-    fun channel_unmute(channel: Int? = null) {
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        val w_channel = channel ?: cursor.channel
-
-        opus_manager.lock_cursor {
-            opus_manager.unmute_channel(w_channel)
-        }
-    }
-
-    fun line_mute(channel: Int? = null, line_offset: Int? = null) {
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        val w_channel = channel ?: cursor.channel
-        val w_line_offset = line_offset ?: cursor.line_offset
-
-        opus_manager.mute_line(w_channel, w_line_offset)
-    }
-
-    fun line_unmute(channel: Int? = null, line_offset: Int? = null) {
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        val w_channel = channel ?: cursor.channel
-        val w_line_offset = line_offset ?: cursor.line_offset
-
-        opus_manager.lock_cursor {
-            opus_manager.unmute_line(w_channel, w_line_offset)
-        }
-    }
-
-    fun tag_column(beat: Int? = null, description: String? = null, force_null_description: Boolean = false) {
-        val opus_manager = this.get_opus_manager()
-        val use_beat = beat ?: opus_manager.cursor.beat
-
-        if (force_null_description && description == null) {
-            opus_manager.lock_cursor {
-                opus_manager.tag_section(use_beat, null)
-            }
-        } else if (description != null) {
-            opus_manager.lock_cursor {
-                opus_manager.tag_section(use_beat, description)
-            }
-        }
-    }
-
-    fun untag_column(beat: Int? = null) {
-        val opus_manager = this.get_opus_manager()
-        val use_beat = beat ?: opus_manager.cursor.beat
-        opus_manager.lock_cursor {
-            opus_manager.remove_tagged_section(use_beat)
-        }
-    }
-
-    fun load_from_bkp() {
-        val (backup_uri, bytes) = this.vm_top.project_manager?.read_backup() ?: throw MissingProjectManager()
-        this.get_opus_manager().load(bytes) {
-            this.vm_controller.active_project = backup_uri
-            backup_uri?.let {
-                this.vm_controller.project_exists.value = DocumentFile.fromTreeUri(this.context, it)?.exists() == true
-            }
-        }
-    }
-
-    fun duplicate_line() {
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        when (cursor.mode) {
-            CursorMode.Single,
-            CursorMode.Line -> {
-                opus_manager.duplicate_line(cursor.channel, cursor.line_offset)
-            }
-            else -> return // TODO: Throw exception?
-        }
-
-    }
-
-    fun duplicate_channel() {
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        when (cursor.mode) {
-            CursorMode.Channel,
-            CursorMode.Single,
-            CursorMode.Line -> {
-                opus_manager.duplicate_channel(cursor.channel)
-            }
-            else -> return // TODO: Throw exception?
-        }
     }
 }

@@ -55,6 +55,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -107,6 +108,7 @@ import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.pagan.ActionDispatcher
+import com.qfs.pagan.ActionDispatcher.MissingProjectManager
 import com.qfs.pagan.CompatibleFileType
 import com.qfs.pagan.EffectResourceMap
 import com.qfs.pagan.Exportable
@@ -126,6 +128,7 @@ import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.DrawerCard
 import com.qfs.pagan.composable.MediumSpacer
+import com.qfs.pagan.composable.PaganDialog
 import com.qfs.pagan.composable.SettingsColumn
 import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.composable.button.ConfigDrawerBottomButton
@@ -148,6 +151,7 @@ import com.qfs.pagan.composable.cxtmenu.ContextMenuLinePrimary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuLineSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuRangeSecondary
 import com.qfs.pagan.composable.SoundfontLoadingIndicator
+import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.TuningDialogNormal
 import com.qfs.pagan.composable.TuningDialogTiny
 import com.qfs.pagan.composable.dashed_border
@@ -505,7 +509,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             this.view_model.save_configuration()
 
             this.view_model.project_manager?.change_project_path(tree_uri, this.controller_model.active_project)
-            this@ComponentActivityEditor.action_interface.save()
+            this@ComponentActivityEditor.save()
 
             this.reload_config()
         }
@@ -519,7 +523,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     internal var result_launcher_import = this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode != RESULT_OK) return@registerForActivityResult
             val uri = result.data?.data ?: return@registerForActivityResult
-            this.action_interface.save_before {
+            this.save_confirm_dialog {
                 this.handle_uri(uri)
             }
         }
@@ -607,16 +611,24 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.state_model.pixel_density.value = this.resources.displayMetrics.density
 
         thread {
-            if (savedInstanceState != null) {
-                dispatcher.load_from_bkp()
-            } else if (this.intent.getBooleanExtra("load_backup", false)) {
-                dispatcher.load_from_bkp()
+            if (savedInstanceState != null || this.intent.getBooleanExtra("load_backup", false)) {
+                this.load_from_bkp()
             } else if (this.intent.data == null) {
                 dispatcher.new_project()
             } else if (this.view_model.project_manager?.contains(this.intent.data!!) == true) {
                 this@ComponentActivityEditor.load_project(this@ComponentActivityEditor.intent.data!!)
             } else {
                 this.handle_uri(this.intent.data!!)
+            }
+        }
+    }
+
+    fun load_from_bkp() {
+        val (backup_uri, bytes) = this.view_model.project_manager?.read_backup() ?: throw MissingProjectManager()
+        this.controller_model.opus_manager.load(bytes) {
+            this.controller_model.active_project = backup_uri
+            backup_uri?.let {
+                this.controller_model.project_exists.value = DocumentFile.fromTreeUri(this, it)?.exists() == true
             }
         }
     }
@@ -986,7 +998,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         val menu_items: MutableList<Pair<Int, () -> Unit>> = mutableListOf(
             Pair(R.string.menu_item_new_project) {
-                dispatcher.save_before {
+                this.save_confirm_dialog {
                     dispatcher.new_project()
                 }
             }
@@ -996,7 +1008,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             menu_items.add(
                 Pair(R.string.menu_item_load_project) {
                     this@ComponentActivityEditor.load_menu_dialog { uri ->
-                        dispatcher.save_before {
+                        this.save_confirm_dialog {
                             this@ComponentActivityEditor.load_project(uri)
                         }
                     }
@@ -1210,18 +1222,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val dialog_visible = remember { mutableStateOf(false) }
             Text(
-                modifier = Modifier
-                    .combinedClickable(
-                        onClick = {
-                            dispatcher.set_project_name_and_notes()
-                        }
-                    ),
+                modifier = Modifier.clickable { dialog_visible.value = true },
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 text = vm_state.project_name.value ?: stringResource(R.string.untitled_opus)
             )
+            NameAndNotesDialog(dialog_visible)
         }
 
         UndoButton(vm_state, dispatcher)
@@ -1259,6 +1268,37 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun RowScope.LoadingTopBar() {
         Box(Modifier.fillMaxSize()) {}
     }
+
+    @Composable
+    fun ConfirmSaveDialog() {
+        val confirm_action_callback = this.state_model.confirm_action_callback
+        confirm_action_callback.value?.let { callback ->
+            val adj_callback = {
+                callback()
+                confirm_action_callback.value = null
+            }
+            val view_model = this.view_model
+            val visibility = remember { mutableStateOf(true) }
+            val local_context = LocalContext.current
+
+            PaganDialog(visibility) {
+                Row { DialogSTitle(R.string.dialog_save_warning_title, modifier = Modifier.weight(1F)) }
+                DialogBar(
+                    negative = {
+                        adj_callback()
+                    },
+                    neutral = {
+                        confirm_action_callback.value = null
+                    },
+                    positive = {
+                        this@ComponentActivityEditor.save()
+                        adj_callback()
+                    }
+                )
+            }
+        }
+    }
+
 
     override val top_bar_wrapper: @Composable (RowScope.() -> Unit) = {
         val vm_controller = this@ComponentActivityEditor.controller_model
@@ -2050,20 +2090,20 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 .imePadding()
         ) {
             if (top_model.active_layout_size.value == LayoutSize.SmallPortrait) {
+                val dialog_visible = remember { mutableStateOf(false) }
                 Text(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = Dimensions.ConfigDrawerPadding)
                         .combinedClickable(
-                            onClick = {
-                                dispatcher.set_project_name_and_notes()
-                            }
+                            onClick = { dialog_visible.value = true }
                         ),
                     overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center,
                     maxLines = 1,
                     text = state_model.project_name.value ?: stringResource(R.string.untitled_opus)
                 )
+                NameAndNotesDialog(dialog_visible)
             }
 
             Row(
@@ -2182,7 +2222,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     ) {
                                         ConfigDrawerChannelLeftButton(
                                             modifier = Modifier.weight(1F),
-                                            onClick = { dispatcher.set_channel_preset(i) },
+                                            onClick = {
+                                                dispatcher.set_channel_preset(i)
+                                            },
                                             content = {
                                                 Row(
                                                     Modifier.weight(1F),
@@ -2275,7 +2317,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 }
                             )
                         } else {
-                            dispatcher.save()
+                            this@ComponentActivityEditor.save()
                         }
                     }
                 )
@@ -2286,8 +2328,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     description = R.string.btn_cfg_copy,
                     enabled = this@ComponentActivityEditor.controller_model.project_exists.value,
                     onClick = {
-                        scope.launch { this@ComponentActivityEditor.close_drawer() }
-                        dispatcher.project_copy()
+                        scope.launch {
+                            this@ComponentActivityEditor.close_drawer()
+                        }
+                        this@ComponentActivityEditor.project_copy()
                     }
                 )
                 DrawerPadder()
@@ -2362,7 +2406,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
-
     @Composable
     override fun LayoutXLargePortrait(modifier: Modifier) = LayoutLargePortrait(modifier)
 
@@ -2422,6 +2465,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 this@ComponentActivityEditor.state_model.table_side_padding.value = 0F
             }
         }
+        ConfirmSaveDialog()
     }
 
     @Composable
@@ -2473,6 +2517,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 this@ComponentActivityEditor.state_model.table_side_padding.value = 0F
             }
         }
+        ConfirmSaveDialog()
     }
 
     @Composable
@@ -2549,6 +2594,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             }
         }
+        ConfirmSaveDialog()
     }
 
     @Composable
@@ -2662,6 +2708,45 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
         )
     }
+
+    @Composable
+    fun NameAndNotesDialog(visibility: MutableState<Boolean>) {
+        val opus_manager = this.controller_model.opus_manager
+        val project_name = remember { mutableStateOf(opus_manager.project_name ?: "") }
+        val project_notes = remember { mutableStateOf(opus_manager.project_notes ?: "") }
+        PaganDialog(visibility) {
+            TextInput(
+                label = { Text(R.string.dlg_project_name) },
+                input = project_name,
+                textAlign = TextAlign.Start,
+                modifier = Modifier.fillMaxWidth(),
+                lineLimits = TextFieldLineLimits.Default
+            ) {}
+            Spacer(modifier = Modifier.height(Dimensions.Space.Medium))
+            TextInput(
+                label = { Text(R.string.dlg_project_notes) },
+                input = project_notes,
+                textAlign = TextAlign.Start,
+                lineLimits = TextFieldLineLimits.MultiLine(3),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1F, fill = false)
+            ) {}
+            DialogBar(
+                neutral = {
+                    visibility.value = false
+                },
+                positive = {
+                    visibility.value = false
+                    opus_manager.set_name_and_notes(
+                        if (project_name.value == "") null else project_name.value,
+                        if (project_notes.value == "") null else project_notes.value
+                    )
+                }
+            )
+        }
+    }
+
 
     @Composable
     fun Modifier.update_bottom_padding(): Modifier {
@@ -3186,5 +3271,54 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
+    fun save_confirm_dialog(callback: () -> Unit) {
+        if (!needs_save()) {
+            callback()
+        } else {
+            this.state_model.confirm_action_callback.value = callback
+        }
+    }
+
+    private fun needs_save(): Boolean {
+        val opus_manager = this.controller_model.opus_manager
+        val active_project = this.controller_model.active_project ?: return opus_manager.history_cache.has_undoable_actions()
+        val other = this.view_model.project_manager?.open_project(active_project)
+
+        return (opus_manager as OpusLayerBase) != other
+    }
+
+    fun project_copy() {
+        this.controller_model.active_project ?: return
+        this.save_confirm_dialog {
+            val opus_manager = this.controller_model.opus_manager
+            val old_title = opus_manager.project_name
+            opus_manager.set_project_name(
+                if (old_title == null) null
+                else this.resources.getString(R.string.copied_title, old_title)
+            )
+            this.controller_model.active_project = null
+            this.controller_model.project_exists.value = false
+            Toast.makeText(this, R.string.feedback_on_copy, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun save() {
+        val project_manager = this.view_model.project_manager ?: return
+
+        val uri = project_manager.save(
+            this.controller_model.opus_manager,
+            this.controller_model.active_project
+        )
+
+        this.view_model.has_saved_project.value = true
+        this.controller_model.active_project = uri
+        this.controller_model.project_exists.value = true
+
+        Toast.makeText(
+            this,
+            R.string.feedback_project_saved,
+            Toast.LENGTH_SHORT
+        ).show()
+    }
 }
 

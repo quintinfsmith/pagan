@@ -35,6 +35,7 @@ import com.qfs.pagan.R
 import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.Values
+import com.qfs.pagan.composable.IntegerInputDialog
 import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.NumberSelector
 import com.qfs.pagan.composable.RadioMenu
@@ -72,34 +73,43 @@ fun SplitButton(
     opus_manager: OpusLayerInterface,
     shape: Shape = Shapes.ContextMenuButtonPrimaryStart
 ) {
+    val dialog_visibility = remember { mutableStateOf(false) }
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.LeafSplit),
-        onClick = { opus_manager.split(2) },
+        onClick = { dialog_visibility.value = !dialog_visibility.value },
         onLongClick = { opus_manager.split_tree_at_cursor(2) },
         icon = R.drawable.icon_split,
         shape = shape,
         description = R.string.btn_split
     )
 
-    // TODO
-    // this.dialog_number_input(R.string.dlg_split, 2, 32) {
-    //     this.split(it)
-    // }
+    IntegerInputDialog(
+        visibility = dialog_visibility,
+        title_string_id = R.string.dlg_split,
+        min_value = 1
+    ) {
+        opus_manager.split_tree_at_cursor(it)
+    }
 }
 
 @Composable
 fun InsertButton(opus_manager: OpusLayerInterface) {
+    val dialog_visibility = remember { mutableStateOf(false) }
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.LeafInsert),
-        onClick = { opus_manager.insert_leaf(1) },
+        onClick = { dialog_visibility.value = !dialog_visibility.value },
         onLongClick = { opus_manager.insert_at_cursor(1) },
         icon = R.drawable.icon_add,
         description = R.string.btn_insert
     )
-    // TODO
-    //this.dialog_number_input(R.string.dlg_insert, 1, 63) {
-    //    this.insert_leaf(it)
-    //}
+
+    IntegerInputDialog(
+        visibility = dialog_visibility,
+        title_string_id = R.string.dlg_insert,
+        min_value = 1
+    ) {
+        opus_manager.insert_at_cursor(it)
+    }
 }
 
 @Composable
@@ -121,6 +131,7 @@ fun DurationButton(
     active_event: OpusEvent?,
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
+    val dialog_visibility = remember { mutableStateOf(false) }
     TextCMenuButton(
         modifier = Modifier
             .testTag(TestTag.EventDuration)
@@ -132,7 +143,7 @@ fun DurationButton(
         },
         shape = shape,
         contentPadding = Unpadded,
-        onClick = { opus_manager.set_duration() },
+        onClick = { dialog_visibility.value = !dialog_visibility.value },
         onLongClick = { opus_manager.set_duration_at_cursor(1) },
         text = when (descriptor) {
             ViewModelEditorState.EventDescriptor.Selected,
@@ -141,11 +152,13 @@ fun DurationButton(
         }
     )
 
-    // TODO: Dialog
-    //val event_duration = active_event?.duration ?: 1
-    //this.dialog_number_input(R.string.dlg_duration, 1, default = event_duration) {
-    //    this.set_duration(it)
-    //}
+    IntegerInputDialog(
+        visibility = dialog_visibility,
+        title_string_id = R.string.dlg_duration,
+        min_value = 1
+    ) {
+        opus_manager.set_duration_at_cursor(it)
+    }
 }
 
 @Composable

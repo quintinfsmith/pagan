@@ -31,6 +31,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -53,6 +54,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PageSize
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.input.TextFieldLineLimits
@@ -88,6 +92,7 @@ import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -103,6 +108,7 @@ import androidx.lifecycle.viewModelScope
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
 import com.qfs.apres.MidiController
+import com.qfs.apres.VirtualMidiInputDevice
 import com.qfs.apres.VirtualMidiOutputDevice
 import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.soundfont2.SoundFont
@@ -118,6 +124,7 @@ import com.qfs.pagan.MultiExporterEventHandler
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.PaganBroadcastReceiver
 import com.qfs.pagan.PlaybackState
+import com.qfs.pagan.PresetKey
 import com.qfs.pagan.R
 import com.qfs.pagan.SingleExporterEventHandler
 import com.qfs.pagan.TestTag
@@ -130,6 +137,7 @@ import com.qfs.pagan.composable.DrawerCard
 import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.PaganDialog
 import com.qfs.pagan.composable.SettingsColumn
+import com.qfs.pagan.composable.SortableMenu
 import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.composable.button.ConfigDrawerBottomButton
 import com.qfs.pagan.composable.button.ConfigDrawerChannelLeftButton
@@ -189,13 +197,20 @@ import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.InputStreamReader
 import java.time.format.DateTimeFormatter
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.get
+import kotlin.collections.iterator
+import kotlin.compareTo
 import kotlin.concurrent.thread
 import kotlin.math.ceil
+import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
+import kotlin.text.get
 
 class ComponentActivityEditor: PaganComponentActivity() {
     val controller_model: ViewModelEditorController by this.viewModels()
@@ -2079,10 +2094,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val opus_manager = this.controller_model.opus_manager
 
         val scroll_state = rememberScrollState()
-        val dragging_row_index: MutableState<Int?> = remember { mutableStateOf(null) }
-        val dragging_row_offset: MutableState<Float?> = remember { mutableStateOf(null) }
+        val dragging_row_index = remember { mutableStateOf<Int?>(null) }
+        val dragging_row_offset = remember { mutableStateOf<Float?>(null) }
 
         val context = LocalContext.current
+        val tuning_table_visibility = remember  { mutableStateOf(false) }
+        val preset_dialog_channel = remember { mutableStateOf<Int?>(null) }
 
         DrawerCard(
             modifier
@@ -2111,7 +2128,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 ConfigDrawerTopButton(
-                    onClick = { this@ComponentActivityEditor.create_tuning_table_dialog() },
+                    onClick = { tuning_table_visibility.value = true },
                     content = { Text(R.string.label_tuning) }
                 )
                 Spacer(Modifier.weight(1F))
@@ -2223,7 +2240,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         ConfigDrawerChannelLeftButton(
                                             modifier = Modifier.weight(1F),
                                             onClick = {
-                                                dispatcher.set_channel_preset(i)
+                                                preset_dialog_channel.value = i
                                             },
                                             content = {
                                                 Row(
@@ -2404,6 +2421,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             }
         }
+        TuningTableDialog(tuning_table_visibility)
+        ChannelPresetDialog(preset_dialog_channel)
     }
 
     @Composable
@@ -2746,7 +2765,246 @@ class ComponentActivityEditor: PaganComponentActivity() {
             )
         }
     }
+    @Composable
+    fun ChannelPresetDialog(active_channel: MutableState<Int?>) {
+        val channel = active_channel.value ?: return
 
+        fun padded_hex(i: Int): String {
+            var s = Integer.toHexString(i)
+            while (s.length < 2) {
+                s = "0$s"
+            }
+            return s.uppercase()
+        }
+
+        val opus_manager = this.controller_model.opus_manager
+        val is_percussion = opus_manager.is_percussion(channel)
+        val default = opus_manager.get_channel_instrument(channel)
+
+        val default_presets = stringArrayResource(R.array.general_midi_presets)
+        val pre_option = mutableListOf<Pair<PresetKey, String?>>()
+        val can_preview = this.controller_model.audio_interface.has_soundfont() || this.controller_model.active_midi_device != null
+        if (!this.controller_model.audio_interface.has_soundfont() || this.controller_model.active_midi_device != null) {
+            // Setup default empty preset names
+            for (i in 0 until 128) {
+                pre_option.add(Pair(PresetKey(default.soundfont_index, 0, i), null))
+            }
+            pre_option.add(Pair(PresetKey(default.soundfont_index, 128, 0), null))
+        } else if (opus_manager.vm_state.preset_names.isNotEmpty()) {
+            for ((soundfont_index, bank_map) in opus_manager.vm_state.preset_names.enumerate()) {
+                for ((bank, program_map) in bank_map) {
+                    for ((program, name) in program_map) {
+                        pre_option.add(Pair(PresetKey(soundfont_index, bank, program), name))
+                    }
+                }
+            }
+            pre_option.sortBy { it.first.program }
+            pre_option.sortBy { it.first.bank }
+            pre_option.sortBy { it.first.soundfont_index }
+        } else {
+            for ((program, name) in default_presets.enumerate()) {
+                pre_option.add(Pair(PresetKey(0, 0, program), name))
+            }
+        }
+
+        val options = mutableListOf<MutableList<Pair<PresetKey, @Composable RowScope.() -> Unit>>>()
+        val preset_names =  mutableListOf<MutableList<Pair<PresetKey, String?>>>()
+        val existing_keys = mutableSetOf<Int>()
+
+        for ((preset_key, name) in pre_option) {
+            if (is_percussion && preset_key.bank != 128) continue
+            if (!this.view_model.configuration.allow_std_percussion.value && !is_percussion && preset_key.bank == 128) continue
+
+            while (preset_names.size <= preset_key.soundfont_index) {
+                preset_names.add(mutableListOf())
+            }
+            preset_names[preset_key.soundfont_index].add(Pair(preset_key, name))
+
+            while (options.size <= preset_key.soundfont_index) {
+                options.add(mutableListOf())
+            }
+            existing_keys.add(preset_key.soundfont_index)
+            options[preset_key.soundfont_index].add(
+                Pair(
+                    preset_key,
+                    {
+                        Text("${padded_hex(preset_key.bank)}|${padded_hex(preset_key.program)}")
+                        Text(
+                            name ?: if (preset_key.bank == 128) {
+                                stringResource(R.string.gm_kit)
+                            } else {
+                                stringArrayResource(R.array.general_midi_presets)[preset_key.program]
+                            },
+                            modifier = Modifier.weight(1F),
+                            textAlign = TextAlign.Center,
+                            maxLines = 1
+                        )
+                        if (can_preview) {
+                            Box(
+                                Modifier
+                                    .clickable {
+                                        val radix = opus_manager.get_radix()
+                                        this@ComponentActivityEditor.play_event(
+                                            preset_key,
+                                            is_percussion,
+                                            (2 * radix)
+                                        )
+                                        Thread.sleep(200)
+                                        this@ComponentActivityEditor.play_event(
+                                            preset_key,
+                                            is_percussion,
+                                            (3 * radix) + (4 * radix / 12)
+                                        )
+                                        Thread.sleep(200)
+                                        this@ComponentActivityEditor.play_event(
+                                            preset_key,
+                                            is_percussion,
+                                            (3 * radix) + (7 * radix / 12)
+                                        )
+                                    }
+                                    .height(Dimensions.PreviewIconHeight)
+                                    .width(Dimensions.PreviewIconHeight),
+                                contentAlignment = Alignment.CenterEnd
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.icon_volume),
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .padding(
+                                            top = Dimensions.PreviewIconPadding,
+                                            bottom = Dimensions.PreviewIconPadding,
+                                            start = Dimensions.PreviewIconPadding
+                                        )
+                                        .height(Dimensions.PreviewIconHeight - (Dimensions.PreviewIconPadding * 2))
+                                        .width(Dimensions.PreviewIconHeight - (Dimensions.PreviewIconPadding))
+                                )
+                            }
+                        }
+                    }
+                )
+            )
+        }
+
+        val sort_options = List(preset_names.size) { i ->
+            listOf(
+                Pair(R.string.sort_option_bank) { a: Int, b: Int ->
+                    preset_names[i][a].first.bank.compareTo(preset_names[i][b].first.bank)
+                },
+                Pair(R.string.sort_option_program) { a: Int, b: Int ->
+                    preset_names[i][a].first.program.compareTo(preset_names[i][b].first.program)
+                },
+                Pair(R.string.sort_option_abc) { a: Int, b: Int ->
+                    val a_name = preset_names[i][a].second ?: default_presets[preset_names[i][a].first.program]
+                    val b_name = preset_names[i][b].second ?: default_presets[preset_names[i][b].first.program]
+                    a_name.lowercase().compareTo(b_name.lowercase())
+                }
+            )
+        }
+
+        val dialog_visibility = remember { mutableStateOf(false) }
+        PaganDialog(dialog_visibility) {
+            val selected_sort: MutableState<Int?> = remember { mutableStateOf(null) }
+            val scope = rememberCoroutineScope()
+            val sorted_pages = existing_keys.toList().sorted()
+            val state = rememberPagerState(
+                if (sorted_pages.contains(default.soundfont_index)) {
+                    sorted_pages.indexOf(default.soundfont_index)
+                } else {
+                    0
+                },
+                pageCount = { sorted_pages.size }
+            )
+
+            HorizontalPager(
+                modifier = Modifier.weight(1F, fill = false),
+                state = state,
+                pageSize = PageSize.Fill,
+                snapPosition = SnapPosition.Center,
+                verticalAlignment = Alignment.Top,
+                beyondViewportPageCount = sorted_pages.size
+            ) { i ->
+                SortableMenu(
+                    modifier = Modifier.fillMaxWidth(),
+                    title_content = {
+                        if (!opus_manager.vm_state.use_midi_playback.value && opus_manager.vm_state.active_soundfonts.value.size > 1) {
+                            val expanded = remember { mutableStateOf(false) }
+                            DropdownMenu(
+                                expanded = expanded.value,
+                                onDismissRequest = { expanded.value = false }
+                            ) {
+                                for (j in sorted_pages) {
+                                    val soundfont_path = opus_manager.vm_state.active_soundfonts.value[sorted_pages[j]]
+                                    val soundfont_name = soundfont_path.split("/").let { it[it.size - 1].trim() }
+                                    DropdownMenuItem(
+                                        text = { Text("$j: $soundfont_name") },
+                                        onClick = {
+                                            expanded.value = false
+                                            scope.launch {
+                                                state.animateScrollToPage(j)
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                            if (i > 0) {
+                                Icon(
+                                    modifier = Modifier
+                                        .clickable {
+                                            scope.launch {
+                                                state.animateScrollToPage(i - 1)
+                                            }
+                                        }
+                                        .width(Dimensions.PresetMenuArrowWidth)
+                                        .height(Dimensions.PresetMenuArrowHeight),
+                                    painter = painterResource(R.drawable.icon_arrow_prev),
+                                    contentDescription = (opus_manager.vm_state.active_soundfonts.value[sorted_pages[i - 1]]).split("/").let { it[it.size - 1].trim() },
+                                )
+                            }
+                            Text(
+                                (opus_manager.vm_state.active_soundfonts.value[sorted_pages[i]]).split("/").let { it[it.size - 1].trim() },
+                                maxLines = 1,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .weight(1F)
+                                    .clickable { expanded.value = true },
+                                overflow = TextOverflow.StartEllipsis
+                            )
+                            if (i < sorted_pages.size - 1) {
+                                Icon(
+                                    modifier = Modifier
+                                        .clickable {
+                                            scope.launch {
+                                                state.animateScrollToPage(i + 1)
+                                            }
+                                        }
+                                        .width(Dimensions.PresetMenuArrowWidth)
+                                        .height(Dimensions.PresetMenuArrowHeight),
+                                    painter = painterResource(R.drawable.icon_arrow_next),
+                                    contentDescription = (opus_manager.vm_state.active_soundfonts.value[sorted_pages[i + 1]]).split("/").let { it[it.size - 1].trim() },
+                                )
+                            }
+                            Spacer(Modifier.width(Dimensions.Space.Medium))
+                        } else {
+                            DialogSTitle(R.string.dropdown_choose_instrument)
+                        }
+
+                    },
+                    default_menu = options[sorted_pages[i]],
+                    sort_row_padding = PaddingValues(
+                        bottom = Dimensions.DialogBarPaddingVertical,
+                    ),
+                    active_sort_option = selected_sort,
+                    sort_options = sort_options[sorted_pages[i]],
+                    default_value = default,
+                    onClick = {
+                        opus_manager.channel_set_preset(channel, it)
+                        active_channel.value = null
+                    }
+                )
+            }
+            DialogBar(neutral = { active_channel.value = null })
+        }
+    }
 
     @Composable
     fun Modifier.update_bottom_padding(): Modifier {
@@ -3239,33 +3497,42 @@ class ComponentActivityEditor: PaganComponentActivity() {
         // return this.keyboard_interface.input(e)
     }
 
-    fun create_tuning_table_dialog() {
+    @Composable
+    fun TuningTableDialog(visibility: MutableState<Boolean>) {
         val opus_manager = this.controller_model.opus_manager
-        this.create_dialog { close ->
-            @Composable {
-                val original_radix = opus_manager.get_radix()
-                val transpose_numerator = remember { mutableIntStateOf(opus_manager.transpose.first) }
-                val transpose_denominator = remember { mutableIntStateOf(opus_manager.transpose.second) }
-                val radix = remember { mutableIntStateOf(original_radix) }
-                val note_map = MutableList(radix.intValue) { i ->
-                    if (radix.intValue == original_radix) {
-                        Pair(
-                            opus_manager.tuning_map[i].first,
-                            opus_manager.tuning_map[i].second
-                        )
-                    } else {
-                        Pair(i, radix.intValue)
-                    }
-                }
-
-                if(this@ComponentActivityEditor.view_model.active_layout_size.value == LayoutSize.SmallLandscape) {
-                    TuningDialogTiny(close, transpose_numerator, transpose_denominator, radix, note_map) { new_table, new_transpose ->
-                        opus_manager.set_tuning_map_and_transpose(new_table, new_transpose)
-                    }
+        val original_radix = opus_manager.get_radix()
+        PaganDialog(visibility) {
+            val transpose_numerator = remember { mutableIntStateOf(opus_manager.transpose.first) }
+            val transpose_denominator = remember { mutableIntStateOf(opus_manager.transpose.second) }
+            val radix = remember { mutableIntStateOf(original_radix) }
+            val note_map = MutableList(radix.intValue) { i ->
+                if (radix.intValue == original_radix) {
+                    Pair(
+                        opus_manager.tuning_map[i].first,
+                        opus_manager.tuning_map[i].second
+                    )
                 } else {
-                    TuningDialogNormal(close, transpose_numerator, transpose_denominator, radix, note_map) { new_table, new_transpose ->
-                        opus_manager.set_tuning_map_and_transpose(new_table, new_transpose)
-                    }
+                    Pair(i, radix.intValue)
+                }
+            }
+
+            if(this@ComponentActivityEditor.view_model.active_layout_size.value == LayoutSize.SmallLandscape) {
+                TuningDialogTiny(
+                    { visibility.value = false },
+                    transpose_numerator,
+                    transpose_denominator, radix, note_map
+                ) { new_table, new_transpose ->
+                    opus_manager.set_tuning_map_and_transpose(new_table, new_transpose)
+                }
+            } else {
+                TuningDialogNormal(
+                    { visibility.value = false },
+                    transpose_numerator,
+                    transpose_denominator,
+                    radix,
+                    note_map
+                ) { new_table, new_transpose ->
+                    opus_manager.set_tuning_map_and_transpose(new_table, new_transpose)
                 }
             }
         }
@@ -3319,6 +3586,70 @@ class ComponentActivityEditor: PaganComponentActivity() {
             R.string.feedback_project_saved,
             Toast.LENGTH_SHORT
         ).show()
+    }
+
+    private fun play_event(preset: PresetKey, is_percussion: Boolean, event_value: Int, velocity: Float = .5f) {
+        if (event_value < 0) return // No sound to play
+        if (this.controller_model.in_playback()) return // disable feedback during playback
+        if (!this.controller_model.opus_manager.vm_state.soundfont_ready.value) return
+
+        val (note, bend) = if (is_percussion) {
+            Pair(event_value + 27, 0)
+        } else {
+            this.controller_model.opus_manager.calculate_note_bend(0, event_value)
+        }
+
+        if (note > 127) return
+
+        val audio_interface = this.controller_model.audio_interface
+        if (this.controller_model.active_midi_device != null) {
+            // TODO()
+            //try {
+            //    this.vm_controller.virtual_midi_device.play_note(
+            //        note,
+            //        bend,
+            //        (velocity * 127F).toInt(),
+            //        !this.get_opus_manager().is_tuning_standard()
+            //    )
+            //} catch (_: VirtualMidiInputDevice.DisconnectedException) {
+            //    // Feedback shouldn't be necessary here. But i'm sure that'll come back to bite me
+            //}
+        } else if (audio_interface.has_soundfont()) {
+            audio_interface.play_feedback(preset, note, bend, (velocity * 127F).toInt() shl 8)
+        }
+    }
+
+    private fun play_event(channel: Int, event_value: Int, velocity: Float = .5F) {
+        if (event_value < 0) return // No sound to play
+        if (this.controller_model.in_playback()) return // disable feedback during playback
+        val opus_manager = this.controller_model.opus_manager
+        if (!opus_manager.vm_state.soundfont_ready.value) return
+
+        val (note, bend) = if (opus_manager.is_percussion(channel)) {
+            Pair(event_value + 27, 0)
+        } else {
+            opus_manager.calculate_note_bend(channel, event_value)
+        }
+
+        if (note > 127) return
+
+        val audio_interface = this.controller_model.audio_interface
+        val midi_channel = opus_manager.get_midi_channel(channel)
+        if (this.controller_model.active_midi_device != null) {
+            try {
+                this.controller_model.virtual_midi_device.play_note(
+                    midi_channel,
+                    note,
+                    bend,
+                    (velocity * 127F).toInt(),
+                    !opus_manager.is_tuning_standard()
+                )
+            } catch (_: VirtualMidiInputDevice.DisconnectedException) {
+                // Feedback shouldn't be necessary here. But i'm sure that'll come back to bite me
+            }
+        } else if (audio_interface.has_soundfont()) {
+            audio_interface.play_feedback(midi_channel, note, bend, (velocity * 127F).toInt() shl 8)
+        }
     }
 }
 

@@ -5165,4 +5165,19 @@ open class OpusLayerBase: Effectable {
         this.recache_line_maps()
         return new_channel.uuid
     }
+
+    fun calculate_note_bend(channel: Int, event_value: Int) : Pair<Int, Int> {
+        val radix = this.get_radix()
+        val octave = event_value / radix
+        val offset = this.tuning_map[event_value % radix]
+
+        val transpose_offset = 12.0 * this.transpose.first.toDouble() / this.transpose.second.toDouble()
+        val std_offset = 12.0 * offset.first.toDouble() / offset.second.toDouble()
+
+        val bend = (((std_offset - floor(std_offset)) + (transpose_offset - floor(transpose_offset))) * 512.0).toInt()
+        val new_note = (octave * 12) + std_offset.toInt() + transpose_offset.toInt() + 21
+
+        return Pair(new_note, bend)
+    }
+
 }

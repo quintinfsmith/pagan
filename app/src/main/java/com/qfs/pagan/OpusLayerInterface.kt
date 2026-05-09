@@ -2361,12 +2361,11 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             if (original != Pair(beat_key, position) && head_tree.event != null) {
                 Pair(head_tree.event!!, ViewModelEditorState.EventDescriptor.Tail)
             } else {
-                //var (working_beat, working_position) = controller.get_preceding_event_position(beat_key.beat, position) ?: Pair(beat_key.beat, position)
-                Pair(
-                    controller.get_latest_persistent_position(beat_key.beat, position)
-                        ?.let { controller.get_tree(it.first, it.second).event } ?: controller.initial_event,
-                    ViewModelEditorState.EventDescriptor.Backup
-                )
+                val event_copy = (controller.get_latest_persistent_position(beat_key.beat, position)?.let {
+                    controller.get_tree(it.first, it.second).event
+                } ?: controller.initial_event).copy()
+                event_copy.duration = 1
+                Pair(event_copy, ViewModelEditorState.EventDescriptor.Backup)
             }
         }
 

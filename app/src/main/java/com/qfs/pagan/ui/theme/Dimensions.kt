@@ -226,6 +226,7 @@ object Dimensions {
     object EffectWidget {
         object Pan {
             val CenterDotDiameter = 12.dp
+            val SliderPadding = 8.dp
         }
         object Velocity {
             val FadePopupHeight = 250.dp

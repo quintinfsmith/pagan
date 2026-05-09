@@ -24,6 +24,7 @@ import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
+import com.qfs.pagan.composable.IntegerInputDialog
 import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.button.IconCMenuButton
@@ -74,28 +75,35 @@ fun AdjustBeatButton(vm_state: ViewModelEditorState, opus_manager: OpusLayerInte
 
 @Composable
 fun RemoveBeatButton(opus_manager: OpusLayerInterface, enabled: Boolean) {
+    val dialog_visibility = remember { mutableStateOf(false) }
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.BeatRemove),
         enabled = enabled,
         onClick = { opus_manager.remove_beat_at_cursor(1) },
-        onLongClick = { opus_manager.remove_beat_at_cursor() },
+        onLongClick = { dialog_visibility.value = true },
         icon = R.drawable.icon_subtract,
         description = R.string.cd_remove_beat
     )
-     // TODO: Dialog
+
+    IntegerInputDialog(dialog_visibility, R.string.dlg_remove_beats, 0) {
+        opus_manager.remove_beat_at_cursor(it)
+    }
 }
 
 @Composable
 fun InsertBeatButton(opus_manager: OpusLayerInterface, shape: Shape = Shapes.ContextMenuButtonPrimary) {
+    val dialog_visibility = remember { mutableStateOf(false) }
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.BeatInsert),
         onClick = { opus_manager.insert_beat_after_cursor(1) },
-        onLongClick = { opus_manager.insert_beat_after_cursor() },
+        onLongClick = { dialog_visibility.value = true },
         shape = shape,
         icon = R.drawable.icon_add,
         description = R.string.cd_insert_beat
     )
-    // TODO: Dialog
+    IntegerInputDialog(dialog_visibility, R.string.dlg_insert_beats, 1, 2048) {
+        opus_manager.insert_beat_after_cursor(it)
+    }
 }
 @Composable
 fun ContextMenuColumnPrimary(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, layout: LayoutSize) {

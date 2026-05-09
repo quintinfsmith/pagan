@@ -3619,7 +3619,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
-    private fun play_event(channel: Int, event_value: Int, velocity: Float = .5F) {
+    internal fun play_event(channel: Int, event_value: Int, velocity: Float = .5F) {
         if (event_value < 0) return // No sound to play
         if (this.controller_model.in_playback()) return // disable feedback during playback
         val opus_manager = this.controller_model.opus_manager

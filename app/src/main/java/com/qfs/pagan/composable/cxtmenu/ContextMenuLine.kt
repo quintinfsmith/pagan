@@ -24,6 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.currentCompositionLocalContext
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -31,10 +32,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import com.qfs.pagan.ComponentActivity.ComponentActivityEditor
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
@@ -231,11 +234,7 @@ fun PercussionSetInstrumentButton(modifier: Modifier = Modifier, vm_state: ViewM
             TextCMenuButton(
                 modifier = modifier.testTag(TestTag.InstrumentSet),
                 onClick = {
-                    opus_manager.percussion_set_instrument(
-                        active_line.channel.value!!,
-                        active_line.line_offset.value!!,
-
-                    )
+                    dialog_visibility.value = true
                 },
                 text = label ?: if (active_channel.instrument.value.bank == 128) {
                     if (assigned_offset < midi_instruments.size) {
@@ -252,7 +251,7 @@ fun PercussionSetInstrumentButton(modifier: Modifier = Modifier, vm_state: ViewM
                 }
             )
         }
-        PercussionInstrumentDialog(dialog_visibility, vm_state, opus_manager)
+        PercussionInstrumentDialog(dialog_visibility, vm_state, opus_manager, active_line.channel.value!!, active_line.line_offset.value!!)
     } else {
         Box(
             modifier = modifier,
@@ -265,67 +264,76 @@ fun PercussionSetInstrumentButton(modifier: Modifier = Modifier, vm_state: ViewM
 
 @Composable
 fun PercussionInstrumentDialog(visibility: MutableState<Boolean>, vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, channel: Int, line_offset: Int) {
-    val options = mutableListOf<Pair<Int, @Composable RowScope.() -> Unit>>()
-    var use_defaults = true
-    if (!vm_state.use_midi_playback.value) {
-        val preset = opus_manager.get_channel_instrument(channel)
-        vm_state.get_available_instruments(preset)?.let { instruments ->
-            for ((name, index) in instruments) {
-                if (index < 0) continue
-                options.add(
-                    Pair(index) {
-                        androidx.compose.material3.Text("$index:")
-                        _root_ide_package_.androidx.compose.material3.Text(
-                            "$name",
-                            modifier = Modifier.weight(1F),
-                            textAlign = TextAlign.Center,
-                            maxLines = 1
-                        )
-                        Box(
-                            Modifier
-                                .clickable {
-                                    opus_manager.play_event(channel, index, .7F)
-                                }
-                                .height(Dimensions.PreviewIconHeight)
-                                .width(Dimensions.PreviewIconHeight),
-                            contentAlignment = Alignment.CenterEnd
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.icon_volume),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .padding(
-                                        top = Dimensions.PreviewIconPadding,
-                                        bottom = Dimensions.PreviewIconPadding,
-                                        start = Dimensions.PreviewIconPadding
-                                    )
-                                    .height(Dimensions.PreviewIconHeight - (Dimensions.PreviewIconPadding * 2))
-                                    .width(Dimensions.PreviewIconHeight - (Dimensions.PreviewIconPadding))
+    val context = LocalContext.current
+    val gen_options = {
+        var use_defaults = true
+        val options = mutableListOf<Pair<Int, @Composable RowScope.() -> Unit>>()
+        if (!vm_state.use_midi_playback.value) {
+            val preset = opus_manager.get_channel_instrument(channel)
+            vm_state.get_available_instruments(preset)?.let { instruments ->
+                for ((name, index) in instruments) {
+                    if (index < 0) continue
+                    options.add(
+                        Pair(index) {
+                            Text("$index:")
+                            Text(
+                                "$name",
+                                modifier = Modifier.weight(1F),
+                                textAlign = TextAlign.Center,
+                                maxLines = 1
                             )
+                            Box(
+                                Modifier
+                                    .clickable {
+                                        if (context is ComponentActivityEditor) {
+                                            context.play_event(channel, index, .7F)
+                                        }
+                                    }
+                                    .height(Dimensions.PreviewIconHeight)
+                                    .width(Dimensions.PreviewIconHeight),
+                                contentAlignment = Alignment.CenterEnd
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.icon_volume),
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .padding(
+                                            top = Dimensions.PreviewIconPadding,
+                                            bottom = Dimensions.PreviewIconPadding,
+                                            start = Dimensions.PreviewIconPadding
+                                        )
+                                        .height(Dimensions.PreviewIconHeight - (Dimensions.PreviewIconPadding * 2))
+                                        .width(Dimensions.PreviewIconHeight - (Dimensions.PreviewIconPadding))
+                                )
+                            }
                         }
-                    }
+                    )
+                }
+                use_defaults = false
+            }
+        }
+
+        if (use_defaults) {
+            for (i in 0..60) {
+                options.add(
+                    Pair(i, { Text("$i: ${stringArrayResource(R.array.midi_drums)[i]}") })
                 )
             }
-            use_defaults = false
         }
-    }
 
-    if (use_defaults) {
-        for (i in 0 .. 60) {
-            options.add(
-                Pair(i, { Text("$i: ${stringArrayResource(R.array.midi_drums)[i]}")})
-            )
-        }
+        options
     }
 
     val current_instrument = (opus_manager.get_channel(channel).lines[line_offset] as OpusLinePercussion).instrument
     DialogMenu(
         visibility,
         R.string.dropdown_choose_instrument,
-        options,
-        current_instrument) {
-        opus_manager.percussion_set_instrument(channel, line_offset, it)
-    }
+        gen_options,
+        default = current_instrument,
+        callback = {
+            opus_manager.percussion_set_instrument(channel, line_offset, it)
+        }
+    )
 }
 
 @Composable

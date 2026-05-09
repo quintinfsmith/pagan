@@ -238,11 +238,14 @@ fun SetPresetButton(
     active_channel: ViewModelEditorState.ChannelData,
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
+
     if (vm_state.soundfont_ready.value) {
+        val dialog_visibility = remember { mutableStateOf(false) }
         TextCMenuButton(
             modifier = modifier.testTag(TestTag.ChannelPreset),
             shape = shape,
             onClick = {
+                dialog_visibility.value = true
                 opus_manager.set_channel_preset(channel_index)
             },
             text = if (vm_state.use_midi_playback.value || active_channel.active_name.value == null) {
@@ -264,6 +267,7 @@ fun SetPresetButton(
                 active_channel.active_name.value!!
             }
         )
+        ChannelPresetDialog()
     } else {
         Box(
             modifier = modifier,

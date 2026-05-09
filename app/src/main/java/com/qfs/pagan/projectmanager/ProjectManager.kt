@@ -26,6 +26,7 @@ import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileNotFoundException
 import java.io.InputStreamReader
 import java.time.Instant
 import java.time.LocalDateTime
@@ -297,37 +298,45 @@ class ProjectManager(val context: Context, var uri: Uri?) {
             val project_list = JSONParser.parse<JSONList>(string_content)
             var needs_save = false
             // Check if timestamp is included in project list, if not, add it.
+            val output = JSONList()
             for (i in 0 until (project_list as JSONList).size) {
                 if (project_list[i] is JSONList) {
                     val entry = project_list.get_list(i)
                     needs_save = true
                     val uri = entry.get_string(0).toUri()
 
-                    val (modified, created) = this.get_json(uri)?.let {
-                        Pair(
-                            this.get_project_modified_timestamp(it, uri).toString(),
-                            this.get_project_created_timestamp(it)?.toString()
+                    val (modified, created) = try {
+                        this.get_json(uri)?.let {
+                            Pair(
+                                this.get_project_modified_timestamp(it, uri).toString(),
+                                this.get_project_created_timestamp(it)?.toString()
+                            )
+                        } ?: Pair(
+                            DocumentFile.fromSingleUri(this.context, uri)?.lastModified().toString(),
+                            null
                         )
-                    } ?: Pair(
-                        DocumentFile.fromSingleUri(this.context, uri)?.lastModified().toString(),
-                        null
-                    )
+                    } catch (e: IllegalArgumentException) {
+                        continue
+                    }
 
-                    project_list[i] = JSONHashMap(
-                        "uri" to entry[0],
-                        "title" to entry[1],
-                        "modified" to JSONString(modified),
-                        "created" to created?.let { JSONString(it) }
+                    output.add(
+                        JSONHashMap(
+                            "uri" to entry[0],
+                            "title" to entry[1],
+                            "modified" to JSONString(modified),
+                            "created" to created?.let { JSONString(it) }
+                        )
                     )
+                } else {
+                    output.add(project_list[i])
                 }
             }
 
             if (needs_save) {
                 val file = File(this._cache_path)
-                file.writeText(project_list.to_string())
+                file.writeText(output.to_string())
             }
-
-            project_list
+            output
         } catch (_: InvalidJSON) {
             File(this._cache_path).delete()
             JSONList()

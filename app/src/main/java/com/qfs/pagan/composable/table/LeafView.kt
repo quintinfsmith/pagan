@@ -174,9 +174,9 @@ fun LeafView(
                                 is OpusVolumeEvent -> Text("${(event.value * 100F).toInt()}%", color = text_color)
                                 is OpusPanEvent -> {
                                     Text(
-                                        text = if (event.value < 0) {
+                                        text = if (event.value > 0) {
                                             "<${(abs(event.value) * 10).roundToInt()}"
-                                        } else if (event.value > 0) {
+                                        } else if (event.value < 0) {
                                             "${(abs(event.value) * 10).roundToInt()}>"
                                         } else {
                                             "-0-"

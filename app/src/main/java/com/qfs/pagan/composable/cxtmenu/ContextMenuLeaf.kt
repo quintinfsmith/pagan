@@ -420,6 +420,8 @@ fun ContextMenuLeafStdSecondary(vm_state: ViewModelEditorState, opus_manager: Op
                     if (!it) {
                         opus_manager.unset()
                     } else {
+                        //val event_note = opus_manager.get_percussion_instrument(beat_key.channel, beat_key.line_offset)
+                        //this.play_event(beat_key.channel, event_note)
                         opus_manager.set_percussion_event_at_cursor()
                     }
                 }

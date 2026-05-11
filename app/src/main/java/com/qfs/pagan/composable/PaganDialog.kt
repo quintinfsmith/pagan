@@ -19,10 +19,18 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.window.Dialog
 
 @Composable
-fun PaganDialog(visibility: MutableState<Boolean>, alignment: Alignment.Horizontal = Alignment.CenterHorizontally, content: @Composable ColumnScope.(MutableState<Boolean>) -> Unit) {
+fun PaganDialog(
+    visibility: MutableState<Boolean>,
+    alignment: Alignment.Horizontal = Alignment.CenterHorizontally,
+    on_dismiss_request: (() -> Unit)? = null,
+    content: @Composable ColumnScope.(MutableState<Boolean>) -> Unit
+) {
     if (!visibility.value) return
     PaganTheme(MaterialTheme.colorScheme) {
-        Dialog(onDismissRequest = { visibility.value = false }) {
+        Dialog(onDismissRequest = {
+            visibility.value = false
+            on_dismiss_request?.invoke()
+        }) {
             val keyboard_controller = LocalSoftwareKeyboardController.current
             val focus_manager = LocalFocusManager.current
 

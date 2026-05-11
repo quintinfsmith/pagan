@@ -24,7 +24,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.currentCompositionLocalContext
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -47,7 +46,6 @@ import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogMenu
 import com.qfs.pagan.composable.IntegerInputDialog
 import com.qfs.pagan.composable.MediumSpacer
-import com.qfs.pagan.composable.NumberInput
 import com.qfs.pagan.composable.NumberPicker
 import com.qfs.pagan.composable.PaganDialog
 import com.qfs.pagan.composable.SoundfontLoadingIndicator
@@ -60,6 +58,7 @@ import com.qfs.pagan.composable.effectwidget.TempoEventMenu
 import com.qfs.pagan.composable.effectwidget.VelocityEventMenu
 import com.qfs.pagan.composable.effectwidget.VolumeEventMenu
 import com.qfs.pagan.composable.wrappers.Text
+import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
@@ -402,6 +401,11 @@ fun HideEffectButton(active_line: ViewModelEditorState.LineData, opus_manager: O
         shape = shape,
         description = R.string.cd_hide_control_line
     )
+}
+
+@Composable
+fun ShowEffectDialog(domain: CtlLineLevel, vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, callback: (EffectType) -> Unit) {
+
 }
 
 @Composable

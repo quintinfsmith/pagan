@@ -134,6 +134,7 @@ import com.qfs.pagan.composable.DialogMenu
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.DrawerCard
+import com.qfs.pagan.composable.IntegerInputDialog
 import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.PaganDialog
 import com.qfs.pagan.composable.SettingsColumn
@@ -176,6 +177,7 @@ import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
+import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
@@ -1599,6 +1601,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         options
                                     }
                                 ) { value ->
+                                    this
                                     this@ComponentActivityEditor.action_interface.show_hidden_global_controller(value)
                                 }
                             }
@@ -1623,14 +1626,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 itemsIndexed(column_widths + listOf(1)) { x, width ->
                                     if (x == column_widths.size) {
                                         ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onSurfaceVariant) {
+                                            val dialog_visibility = remember { mutableStateOf(false) }
                                             Box(
                                                 modifier = Modifier
                                                     .testTag(TestTag.OuterInsertBeat)
                                                     .width(Dimensions.LeafBaseWidth)
-                                                    .combinedClickable(
-                                                        onClick = { dispatcher.append_beats() },
-                                                        onLongClick = { dispatcher.append_beats() }
-                                                    ),
+                                                    .clickable { dialog_visibility.value = true },
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 Icon(
@@ -1638,6 +1639,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                     painter = painterResource(R.drawable.icon_add),
                                                     contentDescription = stringResource(R.string.cd_insert_beat)
                                                 )
+                                            }
+                                            IntegerInputDialog(dialog_visibility, R.string.dlg_insert_beats, 1, 2048) {
+                                                opus_manager.insert_beats(opus_manager.length,it)
                                             }
                                         }
 
@@ -2216,7 +2220,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                             )
                                             .conditional_drag(
                                                 is_dragging,
-                                                on_drag_start = { position ->
+                                                on_drag_start = {
                                                     dragging_row_offset.value = 0F
                                                     dragging_row_index.value = i
                                                 },
@@ -2422,7 +2426,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
         }
         TuningTableDialog(tuning_table_visibility)
-        ChannelPresetDialog(preset_dialog_channel)
     }
 
     @Composable
@@ -2484,7 +2487,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 this@ComponentActivityEditor.state_model.table_side_padding.value = 0F
             }
         }
-        ConfirmSaveDialog()
+        DialogsKludge()
     }
 
     @Composable
@@ -2536,7 +2539,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 this@ComponentActivityEditor.state_model.table_side_padding.value = 0F
             }
         }
-        ConfirmSaveDialog()
+        DialogsKludge()
     }
 
     @Composable
@@ -2613,7 +2616,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             }
         }
+        DialogsKludge()
+    }
+
+    @Composable
+    fun DialogsKludge() {
         ConfirmSaveDialog()
+        ChannelPresetDialog()
     }
 
     @Composable
@@ -2765,9 +2774,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
             )
         }
     }
+
     @Composable
-    fun ChannelPresetDialog(active_channel: MutableState<Int?>) {
-        val channel = active_channel.value ?: return
+    fun ChannelPresetDialog() {
+        val channel = this.state_model.channel_preset_dialog.value ?: return
 
         fun padded_hex(i: Int): String {
             var s = Integer.toHexString(i)
@@ -2998,11 +3008,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     default_value = default,
                     onClick = {
                         opus_manager.channel_set_preset(channel, it)
-                        active_channel.value = null
+                        state_model.channel_preset_dialog.value = null
                     }
                 )
             }
-            DialogBar(neutral = { active_channel.value = null })
+            DialogBar(neutral = {
+                state_model.channel_preset_dialog.value = null
+            })
         }
     }
 

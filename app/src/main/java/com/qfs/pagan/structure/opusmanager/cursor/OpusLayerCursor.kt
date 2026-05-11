@@ -942,12 +942,14 @@ open class OpusLayerCursor: OpusLayerBase() {
             else -> throw InvalidCursorState()
         }
     }
+
     fun set_percussion_event_at_cursor() {
         this.percussion_set_event(
             this.cursor.get_beatkey(),
             this.cursor.get_position()
         )
     }
+
     open fun remove_at_cursor(count: Int = 1) {
         val cursor = this.cursor
         when (cursor.ctl_level) {

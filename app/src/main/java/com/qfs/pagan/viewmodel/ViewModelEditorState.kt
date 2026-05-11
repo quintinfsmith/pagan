@@ -254,6 +254,7 @@ class ViewModelEditorState: ViewModel() {
     val scroll_x_center = mutableStateOf<Triple<Int, Float, Float>?>(null)
 
     val confirm_action_callback: MutableState<(() -> Unit)?> = mutableStateOf(null)
+    val channel_preset_dialog = mutableStateOf<Int?>(null)
 
     fun get_active_zoom(x: Int): Float {
         return if (this.normalize_beat_widths.value) {

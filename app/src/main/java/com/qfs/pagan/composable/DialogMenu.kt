@@ -15,12 +15,16 @@ fun <T> DialogMenu(
     title: Int,
     options: () -> List<Pair<T, @Composable RowScope.() -> Unit>>,
     default: T? = null,
+    on_dismiss_request: (() -> Unit)? = null,
     long_click_callback: ((T) -> Unit)? = null,
     callback: (value: T) -> Unit
 ) {
     val mutable_options = remember { mutableStateOf<List<Pair<T, @Composable RowScope.() -> Unit>>>(listOf()) }
     val options_ready = remember { mutableStateOf(false) }
-    PaganDialog(visibility) { visibility ->
+    PaganDialog(
+        visibility = visibility,
+        on_dismiss_request = on_dismiss_request,
+    ) { visibility ->
         DialogSTitle(title)
         if (options_ready.value) {
             UnSortableMenu(

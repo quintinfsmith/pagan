@@ -27,7 +27,6 @@ public:
                 ptr->initial_value[j] = (float)values[(i * data_width) + j];
                 ptr->increment[j] = (float)increments[(i * data_width) + j];
             }
-
             this->frames[i] = ptr;
         }
     }

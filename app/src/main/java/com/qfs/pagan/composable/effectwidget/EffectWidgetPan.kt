@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -26,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.qfs.pagan.OpusLayerInterface
+import androidx.compose.ui.unit.dp
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
@@ -75,6 +77,7 @@ fun RowScope.PanEventMenu(vm_state: ViewModelEditorState, dispatcher: OpusLayerI
             steps = 21,
             colors = colors,
             modifier = Modifier
+                .padding(horizontal = Dimensions.EffectWidget.Pan.SliderPadding)
                 .testTag(TestTag.PanSlider)
                 .align(Alignment.Center)
                 .fillMaxWidth()

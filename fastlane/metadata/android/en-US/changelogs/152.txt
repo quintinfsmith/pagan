@@ -1,0 +1,1 @@
+Fixed immediate-transitioned effect controls being skipped if the directly proceed effects with linear transitions.

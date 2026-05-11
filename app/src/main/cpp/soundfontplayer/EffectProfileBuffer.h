@@ -114,15 +114,8 @@ class EffectProfileBuffer {
             } else {
                 auto bframe = this->data->frames[this->current_index];
                 bool frame_changed = false;
-                while (this->current_frame >= bframe->end) {
-                    this->current_index++;
-                    if (this->current_index >= this->data->frame_count) {
-                        if (frame_changed) {
-                            break;
-                        } else {
-                            return;
-                        }
-                    }
+                while (this->current_frame > bframe->end) {
+                    if (++this->current_index >= this->data->frame_count) break;
 
                     bframe = this->data->frames[this->current_index];
                     frame_changed = true;

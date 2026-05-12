@@ -106,13 +106,6 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         this.vm_top = model
     }
 
-    fun apply_undo(repeat: Int = 1) {
-        this.get_opus_manager().apply_undo(repeat)
-    }
-    fun apply_redo(repeat: Int = 1) {
-        this.get_opus_manager().apply_redo(repeat)
-    }
-
     fun move_selection_to_beat(beat_key: BeatKey) {
         when (this.vm_top.configuration.move_mode.value)  {
             PaganConfiguration.MoveMode.MOVE -> {
@@ -128,46 +121,9 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
     }
 
     fun tap_leaf(beat: Int, position: List<Int>, channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        val selecting_range = cursor.mode == CursorMode.Range
-        if (selecting_range && cursor.ctl_type == ctl_type) {
-            try {
-                if (ctl_type == null) {
-                    this.move_selection_to_beat(BeatKey(channel!!, line_offset!!, beat))
-                } else if (line_offset != null) {
-                    this.move_line_ctl_to_beat(BeatKey(channel!!, line_offset, beat))
-                } else if (channel != null) {
-                    this.move_channel_ctl_to_beat(channel, beat)
-                } else {
-                    this.move_global_ctl_to_beat(beat)
-                }
-            } catch (e: RangeOverflow) {
-                Toast.makeText(this.context, R.string.range_overflow, Toast.LENGTH_SHORT).show()
-            } catch (e: MixedInstrumentException) {
-                Toast.makeText(this.context, R.string.feedback_mixed_copy, Toast.LENGTH_SHORT).show()
-            }
-        } else if (ctl_type == null) {
-            this.cursor_select(BeatKey(channel!!, line_offset!!, beat), position)
-        } else if (line_offset != null) {
-            this.cursor_select_ctl_at_line(ctl_type, BeatKey(channel!!, line_offset, beat), position)
-        } else if (channel != null) {
-            this.cursor_select_ctl_at_channel(ctl_type, channel, beat, position)
-        } else {
-            this.cursor_select_ctl_at_global(ctl_type, beat, position)
-        }
     }
 
     fun long_tap_leaf(beat: Int, position: List<Int>, channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
-        if (ctl_type == null) {
-            this.cursor_select_range_next(BeatKey(channel!!, line_offset!!, beat))
-        } else if (line_offset != null) {
-            this.cursor_select_line_ctl_range_next(ctl_type, BeatKey(channel!!, line_offset, beat))
-        } else if (channel != null) {
-            this.cursor_select_channel_ctl_range_next(ctl_type, channel, beat)
-        } else {
-            this.cursor_select_global_ctl_range_next(ctl_type, beat)
-        }
     }
 
     private fun _tap_line_repeatable(channel: Int?, line_offset: Int?, ctl_type: EffectType?): Boolean {
@@ -291,22 +247,6 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
     }
 
     fun cursor_select(beat_key: BeatKey, position: List<Int>) {
-        val opus_manager = this.vm_controller.opus_manager
-        opus_manager.cursor_select(beat_key, position)
-
-        val tree = opus_manager.get_tree() ?: return
-        if (tree.has_event()) {
-            val note = if (opus_manager.is_percussion(beat_key.channel)) {
-                opus_manager.get_percussion_instrument(beat_key.channel, beat_key.line_offset)
-            } else {
-                opus_manager.get_absolute_value(beat_key, position) ?: return
-            }
-
-            this.play_event(
-                beat_key.channel,
-                note
-            )
-        }
     }
 
     fun cursor_select_line(channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
@@ -326,69 +266,33 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
     }
 
     fun move_line_ctl_to_beat(beat_key: BeatKey) {
-        when (this.vm_top.configuration.move_mode.value)  {
-            PaganConfiguration.MoveMode.MOVE -> {
-                this._move_line_ctl_to_beat(beat_key)
-            }
-            PaganConfiguration.MoveMode.MERGE -> TODO("Merge not implemented yet")
-            PaganConfiguration.MoveMode.COPY -> {
-                this._copy_line_ctl_to_beat(beat_key)
-            }
-        }
     }
 
     fun _move_line_ctl_to_beat(beat_key: BeatKey) {
-        this.get_opus_manager().move_line_ctl_to_beat(beat_key)
     }
     fun _copy_line_ctl_to_beat(beat_key: BeatKey) {
-        this.get_opus_manager().copy_line_ctl_to_beat(beat_key)
     }
     fun move_channel_ctl_to_beat(channel: Int, beat: Int) {
-        when (this.vm_top.configuration.move_mode.value)  {
-            PaganConfiguration.MoveMode.MOVE -> {
-                this._move_channel_ctl_to_beat(channel, beat)
-            }
-            PaganConfiguration.MoveMode.MERGE -> TODO("Merge not implemented yet")
-            PaganConfiguration.MoveMode.COPY -> {
-                this._copy_channel_ctl_to_beat(channel, beat)
-            }
-        }
     }
     fun _move_channel_ctl_to_beat(channel: Int, beat: Int) {
-        this.get_opus_manager().move_channel_ctl_to_beat(channel, beat)
     }
     fun _copy_channel_ctl_to_beat(channel: Int, beat: Int) {
-        this.get_opus_manager().copy_channel_ctl_to_beat(channel, beat)
     }
     fun move_global_ctl_to_beat(beat: Int) {
-        when (this.vm_top.configuration.move_mode.value)  {
-            PaganConfiguration.MoveMode.MOVE -> {
-                this._move_global_ctl_to_beat(beat)
-            }
-            PaganConfiguration.MoveMode.MERGE -> TODO("Merge not implemented yet")
-            PaganConfiguration.MoveMode.COPY -> {
-                this._copy_global_ctl_to_beat(beat)
-            }
-        }
     }
     fun _move_global_ctl_to_beat(beat: Int) {
-        this.get_opus_manager().move_global_ctl_to_beat(beat)
     }
 
     fun _copy_global_ctl_to_beat(beat: Int) {
-        this.get_opus_manager().copy_global_ctl_to_beat(beat)
     }
 
     fun cursor_select_ctl_at_line(type: EffectType, beat_key: BeatKey, position: List<Int>) {
-        this.get_opus_manager().cursor_select_ctl_at_line(type, beat_key, position)
     }
 
     fun cursor_select_ctl_at_channel(type: EffectType, channel: Int, beat: Int, position: List<Int>) {
-        this.get_opus_manager().cursor_select_ctl_at_channel(type, channel, beat, position)
     }
 
     fun cursor_select_ctl_at_global(type: EffectType, beat: Int, position: List<Int>) {
-        this.get_opus_manager().cursor_select_ctl_at_global(type, beat, position)
     }
 
     fun cursor_select_channel(channel: Int) {
@@ -696,31 +600,6 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
                 }
             }
         }
-    }
-
-    fun cursor_select_range_next(beat_key: BeatKey) {
-        this.vm_controller.opus_manager.cursor_select_range_next(beat_key)
-    }
-    fun cursor_select_line_ctl_range_next(type: EffectType, beat_key: BeatKey) {
-        this.vm_controller.opus_manager.cursor_select_line_ctl_range_next(type, beat_key)
-    }
-    fun cursor_select_channel_ctl_range_next(type: EffectType, channel: Int, beat: Int) {
-        this.vm_controller.opus_manager.cursor_select_channel_ctl_range_next(type, channel, beat)
-    }
-    fun cursor_select_global_ctl_range_next(type: EffectType, beat: Int) {
-        this.vm_controller.opus_manager.cursor_select_global_ctl_range_next(type, beat)
-    }
-    fun cursor_select_range(first_key: BeatKey, second_key: BeatKey) {
-        this.vm_controller.opus_manager.cursor_select_range(first_key, second_key)
-    }
-    fun cursor_select_line_ctl_range(type: EffectType, first_key: BeatKey, second_key: BeatKey) {
-        this.vm_controller.opus_manager.cursor_select_line_ctl_range(type, first_key, second_key)
-    }
-    fun cursor_select_channel_ctl_range(type: EffectType, channel: Int, first_beat: Int, second_beat: Int) {
-        this.vm_controller.opus_manager.cursor_select_channel_ctl_range(type, channel, first_beat, second_beat)
-    }
-    fun cursor_select_global_ctl_range(type: EffectType, first_beat: Int, second_beat: Int) {
-        this.vm_controller.opus_manager.cursor_select_global_ctl_range(type, first_beat, second_beat)
     }
 
     fun new_project() {

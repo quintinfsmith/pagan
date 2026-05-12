@@ -177,7 +177,6 @@ import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
-import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
@@ -201,18 +200,14 @@ import java.io.InputStreamReader
 import java.time.format.DateTimeFormatter
 import kotlin.collections.component1
 import kotlin.collections.component2
-import kotlin.collections.get
 import kotlin.collections.iterator
-import kotlin.compareTo
 import kotlin.concurrent.thread
 import kotlin.math.ceil
-import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
-import kotlin.text.get
 
 class ComponentActivityEditor: PaganComponentActivity() {
     val controller_model: ViewModelEditorController by this.viewModels()
@@ -1141,7 +1136,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     fun RowScope.TopBarNoTitle() {
         val vm_state = this@ComponentActivityEditor.state_model
-        val dispatcher = this@ComponentActivityEditor.action_interface
+        val opus_manager = this@ComponentActivityEditor.controller_model.opus_manager
 
         Spacer(Modifier.weight(1F))
 
@@ -1161,14 +1156,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
         Spacer(Modifier.weight(1F))
 
-        UndoButton(vm_state, dispatcher)
-        RedoButton(vm_state, dispatcher)
+        UndoButton(vm_state, opus_manager)
+        RedoButton(vm_state, opus_manager)
 
         Spacer(Modifier.weight(1F))
     }
 
     @Composable
-    fun UndoButton(vm_state: ViewModelEditorState, dispatcher: ActionDispatcher) {
+    fun UndoButton(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface) {
         TopBarIcon(
             icon = R.drawable.icon_undo,
             description = R.string.menu_item_undo,
@@ -1184,14 +1179,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
             onClick = {
                 if (!vm_state.has_undoable_actions.value) return@TopBarIcon
                 if (vm_state.playback_state_midi.value != PlaybackState.Playing && vm_state.playback_state_soundfont.value != PlaybackState.Playing) {
-                    dispatcher.apply_undo()
+                    opus_manager.apply_undo()
                 }
             }
         )
     }
 
     @Composable
-    fun RedoButton(vm_state: ViewModelEditorState, dispatcher: ActionDispatcher) {
+    fun RedoButton(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface) {
         TopBarIcon(
             icon = R.drawable.icon_redo,
             description = R.string.menu_item_redo,
@@ -1207,7 +1202,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             onClick = {
                 if (!vm_state.has_redoable_actions.value) return@TopBarIcon
                 if (vm_state.playback_state_midi.value != PlaybackState.Playing && vm_state.playback_state_soundfont.value != PlaybackState.Playing) {
-                    dispatcher.apply_redo()
+                    opus_manager.apply_redo()
                 }
             }
         )
@@ -1216,7 +1211,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     fun RowScope.TopBarWithTitle() {
         val vm_state = this@ComponentActivityEditor.state_model
-        val dispatcher = this@ComponentActivityEditor.action_interface
+        val opus_manager = this@ComponentActivityEditor.controller_model.opus_manager
 
         Spacer(Modifier.width(Dimensions.TopBarItemSpace))
         if (vm_state.soundfont_ready.value) {
@@ -1250,8 +1245,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
             NameAndNotesDialog(dialog_visible)
         }
 
-        UndoButton(vm_state, dispatcher)
-        RedoButton(vm_state, dispatcher)
+        UndoButton(vm_state, opus_manager)
+        RedoButton(vm_state, opus_manager)
         Spacer(Modifier.width(Dimensions.TopBarItemSpace))
     }
 

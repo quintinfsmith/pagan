@@ -9,8 +9,10 @@
  */
 package com.qfs.pagan.composable.table
 
+import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,19 +33,25 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.qfs.pagan.OpusLayerInterface
+import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.dashed_border
 import com.qfs.pagan.composable.is_light
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
+import com.qfs.pagan.structure.opusmanager.base.BeatKey
+import com.qfs.pagan.structure.opusmanager.base.MixedInstrumentException
 import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.OpusColorPalette
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
+import com.qfs.pagan.structure.opusmanager.base.RangeOverflow
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
+import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Typography
@@ -53,13 +61,20 @@ import kotlin.math.roundToInt
 
 @Composable
 fun LeafView(
-    channel_data: ViewModelEditorState.ChannelData?,
-    line_data: ViewModelEditorState.LineData,
-    leaf_data: ViewModelEditorState.LeafData,
-    radix: Int,
-    zoom: Float = 1F,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    opus_manager: OpusLayerInterface,
+    vm_state: ViewModelEditorState,
+    line_info: ViewModelEditorState.LineData,
+    beat: Int,
+    position: List<Int>,
+    leaf_data: ViewModelEditorState.LeafData
 ) {
+
+    val channel_data = line_info.channel.value?.let { vm_state.channel_data[it] },
+    val radix = vm_state.radix.value
+    val zoom = vm_state.zoom_index.intValue
+    val ctl_type = line_info.ctl_type.value
+
     val event = leaf_data.event.value
     val leaf_state = if (leaf_data.is_spillover.value) Colors.LeafState.Spill
     else if (event != null) Colors.LeafState.Active
@@ -70,18 +85,118 @@ fun LeafView(
     else Colors.LeafSelection.Unselected
 
     val (leaf_color, text_color) = Colors.get_leaf_color(
-        line_data.palette.value ?: OpusColorPalette(),
+        line_info.palette.value ?: OpusColorPalette(),
         channel_data?.palette?.value ?: OpusColorPalette(),
         leaf_state,
         leaf_selection,
-        line_data.ctl_type.value != null,
-        line_data.is_mute.value || channel_data?.is_mute?.value == true,
+        line_info.ctl_type.value != null,
+        line_info.is_mute.value || channel_data?.is_mute?.value == true,
         !MaterialTheme.colorScheme.is_light()
     )
 
     ProvideContentColorTextStyle(contentColor = text_color) {
         Box(
             modifier
+                .combinedClickable(
+                    onClick = {
+                        val cursor = opus_manager.cursor
+                        val selecting_range = cursor.mode == CursorMode.Range
+                        val channel = line_info.channel.value
+                        val line_offset = line_info.line_offset.value
+                        if (selecting_range && cursor.ctl_type == ctl_type) {
+                            try {
+                                if (ctl_type == null) {
+                                    val beat_key = BeatKey(channel!!, line_offset!!, beat)
+                                    when (this.vm_top.configuration.move_mode.value)  {
+                                        PaganConfiguration.MoveMode.MOVE -> {
+                                            opus_manager.move_to_beat(beat_key)
+                                        }
+                                        PaganConfiguration.MoveMode.COPY -> {
+                                            opus_manager.copy_to_beat(beat_key)
+                                        }
+                                        PaganConfiguration.MoveMode.MERGE -> {
+                                            opus_manager.merge_into_beat(beat_key)
+                                        }
+                                    }
+                                } else if (line_offset != null) {
+                                    val beat_key = BeatKey(channel!!, line_offset, beat)
+                                    when (this.vm_top.configuration.move_mode.value)  {
+                                        PaganConfiguration.MoveMode.MOVE -> {
+                                            opus_manager.move_line_ctl_to_beat(beat_key)
+                                        }
+                                        PaganConfiguration.MoveMode.MERGE -> TODO("Merge not implemented yet")
+                                        PaganConfiguration.MoveMode.COPY -> {
+                                            opus_manager.copy_line_ctl_to_beat(beat_key)
+                                        }
+                                    }
+                                } else if (channel != null) {
+                                    when (this.vm_top.configuration.move_mode.value)  {
+                                        PaganConfiguration.MoveMode.MOVE -> {
+                                            opus_manager.move_channel_ctl_to_beat(channel, beat)
+                                        }
+                                        PaganConfiguration.MoveMode.MERGE -> TODO("Merge not implemented yet")
+                                        PaganConfiguration.MoveMode.COPY -> {
+                                            opus_manager.copy_channel_ctl_to_beat(channel, beat)
+                                        }
+                                    }
+                                } else {
+                                    when (this.vm_top.configuration.move_mode.value)  {
+                                        PaganConfiguration.MoveMode.MOVE -> {
+                                            opus_manager.move_global_ctl_to_beat(beat)
+                                        }
+                                        PaganConfiguration.MoveMode.MERGE -> TODO("Merge not implemented yet")
+                                        PaganConfiguration.MoveMode.COPY -> {
+                                            opus_manager.copy_global_ctl_to_beat(beat)
+                                        }
+                                    }
+                                }
+                            } catch (e: RangeOverflow) {
+                                Toast.makeText(this.context, R.string.range_overflow, Toast.LENGTH_SHORT).show()
+                            } catch (e: MixedInstrumentException) {
+                                Toast.makeText(this.context, R.string.feedback_mixed_copy, Toast.LENGTH_SHORT).show()
+                            }
+                        } else if (ctl_type == null) {
+                            val beat_key = BeatKey(channel!!, line_offset!!, beat)
+                            opus_manager.cursor_select(beat_key, position)
+
+                            val tree = opus_manager.get_tree() ?: return
+                            if (tree.has_event()) {
+                                val note = if (opus_manager.is_percussion(channel)) {
+                                    opus_manager.get_percussion_instrument(channel, line_offset)
+                                } else {
+                                    opus_manager.get_absolute_value(beat_key, position) ?: return
+                                }
+
+                                this.play_event(
+                                    beat_key.channel,
+                                    note
+                                )
+                            }
+                        } else if (line_offset != null) {
+                            val beat_key = BeatKey(channel!!, line_offset, beat)
+                            opus_manager.cursor_select_ctl_at_line(ctl_type, beat_key, position)
+                        } else if (channel != null) {
+                            opus_manager.cursor_select_ctl_at_channel(ctl_type, channel, beat, position)
+                        } else {
+                            opus_manager.cursor_select_ctl_at_global(ctl_type, beat, position)
+                        }
+                    },
+                    onLongClick = {
+                        val channel = line_info.channel.value
+                        val line_offset = line_info.line_offset.value
+                        if (ctl_type == null) {
+                            val beat_key = BeatKey(channel!!, line_offset!!, beat)
+                            opus_manager.cursor_select_range_next(beat_key)
+                        } else if (line_offset != null) {
+                            val beat_key = BeatKey(channel!!, line_offset, beat)
+                            opus_manager.cursor_select_line_ctl_range_next(ctl_type, beat_key)
+                        } else if (channel != null) {
+                            opus_manager.cursor_select_channel_ctl_range_next(ctl_type, channel, beat)
+                        } else {
+                            opus_manager.cursor_select_global_ctl_range_next(ctl_type, beat)
+                        }
+                    }
+                )
                 .fillMaxHeight()
                 .background(color = leaf_color),
             contentAlignment = Alignment.Center

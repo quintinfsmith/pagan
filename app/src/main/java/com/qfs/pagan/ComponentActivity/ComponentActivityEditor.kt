@@ -661,6 +661,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.state_model.normalize_beat_widths.value = this.view_model.configuration.normalize_beat_widths.value
         this.state_model.beat_stroke_thickness.value = this.view_model.configuration.beat_stroke_thickness.value
         this.state_model.update_global_zoom_notches()
+        this.state_model.move_mode.value = this.view_model.configuration.move_mode.value
         this.set_soundfont {
             this.view_model.configuration.soundfonts.value = arrayOf()
             this.set_soundfont()
@@ -1382,11 +1383,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
             CursorMode.Range -> {
                 @Composable {
-                    ContextMenuRangeSecondary(
-                        vm_state,
-                        opus_manager,
-                        this@ComponentActivityEditor.view_model.configuration.move_mode
-                    )
+                    ContextMenuRangeSecondary(vm_state, opus_manager)
                 }
             }
 
@@ -1429,7 +1426,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun MainTable(
         modifier: Modifier = Modifier,
         vm_state: ViewModelEditorState,
-        dispatcher: ActionDispatcher,
+        opus_manager: OpusLayerInterface,
         length: MutableState<Int>,
         layout: LayoutSize
     ) {
@@ -1439,8 +1436,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val column_widths = Array(vm_state.beat_count.value) { i ->
             vm_state.column_data[i].top_weight.value
         }
-        val opus_manager = this.controller_model.opus_manager
-
 
         val channel_gap_height = Dimensions.ChannelGapHeight
 
@@ -1460,7 +1455,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onSurfaceVariant) {
                     Column(Modifier.width(line_label_width)) {
                         Column(Modifier.height(line_height)) {
-                            ShortcutView(Modifier.weight(1F), dispatcher, scope, scroll_state_h)
+                            ShortcutView(Modifier.weight(1F), vm_state, opus_manager, scope)
                             TableLine(MaterialTheme.colorScheme.onSurfaceVariant)
                         }
 
@@ -1547,7 +1542,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                 modifier = Modifier
                                                     .weight(1F)
                                                     .fillMaxWidth(),
-                                                dispatcher,
+                                                opus_manager,
                                                 vm_state,
                                                 y
                                             )
@@ -1668,7 +1663,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                         .weight(1F),
                                                     x = x,
                                                     vm_state = vm_state,
-                                                    dispatcher = dispatcher,
+                                                    dispatcher = opus_manager,
                                                     column_info = vm_state.column_data[x],
                                                     column_width = (column_width)
                                                 )
@@ -1711,13 +1706,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                             )
                                                         }
                                                         CellView(
+                                                            Modifier.weight(1F),
                                                             vm_state,
-                                                            dispatcher,
+                                                            opus_manager,
                                                             cell,
                                                             y,
                                                             x,
-                                                            vm_state.get_active_zoom(x),
-                                                            Modifier.weight(1F)
                                                         )
                                                     }
                                                     TableLine(MaterialTheme.colorScheme.onBackground)
@@ -1768,7 +1762,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     fun LineLabelView(
         modifier: Modifier = Modifier,
-        dispatcher: ActionDispatcher,
+        opus_manager: OpusLayerInterface,
         vm_state: ViewModelEditorState,
         y: Int
     ) {
@@ -1798,14 +1792,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     )
                     .combinedClickable(
                         onClick = {
-                            dispatcher.tap_line(
+                            opus_manager.tap_line(
                                 line_info.channel.value,
                                 line_info.line_offset.value,
                                 line_info.ctl_type.value
                             )
                         },
                         onLongClick = {
-                            dispatcher.long_tap_line(
+                            opus_manager.long_tap_line(
                                 line_info.channel.value,
                                 line_info.line_offset.value,
                                 line_info.ctl_type.value,

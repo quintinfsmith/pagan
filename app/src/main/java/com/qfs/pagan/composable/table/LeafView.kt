@@ -27,10 +27,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.currentCompositionContext
+import androidx.compose.runtime.currentCompositionLocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.OpusLayerInterface
@@ -67,12 +71,11 @@ fun LeafView(
     line_info: ViewModelEditorState.LineData,
     beat: Int,
     position: List<Int>,
-    leaf_data: ViewModelEditorState.LeafData
+    leaf_data: ViewModelEditorState.LeafData,
 ) {
-
-    val channel_data = line_info.channel.value?.let { vm_state.channel_data[it] },
+    val channel_data = line_info.channel.value?.let { vm_state.channel_data[it] }
     val radix = vm_state.radix.value
-    val zoom = vm_state.zoom_index.intValue
+    val zoom = vm_state.get_active_zoom(beat)
     val ctl_type = line_info.ctl_type.value
 
     val event = leaf_data.event.value
@@ -94,11 +97,14 @@ fun LeafView(
         !MaterialTheme.colorScheme.is_light()
     )
 
+    val context = LocalContext.current
+
     ProvideContentColorTextStyle(contentColor = text_color) {
         Box(
             modifier
                 .combinedClickable(
                     onClick = {
+                        val move_mode = vm_state.move_mode.value
                         val cursor = opus_manager.cursor
                         val selecting_range = cursor.mode == CursorMode.Range
                         val channel = line_info.channel.value
@@ -107,71 +113,37 @@ fun LeafView(
                             try {
                                 if (ctl_type == null) {
                                     val beat_key = BeatKey(channel!!, line_offset!!, beat)
-                                    when (this.vm_top.configuration.move_mode.value)  {
-                                        PaganConfiguration.MoveMode.MOVE -> {
-                                            opus_manager.move_to_beat(beat_key)
-                                        }
-                                        PaganConfiguration.MoveMode.COPY -> {
-                                            opus_manager.copy_to_beat(beat_key)
-                                        }
-                                        PaganConfiguration.MoveMode.MERGE -> {
-                                            opus_manager.merge_into_beat(beat_key)
-                                        }
-                                    }
+                                    opus_manager.cmove_to_beat(beat_key, move_mode)
                                 } else if (line_offset != null) {
                                     val beat_key = BeatKey(channel!!, line_offset, beat)
-                                    when (this.vm_top.configuration.move_mode.value)  {
-                                        PaganConfiguration.MoveMode.MOVE -> {
-                                            opus_manager.move_line_ctl_to_beat(beat_key)
-                                        }
-                                        PaganConfiguration.MoveMode.MERGE -> TODO("Merge not implemented yet")
-                                        PaganConfiguration.MoveMode.COPY -> {
-                                            opus_manager.copy_line_ctl_to_beat(beat_key)
-                                        }
-                                    }
+                                    opus_manager.cmove_line_ctl_to_beat(beat_key, move_mode)
                                 } else if (channel != null) {
-                                    when (this.vm_top.configuration.move_mode.value)  {
-                                        PaganConfiguration.MoveMode.MOVE -> {
-                                            opus_manager.move_channel_ctl_to_beat(channel, beat)
-                                        }
-                                        PaganConfiguration.MoveMode.MERGE -> TODO("Merge not implemented yet")
-                                        PaganConfiguration.MoveMode.COPY -> {
-                                            opus_manager.copy_channel_ctl_to_beat(channel, beat)
-                                        }
-                                    }
+                                    opus_manager.cmove_channel_ctl_to_beat(channel, beat, move_mode)
                                 } else {
-                                    when (this.vm_top.configuration.move_mode.value)  {
-                                        PaganConfiguration.MoveMode.MOVE -> {
-                                            opus_manager.move_global_ctl_to_beat(beat)
-                                        }
-                                        PaganConfiguration.MoveMode.MERGE -> TODO("Merge not implemented yet")
-                                        PaganConfiguration.MoveMode.COPY -> {
-                                            opus_manager.copy_global_ctl_to_beat(beat)
-                                        }
-                                    }
+                                    opus_manager.cmove_global_ctl_to_beat(beat, move_mode)
                                 }
-                            } catch (e: RangeOverflow) {
-                                Toast.makeText(this.context, R.string.range_overflow, Toast.LENGTH_SHORT).show()
-                            } catch (e: MixedInstrumentException) {
-                                Toast.makeText(this.context, R.string.feedback_mixed_copy, Toast.LENGTH_SHORT).show()
+                            } catch (_: RangeOverflow) {
+                                Toast.makeText(context, R.string.range_overflow, Toast.LENGTH_SHORT).show()
+                            } catch (_: MixedInstrumentException) {
+                                Toast.makeText(context, R.string.feedback_mixed_copy, Toast.LENGTH_SHORT).show()
                             }
                         } else if (ctl_type == null) {
                             val beat_key = BeatKey(channel!!, line_offset!!, beat)
                             opus_manager.cursor_select(beat_key, position)
 
-                            val tree = opus_manager.get_tree() ?: return
-                            if (tree.has_event()) {
-                                val note = if (opus_manager.is_percussion(channel)) {
-                                    opus_manager.get_percussion_instrument(channel, line_offset)
-                                } else {
-                                    opus_manager.get_absolute_value(beat_key, position) ?: return
-                                }
-
-                                this.play_event(
-                                    beat_key.channel,
-                                    note
-                                )
-                            }
+                            // TODO: Feedback
+                            //val tree = opus_manager.get_tree() ?: return@combinedClickable
+                            //if (tree.has_event()) {
+                            //    val note = if (opus_manager.is_percussion(channel)) {
+                            //        opus_manager.get_percussion_instrument(channel, line_offset)
+                            //    } else {
+                            //        opus_manager.get_absolute_value(beat_key, position) ?: return@combinedClickable
+                            //    }
+                            //    // this.play_event(
+                            //    //     beat_key.channel,
+                            //    //     note
+                            //    // )
+                            //}
                         } else if (line_offset != null) {
                             val beat_key = BeatKey(channel!!, line_offset, beat)
                             opus_manager.cursor_select_ctl_at_line(ctl_type, beat_key, position)

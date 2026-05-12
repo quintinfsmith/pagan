@@ -16,12 +16,20 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import com.qfs.pagan.OpusLayerInterface
+import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.testTag
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun CellView(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, cell: MutableState<ViewModelEditorState.TreeData>, y: Int, x: Int, zoom: Float, modifier: Modifier = Modifier) {
+fun CellView(
+    modifier: Modifier = Modifier,
+    vm_state: ViewModelEditorState,
+    opus_manager: OpusLayerInterface,
+    cell: MutableState<ViewModelEditorState.TreeData>,
+    y: Int,
+    x: Int,
+) {
     val line_info = vm_state.line_data[y]
     key(cell.value.key.value, y) {
         Row(modifier.fillMaxSize()) {

@@ -62,7 +62,10 @@ fun UnsetRangeButton(opus_manager: OpusLayerInterface) {
 }
 
 @Composable
-fun ContextMenuRangeSecondary(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, move_mode: MutableState<PaganConfiguration.MoveMode>) {
+fun ContextMenuRangeSecondary(
+    vm_state: ViewModelEditorState,
+    opus_manager: OpusLayerInterface
+) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -79,7 +82,7 @@ fun ContextMenuRangeSecondary(vm_state: ViewModelEditorState, opus_manager: Opus
                         Text(R.string.move_mode_copy)
                     }
                 ),
-                active = move_mode,
+                active = vm_state.move_mode,
                 callback = { }
             )
             UnsetRangeButton(opus_manager)
@@ -90,7 +93,7 @@ fun ContextMenuRangeSecondary(vm_state: ViewModelEditorState, opus_manager: Opus
             horizontalArrangement = Arrangement.Center
         ) {
             Text(
-                when (move_mode.value) {
+                when (vm_state.move_mode.value) {
                     PaganConfiguration.MoveMode.MOVE -> R.string.label_move_beat
                     PaganConfiguration.MoveMode.COPY -> R.string.label_copy_beat
                     PaganConfiguration.MoveMode.MERGE -> R.string.label_merge_beat

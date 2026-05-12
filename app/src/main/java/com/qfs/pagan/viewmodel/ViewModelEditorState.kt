@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.Coordinate
+import com.qfs.pagan.PaganConfiguration
+import com.qfs.pagan.PaganConfiguration.MoveMode
 import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.PresetKey
 import com.qfs.pagan.RelativeInputMode
@@ -200,19 +202,20 @@ class ViewModelEditorState: ViewModel() {
     var selected_leafs: MutableList<LeafData> = mutableListOf()
 
     var blocker_leaf: List<Int>? = null
-    val use_midi_playback: MutableState<Boolean> = mutableStateOf(false)
-    val midi_device_connected: MutableState<Boolean> = mutableStateOf(false)
-    val soundfont_ready: MutableState<Boolean> = mutableStateOf(false)
-    val playback_state_soundfont: MutableState<PlaybackState> = mutableStateOf(PlaybackState.NotReady)
-    val looping_playback: MutableState<Boolean> = mutableStateOf(false)
-    val playback_state_midi: MutableState<PlaybackState> = mutableStateOf(PlaybackState.NotReady)
-    val relative_input_mode: MutableState<RelativeInputMode> = mutableStateOf(RelativeInputMode.Absolute)
-    val latest_input_indicator: MutableState<Boolean> = mutableStateOf(false)
+    val use_midi_playback = mutableStateOf(false)
+    val midi_device_connected = mutableStateOf(false)
+    val soundfont_ready = mutableStateOf(false)
+    val playback_state_soundfont = mutableStateOf(PlaybackState.NotReady)
+    val looping_playback = mutableStateOf(false)
+    val playback_state_midi = mutableStateOf(PlaybackState.NotReady)
+    val relative_input_mode = mutableStateOf<RelativeInputMode>(RelativeInputMode.Absolute)
+    val latest_input_indicator  = mutableStateOf(false)
+    val move_mode = mutableStateOf(MoveMode.COPY)
 
-    val highlighted_offset: MutableState<Int?> = mutableStateOf(null)
-    val highlighted_octave: MutableState<Int?> = mutableStateOf(null)
+    val highlighted_offset = mutableStateOf<Int?>(null)
+    val highlighted_octave = mutableStateOf<Int?>(null)
 
-    val is_buffering: MutableState<Boolean> = mutableStateOf(false)
+    val is_buffering = mutableStateOf(false)
 
     val scroll_state_x = mutableStateOf(LazyListState())
     val scroll_state_y: MutableState<ScrollState> = mutableStateOf(ScrollState(0))
@@ -226,15 +229,15 @@ class ViewModelEditorState: ViewModel() {
     val pixel_density = mutableStateOf(1F)
 
     val has_global_effects_hidden = mutableStateOf(true)
-    val soundfont_active: MutableState<Long?> = mutableStateOf(null) // can use as key if we specify some indicator
-    val active_soundfonts: MutableState<Array<String>> = mutableStateOf(arrayOf())
-    val table_side_padding: MutableState<Float> = mutableStateOf(0F)
-    val table_bottom_padding: MutableState<Float> = mutableStateOf(0F)
-    val wide_beat_progress: MutableState<Float> = mutableStateOf(0F)
-    val active_wide_beat: MutableState<Int?> = mutableStateOf(null)
+    val soundfont_active = mutableStateOf<Long?>(null) // can use as key if we specify some indicator
+    val active_soundfonts = mutableStateOf<Array<String>>(arrayOf())
+    val table_side_padding = mutableStateOf(0F)
+    val table_bottom_padding = mutableStateOf(0F)
+    val wide_beat_progress = mutableStateOf(0F)
+    val active_wide_beat = mutableStateOf<Int?>(null)
 
-    val has_undoable_actions: MutableState<Boolean> = mutableStateOf(false)
-    val has_redoable_actions: MutableState<Boolean> = mutableStateOf(false)
+    val has_undoable_actions = mutableStateOf(false)
+    val has_redoable_actions = mutableStateOf(false)
 
     val dragging_line: MutableState<Int?> = mutableStateOf(null)
     val dragging_abs_offset: MutableState<Float?> = mutableStateOf(null)

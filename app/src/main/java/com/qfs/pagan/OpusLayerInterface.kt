@@ -2566,4 +2566,72 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
         return new_uuid
     }
+
+    fun tap_line(channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
+        val cursor = this.cursor
+        when (cursor.mode) {
+            CursorMode.Range -> {
+                if (this._tap_line_repeatable(channel, line_offset, ctl_type)) {
+                    val (beat_key, _ ) = cursor.get_ordered_range()!!
+                    when (cursor.ctl_level) {
+                        CtlLineLevel.Line -> this.repeat_selection_ctl_line(cursor.ctl_type!!, beat_key.channel, beat_key.line_offset)
+                        CtlLineLevel.Channel -> this.repeat_selection_ctl_channel(cursor.ctl_type!!, beat_key.channel)
+                        CtlLineLevel.Global -> this.repeat_selection_ctl_global(cursor.ctl_type!!)
+                        null -> this.repeat_selection_std(beat_key.channel, beat_key.line_offset)
+                    }
+                } else {
+                    this.cursor_select_line(channel, line_offset, ctl_type)
+                }
+            }
+            CursorMode.Line -> {
+                val ctl_level = if (ctl_type == null) null
+                else if (channel == null) CtlLineLevel.Global
+                else if (line_offset == null) CtlLineLevel.Channel
+                else CtlLineLevel.Line
+
+
+                if (channel == cursor.channel && line_offset == cursor.line_offset && ctl_type == cursor.ctl_type && ctl_level == cursor.ctl_level) {
+                    this.cursor_select_channel(channel)
+                } else {
+                    this.cursor_select_line(channel, line_offset, ctl_type)
+                }
+            }
+            CursorMode.Single,
+            CursorMode.Column,
+            CursorMode.Channel,
+            CursorMode.Unset -> {
+                this.cursor_select_line(channel, line_offset, ctl_type)
+            }
+        }
+    }
+
+    fun long_tap_line(channel: Int?, line_offset: Int?, ctl_type: EffectType?, fallback: () -> Unit = {}) {
+        val cursor = this.cursor
+        when (cursor.mode) {
+            CursorMode.Range -> {
+                if (this._tap_line_repeatable(channel, line_offset, ctl_type)) {
+                    val (beat_key, _ ) = cursor.get_ordered_range()!!
+                    when (cursor.ctl_level) {
+                        CtlLineLevel.Line -> this.repeat_selection_ctl_line(cursor.ctl_type!!, beat_key.channel, beat_key.line_offset, -1)
+                        CtlLineLevel.Channel -> this.repeat_selection_ctl_channel(cursor.ctl_type!!, beat_key.channel, -1)
+                        CtlLineLevel.Global -> this.repeat_selection_ctl_global(cursor.ctl_type!!, -1)
+                        null -> this.repeat_selection_std(beat_key.channel, beat_key.line_offset, -1)
+                    }
+                } else {
+                    this.cursor_select_line(channel, line_offset, ctl_type)
+                }
+            }
+            else -> fallback()
+        }
+    }
+
+    private fun _tap_line_repeatable(channel: Int?, line_offset: Int?, ctl_type: EffectType?): Boolean {
+        return if (ctl_type == null) this.is_line_selected_secondary(channel!!, line_offset!!)
+        else if (channel == null) this.is_global_control_line_selected_secondary(ctl_type)
+        else if (line_offset == null) this.is_channel_control_line_selected_secondary(ctl_type, channel)
+        else this.is_line_control_line_selected_secondary(ctl_type, channel, line_offset)
+    }
+
+
+
 }

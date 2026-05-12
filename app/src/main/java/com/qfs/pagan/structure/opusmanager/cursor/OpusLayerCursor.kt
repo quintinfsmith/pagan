@@ -10,6 +10,7 @@
 package com.qfs.pagan.structure.opusmanager.cursor
 import android.widget.Toast
 import androidx.compose.ui.graphics.Color
+import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.PresetKey
 import com.qfs.pagan.R
 import com.qfs.pagan.RelativeInputMode
@@ -2770,6 +2771,38 @@ open class OpusLayerCursor: OpusLayerBase() {
                 )
                 this.set_duration(beat_key, position, kotlin.math.max(1, duration))
             }
+        }
+    }
+
+    fun cmove_to_beat(beat_key: BeatKey, mode: PaganConfiguration.MoveMode) {
+        when (mode)  {
+            PaganConfiguration.MoveMode.MOVE -> this.move_to_beat(beat_key)
+            PaganConfiguration.MoveMode.COPY -> this.copy_to_beat(beat_key)
+            PaganConfiguration.MoveMode.MERGE -> this.merge_into_beat(beat_key)
+        }
+    }
+
+    fun cmove_line_ctl_to_beat(beat_key: BeatKey, mode: PaganConfiguration.MoveMode) {
+        when (mode)  {
+            PaganConfiguration.MoveMode.MOVE -> this.move_line_ctl_to_beat(beat_key)
+            PaganConfiguration.MoveMode.COPY -> this.copy_line_ctl_to_beat(beat_key)
+            PaganConfiguration.MoveMode.MERGE -> TODO("Merge not implemented yet")
+        }
+    }
+
+    fun cmove_channel_ctl_to_beat(channel: Int, beat: Int, mode: PaganConfiguration.MoveMode) {
+        when (mode)  {
+            PaganConfiguration.MoveMode.MOVE -> this.move_channel_ctl_to_beat(channel, beat)
+            PaganConfiguration.MoveMode.COPY -> this.copy_channel_ctl_to_beat(channel, beat)
+            PaganConfiguration.MoveMode.MERGE -> TODO("Merge not implemented yet")
+        }
+    }
+
+    fun cmove_global_ctl_to_beat(beat: Int, mode: PaganConfiguration.MoveMode) {
+        when (mode)  {
+            PaganConfiguration.MoveMode.MOVE -> this.move_global_ctl_to_beat(beat)
+            PaganConfiguration.MoveMode.COPY -> this.copy_global_ctl_to_beat(beat)
+            PaganConfiguration.MoveMode.MERGE -> TODO("Merge not implemented yet")
         }
     }
 }

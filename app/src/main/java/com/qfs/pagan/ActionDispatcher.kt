@@ -120,58 +120,6 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         }
     }
 
-    fun tap_leaf(beat: Int, position: List<Int>, channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
-    }
-
-    fun long_tap_leaf(beat: Int, position: List<Int>, channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
-    }
-
-    private fun _tap_line_repeatable(channel: Int?, line_offset: Int?, ctl_type: EffectType?): Boolean {
-        val opus_manager = this.get_opus_manager()
-        return if (ctl_type == null) opus_manager.is_line_selected_secondary(channel!!, line_offset!!)
-        else if (channel == null) opus_manager.is_global_control_line_selected_secondary(ctl_type)
-        else if (line_offset == null) opus_manager.is_channel_control_line_selected_secondary(ctl_type, channel)
-        else opus_manager.is_line_control_line_selected_secondary(ctl_type, channel, line_offset)
-    }
-
-    fun tap_line(channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        when (cursor.mode) {
-            CursorMode.Range -> {
-                if (this._tap_line_repeatable(channel, line_offset, ctl_type)) {
-                    val (beat_key, _ ) = cursor.get_ordered_range()!!
-                    when (cursor.ctl_level) {
-                        CtlLineLevel.Line -> this.repeat_selection_ctl_line(cursor.ctl_type!!, beat_key.channel, beat_key.line_offset)
-                        CtlLineLevel.Channel -> this.repeat_selection_ctl_channel(cursor.ctl_type!!, beat_key.channel)
-                        CtlLineLevel.Global -> this.repeat_selection_ctl_global(cursor.ctl_type!!)
-                        null -> this.repeat_selection_std(beat_key.channel, beat_key.line_offset)
-                    }
-                } else {
-                    this.cursor_select_line(channel, line_offset, ctl_type)
-                }
-            }
-            CursorMode.Line -> {
-                val ctl_level = if (ctl_type == null) null
-                else if (channel == null) CtlLineLevel.Global
-                else if (line_offset == null) CtlLineLevel.Channel
-                else CtlLineLevel.Line
-
-
-                if (channel == cursor.channel && line_offset == cursor.line_offset && ctl_type == cursor.ctl_type && ctl_level == cursor.ctl_level) {
-                    this.cursor_select_channel(channel)
-                } else {
-                    this.cursor_select_line(channel, line_offset, ctl_type)
-                }
-            }
-            CursorMode.Single,
-            CursorMode.Column,
-            CursorMode.Channel,
-            CursorMode.Unset -> {
-                this.cursor_select_line(channel, line_offset, ctl_type)
-            }
-        }
-    }
 
     fun set_effect_transition(event: EffectEvent, transition: EffectTransition? = null) {
         transition?.let {
@@ -221,26 +169,6 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         }
     }
 
-    fun long_tap_line(channel: Int?, line_offset: Int?, ctl_type: EffectType?, fallback: () -> Unit = {}) {
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-        when (cursor.mode) {
-            CursorMode.Range -> {
-                if (this._tap_line_repeatable(channel, line_offset, ctl_type)) {
-                    val (beat_key, _ ) = cursor.get_ordered_range()!!
-                    when (cursor.ctl_level) {
-                        CtlLineLevel.Line -> this.repeat_selection_ctl_line(cursor.ctl_type!!, beat_key.channel, beat_key.line_offset, -1)
-                        CtlLineLevel.Channel -> this.repeat_selection_ctl_channel(cursor.ctl_type!!, beat_key.channel, -1)
-                        CtlLineLevel.Global -> this.repeat_selection_ctl_global(cursor.ctl_type!!, -1)
-                        null -> this.repeat_selection_std(beat_key.channel, beat_key.line_offset, -1)
-                    }
-                } else {
-                    this.cursor_select_line(channel, line_offset, ctl_type)
-                }
-            }
-            else -> fallback()
-        }
-    }
 
     fun cursor_clear() {
         this.vm_controller.opus_manager.cursor_clear()

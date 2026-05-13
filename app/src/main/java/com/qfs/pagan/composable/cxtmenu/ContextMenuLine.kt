@@ -37,6 +37,7 @@ import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import com.qfs.pagan.ComponentActivity.ComponentActivityEditor
+import com.qfs.pagan.EffectResourceMap
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
@@ -45,11 +46,14 @@ import com.qfs.pagan.composable.ColorPickerDialog
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogMenu
 import com.qfs.pagan.composable.IntegerInputDialog
+import com.qfs.pagan.composable.LargeSpacer
 import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.NumberPicker
 import com.qfs.pagan.composable.PaganDialog
 import com.qfs.pagan.composable.SoundfontLoadingIndicator
+import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.IconCMenuButton
+import com.qfs.pagan.composable.button.OutlinedButton
 import com.qfs.pagan.composable.button.TextCMenuButton
 import com.qfs.pagan.composable.effectwidget.DelayEventMenu
 import com.qfs.pagan.composable.effectwidget.PanEventMenu
@@ -140,15 +144,25 @@ fun DuplicateLineButton(active_line: ViewModelEditorState.LineData, opus_manager
 
 @Composable
 fun ToggleLineControllerButton(
+    vm_state: ViewModelEditorState,
+    active_line: ViewModelEditorState.LineData,
     opus_manager: OpusLayerInterface,
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
+    val dialog_visibility = remember { mutableStateOf(false) }
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.LineEffectsShow),
-        onClick = { opus_manager.toggle_controller_visibility_at_cursor() },
+        onClick = { dialog_visibility.value = true },
         shape = shape,
         icon = R.drawable.icon_ctl,
         description = R.string.cd_show_effect_controls
+    )
+
+    LineEffectMenuDialog(
+        dialog_visibility,
+        active_line,
+        opus_manager,
+        vm_state
     )
 }
 
@@ -404,7 +418,124 @@ fun HideEffectButton(active_line: ViewModelEditorState.LineData, opus_manager: O
 }
 
 @Composable
-fun ShowEffectDialog(domain: CtlLineLevel, vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, callback: (EffectType) -> Unit) {
+fun LineEffectMenuDialog(
+    visibility: MutableState<Boolean>,
+    active_line: ViewModelEditorState.LineData,
+    opus_manager: OpusLayerInterface,
+    vm_state: ViewModelEditorState,
+) {
+    val subdialog_visibility = remember { mutableStateOf(false) }
+    val subdialog_ctl_type = remember { mutableStateOf<EffectType?>(null) }
+
+    DialogMenu(
+        visibility = visibility,
+        title = R.string.cd_show_effect_controls,
+        options = {
+            val available_effects = OpusLayerInterface.line_controller_domain.toMutableList()
+            for (line in vm_state.line_data) {
+                if (!available_effects.contains(line.ctl_type.value)) continue
+                if (line.ctl_type.value == null) continue
+                if (line.channel.value != active_line.channel.value) continue
+                if (line.line_offset.value != active_line.line_offset.value) continue
+                available_effects.remove(line.ctl_type.value)
+            }
+            List<Pair<EffectType, @Composable RowScope.() -> Unit>>(available_effects.size) { i ->
+                Pair(available_effects[i]) { EffectMenuItem(available_effects[i]) }
+            }
+        },
+        long_click_callback = {
+            subdialog_ctl_type.value = it
+            subdialog_visibility.value = true
+        },
+        callback = {
+            opus_manager.set_line_controller_visibility(
+                type = it,
+                channel_index = active_line.channel.value!!,
+                line_offset = active_line.line_offset.value!!,
+                visibility = true
+            )
+        }
+    )
+
+    PaganDialog(subdialog_visibility) {
+        Icon(
+            modifier = Modifier.height(Dimensions.EffectDialogIconHeight),
+            painter = painterResource(EffectResourceMap[subdialog_ctl_type.value!!].icon),
+            contentDescription = stringResource(EffectResourceMap[subdialog_ctl_type.value!!].name)
+        )
+        LargeSpacer()
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = {
+                opus_manager.set_line_controller_visibility(
+                    type = subdialog_ctl_type.value!!,
+                    channel_index = active_line.channel.value!!,
+                    line_offset = active_line.line_offset.value!!,
+                    visibility = true
+                )
+
+                subdialog_visibility.value = false
+                subdialog_ctl_type.value = null
+                visibility.value = false
+            },
+            content = { Text(stringResource(R.string.show_line_controls_this)) },
+        )
+        LargeSpacer()
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = {
+                opus_manager.set_all_line_controller_visibility(
+                    type = subdialog_ctl_type.value!!,
+                    channel = active_line.channel.value!!
+                )
+
+                subdialog_visibility.value = false
+                subdialog_ctl_type.value = null
+                visibility.value = false
+            },
+            content = {
+                Text(
+                    stringResource(R.string.show_line_controls_channel),
+                    maxLines = 1
+                )
+            },
+        )
+        LargeSpacer()
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = {
+                opus_manager.set_all_line_controller_visibility(subdialog_ctl_type.value!!)
+
+                subdialog_visibility.value = false
+                subdialog_ctl_type.value = null
+                visibility.value = false
+            },
+            content = {
+                Text(
+                    stringResource(R.string.show_line_controls_all),
+                    maxLines = 1
+                )
+            },
+        )
+        LargeSpacer()
+        OutlinedButton(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = {
+                subdialog_visibility.value = false
+                subdialog_ctl_type.value = null
+            },
+            content = { Text(android.R.string.cancel) },
+        )
+    }
+}
+
+
+@Composable
+fun GlobalEffectMenuDialog(
+    visibility: MutableState<Boolean>,
+    opus_manager: OpusLayerInterface,
+    vm_state: ViewModelEditorState,
+) {
 
 }
 
@@ -420,7 +551,12 @@ fun ContextMenuLinePrimary(modifier: Modifier = Modifier, vm_state: ViewModelEdi
 }
 
 @Composable
-fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, layout: LayoutSize) {
+fun ContextMenuLineStdPrimary(
+    modifier: Modifier = Modifier,
+    vm_state: ViewModelEditorState,
+    opus_manager: OpusLayerInterface,
+    layout: LayoutSize
+) {
     val cursor = vm_state.active_cursor.value ?: return
     val active_line = vm_state.line_data[cursor.ints[0]]
     val active_channel = vm_state.channel_data[active_line.channel.value!!]
@@ -432,6 +568,8 @@ fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
         LayoutSize.XLargeLandscape -> {
             ContextMenuPrimaryRow(modifier) {
                 ToggleLineControllerButton(
+                    vm_state,
+                    active_line,
                     opus_manager,
                     shape = Shapes.ContextMenuButtonPrimaryStart
                 )
@@ -489,6 +627,8 @@ fun ContextMenuLineStdPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
                 Spacer(Modifier.weight(1F))
 
                 ToggleLineControllerButton(
+                    vm_state,
+                    active_line,
                     opus_manager,
                     shape = Shapes.ContextMenuButtonPrimaryBottom
                 )

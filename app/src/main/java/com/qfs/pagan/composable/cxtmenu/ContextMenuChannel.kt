@@ -19,7 +19,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -238,7 +240,6 @@ fun SetPresetButton(
     active_channel: ViewModelEditorState.ChannelData,
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
-
     if (vm_state.soundfont_ready.value) {
         TextCMenuButton(
             modifier = modifier.testTag(TestTag.ChannelPreset),
@@ -299,6 +300,91 @@ fun SetChannelColorButton(
         ColorPickerDialog(default_color, visibility) { new_color ->
             opus_manager.set_channel_event_color(channel_index, new_color)
         }
+    }
+}
+
+@Composable
+fun ChannelEffectMenuDialog(
+    visibility: MutableState<Boolean>,
+    active_channel: Int,
+    opus_manager: OpusLayerInterface,
+    vm_state: ViewModelEditorState,
+) {
+    val subdialog_visibility = remember { mutableStateOf(false) }
+    val subdialog_ctl_type = remember { mutableStateOf<EffectType?>(null) }
+
+    DialogMenu(
+        visibility = visibility,
+        title = R.string.cd_show_effect_controls,
+        options = {
+            val available_effects = OpusLayerInterface.channel_controller_domain.toMutableList()
+            for (line in vm_state.line_data) {
+                if (!available_effects.contains(line.ctl_type.value)) continue
+                if (line.ctl_type.value == null) continue
+                if (line.channel.value != active_channel) continue
+                available_effects.remove(line.ctl_type.value)
+            }
+            List<Pair<EffectType, @Composable RowScope.() -> Unit>>(available_effects.size) { i ->
+                Pair(available_effects[i]) { EffectMenuItem(available_effects[i]) }
+            }
+        },
+        long_click_callback = {
+            subdialog_ctl_type.value = it
+            subdialog_visibility.value = true
+        },
+        callback = {
+            opus_manager.set_channel_controller_visibility(
+                type = it,
+                channel_index = active_channel,
+                visibility = true
+            )
+        }
+    )
+
+    PaganDialog(subdialog_visibility) {
+        Icon(
+            modifier = Modifier.height(Dimensions.EffectDialogIconHeight),
+            painter = painterResource(EffectResourceMap[subdialog_ctl_type.value!!].icon),
+            contentDescription = stringResource(EffectResourceMap[subdialog_ctl_type.value!!].name)
+        )
+        LargeSpacer()
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = {
+                opus_manager.set_channel_controller_visibility(
+                    type = subdialog_ctl_type.value!!,
+                    channel_index = active_channel,
+                    visibility = true
+                )
+
+                subdialog_visibility.value = false
+                subdialog_ctl_type.value = null
+                visibility.value = false
+            },
+            content = { Text(stringResource(R.string.show_channel_controls_single)) },
+        )
+        LargeSpacer()
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = {
+                opus_manager.set_all_channel_controller_visibility(
+                    type = subdialog_ctl_type.value!!
+                )
+                subdialog_visibility.value = false
+                subdialog_ctl_type.value = null
+                visibility.value = false
+            },
+            content = { androidx.compose.material3.Text(stringResource(R.string.show_channel_controls_all)) },
+        )
+        LargeSpacer()
+        OutlinedButton(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = {
+                subdialog_visibility.value = false
+                subdialog_ctl_type.value = null
+            },
+            content = { Text(android.R.string.cancel) },
+        )
     }
 }
 

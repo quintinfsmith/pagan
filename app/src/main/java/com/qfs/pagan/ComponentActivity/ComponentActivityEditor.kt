@@ -1591,8 +1591,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         options
                                     }
                                 ) { value ->
-                                    this
-                                    this@ComponentActivityEditor.action_interface.show_hidden_global_controller(value)
+                                    opus_manager.toggle_global_controller_visibility(value)
                                 }
                             }
                             Spacer(Modifier.height(toDp(this@ComponentActivityEditor.state_model.table_bottom_padding.value)))
@@ -1663,7 +1662,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                         .weight(1F),
                                                     x = x,
                                                     vm_state = vm_state,
-                                                    dispatcher = opus_manager,
+                                                    opus_manager = opus_manager,
                                                     column_info = vm_state.column_data[x],
                                                     column_width = (column_width)
                                                 )
@@ -1922,7 +1921,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         modifier: Modifier = Modifier,
         x: Int,
         vm_state: ViewModelEditorState,
-        dispatcher: ActionDispatcher,
+        opus_manager: OpusLayerInterface,
         column_info: ViewModelEditorState.ColumnData,
         column_width: Dp // Necessary for floating label
     ) {
@@ -1946,11 +1945,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         color = background,
                         shape = RectangleShape
                     )
-                    .combinedClickable(
-                        onClick = {
-                            dispatcher.cursor_select_column(x)
-                        },
-                    )
+                    .clickable {
+                        opus_manager.cursor_select_column(x)
+                    }
                     .fillMaxSize(),
                 border_color = MaterialTheme.colorScheme.onSurfaceVariant,
                 content = {
@@ -1960,8 +1957,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 .width(toDp(vm_state.scroll_state_x.value.layoutInfo.viewportSize.width.toFloat() / 3F))
                                 .graphicsLayer {
                                     val width_px = column_width.toPx()
-                                    val scroll_offset =
-                                        vm_state.scroll_state_x.value.firstVisibleItemScrollOffset.toFloat()
+                                    val scroll_offset = vm_state.scroll_state_x.value.firstVisibleItemScrollOffset.toFloat()
                                     val viewport_width = vm_state.scroll_state_x.value.layoutInfo.viewportSize.width
                                     val floating_position = (width_px / -2F) + (viewport_width / 4) + scroll_offset
                                     translationX = floating_position
@@ -1995,8 +1991,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         val end_position = ((width_px - viewport_width) / 2F)
                                         if (floating_position < end_position) {
                                             state_model.active_wide_beat.value = x
-                                            state_model.wide_beat_progress.value =
-                                                scroll_offset / (width_px - viewport_width)
+                                            state_model.wide_beat_progress.value = scroll_offset / (width_px - viewport_width)
                                             floating_position
                                         } else {
                                             if (state_model.active_wide_beat.value == x) {
@@ -2438,7 +2433,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             contentAlignment = Alignment.BottomCenter,
         ) {
             Box(Modifier.fillMaxSize()) {
-                MainTable(Modifier, vm_state, action_interface,  vm_state.beat_count, LayoutSize.LargePortrait)
+                MainTable(Modifier, vm_state, opus_manager,  vm_state.beat_count, LayoutSize.LargePortrait)
             }
 
             val primary = this@ComponentActivityEditor.get_context_menu_primary(
@@ -2503,7 +2498,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             contentAlignment = Alignment.BottomCenter,
         ) {
             Box(Modifier.fillMaxSize()) {
-                MainTable(Modifier, vm_state, action_interface,  vm_state.beat_count, layout)
+                MainTable(Modifier, vm_state, opus_manager,  vm_state.beat_count, layout)
             }
 
             val primary = this@ComponentActivityEditor.get_context_menu_primary(vm_state, opus_manager, layout)
@@ -2546,7 +2541,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             modifier,
             contentAlignment = Alignment.BottomCenter,
         ) {
-            MainTable(Modifier.fillMaxSize(), vm_state, action_interface, vm_state.beat_count, layout)
+            MainTable(Modifier.fillMaxSize(), vm_state, opus_manager, vm_state.beat_count, layout)
             Row(
                 Modifier
                     .fillMaxSize(),

@@ -32,6 +32,7 @@ import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ComposeCompilerApi
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableFloatStateOf
@@ -51,10 +52,12 @@ import androidx.documentfile.provider.DocumentFile
 import com.qfs.apres.VirtualMidiInputDevice
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.composable.DialogBar
+import com.qfs.pagan.composable.DialogMenu
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.IntegerInput
 import com.qfs.pagan.composable.LargeSpacer
+import com.qfs.pagan.composable.PaganDialog
 import com.qfs.pagan.composable.SortableMenu
 import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.UnSortableMenu
@@ -106,75 +109,8 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         this.vm_top = model
     }
 
-    fun move_selection_to_beat(beat_key: BeatKey) {
-        when (this.vm_top.configuration.move_mode.value)  {
-            PaganConfiguration.MoveMode.MOVE -> {
-                this.vm_controller.opus_manager.move_to_beat(beat_key)
-            }
-            PaganConfiguration.MoveMode.COPY -> {
-                this.vm_controller.opus_manager.copy_to_beat(beat_key)
-            }
-            PaganConfiguration.MoveMode.MERGE -> {
-                this.vm_controller.opus_manager.merge_into_beat(beat_key)
-            }
-        }
-    }
-
-
-    fun set_effect_transition(event: EffectEvent, transition: EffectTransition? = null) {
-        transition?.let {
-            event.transition = transition
-            this.set_effect_at_cursor(event.copy())
-            return
-        }
-
-
-        val title = R.string.dialog_transition
-
-        val options = mutableListOf<Pair<EffectTransition, @Composable RowScope.() -> Unit>>()
-        for (transition_option in OpusManager.get_available_transitions(event.event_type)) {
-            options.add(
-                Pair(transition_option) {
-                    Icon(
-                        modifier = Modifier.height(Dimensions.EffectTransitionDialogIconHeight),
-                        painter = painterResource(when (transition_option) {
-                            EffectTransition.Instant -> R.drawable.icon_transition_immediate
-                            EffectTransition.Linear -> R.drawable.icon_transition_linear
-                            EffectTransition.InstantB -> R.drawable.icon_transition_rimmediate
-                            EffectTransition.RLinear -> R.drawable.icon_transition_rlinear
-                            EffectTransition.LinearB -> R.drawable.icon_transition_linearb
-                        }),
-                        contentDescription = null
-                    )
-                    Box(
-                        modifier = Modifier.weight(1F),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            when (transition_option) {
-                                EffectTransition.Instant -> R.string.effect_transition_instant
-                                EffectTransition.Linear -> R.string.effect_transition_linear
-                                EffectTransition.InstantB -> R.string.effect_transition_rinstant
-                                EffectTransition.RLinear -> R.string.effect_transition_rlinear_out
-                                EffectTransition.LinearB -> R.string.effect_transition_linearB
-                            }
-                        )
-                    }
-                }
-            )
-        }
-
-        this.dialog_popup_menu(title = title, default = event.transition, options = options) { it ->
-            this.set_effect_transition(event, it)
-        }
-    }
-
-
     fun cursor_clear() {
         this.vm_controller.opus_manager.cursor_clear()
-    }
-
-    fun cursor_select(beat_key: BeatKey, position: List<Int>) {
     }
 
     fun cursor_select_line(channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
@@ -191,36 +127,6 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         } else {
             this.cursor_select_global_ctl_line(ctl_type)
         }
-    }
-
-    fun move_line_ctl_to_beat(beat_key: BeatKey) {
-    }
-
-    fun _move_line_ctl_to_beat(beat_key: BeatKey) {
-    }
-    fun _copy_line_ctl_to_beat(beat_key: BeatKey) {
-    }
-    fun move_channel_ctl_to_beat(channel: Int, beat: Int) {
-    }
-    fun _move_channel_ctl_to_beat(channel: Int, beat: Int) {
-    }
-    fun _copy_channel_ctl_to_beat(channel: Int, beat: Int) {
-    }
-    fun move_global_ctl_to_beat(beat: Int) {
-    }
-    fun _move_global_ctl_to_beat(beat: Int) {
-    }
-
-    fun _copy_global_ctl_to_beat(beat: Int) {
-    }
-
-    fun cursor_select_ctl_at_line(type: EffectType, beat_key: BeatKey, position: List<Int>) {
-    }
-
-    fun cursor_select_ctl_at_channel(type: EffectType, channel: Int, beat: Int, position: List<Int>) {
-    }
-
-    fun cursor_select_ctl_at_global(type: EffectType, beat: Int, position: List<Int>) {
     }
 
     fun cursor_select_channel(channel: Int) {
@@ -584,27 +490,6 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         }
     }
 
-    fun <T: EffectEvent> set_effect_at_cursor(event: T) {
-        val opus_manager = this.get_opus_manager()
-        opus_manager.lock_cursor {
-            opus_manager.set_event_at_cursor(event)
-        }
-    }
-
-    fun generate_effect_menu_option(ctl_type: EffectType, icon_id: Int): Pair<EffectType, @Composable RowScope.() -> Unit> {
-        return Pair(ctl_type) {
-            Icon(
-                modifier = Modifier.width(Dimensions.EffectDialogIconWidth),
-                painter = painterResource(icon_id),
-                contentDescription = stringResource(EffectResourceMap[ctl_type].name)
-            )
-            Text(
-                ctl_type.name,
-                Modifier.weight(1F)
-            )
-        }
-    }
-
     fun hide_all_hidden_line_controller(effect_type: EffectType, all_channels: Boolean = false) {
         val opus_manager = this.get_opus_manager()
         if (all_channels) {
@@ -615,167 +500,6 @@ class ActionDispatcher(val context: Context, var vm_controller: ViewModelEditorC
         }
     }
 
-    fun show_all_hidden_line_controller(effect_type: EffectType, all_channels: Boolean = false) {
-        val opus_manager = this.get_opus_manager()
-        if (all_channels) {
-            opus_manager.set_all_line_controller_visibility(effect_type)
-        } else {
-            val cursor = opus_manager.cursor
-            opus_manager.set_all_line_controller_visibility(effect_type, cursor.channel)
-        }
-    }
-
-    fun show_hidden_line_controller(forced_value: EffectType? = null) {
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-
-        forced_value?.let {
-            opus_manager.toggle_line_controller_visibility(it, cursor.channel, cursor.line_offset)
-            return
-        }
-
-        val options = mutableListOf<Pair<EffectType, @Composable RowScope.() -> Unit>>( )
-        for (ctl_type in OpusLayerInterface.line_controller_domain) {
-            if (opus_manager.is_line_ctl_visible(ctl_type, cursor.channel, cursor.line_offset)) continue
-            options.add(this.generate_effect_menu_option(ctl_type, EffectResourceMap[ctl_type].icon))
-        }
-
-        this.dialog_popup_menu(
-            title = R.string.show_line_controls,
-            options = options,
-            long_click_callback = { ctl_type: EffectType ->
-                this@ActionDispatcher.vm_top.create_dialog { close ->
-                    @Composable {
-                        Icon(
-                            modifier = Modifier.height(Dimensions.EffectDialogIconHeight),
-                            painter = painterResource(EffectResourceMap[ctl_type].icon),
-                            contentDescription = stringResource(EffectResourceMap[ctl_type].name)
-                        )
-                        LargeSpacer()
-                        Button(
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = {
-                                close()
-                                this@ActionDispatcher.show_hidden_line_controller(ctl_type)
-                            },
-                            content = { Text(stringResource(R.string.show_line_controls_this)) },
-                        )
-                        LargeSpacer()
-                        Button(
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = {
-                                close()
-                                this@ActionDispatcher.show_all_hidden_line_controller(
-                                    ctl_type,
-                                    false
-                                )
-                            },
-                            content = {
-                                Text(
-                                    stringResource(R.string.show_line_controls_channel),
-                                    maxLines = 1
-                                )
-                            },
-                        )
-                        LargeSpacer()
-                        Button(
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = {
-                                close()
-                                this@ActionDispatcher.show_all_hidden_line_controller(
-                                    ctl_type,
-                                    true
-                                )
-                            },
-                            content = {
-                                Text(
-                                    stringResource(R.string.show_line_controls_all),
-                                    maxLines = 1
-                                )
-                            },
-                        )
-                        LargeSpacer()
-                        OutlinedButton(
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = { close() },
-                            content = { Text(android.R.string.cancel) },
-                        )
-                    }
-                }
-            },
-            callback = { ctl_type: EffectType ->
-                this.show_hidden_line_controller(ctl_type)
-            }
-        )
-    }
-
-    fun show_all_hidden_channel_controllers(value: EffectType) {
-        val opus_manager = this.get_opus_manager()
-        opus_manager.set_all_channel_controller_visibility(value)
-    }
-
-    fun show_hidden_channel_controller(forced_value: EffectType? =  null) {
-        val opus_manager = this.get_opus_manager()
-        val cursor = opus_manager.cursor
-
-        forced_value?.let {
-            opus_manager.toggle_channel_controller_visibility(it, cursor.channel)
-            return
-        }
-
-        val options = mutableListOf<Pair<EffectType, @Composable RowScope.() -> Unit>>( )
-        for (ctl_type in OpusLayerInterface.channel_controller_domain) {
-            if (opus_manager.is_channel_ctl_visible(ctl_type, cursor.channel)) continue
-            options.add(this.generate_effect_menu_option(ctl_type, EffectResourceMap[ctl_type].icon))
-        }
-
-        this.dialog_popup_menu(
-            R.string.show_channel_controls,
-            options,
-            long_click_callback = { ctl_type: EffectType ->
-                this@ActionDispatcher.vm_top.create_dialog { close ->
-                    @Composable {
-                        Icon(
-                            modifier = Modifier.height(Dimensions.EffectDialogIconHeight),
-                            painter = painterResource(EffectResourceMap[ctl_type].icon),
-                            contentDescription = stringResource(EffectResourceMap[ctl_type].name)
-                        )
-                        LargeSpacer()
-                        Button(
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = {
-                                close()
-                                this@ActionDispatcher.show_hidden_channel_controller(ctl_type)
-                            },
-                            content = { Text(stringResource(R.string.show_channel_controls_single)) },
-                        )
-                        LargeSpacer()
-                        Button(
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = {
-                                close()
-                                this@ActionDispatcher.show_all_hidden_channel_controllers(ctl_type)
-                            },
-                            content = { Text(stringResource(R.string.show_channel_controls_all)) },
-                        )
-                        LargeSpacer()
-                        OutlinedButton(
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = { close() },
-                            content = { Text(android.R.string.cancel) },
-                        )
-                    }
-                }
-            },
-            callback = {
-                this.show_hidden_channel_controller(it)
-            }
-        )
-    }
-
-    fun show_hidden_global_controller(forced_value: EffectType) {
-        this.get_opus_manager().toggle_global_controller_visibility(forced_value)
-    }
 
     fun get_opus_manager(): OpusManager {
         return this.vm_controller.opus_manager

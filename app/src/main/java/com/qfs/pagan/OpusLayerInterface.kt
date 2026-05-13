@@ -2571,7 +2571,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         val cursor = this.cursor
         when (cursor.mode) {
             CursorMode.Range -> {
-                if (this._tap_line_repeatable(channel, line_offset, ctl_type)) {
+                if (this.selected_for_repetition(channel, line_offset, ctl_type)) {
                     val (beat_key, _ ) = cursor.get_ordered_range()!!
                     when (cursor.ctl_level) {
                         CtlLineLevel.Line -> this.repeat_selection_ctl_line(cursor.ctl_type!!, beat_key.channel, beat_key.line_offset)
@@ -2605,31 +2605,19 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         }
     }
 
-    fun long_tap_line(channel: Int?, line_offset: Int?, ctl_type: EffectType?, fallback: () -> Unit = {}) {
-        val cursor = this.cursor
-        when (cursor.mode) {
-            CursorMode.Range -> {
-                if (this._tap_line_repeatable(channel, line_offset, ctl_type)) {
-                    val (beat_key, _ ) = cursor.get_ordered_range()!!
-                    when (cursor.ctl_level) {
-                        CtlLineLevel.Line -> this.repeat_selection_ctl_line(cursor.ctl_type!!, beat_key.channel, beat_key.line_offset, -1)
-                        CtlLineLevel.Channel -> this.repeat_selection_ctl_channel(cursor.ctl_type!!, beat_key.channel, -1)
-                        CtlLineLevel.Global -> this.repeat_selection_ctl_global(cursor.ctl_type!!, -1)
-                        null -> this.repeat_selection_std(beat_key.channel, beat_key.line_offset, -1)
-                    }
-                } else {
-                    this.cursor_select_line(channel, line_offset, ctl_type)
-                }
-            }
-            else -> fallback()
-        }
-    }
 
-    private fun _tap_line_repeatable(channel: Int?, line_offset: Int?, ctl_type: EffectType?): Boolean {
+    fun selected_for_repetition(channel: Int?, line_offset: Int?, ctl_type: EffectType?): Boolean {
         return if (ctl_type == null) this.is_line_selected_secondary(channel!!, line_offset!!)
         else if (channel == null) this.is_global_control_line_selected_secondary(ctl_type)
         else if (line_offset == null) this.is_channel_control_line_selected_secondary(ctl_type, channel)
         else this.is_line_control_line_selected_secondary(ctl_type, channel, line_offset)
+    }
+
+    fun fuzzy_select_line(channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
+        if (ctl_type == null) this.cursor_select_line(channel!!, line_offset!!)
+        else if (channel == null)  this.cursor_select_global_ctl_line(ctl_type)
+        else if (line_offset == null)  this.cursor_select_channel_ctl_line(ctl_type, channel)
+        else this.cursor_select_line_ctl_line(ctl_type, channel, line_offset)
     }
 
 

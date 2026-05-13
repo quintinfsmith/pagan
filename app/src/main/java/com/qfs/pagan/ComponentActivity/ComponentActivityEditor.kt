@@ -169,6 +169,7 @@ import com.qfs.pagan.composable.keyboardAsState
 import com.qfs.pagan.composable.long_press
 import com.qfs.pagan.composable.table.CellView
 import com.qfs.pagan.composable.table.HalfBorderBox
+import com.qfs.pagan.composable.table.LineLabelView
 import com.qfs.pagan.composable.table.ShortcutView
 import com.qfs.pagan.composable.table.TableLine
 import com.qfs.pagan.composable.wrappers.DropdownMenu
@@ -1539,7 +1540,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         }
                                         key(vm_state.line_data[y].hashCode()) {
                                             LineLabelView(
-                                                modifier = Modifier
+                                                this, modifier = Modifier
                                                     .weight(1F)
                                                     .fillMaxWidth(),
                                                 opus_manager,
@@ -1756,164 +1757,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 )
             }
 
-    }
-
-    @Composable
-    fun LineLabelView(
-        modifier: Modifier = Modifier,
-        opus_manager: OpusLayerInterface,
-        vm_state: ViewModelEditorState,
-        y: Int
-    ) {
-        val line_info = vm_state.line_data[y]
-        val cursor = vm_state.active_cursor.value
-        val ctl_type = line_info.ctl_type.value
-        val (background, foreground) = if (!line_info.is_selected.value && !line_info.is_secondary.value) {
-            Pair(
-                MaterialTheme.colorScheme.surfaceVariant,
-                MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        } else {
-            Pair(
-                MaterialTheme.colorScheme.tertiary,
-                MaterialTheme.colorScheme.onTertiary
-            )
-        }
-
-        ProvideContentColorTextStyle(foreground, Typography.LineLabel) {
-            HalfBorderBox(
-                modifier
-                    .testTag(
-                        TestTag.LineLabel,
-                        line_info.channel.value,
-                        line_info.line_offset.value,
-                        line_info.ctl_type.value
-                    )
-                    .combinedClickable(
-                        onClick = {
-                            opus_manager.tap_line(
-                                line_info.channel.value,
-                                line_info.line_offset.value,
-                                line_info.ctl_type.value
-                            )
-                        },
-                        onLongClick = {
-                            opus_manager.long_tap_line(
-                                line_info.channel.value,
-                                line_info.line_offset.value,
-                                line_info.ctl_type.value,
-                            )
-                        }
-                    )
-                    .background(
-                        shape = RectangleShape,
-                        color = background
-                    ),
-                border_color = MaterialTheme.colorScheme.onSurfaceVariant,
-                content = {
-                    Box(
-                        Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (cursor?.type == CursorMode.Range && (line_info.is_selected.value || line_info.is_secondary.value)) {
-                            Icon(
-                                modifier = Modifier.fillMaxSize(),
-                                painter = painterResource(R.drawable.icon_repeat),
-                                contentDescription = stringResource(R.string.repeat_selection_in_line),
-                                tint = Color(0x55FFFFFF)
-                            )
-                        } else if (line_info.is_selected.value) {
-                            Spacer(
-                                Modifier
-                                    .padding(Dimensions.SelectionBorderPadding)
-                                    .fillMaxSize()
-                                    .dashed_border(
-                                        color = foreground,
-                                        shape = RectangleShape
-                                    )
-                            )
-                        }
-
-                        if (ctl_type == null) {
-                            val (label_a, label_b) = if (line_info.assigned_offset.value != null) {
-                                Pair(
-                                    "!${line_info.channel.value}",
-                                    "${line_info.assigned_offset.value}"
-                                )
-                            } else {
-                                Pair("${line_info.channel.value}", "${line_info.line_offset.value}")
-                            }
-
-                            Row(
-                                Modifier
-                                    .fillMaxSize()
-                                    .padding(Dimensions.LineLabelPadding),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxHeight(),
-                                    verticalArrangement = Arrangement.Top,
-                                    horizontalAlignment = Alignment.End
-                                ) {
-                                    Text(label_a, maxLines = 1)
-                                }
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxHeight(),
-                                    verticalArrangement = Arrangement.Bottom,
-                                    horizontalAlignment = Alignment.End
-                                ) {
-                                    Text(
-                                        text = label_b,
-                                        maxLines = 1,
-                                        textAlign = TextAlign.End
-                                    )
-                                }
-                            }
-                        } else {
-                            val (drawable_id, description_id) = when (ctl_type) {
-                                EffectType.Tempo -> Pair(
-                                    R.drawable.icon_tempo,
-                                    R.string.ctl_desc_tempo
-                                )
-
-                                EffectType.Velocity -> Pair(
-                                    R.drawable.icon_velocity,
-                                    R.string.ctl_desc_velocity
-                                )
-
-                                EffectType.Volume -> Pair(
-                                    R.drawable.icon_volume,
-                                    R.string.ctl_desc_volume
-                                )
-
-                                EffectType.Delay -> Pair(
-                                    R.drawable.icon_echo,
-                                    R.string.ctl_desc_delay
-                                )
-
-                                EffectType.Pan -> Pair(R.drawable.icon_pan, R.string.ctl_desc_pan)
-                                EffectType.LowPass -> TODO()
-                                EffectType.Reverb -> TODO()
-                                EffectType.Pitch -> TODO()
-                            }
-                            Box(
-                                Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    modifier = Modifier.padding(Dimensions.LineLabelIconPadding),
-                                    painter = painterResource(drawable_id),
-                                    contentDescription = stringResource(description_id)
-                                )
-                            }
-                        }
-
-                    }
-                }
-            )
-        }
     }
 
     @Composable

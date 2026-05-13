@@ -10,6 +10,8 @@
 package com.qfs.pagan.structure.opusmanager.cursor
 import android.widget.Toast
 import androidx.compose.ui.graphics.Color
+import com.qfs.pagan.ActionDispatcher.IncompatibleEffectMerge
+import com.qfs.pagan.ActionDispatcher.UnexpectedBranch
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.PresetKey
 import com.qfs.pagan.R
@@ -32,7 +34,10 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import java.lang.Integer.max
 import java.lang.Integer.min
+import kotlin.div
 import kotlin.math.abs
+import kotlin.math.ceil
+import kotlin.text.toFloat
 
 open class OpusLayerCursor: OpusLayerBase() {
     var cursor = OpusManagerCursor()
@@ -2805,4 +2810,43 @@ open class OpusLayerCursor: OpusLayerBase() {
             PaganConfiguration.MoveMode.MERGE -> TODO("Merge not implemented yet")
         }
     }
+
+    fun repeat_selection(repeat: Int?) {
+        val cursor = this.cursor
+        val (first, second) = cursor.get_ordered_range() ?: return
+        val adj_repeat = repeat ?: ceil((this.length.toFloat() - first.beat) / (second.beat - first.beat + 1).toFloat()).toInt()
+
+        when (cursor.ctl_level) {
+            CtlLineLevel.Line -> this.controller_line_overwrite_range_horizontally(
+                cursor.ctl_type!!,
+                first.channel,
+                first.line_offset,
+                first,
+                second,
+                adj_repeat
+            )
+            CtlLineLevel.Channel -> this.controller_channel_overwrite_range_horizontally(
+                cursor.ctl_type!!,
+                first.channel,
+                first.channel,
+                first.beat,
+                second.beat,
+                adj_repeat
+            )
+            CtlLineLevel.Global -> this.controller_global_overwrite_range_horizontally(
+                cursor.ctl_type!!,
+                first.beat,
+                second.beat,
+                adj_repeat
+            )
+            null -> this.overwrite_beat_range_horizontally(
+                first.channel,
+                first.line_offset,
+                first,
+                second,
+                adj_repeat
+            )
+        }
+    }
+
 }

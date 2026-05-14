@@ -1509,10 +1509,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     // CURSOR FUNCTIONS vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     override fun cursor_apply(cursor: OpusManagerCursor, force: Boolean) {
         if (!force && this._block_cursor_selection()) return
-
         super.cursor_apply(cursor, force)
         this._queue_cursor_update(this.cursor)
-
         if (cursor.mode == CursorMode.Single && cursor.ctl_level == null && !this.is_percussion(cursor.channel)) {
             val event = this.get_tree()?.get_event()
             this.vm_state.relative_input_mode.value = when (event) {
@@ -1565,48 +1563,54 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.vm_state.set_active_event(null)
     }
 
-    override fun cursor_select_channel_ctl_line(ctl_type: EffectType, channel: Int) {
-        if (this._block_cursor_selection()) return
+    override fun cursor_select_channel_ctl_line(ctl_type: EffectType, channel: Int): Boolean {
+        return if (super.cursor_select_channel_ctl_line(ctl_type, channel)) {
+            this.clear_temporary_blocker()
 
-        super.cursor_select_channel_ctl_line(ctl_type, channel)
-        this.clear_temporary_blocker()
-
-        this._queue_cursor_update(this.cursor)
-        this.vm_state.set_active_event(
-            this.get_channel_controller_initial_event(ctl_type, channel, copy = true),
-            ViewModelEditorState.EventDescriptor.Selected
-        )
+            this._queue_cursor_update(this.cursor)
+            this.vm_state.set_active_event(
+                this.get_channel_controller_initial_event(ctl_type, channel, copy = true),
+                ViewModelEditorState.EventDescriptor.Selected
+            )
+            true
+        } else {
+            false
+        }
     }
 
-    override fun cursor_select_line_ctl_line(ctl_type: EffectType, channel: Int, line_offset: Int) {
-        if (this._block_cursor_selection()) return
+    override fun cursor_select_line_ctl_line(ctl_type: EffectType, channel: Int, line_offset: Int): Boolean {
+        return if (super.cursor_select_line_ctl_line(ctl_type, channel, line_offset)) {
+            this.clear_temporary_blocker()
 
-        super.cursor_select_line_ctl_line(ctl_type, channel, line_offset)
-        this.clear_temporary_blocker()
-
-        this._queue_cursor_update(this.cursor)
-        this.vm_state.set_active_event(
-            this.get_line_controller_initial_event(
-                ctl_type,
-                channel,
-                line_offset,
-                copy = true
-            ),
-            ViewModelEditorState.EventDescriptor.Selected
-        )
+            this._queue_cursor_update(this.cursor)
+            this.vm_state.set_active_event(
+                this.get_line_controller_initial_event(
+                    ctl_type,
+                    channel,
+                    line_offset,
+                    copy = true
+                ),
+                ViewModelEditorState.EventDescriptor.Selected
+            )
+            true
+        } else {
+            false
+        }
     }
 
-    override fun cursor_select_global_ctl_line(ctl_type: EffectType) {
-        if (this._block_cursor_selection()) return
+    override fun cursor_select_global_ctl_line(ctl_type: EffectType): Boolean {
+        return if (super.cursor_select_global_ctl_line(ctl_type)) {
+            this.clear_temporary_blocker()
 
-        super.cursor_select_global_ctl_line(ctl_type)
-        this.clear_temporary_blocker()
-
-        this._queue_cursor_update(this.cursor)
-        this.vm_state.set_active_event(
-            this.get_global_controller_initial_event(ctl_type, copy = true),
-            ViewModelEditorState.EventDescriptor.Selected
-        )
+            this._queue_cursor_update(this.cursor)
+            this.vm_state.set_active_event(
+                this.get_global_controller_initial_event(ctl_type, copy = true),
+                ViewModelEditorState.EventDescriptor.Selected
+            )
+            true
+        } else {
+            false
+        }
     }
 
     fun force_cursor_select_column(beat: Int) {
@@ -1676,37 +1680,46 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         }
     }
 
-    override fun cursor_select_ctl_at_line(ctl_type: EffectType, beat_key: BeatKey, position: List<Int>) {
-        if (this._block_cursor_selection()) return
+    override fun cursor_select_ctl_at_line(ctl_type: EffectType, beat_key: BeatKey, position: List<Int>): Boolean {
+        if (this._block_cursor_selection()) return false
 
         this.clear_temporary_blocker()
-        super.cursor_select_ctl_at_line(ctl_type, beat_key, position)
-
-        if (this.ui_lock.is_locked()) return
-        this._queue_cursor_update(this.cursor)
-        this.check_update_active_event(ctl_type, beat_key, position)
+        return if (super.cursor_select_ctl_at_line(ctl_type, beat_key, position)) {
+            if (this.ui_lock.is_locked()) return true
+            this._queue_cursor_update(this.cursor)
+            this.check_update_active_event(ctl_type, beat_key, position)
+            true
+        } else {
+            false
+        }
     }
 
-    override fun cursor_select_ctl_at_channel(ctl_type: EffectType, channel: Int, beat: Int, position: List<Int>) {
-        if (this._block_cursor_selection()) return
+    override fun cursor_select_ctl_at_channel(ctl_type: EffectType, channel: Int, beat: Int, position: List<Int>): Boolean {
+        if (this._block_cursor_selection()) return false
 
         this.clear_temporary_blocker()
-        super.cursor_select_ctl_at_channel(ctl_type, channel, beat, position)
-
-        if (this.ui_lock.is_locked()) return
-        this._queue_cursor_update(this.cursor)
-        this.check_update_active_event(ctl_type, channel, beat, position)
+        return if (super.cursor_select_ctl_at_channel(ctl_type, channel, beat, position)) {
+            if (this.ui_lock.is_locked()) return true
+            this._queue_cursor_update(this.cursor)
+            this.check_update_active_event(ctl_type, channel, beat, position)
+            true
+        } else {
+            false
+        }
     }
 
-    override fun cursor_select_ctl_at_global(ctl_type: EffectType, beat: Int, position: List<Int>) {
-        if (this._block_cursor_selection()) return
+    override fun cursor_select_ctl_at_global(ctl_type: EffectType, beat: Int, position: List<Int>): Boolean {
+        if (this._block_cursor_selection()) return false
 
         this.clear_temporary_blocker()
-        super.cursor_select_ctl_at_global(ctl_type, beat, position)
-
-        if (this.ui_lock.is_locked()) return
-        this._queue_cursor_update(this.cursor)
-        this.check_update_active_event(ctl_type, beat, position)
+        return if (super.cursor_select_ctl_at_global(ctl_type, beat, position)) {
+            if (this.ui_lock.is_locked()) return true
+            this._queue_cursor_update(this.cursor)
+            this.check_update_active_event(ctl_type, beat, position)
+            true
+        } else {
+            false
+        }
     }
 
     fun cursor_select_global_ctl_range_next(type: EffectType, beat: Int) {
@@ -1718,14 +1731,17 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.vm_state.set_active_event(null)
     }
 
-    override fun cursor_select_global_ctl_range(type: EffectType, first: Int, second: Int) {
-        if (this._block_cursor_selection()) return
+    override fun cursor_select_global_ctl_range(type: EffectType, first: Int, second: Int): Boolean {
+        if (this._block_cursor_selection()) return false
 
         this.clear_temporary_blocker()
-        super.cursor_select_global_ctl_range(type, first, second)
-
-        this._queue_cursor_update(this.cursor)
-        this.vm_state.set_active_event(null)
+        return if (super.cursor_select_global_ctl_range(type, first, second)) {
+            this._queue_cursor_update(this.cursor)
+            this.vm_state.set_active_event(null)
+            true
+        } else {
+            false
+        }
     }
 
     fun cursor_select_channel_ctl_range_next(type: EffectType, channel: Int, beat: Int) {
@@ -1737,15 +1753,18 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.vm_state.set_active_event(null)
     }
 
-    override fun cursor_select_channel_ctl_range(type: EffectType, channel: Int, first: Int, second: Int) {
-        if (this._block_cursor_selection()) return
+    override fun cursor_select_channel_ctl_range(type: EffectType, channel: Int, first: Int, second: Int): Boolean {
+        if (this._block_cursor_selection()) return false
 
         this.clear_temporary_blocker()
-        super.cursor_select_channel_ctl_range(type, channel, first, second)
-
-        if (!this.ui_lock.is_locked()) {
-            this._queue_cursor_update(this.cursor)
-            this.vm_state.set_active_event(null)
+        return if (super.cursor_select_channel_ctl_range(type, channel, first, second)) {
+            if (!this.ui_lock.is_locked()) {
+                this._queue_cursor_update(this.cursor)
+                this.vm_state.set_active_event(null)
+            }
+            true
+        } else {
+            false
         }
     }
 
@@ -1760,15 +1779,18 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         }
     }
 
-    override fun cursor_select_line_ctl_range(type: EffectType, beat_key_a: BeatKey, beat_key_b: BeatKey) {
-        if (this._block_cursor_selection()) return
+    override fun cursor_select_line_ctl_range(type: EffectType, beat_key_a: BeatKey, beat_key_b: BeatKey): Boolean {
+        if (this._block_cursor_selection()) return false
 
         this.clear_temporary_blocker()
-        super.cursor_select_line_ctl_range(type, beat_key_a, beat_key_b)
-
-        if (!this.ui_lock.is_locked()) {
-            this._queue_cursor_update(this.cursor)
-            this.vm_state.set_active_event(null)
+        return if (super.cursor_select_line_ctl_range(type, beat_key_a, beat_key_b)) {
+            if (!this.ui_lock.is_locked()) {
+                this._queue_cursor_update(this.cursor)
+                this.vm_state.set_active_event(null)
+            }
+            true
+        } else {
+            false
         }
     }
 
@@ -2564,5 +2586,259 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.vm_state.refresh_cursor()
 
         return new_uuid
+    }
+
+    override fun controller_line_overwrite_range_horizontally(type: EffectType, channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey, repeat: Int?) {
+        this.exception_catcher {
+            super.controller_line_overwrite_range_horizontally(
+                type,
+                channel,
+                line_offset,
+                first_key,
+                second_key,
+                repeat
+            )
+        }
+    }
+    override fun controller_channel_overwrite_range_horizontally(
+        type: EffectType,
+        target_channel: Int,
+        from_channel: Int,
+        first_beat: Int,
+        second_beat: Int,
+        repeat: Int?
+    ) {
+        this.exception_catcher {
+            super.controller_channel_overwrite_range_horizontally(
+                type,
+                target_channel,
+                from_channel,
+                first_beat,
+                second_beat,
+                repeat
+            )
+        }
+    }
+    override fun controller_global_overwrite_range_horizontally(
+        type: EffectType,
+        first_beat: Int,
+        second_beat: Int,
+        repeat: Int?
+    ) {
+        this.exception_catcher {
+            super.controller_global_overwrite_range_horizontally(type, first_beat, second_beat, repeat)
+        }
+    }
+
+    override fun controller_line_overwrite_line(type: EffectType, channel: Int, line_offset: Int, beat_key: BeatKey, repeat: Int?) {
+        this.exception_catcher {
+            super.controller_line_overwrite_line(type, channel, line_offset, beat_key, repeat)
+        }
+    }
+
+    override fun controller_line_to_channel_overwrite_line(
+        type: EffectType,
+        target_channel: Int,
+        original_key: BeatKey,
+        repeat: Int?
+    ) {
+        this.exception_catcher {
+            super.controller_line_to_channel_overwrite_line(type, target_channel, original_key, repeat)
+        }
+    }
+
+    override fun controller_line_to_global_overwrite_line(type: EffectType, beat_key: BeatKey, repeat: Int?) {
+        this.exception_catcher {
+            super.controller_line_to_global_overwrite_line(type, beat_key, repeat)
+        }
+    }
+
+    override fun controller_line_to_channel_overwrite_range_horizontally( type: EffectType, channel: Int, first_key: BeatKey, second_key: BeatKey, repeat: Int?) {
+        this.exception_catcher {
+            super.controller_line_to_channel_overwrite_range_horizontally(type, channel, first_key, second_key, repeat)
+        }
+    }
+
+    override fun controller_line_to_global_overwrite_range_horizontally(
+        type: EffectType,
+        channel: Int,
+        line_offset: Int,
+        first_beat: Int,
+        second_beat: Int,
+        repeat: Int?
+    ) {
+        this.exception_catcher {
+            super.controller_line_to_global_overwrite_range_horizontally(
+                type,
+                channel,
+                line_offset,
+                first_beat,
+                second_beat,
+                repeat
+            )
+        }
+    }
+
+    override fun controller_channel_to_global_overwrite_line(type: EffectType, channel: Int, beat: Int, repeat: Int?) {
+        this.exception_catcher {
+            super.controller_channel_to_global_overwrite_line(type, channel, beat, repeat)
+        }
+    }
+
+    override fun controller_channel_to_global_overwrite_range_horizontally(
+        type: EffectType,
+        channel: Int,
+        first_beat: Int,
+        second_beat: Int,
+        repeat: Int?
+    ) {
+        this.exception_catcher {
+            super.controller_channel_to_global_overwrite_range_horizontally(
+                type,
+                channel,
+                first_beat,
+                second_beat,
+                repeat
+            )
+        }
+    }
+
+    override fun controller_channel_to_line_overwrite_range_horizontally(
+        type: EffectType,
+        target_channel: Int,
+        target_line_offset: Int,
+        from_channel: Int,
+        first_beat: Int,
+        second_beat: Int,
+        repeat: Int?
+    ) {
+        this.exception_catcher {
+            super.controller_channel_to_line_overwrite_range_horizontally(
+                type,
+                target_channel,
+                target_line_offset,
+                from_channel,
+                first_beat,
+                second_beat,
+                repeat
+            )
+        }
+    }
+
+    override fun controller_channel_to_line_overwrite_line(
+        type: EffectType,
+        target_channel: Int,
+        target_line_offset: Int,
+        original_channel: Int,
+        original_beat: Int,
+        repeat: Int?
+    ) {
+        this.exception_catcher {
+            super.controller_channel_to_line_overwrite_line(
+                type,
+                target_channel,
+                target_line_offset,
+                original_channel,
+                original_beat,
+                repeat
+            )
+        }
+    }
+
+    override fun controller_global_to_channel_overwrite_line(
+        type: EffectType,
+        target_channel: Int,
+        beat: Int,
+        repeat: Int?
+    ) {
+        this.exception_catcher {
+            super.controller_global_to_channel_overwrite_line(type, target_channel, beat, repeat)
+        }
+    }
+
+    override fun controller_global_to_channel_overwrite_range_horizontally(
+        type: EffectType,
+        channel: Int,
+        first_beat: Int,
+        second_beat: Int,
+        repeat: Int?
+    ) {
+        this.exception_catcher {
+            super.controller_global_to_channel_overwrite_range_horizontally(type, channel, first_beat, second_beat, repeat)
+        }
+    }
+
+    override fun controller_global_to_line_overwrite_range_horizontally(
+        type: EffectType,
+        target_channel: Int,
+        target_line_offset: Int,
+        first_beat: Int,
+        second_beat: Int,
+        repeat: Int?
+    ) {
+        this.exception_catcher {
+            super.controller_global_to_line_overwrite_range_horizontally(
+                type,
+                target_channel,
+                target_line_offset,
+                first_beat,
+                second_beat,
+                repeat
+            )
+        }
+    }
+
+    override fun controller_global_to_line_overwrite_line(
+        type: EffectType,
+        from_beat: Int,
+        target_channel: Int,
+        target_line_offset: Int,
+        repeat: Int?
+    ) {
+        this.exception_catcher {
+            super.controller_global_to_line_overwrite_line(type, from_beat, target_channel, target_line_offset, repeat)
+        }
+    }
+
+    override fun overwrite_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
+        this.exception_catcher {
+            super.overwrite_beat_range(beat_key, first_corner, second_corner)
+        }
+    }
+
+    override fun overwrite_beat_range_horizontally(
+        channel: Int,
+        line_offset: Int,
+        first_key: BeatKey,
+        second_key: BeatKey,
+        repeat: Int?
+    ) {
+        this.exception_catcher {
+            super.overwrite_beat_range_horizontally(channel, line_offset, first_key, second_key, repeat)
+        }
+    }
+
+    override fun overwrite_line(channel: Int, line_offset: Int, beat_key: BeatKey, repeat: Int?) {
+        this.exception_catcher {
+            super.overwrite_line(channel, line_offset, beat_key, repeat)
+        }
+    }
+
+    override fun controller_channel_overwrite_line(
+        type: EffectType,
+        target_channel: Int,
+        original_channel: Int,
+        original_beat: Int,
+        repeat: Int?
+    ) {
+        this.exception_catcher {
+            super.controller_channel_overwrite_line(type, target_channel, original_channel, original_beat, repeat)
+        }
+    }
+
+    override fun controller_global_overwrite_line(type: EffectType, beat: Int, repeat: Int?) {
+        this.exception_catcher {
+            super.controller_global_overwrite_line(type, beat, repeat)
+        }
     }
 }

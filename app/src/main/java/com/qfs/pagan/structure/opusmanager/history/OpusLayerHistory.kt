@@ -304,8 +304,11 @@ open class OpusLayerHistory: OpusLayerCursor() {
         val output = try {
             this.history_cache.remember(callback)
         } catch (e: BlockedActionException) {
-            this.apply_undo()
-            this.on_remember()
+            if (!e.processed) {
+                this.apply_undo()
+                this.on_remember()
+                e.processed = true
+            }
             throw e
         }
 

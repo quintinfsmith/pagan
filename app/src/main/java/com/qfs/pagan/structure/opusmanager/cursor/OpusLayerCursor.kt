@@ -561,28 +561,6 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor_select_global_ctl_line(type)
     }
 
-    override fun controller_global_to_line_overwrite_range_horizontally(type: EffectType, target_channel: Int, target_line_offset: Int, first_beat: Int, second_beat: Int, repeat: Int?) {
-        this.lock_cursor {
-            super.controller_global_to_line_overwrite_range_horizontally(type, target_channel, target_line_offset, first_beat, second_beat, repeat)
-
-        }
-        this.cursor_select_line_ctl_line(type, target_channel, target_line_offset)
-    }
-
-    override fun controller_line_to_channel_overwrite_range_horizontally(type: EffectType, channel: Int, first_key: BeatKey, second_key: BeatKey, repeat: Int?) {
-        this.lock_cursor {
-            super.controller_line_to_channel_overwrite_range_horizontally(type, channel, first_key, second_key, repeat)
-        }
-        this.cursor_select_channel_ctl_line(type, channel)
-    }
-
-    override fun controller_global_to_channel_overwrite_range_horizontally(type: EffectType, channel: Int, first_beat: Int, second_beat: Int, repeat: Int?) {
-        this.lock_cursor {
-            super.controller_global_to_channel_overwrite_range_horizontally(type, channel, first_beat, second_beat, repeat)
-        }
-        this.cursor_select_channel_ctl_line(type, channel)
-    }
-
     override fun controller_line_overwrite_range_horizontally(type: EffectType, channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey, repeat: Int?) {
         this.lock_cursor {
             super.controller_line_overwrite_range_horizontally(type, channel, line_offset, first_key, second_key, repeat)
@@ -590,32 +568,11 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor_select_line_ctl_line(type, channel, line_offset)
     }
 
-    override fun controller_line_to_global_overwrite_range_horizontally(type: EffectType, channel: Int, line_offset: Int, first_beat: Int, second_beat: Int, repeat: Int?) {
-        this.lock_cursor {
-            super.controller_line_to_global_overwrite_range_horizontally(type, channel, line_offset, first_beat, second_beat, repeat)
-        }
-        this.cursor_select_global_ctl_line(type)
-    }
-
-    override fun controller_channel_to_global_overwrite_range_horizontally(type: EffectType, channel: Int, first_beat: Int, second_beat: Int, repeat: Int?) {
-        this.lock_cursor {
-            super.controller_channel_to_global_overwrite_range_horizontally(type, channel, first_beat, second_beat, repeat)
-        }
-        this.cursor_select_global_ctl_line(type)
-    }
-
     override fun controller_channel_overwrite_range_horizontally(type: EffectType, target_channel: Int, from_channel: Int, first_beat: Int, second_beat: Int, repeat: Int?) {
         this.lock_cursor {
             super.controller_channel_overwrite_range_horizontally(type, target_channel, from_channel, first_beat, second_beat, repeat)
         }
         this.cursor_select_channel_ctl_line(type, target_channel)
-    }
-
-    override fun controller_channel_to_line_overwrite_range_horizontally(type: EffectType, target_channel: Int, target_line_offset: Int, from_channel: Int, first_beat: Int, second_beat: Int, repeat: Int?) {
-        this.lock_cursor {
-            super.controller_channel_to_line_overwrite_range_horizontally(type, target_channel, target_line_offset, from_channel, first_beat, second_beat, repeat)
-        }
-        this.cursor_select_line_ctl_line(type, target_channel, target_line_offset)
     }
 
     override fun controller_global_overwrite_line(type: EffectType, beat: Int, repeat: Int?) {
@@ -2849,4 +2806,10 @@ open class OpusLayerCursor: OpusLayerBase() {
         }
     }
 
+    fun fuzzy_select_line(channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
+        if (ctl_type == null) this.cursor_select_line(channel!!, line_offset!!)
+        else if (channel == null)  this.cursor_select_global_ctl_line(ctl_type)
+        else if (line_offset == null)  this.cursor_select_channel_ctl_line(ctl_type, channel)
+        else this.cursor_select_line_ctl_line(ctl_type, channel, line_offset)
+    }
 }

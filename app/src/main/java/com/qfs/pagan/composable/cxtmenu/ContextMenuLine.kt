@@ -404,7 +404,6 @@ fun HideEffectButton(active_line: ViewModelEditorState.LineData, opus_manager: O
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.EffectHide),
         onClick = {
-            opus_manager.toggle_controller_visibility_at_cursor()
             active_line.ctl_type.value?.let { type ->
                 val channel = active_line.channel.value ?: return@let
                 val line_offset = active_line.line_offset.value ?: return@let

@@ -181,4 +181,11 @@ class ViewModelEditorController(): ViewModel() {
         }
     }
 
+    fun stop_opus_midi() {
+        this.update_playback_state_midi(PlaybackState.Stopping)
+        this.virtual_midi_device.stop()
+        this.update_playback_state_midi(PlaybackState.Ready)
+        this.opus_manager.vm_state.playback_state_midi.value = this.playback_state_midi
+    }
+
 }

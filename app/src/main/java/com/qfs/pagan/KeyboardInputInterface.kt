@@ -68,27 +68,27 @@ class KeyboardInputInterface(var dispatcher: ActionDispatcher) {
 
     fun go_to_column(dispatcher: ActionDispatcher, opus_manager: OpusManager): Boolean {
         val beat = this.get_buffer_value(0, 0, opus_manager.length - 1)
-        dispatcher.cursor_select_column(beat)
+        TODO("cursor select column")
         return true
     }
 
     fun go_to_channel(dispatcher: ActionDispatcher, opus_manager: OpusManager): Boolean {
         val visible_channels = opus_manager.get_visible_channels()
         val channel = this.get_buffer_value(visible_channels.size - 1, 0, visible_channels.size - 1)
-        dispatcher.cursor_select_channel(channel)
+        TODO("cursor select channel")
         return true
     }
 
     fun go_to_first_line_in_channel(dispatcher: ActionDispatcher, opus_manager: OpusManager): Boolean {
         val visible_channels = opus_manager.get_visible_channels()
         val channel = this.get_buffer_value(visible_channels.size - 1, 0, visible_channels.size - 1)
-        dispatcher.cursor_select_line(channel, 0, null)
+        TODO("cursor select line")
         return true
     }
 
     fun clear_buffer_or_cursor(dispatcher: ActionDispatcher): Boolean {
         if (this.input_buffer_value == null) {
-            dispatcher.cursor_clear()
+            TODO("Cursor clear")
         } else {
             this.input_buffer_value = null
         }
@@ -127,39 +127,39 @@ class KeyboardInputInterface(var dispatcher: ActionDispatcher) {
             val channel = opus_manager.cursor.channel
             val default_value = opus_manager.get_channel(channel).lines.size - 1
             val line_offset = this.get_buffer_value(default_value, 0, default_value)
-            this.dispatcher.cursor_select_line(channel, line_offset, null)
+            TODO("cursor select line")
 
             true
         },
         FunctionAlias.SetOctave to { dispatcher, opus_manager ->
             val default_octave = opus_manager.latest_set_octave ?: 0
-            dispatcher.set_octave(this.get_buffer_value(default_octave, 0, 7), RelativeInputMode.Absolute)
+            TODO("set octave")
             true
         },
         FunctionAlias.SetOffset to { dispatcher, opus_manager ->
             val default_offset = opus_manager.latest_set_offset ?: 0
             val max_offset = opus_manager.get_radix() - 1
-            dispatcher.set_offset(this.get_buffer_value(default_offset, 0, max_offset), RelativeInputMode.Absolute)
+            TODO("set offset")
             true
         },
         FunctionAlias.TogglePercussion to { dispatcher, opus_manager ->
-            dispatcher.toggle_percussion()
+            TODO("toggle percussion")
             true
         },
         FunctionAlias.LeafSplit to { dispatcher, opus_manager ->
-            dispatcher.split(this.get_buffer_value(2, 1, 64))
+            TODO("split")
             true
         },
         FunctionAlias.LeafUnset to  { dispatcher, opus_manager ->
-            dispatcher.unset()
+            TODO("unset")
             true
         },
         FunctionAlias.LeafRemove to { dispatcher, opus_manager ->
-            dispatcher.remove_at_cursor()
+            TODO("remove at cursor")
             true
         },
         FunctionAlias.LeafAdd to { dispatcher, opus_manager ->
-            dispatcher.insert_leaf(this.get_buffer_value(1, 1, 64))
+            TODO("insert leaf")
             true
         }
         //SelectLine to { dispatcher, opus_manager ->

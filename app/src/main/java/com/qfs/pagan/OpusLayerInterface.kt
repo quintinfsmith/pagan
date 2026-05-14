@@ -9,6 +9,7 @@
  */
 package com.qfs.pagan
 
+import android.provider.Settings
 import androidx.compose.ui.graphics.Color
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONList
@@ -17,8 +18,11 @@ import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.BlockedActionException
+import com.qfs.pagan.structure.opusmanager.base.ChannelEffectRowNotVisible
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.base.GlobalEffectRowNotVisible
 import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
+import com.qfs.pagan.structure.opusmanager.base.LineEffectRowNotVisible
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusLineAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
@@ -36,6 +40,7 @@ import com.qfs.pagan.structure.rationaltree.InvalidGetCall
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
+import kotlinx.coroutines.GlobalScope
 import kotlin.math.max
 import kotlin.math.min
 
@@ -144,10 +149,11 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     private fun _update_facade_blocker_leaf_line_ctl(type: EffectType, beat_key: BeatKey, position: List<Int>) {
         if (this.ui_lock.is_locked()) return
-        this.vm_state.blocker_leaf = listOf<Int>(
+        if (!this.get_line_controller<EffectEvent>(type, beat_key.channel, beat_key.line_offset).visible) return
+        this.vm_state.blocker_leaf = listOf(
             try {
                 this.get_visible_row_from_ctl_line_line(type, beat_key.channel, beat_key.line_offset)
-            } catch (_: IndexOutOfBoundsException) { // may reference a channel's line before the channel exists
+            } catch (_: LineEffectRowNotVisible) { // may reference a channel's line before the channel exists
                 this.get_row_count()
             },
             beat_key.beat,
@@ -161,10 +167,11 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         position: List<Int>
     ) {
         if (this.ui_lock.is_locked()) return
+        if (!this.get_channel_controller<EffectEvent>(type, channel).visible) return
         this.vm_state.blocker_leaf = listOf<Int>(
             try {
                 this.get_visible_row_from_ctl_line_channel(type, channel)
-            } catch (_: IndexOutOfBoundsException) { // may reference a channel's line before the channel exists
+            } catch (_: ChannelEffectRowNotVisible) { // may reference a channel's line before the channel exists
                 this.get_row_count()
             },
             beat,
@@ -173,10 +180,12 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     private fun _update_facade_blocker_leaf_global_ctl(type: EffectType, beat: Int, position: List<Int>) {
         if (this.ui_lock.is_locked()) return
-        this.vm_state.blocker_leaf = listOf<Int>(
+        if (!this.get_global_controller<EffectEvent>(type).visible) return
+
+        this.vm_state.blocker_leaf = listOf(
             try {
                 this.get_visible_row_from_ctl_line_global(type)
-            } catch (_: IndexOutOfBoundsException) { // may reference a channel's line before the channel exists
+            } catch (_: GlobalEffectRowNotVisible) { // may reference a channel's line before the channel exists
                 this.get_row_count()
             },
             beat,
@@ -281,8 +290,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     // Line
     private fun _update_tree(type: EffectType, beat_key: BeatKey, position: List<Int>) {
         if (this.ui_lock.is_locked()) return
-        val controller =
-            this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].get_controller<EffectEvent>(type)
+        val controller = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].get_controller<EffectEvent>(type)
         if (!controller.visible) return
 
         this.vm_state.update_tree(
@@ -1874,14 +1882,13 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                     this._clear_facade_blocker_leaf()
                 }
                 for ((type, controller) in line.controllers.get_all()) {
-                    controller.overlap_removed_callback =
-                        { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
-                            this._update_facade_blocker_leaf_line_ctl(
-                                type,
-                                BeatKey(channel, line_offset, blocker.first),
-                                blocker.second
-                            )
-                        }
+                    controller.overlap_removed_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
+                        this._update_facade_blocker_leaf_line_ctl(
+                            type,
+                            BeatKey(channel, line_offset, blocker.first),
+                            blocker.second
+                        )
+                    }
                     controller.overlap_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
                         this._clear_facade_blocker_leaf()
                     }
@@ -1936,6 +1943,12 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
                         CtlLineLevel.Global -> this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
                     }
+                } catch (_: LineEffectRowNotVisible) {
+                    null
+                } catch (_: ChannelEffectRowNotVisible) {
+                    null
+                } catch (_: GlobalEffectRowNotVisible) {
+                    null
                 } catch (_: IndexOutOfBoundsException) {
                     null
                 } ?: return
@@ -2003,6 +2016,12 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                             )
                         }
                     }
+                } catch (_: LineEffectRowNotVisible) {
+                    return
+                } catch (_: ChannelEffectRowNotVisible) {
+                    return
+                } catch (_: GlobalEffectRowNotVisible) {
+                    return
                 } catch (_: IndexOutOfBoundsException) {
                     return
                 }
@@ -2040,6 +2059,12 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
                         CtlLineLevel.Global -> this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
                     }
+                } catch (_: LineEffectRowNotVisible) {
+                    null
+                } catch (_: ChannelEffectRowNotVisible) {
+                    null
+                } catch (_: GlobalEffectRowNotVisible) {
+                    null
                 } catch (_: IndexOutOfBoundsException) {
                     null
                 } ?: return
@@ -2567,59 +2592,10 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         return new_uuid
     }
 
-    fun tap_line(channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
-        val cursor = this.cursor
-        when (cursor.mode) {
-            CursorMode.Range -> {
-                if (this.selected_for_repetition(channel, line_offset, ctl_type)) {
-                    val (beat_key, _ ) = cursor.get_ordered_range()!!
-                    when (cursor.ctl_level) {
-                        CtlLineLevel.Line -> this.repeat_selection_ctl_line(cursor.ctl_type!!, beat_key.channel, beat_key.line_offset)
-                        CtlLineLevel.Channel -> this.repeat_selection_ctl_channel(cursor.ctl_type!!, beat_key.channel)
-                        CtlLineLevel.Global -> this.repeat_selection_ctl_global(cursor.ctl_type!!)
-                        null -> this.repeat_selection_std(beat_key.channel, beat_key.line_offset)
-                    }
-                } else {
-                    this.cursor_select_line(channel, line_offset, ctl_type)
-                }
-            }
-            CursorMode.Line -> {
-                val ctl_level = if (ctl_type == null) null
-                else if (channel == null) CtlLineLevel.Global
-                else if (line_offset == null) CtlLineLevel.Channel
-                else CtlLineLevel.Line
-
-
-                if (channel == cursor.channel && line_offset == cursor.line_offset && ctl_type == cursor.ctl_type && ctl_level == cursor.ctl_level) {
-                    this.cursor_select_channel(channel)
-                } else {
-                    this.cursor_select_line(channel, line_offset, ctl_type)
-                }
-            }
-            CursorMode.Single,
-            CursorMode.Column,
-            CursorMode.Channel,
-            CursorMode.Unset -> {
-                this.cursor_select_line(channel, line_offset, ctl_type)
-            }
-        }
-    }
-
-
     fun selected_for_repetition(channel: Int?, line_offset: Int?, ctl_type: EffectType?): Boolean {
         return if (ctl_type == null) this.is_line_selected_secondary(channel!!, line_offset!!)
         else if (channel == null) this.is_global_control_line_selected_secondary(ctl_type)
         else if (line_offset == null) this.is_channel_control_line_selected_secondary(ctl_type, channel)
         else this.is_line_control_line_selected_secondary(ctl_type, channel, line_offset)
     }
-
-    fun fuzzy_select_line(channel: Int?, line_offset: Int?, ctl_type: EffectType?) {
-        if (ctl_type == null) this.cursor_select_line(channel!!, line_offset!!)
-        else if (channel == null)  this.cursor_select_global_ctl_line(ctl_type)
-        else if (line_offset == null)  this.cursor_select_channel_ctl_line(ctl_type, channel)
-        else this.cursor_select_line_ctl_line(ctl_type, channel, line_offset)
-    }
-
-
-
 }

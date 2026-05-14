@@ -113,10 +113,8 @@ import com.qfs.apres.VirtualMidiOutputDevice
 import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.apres.soundfontplayer.SampleHandleManager
-import com.qfs.pagan.ActionDispatcher
 import com.qfs.pagan.ActionDispatcher.MissingProjectManager
 import com.qfs.pagan.CompatibleFileType
-import com.qfs.pagan.EffectResourceMap
 import com.qfs.pagan.Exportable
 import com.qfs.pagan.KeyboardInputInterface
 import com.qfs.pagan.LayoutSize
@@ -163,6 +161,7 @@ import com.qfs.pagan.composable.SoundfontLoadingIndicator
 import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.TuningDialogNormal
 import com.qfs.pagan.composable.TuningDialogTiny
+import com.qfs.pagan.composable.cxtmenu.EffectMenuItem
 import com.qfs.pagan.composable.dashed_border
 import com.qfs.pagan.composable.dragging_scroll
 import com.qfs.pagan.composable.keyboardAsState
@@ -188,6 +187,7 @@ import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.BufferedOutputStream
@@ -197,6 +197,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
+import java.io.IOException
 import java.io.InputStreamReader
 import java.time.format.DateTimeFormatter
 import kotlin.collections.component1
@@ -213,7 +214,6 @@ import kotlin.math.sqrt
 class ComponentActivityEditor: PaganComponentActivity() {
     val controller_model: ViewModelEditorController by this.viewModels()
     val state_model: ViewModelEditorState by this.viewModels()
-    lateinit var action_interface: ActionDispatcher
     lateinit var keyboard_interface: KeyboardInputInterface
 
     private var broadcast_receiver = PaganBroadcastReceiver()
@@ -589,7 +589,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     override fun on_back_press_check(): Boolean {
         val active_cursor = this.state_model.active_cursor.value
         return if (active_cursor != null && active_cursor.type != CursorMode.Unset) {
-            this.action_interface.cursor_clear()
+            this.controller_model.opus_manager.cursor_clear()
             false
         } else {
             true
@@ -601,9 +601,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        this.action_interface = ActionDispatcher(this, this.controller_model)
-        this.keyboard_interface = KeyboardInputInterface(this.action_interface)
-        val dispatcher = this.action_interface
         this.controller_model.attach_state_model(this.state_model)
 
         this.registerReceiver(
@@ -616,8 +613,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
         )
 
-        dispatcher.attach_top_model(this.view_model)
-
         this.bind_midi_interface()
         super.onCreate(savedInstanceState)
 
@@ -627,7 +622,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             if (savedInstanceState != null || this.intent.getBooleanExtra("load_backup", false)) {
                 this.load_from_bkp()
             } else if (this.intent.data == null) {
-                dispatcher.new_project()
+                this.new_project()
             } else if (this.view_model.project_manager?.contains(this.intent.data!!) == true) {
                 this@ComponentActivityEditor.load_project(this@ComponentActivityEditor.intent.data!!)
             } else {
@@ -671,8 +666,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     fun set_soundfont(bad_soundfont_callback: ((Uri) -> Unit)? = null) {
         // Ensure playback is stopped
-        this.action_interface.stop_opus_midi()
-        this.action_interface.stop_opus()
+        this.stop_opus_midi()
+        this.stop_opus()
 
         val file_paths = this.view_model.configuration.soundfonts.value
         if (file_paths.isEmpty()) {
@@ -829,7 +824,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
         if (fallback_msg != null) {
-            this.action_interface.new_project()
+            this.new_project()
             runOnUiThread {
                 this.toast(fallback_msg)
             }
@@ -842,8 +837,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     override fun onStop() {
-        this.action_interface.stop_opus_midi()
-        this.action_interface.stop_opus()
+        this.stop_opus_midi()
+        this.stop_opus()
         super.onStop()
     }
 
@@ -875,7 +870,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     fun PlaySFButton() {
-        val dispatcher = this@ComponentActivityEditor.action_interface
         val scope = rememberCoroutineScope()
         Box(contentAlignment = Alignment.Center) {
             TopBarIcon(
@@ -901,13 +895,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                         PlaybackState.Ready -> {
                             scope.launch(Dispatchers.IO) {
-                                dispatcher.play_opus(this, false)
+                                this@ComponentActivityEditor.play_opus(this, false)
                             }
                         }
 
                         PlaybackState.Playing -> {
                             scope.launch(Dispatchers.IO) {
-                                dispatcher.stop_opus()
+                                this@ComponentActivityEditor.stop_opus()
                             }
                         }
                     }
@@ -920,13 +914,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                         PlaybackState.Ready -> {
                             scope.launch(Dispatchers.IO) {
-                                dispatcher.play_opus(this, true)
+                                this@ComponentActivityEditor.play_opus(this, true)
                             }
                         }
 
                         PlaybackState.Playing -> {
                             scope.launch(Dispatchers.IO) {
-                                dispatcher.stop_opus()
+                                this@ComponentActivityEditor.stop_opus()
                             }
                         }
                     }
@@ -940,7 +934,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
     @Composable
     fun PlayMidiButton() {
-        val dispatcher = this@ComponentActivityEditor.action_interface
         val scope = rememberCoroutineScope()
         Box(contentAlignment = Alignment.Center) {
             TopBarIcon(
@@ -966,13 +959,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                         PlaybackState.Ready -> {
                             scope.launch(Dispatchers.IO) {
-                                dispatcher.play_opus_midi(true)
+                                this@ComponentActivityEditor.play_opus_midi(true)
                             }
                         }
 
                         PlaybackState.Playing -> {
                             scope.launch(Dispatchers.IO) {
-                                dispatcher.stop_opus_midi()
+                                this@ComponentActivityEditor.stop_opus_midi()
                             }
                         }
                     }
@@ -985,13 +978,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                         PlaybackState.Ready -> {
                             scope.launch(Dispatchers.IO) {
-                                dispatcher.play_opus_midi()
+                                this@ComponentActivityEditor.play_opus_midi()
                             }
                         }
 
                         PlaybackState.Playing -> {
                             scope.launch(Dispatchers.IO) {
-                                dispatcher.stop_opus_midi()
+                                this@ComponentActivityEditor.stop_opus_midi()
                             }
                         }
                     }
@@ -1008,12 +1001,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val vm_top = this@ComponentActivityEditor.view_model
         val vm_state = this@ComponentActivityEditor.state_model
         val vm_controller = this@ComponentActivityEditor.controller_model
-        val dispatcher = this@ComponentActivityEditor.action_interface
 
         val menu_items: MutableList<Pair<Int, () -> Unit>> = mutableListOf(
             Pair(R.string.menu_item_new_project) {
                 this.save_confirm_dialog {
-                    dispatcher.new_project()
+                    this.new_project()
                 }
             }
         )
@@ -1291,9 +1283,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 callback()
                 confirm_action_callback.value = null
             }
-            val view_model = this.view_model
             val visibility = remember { mutableStateOf(true) }
-            val local_context = LocalContext.current
 
             PaganDialog(visibility) {
                 Row { DialogSTitle(R.string.dialog_save_warning_title, modifier = Modifier.weight(1F)) }
@@ -1540,7 +1530,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         }
                                         key(vm_state.line_data[y].hashCode()) {
                                             LineLabelView(
-                                                this, modifier = Modifier
+                                                modifier = Modifier
                                                     .weight(1F)
                                                     .fillMaxWidth(),
                                                 opus_manager,
@@ -1587,7 +1577,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         val options = mutableListOf<Pair<EffectType, @Composable RowScope.() -> Unit>>()
                                         for (ctl_type in OpusLayerInterface.global_controller_domain) {
                                             if (this@ComponentActivityEditor.controller_model.opus_manager.is_global_ctl_visible(ctl_type)) continue
-                                            options.add(this@ComponentActivityEditor.action_interface.generate_effect_menu_option(ctl_type, EffectResourceMap[ctl_type].icon))
+                                            options.add(Pair(ctl_type) { EffectMenuItem(ctl_type) })
                                         }
                                         options
                                     }
@@ -1779,7 +1769,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 MaterialTheme.colorScheme.onTertiary
             )
         }
-        val zoom = vm_state.active_zoom.value
+        val zoom = vm_state.active_zoom.floatValue
         ProvideContentColorTextStyle(foreground, Typography.BeatLabel) {
             HalfBorderBox(
                 modifier
@@ -2212,12 +2202,21 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 )
                 DrawerPadder()
                 if (!this@ComponentActivityEditor.state_model.export_in_progress.value) {
+                    val dialog_visibility = remember { mutableStateOf(false) }
                     ConfigDrawerBottomButton(
                         modifier = Modifier.weight(1F),
                         icon = R.drawable.icon_export,
                         description = R.string.btn_cfg_export,
                         onClick = {
-                            this@ComponentActivityEditor.export()
+                            dialog_visibility.value = true
+                        }
+                    )
+                    DialogMenu(
+                        visibility = dialog_visibility,
+                        title = R.string.dlg_export,
+                        options = { this@ComponentActivityEditor.get_exportable_options() },
+                        callback = { export_type ->
+                            this@ComponentActivityEditor.export(export_type)
                         }
                     )
                 } else {
@@ -2499,14 +2498,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     zoom_state.value += zoom
                                     if (zoom > 0.dp) {
                                         if (zoom_state.value >= zoom_unit) {
-                                            if (vm_state.zoom_index.value > 0) {
+                                            if (vm_state.zoom_index.intValue > 0) {
                                                 vm_state.decrement_zoom(lesser.position.x + (current_diff / 2F))
                                             }
                                             zoom_state.value = 0.dp // TODO: Include overflow
                                         }
                                     } else if (zoom < 0.dp) {
                                         if (zoom_state.value < zoom_unit * -1) {
-                                            if (vm_state.zoom_index.value < vm_state.max_zoom_index.value) {
+                                            if (vm_state.zoom_index.intValue < vm_state.max_zoom_index.intValue) {
                                                 vm_state.increment_zoom(lesser.position.x + (current_diff / 2F))
                                             }
                                             zoom_state.value = 0.dp // TODO: Include overflow
@@ -2906,8 +2905,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     fun load_project(uri: Uri) {
         // Stop Playback First
-        this.action_interface.stop_opus()
-        this.action_interface.stop_opus_midi()
+        this.stop_opus()
+        this.stop_opus_midi()
 
         this.controller_model.opus_manager.vm_state.ready.value = false
 
@@ -3136,19 +3135,17 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     fun export(type: Exportable? = null) {
-        type?.let { it
-            when (it) {
-                Exportable.JSON -> { this.export_project() }
-                Exportable.MIDI1 -> { this.export_midi_check() }
-                Exportable.WAV_SINGLE -> { this.export_wav() }
-                Exportable.WAV_LINES -> { this.export_multi_lines_wav() }
-                Exportable.WAV_CHANNELS -> { this.export_multi_channels_wav() }
+        when (type) {
+            Exportable.JSON -> { this.export_project() }
+            Exportable.MIDI1 -> { this.export_midi_check() }
+            Exportable.WAV_SINGLE -> { this.export_wav() }
+            Exportable.WAV_LINES -> { this.export_multi_lines_wav() }
+            Exportable.WAV_CHANNELS -> { this.export_multi_channels_wav() }
+            null -> {
+                this.view_model.unsortable_list_dialog(R.string.dlg_export, this.get_exportable_options()) { export_type ->
+                    this.export(export_type)
+                }
             }
-            return
-        }
-
-        this.view_model.unsortable_list_dialog(R.string.dlg_export, this.get_exportable_options()) { export_type ->
-            this.export(export_type)
         }
     }
 
@@ -3156,41 +3153,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val export_options = mutableListOf<Pair<Exportable, @Composable RowScope.() -> Unit>>()
         val opus_manager = this.controller_model.opus_manager
 
-        export_options.add(
-            Pair(
-                Exportable.JSON,
-                @Composable { Text(R.string.export_option_json) }
-            )
-        )
+        export_options.add(Pair(Exportable.JSON) { Text(R.string.export_option_json) })
 
         if (opus_manager.is_tuning_standard()) {
-            export_options.add(
-                Pair(
-                    Exportable.MIDI1,
-                    @Composable { Text(R.string.export_option_midi) }
-                )
-            )
+            export_options.add(Pair(Exportable.MIDI1) { Text(R.string.export_option_midi) })
         }
 
         if (this.controller_model.audio_interface.has_soundfont()) {
-            export_options.add(
-                Pair(
-                    Exportable.WAV_SINGLE,
-                    @Composable { Text(R.string.export_option_wav) }
-                )
-            )
-            export_options.add(
-                Pair(
-                    Exportable.WAV_LINES,
-                    @Composable { Text(R.string.export_option_wav_lines) }
-                )
-            )
-            export_options.add(
-                Pair(
-                    Exportable.WAV_CHANNELS,
-                    @Composable { Text(R.string.export_option_wav_channels) }
-                )
-            )
+            export_options.add(Pair(Exportable.WAV_SINGLE) { Text(R.string.export_option_wav) })
+            export_options.add(Pair(Exportable.WAV_LINES) { Text(R.string.export_option_wav_lines) })
+            export_options.add(Pair(Exportable.WAV_CHANNELS) { Text(R.string.export_option_wav_channels) })
         }
 
         return export_options
@@ -3265,12 +3237,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val is_dragging_channel = this.state_model.is_dragging_channel()
 
         val output = mutableListOf<Triple<ClosedFloatingPointRange<Float>, IntRange, Boolean>>()
-        var start_line: Int = 0
-        var end_line: Int = 0
+        var start_line = 0
+        var end_line = 0
         var start_position = 0F
         var running_position = 0f
-        var working_channel: Int = 0
-        var working_line_offset: Int = 0
+        var working_channel = 0
+        var working_line_offset = 0
         for (y in 0 until this.state_model.line_count.value) {
             val working_line = this.state_model.line_data[y]
 
@@ -3328,7 +3300,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val is_current = uri == this.controller_model.active_project
         super.on_delete_project(uri)
         if (is_current) {
-            this.action_interface.new_project()
+            this.new_project()
         }
     }
     override fun on_key_press(e: KeyEvent): Boolean {
@@ -3489,6 +3461,96 @@ class ComponentActivityEditor: PaganComponentActivity() {
         } else if (audio_interface.has_soundfont()) {
             audio_interface.play_feedback(midi_channel, note, bend, (velocity * 127F).toInt() shl 8)
         }
+    }
+
+    fun stop_opus_midi() {
+        this.controller_model.stop_opus_midi()
+    }
+
+    fun stop_opus() {
+        this.controller_model.playback_device?.kill()
+    }
+
+    fun play_opus_midi(loop_playback: Boolean = false) {
+        if (this.controller_model.active_midi_device == null) return
+        val opus_manager = this.controller_model.opus_manager
+        this.controller_model.update_playback_state_midi(PlaybackState.Queued)
+        opus_manager.vm_state.playback_state_midi.value = this.controller_model.playback_state_midi
+
+        val cursor = opus_manager.cursor
+        val start_beat = when (cursor.mode) {
+            CursorMode.Single,
+            CursorMode.Column -> if (cursor.beat == opus_manager.length - 1) {
+                0
+            } else {
+                cursor.beat
+            }
+
+            CursorMode.Range -> cursor.get_ordered_range()!!.first.beat
+
+            CursorMode.Line,
+            CursorMode.Channel,
+            CursorMode.Unset -> 0
+        }
+
+        val midi = opus_manager.get_midi(start_beat, include_pointers = true)
+
+        if (!this.controller_model.update_playback_state_midi(PlaybackState.Playing)) return
+        opus_manager.vm_state.playback_state_midi.value = this.controller_model.playback_state_midi
+
+        thread {
+            try {
+                this.controller_model.virtual_midi_device.play_midi(midi, loop_playback) {
+                    this.stop_opus_midi()
+                }
+                opus_manager.vm_state.looping_playback.value = loop_playback
+            } catch (_: IOException) {
+                this.stop_opus_midi()
+            }
+        }
+    }
+
+    fun play_opus(scope: CoroutineScope, loop_playback: Boolean = false) {
+        val opus_manager = this.controller_model.opus_manager
+        this.controller_model.playback_device?.let {
+            it.play_opus(
+                when (opus_manager.cursor.mode) {
+                    CursorMode.Single,
+                    CursorMode.Column -> if (opus_manager.cursor.beat == opus_manager.length - 1) {
+                        0
+                    } else {
+                        opus_manager.cursor.beat
+                    }
+
+
+                    CursorMode.Range -> opus_manager.cursor.get_ordered_range()!!.first.beat
+
+                    CursorMode.Line,
+                    CursorMode.Channel,
+                    CursorMode.Unset -> {
+                        opus_manager.vm_state.scroll_state_x.value.firstVisibleItemIndex
+                    }
+                },
+                loop_playback
+            )
+            opus_manager.vm_state.looping_playback.value = loop_playback
+        }
+    }
+
+    fun new_project() {
+        val opus_manager = this.controller_model.opus_manager
+        opus_manager.project_change_new()
+
+        for ((c, channel) in opus_manager.channels.enumerate()) {
+            if (!opus_manager.is_percussion(c)) continue
+            val i = this.controller_model.audio_interface.get_minimum_instrument_index(channel.get_preset())
+            for (l in 0 until opus_manager.get_channel(c).size) {
+                opus_manager.percussion_set_instrument(c, l, max(0, i - 27))
+            }
+        }
+
+        this.controller_model.update_soundfont_instruments()
+        opus_manager.clear_history()
     }
 }
 

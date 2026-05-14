@@ -41,13 +41,12 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, opus_manager: OpusL
     val cursor = ui_facade.active_cursor.value ?: return
     val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
-    val (channel, line_offset, beat, position) = ui_facade.get_location_ints()
 
     Spacer(Modifier.weight(.5F))
 
     val tempo_label = remember { mutableFloatStateOf(working_event.value) }
     FloatInput(
-        tempo_label.value,
+        tempo_label.floatValue,
         precision = 3,
         revert_on_exit = true,
         prefix = {
@@ -66,10 +65,8 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, opus_manager: OpusL
             .weight(1F, fill = true)
     ) {
         working_event.value = it
-        if (beat != null) {
-            opus_manager.set_effect(EffectType.Tempo, working_event, channel, line_offset, beat, position!!, lock_cursor = true)
-        } else {
-            opus_manager.set_initial_effect(EffectType.Tempo, working_event, channel, line_offset, lock_cursor = true)
+        opus_manager.lock_cursor {
+            opus_manager.set_event_at_cursor(working_event)
         }
     }
 

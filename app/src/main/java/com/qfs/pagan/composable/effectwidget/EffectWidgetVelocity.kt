@@ -50,6 +50,7 @@ import com.qfs.pagan.TestTag
 import com.qfs.pagan.Values
 import com.qfs.pagan.composable.DivisorSeparator
 import com.qfs.pagan.composable.IntegerInput
+import com.qfs.pagan.composable.IntegerInputDialog
 import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.composable.button.Button
@@ -83,12 +84,9 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
         activeTickColor = default_colors.inactiveTickColor,
         inactiveTickColor = default_colors.activeTickColor
     )
-
     val submit = {
-        if (beat != null) {
-            opus_manager.set_effect(EffectType.Velocity, working_event, channel, line_offset, beat, position!!, true)
-        } else {
-            opus_manager.set_initial_effect(EffectType.Velocity, working_event, channel, line_offset, true)
+        opus_manager.lock_cursor {
+            opus_manager.set_event_at_cursor(working_event)
         }
     }
 
@@ -121,9 +119,7 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
                                 )
                             }
                         },
-                        onClick = {
-                            velocity_expanded.value = !velocity_expanded.value
-                        }
+                        onClick = { velocity_expanded.value = !velocity_expanded.value }
                     )
                     DropdownMenu(
                         velocity_expanded.value,
@@ -168,25 +164,7 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
 
                             onValueChangeFinished = {
                                 velocity_expanded.value = false
-                                if (beat != null) {
-                                    opus_manager.set_effect(
-                                        EffectType.Velocity,
-                                        working_event,
-                                        channel,
-                                        line_offset,
-                                        beat,
-                                        position!!,
-                                        true
-                                    )
-                                } else {
-                                    opus_manager.set_initial_effect(
-                                        EffectType.Velocity,
-                                        working_event,
-                                        channel,
-                                        line_offset,
-                                        true
-                                    )
-                                }
+                                submit()
                             }
                         )
                     }
@@ -353,4 +331,15 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
     } else {
         EffectTransitionButton(working_event, opus_manager, is_initial)
     }
+
+    // IntegerInputDialog(
+    //     dialog_visibility,
+    //     R.string.dlg_set_velocity,
+    //     0, 200,
+    //     (working_event.value * 100).toInt()
+    // ) {
+    //     working_event.value = it.toFloat() / 100F
+    //     working_value.floatValue = working_event.value
+    //     submit()
+    // }
 }

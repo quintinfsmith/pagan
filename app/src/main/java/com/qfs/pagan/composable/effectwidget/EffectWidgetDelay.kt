@@ -60,7 +60,6 @@ fun RowScope.DelayEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLa
     val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
     val fade = remember { mutableFloatStateOf(working_event.fade) }
-    val (channel, line_offset, beat, position) = vm_state.get_location_ints()
 
     val default_colors = SliderDefaults.colors()
     val colors = default_colors.copy(
@@ -69,10 +68,8 @@ fun RowScope.DelayEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLa
     )
 
     val submit = {
-        if (beat != null) {
-            opus_manager.set_effect(EffectType.Delay, working_event, channel, line_offset, beat, position!!, true)
-        } else {
-            opus_manager.set_initial_effect(EffectType.Delay, working_event, channel, line_offset, true)
+        opus_manager.lock_cursor {
+            opus_manager.set_event_at_cursor(working_event)
         }
     }
 

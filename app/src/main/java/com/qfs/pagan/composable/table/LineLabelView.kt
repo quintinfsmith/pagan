@@ -14,6 +14,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -37,6 +39,7 @@ import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorState
+import kotlin.math.ceil
 
 @Composable
 fun LineLabelView(
@@ -63,6 +66,7 @@ fun LineLabelView(
     }
 
     val repeat_selection_dialog_visibility = remember { mutableStateOf(false) }
+    val repeat_select_dialog_default = remember { mutableIntStateOf(1) }
 
     ProvideContentColorTextStyle(foreground, Typography.LineLabel) {
         HalfBorderBox(
@@ -79,6 +83,9 @@ fun LineLabelView(
                         when (cursor.mode) {
                             CursorMode.Range -> {
                                 if (opus_manager.selected_for_repetition(channel, line_offset, ctl_type)) {
+                                    val cursor = opus_manager.cursor
+                                    val (first, second) = cursor.get_ordered_range()!!
+                                    repeat_select_dialog_default.intValue = ceil((opus_manager.length.toFloat() - first.beat) / (second.beat - first.beat + 1).toFloat()).toInt()
                                     repeat_selection_dialog_visibility.value = true
                                 } else {
                                     opus_manager.fuzzy_select_line(channel, line_offset, ctl_type)
@@ -196,10 +203,15 @@ fun LineLabelView(
         )
     }
 
-    IntegerInputDialog(
-        visibility = repeat_selection_dialog_visibility,
-        title_string_id = R.string.repeat_selection_in_line,
-        min_value = 1,
-        callback = { count -> opus_manager.repeat_selection(count) }
-    )
+    key(repeat_select_dialog_default.value) {
+        IntegerInputDialog(
+            visibility = repeat_selection_dialog_visibility,
+            title_string_id = R.string.repeat_selection_in_line,
+            min_value = 1,
+            default = repeat_select_dialog_default.intValue,
+            callback = { count ->
+                opus_manager.repeat_selection(count)
+            }
+        )
+    }
 }

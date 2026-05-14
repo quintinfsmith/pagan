@@ -2730,12 +2730,15 @@ open class OpusLayerBase: Effectable {
         for ((target_key, key_list) in beat_keys) {
             if (key_list.isEmpty()) continue
             for (overwrite_key in key_list) {
-                if (overwrite_key != target_key) {
-                    this.unset(overwrite_key, listOf())
-                    // Copy all effects as well
-                    for ((type, _) in this.get_all_channels()[overwrite_key.channel].lines[overwrite_key.line_offset].controllers.get_all()) {
-                        this.controller_line_unset(type, overwrite_key, listOf())
-                    }
+                if (overwrite_key == target_key) continue
+                this.unset(overwrite_key, listOf())
+            }
+            // Only replace visible effect controls
+            for ((type, controller) in this.get_all_channels()[target_key.channel].lines[target_key.line_offset].controllers.get_all()) {
+                if (!controller.visible) continue
+                for (overwrite_key in key_list) {
+                    if (overwrite_key == target_key) continue
+                    this.controller_line_unset(type, overwrite_key, listOf())
                 }
             }
         }
@@ -2743,14 +2746,20 @@ open class OpusLayerBase: Effectable {
         for ((target_key, key_list) in beat_keys) {
             if (key_list.isEmpty()) continue
             for (overwrite_key in key_list) {
-                if (target_key != overwrite_key) {
-                    this.replace_tree(overwrite_key, null, this.get_tree_copy(target_key))
-                    for ((type, _) in this.get_all_channels()[target_key.channel].lines[target_key.line_offset].controllers.get_all()) {
-                        if (!this.has_line_controller(type, overwrite_key.channel, overwrite_key.line_offset)) {
-                            this.new_line_controller(type, overwrite_key.channel, overwrite_key.line_offset)
-                        }
-                        this.controller_line_replace_tree(type, overwrite_key, listOf(), this.get_line_ctl_tree(type, target_key, listOf()))
-                    }
+                if (target_key == overwrite_key) continue
+                this.replace_tree(overwrite_key, null, this.get_tree_copy(target_key))
+            }
+
+            for ((type, controller) in this.get_all_channels()[target_key.channel].lines[target_key.line_offset].controllers.get_all()) {
+                if (!controller.visible) continue
+                for (overwrite_key in key_list) {
+                    if (overwrite_key == target_key) continue
+                    this.controller_line_replace_tree(
+                        type,
+                        overwrite_key,
+                        listOf(),
+                        this.get_line_ctl_tree(type, target_key, listOf())
+                    )
                 }
             }
         }
@@ -2921,6 +2930,21 @@ open class OpusLayerBase: Effectable {
             working_key.beat = x + beat_key.beat
             this.replace_tree(working_key, null, this.get_tree_copy(beat_key))
         }
+
+        for ((type, controller) in this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].controllers.get_all()) {
+            if (!controller.visible) continue
+            working_key.beat = beat_key.beat
+            for (x in 0 until adj_repeat) {
+                working_key.beat = x + beat_key.beat
+                this.controller_line_replace_tree(
+                    type,
+                    working_key,
+                    listOf(),
+                    this.get_line_ctl_tree(type, beat_key, listOf())
+                )
+            }
+        }
+
     }
 
     open fun controller_global_overwrite_line(type: EffectType, beat: Int, repeat: Int? = null) {

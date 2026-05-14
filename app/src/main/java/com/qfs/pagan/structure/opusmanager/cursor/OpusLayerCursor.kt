@@ -16,6 +16,7 @@ import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.PresetKey
 import com.qfs.pagan.R
 import com.qfs.pagan.RelativeInputMode
+import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
@@ -783,6 +784,24 @@ open class OpusLayerCursor: OpusLayerBase() {
     open fun cursor_apply(cursor: OpusManagerCursor, force: Boolean = false) {
         if (!force && this._block_cursor_selection()) return
         this.cursor.clear()
+        when (cursor.ctl_level) {
+            CtlLineLevel.Line -> {
+                if (!this.is_line_ctl_visible(cursor.ctl_type!!, cursor.channel, cursor.line_offset)) {
+                    this.set_line_controller_visibility(cursor.ctl_type!!, cursor.channel, cursor.line_offset, true)
+                }
+            }
+            CtlLineLevel.Channel -> {
+                if (!this.is_channel_ctl_visible(cursor.ctl_type!!, cursor.channel)) {
+                    this.set_channel_controller_visibility(cursor.ctl_type!!, cursor.channel, true)
+                }
+            }
+            CtlLineLevel.Global -> {
+                if (!this.is_global_ctl_visible(cursor.ctl_type!!)) {
+                    this.set_global_controller_visibility(cursor.ctl_type!!, true)
+                }
+            }
+            null -> {}
+        }
         this.cursor = cursor
     }
     open fun cursor_clear() {
@@ -797,17 +816,23 @@ open class OpusLayerCursor: OpusLayerBase() {
         if (this._block_cursor_selection()) return
         this.cursor.select_line(channel, line_offset)
     }
-    open fun cursor_select_line_ctl_line(ctl_type: EffectType, channel: Int, line_offset: Int) {
-        if (this._block_cursor_selection()) return
+    open fun cursor_select_line_ctl_line(ctl_type: EffectType, channel: Int, line_offset: Int): Boolean {
+        if (this._block_cursor_selection()) return false
+        if (!this.is_line_ctl_visible(ctl_type, channel, line_offset)) return false
         this.cursor.select_line_ctl_line(channel, line_offset, ctl_type)
+        return true
     }
-    open fun cursor_select_channel_ctl_line(ctl_type: EffectType, channel: Int) {
-        if (this._block_cursor_selection()) return
+    open fun cursor_select_channel_ctl_line(ctl_type: EffectType, channel: Int): Boolean {
+        if (this._block_cursor_selection()) return false
+        if (!this.is_channel_ctl_visible(ctl_type, channel)) return false
         this.cursor.select_channel_ctl_line(channel, ctl_type)
+        return true
     }
-    open fun cursor_select_global_ctl_line(ctl_type: EffectType) {
-        if (this._block_cursor_selection()) return
+    open fun cursor_select_global_ctl_line(ctl_type: EffectType): Boolean {
+        if (this._block_cursor_selection()) return false
+        if (!this.is_global_ctl_visible(ctl_type)) return false
         this.cursor.select_global_ctl_line(ctl_type)
+        return true
     }
     open fun cursor_select_column(beat: Int) {
         if (this._block_cursor_selection() || beat >= this.length) return
@@ -817,36 +842,42 @@ open class OpusLayerCursor: OpusLayerBase() {
         if (this._block_cursor_selection()) return
         this.cursor.select(beat_key, position)
     }
-    open fun cursor_select_ctl_at_line(ctl_type: EffectType, beat_key: BeatKey, position: List<Int>) {
-        if (this._block_cursor_selection()) return
-        if (!this.is_line_ctl_visible(ctl_type, beat_key.channel, beat_key.line_offset)) return
+    open fun cursor_select_ctl_at_line(ctl_type: EffectType, beat_key: BeatKey, position: List<Int>): Boolean {
+        if (this._block_cursor_selection()) return false
+        if (!this.is_line_ctl_visible(ctl_type, beat_key.channel, beat_key.line_offset)) return false
         this.cursor.select_ctl_at_line(beat_key, position, ctl_type)
+        return true
     }
-    open fun cursor_select_ctl_at_channel(ctl_type: EffectType, channel: Int, beat: Int, position: List<Int>) {
-        if (this._block_cursor_selection()) return
-        if (!this.is_channel_ctl_visible(ctl_type, channel)) return
+    open fun cursor_select_ctl_at_channel(ctl_type: EffectType, channel: Int, beat: Int, position: List<Int>): Boolean {
+        if (this._block_cursor_selection()) return false
+        if (!this.is_channel_ctl_visible(ctl_type, channel)) return false
         this.cursor.select_ctl_at_channel(channel, beat, position, ctl_type)
+        return true
     }
-    open fun cursor_select_ctl_at_global(ctl_type: EffectType, beat: Int, position: List<Int>) {
-        if (this._block_cursor_selection()) return
-        if (!this.is_global_ctl_visible(ctl_type)) return
+    open fun cursor_select_ctl_at_global(ctl_type: EffectType, beat: Int, position: List<Int>): Boolean {
+        if (this._block_cursor_selection()) return false
+        if (!this.is_global_ctl_visible(ctl_type)) return false
         this.cursor.select_ctl_at_global(beat, position, ctl_type)
+        return true
     }
     open fun cursor_select_range(beat_key_a: BeatKey, beat_key_b: BeatKey) {
         if (this._block_cursor_selection()) return
         this.cursor.select_range(beat_key_a, beat_key_b)
     }
-    open fun cursor_select_global_ctl_range(type: EffectType, first: Int, second: Int) {
-        if (this._block_cursor_selection()) return
+    open fun cursor_select_global_ctl_range(type: EffectType, first: Int, second: Int): Boolean {
+        if (this._block_cursor_selection()) return false
         this.cursor.select_global_ctl_range(type, first, second)
+        return true
     }
-    open fun cursor_select_channel_ctl_range(type: EffectType, channel: Int, first: Int, second: Int) {
-        if (this._block_cursor_selection()) return
+    open fun cursor_select_channel_ctl_range(type: EffectType, channel: Int, first: Int, second: Int): Boolean {
+        if (this._block_cursor_selection()) return false
         this.cursor.select_channel_ctl_range(type, channel, first, second)
+        return true
     }
-    open fun cursor_select_line_ctl_range(type: EffectType, beat_key_a: BeatKey, beat_key_b: BeatKey) {
-        if (this._block_cursor_selection()) return
+    open fun cursor_select_line_ctl_range(type: EffectType, beat_key_a: BeatKey, beat_key_b: BeatKey): Boolean {
+        if (this._block_cursor_selection()) return false
         this.cursor.select_line_ctl_range(type, beat_key_a, beat_key_b)
+        return true
     }
 
     fun set_event_at_cursor(event: EffectEvent) {

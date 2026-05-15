@@ -1001,6 +1001,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val vm_top = this@ComponentActivityEditor.view_model
         val vm_state = this@ComponentActivityEditor.state_model
         val vm_controller = this@ComponentActivityEditor.controller_model
+        val load_menu_visibility = remember { mutableStateOf(false) }
 
         val menu_items: MutableList<Pair<Int, () -> Unit>> = mutableListOf(
             Pair(R.string.menu_item_new_project) {
@@ -1012,13 +1013,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         if (vm_top.has_saved_project.value) {
             menu_items.add(
-                Pair(R.string.menu_item_load_project) {
-                    this@ComponentActivityEditor.load_menu_dialog { uri ->
-                        this.save_confirm_dialog {
-                            this@ComponentActivityEditor.load_project(uri)
-                        }
-                    }
-                }
+                Pair(R.string.menu_item_load_project) { load_menu_visibility.value = true }
             )
         }
 
@@ -1107,7 +1102,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             }
         }
+
+        LoadMenuDialog(load_menu_visibility) { uri ->
+            this.save_confirm_dialog {
+                this@ComponentActivityEditor.load_project(uri)
+            }
+        }
     }
+
     @Composable
     fun ZoomIndicator(vm_state: ViewModelEditorState) {
         Row(

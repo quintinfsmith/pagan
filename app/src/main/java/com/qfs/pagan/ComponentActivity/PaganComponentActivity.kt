@@ -54,6 +54,8 @@ import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -75,6 +77,7 @@ import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.ColorScheme
 import com.qfs.pagan.composable.DialogBar
+import com.qfs.pagan.composable.DialogSortableMenu
 import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.PaganDialog
 import com.qfs.pagan.composable.PaganTheme
@@ -91,6 +94,7 @@ import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable.key
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileNotFoundException
@@ -451,12 +455,11 @@ abstract class PaganComponentActivity: ComponentActivity() {
 
     open fun on_delete_project(uri: Uri) { }
 
-    fun load_menu_dialog(current_sort: Int? = -3, load_callback: (Uri) -> Unit) {
-        val project_list = this.view_model.project_manager?.get_project_list() ?: return
+    @Composable
+    fun LoadMenuDialog(visibility: MutableState<Boolean>, current_sort: Int? = -3, load_callback: (Uri) -> Unit) {
+        // TODO: Need to test refreshing
+        val project_list = this.view_model.project_manager?.get_project_list()?.toMutableList() ?: mutableListOf()
         val items = mutableListOf<Pair<Uri, @Composable RowScope.() -> Unit>>()
-        for ((uri, title) in project_list) {
-            items.add(Pair(uri, { Text(text = title) }))
-        }
 
         val sort_options = listOf(
             Pair(R.string.sort_option_abc) { a: Int, b: Int ->
@@ -469,59 +472,75 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 (project_list[a].modified ?: 0L).compareTo(project_list[b].modified ?: 0L)
             }
         )
-
-        this.view_model.sortable_list_dialog(
-            R.string.menu_item_load_project,
-            items,
-            sort_options,
-            selected_sort = mutableStateOf(current_sort),
-            content = @Composable { close, active_sort ->
-                val scope = rememberCoroutineScope()
-                val is_refreshing = remember { mutableStateOf(false) }
-                if (is_refreshing.value) {
-                    CircularProgressIndicator()
-                } else {
-                    Button(
-                        modifier = Modifier
-                            .height(Dimensions.SortableMenuSortButtonDiameter)
-                            .width(Dimensions.SortableMenuSortButtonDiameter),
-                        colors = ButtonDefaults.buttonColors().copy(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        ),
-                        onClick = {
-                            is_refreshing.value = true
-                            scope.launch(Dispatchers.IO) {
-                                this@PaganComponentActivity.view_model.project_manager?.scan_and_update_project_list(
-                                    full_refresh = true
-                                )
-                                close()
-                                load_menu_dialog(active_sort, load_callback)
-                                is_refreshing.value = false
-                            }
-                        },
-                        contentPadding = Dimensions.SortableMenuSortButtonPadding,
-                        content = {
-                            Icon(
-                                painter = painterResource(R.drawable.icon_refresh),
-                                contentDescription = stringResource(R.string.cd_sort_options)
-                            )
-                        }
-                    )
-                }
-                Spacer(Modifier.width(Dimensions.Space.Large))
-            },
-            onClick = load_callback,
-            onLongClick = { it, close_callback ->
-                for ((uri, title) in project_list) {
-                    if (uri != it) continue
-                    this.create_project_card_dialog(title, it, close_callback) {
-                        load_callback(it)
+        val refresher = remember { mutableStateOf(false) }
+        key(refresher) {
+            DialogSortableMenu(
+                visibility,
+                R.string.menu_item_load_project,
+                options = {
+                    items.clear()
+                    for ((uri, title) in project_list) {
+                        items.add(Pair(uri, { Text(text = title) }))
                     }
-                    break
-                }
-            }
-        )
+                    items
+                },
+                sort_options,
+                active_sort_option = current_sort,
+                extra_content = @Composable { close, active_sort ->
+                    val scope = rememberCoroutineScope()
+                    val is_refreshing = remember { mutableStateOf(false) }
+                    if (is_refreshing.value) {
+                        CircularProgressIndicator()
+                    } else {
+                        Button(
+                            modifier = Modifier
+                                .height(Dimensions.SortableMenuSortButtonDiameter)
+                                .width(Dimensions.SortableMenuSortButtonDiameter),
+                            colors = ButtonDefaults.buttonColors().copy(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ),
+                            onClick = {
+                                is_refreshing.value = true
+                                scope.launch(Dispatchers.IO) {
+                                    this@PaganComponentActivity.view_model.project_manager?.scan_and_update_project_list(
+                                        full_refresh = true
+                                    )
+                                    project_list.clear()
+                                    project_list.addAll(
+                                        this@PaganComponentActivity.view_model.project_manager?.get_project_list()
+                                            ?.toMutableList() ?: mutableListOf()
+                                    )
+                                    is_refreshing.value = false
+                                    refresher.value = !refresher.value
+                                }
+                            },
+                            contentPadding = Dimensions.SortableMenuSortButtonPadding,
+                            content = {
+                                Icon(
+                                    painter = painterResource(R.drawable.icon_refresh),
+                                    contentDescription = stringResource(R.string.cd_sort_options)
+                                )
+                            }
+                        )
+                    }
+                    Spacer(Modifier.width(Dimensions.Space.Large))
+                },
+                long_click_callback = { value ->
+                    for ((uri, title) in project_list) {
+                        if (uri != value) continue
+                        this.create_project_card_dialog(
+                            title,
+                            value,
+                            { visibility.value = false }) {
+                            load_callback(it)
+                        }
+                        break
+                    }
+                },
+                callback = load_callback
+            )
+        }
     }
 
     @Composable

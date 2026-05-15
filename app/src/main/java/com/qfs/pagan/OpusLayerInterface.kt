@@ -2617,7 +2617,10 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     fun selected_for_repetition(channel: Int?, line_offset: Int?, ctl_type: EffectType?): Boolean {
         return if (ctl_type == null) this.is_line_selected_secondary(channel!!, line_offset!!)
         else if (channel == null) this.is_global_control_line_selected_secondary(ctl_type)
-        else if (line_offset == null) this.is_channel_control_line_selected_secondary(ctl_type, channel)
+        else if (line_offset == null) this.is_channel_control_line_selected_secondary(
+            ctl_type,
+            channel
+        )
         else this.is_line_control_line_selected_secondary(ctl_type, channel, line_offset)
     }
 
@@ -2686,13 +2689,19 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         }
     }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 090e956ca414f75bc5cd416b0e0964166bde1070
     override fun controller_channel_to_global_overwrite_line(type: EffectType, channel: Int, beat: Int, repeat: Int?) {
         this.exception_catcher {
             super.controller_channel_to_global_overwrite_line(type, channel, beat, repeat)
         }
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> 090e956ca414f75bc5cd416b0e0964166bde1070
     override fun controller_channel_to_line_overwrite_line(
         type: EffectType,
         target_channel: Int,

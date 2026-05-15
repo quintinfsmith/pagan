@@ -32,6 +32,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
@@ -164,22 +166,23 @@ class ComponentActivityLanding: PaganComponentActivity() {
         modifier: Modifier = Modifier,
         shape: Shape = Shapes.LandingButtonShape
     ) {
+        val load_menu_visibility = remember { mutableStateOf(false) }
         Button(
             modifier = modifier
                 .testTag(TestTag.LandingLoadProject)
                 .height(Dimensions.LandingButtonHeight),
             content = { Text(stringResource(R.string.btn_landing_load)) },
             shape = shape,
-            onClick = {
-                this.load_menu_dialog {
-                    this@ComponentActivityLanding.startActivity(
-                        Intent(this@ComponentActivityLanding, ComponentActivityEditor::class.java).apply {
-                            this.data = it
-                        }
-                    )
-                }
-            }
+            onClick = { load_menu_visibility.value = true }
         )
+
+        LoadMenuDialog(load_menu_visibility) {
+            this@ComponentActivityLanding.startActivity(
+                Intent(this@ComponentActivityLanding, ComponentActivityEditor::class.java).apply {
+                    this.data = it
+                }
+            )
+        }
     }
 
 

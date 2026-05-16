@@ -259,6 +259,15 @@ class ViewModelEditorState: ViewModel() {
     val confirm_action_callback: MutableState<(() -> Unit)?> = mutableStateOf(null)
     val channel_preset_dialog = mutableStateOf<Int?>(null)
 
+    val dlg_split = mutableIntStateOf(Values.DialogInput.Split)
+    val dlg_insert_leaf = mutableIntStateOf(Values.DialogInput.InsertLeaf)
+    val dlg_remove_leaf = mutableIntStateOf(Values.DialogInput.RemoveLeaf)
+    val dlg_insert_line = mutableIntStateOf(Values.DialogInput.InsertLine)
+    val dlg_remove_line = mutableIntStateOf(Values.DialogInput.RemoveLine)
+    val dlg_insert_beat = mutableIntStateOf(Values.DialogInput.InsertBeat)
+    val dlg_remove_beat = mutableIntStateOf(Values.DialogInput.RemoveBeat)
+    val dlg_duration = mutableIntStateOf(Values.DialogInput.Duration)
+
     fun get_active_zoom(x: Int): Float {
         return if (this.normalize_beat_widths.value) {
             this.get_active_zoom()

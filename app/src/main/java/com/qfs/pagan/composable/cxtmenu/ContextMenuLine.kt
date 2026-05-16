@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -167,7 +168,13 @@ fun ToggleLineControllerButton(
 }
 
 @Composable
-fun InsertLineButton(active_line: ViewModelEditorState.LineData, opus_manager: OpusLayerInterface, shape: Shape = Shapes.ContextMenuButtonPrimaryStart) {
+fun InsertLineButton(
+    active_line: ViewModelEditorState.LineData,
+    opus_manager: OpusLayerInterface,
+    dialog_value: MutableIntState,
+    shape: Shape = Shapes.ContextMenuButtonPrimaryStart
+) {
+    val visibility = remember { mutableStateOf(false) }
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.LineNew),
         onClick = {
@@ -176,16 +183,32 @@ fun InsertLineButton(active_line: ViewModelEditorState.LineData, opus_manager: O
             opus_manager.new_line(channel, line_offset + 1)
         },
         onLongClick = {
-            TODO("NUMBER DIALOG")
+            visibility.value = true
         },
         icon = R.drawable.icon_add,
         shape = shape,
         description = R.string.cd_insert_line
     )
+
+    IntegerInputDialog(
+        R.string.dlg_insert_lines,
+        visibility,
+        dialog_value,
+        1
+    ) { i ->
+        val channel = active_line.channel.value ?: return@IntegerInputDialog
+        val line_offset = active_line.line_offset.value ?: return@IntegerInputDialog
+        opus_manager.new_line_repeat(channel, line_offset, i)
+    }
 }
 
 @Composable
-fun RemoveLineButton(active_line: ViewModelEditorState.LineData, opus_manager: OpusLayerInterface, size: Int) {
+fun RemoveLineButton(
+    active_line: ViewModelEditorState.LineData,
+    opus_manager: OpusLayerInterface,
+    dialog_value: MutableIntState,
+    size: Int
+) {
     val visibility = remember { mutableStateOf(false) }
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.LineRemove),
@@ -202,7 +225,12 @@ fun RemoveLineButton(active_line: ViewModelEditorState.LineData, opus_manager: O
         description = R.string.cd_remove_line
     )
 
-    IntegerInputDialog(visibility, R.string.dlg_remove_lines, 0) { i ->
+    IntegerInputDialog(
+        R.string.dlg_remove_lines,
+        visibility,
+        dialog_value,
+        0
+    ) { i ->
         val channel = active_line.channel.value ?: return@IntegerInputDialog
         val line_offset = active_line.line_offset.value ?: return@IntegerInputDialog
         opus_manager.remove_line_repeat(channel, line_offset, i)
@@ -428,7 +456,7 @@ fun LineEffectMenuDialog(
 
     DialogMenu(
         visibility = visibility,
-        title = R.string.cd_show_effect_controls,
+        title = R.string.show_line_controls,
         options = {
             val available_effects = OpusLayerInterface.line_controller_domain.toMutableList()
             for (line in vm_state.line_data) {
@@ -590,19 +618,38 @@ fun ContextMenuLineStdPrimary(
                 MediumSpacer()
                 DuplicateLineButton(active_line, opus_manager)
                 MediumSpacer()
-                RemoveLineButton(active_line, opus_manager, active_channel.size.intValue)
+                RemoveLineButton(
+                    active_line,
+                    opus_manager,
+                    vm_state.dlg_remove_line,
+                    active_channel.size.intValue
+                )
                 MediumSpacer()
-                InsertLineButton(active_line, opus_manager, Shapes.ContextMenuButtonPrimaryEnd)
+                InsertLineButton(
+                    active_line,
+                    opus_manager,
+                    vm_state.dlg_insert_line,
+                    Shapes.ContextMenuButtonPrimaryEnd
+                )
             }
         }
         LayoutSize.SmallLandscape,
         LayoutSize.LargeLandscape,
         LayoutSize.MediumLandscape -> {
             Column {
-                InsertLineButton(active_line, opus_manager)
+                InsertLineButton(
+                    active_line,
+                    opus_manager,
+                    vm_state.dlg_insert_line
+                )
 
                 MediumSpacer()
-                RemoveLineButton(active_line, opus_manager, active_channel.size.intValue)
+                RemoveLineButton(
+                    active_line,
+                    opus_manager,
+                    vm_state.dlg_remove_line,
+                    active_channel.size.intValue
+                )
 
                 MediumSpacer()
                 DuplicateLineButton(active_line, opus_manager)

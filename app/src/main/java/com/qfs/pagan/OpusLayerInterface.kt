@@ -2689,19 +2689,12 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         }
     }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 090e956ca414f75bc5cd416b0e0964166bde1070
     override fun controller_channel_to_global_overwrite_line(type: EffectType, channel: Int, beat: Int, repeat: Int?) {
         this.exception_catcher {
             super.controller_channel_to_global_overwrite_line(type, channel, beat, repeat)
         }
     }
-<<<<<<< HEAD
 
-=======
->>>>>>> 090e956ca414f75bc5cd416b0e0964166bde1070
     override fun controller_channel_to_line_overwrite_line(
         type: EffectType,
         target_channel: Int,

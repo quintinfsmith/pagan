@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -71,21 +72,23 @@ import kotlin.math.ceil
 @Composable
 fun SplitButton(
     opus_manager: OpusLayerInterface,
+    dialog_value: MutableIntState,
     shape: Shape = Shapes.ContextMenuButtonPrimaryStart
 ) {
     val dialog_visibility = remember { mutableStateOf(false) }
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.LeafSplit),
-        onClick = { dialog_visibility.value = !dialog_visibility.value },
-        onLongClick = { opus_manager.split_tree_at_cursor(2) },
+        onClick = { opus_manager.split_tree_at_cursor(2) },
+        onLongClick = { dialog_visibility.value = !dialog_visibility.value },
         icon = R.drawable.icon_split,
         shape = shape,
         description = R.string.btn_split
     )
 
     IntegerInputDialog(
-        visibility = dialog_visibility,
         title_string_id = R.string.dlg_split,
+        visibility = dialog_visibility,
+        value = dialog_value,
         min_value = 1
     ) {
         opus_manager.split_tree_at_cursor(it)
@@ -93,19 +96,23 @@ fun SplitButton(
 }
 
 @Composable
-fun InsertButton(opus_manager: OpusLayerInterface) {
+fun InsertButton(
+    opus_manager: OpusLayerInterface,
+    dialog_value: MutableIntState,
+) {
     val dialog_visibility = remember { mutableStateOf(false) }
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.LeafInsert),
-        onClick = { dialog_visibility.value = !dialog_visibility.value },
-        onLongClick = { opus_manager.insert_at_cursor(1) },
+        onClick = { opus_manager.insert_at_cursor(1) },
+        onLongClick = { dialog_visibility.value = !dialog_visibility.value },
         icon = R.drawable.icon_add,
         description = R.string.btn_insert
     )
 
     IntegerInputDialog(
-        visibility = dialog_visibility,
         title_string_id = R.string.dlg_insert,
+        visibility = dialog_visibility,
+        value = dialog_value,
         min_value = 1
     ) {
         opus_manager.insert_at_cursor(it)
@@ -127,6 +134,7 @@ fun RemoveButton(opus_manager: OpusLayerInterface, cursor: ViewModelEditorState.
 @Composable
 fun DurationButton(
     opus_manager: OpusLayerInterface,
+    dialog_value: MutableIntState,
     descriptor: ViewModelEditorState.EventDescriptor?,
     active_event: OpusEvent?,
     shape: Shape = Shapes.ContextMenuButtonPrimary
@@ -153,8 +161,9 @@ fun DurationButton(
     )
 
     IntegerInputDialog(
-        visibility = dialog_visibility,
         title_string_id = R.string.dlg_duration,
+        visibility = dialog_visibility,
+        value = dialog_value,
         min_value = 1
     ) {
         opus_manager.set_duration_at_cursor(it)
@@ -195,9 +204,9 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, vm_state: ViewMo
             Modifier.width(Dimensions.ContextMenuButtonWidth),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            SplitButton(opus_manager)
+            SplitButton(opus_manager, vm_state.dlg_split)
             MediumSpacer()
-            InsertButton(opus_manager)
+            InsertButton(opus_manager, vm_state.dlg_insert_leaf)
             MediumSpacer()
             RemoveButton(opus_manager, cursor)
             MediumSpacer()
@@ -205,6 +214,7 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, vm_state: ViewMo
             key(active_event?.duration) {
                 DurationButton(
                     opus_manager,
+                    vm_state.dlg_duration,
                     vm_state.active_event_descriptor.value,
                     active_event,
                     shape = if (active_line.assigned_offset.value != null) {
@@ -221,9 +231,9 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, vm_state: ViewMo
         }
     } else {
         ContextMenuPrimaryRow(modifier) {
-            SplitButton(opus_manager)
+            SplitButton(opus_manager, vm_state.dlg_split)
             MediumSpacer()
-            InsertButton(opus_manager)
+            InsertButton(opus_manager, vm_state.dlg_insert_leaf)
             MediumSpacer()
             RemoveButton(opus_manager, cursor)
             MediumSpacer()
@@ -231,6 +241,7 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, vm_state: ViewMo
             key(active_event?.duration) {
                 DurationButton(
                     opus_manager,
+                    vm_state.dlg_duration,
                     vm_state.active_event_descriptor.value,
                     active_event,
                     shape = if (active_line.assigned_offset.value != null) {
@@ -489,7 +500,7 @@ fun ContextMenuLeafStdSecondary(vm_state: ViewModelEditorState, opus_manager: Op
             opus_manager.set_note_offset_at_cursor(i, mode)
         }
         Column {
-            var count = ceil(vm_state.radix.value.toFloat() / Values.OffsetModulo).toInt()
+            val count = ceil(vm_state.radix.value.toFloat() / Values.OffsetModulo).toInt()
             for (i in count - 1 downTo 0) {
                 Row(modifier) {
                     NumberSelector(

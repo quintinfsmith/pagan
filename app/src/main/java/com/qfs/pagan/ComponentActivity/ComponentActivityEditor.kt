@@ -1622,7 +1622,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                     contentDescription = stringResource(R.string.cd_insert_beat)
                                                 )
                                             }
-                                            IntegerInputDialog(dialog_visibility, R.string.dlg_insert_beats, 1, 2048) {
+                                            IntegerInputDialog(
+                                                R.string.dlg_insert_beats,
+                                                dialog_visibility,
+                                                vm_state.dlg_insert_beat,
+                                                1,
+                                                2048
+                                            ) {
                                                 opus_manager.insert_beats(opus_manager.length,it)
                                             }
                                         }
@@ -1922,7 +1928,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         val context = LocalContext.current
         val tuning_table_visibility = remember  { mutableStateOf(false) }
-        val preset_dialog_channel = remember { mutableStateOf<Int?>(null) }
 
         DrawerCard(
             modifier
@@ -2063,7 +2068,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         ConfigDrawerChannelLeftButton(
                                             modifier = Modifier.weight(1F),
                                             onClick = {
-                                                preset_dialog_channel.value = i
+                                                this@ComponentActivityEditor.state_model.channel_preset_dialog.value = i
                                             },
                                             content = {
                                                 Row(
@@ -2450,7 +2455,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     fun DialogsKludge() {
         ConfirmSaveDialog()
-        ChannelPresetDialog()
+        ChannelPresetDialog(this@ComponentActivityEditor.state_model.channel_preset_dialog)
     }
 
     @Composable
@@ -2604,8 +2609,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun ChannelPresetDialog() {
-        val channel = this.state_model.channel_preset_dialog.value ?: return
+    fun ChannelPresetDialog(channel_state: MutableState<Int?>) {
+        val channel = channel_state.value ?: return
 
         fun padded_hex(i: Int): String {
             var s = Integer.toHexString(i)
@@ -2739,7 +2744,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             )
         }
 
-        val dialog_visibility = remember { mutableStateOf(false) }
+        val dialog_visibility = remember { mutableStateOf(channel_state.value != null) }
         PaganDialog(dialog_visibility) {
             val selected_sort: MutableState<Int?> = remember { mutableStateOf(null) }
             val scope = rememberCoroutineScope()

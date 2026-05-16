@@ -205,10 +205,10 @@ fun LineLabelView(
 
     key(repeat_select_dialog_default.value) {
         IntegerInputDialog(
-            visibility = repeat_selection_dialog_visibility,
             title_string_id = R.string.repeat_selection_in_line,
+            visibility = repeat_selection_dialog_visibility,
+            repeat_select_dialog_default,
             min_value = 1,
-            default = repeat_select_dialog_default.intValue,
             callback = { count ->
                 opus_manager.repeat_selection(count)
             }

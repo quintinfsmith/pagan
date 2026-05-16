@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -70,10 +71,10 @@ fun RowScope.VolumeEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusL
         },
     )
     IntegerInputDialog(
-        dialog_visibility,
         R.string.dlg_set_volume,
+        dialog_visibility,
+        remember { mutableIntStateOf((working_event.value * 100).toInt()) },
         0, 200,
-        (working_event.value * 100).toInt()
     ) {
         working_event.value = it.toFloat() / 100F
         working_value.floatValue = working_event.value

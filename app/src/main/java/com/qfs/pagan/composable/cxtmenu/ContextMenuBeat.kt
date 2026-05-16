@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -24,6 +26,7 @@ import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
+import com.qfs.pagan.Values
 import com.qfs.pagan.composable.IntegerInputDialog
 import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.TextInput
@@ -74,8 +77,13 @@ fun AdjustBeatButton(vm_state: ViewModelEditorState, opus_manager: OpusLayerInte
 }
 
 @Composable
-fun RemoveBeatButton(opus_manager: OpusLayerInterface, enabled: Boolean) {
+fun RemoveBeatButton(
+    opus_manager: OpusLayerInterface,
+    dialog_value: MutableIntState,
+    enabled: Boolean
+) {
     val dialog_visibility = remember { mutableStateOf(false) }
+
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.BeatRemove),
         enabled = enabled,
@@ -85,13 +93,22 @@ fun RemoveBeatButton(opus_manager: OpusLayerInterface, enabled: Boolean) {
         description = R.string.cd_remove_beat
     )
 
-    IntegerInputDialog(dialog_visibility, R.string.dlg_remove_beats, 0) {
+    IntegerInputDialog(
+        R.string.dlg_remove_beats,
+        dialog_visibility,
+        dialog_value,
+        Values.DialogInput.RemoveBeat
+    ) {
         opus_manager.remove_beat_at_cursor(it)
     }
 }
 
 @Composable
-fun InsertBeatButton(opus_manager: OpusLayerInterface, shape: Shape = Shapes.ContextMenuButtonPrimary) {
+fun InsertBeatButton(
+    opus_manager: OpusLayerInterface,
+    dialog_value: MutableIntState,
+    shape: Shape = Shapes.ContextMenuButtonPrimary
+) {
     val dialog_visibility = remember { mutableStateOf(false) }
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.BeatInsert),
@@ -101,7 +118,13 @@ fun InsertBeatButton(opus_manager: OpusLayerInterface, shape: Shape = Shapes.Con
         icon = R.drawable.icon_add,
         description = R.string.cd_insert_beat
     )
-    IntegerInputDialog(dialog_visibility, R.string.dlg_insert_beats, 1, 2048) {
+    IntegerInputDialog(
+        R.string.dlg_insert_beats,
+        dialog_visibility,
+        dialog_value,
+        1,
+        2048
+    ) {
         opus_manager.insert_beat_after_cursor(it)
     }
 }
@@ -115,9 +138,17 @@ fun ContextMenuColumnPrimary(modifier: Modifier = Modifier, vm_state: ViewModelE
         LayoutSize.MediumLandscape,
         LayoutSize.SmallLandscape -> {
             Column {
-                InsertBeatButton(opus_manager, Shapes.ContextMenuButtonPrimaryStart)
+                InsertBeatButton(
+                    opus_manager,
+                    vm_state.dlg_insert_beat,
+                    Shapes.ContextMenuButtonPrimaryStart
+                )
                 MediumSpacer()
-                RemoveBeatButton(opus_manager, vm_state.beat_count.value > 1)
+                RemoveBeatButton(
+                    opus_manager,
+                    vm_state.dlg_remove_beat,
+                    vm_state.beat_count.value > 1
+                )
                 MediumSpacer()
                 AdjustBeatButton(vm_state, opus_manager)
                 Spacer(Modifier.weight(1F))
@@ -147,10 +178,15 @@ fun ContextMenuColumnSecondary(modifier: Modifier = Modifier, vm_state: ViewMode
                 MediumSpacer()
                 AdjustBeatButton(vm_state, opus_manager)
                 MediumSpacer()
-                RemoveBeatButton(opus_manager, vm_state.beat_count.value > 1)
+                RemoveBeatButton(
+                    opus_manager,
+                    vm_state.dlg_remove_beat,
+                    vm_state.beat_count.value > 1
+                )
                 MediumSpacer()
                 InsertBeatButton(
                     opus_manager,
+                    vm_state.dlg_insert_beat,
                     if (!column_data.is_tagged.value) {
                         Shapes.ContextMenuButtonPrimaryEnd
                     } else {

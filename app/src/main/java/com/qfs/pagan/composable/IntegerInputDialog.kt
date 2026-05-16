@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -28,10 +29,16 @@ import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
 
 @Composable
-fun IntegerInputDialog(visibility: MutableState<Boolean>, title_string_id: Int, min_value: Int, max_value: Int? = null, default: Int? = null, callback: (value: Int) -> Unit) {
+fun IntegerInputDialog(
+    title_string_id: Int,
+    visibility: MutableState<Boolean>,
+    value: MutableIntState,
+    min_value: Int,
+    max_value: Int? = null,
+    callback: (value: Int) -> Unit
+) {
     val focus_requester = remember { FocusRequester() }
     //default ?: this@ActionDispatcher.persistent_number_input_values[title_string_id] ?: min_value
-    val value = remember { mutableIntStateOf(default ?: min_value) }
 
     PaganDialog(visibility) {
         Row(
@@ -46,10 +53,8 @@ fun IntegerInputDialog(visibility: MutableState<Boolean>, title_string_id: Int, 
                     .focusRequester(focus_requester),
                 contentPadding = PaddingValues(Dimensions.NumberInputDialogPadding),
                 text_align = TextAlign.Center,
-                on_focus_exit = {
-                    if (it != null) {
-                        value.intValue = it
-                    }
+                on_focus_exit = { dialog_value ->
+                    dialog_value?.let { value.intValue = it }
                 },
                 minimum = min_value,
                 maximum = max_value

@@ -55,6 +55,7 @@ import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
@@ -174,12 +175,12 @@ fun DurationButton(
 fun UnsetButton(
     opus_manager: OpusLayerInterface,
     active_line: ViewModelEditorState.LineData,
-    active_event: OpusEvent?,
+    enabled: Boolean,
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.EventUnset),
-        enabled = active_event != null,
+        enabled = enabled,
         onClick = { opus_manager.unset() },
         onLongClick = { opus_manager.unset_root_at_cursor() },
         icon = R.drawable.icon_erase,
@@ -198,7 +199,7 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, vm_state: ViewMo
     val active_event = vm_state.active_event.value
     val cursor = vm_state.active_cursor.value ?: return
     val active_line = vm_state.line_data[cursor.ints[0]]
-
+    val unset_enabled = vm_state.active_event_descriptor.value != ViewModelEditorState.EventDescriptor.Backup && active_event != null
     if (landscape) {
         Column(
             Modifier.width(Dimensions.ContextMenuButtonWidth),
@@ -226,7 +227,12 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, vm_state: ViewMo
             }
             if (active_line.assigned_offset.value == null) {
                 MediumSpacer()
-                UnsetButton(opus_manager, active_line, active_event, Shapes.ContextMenuButtonPrimaryBottom)
+                UnsetButton(
+                    opus_manager,
+                    active_line,
+                    unset_enabled,
+                    Shapes.ContextMenuButtonPrimaryBottom
+                )
             }
         }
     } else {
@@ -253,7 +259,12 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, vm_state: ViewMo
             }
             if (active_line.assigned_offset.value == null) {
                 MediumSpacer()
-                UnsetButton(opus_manager, active_line, active_event, Shapes.ContextMenuButtonPrimaryEnd)
+                UnsetButton(
+                    opus_manager,
+                    active_line,
+                    unset_enabled,
+                    Shapes.ContextMenuButtonPrimaryEnd
+                )
             }
         }
     }

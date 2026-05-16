@@ -937,7 +937,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         }
     }
 
-    fun set_percussion_event_at_cursor() {
+    open fun set_percussion_event_at_cursor() {
         this.percussion_set_event(
             this.cursor.get_beatkey(),
             this.cursor.get_position()

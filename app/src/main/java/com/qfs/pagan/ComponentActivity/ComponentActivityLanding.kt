@@ -150,7 +150,6 @@ class ComponentActivityLanding: PaganComponentActivity() {
             content = { Text(stringResource(R.string.btn_landing_new)) },
             shape = shape,
             onClick = {
-
                 this@ComponentActivityLanding.startActivity(
                     Intent(
                         this@ComponentActivityLanding,

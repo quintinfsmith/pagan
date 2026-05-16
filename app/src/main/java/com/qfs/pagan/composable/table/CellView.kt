@@ -19,6 +19,7 @@ import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.testTag
+import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
@@ -26,6 +27,7 @@ fun CellView(
     modifier: Modifier = Modifier,
     vm_state: ViewModelEditorState,
     opus_manager: OpusLayerInterface,
+    controller_model: ViewModelEditorController,
     cell: MutableState<ViewModelEditorState.TreeData>,
     y: Int,
     x: Int,
@@ -40,6 +42,7 @@ fun CellView(
                         .weight(leaf_data.value.weight.floatValue),
                     opus_manager,
                     vm_state,
+                    controller_model,
                     line_info,
                     x,
                     path,

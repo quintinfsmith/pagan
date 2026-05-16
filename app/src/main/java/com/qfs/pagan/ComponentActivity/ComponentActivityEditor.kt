@@ -1707,6 +1707,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                             Modifier.weight(1F),
                                                             vm_state,
                                                             opus_manager,
+                                                            this@ComponentActivityEditor.controller_model,
                                                             cell,
                                                             y,
                                                             x,
@@ -2627,6 +2628,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val default_presets = stringArrayResource(R.array.general_midi_presets)
         val pre_option = mutableListOf<Pair<PresetKey, String?>>()
         val can_preview = this.controller_model.audio_interface.has_soundfont() || this.controller_model.active_midi_device != null
+
         if (!this.controller_model.audio_interface.has_soundfont() || this.controller_model.active_midi_device != null) {
             // Setup default empty preset names
             for (i in 0 until 128) {
@@ -2687,23 +2689,31 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 Modifier
                                     .clickable {
                                         val radix = opus_manager.get_radix()
-                                        this@ComponentActivityEditor.play_event(
-                                            preset_key,
-                                            is_percussion,
-                                            (2 * radix)
-                                        )
-                                        Thread.sleep(200)
-                                        this@ComponentActivityEditor.play_event(
-                                            preset_key,
-                                            is_percussion,
-                                            (3 * radix) + (4 * radix / 12)
-                                        )
-                                        Thread.sleep(200)
-                                        this@ComponentActivityEditor.play_event(
-                                            preset_key,
-                                            is_percussion,
-                                            (3 * radix) + (7 * radix / 12)
-                                        )
+                                        if (this@ComponentActivityEditor.controller_model.active_midi_device != null) {
+                                            this@ComponentActivityEditor.play_event(channel, (2 * radix))
+                                            Thread.sleep(200)
+                                            this@ComponentActivityEditor.play_event(channel, (3 * radix) + (4 * radix / 12))
+                                            Thread.sleep(200)
+                                            this@ComponentActivityEditor.play_event(channel, (3 * radix) + (7 * radix / 12))
+                                        } else {
+                                            this@ComponentActivityEditor.play_event(
+                                                preset_key,
+                                                is_percussion,
+                                                (2 * radix)
+                                            )
+                                            Thread.sleep(200)
+                                            this@ComponentActivityEditor.play_event(
+                                                preset_key,
+                                                is_percussion,
+                                                (3 * radix) + (4 * radix / 12)
+                                            )
+                                            Thread.sleep(200)
+                                            this@ComponentActivityEditor.play_event(
+                                                preset_key,
+                                                is_percussion,
+                                                (3 * radix) + (7 * radix / 12)
+                                            )
+                                        }
                                     }
                                     .height(Dimensions.PreviewIconHeight)
                                     .width(Dimensions.PreviewIconHeight),
@@ -3407,67 +3417,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     private fun play_event(preset: PresetKey, is_percussion: Boolean, event_value: Int, velocity: Float = .5f) {
-        if (event_value < 0) return // No sound to play
-        if (this.controller_model.in_playback()) return // disable feedback during playback
         if (!this.controller_model.opus_manager.vm_state.soundfont_ready.value) return
-
-        val (note, bend) = if (is_percussion) {
-            Pair(event_value + 27, 0)
-        } else {
-            this.controller_model.opus_manager.calculate_note_bend(0, event_value)
-        }
-
-        if (note > 127) return
-
-        val audio_interface = this.controller_model.audio_interface
-        if (this.controller_model.active_midi_device != null) {
-            // TODO()
-            //try {
-            //    this.vm_controller.virtual_midi_device.play_note(
-            //        note,
-            //        bend,
-            //        (velocity * 127F).toInt(),
-            //        !this.get_opus_manager().is_tuning_standard()
-            //    )
-            //} catch (_: VirtualMidiInputDevice.DisconnectedException) {
-            //    // Feedback shouldn't be necessary here. But i'm sure that'll come back to bite me
-            //}
-        } else if (audio_interface.has_soundfont()) {
-            audio_interface.play_feedback(preset, note, bend, (velocity * 127F).toInt() shl 8)
-        }
+        this.controller_model.play_event(preset, is_percussion, event_value, velocity)
     }
 
     internal fun play_event(channel: Int, event_value: Int, velocity: Float = .5F) {
-        if (event_value < 0) return // No sound to play
-        if (this.controller_model.in_playback()) return // disable feedback during playback
-        val opus_manager = this.controller_model.opus_manager
-        if (!opus_manager.vm_state.soundfont_ready.value) return
-
-        val (note, bend) = if (opus_manager.is_percussion(channel)) {
-            Pair(event_value + 27, 0)
-        } else {
-            opus_manager.calculate_note_bend(channel, event_value)
-        }
-
-        if (note > 127) return
-
-        val audio_interface = this.controller_model.audio_interface
-        val midi_channel = opus_manager.get_midi_channel(channel)
-        if (this.controller_model.active_midi_device != null) {
-            try {
-                this.controller_model.virtual_midi_device.play_note(
-                    midi_channel,
-                    note,
-                    bend,
-                    (velocity * 127F).toInt(),
-                    !opus_manager.is_tuning_standard()
-                )
-            } catch (_: VirtualMidiInputDevice.DisconnectedException) {
-                // Feedback shouldn't be necessary here. But i'm sure that'll come back to bite me
-            }
-        } else if (audio_interface.has_soundfont()) {
-            audio_interface.play_feedback(midi_channel, note, bend, (velocity * 127F).toInt() shl 8)
-        }
+        if (!this.controller_model.opus_manager.vm_state.soundfont_ready.value) return
+        this.controller_model.play_event(channel, event_value, velocity)
     }
 
     fun stop_opus_midi() {
@@ -3559,5 +3515,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.controller_model.update_soundfont_instruments()
         opus_manager.clear_history()
     }
+
 }
 

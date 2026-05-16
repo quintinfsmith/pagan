@@ -292,7 +292,13 @@ fun PercussionSetInstrumentButton(modifier: Modifier = Modifier, vm_state: ViewM
                 }
             )
         }
-        PercussionInstrumentDialog(dialog_visibility, vm_state, opus_manager, active_line.channel.value!!, active_line.line_offset.value!!)
+        PercussionInstrumentDialog(
+            dialog_visibility,
+            vm_state,
+            opus_manager,
+            active_line.channel.value!!,
+            active_line.line_offset.value!!
+        )
     } else {
         Box(
             modifier = modifier,

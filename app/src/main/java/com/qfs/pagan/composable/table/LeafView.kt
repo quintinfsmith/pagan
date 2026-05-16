@@ -59,6 +59,7 @@ import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Typography
+import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -68,6 +69,7 @@ fun LeafView(
     modifier: Modifier = Modifier,
     opus_manager: OpusLayerInterface,
     vm_state: ViewModelEditorState,
+    controller_model: ViewModelEditorController,
     line_info: ViewModelEditorState.LineData,
     beat: Int,
     position: List<Int>,
@@ -131,19 +133,19 @@ fun LeafView(
                             val beat_key = BeatKey(channel!!, line_offset!!, beat)
                             opus_manager.cursor_select(beat_key, position)
 
-                            // TODO: Feedback
-                            //val tree = opus_manager.get_tree() ?: return@combinedClickable
-                            //if (tree.has_event()) {
-                            //    val note = if (opus_manager.is_percussion(channel)) {
-                            //        opus_manager.get_percussion_instrument(channel, line_offset)
-                            //    } else {
-                            //        opus_manager.get_absolute_value(beat_key, position) ?: return@combinedClickable
-                            //    }
-                            //    // this.play_event(
-                            //    //     beat_key.channel,
-                            //    //     note
-                            //    // )
-                            //}
+                            val tree = opus_manager.get_tree() ?: return@combinedClickable
+                            if (tree.has_event()) {
+                                val note = if (opus_manager.is_percussion(channel)) {
+                                    opus_manager.get_percussion_instrument(channel, line_offset)
+                                } else {
+                                    opus_manager.get_absolute_value(beat_key, position) ?: return@combinedClickable
+                                }
+
+                                controller_model.play_event(
+                                    beat_key.channel,
+                                    note
+                                )
+                            }
                         } else if (line_offset != null) {
                             val beat_key = BeatKey(channel!!, line_offset, beat)
                             opus_manager.cursor_select_ctl_at_line(ctl_type, beat_key, position)

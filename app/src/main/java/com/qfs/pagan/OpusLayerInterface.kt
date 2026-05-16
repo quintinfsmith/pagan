@@ -788,6 +788,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         // Need to call get_drum name to repopulate instrument list if needed
         // this.get_activity()?.get_drum_name(channel, instrument)
 
+        this.vm_controller.play_event(channel, instrument)
+
         if (this.ui_lock.is_locked()) return
         val y = this.get_visible_row_from_ctl_line(
             this.get_actual_line_index(
@@ -2256,27 +2258,23 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     fun set_note_octave_at_cursor(octave: Int, mode: RelativeInputMode) {
         if (this.cursor.mode != CursorMode.Single) throw IncorrectCursorMode(this.cursor.mode, CursorMode.Single)
 
-        val current_tree_position = this.get_actual_position(this.cursor.get_beatkey(), this.cursor.get_position())
-        this._set_note_octave(
-            current_tree_position.first,
-            current_tree_position.second,
-            octave,
-            mode,
-            this.latest_set_offset ?: 0
-        )
+        val (beat_key, position) = this.get_actual_position(this.cursor.get_beatkey(), this.cursor.get_position())
+        this._set_note_octave(beat_key, position, octave, mode, this.latest_set_offset ?: 0)
+
+        this.get_absolute_value(beat_key, position)?.let {
+            this.vm_controller.play_event(beat_key.channel, it)
+        }
     }
 
     fun set_note_offset_at_cursor(offset: Int, mode: RelativeInputMode) {
         if (this.cursor.mode != CursorMode.Single) throw IncorrectCursorMode(this.cursor.mode, CursorMode.Single)
 
-        val current_tree_position = this.get_actual_position(this.cursor.get_beatkey(), this.cursor.get_position())
-        this._set_note_offset(
-            current_tree_position.first,
-            current_tree_position.second,
-            offset,
-            mode,
-            this.latest_set_octave ?: 0
-        )
+        val (beat_key, position) = this.get_actual_position(this.cursor.get_beatkey(), this.cursor.get_position())
+        this._set_note_offset(beat_key, position, offset, mode, this.latest_set_octave ?: 0)
+
+        this.get_absolute_value(beat_key, position)?.let {
+            this.vm_controller.play_event(beat_key.channel, it)
+        }
     }
 
     override fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
@@ -2778,5 +2776,18 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.exception_catcher {
             super.controller_global_overwrite_line(type, beat, repeat)
         }
+    }
+
+    override fun set_percussion_event_at_cursor() {
+        super.set_percussion_event_at_cursor()
+
+        if (this.cursor.mode != CursorMode.Single) return
+        this.vm_controller.play_event(
+            this.cursor.channel,
+            this.get_percussion_instrument(
+                this.cursor.channel,
+                this.cursor.line_offset
+            )
+        )
     }
 }

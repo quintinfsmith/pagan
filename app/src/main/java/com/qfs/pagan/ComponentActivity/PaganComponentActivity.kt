@@ -386,64 +386,6 @@ abstract class PaganComponentActivity: ComponentActivity() {
     private fun create_project_card_dialog(title: String, uri: Uri, close_top_callback: () -> Unit, load_callback: (Uri) -> Unit) {
         this.view_model.create_dialog(level = 1) { close ->
             @Composable {
-                Column {
-                    ProjectCard(modifier = Modifier.fillMaxWidth(), uri = uri)
-                    Spacer(Modifier.height(Dimensions.Space.Large))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        OutlinedButton(
-                            modifier = Modifier.height(Dimensions.ButtonHeight.Small),
-                            onClick = close,
-                            content = { Text(android.R.string.cancel) }
-                        )
-                        Spacer(Modifier.width(Dimensions.Space.Medium))
-                        Button(
-                            modifier = Modifier.height(Dimensions.ButtonHeight.Small),
-                            onClick = {
-                                this@PaganComponentActivity.view_model.create_dialog { close_subdialog ->
-                                    @Composable {
-                                        Column {
-                                            Row {
-                                                DialogTitle(
-                                                    stringResource(R.string.dlg_delete_title, title),
-                                                    modifier = Modifier.weight(1F)
-                                                )
-                                            }
-                                            DialogBar(
-                                                neutral = close_subdialog,
-                                                positive = {
-                                                    this@PaganComponentActivity.delete_project(uri)
-                                                    close()
-                                                    close_subdialog()
-                                                    close_top_callback()
-                                                }
-                                            )
-                                        }
-                                    }
-                                }
-                            },
-                            content = {
-                                Icon(
-                                    painter = painterResource(R.drawable.icon_trash),
-                                    contentDescription = stringResource(R.string.delete_project)
-                                )
-                            }
-                        )
-                        Spacer(Modifier.width(Dimensions.Space.Medium))
-                        Button(
-                            modifier = Modifier.height(Dimensions.ButtonHeight.Small),
-                            onClick = {
-                                close()
-                                close_top_callback()
-                                load_callback(uri)
-                            },
-                            content = { Text(R.string.details_load_project) }
-                        )
-                    }
-                }
             }
         }
     }
@@ -472,6 +414,8 @@ abstract class PaganComponentActivity: ComponentActivity() {
             }
         )
         val refresher = remember { mutableStateOf(false) }
+        val project_card_visibility = remember { mutableStateOf(false) }
+        val project_card_pair = remember { mutableStateOf<Pair<String?, Uri>?>(null)}
         key(refresher) {
             DialogSortableMenu(
                 visibility,
@@ -529,17 +473,70 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 long_click_callback = { value ->
                     for ((uri, title) in project_list) {
                         if (uri != value) continue
-                        this.create_project_card_dialog(
-                            title,
-                            value,
-                            { visibility.value = false }) {
-                            load_callback(it)
-                        }
+                        project_card_pair.value = Pair(title, uri)
+                        project_card_visibility.value = true
                         break
                     }
                 },
                 callback = load_callback
             )
+        }
+
+        PaganDialog(project_card_visibility) {
+            val confirm_visibility = remember { mutableStateOf(false) }
+
+            ProjectCard(modifier = Modifier.fillMaxWidth(), uri = project_card_pair.value!!.second)
+            Spacer(Modifier.height(Dimensions.Space.Large))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                OutlinedButton(
+                    modifier = Modifier.height(Dimensions.ButtonHeight.Small),
+                    onClick = { project_card_visibility.value = false },
+                    content = { Text(android.R.string.cancel) }
+                )
+                Spacer(Modifier.width(Dimensions.Space.Medium))
+                Button(
+                    modifier = Modifier.height(Dimensions.ButtonHeight.Small),
+                    onClick = { confirm_visibility.value = true },
+                    content = {
+                        Icon(
+                            painter = painterResource(R.drawable.icon_trash),
+                            contentDescription = stringResource(R.string.delete_project)
+                        )
+                    }
+                )
+                Spacer(Modifier.width(Dimensions.Space.Medium))
+                Button(
+                    modifier = Modifier.height(Dimensions.ButtonHeight.Small),
+                    onClick = {
+                        project_card_visibility.value = false
+                        visibility.value = false
+                        load_callback(project_card_pair.value!!.second)
+                    },
+                    content = { Text(R.string.details_load_project) }
+                )
+
+                PaganDialog(confirm_visibility) {
+                    Row {
+                        DialogTitle(
+                            stringResource(R.string.dlg_delete_title, title),
+                            modifier = Modifier.weight(1F)
+                        )
+                    }
+                    DialogBar(
+                        neutral = { confirm_visibility.value = false },
+                        positive = {
+                            this@PaganComponentActivity.delete_project(project_card_pair.value!!.second)
+                            confirm_visibility.value = false
+                            project_card_visibility.value = false
+                            visibility.value = false
+                        }
+                    )
+                }
+            }
         }
     }
 

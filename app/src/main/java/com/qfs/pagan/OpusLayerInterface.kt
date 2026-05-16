@@ -1452,6 +1452,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             instrument.program
         )
 
+
         if (this.ui_lock.is_locked()) return
         this.vm_state.set_channel_data(
             channel,

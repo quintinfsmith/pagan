@@ -888,8 +888,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
         this.history_cache.start_undo()
 
         for (i in 0 until repeat) {
-            val node = this.history_cache.pop()
-            if (node == null) break
+            val node = this.history_cache.pop() ?: break
             this._remember { // Keep multi's intact for redo
                 this.apply_history_node(node)
             }
@@ -901,8 +900,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
     open fun apply_redo(repeat: Int = 1) {
         this.history_cache.start_redo()
         for (i in 0 until repeat) {
-            val node = this.history_cache.pop()
-            if (node == null) break
+            val node = this.history_cache.pop() ?: break
             this._remember {
                 this.apply_history_node(node)
             }

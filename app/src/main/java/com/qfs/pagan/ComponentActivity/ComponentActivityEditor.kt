@@ -850,22 +850,22 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     fun NoPlayButton() {
+        val dialog_visibility = remember { mutableStateOf(false) }
         TopBarIcon(
             modifier = Modifier.alpha(Values.DisabledTopBarIconAlpha),
             icon = R.drawable.icon_play,
             description = R.string.menu_item_playpause,
             onClick = {
-                this.view_model.create_dialog { close ->
-                    @Composable {
-                        Text(
-                            R.string.need_soundfont_playback_warning,
-                            textAlign = TextAlign.Center
-                        )
-                        DialogBar(positive = close)
-                    }
-                }
+                dialog_visibility.value = !dialog_visibility.value
             },
         )
+        PaganDialog(dialog_visibility) {
+            Text(
+                R.string.need_soundfont_playback_warning,
+                textAlign = TextAlign.Center
+            )
+            DialogBar(positive = { dialog_visibility.value = false })
+        }
     }
 
     @Composable
@@ -1049,7 +1049,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             }
 
                             DialogSTitle(R.string.playback_device)
-                            UnSortableMenu<MidiDeviceInfo?>(
+                            UnSortableMenu(
                                 modifier = Modifier,
                                 options = options,
                                 default_value = vm_controller.active_midi_device
@@ -2181,33 +2181,34 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     }
                 )
                 DrawerPadder()
+                val confirm_delete_dialog_visibility = remember { mutableStateOf(false) }
                 ConfigDrawerBottomButton(
                     modifier = Modifier.weight(1F),
                     icon = R.drawable.icon_trash,
                     description = R.string.btn_cfg_delete,
                     enabled = this@ComponentActivityEditor.controller_model.project_exists.value,
                     onClick = {
-                        val controller_model = this@ComponentActivityEditor.controller_model
-                        val opus_manager = controller_model.opus_manager
-                        scope.launch { this@ComponentActivityEditor.close_drawer() }
-
-                        this@ComponentActivityEditor.view_model.create_dialog { close ->
-                            @Composable {
-                                val project_name = opus_manager.project_name ?: stringResource(R.string.untitled_opus)
-                                DialogTitle(stringResource(R.string.dlg_delete_title, project_name))
-                                DialogBar(
-                                    neutral = close,
-                                    positive = {
-                                        close()
-                                        controller_model.active_project?.let { project ->
-                                            this@ComponentActivityEditor.delete_project(project)
-                                        }
-                                    }
-                                )
-                            }
-                        }
+                        confirm_delete_dialog_visibility.value = true
                     }
                 )
+
+                PaganDialog(confirm_delete_dialog_visibility) {
+                    val project_name = opus_manager.project_name ?: stringResource(R.string.untitled_opus)
+                    DialogTitle(stringResource(R.string.dlg_delete_title, project_name))
+                    DialogBar(
+                        neutral = {
+                            confirm_delete_dialog_visibility.value = false
+                        },
+                        positive = {
+                            confirm_delete_dialog_visibility.value = false
+                            scope.launch { this@ComponentActivityEditor.close_drawer() }
+                            controller_model.active_project?.let { project ->
+                                this@ComponentActivityEditor.delete_project(project)
+                            }
+                        }
+                    )
+                }
+
                 DrawerPadder()
                 if (!this@ComponentActivityEditor.state_model.export_in_progress.value) {
                     val dialog_visibility = remember { mutableStateOf(false) }
@@ -2851,6 +2852,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     default_value = default,
                     onClick = {
                         opus_manager.channel_set_preset(channel, it)
+                        val radix = opus_manager.get_radix()
+                        controller_model.play_event(channel, (2 * radix))
+                        Thread.sleep(200)
+                        controller_model.play_event(channel, (3 * radix) + (4 * radix / 12))
+                        Thread.sleep(200)
+                        controller_model.play_event(channel, (3 * radix) + (7 * radix / 12))
+
                         state_model.channel_preset_dialog.value = null
                     }
                 )
@@ -3151,18 +3159,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
         return this._notification_channel
     }
 
-    fun export(type: Exportable? = null) {
+    fun export(type: Exportable) {
         when (type) {
             Exportable.JSON -> { this.export_project() }
             Exportable.MIDI1 -> { this.export_midi_check() }
             Exportable.WAV_SINGLE -> { this.export_wav() }
             Exportable.WAV_LINES -> { this.export_multi_lines_wav() }
             Exportable.WAV_CHANNELS -> { this.export_multi_channels_wav() }
-            null -> {
-                this.view_model.unsortable_list_dialog(R.string.dlg_export, this.get_exportable_options()) { export_type ->
-                    this.export(export_type)
-                }
-            }
         }
     }
 

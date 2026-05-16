@@ -133,63 +133,6 @@ class ViewModelPagan: ViewModel() {
         )
     }
 
-    fun <T> unsortable_list_dialog(title: Int, options: List<Pair<T, @Composable RowScope.() -> Unit>>, default_value: T? = null, callback: (T) -> Unit) {
-        this.create_dialog { close ->
-            @Composable {
-                DialogSTitle(title)
-                UnSortableMenu(Modifier.weight(1F, fill=false), options, default_value) {
-                    close()
-                    callback(it)
-                }
-                DialogBar(neutral = close)
-            }
-        }
-    }
-
-    fun <T> sortable_list_dialog(
-        title: Int,
-        default_menu: List<Pair<T, @Composable RowScope.() -> Unit>>,
-        sort_options: List<Pair<Int, (Int, Int) -> Int>>,
-        selected_sort: MutableState<Int?> = mutableStateOf(null),
-        default_value: T? = null,
-        content: (@Composable RowScope.(() -> Unit, Int?) -> Unit)? = null,
-        onLongClick: (T, (() -> Unit)) -> Unit = {_, _ -> },
-        onClick: (T) -> Unit
-    ) {
-        this.create_dialog { close ->
-            @Composable {
-                SortableMenu(
-                    modifier = Modifier
-                        .weight(1F, fill = false)
-                        .fillMaxWidth(),
-                    title_content = {
-                        DialogSTitle(title)
-                        content?.let {
-                            Row {
-                                it(close, selected_sort.value)
-                            }
-                        }
-                    },
-                    default_menu = default_menu,
-                    sort_row_padding = PaddingValues(
-                        bottom = Dimensions.DialogBarPaddingVertical,
-                    ),
-                    sort_options = sort_options,
-                    active_sort_option = selected_sort,
-                    onLongClick = {
-                        onLongClick(it, close)
-                    },
-                    default_value = default_value,
-                    onClick = {
-                        close()
-                        onClick(it)
-                    }
-                )
-                DialogBar(neutral = close)
-            }
-        }
-    }
-
     internal fun save_configuration() {
         this.configuration_path?.let {
             this.configuration.save(it)

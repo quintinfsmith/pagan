@@ -457,7 +457,6 @@ abstract class PaganComponentActivity: ComponentActivity() {
 
     @Composable
     fun LoadMenuDialog(visibility: MutableState<Boolean>, current_sort: Int? = -3, load_callback: (Uri) -> Unit) {
-        // TODO: Need to test refreshing
         val project_list = this.view_model.project_manager?.get_project_list()?.toMutableList() ?: mutableListOf()
         val items = mutableListOf<Pair<Uri, @Composable RowScope.() -> Unit>>()
 
@@ -486,6 +485,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 },
                 sort_options,
                 active_sort_option = current_sort,
+                refresher = refresher,
                 extra_content = @Composable { close, active_sort ->
                     val scope = rememberCoroutineScope()
                     val is_refreshing = remember { mutableStateOf(false) }

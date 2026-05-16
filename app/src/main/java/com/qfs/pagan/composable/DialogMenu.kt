@@ -68,6 +68,7 @@ fun <T> DialogSortableMenu(
     sort_options: List<Pair<Int, (Int, Int) -> Int>>,
     active_sort_option: Int? = null,
     default: T? = null,
+    refresher: MutableState<Boolean>? = null,
     extra_content: (@Composable RowScope.(() -> Unit, Int?) -> Unit)? = null,
     on_dismiss_request: (() -> Unit)? = null,
     long_click_callback: ((T) -> Unit)? = null,
@@ -117,8 +118,9 @@ fun <T> DialogSortableMenu(
 
         DialogBar(neutral = { visibility.value = false })
 
-        LaunchedEffect(visibility.value) {
+        LaunchedEffect(visibility.value, refresher?.value) {
             if (visibility.value) {
+                println("K? ${System.currentTimeMillis()}")
                 mutable_options.value = options()
                 options_ready.value = true
             }

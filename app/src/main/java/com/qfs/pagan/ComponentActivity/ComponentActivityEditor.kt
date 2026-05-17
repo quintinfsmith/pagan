@@ -2707,30 +2707,29 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     .clip(CircleShape)
                                     .clickable {
                                         val radix = opus_manager.get_radix()
-                                        if (this@ComponentActivityEditor.controller_model.active_midi_device != null) {
-                                            this@ComponentActivityEditor.play_event(channel, (2 * radix))
-                                            Thread.sleep(200)
-                                            this@ComponentActivityEditor.play_event(channel, (3 * radix) + (4 * radix / 12))
-                                            Thread.sleep(200)
-                                            this@ComponentActivityEditor.play_event(channel, (3 * radix) + (7 * radix / 12))
+                                        val notes = if (is_percussion) {
+                                            arrayOf(8, 11, 22)
                                         } else {
-                                            this@ComponentActivityEditor.play_event(
-                                                preset_key,
-                                                is_percussion,
-                                                (2 * radix)
-                                            )
-                                            Thread.sleep(200)
-                                            this@ComponentActivityEditor.play_event(
-                                                preset_key,
-                                                is_percussion,
-                                                (3 * radix) + (4 * radix / 12)
-                                            )
-                                            Thread.sleep(200)
-                                            this@ComponentActivityEditor.play_event(
-                                                preset_key,
-                                                is_percussion,
+                                            arrayOf(
+                                                2 * radix,
+                                                (3 * radix) + (4 * radix / 12),
                                                 (3 * radix) + (7 * radix / 12)
                                             )
+                                        }
+                                        if (this@ComponentActivityEditor.controller_model.active_midi_device != null) {
+                                            for ((i, n) in notes.enumerate()) {
+                                                if (i != 0) {
+                                                    Thread.sleep(200)
+                                                }
+                                                this@ComponentActivityEditor.play_event(channel, n)
+                                            }
+                                        } else {
+                                            for ((i, n) in notes.enumerate()) {
+                                                if (i != 0) {
+                                                    Thread.sleep(200)
+                                                }
+                                                this@ComponentActivityEditor.play_event(preset_key, is_percussion, n)
+                                            }
                                         }
                                     }
                                     .height(Dimensions.PreviewIconHeight)
@@ -2868,12 +2867,20 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     default_value = default,
                     onClick = {
                         opus_manager.channel_set_preset(channel, it)
-                        val radix = opus_manager.get_radix()
-                        controller_model.play_event(channel, (2 * radix))
-                        Thread.sleep(200)
-                        controller_model.play_event(channel, (3 * radix) + (4 * radix / 12))
-                        Thread.sleep(200)
-                        controller_model.play_event(channel, (3 * radix) + (7 * radix / 12))
+                        if (!opus_manager.is_percussion(channel)) {
+                            val radix = opus_manager.get_radix()
+                            controller_model.play_event(channel, (2 * radix))
+                            Thread.sleep(200)
+                            controller_model.play_event(channel, (3 * radix) + (4 * radix / 12))
+                            Thread.sleep(200)
+                            controller_model.play_event(channel, (3 * radix) + (7 * radix / 12))
+                        } else {
+                            controller_model.play_event(channel, 8)
+                            Thread.sleep(200)
+                            controller_model.play_event(channel, 11)
+                            Thread.sleep(200)
+                            controller_model.play_event(channel, 22)
+                        }
 
                         state_model.channel_preset_dialog.value = null
                         this@ComponentActivityEditor.state_model.channel_preset_dialog_visibility.value = false

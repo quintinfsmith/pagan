@@ -32,7 +32,7 @@ fun <T> DialogMenu(
         DialogSTitle(title)
         if (options_ready.value) {
             UnSortableMenu(
-                Modifier,
+                Modifier.weight(1F, fill=false),
                 mutable_options.value,
                 default,
                 long_click_callback = { value ->

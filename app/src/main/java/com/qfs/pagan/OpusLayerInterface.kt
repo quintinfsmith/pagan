@@ -788,7 +788,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         // Need to call get_drum name to repopulate instrument list if needed
         // this.get_activity()?.get_drum_name(channel, instrument)
 
-        this.vm_controller.play_event(channel, instrument)
 
         if (this.ui_lock.is_locked()) return
         val y = this.get_visible_row_from_ctl_line(

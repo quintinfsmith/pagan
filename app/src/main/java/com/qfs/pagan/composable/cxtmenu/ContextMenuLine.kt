@@ -390,6 +390,7 @@ fun PercussionInstrumentDialog(visibility: MutableState<Boolean>, vm_state: View
         default = current_instrument,
         callback = {
             opus_manager.percussion_set_instrument(channel, line_offset, it)
+            opus_manager.vm_controller.play_event(channel, it)
         }
     )
 }

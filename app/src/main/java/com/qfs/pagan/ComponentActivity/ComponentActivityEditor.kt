@@ -2000,8 +2000,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             val row_height_px = this@ComponentActivityEditor.toPx(row_height)
                             for (i in 0 until state_model.channel_count.value) {
                                 val channel_data = state_model.channel_data[i]
-                                val is_dragging = remember { mutableStateOf(false) }
                                 key(channel_data.update_key.value) {
+                                    val is_dragging = remember { mutableStateOf(false) }
                                     Row(
                                         Modifier
                                             .zIndex(
@@ -2026,8 +2026,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                         0.dp
                                                     }
                                                 } else {
-                                                    val dragged_position =
-                                                        (padding_height_px * dragging_row_index.value!!) + (row_height_px * dragging_row_index.value!!) + dragging_row_offset.value!!
+                                                    val dragged_position = (padding_height_px * dragging_row_index.value!!) + (row_height_px * dragging_row_index.value!!) + dragging_row_offset.value!!
                                                     if (((padding_height_px + row_height_px) * i) > dragged_position) {
                                                         row_height
                                                     } else {
@@ -2036,8 +2035,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                 }
                                             )
                                             .long_press(
-                                                onPress = { is_dragging.value = true },
-                                                onRelease = { is_dragging.value = false }
+                                                onPress = {
+                                                    is_dragging.value = true
+                                                },
+                                                onRelease = {
+                                                    is_dragging.value = false
+                                                }
                                             )
                                             .conditional_drag(
                                                 is_dragging,
@@ -2049,8 +2052,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                 on_drag_stop = {
                                                     dragging_row_index.value?.let {
                                                         val dragged_position = (padding_height_px * it) + (row_height_px * it) + dragging_row_offset.value!!
-                                                        val new_channel_position = max(0F, ceil(dragged_position / row_height_px))
-                                                        opus_manager.move_channel(i, new_channel_position.toInt() + 1)
+                                                        val new_channel_position = min(opus_manager.channels.size, max(0F, ceil(dragged_position / (row_height_px + padding_height_px))).toInt())
+                                                        opus_manager.move_channel(i, new_channel_position)
                                                     }
                                                     dragging_row_offset.value = null
                                                     dragging_row_index.value = null

@@ -17,6 +17,7 @@ import android.os.Bundle
 import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -59,11 +60,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.DialogBar
+import com.qfs.pagan.composable.DialogMenu
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.MenuPadder
+import com.qfs.pagan.composable.PaganDialog
 import com.qfs.pagan.composable.RadioMenu
 import com.qfs.pagan.composable.SettingsColumn
 import com.qfs.pagan.composable.SettingsRow
@@ -79,15 +83,22 @@ import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Typography
+import com.qfs.pagan.viewmodel.ViewModelEditorController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.FileInputStream
 import java.io.FileNotFoundException
+import kotlin.getValue
 import kotlin.math.min
 import kotlin.text.split
 import kotlin.text.trim
 
 class ComponentActivitySettings: PaganComponentActivity() {
+    class SettingsModel: ViewModel() {
+        val soundfont_menu_visibility = mutableStateOf(false)
+        val soundfont_menu_active_choice = mutableStateOf<String?>(null)
+    }
+
     override val top_bar_wrapper: @Composable (RowScope.() -> Unit) = {
         Spacer(Modifier.width(Dimensions.TopBarItemSpace))
         TopBarIcon(
@@ -105,6 +116,8 @@ class ComponentActivitySettings: PaganComponentActivity() {
         TopBarNoIcon()
         Spacer(Modifier.width(Dimensions.TopBarItemSpace))
     }
+
+    val settings_model: SettingsModel by this.viewModels()
 
     val options_orientation: List<Pair<Int, @Composable RowScope.() -> Unit>> = listOf(
         Pair(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) @Composable {
@@ -247,7 +260,10 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
             this.update_result()
 
-            this@ComponentActivitySettings.show_soundfont_menu(null)
+            this@ComponentActivitySettings.settings_model.let {
+                it.soundfont_menu_active_choice.value = null
+                it.soundfont_menu_visibility.value = true
+            }
         }
 
     private var result_launcher_set_project_directory =
@@ -478,142 +494,144 @@ class ComponentActivitySettings: PaganComponentActivity() {
     @Composable
     override fun LayoutSmallLandscape(modifier: Modifier) = LayoutMediumPortrait(modifier)
 
-    fun show_soundfont_menu(selected_file_name: String?) {
+    @Composable
+    fun SoundFontMenu(visibility: MutableState<Boolean>, selected_file_name: MutableState<String?>) {
         val file_list = this.get_existing_soundfonts()
         if (file_list.isEmpty()) {
             this.import_soundfont()
             return
         }
 
-
         val active_soundfonts = this.view_model.configuration.soundfonts.value
         val soundfonts = mutableListOf<Pair<Uri, @Composable RowScope.() -> Unit>>()
 
-        this.view_model.create_dialog { close ->
-            @Composable {
-                val selected_uri: MutableState<Uri?> = remember { mutableStateOf(null) }
-                val scope = rememberCoroutineScope()
-                val loading_soundfonts = remember { mutableStateOf(true) }
+        PaganDialog(visibility) {
+            val selected_uri: MutableState<Uri?> = remember { mutableStateOf(null) }
+            val scope = rememberCoroutineScope()
+            val loading_soundfonts = remember { mutableStateOf(true) }
 
-                Column {
-                    Row(
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        DialogSTitle(R.string.dialog_select_soundfont)
-                        Spacer(modifier = Modifier.weight(1F))
-                        Button(
-                            modifier = Modifier.height(Dimensions.SoundFontMenuIconHeight),
-                            contentPadding = PaddingValues(Dimensions.SoundFontMenuInnerPadding),
-                            content = {
-                                Icon(
-                                    painter = painterResource(R.drawable.icon_import),
-                                    contentDescription = stringResource(R.string.option_import_soundfont)
-                                )
-                            },
-                            shape = CircleShape,
-                            onClick = {
-                                close()
-                                this@ComponentActivitySettings.import_soundfont()
-                            }
-                        )
-                        MenuPadder()
-                        Button(
-                            modifier = Modifier.height(Dimensions.SoundFontMenuIconHeight),
-                            contentPadding = PaddingValues(Dimensions.SoundFontMenuInnerPadding),
-                            content = {
-                                Icon(
-                                    painter = painterResource(R.drawable.no_soundfont),
-                                    contentDescription = stringResource(R.string.no_soundfont)
-                                )
-                            },
-                            shape = CircleShape,
-                            onClick = {
-                                view_model.configuration.soundfonts.value = arrayOf()
-                                view_model.save_configuration()
-                                this@ComponentActivitySettings.update_result()
-                                close()
-                            }
-                        )
-                        MenuPadder()
-                    }
+            Column {
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    DialogSTitle(R.string.dialog_select_soundfont)
+                    Spacer(modifier = Modifier.weight(1F))
+                    Button(
+                        modifier = Modifier.height(Dimensions.SoundFontMenuIconHeight),
+                        contentPadding = PaddingValues(Dimensions.SoundFontMenuInnerPadding),
+                        content = {
+                            Icon(
+                                painter = painterResource(R.drawable.icon_import),
+                                contentDescription = stringResource(R.string.option_import_soundfont)
+                            )
+                        },
+                        shape = CircleShape,
+                        onClick = {
+                            selected_file_name.value = null
+                            this@ComponentActivitySettings.import_soundfont()
+                        }
+                    )
                     MenuPadder()
-                    if (loading_soundfonts.value) {
-                        Box(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
+                    Button(
+                        modifier = Modifier.height(Dimensions.SoundFontMenuIconHeight),
+                        contentPadding = PaddingValues(Dimensions.SoundFontMenuInnerPadding),
+                        content = {
+                            Icon(
+                                painter = painterResource(R.drawable.no_soundfont),
+                                contentDescription = stringResource(R.string.no_soundfont)
+                            )
+                        },
+                        shape = CircleShape,
+                        onClick = {
+                            view_model.configuration.soundfonts.value = arrayOf()
+                            view_model.save_configuration()
+                            this@ComponentActivitySettings.update_result()
+                            selected_file_name.value = null
+                            this@ComponentActivitySettings.settings_model.soundfont_menu_visibility.value = false
                         }
-                    } else {
-                        UnSortableMenu(
-                            modifier = Modifier.weight(1F, fill = false),
-                            options = soundfonts,
-                            default_value = selected_uri.value
-                        ) { uri ->
-                            try {
-                                SoundFont(this@ComponentActivitySettings, uri)
-                                if (selected_file_name == null) {
-                                    view_model.add_soundfont_uri(uri)
-                                } else {
-                                    var index = 0
-                                    for ((i, mutable_path) in active_soundfonts.enumerate()) {
-                                        if (mutable_path.value == selected_file_name) {
-                                            index = i
-                                            break
-                                        }
-                                    }
-                                    view_model.set_soundfont_uri(uri, index)
-                                }
-                                view_model.save_configuration()
-                                this@ComponentActivitySettings.update_result()
-                                close()
-                            } catch (_: Exception) {
-                                this@ComponentActivitySettings.toast(R.string.invalid_soundfont)
-                            }
-                        }
-                    }
-                    DialogBar(neutral = close)
+                    )
+                    MenuPadder()
                 }
-
-                LaunchedEffect(null) {
-                    scope.launch(Dispatchers.IO) {
-                        selected_uri.value = try {
-                            selected_file_name?.let { this@ComponentActivitySettings.coerce_soundfont_uri(it) }
-                        } catch (e: FileNotFoundException) {
-                            null
-                        }
-
-                        val active_soundfont_uris = mutableListOf<Uri>()
-                        for (file_path in active_soundfonts) {
-                            try {
-                                active_soundfont_uris.add(
-                                    this@ComponentActivitySettings.coerce_soundfont_uri(file_path.value)
-                                )
-                            } catch (e: FileNotFoundException) {
-                                continue
-                            }
-                        }
-
-                        for (uri in file_list.sortedBy { it.pathSegments.last().split("/").last().lowercase() }) {
-                            val relative_path_segments = uri.pathSegments.last().split("/")
-                            var skip_entry = false
-                            for (check_uri in active_soundfont_uris) {
-                                if (check_uri == uri && selected_uri != check_uri) {
-                                    skip_entry = true
-                                    break
-                                }
-                            }
-                            if (!skip_entry) {
-                                soundfonts.add(Pair(uri, { Text(relative_path_segments.last()) }))
-                            }
-                        }
-                        loading_soundfonts.value = false
+                MenuPadder()
+                if (loading_soundfonts.value) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
                     }
+                } else {
+                    UnSortableMenu(
+                        modifier = Modifier.weight(1F, fill = false),
+                        options = soundfonts,
+                        default_value = selected_uri.value
+                    ) { uri ->
+                        try {
+                            SoundFont(this@ComponentActivitySettings, uri)
+                            if (selected_file_name.value == null) {
+                                view_model.add_soundfont_uri(uri)
+                            } else {
+                                var index = 0
+                                for ((i, mutable_path) in active_soundfonts.enumerate()) {
+                                    if (mutable_path.value == selected_file_name.value) {
+                                        index = i
+                                        break
+                                    }
+                                }
+                                view_model.set_soundfont_uri(uri, index)
+                            }
+                            view_model.save_configuration()
+                            this@ComponentActivitySettings.update_result()
+                            visibility.value = false
+                        } catch (_: Exception) {
+                            this@ComponentActivitySettings.toast(R.string.invalid_soundfont)
+                        }
+                    }
+                }
+                DialogBar(neutral = { visibility.value = false })
+            }
+
+            LaunchedEffect(null) {
+                scope.launch(Dispatchers.IO) {
+                    selected_uri.value = try {
+                        selected_file_name.value?.let {
+                            this@ComponentActivitySettings.coerce_soundfont_uri(it)
+                        }
+                    } catch (e: FileNotFoundException) {
+                        null
+                    }
+
+                    val active_soundfont_uris = mutableListOf<Uri>()
+                    for (file_path in active_soundfonts) {
+                        try {
+                            active_soundfont_uris.add(
+                                this@ComponentActivitySettings.coerce_soundfont_uri(file_path.value)
+                            )
+                        } catch (e: FileNotFoundException) {
+                            continue
+                        }
+                    }
+
+                    for (uri in file_list.sortedBy { it.pathSegments.last().split("/").last().lowercase() }) {
+                        val relative_path_segments = uri.pathSegments.last().split("/")
+                        var skip_entry = false
+                        for (check_uri in active_soundfont_uris) {
+                            if (check_uri == uri && selected_uri != check_uri) {
+                                skip_entry = true
+                                break
+                            }
+                        }
+                        if (!skip_entry) {
+                            soundfonts.add(Pair(uri, { Text(relative_path_segments.last()) }))
+                        }
+                    }
+                    loading_soundfonts.value = false
                 }
             }
         }
     }
+
 
     @Composable
     fun ActiveSoundfontButton(modifier: Modifier = Modifier) {
@@ -622,12 +640,17 @@ class ComponentActivitySettings: PaganComponentActivity() {
         } else {
             ActiveSoundfontButtonSingle(modifier)
         }
+        SoundFontMenu(
+            this@ComponentActivitySettings.settings_model.soundfont_menu_visibility,
+            this@ComponentActivitySettings.settings_model.soundfont_menu_active_choice
+        )
     }
 
     @Composable
     fun ActiveSoundfontButtonMulti(modifier: Modifier = Modifier) {
         val no_soundfont_text = stringResource(R.string.no_soundfont)
         val load_soundfont_text = stringResource(R.string.load_soundfont)
+        val need_sf_dir_visibility = remember { mutableStateOf(false) }
 
         SettingsColumn(modifier) {
             Text(R.string.label_settings_sfs, style = Typography.Settings.Title)
@@ -650,7 +673,10 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                 Text(soundfont_name, textAlign = TextAlign.Center)
                             },
                             onClick = {
-                                this@ComponentActivitySettings.show_soundfont_menu(soundfont_path.value)
+                                this@ComponentActivitySettings.settings_model.let {
+                                    it.soundfont_menu_active_choice.value = soundfont_path.value
+                                    it.soundfont_menu_visibility.value = true
+                                }
                             }
                         )
                         Icon(
@@ -691,24 +717,26 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 },
                 onClick = {
                     if (this@ComponentActivitySettings.view_model.configuration.soundfont_directory.value == null) {
-                        this@ComponentActivitySettings.view_model.create_dialog { close ->
-                            @Composable {
-                                DialogSTitle(R.string.settings_need_soundfont_directory)
-                                DialogBar(
-                                    positive = {
-                                        close()
-                                        this@ComponentActivitySettings.result_launcher_set_soundfont_directory_and_import.launch(
-                                            Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also {
-                                                it.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                                            }
-                                        )
-                                    }
-                                )
-                            }
-                        }
+                        need_sf_dir_visibility.value = true
                     } else {
-                        this@ComponentActivitySettings.show_soundfont_menu(null)
+                        this@ComponentActivitySettings.settings_model.let {
+                            it.soundfont_menu_active_choice.value = null
+                            it.soundfont_menu_visibility.value = true
+                        }
                     }
+                }
+            )
+        }
+        PaganDialog(need_sf_dir_visibility) {
+            DialogSTitle(R.string.settings_need_soundfont_directory)
+            DialogBar(
+                positive = {
+                    need_sf_dir_visibility.value = false
+                    this@ComponentActivitySettings.result_launcher_set_soundfont_directory_and_import.launch(
+                        Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also {
+                            it.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        }
+                    )
                 }
             )
         }
@@ -718,6 +746,8 @@ class ComponentActivitySettings: PaganComponentActivity() {
     fun ActiveSoundfontButtonSingle(modifier: Modifier = Modifier) {
         val no_soundfont_text = stringResource(R.string.no_soundfont)
         val soundfonts = this@ComponentActivitySettings.view_model.configuration.soundfonts
+        val need_sf_dir_visibility = remember { mutableStateOf(false) }
+
         SettingsColumn(modifier) {
             Text(
                 R.string.label_settings_sf,
@@ -739,21 +769,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 },
                 onClick = {
                     if (this@ComponentActivitySettings.view_model.configuration.soundfont_directory.value == null) {
-                        this@ComponentActivitySettings.view_model.create_dialog { close ->
-                            @Composable {
-                                DialogSTitle(R.string.settings_need_soundfont_directory)
-                                DialogBar(
-                                    positive = {
-                                        close()
-                                        this@ComponentActivitySettings.result_launcher_set_soundfont_directory_and_import.launch(
-                                            Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also {
-                                                it.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                                            }
-                                        )
-                                    }
-                                )
-                            }
-                        }
+                        need_sf_dir_visibility.value = true
                         return@Button
                     }
                     val selected = if (this@ComponentActivitySettings.view_model.configuration.soundfonts.value.isEmpty()) {
@@ -761,7 +777,25 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     } else {
                         this@ComponentActivitySettings.view_model.configuration.soundfonts.value[0].value
                     }
-                    this@ComponentActivitySettings.show_soundfont_menu(selected)
+
+                    this@ComponentActivitySettings.settings_model.let {
+                        it.soundfont_menu_active_choice.value = selected
+                        it.soundfont_menu_visibility.value = true
+                    }
+                }
+            )
+        }
+
+        PaganDialog(need_sf_dir_visibility) {
+            DialogSTitle(R.string.settings_need_soundfont_directory)
+            DialogBar(
+                positive = {
+                    need_sf_dir_visibility.value = false
+                    this@ComponentActivitySettings.result_launcher_set_soundfont_directory_and_import.launch(
+                        Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also {
+                            it.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        }
+                    )
                 }
             )
         }

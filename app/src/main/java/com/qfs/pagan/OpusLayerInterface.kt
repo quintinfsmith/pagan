@@ -9,6 +9,7 @@
  */
 package com.qfs.pagan
 
+import android.provider.Settings
 import androidx.compose.ui.graphics.Color
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONList
@@ -17,8 +18,11 @@ import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.BlockedActionException
+import com.qfs.pagan.structure.opusmanager.base.ChannelEffectRowNotVisible
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.base.GlobalEffectRowNotVisible
 import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
+import com.qfs.pagan.structure.opusmanager.base.LineEffectRowNotVisible
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusLineAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
@@ -36,6 +40,7 @@ import com.qfs.pagan.structure.rationaltree.InvalidGetCall
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
+import kotlinx.coroutines.GlobalScope
 import kotlin.math.max
 import kotlin.math.min
 
@@ -144,10 +149,11 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     private fun _update_facade_blocker_leaf_line_ctl(type: EffectType, beat_key: BeatKey, position: List<Int>) {
         if (this.ui_lock.is_locked()) return
-        this.vm_state.blocker_leaf = listOf<Int>(
+        if (!this.get_line_controller<EffectEvent>(type, beat_key.channel, beat_key.line_offset).visible) return
+        this.vm_state.blocker_leaf = listOf(
             try {
                 this.get_visible_row_from_ctl_line_line(type, beat_key.channel, beat_key.line_offset)
-            } catch (_: IndexOutOfBoundsException) { // may reference a channel's line before the channel exists
+            } catch (_: LineEffectRowNotVisible) { // may reference a channel's line before the channel exists
                 this.get_row_count()
             },
             beat_key.beat,
@@ -161,10 +167,11 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         position: List<Int>
     ) {
         if (this.ui_lock.is_locked()) return
+        if (!this.get_channel_controller<EffectEvent>(type, channel).visible) return
         this.vm_state.blocker_leaf = listOf<Int>(
             try {
                 this.get_visible_row_from_ctl_line_channel(type, channel)
-            } catch (_: IndexOutOfBoundsException) { // may reference a channel's line before the channel exists
+            } catch (_: ChannelEffectRowNotVisible) { // may reference a channel's line before the channel exists
                 this.get_row_count()
             },
             beat,
@@ -173,10 +180,12 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     private fun _update_facade_blocker_leaf_global_ctl(type: EffectType, beat: Int, position: List<Int>) {
         if (this.ui_lock.is_locked()) return
-        this.vm_state.blocker_leaf = listOf<Int>(
+        if (!this.get_global_controller<EffectEvent>(type).visible) return
+
+        this.vm_state.blocker_leaf = listOf(
             try {
                 this.get_visible_row_from_ctl_line_global(type)
-            } catch (_: IndexOutOfBoundsException) { // may reference a channel's line before the channel exists
+            } catch (_: GlobalEffectRowNotVisible) { // may reference a channel's line before the channel exists
                 this.get_row_count()
             },
             beat,
@@ -281,8 +290,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     // Line
     private fun _update_tree(type: EffectType, beat_key: BeatKey, position: List<Int>) {
         if (this.ui_lock.is_locked()) return
-        val controller =
-            this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].get_controller<EffectEvent>(type)
+        val controller = this.get_all_channels()[beat_key.channel].lines[beat_key.line_offset].get_controller<EffectEvent>(type)
         if (!controller.visible) return
 
         this.vm_state.update_tree(
@@ -779,6 +787,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         super.percussion_set_instrument(channel, line_offset, instrument)
         // Need to call get_drum name to repopulate instrument list if needed
         // this.get_activity()?.get_drum_name(channel, instrument)
+
+        this.vm_controller.play_event(channel, instrument)
 
         if (this.ui_lock.is_locked()) return
         val y = this.get_visible_row_from_ctl_line(
@@ -1391,6 +1401,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     }
 
     override fun move_channel(channel_index: Int, new_channel_index: Int) {
+        if (channel_index == new_channel_index) return
         super.move_channel(channel_index, new_channel_index)
         for (i in min(channel_index, new_channel_index) until this.channels.size) {
             val working_channel = this.get_channel(i)
@@ -1440,6 +1451,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             instrument.bank,
             instrument.program
         )
+
 
         if (this.ui_lock.is_locked()) return
         this.vm_state.set_channel_data(
@@ -1895,14 +1907,13 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                     this._clear_facade_blocker_leaf()
                 }
                 for ((type, controller) in line.controllers.get_all()) {
-                    controller.overlap_removed_callback =
-                        { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
-                            this._update_facade_blocker_leaf_line_ctl(
-                                type,
-                                BeatKey(channel, line_offset, blocker.first),
-                                blocker.second
-                            )
-                        }
+                    controller.overlap_removed_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
+                        this._update_facade_blocker_leaf_line_ctl(
+                            type,
+                            BeatKey(channel, line_offset, blocker.first),
+                            blocker.second
+                        )
+                    }
                     controller.overlap_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
                         this._clear_facade_blocker_leaf()
                     }
@@ -1957,6 +1968,12 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
                         CtlLineLevel.Global -> this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
                     }
+                } catch (_: LineEffectRowNotVisible) {
+                    null
+                } catch (_: ChannelEffectRowNotVisible) {
+                    null
+                } catch (_: GlobalEffectRowNotVisible) {
+                    null
                 } catch (_: IndexOutOfBoundsException) {
                     null
                 } ?: return
@@ -2024,6 +2041,12 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                             )
                         }
                     }
+                } catch (_: LineEffectRowNotVisible) {
+                    return
+                } catch (_: ChannelEffectRowNotVisible) {
+                    return
+                } catch (_: GlobalEffectRowNotVisible) {
+                    return
                 } catch (_: IndexOutOfBoundsException) {
                     return
                 }
@@ -2061,6 +2084,12 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
                         CtlLineLevel.Global -> this.get_visible_row_from_ctl_line_global(cursor.ctl_type!!)
                     }
+                } catch (_: LineEffectRowNotVisible) {
+                    null
+                } catch (_: ChannelEffectRowNotVisible) {
+                    null
+                } catch (_: GlobalEffectRowNotVisible) {
+                    null
                 } catch (_: IndexOutOfBoundsException) {
                     null
                 } ?: return
@@ -2230,27 +2259,23 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     fun set_note_octave_at_cursor(octave: Int, mode: RelativeInputMode) {
         if (this.cursor.mode != CursorMode.Single) throw IncorrectCursorMode(this.cursor.mode, CursorMode.Single)
 
-        val current_tree_position = this.get_actual_position(this.cursor.get_beatkey(), this.cursor.get_position())
-        this._set_note_octave(
-            current_tree_position.first,
-            current_tree_position.second,
-            octave,
-            mode,
-            this.latest_set_offset ?: 0
-        )
+        val (beat_key, position) = this.get_actual_position(this.cursor.get_beatkey(), this.cursor.get_position())
+        this._set_note_octave(beat_key, position, octave, mode, this.latest_set_offset ?: 0)
+
+        this.get_absolute_value(beat_key, position)?.let {
+            this.vm_controller.play_event(beat_key.channel, it)
+        }
     }
 
     fun set_note_offset_at_cursor(offset: Int, mode: RelativeInputMode) {
         if (this.cursor.mode != CursorMode.Single) throw IncorrectCursorMode(this.cursor.mode, CursorMode.Single)
 
-        val current_tree_position = this.get_actual_position(this.cursor.get_beatkey(), this.cursor.get_position())
-        this._set_note_offset(
-            current_tree_position.first,
-            current_tree_position.second,
-            offset,
-            mode,
-            this.latest_set_octave ?: 0
-        )
+        val (beat_key, position) = this.get_actual_position(this.cursor.get_beatkey(), this.cursor.get_position())
+        this._set_note_offset(beat_key, position, offset, mode, this.latest_set_octave ?: 0)
+
+        this.get_absolute_value(beat_key, position)?.let {
+            this.vm_controller.play_event(beat_key.channel, it)
+        }
     }
 
     override fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
@@ -2588,6 +2613,16 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         return new_uuid
     }
 
+    fun selected_for_repetition(channel: Int?, line_offset: Int?, ctl_type: EffectType?): Boolean {
+        return if (ctl_type == null) this.is_line_selected_secondary(channel!!, line_offset!!)
+        else if (channel == null) this.is_global_control_line_selected_secondary(ctl_type)
+        else if (line_offset == null) this.is_channel_control_line_selected_secondary(
+            ctl_type,
+            channel
+        )
+        else this.is_line_control_line_selected_secondary(ctl_type, channel, line_offset)
+    }
+
     override fun controller_line_overwrite_range_horizontally(type: EffectType, channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey, repeat: Int?) {
         this.exception_catcher {
             super.controller_line_overwrite_range_horizontally(
@@ -2653,75 +2688,9 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         }
     }
 
-    override fun controller_line_to_channel_overwrite_range_horizontally( type: EffectType, channel: Int, first_key: BeatKey, second_key: BeatKey, repeat: Int?) {
-        this.exception_catcher {
-            super.controller_line_to_channel_overwrite_range_horizontally(type, channel, first_key, second_key, repeat)
-        }
-    }
-
-    override fun controller_line_to_global_overwrite_range_horizontally(
-        type: EffectType,
-        channel: Int,
-        line_offset: Int,
-        first_beat: Int,
-        second_beat: Int,
-        repeat: Int?
-    ) {
-        this.exception_catcher {
-            super.controller_line_to_global_overwrite_range_horizontally(
-                type,
-                channel,
-                line_offset,
-                first_beat,
-                second_beat,
-                repeat
-            )
-        }
-    }
-
     override fun controller_channel_to_global_overwrite_line(type: EffectType, channel: Int, beat: Int, repeat: Int?) {
         this.exception_catcher {
             super.controller_channel_to_global_overwrite_line(type, channel, beat, repeat)
-        }
-    }
-
-    override fun controller_channel_to_global_overwrite_range_horizontally(
-        type: EffectType,
-        channel: Int,
-        first_beat: Int,
-        second_beat: Int,
-        repeat: Int?
-    ) {
-        this.exception_catcher {
-            super.controller_channel_to_global_overwrite_range_horizontally(
-                type,
-                channel,
-                first_beat,
-                second_beat,
-                repeat
-            )
-        }
-    }
-
-    override fun controller_channel_to_line_overwrite_range_horizontally(
-        type: EffectType,
-        target_channel: Int,
-        target_line_offset: Int,
-        from_channel: Int,
-        first_beat: Int,
-        second_beat: Int,
-        repeat: Int?
-    ) {
-        this.exception_catcher {
-            super.controller_channel_to_line_overwrite_range_horizontally(
-                type,
-                target_channel,
-                target_line_offset,
-                from_channel,
-                first_beat,
-                second_beat,
-                repeat
-            )
         }
     }
 
@@ -2753,38 +2722,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     ) {
         this.exception_catcher {
             super.controller_global_to_channel_overwrite_line(type, target_channel, beat, repeat)
-        }
-    }
-
-    override fun controller_global_to_channel_overwrite_range_horizontally(
-        type: EffectType,
-        channel: Int,
-        first_beat: Int,
-        second_beat: Int,
-        repeat: Int?
-    ) {
-        this.exception_catcher {
-            super.controller_global_to_channel_overwrite_range_horizontally(type, channel, first_beat, second_beat, repeat)
-        }
-    }
-
-    override fun controller_global_to_line_overwrite_range_horizontally(
-        type: EffectType,
-        target_channel: Int,
-        target_line_offset: Int,
-        first_beat: Int,
-        second_beat: Int,
-        repeat: Int?
-    ) {
-        this.exception_catcher {
-            super.controller_global_to_line_overwrite_range_horizontally(
-                type,
-                target_channel,
-                target_line_offset,
-                first_beat,
-                second_beat,
-                repeat
-            )
         }
     }
 
@@ -2840,5 +2777,18 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.exception_catcher {
             super.controller_global_overwrite_line(type, beat, repeat)
         }
+    }
+
+    override fun set_percussion_event_at_cursor() {
+        super.set_percussion_event_at_cursor()
+
+        if (this.cursor.mode != CursorMode.Single) return
+        this.vm_controller.play_event(
+            this.cursor.channel,
+            this.get_percussion_instrument(
+                this.cursor.channel,
+                this.cursor.line_offset
+            )
+        )
     }
 }

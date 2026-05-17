@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -29,12 +30,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import com.qfs.pagan.ActionDispatcher
+import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
 import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.Values
+import com.qfs.pagan.composable.IntegerInputDialog
 import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.NumberSelector
 import com.qfs.pagan.composable.RadioMenu
@@ -53,6 +55,7 @@ import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
@@ -69,36 +72,61 @@ import kotlin.math.ceil
 
 @Composable
 fun SplitButton(
-    dispatcher: ActionDispatcher,
+    opus_manager: OpusLayerInterface,
+    dialog_value: MutableIntState,
     shape: Shape = Shapes.ContextMenuButtonPrimaryStart
 ) {
+    val dialog_visibility = remember { mutableStateOf(false) }
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.LeafSplit),
-        onClick = { dispatcher.split(2) },
-        onLongClick = { dispatcher.split() },
+        onClick = { opus_manager.split_tree_at_cursor(2) },
+        onLongClick = { dialog_visibility.value = !dialog_visibility.value },
         icon = R.drawable.icon_split,
         shape = shape,
         description = R.string.btn_split
     )
-}
-@Composable
-fun InsertButton(dispatcher: ActionDispatcher) {
-    IconCMenuButton(
-        modifier = Modifier.testTag(TestTag.LeafInsert),
-        onClick = { dispatcher.insert_leaf(1) },
-        onLongClick = { dispatcher.insert_leaf() },
-        icon = R.drawable.icon_add,
-        description = R.string.btn_insert
-    )
+
+    IntegerInputDialog(
+        title_string_id = R.string.dlg_split,
+        visibility = dialog_visibility,
+        value = dialog_value,
+        min_value = 1
+    ) {
+        opus_manager.split_tree_at_cursor(it)
+    }
 }
 
 @Composable
-fun RemoveButton(dispatcher: ActionDispatcher, cursor: ViewModelEditorState.CacheCursor) {
+fun InsertButton(
+    opus_manager: OpusLayerInterface,
+    dialog_value: MutableIntState,
+) {
+    val dialog_visibility = remember { mutableStateOf(false) }
+    IconCMenuButton(
+        modifier = Modifier.testTag(TestTag.LeafInsert),
+        onClick = { opus_manager.insert_at_cursor(1) },
+        onLongClick = { dialog_visibility.value = !dialog_visibility.value },
+        icon = R.drawable.icon_add,
+        description = R.string.btn_insert
+    )
+
+    IntegerInputDialog(
+        title_string_id = R.string.dlg_insert,
+        visibility = dialog_visibility,
+        value = dialog_value,
+        min_value = 1
+    ) {
+        opus_manager.insert_at_cursor(it)
+    }
+}
+
+@Composable
+fun RemoveButton(opus_manager: OpusLayerInterface, cursor: ViewModelEditorState.CacheCursor) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.LeafRemove),
         enabled = (cursor.ints.size > 2),
-        onClick = { dispatcher.remove_at_cursor() },
-        onLongClick = { dispatcher.unset_root() },
+        onClick = { opus_manager.remove_at_cursor() },
+        onLongClick = { opus_manager.unset_root_at_cursor() },
         icon = R.drawable.icon_subtract,
         description = R.string.btn_remove
     )
@@ -106,11 +134,13 @@ fun RemoveButton(dispatcher: ActionDispatcher, cursor: ViewModelEditorState.Cach
 
 @Composable
 fun DurationButton(
-    dispatcher: ActionDispatcher,
+    opus_manager: OpusLayerInterface,
+    dialog_value: MutableIntState,
     descriptor: ViewModelEditorState.EventDescriptor?,
     active_event: OpusEvent?,
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
+    val dialog_visibility = remember { mutableStateOf(false) }
     TextCMenuButton(
         modifier = Modifier
             .testTag(TestTag.EventDuration)
@@ -122,28 +152,37 @@ fun DurationButton(
         },
         shape = shape,
         contentPadding = Unpadded,
-        onClick = { dispatcher.set_duration() },
-        onLongClick = { dispatcher.set_duration(1) },
+        onClick = { dialog_visibility.value = !dialog_visibility.value },
+        onLongClick = { opus_manager.set_duration_at_cursor(1) },
         text = when (descriptor) {
             ViewModelEditorState.EventDescriptor.Selected,
             ViewModelEditorState.EventDescriptor.Tail -> "x${active_event?.duration ?: 1}"
             else -> ""
         }
     )
+
+    IntegerInputDialog(
+        title_string_id = R.string.dlg_duration,
+        visibility = dialog_visibility,
+        value = dialog_value,
+        min_value = 1
+    ) {
+        opus_manager.set_duration_at_cursor(it)
+    }
 }
 
 @Composable
 fun UnsetButton(
-    dispatcher: ActionDispatcher,
+    opus_manager: OpusLayerInterface,
     active_line: ViewModelEditorState.LineData,
-    active_event: OpusEvent?,
+    enabled: Boolean,
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.EventUnset),
-        enabled = active_event != null,
-        onClick = { dispatcher.unset() },
-        onLongClick = { dispatcher.unset_root() },
+        enabled = enabled,
+        onClick = { opus_manager.unset() },
+        onLongClick = { opus_manager.unset_root_at_cursor() },
         icon = R.drawable.icon_erase,
         shape = shape,
         description = if (active_line.assigned_offset.value != null) {
@@ -156,27 +195,28 @@ fun UnsetButton(
 
 
 @Composable
-fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, landscape: Boolean) {
-    val active_event = ui_facade.active_event.value
-    val cursor = ui_facade.active_cursor.value ?: return
-    val active_line = ui_facade.line_data[cursor.ints[0]]
-
+fun ContextMenuStructureControls(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, landscape: Boolean) {
+    val active_event = vm_state.active_event.value
+    val cursor = vm_state.active_cursor.value ?: return
+    val active_line = vm_state.line_data[cursor.ints[0]]
+    val unset_enabled = vm_state.active_event_descriptor.value != ViewModelEditorState.EventDescriptor.Backup && active_event != null
     if (landscape) {
         Column(
             Modifier.width(Dimensions.ContextMenuButtonWidth),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            SplitButton(dispatcher)
+            SplitButton(opus_manager, vm_state.dlg_split)
             MediumSpacer()
-            InsertButton(dispatcher)
+            InsertButton(opus_manager, vm_state.dlg_insert_leaf)
             MediumSpacer()
-            RemoveButton(dispatcher, cursor)
+            RemoveButton(opus_manager, cursor)
             MediumSpacer()
             Spacer(Modifier.weight(1F))
             key(active_event?.duration) {
                 DurationButton(
-                    dispatcher,
-                    ui_facade.active_event_descriptor.value,
+                    opus_manager,
+                    vm_state.dlg_duration,
+                    vm_state.active_event_descriptor.value,
                     active_event,
                     shape = if (active_line.assigned_offset.value != null) {
                         Shapes.ContextMenuButtonPrimaryBottom
@@ -187,22 +227,28 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewM
             }
             if (active_line.assigned_offset.value == null) {
                 MediumSpacer()
-                UnsetButton(dispatcher, active_line, active_event, Shapes.ContextMenuButtonPrimaryBottom)
+                UnsetButton(
+                    opus_manager,
+                    active_line,
+                    unset_enabled,
+                    Shapes.ContextMenuButtonPrimaryBottom
+                )
             }
         }
     } else {
         ContextMenuPrimaryRow(modifier) {
-            SplitButton(dispatcher)
+            SplitButton(opus_manager, vm_state.dlg_split)
             MediumSpacer()
-            InsertButton(dispatcher)
+            InsertButton(opus_manager, vm_state.dlg_insert_leaf)
             MediumSpacer()
-            RemoveButton(dispatcher, cursor)
+            RemoveButton(opus_manager, cursor)
             MediumSpacer()
 
             key(active_event?.duration) {
                 DurationButton(
-                    dispatcher,
-                    ui_facade.active_event_descriptor.value,
+                    opus_manager,
+                    vm_state.dlg_duration,
+                    vm_state.active_event_descriptor.value,
                     active_event,
                     shape = if (active_line.assigned_offset.value != null) {
                         Shapes.ContextMenuButtonPrimaryEnd
@@ -213,7 +259,12 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewM
             }
             if (active_line.assigned_offset.value == null) {
                 MediumSpacer()
-                UnsetButton(dispatcher, active_line, active_event, Shapes.ContextMenuButtonPrimaryEnd)
+                UnsetButton(
+                    opus_manager,
+                    active_line,
+                    unset_enabled,
+                    Shapes.ContextMenuButtonPrimaryEnd
+                )
             }
         }
     }
@@ -221,15 +272,15 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, ui_facade: ViewM
 
 
 @Composable
-fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, layout: LayoutSize) {
-    val active_event = ui_facade.active_event.value
-    val cursor = ui_facade.active_cursor.value ?: return
-    val active_line = ui_facade.line_data[cursor.ints[0]]
+fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, layout: LayoutSize) {
+    val active_event = vm_state.active_event.value
+    val cursor = vm_state.active_cursor.value ?: return
+    val active_line = vm_state.line_data[cursor.ints[0]]
     val is_percussion = active_line.assigned_offset.value != null
 
     val octave = when (active_event) {
-        is AbsoluteNoteEvent -> active_event.note / ui_facade.radix.value
-        is RelativeNoteEvent -> abs(active_event.offset) / ui_facade.radix.value
+        is AbsoluteNoteEvent -> active_event.note / vm_state.radix.value
+        is RelativeNoteEvent -> abs(active_event.offset) / vm_state.radix.value
         is PercussionEvent -> 0
         else -> null
     }
@@ -239,38 +290,38 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEd
             if (active_line.ctl_type.value != null || is_percussion) {
                 ContextMenuStructureControls(
                     modifier,
-                    ui_facade,
-                    dispatcher,
+                    vm_state,
+                    opus_manager,
                     landscape = true
                 )
             } else {
                 Row {
-                    ContextMenuStructureControls(Modifier, ui_facade, dispatcher, true)
+                    ContextMenuStructureControls(Modifier, vm_state, opus_manager, true)
                     MediumSpacer()
                     Column(Modifier.width(Dimensions.NumberSelectorColumnWidth)) {
                         val octave_dropdown_visible: MutableState<Int?> = remember { mutableStateOf(null) }
                         NumberSelector(
                             progression = 7 downTo 0,
-                            selected = when (ui_facade.active_event_descriptor.value) {
+                            selected = when (vm_state.active_event_descriptor.value) {
                                 ViewModelEditorState.EventDescriptor.Tail,
                                 ViewModelEditorState.EventDescriptor.Selected -> octave
                                 else -> null
                             },
-                            highlighted = if (ui_facade.latest_input_indicator.value && ui_facade.relative_input_mode.value == RelativeInputMode.Absolute) {
-                                ui_facade.highlighted_octave.value
+                            highlighted = if (vm_state.latest_input_indicator.value && vm_state.relative_input_mode.value == RelativeInputMode.Absolute) {
+                                vm_state.highlighted_octave.value
                             } else {
                                 null
                             },
-                            default = when (ui_facade.active_event_descriptor.value) {
+                            default = when (vm_state.active_event_descriptor.value) {
                                 ViewModelEditorState.EventDescriptor.Backup -> octave
                                 else -> null
                             },
                             alternate = false,
-                            on_click = { dispatcher.set_octave(it, ui_facade.relative_input_mode.value) },
+                            on_click = { opus_manager.set_note_octave_at_cursor(it, vm_state.relative_input_mode.value) },
                             on_long_click = { octave_dropdown_visible.value = it }
                         )
-                        RelativeInputDropDown(ui_facade, dispatcher, octave_dropdown_visible) { i: Int, mode: RelativeInputMode ->
-                            dispatcher.set_octave(i, mode)
+                        RelativeInputDropDown(vm_state, opus_manager, octave_dropdown_visible) { new_octave: Int, mode: RelativeInputMode ->
+                            opus_manager.set_note_octave_at_cursor(new_octave, mode)
                         }
                     }
                 }
@@ -278,7 +329,7 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEd
         }
 
         LayoutSize.MediumLandscape -> {
-            ContextMenuStructureControls(modifier, ui_facade, dispatcher, true)
+            ContextMenuStructureControls(modifier, vm_state, opus_manager, true)
         }
 
         LayoutSize.SmallPortrait,
@@ -288,10 +339,10 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEd
         LayoutSize.XLargeLandscape,
         LayoutSize.XLargePortrait -> {
             if (is_percussion) {
-                ContextMenuStructureControls(modifier, ui_facade, dispatcher, landscape = false)
+                ContextMenuStructureControls(modifier, vm_state, opus_manager, landscape = false)
             } else {
                 Column(modifier) {
-                    ContextMenuStructureControls(Modifier, ui_facade, dispatcher, false)
+                    ContextMenuStructureControls(Modifier, vm_state, opus_manager, false)
                 }
             }
         }
@@ -299,25 +350,25 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, ui_facade: ViewModelEd
 }
 
 @Composable
-fun ContextMenuLeafSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, modifier: Modifier = Modifier, layout: LayoutSize) {
+fun ContextMenuLeafSecondary(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, modifier: Modifier = Modifier, layout: LayoutSize) {
 }
 @Composable
-fun ContextMenuLeafCtlSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, modifier: Modifier = Modifier, layout: LayoutSize) {
+fun ContextMenuLeafCtlSecondary(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, modifier: Modifier = Modifier, layout: LayoutSize) {
     ContextMenuSecondaryRow(modifier) {
-        when (val active_event = ui_facade.active_event.value) {
-            is OpusVolumeEvent -> VolumeEventMenu(ui_facade, dispatcher, active_event)
-            is OpusTempoEvent -> TempoEventMenu(ui_facade, dispatcher, active_event)
-            is OpusPanEvent -> PanEventMenu(ui_facade, dispatcher, active_event)
-            is OpusReverbEvent -> ReverbEventMenu(ui_facade, dispatcher, active_event)
-            is DelayEvent -> DelayEventMenu(ui_facade, dispatcher, active_event)
-            is OpusVelocityEvent -> VelocityEventMenu(ui_facade, dispatcher, active_event)
+        when (val active_event = vm_state.active_event.value) {
+            is OpusVolumeEvent -> VolumeEventMenu(vm_state, opus_manager, active_event)
+            is OpusTempoEvent -> TempoEventMenu(vm_state, opus_manager, active_event)
+            is OpusPanEvent -> PanEventMenu(vm_state, opus_manager, active_event)
+            is OpusReverbEvent -> ReverbEventMenu(vm_state, opus_manager, active_event)
+            is DelayEvent -> DelayEventMenu(vm_state, opus_manager, active_event)
+            is OpusVelocityEvent -> VelocityEventMenu(vm_state, opus_manager, active_event)
             else -> {}
         }
     }
 }
 
 @Composable
-fun RelativeInputDropDown(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, expanded: MutableState<Int?>, callback: (Int, RelativeInputMode) -> Unit) {
+fun RelativeInputDropDown(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, expanded: MutableState<Int?>, callback: (Int, RelativeInputMode) -> Unit) {
     DropdownMenu(
         expanded = expanded.value != null,
         onDismissRequest = { expanded.value = null}
@@ -353,9 +404,9 @@ fun RelativeInputDropDown(ui_facade: ViewModelEditorState, dispatcher: ActionDis
                     )
                 }
             ),
-            active = remember { mutableStateOf(ui_facade.relative_input_mode.value) },
+            active = remember { mutableStateOf(vm_state.relative_input_mode.value) },
             callback = {
-                ui_facade.relative_input_mode.value = it
+                vm_state.relative_input_mode.value = it
                 callback(expanded.value!!, it)
                 expanded.value = null
             }
@@ -364,13 +415,13 @@ fun RelativeInputDropDown(ui_facade: ViewModelEditorState, dispatcher: ActionDis
 }
 
 @Composable
-fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, modifier: Modifier = Modifier, layout: LayoutSize) {
-    val cursor = ui_facade.active_cursor.value ?: return
-    val active_line = ui_facade.line_data[cursor.ints[0]]
-    val active_event = ui_facade.active_event.value
+fun ContextMenuLeafStdSecondary(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, modifier: Modifier = Modifier, layout: LayoutSize) {
+    val cursor = vm_state.active_cursor.value ?: return
+    val active_line = vm_state.line_data[cursor.ints[0]]
+    val active_event = vm_state.active_event.value
 
     if (active_line.assigned_offset.value != null) {
-        val checked = remember { mutableStateOf(ui_facade.active_event_descriptor.value == ViewModelEditorState.EventDescriptor.Selected && ui_facade.active_event.value != null) }
+        val checked = remember { mutableStateOf(vm_state.active_event_descriptor.value == ViewModelEditorState.EventDescriptor.Selected && vm_state.active_event.value != null) }
         Row(
             Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -389,17 +440,17 @@ fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
                 onCheckedChange = {
                     checked.value = it
                     if (!it) {
-                        dispatcher.unset()
+                        opus_manager.unset()
                     } else {
-                        dispatcher.toggle_percussion()
+                        opus_manager.set_percussion_event_at_cursor()
                     }
                 }
             )
         }
     } else {
         val octave_dropdown_visible: MutableState<Int?> = remember { mutableStateOf(null) }
-        RelativeInputDropDown(ui_facade, dispatcher, octave_dropdown_visible) { i: Int, mode: RelativeInputMode ->
-            dispatcher.set_octave(i, mode)
+        RelativeInputDropDown(vm_state, opus_manager, octave_dropdown_visible) { i: Int, mode: RelativeInputMode ->
+            opus_manager.set_note_octave_at_cursor(i, mode)
         }
         when (layout) {
             LayoutSize.SmallPortrait,
@@ -410,8 +461,8 @@ fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
             LayoutSize.XLargeLandscape,
             LayoutSize.XLargePortrait -> {
                 val octave = when (active_event) {
-                    is AbsoluteNoteEvent -> active_event.note / ui_facade.radix.value
-                    is RelativeNoteEvent -> abs(active_event.offset) / ui_facade.radix.value
+                    is AbsoluteNoteEvent -> active_event.note / vm_state.radix.value
+                    is RelativeNoteEvent -> abs(active_event.offset) / vm_state.radix.value
                     is PercussionEvent -> 0
                     null -> null
                     else -> throw Exception("Invalid Event Type $active_event") // TODO: Specify
@@ -420,22 +471,22 @@ fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
                 Row {
                     NumberSelector(
                         progression = 0 until Values.OctaveCount,
-                        selected = when (ui_facade.active_event_descriptor.value) {
+                        selected = when (vm_state.active_event_descriptor.value) {
                             ViewModelEditorState.EventDescriptor.Selected,
                             ViewModelEditorState.EventDescriptor.Tail -> octave
                             else -> null
                         },
-                        highlighted = if (ui_facade.latest_input_indicator.value && ui_facade.relative_input_mode.value == RelativeInputMode.Absolute) {
-                            ui_facade.highlighted_octave.value
+                        highlighted = if (vm_state.latest_input_indicator.value && vm_state.relative_input_mode.value == RelativeInputMode.Absolute) {
+                            vm_state.highlighted_octave.value
                         } else {
                             null
                         },
-                        default = when (ui_facade.active_event_descriptor.value) {
+                        default = when (vm_state.active_event_descriptor.value) {
                             ViewModelEditorState.EventDescriptor.Backup -> octave
                             else -> null
                         },
                         alternate = false,
-                        on_click = { dispatcher.set_octave(it, ui_facade.relative_input_mode.value) },
+                        on_click = { opus_manager.set_note_octave_at_cursor(it, vm_state.relative_input_mode.value) },
                         on_long_click = { octave_dropdown_visible.value = it }
                     )
                 }
@@ -446,34 +497,34 @@ fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
         }
 
         val offset = when (active_event) {
-            is AbsoluteNoteEvent -> active_event.note % ui_facade.radix.value
-            is RelativeNoteEvent -> abs(active_event.offset) % ui_facade.radix.value
+            is AbsoluteNoteEvent -> active_event.note % vm_state.radix.value
+            is RelativeNoteEvent -> abs(active_event.offset) % vm_state.radix.value
             is PercussionEvent -> 0
             null -> null
             else -> throw Exception("Invalid Event Type") // TODO: Specify
         }
 
         val offset_dropdown_visible: MutableState<Int?> = remember { mutableStateOf(null) }
-        RelativeInputDropDown(ui_facade, dispatcher, offset_dropdown_visible) { i: Int, mode: RelativeInputMode ->
-            dispatcher.set_offset(i, mode)
+        RelativeInputDropDown(vm_state, opus_manager, offset_dropdown_visible) { i: Int, mode: RelativeInputMode ->
+            opus_manager.set_note_offset_at_cursor(i, mode)
         }
         Column {
-            var count = ceil(ui_facade.radix.value.toFloat() / Values.OffsetModulo).toInt()
+            val count = ceil(vm_state.radix.value.toFloat() / Values.OffsetModulo).toInt()
             for (i in count - 1 downTo 0) {
                 Row(modifier) {
                     NumberSelector(
-                        progression = i until ui_facade.radix.value step count,
-                        selected = when (ui_facade.active_event_descriptor.value) {
+                        progression = i until vm_state.radix.value step count,
+                        selected = when (vm_state.active_event_descriptor.value) {
                             ViewModelEditorState.EventDescriptor.Selected,
                             ViewModelEditorState.EventDescriptor.Tail -> offset
                             else -> null
                         },
-                        highlighted = if (ui_facade.latest_input_indicator.value && ui_facade.relative_input_mode.value == RelativeInputMode.Absolute) {
-                            ui_facade.highlighted_offset.value
+                        highlighted = if (vm_state.latest_input_indicator.value && vm_state.relative_input_mode.value == RelativeInputMode.Absolute) {
+                            vm_state.highlighted_offset.value
                         } else {
                             null
                         },
-                        default = when (ui_facade.active_event_descriptor.value) {
+                        default = when (vm_state.active_event_descriptor.value) {
                             ViewModelEditorState.EventDescriptor.Backup -> offset
                             else -> null
                         },
@@ -489,7 +540,7 @@ fun ContextMenuLeafStdSecondary(ui_facade: ViewModelEditorState, dispatcher: Act
                             Shapes.NumberSelectorButton
                         },
                         on_long_click = { offset_dropdown_visible.value = it },
-                        on_click = { dispatcher.set_offset(it, ui_facade.relative_input_mode.value) }
+                        on_click = { opus_manager.set_note_offset_at_cursor(it, vm_state.relative_input_mode.value) }
                     )
                 }
                 if (i != 0) {

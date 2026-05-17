@@ -19,6 +19,17 @@ object Values {
         const val SlideDenominator = 4
     }
 
+    object DialogInput {
+        const val Split = 2
+        const val InsertLeaf = 1
+        const val RemoveLeaf = 1
+        const val InsertLine = 1
+        const val RemoveLine = 1
+        const val InsertBeat = 1
+        const val RemoveBeat = 1
+        const val Duration = 1
+    }
+
     const val OctaveCount = 8
     const val OffsetModulo = 12
     const val MaximumOctaveSize = 36

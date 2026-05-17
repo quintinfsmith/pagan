@@ -22,13 +22,11 @@ import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import com.qfs.pagan.ActionDispatcher
+import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
@@ -38,8 +36,8 @@ import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun RowScope.PanEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, event: OpusPanEvent) {
-    val cursor = ui_facade.active_cursor.value ?: return
+fun RowScope.PanEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, event: OpusPanEvent) {
+    val cursor = vm_state.active_cursor.value ?: return
     val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
     val default_colors = SliderDefaults.colors()
@@ -55,6 +53,12 @@ fun RowScope.PanEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionDis
         disabledInactiveTrackColor = default_colors.disabledInactiveTrackColor,
         disabledInactiveTickColor = default_colors.disabledInactiveTickColor
     )
+
+    val submit = {
+        opus_manager.lock_cursor {
+            opus_manager.set_event_at_cursor(working_event)
+        }
+    }
 
     val working_value = remember { mutableFloatStateOf(working_event.value * -1) }
     Box(modifier = Modifier.weight(1F)) {
@@ -72,7 +76,7 @@ fun RowScope.PanEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionDis
             },
             onValueChangeFinished = {
                 working_event.value = working_value.floatValue * -1
-                dispatcher.set_effect_at_cursor(working_event)
+                submit()
             },
             valueRange = -1F..1F,
             steps = 21,
@@ -88,5 +92,5 @@ fun RowScope.PanEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionDis
         working_value.floatValue = working_event.value * -1
     }
 
-    EffectTransitionButton(working_event, dispatcher, is_initial)
+    EffectTransitionButton(working_event, opus_manager, is_initial)
 }

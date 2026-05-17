@@ -15,6 +15,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.qfs.apres.MidiPlayer
+import com.qfs.apres.VirtualMidiInputDevice
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.soundfont2.SoundFont
@@ -27,6 +28,7 @@ import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.PlaybackDevice
 import com.qfs.pagan.PlaybackFrameMap
 import com.qfs.pagan.PlaybackState
+import com.qfs.pagan.PresetKey
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.get_next_playback_state
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
@@ -181,4 +183,72 @@ class ViewModelEditorController(): ViewModel() {
         }
     }
 
+    fun stop_opus_midi() {
+        this.update_playback_state_midi(PlaybackState.Stopping)
+        this.virtual_midi_device.stop()
+        this.update_playback_state_midi(PlaybackState.Ready)
+        this.opus_manager.vm_state.playback_state_midi.value = this.playback_state_midi
+    }
+
+    fun play_event(preset: PresetKey, is_percussion: Boolean, event_value: Int, velocity: Float = .5f) {
+        if (event_value < 0) return // No sound to play
+        if (this.in_playback()) return // disable feedback during playback
+
+        if (!this.opus_manager.vm_state.soundfont_ready.value) return // TODO this check should be somewhere else
+
+        val (note, bend) = if (is_percussion) {
+            Pair(event_value + 27, 0)
+        } else {
+            this.opus_manager.calculate_note_bend(0, event_value)
+        }
+
+        if (note > 127) return
+
+        if (this.active_midi_device != null) {
+            // TODO()
+            //try {
+            //    this.vm_controller.virtual_midi_device.play_note(
+            //        note,
+            //        bend,
+            //        (velocity * 127F).toInt(),
+            //        !this.get_opus_manager().is_tuning_standard()
+            //    )
+            //} catch (_: VirtualMidiInputDevice.DisconnectedException) {
+            //    // Feedback shouldn't be necessary here. But i'm sure that'll come back to bite me
+            //}
+
+        } else if (this.audio_interface.has_soundfont()) {
+            this.audio_interface.play_feedback(preset, note, bend, (velocity * 127F).toInt() shl 8)
+        }
+    }
+
+    fun play_event(channel: Int, event_value: Int, velocity: Float = .5F) {
+        if (event_value < 0) return // No sound to play
+        if (this.in_playback()) return // disable feedback during playback
+
+        val (note, bend) = if (this.opus_manager.is_percussion(channel)) {
+            Pair(event_value + 27, 0)
+        } else {
+            this.opus_manager.calculate_note_bend(channel, event_value)
+        }
+
+        if (note > 127) return
+
+        val midi_channel = this.opus_manager.get_midi_channel(channel)
+        if (this.active_midi_device != null) {
+            try {
+                this.virtual_midi_device.play_note(
+                    midi_channel,
+                    note,
+                    bend,
+                    (velocity * 127F).toInt(),
+                    !opus_manager.is_tuning_standard()
+                )
+            } catch (_: VirtualMidiInputDevice.DisconnectedException) {
+                // Feedback shouldn't be necessary here. But I'm sure that'll come back to bite me
+            }
+        } else if (this.audio_interface.has_soundfont()) {
+            this.audio_interface.play_feedback(midi_channel, note, bend, (velocity * 127F).toInt() shl 8)
+        }
+    }
 }

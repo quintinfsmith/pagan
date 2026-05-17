@@ -32,6 +32,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ComposableOpenTarget
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
@@ -43,6 +46,7 @@ import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
+import com.qfs.pagan.composable.PaganDialog
 import com.qfs.pagan.composable.SettingsRow
 import com.qfs.pagan.composable.SoundFontWarning
 import com.qfs.pagan.composable.button.Button
@@ -96,15 +100,9 @@ class ComponentActivityLanding: PaganComponentActivity() {
         this.reload_config()
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        this.check_for_crash_report()
-    }
-
     override fun on_back_press_check(): Boolean {
         return true
     }
-
 
     @Composable
     fun RowScope.Padder(factor: Float = 1F) {
@@ -148,7 +146,6 @@ class ComponentActivityLanding: PaganComponentActivity() {
             content = { Text(stringResource(R.string.btn_landing_new)) },
             shape = shape,
             onClick = {
-
                 this@ComponentActivityLanding.startActivity(
                     Intent(
                         this@ComponentActivityLanding,
@@ -164,22 +161,23 @@ class ComponentActivityLanding: PaganComponentActivity() {
         modifier: Modifier = Modifier,
         shape: Shape = Shapes.LandingButtonShape
     ) {
+        val load_menu_visibility = remember { mutableStateOf(false) }
         Button(
             modifier = modifier
                 .testTag(TestTag.LandingLoadProject)
                 .height(Dimensions.LandingButtonHeight),
             content = { Text(stringResource(R.string.btn_landing_load)) },
             shape = shape,
-            onClick = {
-                this.load_menu_dialog {
-                    this@ComponentActivityLanding.startActivity(
-                        Intent(this@ComponentActivityLanding, ComponentActivityEditor::class.java).apply {
-                            this.data = it
-                        }
-                    )
-                }
-            }
+            onClick = { load_menu_visibility.value = true }
         )
+
+        LoadMenuDialog(load_menu_visibility) {
+            this@ComponentActivityLanding.startActivity(
+                Intent(this@ComponentActivityLanding, ComponentActivityEditor::class.java).apply {
+                    this.data = it
+                }
+            )
+        }
     }
 
 
@@ -438,7 +436,32 @@ class ComponentActivityLanding: PaganComponentActivity() {
                 LayoutSmallIconLinks()
             }
         }
+    }
 
+    @Composable
+    override fun Dialogs() {
+
+        val file = File("${this.dataDir}/bkp_crashreport.log")
+        if (!file.isFile) return
+
+        val crash_dialog_visibility = remember { mutableStateOf(true) }
+        PaganDialog(crash_dialog_visibility) {
+            DialogSTitle(R.string.crash_report_save)
+            Text(
+                R.string.crash_report_desc,
+                modifier = Modifier.padding(vertical = Dimensions.BugReportPadding)
+            )
+            DialogBar(
+                negative = {
+                    file.delete()
+                    crash_dialog_visibility.value = false
+                },
+                positive = {
+                    this@ComponentActivityLanding.export_crash_report()
+                    crash_dialog_visibility.value = false
+                }
+            )
+        }
     }
 
     @Composable
@@ -452,31 +475,6 @@ class ComponentActivityLanding: PaganComponentActivity() {
             ButtonSettings()
             Padder(2F)
             ButtonAbout()
-        }
-    }
-
-    fun check_for_crash_report() {
-        val file = File("${this.dataDir}/bkp_crashreport.log")
-        if (!file.isFile) return
-
-        this.view_model.create_dialog { close ->
-            @Composable {
-                DialogSTitle(R.string.crash_report_save)
-                Text(
-                    R.string.crash_report_desc,
-                    modifier = Modifier.padding(vertical = Dimensions.BugReportPadding)
-                )
-                DialogBar(
-                    negative = {
-                        file.delete()
-                        close()
-                    },
-                    positive = {
-                        this@ComponentActivityLanding.export_crash_report()
-                        close()
-                    }
-                )
-            }
         }
     }
 

@@ -9,53 +9,44 @@
  */
 package com.qfs.pagan.composable.table
 
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
-import com.qfs.pagan.ActionDispatcher
+import com.qfs.pagan.OpusLayerInterface
+import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.testTag
+import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun CellView(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, cell: MutableState<ViewModelEditorState.TreeData>, y: Int, x: Int, zoom: Float, modifier: Modifier = Modifier) {
-    val line_info = ui_facade.line_data[y]
+fun CellView(
+    modifier: Modifier = Modifier,
+    vm_state: ViewModelEditorState,
+    opus_manager: OpusLayerInterface,
+    controller_model: ViewModelEditorController,
+    cell: MutableState<ViewModelEditorState.TreeData>,
+    y: Int,
+    x: Int,
+) {
+    val line_info = vm_state.line_data[y]
     key(cell.value.key.value, y) {
         Row(modifier.fillMaxSize()) {
             for ((path, leaf_data) in cell.value.leafs) {
                 LeafView(
-                    line_info.channel.value?.let { ui_facade.channel_data[it] },
-                    line_info,
-                    leaf_data.value,
-                    ui_facade.radix.value,
-                    zoom,
                     Modifier
                         .testTag(TestTag.Leaf, line_info.channel.value, line_info.line_offset.value, x, *(Array(path.size) { path[it] }))
-                        .weight(leaf_data.value.weight.floatValue)
-                        .combinedClickable(
-                            onClick = {
-                                dispatcher.tap_leaf(
-                                    x,
-                                    path,
-                                    line_info.channel.value,
-                                    line_info.line_offset.value,
-                                    line_info.ctl_type.value
-                                )
-                            },
-                            onLongClick = {
-                                dispatcher.long_tap_leaf(
-                                    x,
-                                    path,
-                                    line_info.channel.value,
-                                    line_info.line_offset.value,
-                                    line_info.ctl_type.value
-                                )
-                            }
-                        )
+                        .weight(leaf_data.value.weight.floatValue),
+                    opus_manager,
+                    vm_state,
+                    controller_model,
+                    line_info,
+                    x,
+                    path,
+                    leaf_data.value,
                 )
             }
         }

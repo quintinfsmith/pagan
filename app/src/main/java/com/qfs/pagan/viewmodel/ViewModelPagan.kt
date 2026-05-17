@@ -70,10 +70,18 @@ class ViewModelPagan: ViewModel() {
     var configuration = PaganConfiguration()
 
     // MutableStates
-    var dialog_queue: MutableState<DialogChain?> = mutableStateOf(null)
     val requires_soundfont: MutableState<Boolean> = mutableStateOf(false)
     val has_saved_project: MutableState<Boolean> = mutableStateOf(false)
     val has_backup_saved: MutableState<Boolean> = mutableStateOf(false)
+
+    val dialog_states = HashMap<String, MutableState<Boolean>>()
+
+    fun get_dialog_state(key: String): MutableState<Boolean> {
+        if (!this.dialog_states.contains(key)) {
+            this.dialog_states[key] = mutableStateOf(false)
+        }
+        return this.dialog_states[key]!!
+    }
 
     fun set_layout_size(width: Dp, height: Dp) {
         this.active_layout_size.value = Dimensions.set_active_layout_dimensions(width, height)
@@ -107,78 +115,6 @@ class ViewModelPagan: ViewModel() {
         this.project_manager = project_manager
         this.has_saved_project.value = this.project_manager?.has_projects_saved() ?: false
         this.has_backup_saved.value = this.project_manager?.has_backup_saved() == true
-    }
-
-    fun create_dialog(level: Int = 0, alignment: Alignment.Horizontal = Alignment.CenterHorizontally, dialog_callback: (() -> Unit) -> (@Composable (ColumnScope.() -> Unit))) {
-        // Use level to block Dup dialogs. set it to allow for dialogs opened from other dialogs
-        if (this.dialog_queue.value?.level == level) return
-        this.dialog_queue.value = DialogChain(
-            parent = this.dialog_queue.value,
-            alignment = alignment,
-            dialog = dialog_callback {
-                this.dialog_queue.value?.let {
-                    this.dialog_queue.value = it.parent
-                }
-            },
-            level = level
-        )
-    }
-
-    fun <T> unsortable_list_dialog(title: Int, options: List<Pair<T, @Composable RowScope.() -> Unit>>, default_value: T? = null, callback: (T) -> Unit) {
-        this.create_dialog { close ->
-            @Composable {
-                DialogSTitle(title)
-                UnSortableMenu(Modifier.weight(1F, fill=false), options, default_value) {
-                    close()
-                    callback(it)
-                }
-                DialogBar(neutral = close)
-            }
-        }
-    }
-
-    fun <T> sortable_list_dialog(
-        title: Int,
-        default_menu: List<Pair<T, @Composable RowScope.() -> Unit>>,
-        sort_options: List<Pair<Int, (Int, Int) -> Int>>,
-        selected_sort: MutableState<Int?> = mutableStateOf(null),
-        default_value: T? = null,
-        content: (@Composable RowScope.(() -> Unit, Int?) -> Unit)? = null,
-        onLongClick: (T, (() -> Unit)) -> Unit = {_, _ -> },
-        onClick: (T) -> Unit
-    ) {
-        this.create_dialog { close ->
-            @Composable {
-                SortableMenu(
-                    modifier = Modifier
-                        .weight(1F, fill = false)
-                        .fillMaxWidth(),
-                    title_content = {
-                        DialogSTitle(title)
-                        content?.let {
-                            Row {
-                                it(close, selected_sort.value)
-                            }
-                        }
-                    },
-                    default_menu = default_menu,
-                    sort_row_padding = PaddingValues(
-                        bottom = Dimensions.DialogBarPaddingVertical,
-                    ),
-                    sort_options = sort_options,
-                    active_sort_option = selected_sort,
-                    onLongClick = {
-                        onLongClick(it, close)
-                    },
-                    default_value = default_value,
-                    onClick = {
-                        close()
-                        onClick(it)
-                    }
-                )
-                DialogBar(neutral = close)
-            }
-        }
     }
 
     internal fun save_configuration() {

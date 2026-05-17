@@ -10,7 +10,6 @@
 package com.qfs.pagan.composable.effectwidget
 
 import androidx.activity.compose.LocalActivity
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,7 +23,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -37,25 +35,22 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.dp
-import com.qfs.pagan.ActionDispatcher
 import com.qfs.pagan.ComponentActivity.PaganComponentActivity
 import com.qfs.pagan.LayoutSize
+import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.Values
 import com.qfs.pagan.composable.DivisorSeparator
 import com.qfs.pagan.composable.IntegerInput
+import com.qfs.pagan.composable.IntegerInputDialog
 import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.composable.button.Button
@@ -72,8 +67,8 @@ import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, event: OpusVelocityEvent) {
-    val cursor = ui_facade.active_cursor.value ?: return
+fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, event: OpusVelocityEvent) {
+    val cursor = vm_state.active_cursor.value ?: return
     val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
     val working_value = remember { mutableFloatStateOf(working_event.value) }
@@ -81,20 +76,17 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
     val slide_enabled = remember { mutableStateOf<Boolean>(working_event.slide != null) }
     val slide_width_mode = remember { mutableStateOf(working_event.slide?.first ?: OpusVelocityEvent.SlideMaxWidth.Note) }
     val denominator_label: MutableState<Int> = remember { mutableStateOf(working_event.slide?.second ?: Values.Defaults.SlideDenominator) }
-    val (channel, line_offset, beat, position) = ui_facade.get_location_ints()
-    val is_percussion = channel != null && ui_facade.channel_data[channel].percussion.value
+    val (channel, line_offset, beat, position) = vm_state.get_location_ints()
+    val is_percussion = channel != null && vm_state.channel_data[channel].percussion.value
     val active_layout_size = (LocalActivity.current as PaganComponentActivity).view_model.active_layout_size
     val default_colors = SliderDefaults.colors()
     val colors = default_colors.copy(
         activeTickColor = default_colors.inactiveTickColor,
         inactiveTickColor = default_colors.activeTickColor
     )
-
     val submit = {
-        if (beat != null) {
-            dispatcher.set_effect(EffectType.Velocity, working_event, channel, line_offset, beat, position!!, true)
-        } else {
-            dispatcher.set_initial_effect(EffectType.Velocity, working_event, channel, line_offset, true)
+        opus_manager.lock_cursor {
+            opus_manager.set_event_at_cursor(working_event)
         }
     }
 
@@ -127,9 +119,7 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
                                 )
                             }
                         },
-                        onClick = {
-                            velocity_expanded.value = !velocity_expanded.value
-                        }
+                        onClick = { velocity_expanded.value = !velocity_expanded.value }
                     )
                     DropdownMenu(
                         velocity_expanded.value,
@@ -174,25 +164,7 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
 
                             onValueChangeFinished = {
                                 velocity_expanded.value = false
-                                if (beat != null) {
-                                    dispatcher.set_effect(
-                                        EffectType.Velocity,
-                                        working_event,
-                                        channel,
-                                        line_offset,
-                                        beat,
-                                        position!!,
-                                        true
-                                    )
-                                } else {
-                                    dispatcher.set_initial_effect(
-                                        EffectType.Velocity,
-                                        working_event,
-                                        channel,
-                                        line_offset,
-                                        true
-                                    )
-                                }
+                                submit()
                             }
                         )
                     }
@@ -353,10 +325,21 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
                     MediumSpacer()
                 }
 
-                EffectTransitionButton(working_event, dispatcher, is_initial)
+                EffectTransitionButton(working_event, opus_manager, is_initial)
             }
         }
     } else {
-        EffectTransitionButton(working_event, dispatcher, is_initial)
+        EffectTransitionButton(working_event, opus_manager, is_initial)
     }
+
+    // IntegerInputDialog(
+    //     dialog_visibility,
+    //     R.string.dlg_set_velocity,
+    //     0, 200,
+    //     (working_event.value * 100).toInt()
+    // ) {
+    //     working_event.value = it.toFloat() / 100F
+    //     working_value.floatValue = working_event.value
+    //     submit()
+    // }
 }

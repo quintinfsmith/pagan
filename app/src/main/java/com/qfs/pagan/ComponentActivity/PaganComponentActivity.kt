@@ -28,8 +28,6 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,7 +43,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -57,7 +54,8 @@ import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -70,27 +68,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.window.Dialog
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import com.qfs.pagan.DialogChain
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
+import com.qfs.pagan.composable.ColorScheme
 import com.qfs.pagan.composable.DialogBar
-import com.qfs.pagan.composable.DialogCard
+import com.qfs.pagan.composable.DialogSortableMenu
 import com.qfs.pagan.composable.DialogTitle
+import com.qfs.pagan.composable.PaganDialog
 import com.qfs.pagan.composable.PaganTheme
 import com.qfs.pagan.composable.ScaffoldWithTopBar
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.OutlinedButton
 import com.qfs.pagan.composable.dashed_border
-import com.qfs.pagan.composable.keyboardAsState
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.projectmanager.ProjectManager
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
@@ -100,6 +94,7 @@ import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable.key
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileNotFoundException
@@ -129,6 +124,9 @@ abstract class PaganComponentActivity: ComponentActivity() {
     abstract fun LayoutSmallLandscape(modifier: Modifier = Modifier)
     @Composable
     abstract fun Drawer(modifier: Modifier = Modifier)
+
+    @Composable
+    open fun Dialogs() {}
 
     open val top_bar_wrapper: (@Composable RowScope.() -> Unit)? = null
 
@@ -223,45 +221,12 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 LocalWindowInfo.current.containerDpSize.height,
             )
 
-            PaganTheme(is_night_mode) {
-                // Popup Dialogs --------------------------------
-                var current_dialog = view_model.dialog_queue.value
-                val dialogs = mutableListOf<DialogChain>()
-                while (current_dialog != null) {
-                    dialogs.add(current_dialog)
-                    current_dialog = current_dialog.parent
-                }
-                for (dialog in dialogs.reversed()) {
-                    Dialog(
-                        onDismissRequest = { view_model.dialog_queue.value = dialog.parent }
-                    ) {
-                        val keyboard_controller = LocalSoftwareKeyboardController.current
-                        val focus_manager = LocalFocusManager.current
-                        // Extra Box prevents weird dialog jumping on focus
-                        Box(
-                            Modifier
-                                .clickable { view_model.dialog_queue.value = dialog.parent }
-                                .fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            DialogCard(
-                                modifier = Modifier
-                                    // Allow click-away from text fields
-                                    .wrapContentSize()
-                                    .pointerInput(Unit) {
-                                        detectTapGestures { offset ->
-                                            keyboard_controller?.hide()
-                                            focus_manager.clearFocus()
-                                        }
-                                    },
-                                alignment = dialog.alignment,
-                                content = dialog.dialog
-                            )
-                        }
-                    }
-                }
-                // -----------------------------------------------
-
+            val color_scheme = if (is_night_mode) {
+                ColorScheme.Dark
+            } else {
+                ColorScheme.Light
+            }
+            PaganTheme(color_scheme) {
                 Box(
                     Modifier
                         .onKeyEvent { e ->
@@ -347,6 +312,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                         }
                     )
                 }
+                Dialogs()
             }
         }
     }
@@ -421,71 +387,6 @@ abstract class PaganComponentActivity: ComponentActivity() {
         }
     }
 
-    private fun create_project_card_dialog(title: String, uri: Uri, close_top_callback: () -> Unit, load_callback: (Uri) -> Unit) {
-        this.view_model.create_dialog(level = 1) { close ->
-            @Composable {
-                Column {
-                    ProjectCard(modifier = Modifier.fillMaxWidth(), uri = uri)
-                    Spacer(Modifier.height(Dimensions.Space.Large))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        OutlinedButton(
-                            modifier = Modifier.height(Dimensions.ButtonHeight.Small),
-                            onClick = close,
-                            content = { Text(android.R.string.cancel) }
-                        )
-                        Spacer(Modifier.width(Dimensions.Space.Medium))
-                        Button(
-                            modifier = Modifier.height(Dimensions.ButtonHeight.Small),
-                            onClick = {
-                                this@PaganComponentActivity.view_model.create_dialog { close_subdialog ->
-                                    @Composable {
-                                        Column {
-                                            Row {
-                                                DialogTitle(
-                                                    stringResource(R.string.dlg_delete_title, title),
-                                                    modifier = Modifier.weight(1F)
-                                                )
-                                            }
-                                            DialogBar(
-                                                neutral = close_subdialog,
-                                                positive = {
-                                                    this@PaganComponentActivity.delete_project(uri)
-                                                    close()
-                                                    close_subdialog()
-                                                    close_top_callback()
-                                                }
-                                            )
-                                        }
-                                    }
-                                }
-                            },
-                            content = {
-                                Icon(
-                                    painter = painterResource(R.drawable.icon_trash),
-                                    contentDescription = stringResource(R.string.delete_project)
-                                )
-                            }
-                        )
-                        Spacer(Modifier.width(Dimensions.Space.Medium))
-                        Button(
-                            modifier = Modifier.height(Dimensions.ButtonHeight.Small),
-                            onClick = {
-                                close()
-                                close_top_callback()
-                                load_callback(uri)
-                            },
-                            content = { Text(R.string.details_load_project) }
-                        )
-                    }
-                }
-            }
-        }
-    }
-
     fun delete_project(uri: Uri) {
         this.view_model.delete_project(uri)
         this.on_delete_project(uri)
@@ -493,12 +394,10 @@ abstract class PaganComponentActivity: ComponentActivity() {
 
     open fun on_delete_project(uri: Uri) { }
 
-    fun load_menu_dialog(current_sort: Int? = -3, load_callback: (Uri) -> Unit) {
-        val project_list = this.view_model.project_manager?.get_project_list() ?: return
+    @Composable
+    fun LoadMenuDialog(visibility: MutableState<Boolean>, current_sort: Int? = -3, load_callback: (Uri) -> Unit) {
+        val project_list = this.view_model.project_manager?.get_project_list()?.toMutableList() ?: mutableListOf()
         val items = mutableListOf<Pair<Uri, @Composable RowScope.() -> Unit>>()
-        for ((uri, title) in project_list) {
-            items.add(Pair(uri, { Text(text = title) }))
-        }
 
         val sort_options = listOf(
             Pair(R.string.sort_option_abc) { a: Int, b: Int ->
@@ -511,59 +410,131 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 (project_list[a].modified ?: 0L).compareTo(project_list[b].modified ?: 0L)
             }
         )
-
-        this.view_model.sortable_list_dialog(
-            R.string.menu_item_load_project,
-            items,
-            sort_options,
-            selected_sort = mutableStateOf(current_sort),
-            content = @Composable { close, active_sort ->
-                val scope = rememberCoroutineScope()
-                val is_refreshing = remember { mutableStateOf(false) }
-                if (is_refreshing.value) {
-                    CircularProgressIndicator()
-                } else {
-                    Button(
-                        modifier = Modifier
-                            .height(Dimensions.SortableMenuSortButtonDiameter)
-                            .width(Dimensions.SortableMenuSortButtonDiameter),
-                        colors = ButtonDefaults.buttonColors().copy(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        ),
-                        onClick = {
-                            is_refreshing.value = true
-                            scope.launch(Dispatchers.IO) {
-                                this@PaganComponentActivity.view_model.project_manager?.scan_and_update_project_list(
-                                    full_refresh = true
+        val refresher = remember { mutableStateOf(false) }
+        val project_card_visibility = remember { mutableStateOf(false) }
+        val project_card_pair = remember { mutableStateOf<Pair<String?, Uri>?>(null)}
+        key(refresher) {
+            DialogSortableMenu(
+                visibility,
+                R.string.menu_item_load_project,
+                options = {
+                    items.clear()
+                    for ((uri, title) in project_list) {
+                        items.add(Pair(uri, { Text(text = title) }))
+                    }
+                    items
+                },
+                sort_options,
+                active_sort_option = current_sort,
+                refresher = refresher,
+                extra_content = @Composable { close, active_sort ->
+                    val scope = rememberCoroutineScope()
+                    val is_refreshing = remember { mutableStateOf(false) }
+                    if (is_refreshing.value) {
+                        CircularProgressIndicator()
+                    } else {
+                        Button(
+                            modifier = Modifier
+                                .height(Dimensions.SortableMenuSortButtonDiameter)
+                                .width(Dimensions.SortableMenuSortButtonDiameter),
+                            colors = ButtonDefaults.buttonColors().copy(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ),
+                            onClick = {
+                                is_refreshing.value = true
+                                scope.launch(Dispatchers.IO) {
+                                    this@PaganComponentActivity.view_model.project_manager?.scan_and_update_project_list(
+                                        full_refresh = true
+                                    )
+                                    project_list.clear()
+                                    project_list.addAll(
+                                        this@PaganComponentActivity.view_model.project_manager?.get_project_list()
+                                            ?.toMutableList() ?: mutableListOf()
+                                    )
+                                    is_refreshing.value = false
+                                    refresher.value = !refresher.value
+                                }
+                            },
+                            contentPadding = Dimensions.SortableMenuSortButtonPadding,
+                            content = {
+                                Icon(
+                                    painter = painterResource(R.drawable.icon_refresh),
+                                    contentDescription = stringResource(R.string.cd_sort_options)
                                 )
-                                close()
-                                load_menu_dialog(active_sort, load_callback)
-                                is_refreshing.value = false
                             }
-                        },
-                        contentPadding = Dimensions.SortableMenuSortButtonPadding,
-                        content = {
-                            Icon(
-                                painter = painterResource(R.drawable.icon_refresh),
-                                contentDescription = stringResource(R.string.cd_sort_options)
-                            )
+                        )
+                    }
+                    Spacer(Modifier.width(Dimensions.Space.Large))
+                },
+                long_click_callback = { value ->
+                    for ((uri, title) in project_list) {
+                        if (uri != value) continue
+                        project_card_pair.value = Pair(title, uri)
+                        project_card_visibility.value = true
+                        break
+                    }
+                },
+                callback = load_callback
+            )
+        }
+
+        PaganDialog(project_card_visibility) {
+            val confirm_visibility = remember { mutableStateOf(false) }
+
+            ProjectCard(modifier = Modifier.fillMaxWidth(), uri = project_card_pair.value!!.second)
+            Spacer(Modifier.height(Dimensions.Space.Large))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                OutlinedButton(
+                    modifier = Modifier.height(Dimensions.ButtonHeight.Small),
+                    onClick = { project_card_visibility.value = false },
+                    content = { Text(android.R.string.cancel) }
+                )
+                Spacer(Modifier.width(Dimensions.Space.Medium))
+                Button(
+                    modifier = Modifier.height(Dimensions.ButtonHeight.Small),
+                    onClick = { confirm_visibility.value = true },
+                    content = {
+                        Icon(
+                            painter = painterResource(R.drawable.icon_trash),
+                            contentDescription = stringResource(R.string.delete_project)
+                        )
+                    }
+                )
+                Spacer(Modifier.width(Dimensions.Space.Medium))
+                Button(
+                    modifier = Modifier.height(Dimensions.ButtonHeight.Small),
+                    onClick = {
+                        project_card_visibility.value = false
+                        visibility.value = false
+                        load_callback(project_card_pair.value!!.second)
+                    },
+                    content = { Text(R.string.details_load_project) }
+                )
+
+                PaganDialog(confirm_visibility) {
+                    Row {
+                        DialogTitle(
+                            stringResource(R.string.dlg_delete_title, title),
+                            modifier = Modifier.weight(1F)
+                        )
+                    }
+                    DialogBar(
+                        neutral = { confirm_visibility.value = false },
+                        positive = {
+                            this@PaganComponentActivity.delete_project(project_card_pair.value!!.second)
+                            confirm_visibility.value = false
+                            project_card_visibility.value = false
+                            visibility.value = false
                         }
                     )
                 }
-                Spacer(Modifier.width(Dimensions.Space.Large))
-            },
-            onClick = load_callback,
-            onLongClick = { it, close_callback ->
-                for ((uri, title) in project_list) {
-                    if (uri != it) continue
-                    this.create_project_card_dialog(title, it, close_callback) {
-                        load_callback(it)
-                    }
-                    break
-                }
             }
-        )
+        }
     }
 
     @Composable
@@ -673,8 +644,4 @@ abstract class PaganComponentActivity: ComponentActivity() {
         }
     }
     abstract fun on_key_press(e: KeyEvent): Boolean
-
-    fun create_dialog(level: Int = 0, alignment: Alignment.Horizontal = Alignment.CenterHorizontally, dialog_callback: (() -> Unit) -> (@Composable (ColumnScope.() -> Unit))) {
-        this@PaganComponentActivity.view_model.create_dialog(level, alignment, dialog_callback)
-    }
 }

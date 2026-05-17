@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.Coordinate
+import com.qfs.pagan.PaganConfiguration
+import com.qfs.pagan.PaganConfiguration.MoveMode
 import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.PresetKey
 import com.qfs.pagan.RelativeInputMode
@@ -200,19 +202,20 @@ class ViewModelEditorState: ViewModel() {
     var selected_leafs: MutableList<LeafData> = mutableListOf()
 
     var blocker_leaf: List<Int>? = null
-    val use_midi_playback: MutableState<Boolean> = mutableStateOf(false)
-    val midi_device_connected: MutableState<Boolean> = mutableStateOf(false)
-    val soundfont_ready: MutableState<Boolean> = mutableStateOf(false)
-    val playback_state_soundfont: MutableState<PlaybackState> = mutableStateOf(PlaybackState.NotReady)
-    val looping_playback: MutableState<Boolean> = mutableStateOf(false)
-    val playback_state_midi: MutableState<PlaybackState> = mutableStateOf(PlaybackState.NotReady)
-    val relative_input_mode: MutableState<RelativeInputMode> = mutableStateOf(RelativeInputMode.Absolute)
-    val latest_input_indicator: MutableState<Boolean> = mutableStateOf(false)
+    val use_midi_playback = mutableStateOf(false)
+    val midi_device_connected = mutableStateOf(false)
+    val soundfont_ready = mutableStateOf(false)
+    val playback_state_soundfont = mutableStateOf(PlaybackState.NotReady)
+    val looping_playback = mutableStateOf(false)
+    val playback_state_midi = mutableStateOf(PlaybackState.NotReady)
+    val relative_input_mode = mutableStateOf<RelativeInputMode>(RelativeInputMode.Absolute)
+    val latest_input_indicator  = mutableStateOf(false)
+    val move_mode = mutableStateOf(MoveMode.COPY)
 
-    val highlighted_offset: MutableState<Int?> = mutableStateOf(null)
-    val highlighted_octave: MutableState<Int?> = mutableStateOf(null)
+    val highlighted_offset = mutableStateOf<Int?>(null)
+    val highlighted_octave = mutableStateOf<Int?>(null)
 
-    val is_buffering: MutableState<Boolean> = mutableStateOf(false)
+    val is_buffering = mutableStateOf(false)
 
     val scroll_state_x = mutableStateOf(LazyListState())
     val scroll_state_y: MutableState<ScrollState> = mutableStateOf(ScrollState(0))
@@ -226,15 +229,15 @@ class ViewModelEditorState: ViewModel() {
     val pixel_density = mutableStateOf(1F)
 
     val has_global_effects_hidden = mutableStateOf(true)
-    val soundfont_active: MutableState<Long?> = mutableStateOf(null) // can use as key if we specify some indicator
-    val active_soundfonts: MutableState<Array<String>> = mutableStateOf(arrayOf())
-    val table_side_padding: MutableState<Float> = mutableStateOf(0F)
-    val table_bottom_padding: MutableState<Float> = mutableStateOf(0F)
-    val wide_beat_progress: MutableState<Float> = mutableStateOf(0F)
-    val active_wide_beat: MutableState<Int?> = mutableStateOf(null)
+    val soundfont_active = mutableStateOf<Long?>(null) // can use as key if we specify some indicator
+    val active_soundfonts = mutableStateOf<Array<String>>(arrayOf())
+    val table_side_padding = mutableStateOf(0F)
+    val table_bottom_padding = mutableStateOf(0F)
+    val wide_beat_progress = mutableStateOf(0F)
+    val active_wide_beat = mutableStateOf<Int?>(null)
 
-    val has_undoable_actions: MutableState<Boolean> = mutableStateOf(false)
-    val has_redoable_actions: MutableState<Boolean> = mutableStateOf(false)
+    val has_undoable_actions = mutableStateOf(false)
+    val has_redoable_actions = mutableStateOf(false)
 
     val dragging_line: MutableState<Int?> = mutableStateOf(null)
     val dragging_abs_offset: MutableState<Float?> = mutableStateOf(null)
@@ -248,10 +251,23 @@ class ViewModelEditorState: ViewModel() {
     val zoom_index = mutableIntStateOf(0)
     val active_zoom = mutableFloatStateOf(1F)
     val max_zoom_index = mutableIntStateOf(0)
-    val zoom_notches = mutableListOf<Float>(1F) // Used only when beat widths are normalized
-    val normalize_beat_widths = mutableStateOf<Boolean>(false)
-    val beat_stroke_thickness = mutableStateOf<Dp>(0.dp)
+    val zoom_notches = mutableListOf(1F) // Used only when beat widths are normalized
+    val normalize_beat_widths = mutableStateOf(false)
+    val beat_stroke_thickness = mutableStateOf(0.dp)
     val scroll_x_center = mutableStateOf<Triple<Int, Float, Float>?>(null)
+
+    val confirm_action_callback: MutableState<(() -> Unit)?> = mutableStateOf(null)
+    val channel_preset_dialog = mutableStateOf<Int?>(null)
+    val channel_preset_dialog_visibility = mutableStateOf(false)
+
+    val dlg_split = mutableIntStateOf(Values.DialogInput.Split)
+    val dlg_insert_leaf = mutableIntStateOf(Values.DialogInput.InsertLeaf)
+    val dlg_remove_leaf = mutableIntStateOf(Values.DialogInput.RemoveLeaf)
+    val dlg_insert_line = mutableIntStateOf(Values.DialogInput.InsertLine)
+    val dlg_remove_line = mutableIntStateOf(Values.DialogInput.RemoveLine)
+    val dlg_insert_beat = mutableIntStateOf(Values.DialogInput.InsertBeat)
+    val dlg_remove_beat = mutableIntStateOf(Values.DialogInput.RemoveBeat)
+    val dlg_duration = mutableIntStateOf(Values.DialogInput.Duration)
 
     fun get_active_zoom(x: Int): Float {
         return if (this.normalize_beat_widths.value) {
@@ -261,7 +277,6 @@ class ViewModelEditorState: ViewModel() {
                 this.column_data[x].top_weight.value.toFloat(),
                 this.get_active_zoom()
             )
-
         }
     }
 
@@ -271,7 +286,7 @@ class ViewModelEditorState: ViewModel() {
 
     private fun set_normalized_zoom() {
         val pegs = this.zoom_notches
-        this.active_zoom.value = if (pegs.isEmpty()) {
+        this.active_zoom.floatValue = if (pegs.isEmpty()) {
             1F
         } else {
             val i = this.zoom_index.intValue.coerceIn(0, pegs.size - 1)
@@ -281,7 +296,7 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun set_zoom(beat: Int, position: Rational, new_zoom: Float) {
-        if (new_zoom <= this.active_zoom.value) return
+        if (new_zoom <= this.active_zoom.floatValue) return
         val new_zoom_index = this.zoom_notches.indexOf(new_zoom)
         val base_leaf_width = this.pixel_density.value * Dimensions.LeafBaseWidth.value
         val beat_stroke_width = this.pixel_density.value * this.beat_stroke_thickness.value.value
@@ -289,7 +304,7 @@ class ViewModelEditorState: ViewModel() {
         val first_visible_beat = this.scroll_state_x.value.firstVisibleItemIndex
         val first_visible_position = (Array(first_visible_beat) { this.get_active_zoom(it) }.sum() * base_leaf_width) + this.scroll_state_x.value.firstVisibleItemScrollOffset + (beat_stroke_width * first_visible_beat.toFloat())
         this.queue_recenter(target_position - first_visible_position) {
-            this.queued_zoom_index.value = new_zoom_index
+            this.queued_zoom_index.intValue = new_zoom_index
         }
     }
 

@@ -70,7 +70,6 @@ class ViewModelPagan: ViewModel() {
     var configuration = PaganConfiguration()
 
     // MutableStates
-    var dialog_queue: MutableState<DialogChain?> = mutableStateOf(null)
     val requires_soundfont: MutableState<Boolean> = mutableStateOf(false)
     val has_saved_project: MutableState<Boolean> = mutableStateOf(false)
     val has_backup_saved: MutableState<Boolean> = mutableStateOf(false)
@@ -116,21 +115,6 @@ class ViewModelPagan: ViewModel() {
         this.project_manager = project_manager
         this.has_saved_project.value = this.project_manager?.has_projects_saved() ?: false
         this.has_backup_saved.value = this.project_manager?.has_backup_saved() == true
-    }
-
-    fun create_dialog(level: Int = 0, alignment: Alignment.Horizontal = Alignment.CenterHorizontally, dialog_callback: (() -> Unit) -> (@Composable (ColumnScope.() -> Unit))) {
-        // Use level to block Dup dialogs. set it to allow for dialogs opened from other dialogs
-        if (this.dialog_queue.value?.level == level) return
-        this.dialog_queue.value = DialogChain(
-            parent = this.dialog_queue.value,
-            alignment = alignment,
-            dialog = dialog_callback {
-                this.dialog_queue.value?.let {
-                    this.dialog_queue.value = it.parent
-                }
-            },
-            level = level
-        )
     }
 
     internal fun save_configuration() {

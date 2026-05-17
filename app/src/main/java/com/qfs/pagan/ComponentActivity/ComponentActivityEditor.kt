@@ -79,6 +79,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -1002,6 +1003,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val vm_state = this@ComponentActivityEditor.state_model
         val vm_controller = this@ComponentActivityEditor.controller_model
         val load_menu_visibility = remember { mutableStateOf(false) }
+        val device_menu_visibility = remember { mutableStateOf(false) }
 
         val menu_items: MutableList<Pair<Int, () -> Unit>> = mutableListOf(
             Pair(R.string.menu_item_new_project) {
@@ -1029,45 +1031,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         )
 
         if (vm_state.midi_device_connected.value) {
-            menu_items.add(
-                Pair(R.string.playback_device) {
-                    vm_top.create_dialog { close ->
-                        @Composable {
-                            val options = mutableListOf<Pair<MidiDeviceInfo?, @Composable RowScope.() -> Unit>>(
-                                Pair(null) { Text(R.string.device_menu_default_name) }
-                            )
-
-                            for (device_info in this@ComponentActivityEditor._midi_interface.poll_output_devices()) {
-                                options.add(
-                                    Pair(device_info) {
-                                        Text(
-                                            device_info.properties.getString(MidiDeviceInfo.PROPERTY_NAME)
-                                                ?: stringResource(R.string.unknown_midi_device, device_info.id)
-                                        )
-                                    }
-                                )
-                            }
-
-                            DialogSTitle(R.string.playback_device)
-                            UnSortableMenu(
-                                modifier = Modifier,
-                                options = options,
-                                default_value = vm_controller.active_midi_device
-                            ) { device ->
-                                close()
-                                vm_controller.set_active_midi_device(device)
-
-                                device?.let {
-                                    this@ComponentActivityEditor._midi_interface.open_output_device(it)
-                                }
-                                vm_state.set_use_midi_playback(device != null)
-                                vm_state.playback_state_midi.value = vm_controller.playback_state_midi
-                            }
-                            DialogBar(neutral = close)
-                        }
-                    }
-                }
-            )
+            menu_items.add(Pair(R.string.playback_device) { device_menu_visibility.value = true })
         }
 
         menu_items.add(
@@ -1101,6 +1065,37 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     )
                 }
             }
+        }
+
+        DialogMenu(
+            device_menu_visibility,
+            R.string.playback_device,
+            options = {
+                val options = mutableListOf<Pair<MidiDeviceInfo?, @Composable RowScope.() -> Unit>>(
+                    Pair(null) { Text(R.string.device_menu_default_name) }
+                )
+
+                for (device_info in this@ComponentActivityEditor._midi_interface.poll_output_devices()) {
+                    options.add(
+                        Pair(device_info) {
+                            Text(
+                                device_info.properties.getString(MidiDeviceInfo.PROPERTY_NAME)
+                                    ?: stringResource(R.string.unknown_midi_device, device_info.id)
+                            )
+                        }
+                    )
+                }
+
+                options
+            },
+            default = vm_controller.active_midi_device
+        ) { device ->
+            vm_controller.set_active_midi_device(device)
+            device?.let {
+                this@ComponentActivityEditor._midi_interface.open_output_device(it)
+            }
+            vm_state.set_use_midi_playback(device != null)
+            vm_state.playback_state_midi.value = vm_controller.playback_state_midi
         }
 
         LoadMenuDialog(load_menu_visibility) { uri ->
@@ -1928,7 +1923,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val dragging_row_offset = remember { mutableStateOf<Float?>(null) }
 
         val context = LocalContext.current
-        val tuning_table_visibility = remember  { mutableStateOf(false) }
+        val tuning_table_visibility = remember { mutableStateOf(false) }
+        val export_check_dialog_visibility = remember { mutableStateOf(false) }
 
         DrawerCard(
             modifier
@@ -2070,6 +2066,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                             modifier = Modifier.weight(1F),
                                             onClick = {
                                                 this@ComponentActivityEditor.state_model.channel_preset_dialog.value = i
+                                                this@ComponentActivityEditor.state_model.channel_preset_dialog_visibility.value = true
                                             },
                                             content = {
                                                 Row(
@@ -2225,7 +2222,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         title = R.string.dlg_export,
                         options = { this@ComponentActivityEditor.get_exportable_options() },
                         callback = { export_type ->
-                            this@ComponentActivityEditor.export(export_type)
+                            if (export_type == Exportable.MIDI1 && opus_manager.get_percussion_channels().size > 1) {
+                                export_check_dialog_visibility.value = true
+                            } else {
+                                this@ComponentActivityEditor.export(export_type)
+                            }
                         }
                     )
                 } else {
@@ -2260,6 +2261,21 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             }
         }
+
+        PaganDialog(export_check_dialog_visibility) {
+            DialogSTitle(R.string.generic_warning)
+            Text(R.string.multiple_kit_warning)
+            DialogBar(
+                neutral = {
+                    export_check_dialog_visibility.value = false
+                },
+                positive = {
+                    this@ComponentActivityEditor.export_midi()
+                    export_check_dialog_visibility.value = false
+                }
+            )
+        }
+
         TuningTableDialog(tuning_table_visibility)
     }
 
@@ -2322,7 +2338,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 this@ComponentActivityEditor.state_model.table_side_padding.value = 0F
             }
         }
-        DialogsKludge()
     }
 
     @Composable
@@ -2374,7 +2389,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 this@ComponentActivityEditor.state_model.table_side_padding.value = 0F
             }
         }
-        DialogsKludge()
     }
 
     @Composable
@@ -2451,13 +2465,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             }
         }
-        DialogsKludge()
     }
 
     @Composable
-    fun DialogsKludge() {
+    override fun Dialogs() {
         ConfirmSaveDialog()
-        ChannelPresetDialog(this@ComponentActivityEditor.state_model.channel_preset_dialog)
+        ChannelPresetDialog(
+            this@ComponentActivityEditor.state_model.channel_preset_dialog_visibility,
+            this@ComponentActivityEditor.state_model.channel_preset_dialog
+        )
     }
 
     @Composable
@@ -2611,7 +2627,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
-    fun ChannelPresetDialog(channel_state: MutableState<Int?>) {
+    fun ChannelPresetDialog(visibility: MutableState<Boolean>, channel_state: MutableState<Int?>) {
         val channel = channel_state.value ?: return
 
         fun padded_hex(i: Int): String {
@@ -2688,6 +2704,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         if (can_preview) {
                             Box(
                                 Modifier
+                                    .clip(CircleShape)
                                     .clickable {
                                         val radix = opus_manager.get_radix()
                                         if (this@ComponentActivityEditor.controller_model.active_midi_device != null) {
@@ -2755,8 +2772,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             )
         }
 
-        val dialog_visibility = remember { mutableStateOf(channel_state.value != null) }
-        PaganDialog(dialog_visibility) {
+        PaganDialog(visibility) {
             val selected_sort: MutableState<Int?> = remember { mutableStateOf(null) }
             val scope = rememberCoroutineScope()
             val sorted_pages = existing_keys.toList().sorted()
@@ -2860,11 +2876,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         controller_model.play_event(channel, (3 * radix) + (7 * radix / 12))
 
                         state_model.channel_preset_dialog.value = null
+                        this@ComponentActivityEditor.state_model.channel_preset_dialog_visibility.value = false
                     }
                 )
             }
             DialogBar(neutral = {
                 state_model.channel_preset_dialog.value = null
+                this@ComponentActivityEditor.state_model.channel_preset_dialog_visibility.value = false
             })
         }
     }
@@ -3054,27 +3072,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.controller_model.cancel_export()
     }
 
-    fun export_midi_check() {
-      val opus_manager = this.controller_model.opus_manager
-      if (opus_manager.get_percussion_channels().size > 1) {
-          this.view_model.create_dialog { close ->
-              @Composable {
-                  DialogSTitle(R.string.generic_warning)
-                  Text(R.string.multiple_kit_warning)
-                  DialogBar(
-                      neutral = close,
-                      positive = {
-                          close()
-                          this@ComponentActivityEditor.export_midi()
-                      }
-                  )
-              }
-          }
-      } else {
-          this.export_midi()
-      }
-    }
-
     fun export_midi() {
         this._result_launcher_export_midi.launch(
             Intent(Intent.ACTION_CREATE_DOCUMENT).also {
@@ -3162,7 +3159,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun export(type: Exportable) {
         when (type) {
             Exportable.JSON -> { this.export_project() }
-            Exportable.MIDI1 -> { this.export_midi_check() }
+            Exportable.MIDI1 -> { this.export_midi() }
             Exportable.WAV_SINGLE -> { this.export_wav() }
             Exportable.WAV_LINES -> { this.export_multi_lines_wav() }
             Exportable.WAV_CHANNELS -> { this.export_multi_channels_wav() }

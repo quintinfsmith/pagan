@@ -650,6 +650,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
     fun ActiveSoundfontButtonMulti(modifier: Modifier = Modifier) {
         val no_soundfont_text = stringResource(R.string.no_soundfont)
         val load_soundfont_text = stringResource(R.string.load_soundfont)
+        val need_sf_dir_visibility = remember { mutableStateOf(false) }
 
         SettingsColumn(modifier) {
             Text(R.string.label_settings_sfs, style = Typography.Settings.Title)
@@ -716,21 +717,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 },
                 onClick = {
                     if (this@ComponentActivitySettings.view_model.configuration.soundfont_directory.value == null) {
-                        this@ComponentActivitySettings.view_model.create_dialog { close ->
-                            @Composable {
-                                DialogSTitle(R.string.settings_need_soundfont_directory)
-                                DialogBar(
-                                    positive = {
-                                        close()
-                                        this@ComponentActivitySettings.result_launcher_set_soundfont_directory_and_import.launch(
-                                            Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also {
-                                                it.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                                            }
-                                        )
-                                    }
-                                )
-                            }
-                        }
+                        need_sf_dir_visibility.value = true
                     } else {
                         this@ComponentActivitySettings.settings_model.let {
                             it.soundfont_menu_active_choice.value = null
@@ -740,12 +727,27 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 }
             )
         }
+        PaganDialog(need_sf_dir_visibility) {
+            DialogSTitle(R.string.settings_need_soundfont_directory)
+            DialogBar(
+                positive = {
+                    need_sf_dir_visibility.value = false
+                    this@ComponentActivitySettings.result_launcher_set_soundfont_directory_and_import.launch(
+                        Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also {
+                            it.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        }
+                    )
+                }
+            )
+        }
     }
 
     @Composable
     fun ActiveSoundfontButtonSingle(modifier: Modifier = Modifier) {
         val no_soundfont_text = stringResource(R.string.no_soundfont)
         val soundfonts = this@ComponentActivitySettings.view_model.configuration.soundfonts
+        val need_sf_dir_visibility = remember { mutableStateOf(false) }
+
         SettingsColumn(modifier) {
             Text(
                 R.string.label_settings_sf,
@@ -767,21 +769,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 },
                 onClick = {
                     if (this@ComponentActivitySettings.view_model.configuration.soundfont_directory.value == null) {
-                        this@ComponentActivitySettings.view_model.create_dialog { close ->
-                            @Composable {
-                                DialogSTitle(R.string.settings_need_soundfont_directory)
-                                DialogBar(
-                                    positive = {
-                                        close()
-                                        this@ComponentActivitySettings.result_launcher_set_soundfont_directory_and_import.launch(
-                                            Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also {
-                                                it.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                                            }
-                                        )
-                                    }
-                                )
-                            }
-                        }
+                        need_sf_dir_visibility.value = true
                         return@Button
                     }
                     val selected = if (this@ComponentActivitySettings.view_model.configuration.soundfonts.value.isEmpty()) {
@@ -794,6 +782,20 @@ class ComponentActivitySettings: PaganComponentActivity() {
                         it.soundfont_menu_active_choice.value = selected
                         it.soundfont_menu_visibility.value = true
                     }
+                }
+            )
+        }
+
+        PaganDialog(need_sf_dir_visibility) {
+            DialogSTitle(R.string.settings_need_soundfont_directory)
+            DialogBar(
+                positive = {
+                    need_sf_dir_visibility.value = false
+                    this@ComponentActivitySettings.result_launcher_set_soundfont_directory_and_import.launch(
+                        Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also {
+                            it.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        }
+                    )
                 }
             )
         }

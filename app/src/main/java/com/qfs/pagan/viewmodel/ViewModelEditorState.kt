@@ -258,6 +258,7 @@ class ViewModelEditorState: ViewModel() {
 
     val confirm_action_callback: MutableState<(() -> Unit)?> = mutableStateOf(null)
     val channel_preset_dialog = mutableStateOf<Int?>(null)
+    val channel_preset_dialog_visibility = mutableStateOf(false)
 
     val dlg_split = mutableIntStateOf(Values.DialogInput.Split)
     val dlg_insert_leaf = mutableIntStateOf(Values.DialogInput.InsertLeaf)

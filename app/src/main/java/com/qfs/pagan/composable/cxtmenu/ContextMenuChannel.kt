@@ -246,6 +246,7 @@ fun SetPresetButton(
             shape = shape,
             onClick = {
                 vm_state.channel_preset_dialog.value = channel_index
+                vm_state.channel_preset_dialog_visibility.value = true
             },
             text = if (vm_state.use_midi_playback.value || active_channel.active_name.value == null) {
                 if (active_channel.instrument.value.bank == 128) {

@@ -247,6 +247,17 @@ fun RemoveEffectButton(active_line: ViewModelEditorState.LineData, opus_manager:
                 val line_offset = active_line.line_offset.value ?: return@let
                 opus_manager.remove_line_controller(type, channel, line_offset)
             }
+            active_line.ctl_type.value?.let { type ->
+                val channel = active_line.channel.value
+                val line_offset = active_line.line_offset.value
+                if (channel == null) {
+                    opus_manager.remove_global_controller(type)
+                } else if (line_offset == null) {
+                    opus_manager.remove_channel_controller(type, channel)
+                } else {
+                    opus_manager.remove_line_controller(type, channel, line_offset)
+                }
+            }
         },
         icon = R.drawable.icon_subtract,
         shape = shape,
@@ -439,9 +450,15 @@ fun HideEffectButton(active_line: ViewModelEditorState.LineData, opus_manager: O
         modifier = Modifier.testTag(TestTag.EffectHide),
         onClick = {
             active_line.ctl_type.value?.let { type ->
-                val channel = active_line.channel.value ?: return@let
-                val line_offset = active_line.line_offset.value ?: return@let
-                opus_manager.set_line_controller_visibility(type, channel, line_offset, false)
+                val channel = active_line.channel.value
+                val line_offset = active_line.line_offset.value
+                if (channel == null) {
+                    opus_manager.set_global_controller_visibility(type, false)
+                } else if (line_offset == null) {
+                    opus_manager.set_channel_controller_visibility(type, channel, false)
+                } else {
+                    opus_manager.set_line_controller_visibility(type, channel, line_offset, false)
+                }
             }
         },
         icon = R.drawable.icon_hide,

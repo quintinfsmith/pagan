@@ -125,6 +125,9 @@ abstract class PaganComponentActivity: ComponentActivity() {
     @Composable
     abstract fun Drawer(modifier: Modifier = Modifier)
 
+    @Composable
+    open fun Dialogs() {}
+
     open val top_bar_wrapper: (@Composable RowScope.() -> Unit)? = null
 
     abstract fun on_back_press_check(): Boolean
@@ -309,6 +312,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                         }
                     )
                 }
+                Dialogs()
             }
         }
     }
@@ -380,13 +384,6 @@ abstract class PaganComponentActivity: ComponentActivity() {
             }
 
             DocumentFile.fromFile(soundfont_dir)
-        }
-    }
-
-    private fun create_project_card_dialog(title: String, uri: Uri, close_top_callback: () -> Unit, load_callback: (Uri) -> Unit) {
-        this.view_model.create_dialog(level = 1) { close ->
-            @Composable {
-            }
         }
     }
 
@@ -647,8 +644,4 @@ abstract class PaganComponentActivity: ComponentActivity() {
         }
     }
     abstract fun on_key_press(e: KeyEvent): Boolean
-
-    fun create_dialog(level: Int = 0, alignment: Alignment.Horizontal = Alignment.CenterHorizontally, dialog_callback: (() -> Unit) -> (@Composable (ColumnScope.() -> Unit))) {
-        this@PaganComponentActivity.view_model.create_dialog(level, alignment, dialog_callback)
-    }
 }

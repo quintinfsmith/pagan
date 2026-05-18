@@ -47,64 +47,6 @@ class ProjectManager(val context: Context, var uri: Uri?) {
     private val _bkp_path_path = "${this.context.cacheDir}/.bkp_path"
 
     /**
-     * Call before showing Load Projects menu
-     */
-    fun check() {
-        this.scan_and_update_project_list(full_refresh = true)
-    }
-
-    /**
-     * Deprecated. Potential source of project corruption
-     * Move files from [old_uri] to the ProjectManger's current [uri],
-     * return the new uri associated with given [active_project_uri] if it was moved
-     **/
-    fun move_old_projects_directory(old_uri: Uri, active_project_uri: Uri? = null): Uri? {
-        val bkp_path_file = File(this._bkp_path_path)
-        val bkp_uri = if (!bkp_path_file.exists()) {
-            null
-        } else {
-            bkp_path_file.readText().toUri()
-        }
-
-        val old_directory = DocumentFile.fromTreeUri(this.context, old_uri) ?: return null
-        if (!old_directory.isDirectory || old_uri == this.uri) return null
-
-        var output: Uri? = null
-        val buffer_size = 1024 * 1024
-        for (project in old_directory.listFiles()) {
-            if (!project.isFile) continue
-            // Use new path instead of copying file name to avoid collisions
-            val new_uri = this.get_new_file_uri() ?: continue
-            val output_stream = this.context.contentResolver.openOutputStream(new_uri, "wt")
-            val input_stream = this.context.contentResolver.openInputStream(project.uri)
-
-            when (project.uri) {
-                active_project_uri -> { output = new_uri }
-                bkp_uri -> { bkp_path_file.writeText(new_uri.toString()) }
-                else -> { }
-            }
-
-            val buffer = ByteArray(buffer_size)
-            while (true) {
-                val read_size = input_stream?.read(buffer) ?: break
-                if (read_size == -1) {
-                    break
-                }
-                output_stream?.write(buffer, 0, read_size)
-            }
-
-            input_stream?.close()
-            output_stream?.flush()
-            output_stream?.close()
-
-            project.delete()
-        }
-
-        this.scan_and_update_project_list(full_refresh = true)
-        return output
-    }
-
-    /**
      * Change the where projects are saved to [new_uri]. Also moves existing projects.
      * [active_project_uri] is a uri that may be changed by the move and the returned Uri
      * is the altered version of that, if it is altered.
@@ -114,9 +56,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         if (new_directory == null || !new_directory.isDirectory) throw InvalidDirectoryException(new_uri)
 
         this.uri = new_uri
-
         this.ucheck_update_move_project_files(active_project_uri)
-        this.scan_and_update_project_list(full_refresh = true)
     }
 
     /**
@@ -291,7 +231,6 @@ class ProjectManager(val context: Context, var uri: Uri?) {
     fun get_json_project_list(): JSONList {
         val file = File(this._cache_path)
         if (!file.exists()) return JSONList()
-
         val string_content = file.readText(Charsets.UTF_8)
 
         return try {
@@ -388,6 +327,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
 
         file.writeText(cached_list.to_string())
     }
+
     fun get_json(uri: Uri): JSONHashMap? {
         val input_stream = this.context.contentResolver.openInputStream(uri)
         val reader = BufferedReader(InputStreamReader(input_stream))
@@ -498,7 +438,6 @@ class ProjectManager(val context: Context, var uri: Uri?) {
                     output_stream?.close()
                 }
 
-                this.scan_and_update_project_list(full_refresh = true)
                 old_directory.deleteRecursively()
             }
         } catch (_: SecurityException) {

@@ -120,7 +120,6 @@ fun <T> DialogSortableMenu(
 
         LaunchedEffect(visibility.value, refresher?.value) {
             if (visibility.value) {
-                println("K? ${System.currentTimeMillis()}")
                 mutable_options.value = options()
                 options_ready.value = true
             }

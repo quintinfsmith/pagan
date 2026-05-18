@@ -183,6 +183,7 @@ class ViewModelEditorState: ViewModel() {
 
     val ready = mutableStateOf(false)
     val project_name: MutableState<String?> = mutableStateOf(null)
+    val project_notes: MutableState<String?> = mutableStateOf(null)
     val beat_count: MutableState<Int> = mutableIntStateOf(0)
     val line_count: MutableState<Int> = mutableIntStateOf(0)
     var channel_count: MutableState<Int> = mutableIntStateOf(0)

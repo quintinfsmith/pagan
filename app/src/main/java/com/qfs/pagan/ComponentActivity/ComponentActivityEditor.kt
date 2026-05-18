@@ -522,7 +522,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             this.view_model.configuration.project_directory.value = tree_uri
             this.view_model.save_configuration()
 
-            this.view_model.project_manager?.change_project_path(tree_uri, this.controller_model.active_project)
+            this.view_model.change_project_path(tree_uri, this.controller_model.active_project)
             this@ComponentActivityEditor.save()
 
             this.reload_config()
@@ -2594,38 +2594,41 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     fun NameAndNotesDialog(visibility: MutableState<Boolean>) {
         val opus_manager = this.controller_model.opus_manager
-        val project_name = remember { mutableStateOf(opus_manager.project_name ?: "") }
-        val project_notes = remember { mutableStateOf(opus_manager.project_notes ?: "") }
-        PaganDialog(visibility) {
-            TextInput(
-                label = { Text(R.string.dlg_project_name) },
-                input = project_name,
-                textAlign = TextAlign.Start,
-                modifier = Modifier.fillMaxWidth(),
-                lineLimits = TextFieldLineLimits.Default
-            ) {}
-            Spacer(modifier = Modifier.height(Dimensions.Space.Medium))
-            TextInput(
-                label = { Text(R.string.dlg_project_notes) },
-                input = project_notes,
-                textAlign = TextAlign.Start,
-                lineLimits = TextFieldLineLimits.MultiLine(3),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1F, fill = false)
-            ) {}
-            DialogBar(
-                neutral = {
-                    visibility.value = false
-                },
-                positive = {
-                    visibility.value = false
-                    opus_manager.set_name_and_notes(
-                        if (project_name.value == "") null else project_name.value,
-                        if (project_notes.value == "") null else project_notes.value
-                    )
-                }
-            )
+        val vm_state = this.state_model
+        key(vm_state.project_name.value, vm_state.project_notes.value) {
+            val project_name = remember { mutableStateOf(vm_state.project_name.value ?: "") }
+            val project_notes = remember { mutableStateOf(vm_state.project_notes.value ?: "") }
+            PaganDialog(visibility) {
+                TextInput(
+                    label = { Text(R.string.dlg_project_name) },
+                    input = project_name,
+                    textAlign = TextAlign.Start,
+                    modifier = Modifier.fillMaxWidth(),
+                    lineLimits = TextFieldLineLimits.Default
+                ) {}
+                Spacer(modifier = Modifier.height(Dimensions.Space.Medium))
+                TextInput(
+                    label = { Text(R.string.dlg_project_notes) },
+                    input = project_notes,
+                    textAlign = TextAlign.Start,
+                    lineLimits = TextFieldLineLimits.MultiLine(3),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1F, fill = false)
+                ) {}
+                DialogBar(
+                    neutral = {
+                        visibility.value = false
+                    },
+                    positive = {
+                        visibility.value = false
+                        opus_manager.set_name_and_notes(
+                            if (project_name.value == "") null else project_name.value,
+                            if (project_notes.value == "") null else project_notes.value
+                        )
+                    }
+                )
+            }
         }
     }
 
@@ -3408,14 +3411,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     fun save() {
-        val project_manager = this.view_model.project_manager ?: return
-
-        val uri = project_manager.save(
+        val uri = this.view_model.save(
             this.controller_model.opus_manager,
             this.controller_model.active_project
-        )
+        ) ?: return
 
-        this.view_model.has_saved_project.value = true
         this.controller_model.active_project = uri
         this.controller_model.project_exists.value = true
 

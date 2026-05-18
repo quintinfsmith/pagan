@@ -9,6 +9,9 @@
  */
 package com.qfs.pagan.structure.opusmanager.base
 
+import android.net.Uri
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BalanceMSB
@@ -75,6 +78,7 @@ open class OpusLayerBase: Effectable {
         }
 
         fun get_ordered_beat_key_pair(first: BeatKey, second: BeatKey): Pair<BeatKey, BeatKey> {
+            val items = mutableListOf<Pair<Uri, @Composable RowScope.() -> Unit>>()
             val (from_key, to_key) = if (first.channel < second.channel) {
                 Pair(
                     BeatKey(first.channel, first.line_offset, -1),
@@ -3982,6 +3986,7 @@ open class OpusLayerBase: Effectable {
         output["ts00"] = this.timestamp.toString()
         output["ts01"] = (System.currentTimeMillis() / 1000L).toString()
 
+        println("SAVE ${this.timestamp}")
         return JSONHashMap(
             "d" to output,
             "v" to JSONInteger(OpusManagerJSONInterface.LATEST_VERSION)
@@ -4127,8 +4132,10 @@ open class OpusLayerBase: Effectable {
             }
         }
 
+
         // Default to zero to differentiate pre/post existence of timestamp
         this.timestamp = inner_map.get_stringn("ts00")?.toLong() ?: 0L
+        println("LOAD ${this.timestamp}")
     }
 
     fun project_change_midi(midi: Midi) {
@@ -4718,9 +4725,11 @@ open class OpusLayerBase: Effectable {
 
     open fun <T: OpusLayerBase> import_from_other(other: T) {
         this.clear()
+        this.timestamp = other.timestamp
         this.length = other.length
         this.channels = other.channels
         this.project_name = other.project_name
+        this.project_notes = other.project_notes
         this.tuning_map = other.tuning_map.clone()
         this.transpose = other.transpose.copy()
         this._cached_instrument_line_map = other._cached_instrument_line_map

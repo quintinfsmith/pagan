@@ -277,7 +277,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             this.view_model.configuration.project_directory.value = uri
             this.view_model.save_configuration()
 
-            this.view_model.project_manager?.change_project_path(uri, this.intent.data)
+            this.view_model.change_project_path(uri, this.intent.data)
 
             this.update_result()
         }
@@ -613,6 +613,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                         }
                     }
 
+                    soundfonts.clear()
                     for (uri in file_list.sortedBy { it.pathSegments.last().split("/").last().lowercase() }) {
                         val relative_path_segments = uri.pathSegments.last().split("/")
                         var skip_entry = false

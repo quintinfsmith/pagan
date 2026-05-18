@@ -396,28 +396,30 @@ abstract class PaganComponentActivity: ComponentActivity() {
 
     @Composable
     fun LoadMenuDialog(visibility: MutableState<Boolean>, current_sort: Int? = -3, load_callback: (Uri) -> Unit) {
-        val project_list = this.view_model.project_manager?.get_project_list()?.toMutableList() ?: mutableListOf()
-        val items = mutableListOf<Pair<Uri, @Composable RowScope.() -> Unit>>()
+        key(this.view_model.project_list.value.hashCode()) {
+            val project_list = this.view_model.project_list.value.toMutableList()
 
-        val sort_options = listOf(
-            Pair(R.string.sort_option_abc) { a: Int, b: Int ->
-                project_list[a].title.lowercase().compareTo(project_list[b].title.lowercase())
-            },
-            Pair(R.string.sort_option_date_created) { a: Int, b: Int ->
-                (project_list[a].created ?: 0L).compareTo(project_list[b].created ?: 0L)
-            },
-            Pair(R.string.sort_option_date_modified) { a: Int, b: Int ->
-                (project_list[a].modified ?: 0L).compareTo(project_list[b].modified ?: 0L)
-            }
-        )
-        val refresher = remember { mutableStateOf(false) }
-        val project_card_visibility = remember { mutableStateOf(false) }
-        val project_card_pair = remember { mutableStateOf<Pair<String?, Uri>?>(null)}
-        key(refresher) {
+            val sort_options = listOf(
+                Pair(R.string.sort_option_abc) { a: Int, b: Int ->
+                    project_list[a].title.lowercase().compareTo(project_list[b].title.lowercase())
+                },
+                Pair(R.string.sort_option_date_created) { a: Int, b: Int ->
+                    (project_list[a].created ?: 0L).compareTo(project_list[b].created ?: 0L)
+                },
+                Pair(R.string.sort_option_date_modified) { a: Int, b: Int ->
+                    (project_list[a].modified ?: 0L).compareTo(project_list[b].modified ?: 0L)
+                }
+            )
+
+            val refresher = remember { mutableStateOf(false) }
+            val project_card_visibility = remember { mutableStateOf(false) }
+            val project_card_pair = remember { mutableStateOf<Pair<String?, Uri>?>(null) }
+
             DialogSortableMenu(
                 visibility,
                 R.string.menu_item_load_project,
                 options = {
+                    val items = mutableListOf<Pair<Uri, @Composable RowScope.() -> Unit>>()
                     items.clear()
                     for ((uri, title) in project_list) {
                         items.add(Pair(uri, { Text(text = title) }))
@@ -444,16 +446,13 @@ abstract class PaganComponentActivity: ComponentActivity() {
                             onClick = {
                                 is_refreshing.value = true
                                 scope.launch(Dispatchers.IO) {
-                                    this@PaganComponentActivity.view_model.project_manager?.scan_and_update_project_list(
+                                    this@PaganComponentActivity.view_model.scan_and_update_project_list(
                                         full_refresh = true
                                     )
                                     project_list.clear()
-                                    project_list.addAll(
-                                        this@PaganComponentActivity.view_model.project_manager?.get_project_list()
-                                            ?.toMutableList() ?: mutableListOf()
-                                    )
+                                    project_list.addAll(this@PaganComponentActivity.view_model.project_list.value)
+
                                     is_refreshing.value = false
-                                    refresher.value = !refresher.value
                                 }
                             },
                             contentPadding = Dimensions.SortableMenuSortButtonPadding,
@@ -477,61 +476,61 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 },
                 callback = load_callback
             )
-        }
 
-        PaganDialog(project_card_visibility) {
-            val confirm_visibility = remember { mutableStateOf(false) }
+            PaganDialog(project_card_visibility) {
+                val confirm_visibility = remember { mutableStateOf(false) }
 
-            ProjectCard(modifier = Modifier.fillMaxWidth(), uri = project_card_pair.value!!.second)
-            Spacer(Modifier.height(Dimensions.Space.Large))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                OutlinedButton(
-                    modifier = Modifier.height(Dimensions.ButtonHeight.Small),
-                    onClick = { project_card_visibility.value = false },
-                    content = { Text(android.R.string.cancel) }
-                )
-                Spacer(Modifier.width(Dimensions.Space.Medium))
-                Button(
-                    modifier = Modifier.height(Dimensions.ButtonHeight.Small),
-                    onClick = { confirm_visibility.value = true },
-                    content = {
-                        Icon(
-                            painter = painterResource(R.drawable.icon_trash),
-                            contentDescription = stringResource(R.string.delete_project)
-                        )
-                    }
-                )
-                Spacer(Modifier.width(Dimensions.Space.Medium))
-                Button(
-                    modifier = Modifier.height(Dimensions.ButtonHeight.Small),
-                    onClick = {
-                        project_card_visibility.value = false
-                        visibility.value = false
-                        load_callback(project_card_pair.value!!.second)
-                    },
-                    content = { Text(R.string.details_load_project) }
-                )
-
-                PaganDialog(confirm_visibility) {
-                    Row {
-                        DialogTitle(
-                            stringResource(R.string.dlg_delete_title, title),
-                            modifier = Modifier.weight(1F)
-                        )
-                    }
-                    DialogBar(
-                        neutral = { confirm_visibility.value = false },
-                        positive = {
-                            this@PaganComponentActivity.delete_project(project_card_pair.value!!.second)
-                            confirm_visibility.value = false
-                            project_card_visibility.value = false
-                            visibility.value = false
+                ProjectCard(modifier = Modifier.fillMaxWidth(), uri = project_card_pair.value!!.second)
+                Spacer(Modifier.height(Dimensions.Space.Large))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    OutlinedButton(
+                        modifier = Modifier.height(Dimensions.ButtonHeight.Small),
+                        onClick = { project_card_visibility.value = false },
+                        content = { Text(android.R.string.cancel) }
+                    )
+                    Spacer(Modifier.width(Dimensions.Space.Medium))
+                    Button(
+                        modifier = Modifier.height(Dimensions.ButtonHeight.Small),
+                        onClick = { confirm_visibility.value = true },
+                        content = {
+                            Icon(
+                                painter = painterResource(R.drawable.icon_trash),
+                                contentDescription = stringResource(R.string.delete_project)
+                            )
                         }
                     )
+                    Spacer(Modifier.width(Dimensions.Space.Medium))
+                    Button(
+                        modifier = Modifier.height(Dimensions.ButtonHeight.Small),
+                        onClick = {
+                            project_card_visibility.value = false
+                            visibility.value = false
+                            load_callback(project_card_pair.value!!.second)
+                        },
+                        content = { Text(R.string.details_load_project) }
+                    )
+
+                    PaganDialog(confirm_visibility) {
+                        Row {
+                            DialogTitle(
+                                stringResource(R.string.dlg_delete_title, project_card_pair.value!!.first ?: ""),
+                                modifier = Modifier.weight(1F)
+                            )
+                        }
+                        DialogBar(
+                            neutral = { confirm_visibility.value = false },
+                            positive = {
+                                this@PaganComponentActivity.delete_project(project_card_pair.value!!.second)
+                                confirm_visibility.value = false
+                                project_card_visibility.value = false
+                                visibility.value = false
+                            }
+                        )
+                    }
                 }
             }
         }

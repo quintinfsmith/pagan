@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.ViewModel
 import com.qfs.pagan.DialogChain
 import com.qfs.pagan.LayoutSize
+import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
@@ -73,8 +74,8 @@ class ViewModelPagan: ViewModel() {
     val requires_soundfont: MutableState<Boolean> = mutableStateOf(false)
     val has_saved_project: MutableState<Boolean> = mutableStateOf(false)
     val has_backup_saved: MutableState<Boolean> = mutableStateOf(false)
-
     val dialog_states = HashMap<String, MutableState<Boolean>>()
+    val project_list = mutableStateOf<List<ProjectManager.CachedProjectData>>(listOf())
 
     fun get_dialog_state(key: String): MutableState<Boolean> {
         if (!this.dialog_states.contains(key)) {
@@ -93,6 +94,7 @@ class ViewModelPagan: ViewModel() {
 
     fun delete_project(uri: Uri) {
         this.project_manager?.delete(uri)
+        this.project_list.value = this.project_manager?.get_project_list() ?: listOf()
         this.has_saved_project.value = this.project_manager?.has_projects_saved() ?: false
         this.has_backup_saved.value = this.project_manager?.has_backup_saved() == true
     }
@@ -113,6 +115,7 @@ class ViewModelPagan: ViewModel() {
     }
     fun set_project_manager(project_manager: ProjectManager) {
         this.project_manager = project_manager
+        this.project_list.value = this.project_manager?.get_project_list() ?: listOf()
         this.has_saved_project.value = this.project_manager?.has_projects_saved() ?: false
         this.has_backup_saved.value = this.project_manager?.has_backup_saved() == true
     }
@@ -139,5 +142,26 @@ class ViewModelPagan: ViewModel() {
         this.coerce_relative_soundfont_path(uri)?.let { path ->
             this.configuration.soundfonts.value[index].value = path
         }
+    }
+
+
+    fun scan_and_update_project_list(full_refresh: Boolean = false) {
+        this.project_manager?.scan_and_update_project_list(full_refresh)
+        this.project_list.value = this.project_manager?.get_project_list() ?: listOf()
+    }
+
+    fun change_project_path(new_uri: Uri, active_project_uri: Uri? = null) {
+        this.project_manager?.change_project_path(new_uri, active_project_uri)
+        this.scan_and_update_project_list(true)
+    }
+
+    fun save(opus_manager: OpusLayerInterface, active_project: Uri?): Uri? {
+        val project_manager = this.project_manager ?: return null
+
+        val uri = project_manager.save(opus_manager, active_project)
+        this.has_saved_project.value = true
+        this.project_list.value = project_manager.get_project_list()
+
+        return uri
     }
 }

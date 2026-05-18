@@ -9,7 +9,6 @@
  */
 package com.qfs.pagan
 
-import android.provider.Settings
 import androidx.compose.ui.graphics.Color
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONList
@@ -40,7 +39,6 @@ import com.qfs.pagan.structure.rationaltree.InvalidGetCall
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
-import kotlinx.coroutines.GlobalScope
 import kotlin.math.max
 import kotlin.math.min
 
@@ -455,6 +453,11 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     override fun set_project_name(new_name: String?) {
         super.set_project_name(new_name)
         this.vm_state.set_project_name(new_name)
+    }
+
+    override fun set_project_notes(notes: String?) {
+        super.set_project_notes(notes)
+        this.vm_state.project_notes.value = notes
     }
 
     override fun unset(beat_key: BeatKey, position: List<Int>) {
@@ -1222,6 +1225,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         super.on_project_changed()
         this.set_latest_octave()
         this.set_latest_offset()
+        this.vm_state.project_name.value = this.project_name
+        this.vm_state.project_notes.value = this.project_notes
 
         for ((i, channel) in this.channels.enumerate()) {
             val instrument = channel.get_preset()
@@ -1250,6 +1255,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     fun ui_full_refresh() {
         this.vm_state.clear()
         this.vm_state.set_project_name(this.project_name)
+        this.vm_state.project_notes.value = this.project_notes
         this.vm_state.set_radix(this.get_radix())
 
         for (x in 0 until this.length) {
@@ -1392,11 +1398,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         }
 
         return output
-    }
-
-    override fun _project_change_json(json_data: JSONHashMap) {
-        super._project_change_json(json_data)
-
     }
 
     override fun move_channel(channel_index: Int, new_channel_index: Int) {

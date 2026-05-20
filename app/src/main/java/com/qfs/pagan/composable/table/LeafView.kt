@@ -9,9 +9,11 @@
  */
 package com.qfs.pagan.composable.table
 
+import android.view.RoundedCorner
 import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,7 +24,9 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
@@ -33,9 +37,15 @@ import androidx.compose.runtime.currentCompositionLocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.PaganConfiguration
@@ -89,7 +99,7 @@ fun LeafView(
     else if (leaf_data.is_secondary.value) Colors.LeafSelection.Secondary
     else Colors.LeafSelection.Unselected
 
-    val (leaf_color, text_color) = Colors.get_leaf_color(
+    val (leaf_color, text_color, highlight_color) = Colors.get_leaf_color(
         line_info.palette.value ?: OpusColorPalette(),
         channel_data?.palette?.value ?: OpusColorPalette(),
         leaf_state,
@@ -101,7 +111,15 @@ fun LeafView(
 
     val context = LocalContext.current
 
-    ProvideContentColorTextStyle(contentColor = text_color) {
+    ProvideContentColorTextStyle(
+        contentColor = text_color,
+        textStyle = LocalTextStyle.current.merge(
+            shadow = Shadow(
+                blurRadius = 4F,
+                color = highlight_color
+            )
+        )
+    ) {
         Box(
             modifier
                 .combinedClickable(
@@ -172,7 +190,7 @@ fun LeafView(
                     }
                 )
                 .fillMaxHeight()
-                .background(color = leaf_color),
+                .background(leaf_color),
             contentAlignment = Alignment.Center
         ) {
             if (leaf_selection == Colors.LeafSelection.Primary) {
@@ -185,9 +203,19 @@ fun LeafView(
                             shape = RectangleShape
                         )
                 )
+            } else {
+                Spacer(
+                    Modifier
+                        .fillMaxSize()
+                        .padding(Dimensions.HighlightBorderPadding)
+                        .border(
+                            width = 2.dp,
+                            color = highlight_color
+                        )
+                )
             }
 
-            if (zoom * leaf_data.weight.value >= 1F) {
+            if (zoom * leaf_data.weight.floatValue >= 1F) {
                 when (event) {
                     is AbsoluteNoteEvent -> {
                         val octave = event.note / radix

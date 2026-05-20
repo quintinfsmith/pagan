@@ -61,7 +61,7 @@ object Colors {
         else  Color(0xFFFFFFFF)
     }
 
-    fun get_leaf_color(
+    fun get_leaf_color_old(
         line_palette: OpusColorPalette,
         channel_palette: OpusColorPalette,
         active: LeafState,
@@ -206,4 +206,123 @@ object Colors {
             this.get_text(primary_base)
         )
     }
+
+    fun get_leaf_color(
+        line_palette: OpusColorPalette,
+        channel_palette: OpusColorPalette,
+        active: LeafState,
+        selected: LeafSelection,
+        is_effect_line: Boolean,
+        is_muted: Boolean,
+        dark_mode: Boolean = false
+    ): Triple<Color, Color, Color> {
+        val event_color_base = if (is_muted) {
+            if (dark_mode) {
+                MUTED_LEAF_COLOR_NIGHT
+            } else {
+                MUTED_LEAF_COLOR
+            }
+        } else if (is_effect_line) {
+            EFFECT_COLOR
+        } else {
+            line_palette.event ?: channel_palette.event ?: LEAF_COLOR
+        }
+
+        val line_color = if (is_muted) {
+            if (dark_mode) {
+                MUTED_LINE_COLOR_NIGHT
+            } else {
+                MUTED_LINE_COLOR
+            }
+        } else {
+            if (dark_mode) {
+                LINE_COLOR_NIGHT
+            } else {
+                LINE_COLOR
+            }
+        }
+
+        return when (active) {
+            LeafState.Active -> when (selected) {
+                LeafSelection.Primary ->  {
+                    Triple(
+                        event_color_base,
+                        get_text(event_color_base),
+                        event_color_base,
+                    )
+                }
+                LeafSelection.Secondary -> {
+                    Triple(
+                        event_color_base,
+                        get_text(event_color_base),
+                        event_color_base,
+                    )
+                }
+                LeafSelection.Unselected -> {
+                    val bg_weight = .65F
+                    val new_bg = (event_color_base * (1f - bg_weight)) + (line_color * bg_weight)
+                    Triple(
+                        new_bg,
+                        get_text(new_bg),
+                        event_color_base
+                    )
+                }
+            }
+            LeafState.Spill -> {
+                val bg_weight = .15F
+                val spill_color = (event_color_base * (1F - bg_weight)) + (Color(0xFF000000) * bg_weight)
+                when (selected) {
+                    LeafSelection.Primary ->  {
+                        Triple(
+                            spill_color,
+                            get_text(spill_color),
+                            event_color_base,
+                        )
+                    }
+                    LeafSelection.Secondary -> {
+                        Triple(
+                            spill_color,
+                            get_text(spill_color),
+                            spill_color
+                        )
+                    }
+                    LeafSelection.Unselected -> {
+                        val bg_weight = .5F
+                        val new_bg = (spill_color * (1f - bg_weight)) + (line_color * bg_weight)
+                        Triple(
+                            new_bg,
+                            get_text(new_bg),
+                            event_color_base,
+                        )
+                    }
+                }
+            }
+            LeafState.Empty -> {
+                if (selected != LeafSelection.Unselected) {
+                    val new_color = (LINE_SELECTED * .3f) + (line_color * .7F)
+                    Triple(new_color, get_text(new_color), new_color)
+                } else {
+                    Triple(line_color, line_color, line_color)
+                }
+            }
+        }
+    }
+}
+
+operator fun Color.times(mult: Float): Color {
+    return Color(
+        this.red * mult,
+        this.green * mult,
+        this.blue * mult,
+        this.alpha
+    )
+}
+
+operator fun Color.plus(other: Color): Color {
+    return Color(
+        this.red + other.red,
+        this.green + other.green,
+        this.blue + other.blue,
+        this.alpha
+    )
 }

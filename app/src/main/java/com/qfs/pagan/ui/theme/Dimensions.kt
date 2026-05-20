@@ -290,6 +290,12 @@ object Dimensions {
         end = 3.dp,
         start = 2.dp
     )
+    val HighlightBorderPadding = PaddingValues(
+        top = 0.dp,
+        bottom = 0.dp,
+        end = 1.dp,
+        start = 0.dp
+    )
 
     val NumberInputDialogPadding = 8.dp
     val NumberPickerRowHeight = 41.dp

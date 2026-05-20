@@ -535,12 +535,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
     internal var result_launcher_import = this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode != RESULT_OK) return@registerForActivityResult
-            val uri = result.data?.data ?: return@registerForActivityResult
-            this.save_confirm_dialog {
-                this.handle_uri(uri)
-            }
+        if (result.resultCode != RESULT_OK) return@registerForActivityResult
+        val uri = result.data?.data ?: return@registerForActivityResult
+        this.save_confirm_dialog {
+            this.handle_uri(uri)
         }
+    }
 
 
     private lateinit var _midi_interface: MidiController
@@ -1275,27 +1275,28 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     fun ConfirmSaveDialog() {
         val confirm_action_callback = this.state_model.confirm_action_callback
-        confirm_action_callback.value?.let { callback ->
-            val adj_callback = {
-                callback()
-                confirm_action_callback.value = null
-            }
-            val visibility = remember { mutableStateOf(true) }
+        key (this.state_model.confirm_action_callback.value) {
+            confirm_action_callback.value?.let { callback ->
+                val adj_callback = {
+                    callback()
+                    confirm_action_callback.value = null
+                }
 
-            PaganDialog(visibility) {
-                Row { DialogSTitle(R.string.dialog_save_warning_title, modifier = Modifier.weight(1F)) }
-                DialogBar(
-                    negative = {
-                        adj_callback()
-                    },
-                    neutral = {
-                        confirm_action_callback.value = null
-                    },
-                    positive = {
-                        this@ComponentActivityEditor.save()
-                        adj_callback()
-                    }
-                )
+                PaganDialog(this.state_model.confirm_action_visibility) {
+                    Row { DialogSTitle(R.string.dialog_save_warning_title, modifier = Modifier.weight(1F)) }
+                    DialogBar(
+                        negative = {
+                            adj_callback()
+                        },
+                        neutral = {
+                            confirm_action_callback.value = null
+                        },
+                        positive = {
+                            this@ComponentActivityEditor.save()
+                            adj_callback()
+                        }
+                    )
+                }
             }
         }
     }
@@ -3384,6 +3385,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             callback()
         } else {
             this.state_model.confirm_action_callback.value = callback
+            this.state_model.confirm_action_visibility.value = true
         }
     }
 

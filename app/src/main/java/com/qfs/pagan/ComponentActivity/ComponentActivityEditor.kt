@@ -2474,10 +2474,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     override fun Dialogs() {
         ConfirmSaveDialog()
-        ChannelPresetDialog(
-            this@ComponentActivityEditor.state_model.channel_preset_dialog_visibility,
-            this@ComponentActivityEditor.state_model.channel_preset_dialog
-        )
+        key(
+            this@ComponentActivityEditor.state_model.channel_preset_dialog_visibility.value,
+            this@ComponentActivityEditor.state_model.channel_preset_dialog.value
+        ) {
+            ChannelPresetDialog(
+                this@ComponentActivityEditor.state_model.channel_preset_dialog_visibility,
+                this@ComponentActivityEditor.state_model.channel_preset_dialog
+            )
+        }
     }
 
     @Composable
@@ -2646,12 +2651,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
         val opus_manager = this.controller_model.opus_manager
-        val is_percussion = opus_manager.is_percussion(channel)
-        val default = opus_manager.get_channel_instrument(channel)
+        val channel_data = this.state_model.channel_data[channel]
+        val is_percussion = channel_data.percussion.value
+        val default = channel_data.instrument.value
+
 
         val default_presets = stringArrayResource(R.array.general_midi_presets)
         val pre_option = mutableListOf<Pair<PresetKey, String?>>()
-        val can_preview = this.controller_model.audio_interface.has_soundfont() || this.controller_model.active_midi_device != null
+        val can_preview =
+            this.controller_model.audio_interface.has_soundfont() || this.controller_model.active_midi_device != null
 
         if (!this.controller_model.audio_interface.has_soundfont() || this.controller_model.active_midi_device != null) {
             // Setup default empty preset names
@@ -2677,7 +2685,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
         val options = mutableListOf<MutableList<Pair<PresetKey, @Composable RowScope.() -> Unit>>>()
-        val preset_names =  mutableListOf<MutableList<Pair<PresetKey, String?>>>()
+        val preset_names = mutableListOf<MutableList<Pair<PresetKey, String?>>>()
         val existing_keys = mutableSetOf<Int>()
 
         for ((preset_key, name) in pre_option) {
@@ -2728,9 +2736,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                             )
                                         }
                                         if (this@ComponentActivityEditor.controller_model.active_midi_device != null) {
-                                            this@ComponentActivityEditor.controller_model.play_events(channel, events)
+                                            this@ComponentActivityEditor.controller_model.play_events(
+                                                channel,
+                                                events
+                                            )
                                         } else {
-                                            this@ComponentActivityEditor.controller_model.play_events(preset_key, is_percussion, events)
+                                            this@ComponentActivityEditor.controller_model.play_events(
+                                                preset_key,
+                                                is_percussion,
+                                                events
+                                            )
                                         }
                                     }
                                     .height(Dimensions.PreviewIconHeight)
@@ -2772,7 +2787,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
             )
         }
 
-        PaganDialog(visibility) {
+        PaganDialog(
+            visibility,
+        ) {
             val selected_sort: MutableState<Int?> = remember { mutableStateOf(null) }
             val scope = rememberCoroutineScope()
             val sorted_pages = existing_keys.toList().sorted()
@@ -2803,7 +2820,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 onDismissRequest = { expanded.value = false }
                             ) {
                                 for (j in sorted_pages) {
-                                    val soundfont_path = opus_manager.vm_state.active_soundfonts.value[sorted_pages[j]]
+                                    val soundfont_path =
+                                        opus_manager.vm_state.active_soundfonts.value[sorted_pages[j]]
                                     val soundfont_name = soundfont_path.split("/").let { it[it.size - 1].trim() }
                                     DropdownMenuItem(
                                         text = { Text("$j: $soundfont_name") },
@@ -2827,11 +2845,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         .width(Dimensions.PresetMenuArrowWidth)
                                         .height(Dimensions.PresetMenuArrowHeight),
                                     painter = painterResource(R.drawable.icon_arrow_prev),
-                                    contentDescription = (opus_manager.vm_state.active_soundfonts.value[sorted_pages[i - 1]]).split("/").let { it[it.size - 1].trim() },
+                                    contentDescription = (opus_manager.vm_state.active_soundfonts.value[sorted_pages[i - 1]]).split(
+                                        "/"
+                                    ).let { it[it.size - 1].trim() },
                                 )
                             }
                             Text(
-                                (opus_manager.vm_state.active_soundfonts.value[sorted_pages[i]]).split("/").let { it[it.size - 1].trim() },
+                                (opus_manager.vm_state.active_soundfonts.value[sorted_pages[i]]).split("/")
+                                    .let { it[it.size - 1].trim() },
                                 maxLines = 1,
                                 textAlign = TextAlign.Center,
                                 modifier = Modifier
@@ -2850,7 +2871,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         .width(Dimensions.PresetMenuArrowWidth)
                                         .height(Dimensions.PresetMenuArrowHeight),
                                     painter = painterResource(R.drawable.icon_arrow_next),
-                                    contentDescription = (opus_manager.vm_state.active_soundfonts.value[sorted_pages[i + 1]]).split("/").let { it[it.size - 1].trim() },
+                                    contentDescription = (opus_manager.vm_state.active_soundfonts.value[sorted_pages[i + 1]]).split(
+                                        "/"
+                                    ).let { it[it.size - 1].trim() },
                                 )
                             }
                             Spacer(Modifier.width(Dimensions.Space.Medium))

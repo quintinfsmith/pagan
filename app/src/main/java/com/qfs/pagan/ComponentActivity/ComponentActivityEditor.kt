@@ -2716,8 +2716,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         val events = if (is_percussion) {
                                             listOf(
                                                 Triple(11, 100, .5F),
-                                                Triple(8, 300, .5F),
-                                                Triple(19, 1000, .5F)
+                                                Triple(8, 200, .5F),
+                                                Triple(19, 400, .5F)
                                             )
                                         } else {
                                             listOf(
@@ -2882,8 +2882,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 channel,
                                 listOf(
                                     Triple(11, 100, .5F),
-                                    Triple(8, 300, .5F),
-                                    Triple(19, 1000, .5F)
+                                    Triple(8, 200, .5F),
+                                    Triple(19, 400, .5F)
                                 )
                             )
                         }

@@ -100,7 +100,6 @@ fun <T> SortableMenu(
         }
     }
 
-
     val scroll_state = rememberScrollState()
     val item_map = HashMap<Int, Float>()
 

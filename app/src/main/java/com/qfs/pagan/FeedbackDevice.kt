@@ -29,7 +29,6 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
         private val _handles = mutableSetOf<Pair<SampleHandle, Int>>()
         private val _mutex = Mutex()
         var start_frame: Int? = null
-        var max_frame = -1
         var volume = .6F
         val volume_event_data = ControllerEventData(
             0,
@@ -51,7 +50,6 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
 
             val usable_handles = this._handles.filter { it.second + (this.start_frame ?: 0) <= frame }
             for ((handle, _) in usable_handles) {
-                this.max_frame = max(frame + handle.release_frame!! + handle.get_release_duration(), this.max_frame)
                 output.add(Pair(handle, intArrayOf(handle.uuid)))
             }
 
@@ -102,7 +100,7 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
     override fun on_start() { }
 
     override fun on_stop() {
-        (this.sample_frame_map as ImmediateFrameMap).max_frame = 0
+        (this.sample_frame_map as ImmediateFrameMap).start_frame = null
     }
 
     override fun on_cancelled() { }

@@ -8,19 +8,13 @@
  * Inquiries can be made to Quintin via email at smith.quintin@protonmail.com
  */
 package com.qfs.pagan.structure.opusmanager.cursor
-import android.widget.Toast
 import androidx.compose.ui.graphics.Color
-import com.qfs.pagan.ActionDispatcher.IncompatibleEffectMerge
-import com.qfs.pagan.ActionDispatcher.UnexpectedBranch
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.PresetKey
-import com.qfs.pagan.R
 import com.qfs.pagan.RelativeInputMode
-import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
-import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
 import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.InvalidOverwriteCall
 import com.qfs.pagan.structure.opusmanager.base.MixedInstrumentException
@@ -35,10 +29,8 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import java.lang.Integer.max
 import java.lang.Integer.min
-import kotlin.div
 import kotlin.math.abs
 import kotlin.math.ceil
-import kotlin.text.toFloat
 
 open class OpusLayerCursor: OpusLayerBase() {
     var cursor = OpusManagerCursor()
@@ -957,20 +949,20 @@ open class OpusLayerCursor: OpusLayerBase() {
 
             CtlLineLevel.Global -> {
                 val working_tree = this.get_global_ctl_tree<EffectEvent>(cursor.ctl_type!!, cursor.beat).copy()
-                val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, cursor.get_position(), count)
+                val (real_count, _) = this._calculate_new_position_after_remove(working_tree, cursor.get_position(), count)
                 this.repeat_controller_global_remove(cursor.ctl_type!!, cursor.beat, cursor.get_position(), real_count)
             }
 
             CtlLineLevel.Channel -> {
                 val working_tree = this.get_channel_ctl_tree<EffectEvent>(cursor.ctl_type!!, cursor.channel, cursor.beat).copy()
-                val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, cursor.get_position(), count)
+                val (real_count, _) = this._calculate_new_position_after_remove(working_tree, cursor.get_position(), count)
                 this.repeat_controller_channel_remove(cursor.ctl_type!!, cursor.channel, cursor.beat, cursor.get_position(), real_count)
             }
 
             CtlLineLevel.Line -> {
                 val beat_key = cursor.get_beatkey()
                 val working_tree = this.get_line_ctl_tree<EffectEvent>(cursor.ctl_type!!, beat_key).copy()
-                val (real_count, cursor_position) = this._calculate_new_position_after_remove(working_tree, cursor.get_position(), count)
+                val (real_count, _) = this._calculate_new_position_after_remove(working_tree, cursor.get_position(), count)
                 this.repeat_controller_line_remove(cursor.ctl_type!!, beat_key, cursor.get_position(), real_count)
             }
         }
@@ -1146,10 +1138,8 @@ open class OpusLayerCursor: OpusLayerBase() {
     fun <T> _calculate_new_position_after_remove(working_tree: ReducibleTree<T>, position: List<Int>, count: Int): Pair<Int, List<Int>> {
         val cursor_position = position.toMutableList()
         var real_count = 0
-        for (i in 0 until count) {
-            if (cursor_position.isEmpty()) {
-                break
-            }
+        for (_ in 0 until count) {
+            if (cursor_position.isEmpty()) break
 
             val parent = working_tree.get(*cursor_position.subList(0, cursor_position.size - 1).toIntArray())
             if (parent.size == 2) {
@@ -1430,69 +1420,25 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     fun copy_global_ctl_to_beat(beat: Int) {
         if (this.cursor.ctl_level != CtlLineLevel.Global) throw InvalidOverwriteCall()
+        if (!this.cursor.is_selecting_range()) throw InvalidCursorState()
 
-        if (this.cursor.is_selecting_range()) {
-            val (first, second) = this.cursor.get_ordered_range()!!
-            when (this.cursor.ctl_level) {
-                CtlLineLevel.Line -> {
-                    if (first != second) {
-                        this.controller_line_to_global_overwrite_range(this.cursor.ctl_type!!, first.channel, first.line_offset, first.beat, second.beat, beat)
-                    } else {
-                        this.controller_global_replace_tree(this.cursor.ctl_type!!, beat, listOf(), this.get_line_ctl_tree_copy(this.cursor.ctl_type!!, first, listOf()))
-                    }
-                }
-                CtlLineLevel.Channel -> {
-                    if (first != second) {
-                        this.controller_channel_to_global_overwrite_range(this.cursor.ctl_type!!, beat, first.channel, first.beat, second.beat)
-                    } else {
-                        this.controller_global_replace_tree(this.cursor.ctl_type!!, beat, listOf(), this.get_channel_ctl_tree_copy(this.cursor.ctl_type!!, first.channel, first.beat, listOf()))
-                    }
-                }
-                CtlLineLevel.Global -> {
-                    if (first != second) {
-                        this.controller_global_overwrite_range(this.cursor.ctl_type!!, beat, first.beat, second.beat)
-                    } else {
-                        this.controller_global_replace_tree(this.cursor.ctl_type!!, beat, listOf(), this.get_global_ctl_tree(this.cursor.ctl_type!!, first.beat, listOf()))
-                    }
-                }
-                null -> {}
-            }
+        val (first, second) = this.cursor.get_ordered_range()!!
+        if (first != second) {
+            this.controller_global_overwrite_range(this.cursor.ctl_type!!, beat, first.beat, second.beat)
         } else {
-            throw InvalidCursorState()
+            this.controller_global_replace_tree(this.cursor.ctl_type!!, beat, listOf(), this.get_global_ctl_tree(this.cursor.ctl_type!!, first.beat, listOf()))
         }
     }
 
     fun move_global_ctl_to_beat(beat: Int) {
         if (this.cursor.ctl_level != CtlLineLevel.Global) throw InvalidOverwriteCall()
+        if (!this.cursor.is_selecting_range()) throw InvalidCursorState()
 
-        if (this.cursor.is_selecting_range()) {
-            val (first, second) = this.cursor.get_ordered_range()!!
-            when (this.cursor.ctl_level) {
-                CtlLineLevel.Line -> {
-                    if (first != second) {
-                        this.controller_line_to_global_move_range(this.cursor.ctl_type!!, first.channel, first.line_offset, first.beat, second.beat, beat)
-                    } else {
-                        this.controller_line_to_global_move_leaf(this.cursor.ctl_type!!, first, listOf(), beat, listOf())
-                    }
-                }
-                CtlLineLevel.Channel -> {
-                    if (first != second) {
-                        this.controller_channel_to_global_move_range(this.cursor.ctl_type!!, beat, first.channel, first.beat, second.beat)
-                    } else {
-                        this.controller_channel_to_global_move_leaf(this.cursor.ctl_type!!, first.channel, first.beat, listOf(), beat, listOf())
-                    }
-                }
-                CtlLineLevel.Global -> {
-                    if (first != second) {
-                        this.controller_global_move_range(this.cursor.ctl_type!!, beat, first.beat, second.beat)
-                    } else {
-                        this.controller_global_move_leaf(this.cursor.ctl_type!!, first.beat, listOf(), beat, listOf())
-                    }
-                }
-                null -> throw InvalidCursorState()
-            }
+        val (first, second) = this.cursor.get_ordered_range()!!
+        if (first != second) {
+            this.controller_global_move_range(this.cursor.ctl_type!!, beat, first.beat, second.beat)
         } else {
-            throw InvalidCursorState()
+            this.controller_global_move_leaf(this.cursor.ctl_type!!, first.beat, listOf(), beat, listOf())
         }
     }
 
@@ -1627,7 +1573,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 val working_beat_key = cursor.get_beatkey()
                 var working_position = cursor.get_position()
 
-                for (i in 0 until repeat) {
+                for (_ in 0 until repeat) {
                     val next_pair = this.get_line_ctl_proceeding_leaf_position(
                         cursor.ctl_type!!,
                         working_beat_key,
@@ -1647,7 +1593,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 var working_position = cursor.get_position()
                 val controller = this.channels[channel].get_controller<EffectEvent>(cursor.ctl_type!!)
 
-                for (i in 0 until repeat) {
+                for (_ in 0 until repeat) {
                     val next_pair = controller.get_proceding_leaf_position(
                         working_beat,
                         working_position
@@ -1661,7 +1607,7 @@ open class OpusLayerCursor: OpusLayerBase() {
             CtlLineLevel.Global -> {
                 var working_beat = cursor.beat
                 var working_position = cursor.get_position()
-                for (i in 0 until repeat) {
+                for (_ in 0 until repeat) {
                     val next_pair = this.get_global_ctl_proceeding_leaf_position(
                         cursor.ctl_type!!,
                         working_beat,
@@ -1677,7 +1623,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 var working_beat_key = cursor.get_beatkey()
                 var working_position = cursor.get_position()
 
-                for (i in 0 until repeat) {
+                for (_ in 0 until repeat) {
                     val next_pair = this.get_proceeding_leaf_position(
                         working_beat_key,
                         working_position
@@ -1697,7 +1643,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 var working_position = cursor.get_position()
                 val controller = this.channels[working_beat_key.channel].lines[working_beat_key.line_offset].get_controller<EffectEvent>(cursor.ctl_type!!)
 
-                for (i in 0 until repeat) {
+                for (_ in 0 until repeat) {
                     val next_pair = controller.get_preceding_leaf_position(
                         working_beat_key.beat,
                         working_position
@@ -1716,7 +1662,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 var working_position = cursor.get_position()
                 val controller = this.channels[channel].get_controller<EffectEvent>(cursor.ctl_type!!)
 
-                for (i in 0 until repeat) {
+                for (_ in 0 until repeat) {
                     val next_pair = controller.get_preceding_leaf_position(
                         working_beat,
                         working_position
@@ -1731,7 +1677,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 var working_beat = cursor.beat
                 var working_position = cursor.get_position()
                 val controller = this.get_controller<EffectEvent>(cursor.ctl_type!!)
-                for (i in 0 until repeat) {
+                for (_ in 0 until repeat) {
                     val next_pair = controller.get_preceding_leaf_position(
                         working_beat,
                         working_position
@@ -1746,7 +1692,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 var working_beat_key = cursor.get_beatkey()
                 var working_position = cursor.get_position()
 
-                for (i in 0 until repeat) {
+                for (_ in 0 until repeat) {
                     val next_pair = this.get_preceding_leaf_position(
                         working_beat_key,
                         working_position
@@ -1765,7 +1711,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 var working_position = this.cursor.get_position()
                 val controller = this.channels[this.cursor.channel].lines[this.cursor.line_offset].get_controller<EffectEvent>(this.cursor.ctl_type!!)
 
-                for (i in 0 until repeat) {
+                for (_ in 0 until repeat) {
                     val next_pair = controller.get_preceding_leaf_position(
                         working_beat,
                         working_position
@@ -1783,7 +1729,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 var working_position = this.cursor.get_position()
                 val controller = this.channels[channel].get_controller<EffectEvent>(this.cursor.ctl_type!!)
 
-                for (i in 0 until repeat) {
+                for (_ in 0 until repeat) {
                     val next_pair = controller.get_preceding_leaf_position(
                         working_beat,
                         working_position
@@ -1798,7 +1744,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 var working_position = this.cursor.get_position()
                 val controller = this.get_controller<EffectEvent>(this.cursor.ctl_type!!)
 
-                for (i in 0 until repeat) {
+                for (_ in 0 until repeat) {
                     val next_pair = controller.get_preceding_leaf_position(
                         working_beat,
                         working_position
@@ -1812,7 +1758,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 var working_beat_key = this.cursor.get_beatkey()
                 var working_position = this.cursor.get_position()
 
-                for (i in 0 until repeat) {
+                for (_ in 0 until repeat) {
                     val next_pair = this.get_preceding_leaf_position(
                         working_beat_key,
                         working_position
@@ -1831,7 +1777,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 val working_beat_key = cursor.get_beatkey()
                 var working_position = cursor.get_position()
 
-                for (i in 0 until repeat) {
+                for (_ in 0 until repeat) {
                     val next_pair = this.get_line_ctl_proceeding_leaf_position(
                         cursor.ctl_type!!,
                         working_beat_key,
@@ -1850,7 +1796,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 var working_position = cursor.get_position()
                 val controller = this.channels[channel].get_controller<EffectEvent>(cursor.ctl_type!!)
 
-                for (i in 0 until repeat) {
+                for (_ in 0 until repeat) {
                     val next_pair = controller.get_proceding_leaf_position(
                         working_beat,
                         working_position
@@ -1863,7 +1809,7 @@ open class OpusLayerCursor: OpusLayerBase() {
             CtlLineLevel.Global -> {
                 var working_beat = cursor.beat
                 var working_position = cursor.get_position()
-                for (i in 0 until repeat) {
+                for (_ in 0 until repeat) {
                     val next_pair = this.get_global_ctl_proceeding_leaf_position(
                         cursor.ctl_type!!,
                         working_beat,
@@ -1879,7 +1825,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                 var working_beat_key = cursor.get_beatkey()
                 var working_position = cursor.get_position()
 
-                for (i in 0 until repeat) {
+                for (_ in 0 until repeat) {
                     val next_pair = this.get_proceeding_leaf_position(
                         working_beat_key,
                         working_position

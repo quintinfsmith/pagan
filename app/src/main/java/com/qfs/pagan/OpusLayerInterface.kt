@@ -2183,7 +2183,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 )
             )
         ) ?: return
-        this.vm_state.shift_line_offsets_up(channel, adj_line_offset, y)
+        this.vm_state.shift_line_offsets_up(channel, y)
     }
 
     private fun _new_column_in_column_width_map(index: Int) {

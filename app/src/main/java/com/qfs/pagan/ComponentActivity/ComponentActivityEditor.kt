@@ -850,6 +850,34 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
+    fun MasterPlayButton(vm_state: ViewModelEditorState) {
+        if (vm_state.soundfont_ready.value) {
+            if (vm_state.use_midi_playback.value) {
+                PlayMidiButton()
+            } else if (vm_state.soundfont_active.value != null) {
+                PlaySFButton()
+            } else {
+                NoPlayButton()
+            }
+        } else {
+            PlayLoadingButton()
+        }
+    }
+
+    @Composable
+    fun PlayLoadingButton() {
+        Box(contentAlignment = Alignment.Center) {
+            TopBarIcon(
+                modifier = Modifier.alpha(Values.DisabledTopBarIconAlpha),
+                icon = R.drawable.icon_play,
+                description = R.string.menu_item_playpause,
+                onClick = { },
+            )
+            SoundfontLoadingIndicator()
+        }
+    }
+
+    @Composable
     fun NoPlayButton() {
         val dialog_visibility = remember { mutableStateOf(false) }
         TopBarIcon(
@@ -1131,20 +1159,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         Spacer(Modifier.weight(1F))
 
-        if (vm_state.soundfont_ready.value) {
-            if (vm_state.use_midi_playback.value) {
-                PlayMidiButton()
-            } else if (vm_state.soundfont_active.value != null) {
-                PlaySFButton()
-            } else {
-                NoPlayButton()
-            }
-        } else {
-            Box(contentAlignment = Alignment.Center) {
-                NoPlayButton()
-                SoundfontLoadingIndicator()
-            }
-        }
+        MasterPlayButton(vm_state)
         Spacer(Modifier.weight(1F))
 
         UndoButton(vm_state, opus_manager)
@@ -1205,20 +1220,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val opus_manager = this@ComponentActivityEditor.controller_model.opus_manager
 
         Spacer(Modifier.width(Dimensions.TopBarItemSpace))
-        if (vm_state.soundfont_ready.value) {
-            if (vm_state.use_midi_playback.value) {
-                PlayMidiButton()
-            } else if (vm_state.soundfont_active.value != null) {
-                PlaySFButton()
-            } else {
-                NoPlayButton()
-            }
-        } else {
-            Box(contentAlignment = Alignment.Center) {
-                NoPlayButton()
-                SoundfontLoadingIndicator()
-            }
-        }
+        MasterPlayButton(vm_state)
         Spacer(Modifier.width(Dimensions.TopBarItemSpace))
         Row(
             modifier = Modifier.weight(1F),

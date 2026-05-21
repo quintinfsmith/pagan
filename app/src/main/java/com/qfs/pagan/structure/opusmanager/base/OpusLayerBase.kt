@@ -9,9 +9,6 @@
  */
 package com.qfs.pagan.structure.opusmanager.base
 
-import android.net.Uri
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BalanceMSB
@@ -61,7 +58,6 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
-import kotlin.time.Instant
 
 /**
  * The logic of the Opus Manager.
@@ -226,7 +222,7 @@ open class OpusLayerBase: Effectable {
             val opus = ReducibleTree<Set<Array<Int>>>()
 
             if (beat_values.isEmpty()) {
-                for (i in 0 until 4) {
+                for (_ in 0 until 4) {
                     beat_values.add(ReducibleTree())
                 }
             }
@@ -464,7 +460,7 @@ open class OpusLayerBase: Effectable {
 
             for (j in remap_trees.size - 1 downTo 0) {
                 val (lines_to_insert, remaps) = remap_trees[j]
-                for (k in 0 until lines_to_insert - 1) {
+                for (_ in 0 until lines_to_insert - 1) {
                     this.new_line(i, j + 1)
                     for ((type, controller) in working_channel.lines[j].controllers.get_all()) {
 
@@ -1445,7 +1441,7 @@ open class OpusLayerBase: Effectable {
      * [uuid] is the unique identifier used when rebuilding a channel
      */
     open fun new_channel(channel: Int? = null, lines: Int = 1, uuid: Int? = null, is_percussion: Boolean = false) {
-        val actual_uuid = uuid ?: OpusLayerBase.gen_channel_uuid()
+        val actual_uuid = uuid ?: gen_channel_uuid()
         val new_channel = if (is_percussion) {
             OpusPercussionChannel(actual_uuid)
         } else {
@@ -1892,19 +1888,19 @@ open class OpusLayerBase: Effectable {
     }
 
     open fun insert_after_repeat(beat_key: BeatKey, position: List<Int>, repeat: Int = 1) {
-        for (i in 0 until repeat) {
+        for (_ in 0 until repeat) {
             this.insert_after(beat_key, position)
         }
     }
 
     open fun insert_beats(beat_index: Int, count: Int) {
-        for (i in 0 until count) {
+        for (_ in 0 until count) {
             this.insert_beat(beat_index)
         }
     }
 
     open fun insert_repeat(beat_key: BeatKey, position: List<Int>, repeat: Int = 1) {
-        for (i in 0 until repeat) {
+        for (_ in 0 until repeat) {
             this.insert(beat_key, position)
         }
     }
@@ -1964,7 +1960,7 @@ open class OpusLayerBase: Effectable {
 
     open fun remove_line_repeat(channel: Int, line_offset: Int, count: Int) {
         val working_channel = this.get_channel(channel)
-        for (i in 0 until count) {
+        for (_ in 0 until count) {
             if (working_channel.size <= 1) break
             this.remove_line(
                 channel,
@@ -1974,7 +1970,7 @@ open class OpusLayerBase: Effectable {
     }
 
     open fun new_line_repeat(channel: Int, line_offset: Int, count: Int) {
-        for (i in 0 until count) {
+        for (_ in 0 until count) {
             this.new_line(channel, line_offset)
         }
     }
@@ -2121,7 +2117,7 @@ open class OpusLayerBase: Effectable {
             this.insert_beat(this.length)
         }
 
-        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
+        val (from_key, to_key) = get_ordered_beat_key_pair(first_corner, second_corner)
 
         val original_keys = this.get_beatkeys_in_range(from_key, to_key)
         val target_keys = this._get_beatkeys_from_range(beat_key, from_key, to_key)
@@ -2320,7 +2316,7 @@ open class OpusLayerBase: Effectable {
             this.insert_beat(this.length)
         }
 
-        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
+        val (from_key, to_key) = get_ordered_beat_key_pair(first_corner, second_corner)
         val original_keys = this.get_beatkeys_in_range(from_key, to_key)
 
 
@@ -2387,7 +2383,7 @@ open class OpusLayerBase: Effectable {
             this.insert_beats(this.length, max_beat - this.length)
         }
 
-        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_corner, second_corner)
+        val (from_key, to_key) = get_ordered_beat_key_pair(first_corner, second_corner)
 
         val original_keys = this.get_beatkeys_in_range(from_key, to_key)
         val target_keys = this._get_beatkeys_from_range(beat_key, from_key, to_key)
@@ -2634,7 +2630,7 @@ open class OpusLayerBase: Effectable {
 
     open fun remove_repeat(beat_key: BeatKey, position: List<Int>, count: Int = 1) {
         val adj_position = position.toMutableList()
-        for (i in 0 until count) {
+        for (_ in 0 until count) {
             val tree = this.get_tree(beat_key, adj_position)
             val parent_size = tree.parent?.size ?: 0
             this.remove(beat_key, adj_position)
@@ -2649,7 +2645,7 @@ open class OpusLayerBase: Effectable {
 
     open fun repeat_controller_line_remove(type: EffectType, beat_key: BeatKey, position: List<Int>, count: Int) {
         val adj_position = position.toMutableList()
-        for (i in 0 until count) {
+        for (_ in 0 until count) {
             val tree = this.get_line_ctl_tree<EffectEvent>(type, beat_key, adj_position)
             val parent_size = tree.parent?.size ?: 0
 
@@ -2664,7 +2660,7 @@ open class OpusLayerBase: Effectable {
 
     open fun repeat_controller_channel_remove(type: EffectType, channel: Int, beat: Int, position: List<Int>, repeat: Int = 1) {
         val adj_position = position.toMutableList()
-        for (i in 0 until repeat) {
+        for (_ in 0 until repeat) {
             val tree = this.get_channel_ctl_tree<EffectEvent>(type, channel, beat, adj_position)
             val parent_size = tree.parent?.size ?: 0
 
@@ -2680,7 +2676,7 @@ open class OpusLayerBase: Effectable {
 
     open fun repeat_controller_global_remove(type: EffectType, beat: Int, position: List<Int>, count: Int) {
         val adj_position = position.toMutableList()
-        for (i in 0 until count) {
+        for (_ in 0 until count) {
             val tree = this.get_global_ctl_tree<EffectEvent>(type, beat, adj_position)
             val parent_size = tree.parent?.size ?: 0
 
@@ -2808,7 +2804,7 @@ open class OpusLayerBase: Effectable {
     }
 
     open fun controller_line_overwrite_range_horizontally(type: EffectType, channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey, repeat: Int? = null) {
-        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
+        val (from_key, to_key) = get_ordered_beat_key_pair(first_key, second_key)
         // Increase song duration as needed
         val width = to_key.beat - from_key.beat + 1
         val count = repeat ?: ceil((this.length - from_key.beat).toFloat() / width.toFloat()).toInt()
@@ -3349,7 +3345,7 @@ open class OpusLayerBase: Effectable {
                 working_offset -= working_position_pair.first.beat
                 val working_offset_end = working_offset + Rational(duration, working_width)
                 for ((from_offset, to_offset) in blocked_ranges) {
-                    if ((working_offset >= from_offset && working_offset < to_offset) || (working_offset <= from_offset && working_offset_end > from_offset)) {
+                    if ((working_offset in from_offset ..< to_offset) || (from_offset in working_offset ..< working_offset_end)) {
                         throw InvalidMergeException()
                     }
                 }
@@ -4075,7 +4071,7 @@ open class OpusLayerBase: Effectable {
     }
 
     open fun _project_change_new() {
-        this.import_from_other(OpusLayerBase.initialize_basic())
+        this.import_from_other(initialize_basic())
     }
 
     fun project_change_json(json_data: JSONHashMap, on_load_callback: ((JSONHashMap) -> Unit)? = null) {
@@ -4098,7 +4094,7 @@ open class OpusLayerBase: Effectable {
                 this.length
             )
 
-            channel.uuid = OpusLayerBase.gen_channel_uuid()
+            channel.uuid = gen_channel_uuid()
             this.channels.add(channel)
             this._channel_uuid_map[channel.uuid] = channel
         }
@@ -4144,7 +4140,7 @@ open class OpusLayerBase: Effectable {
     }
 
     open fun _project_change_midi(midi: Midi) {
-        val (settree, tempo_line, instrument_map) = OpusLayerBase.tree_from_midi(midi)
+        val (settree, tempo_line, instrument_map) = tree_from_midi(midi)
         val mapped_events = settree.get_events_mapped()
         val midi_channel_map = HashMap<Int, Int>()
         val channel_sizes = mutableListOf<Int>()
@@ -4190,7 +4186,7 @@ open class OpusLayerBase: Effectable {
                     var insertion_index = 0
                     for (i in 0 until blocked_percussion_ranges[index].size) {
                         for ((start, end) in blocked_percussion_ranges[index][i]) {
-                            if ((working_start >= start && working_start < end) || (working_end > start && working_end <= end) || (start >= working_start && start < working_end) || (end > working_start && end <= working_end)) {
+                            if ((working_start in start ..< end) || (working_end > start && working_end <= end) || (start in working_start..< working_end) || (end > working_start && end <= working_end)) {
                                 insertion_index += 1
                                 break
                             }
@@ -4214,7 +4210,7 @@ open class OpusLayerBase: Effectable {
                     var insertion_index = 0
                     for (i in 0 until blocked_ranges[channel_index]!!.size) {
                         for ((start, end) in blocked_ranges[channel_index]!![i]) {
-                            if ((working_start >= start && working_start < end) || (working_end > start && working_end <= end) || (start >= working_start && start < working_end) || (end > working_start && end <= working_end)) {
+                            if ((working_start in start ..< end) || (working_end > start && working_end <= end) || (start in working_start..< working_end) || (end > working_start && end <= working_end)) {
                                 insertion_index += 1
                                 break
                             }
@@ -4271,7 +4267,7 @@ open class OpusLayerBase: Effectable {
             Pair(midi_channel_map[keys[i]]!!, keys[i])
         }.sortedBy { it.first }
 
-        sorted_channels.forEachIndexed { i: Int, pair: Pair<Int, Int> ->
+        sorted_channels.forEach { pair: Pair<Int, Int> ->
             val (channel, midi_channel) = pair
             this.new_channel(lines = channel_sizes[channel], is_percussion = midi_channel == Midi.PERCUSSION_CHANNEL)
         }
@@ -4671,7 +4667,7 @@ open class OpusLayerBase: Effectable {
     }
 
     private fun _get_beat_keys_for_overwrite_beat_range_horizontally(channel: Int, line_offset: Int, first_key: BeatKey, second_key: BeatKey, count: Int): List<Pair<BeatKey, List<BeatKey>>> {
-        val (from_key, to_key) = OpusLayerBase.get_ordered_beat_key_pair(first_key, second_key)
+        val (from_key, to_key) = get_ordered_beat_key_pair(first_key, second_key)
         val width = to_key.beat - from_key.beat + 1
         val beat_keys = this.get_beatkeys_in_range(from_key, to_key)
         val y_index_main = this.get_instrument_line_index(channel, line_offset)
@@ -4931,7 +4927,7 @@ open class OpusLayerBase: Effectable {
     }
 
     override fun <T : EffectEvent> get_controller(type: EffectType): EffectController<T> {
-        return this.controllers.get<T>(type)
+        return this.controllers[type]
     }
 
     open fun set_channel_event_color(channel: Int, color: Color? = null) {
@@ -4974,14 +4970,14 @@ open class OpusLayerBase: Effectable {
 
     open fun duplicate_channel(channel: Int): Int {
         val new_channel = this.channels[channel].copy()
-        new_channel.uuid = OpusLayerBase.gen_channel_uuid()
+        new_channel.uuid = gen_channel_uuid()
         this.channels.add(channel, new_channel)
         this._channel_uuid_map[new_channel.uuid] = new_channel
         this.recache_line_maps()
         return new_channel.uuid
     }
 
-    fun calculate_note_bend(channel: Int, event_value: Int) : Pair<Int, Int> {
+    fun calculate_note_bend(event_value: Int) : Pair<Int, Int> {
         val radix = this.get_radix()
         val octave = event_value / radix
         val offset = this.tuning_map[event_value % radix]

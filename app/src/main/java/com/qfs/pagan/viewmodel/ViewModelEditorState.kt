@@ -318,7 +318,7 @@ class ViewModelEditorState: ViewModel() {
 
     fun decrement_zoom(center: Float? = null) {
         this.queue_recenter(center) {
-            this.queued_zoom_index.value = this.zoom_index.value - 1
+            this.queued_zoom_index.value = max(0, this.zoom_index.value - 1)
         }
     }
 

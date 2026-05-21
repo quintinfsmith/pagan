@@ -78,7 +78,6 @@ open class OpusLayerBase: Effectable {
         }
 
         fun get_ordered_beat_key_pair(first: BeatKey, second: BeatKey): Pair<BeatKey, BeatKey> {
-            val items = mutableListOf<Pair<Uri, @Composable RowScope.() -> Unit>>()
             val (from_key, to_key) = if (first.channel < second.channel) {
                 Pair(
                     BeatKey(first.channel, first.line_offset, -1),

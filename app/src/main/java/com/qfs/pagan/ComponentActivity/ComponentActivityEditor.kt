@@ -1095,14 +1095,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
         }
 
-        DialogMenu(
+        DialogMenu<MidiDeviceInfo?>(
             device_menu_visibility,
             R.string.playback_device,
-            options = {
-                val options = mutableListOf<Pair<MidiDeviceInfo?, @Composable RowScope.() -> Unit>>(
-                    Pair(null) { Text(R.string.device_menu_default_name) }
-                )
-
+            options = { options ->
+                options.add(Pair(null) { Text(R.string.device_menu_default_name) })
                 for (device_info in this@ComponentActivityEditor._midi_interface.poll_output_devices()) {
                     options.add(
                         Pair(device_info) {
@@ -1113,8 +1110,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         }
                     )
                 }
-
-                options
             },
             default = vm_controller.active_midi_device
         ) { device ->
@@ -1572,14 +1567,18 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 DialogMenu(
                                     visibility = this@ComponentActivityEditor.view_model.get_dialog_state("global_effects"),
                                     title = R.string.show_global_controls,
-                                    options = {
-                                        // TODO: Work-in-progress
-                                        val options = mutableListOf<Pair<EffectType, @Composable RowScope.() -> Unit>>()
-                                        for (ctl_type in OpusLayerInterface.global_controller_domain) {
-                                            if (this@ComponentActivityEditor.controller_model.opus_manager.is_global_ctl_visible(ctl_type)) continue
-                                            options.add(Pair(ctl_type) { EffectMenuItem(ctl_type) })
+                                    options = { options ->
+                                        val available_effects = OpusLayerInterface.global_controller_domain.toMutableList()
+                                        for (line in vm_state.line_data) {
+                                            if (line.channel.value != null) continue
+                                            val ctl_type = line.ctl_type.value ?: continue
+                                            if (!available_effects.contains(ctl_type)) continue
+                                            available_effects.remove(ctl_type)
                                         }
-                                        options
+
+                                        for (ctl_type in available_effects) {
+                                            options.add( Pair(ctl_type) { EffectMenuItem(ctl_type) } )
+                                        }
                                     }
                                 ) { value ->
                                     opus_manager.toggle_global_controller_visibility(value)
@@ -2226,7 +2225,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     DialogMenu(
                         visibility = dialog_visibility,
                         title = R.string.dlg_export,
-                        options = { this@ComponentActivityEditor.get_exportable_options() },
+                        options = { this@ComponentActivityEditor.get_exportable_options(it) },
                         callback = { export_type ->
                             if (export_type == Exportable.MIDI1 && opus_manager.get_percussion_channels().size > 1) {
                                 export_check_dialog_visibility.value = true
@@ -2643,7 +2642,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     fun ChannelPresetDialog(visibility: MutableState<Boolean>, channel_state: MutableState<Int?>) {
         val channel = channel_state.value ?: return
-
         fun padded_hex(i: Int): String {
             var s = Integer.toHexString(i)
             while (s.length < 2) {
@@ -2686,7 +2684,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
         }
 
-        val options = mutableListOf<MutableList<Pair<PresetKey, @Composable RowScope.() -> Unit>>>()
+        val options =
+            mutableListOf<MutableList<Pair<PresetKey, @Composable RowScope.() -> Unit>>>()
         val preset_names = mutableListOf<MutableList<Pair<PresetKey, String?>>>()
         val existing_keys = mutableSetOf<Int>()
 
@@ -2782,8 +2781,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     preset_names[i][a].first.program.compareTo(preset_names[i][b].first.program)
                 },
                 Pair(R.string.sort_option_abc) { a: Int, b: Int ->
-                    val a_name = preset_names[i][a].second ?: default_presets[preset_names[i][a].first.program]
-                    val b_name = preset_names[i][b].second ?: default_presets[preset_names[i][b].first.program]
+                    val a_name = preset_names[i][a].second
+                        ?: default_presets[preset_names[i][a].first.program]
+                    val b_name = preset_names[i][b].second
+                        ?: default_presets[preset_names[i][b].first.program]
                     a_name.lowercase().compareTo(b_name.lowercase())
                 }
             )
@@ -2824,7 +2825,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 for (j in sorted_pages) {
                                     val soundfont_path =
                                         opus_manager.vm_state.active_soundfonts.value[sorted_pages[j]]
-                                    val soundfont_name = soundfont_path.split("/").let { it[it.size - 1].trim() }
+                                    val soundfont_name =
+                                        soundfont_path.split("/").let { it[it.size - 1].trim() }
                                     DropdownMenuItem(
                                         text = { Text("$j: $soundfont_name") },
                                         onClick = {
@@ -2853,7 +2855,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 )
                             }
                             Text(
-                                (opus_manager.vm_state.active_soundfonts.value[sorted_pages[i]]).split("/")
+                                (opus_manager.vm_state.active_soundfonts.value[sorted_pages[i]]).split(
+                                    "/"
+                                )
                                     .let { it[it.size - 1].trim() },
                                 maxLines = 1,
                                 textAlign = TextAlign.Center,
@@ -2915,13 +2919,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         }
 
                         state_model.channel_preset_dialog.value = null
-                        this@ComponentActivityEditor.state_model.channel_preset_dialog_visibility.value = false
+                        this@ComponentActivityEditor.state_model.channel_preset_dialog_visibility.value =
+                            false
                     }
                 )
             }
             DialogBar(neutral = {
                 state_model.channel_preset_dialog.value = null
-                this@ComponentActivityEditor.state_model.channel_preset_dialog_visibility.value = false
+                this@ComponentActivityEditor.state_model.channel_preset_dialog_visibility.value =
+                    false
             })
         }
     }
@@ -3205,8 +3211,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
-    private fun get_exportable_options(): List<Pair<Exportable, @Composable RowScope.() -> Unit>> {
-        val export_options = mutableListOf<Pair<Exportable, @Composable RowScope.() -> Unit>>()
+    private fun get_exportable_options(export_options: MutableList<Pair<Exportable, @Composable RowScope.() -> Unit>>) {
         val opus_manager = this.controller_model.opus_manager
 
         export_options.add(Pair(Exportable.JSON) { Text(R.string.export_option_json) })
@@ -3220,8 +3225,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
             export_options.add(Pair(Exportable.WAV_LINES) { Text(R.string.export_option_wav_lines) })
             export_options.add(Pair(Exportable.WAV_CHANNELS) { Text(R.string.export_option_wav_channels) })
         }
-
-        return export_options
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

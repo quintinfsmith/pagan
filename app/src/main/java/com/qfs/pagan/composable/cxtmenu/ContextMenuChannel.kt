@@ -71,8 +71,7 @@ fun ShowEffectsButton(channel: Int, opus_manager: OpusLayerInterface, modifier: 
         DialogMenu(
             menu_visibility,
             R.string.show_channel_controls,
-            {
-                val options = mutableListOf<Pair<EffectType, @Composable RowScope.() -> Unit>>( )
+            { options ->
                 for (ctl_type in OpusLayerInterface.channel_controller_domain) {
                     if (opus_manager.is_channel_ctl_visible(ctl_type, channel)) continue
                     options.add(
@@ -89,7 +88,6 @@ fun ShowEffectsButton(channel: Int, opus_manager: OpusLayerInterface, modifier: 
                         }
                     )
                 }
-                options
             },
             long_click_callback = { ctl_type: EffectType ->
                 selected_ctl_type.value = ctl_type
@@ -317,16 +315,17 @@ fun ChannelEffectMenuDialog(
     DialogMenu(
         visibility = visibility,
         title = R.string.cd_show_effect_controls,
-        options = {
+        options = { options ->
             val available_effects = OpusLayerInterface.channel_controller_domain.toMutableList()
             for (line in vm_state.line_data) {
-                if (!available_effects.contains(line.ctl_type.value)) continue
-                if (line.ctl_type.value == null) continue
                 if (line.channel.value != active_channel) continue
-                available_effects.remove(line.ctl_type.value)
+                val ctl_type = line.ctl_type.value ?: continue
+                if (!available_effects.contains(ctl_type)) continue
+
+                available_effects.remove(ctl_type)
             }
-            List<Pair<EffectType, @Composable RowScope.() -> Unit>>(available_effects.size) { i ->
-                Pair(available_effects[i]) { EffectMenuItem(available_effects[i]) }
+            for (ctl_type in available_effects) {
+                options.add( Pair(ctl_type) { EffectMenuItem(ctl_type) } )
             }
         },
         long_click_callback = {

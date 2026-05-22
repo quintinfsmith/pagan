@@ -251,6 +251,7 @@ class ViewModelEditorState: ViewModel() {
 
     val confirm_action_callback: MutableState<(() -> Unit)?> = mutableStateOf(null)
     val confirm_action_visibility = mutableStateOf(false)
+
     val channel_preset_dialog = mutableStateOf<Int?>(null)
     val channel_preset_dialog_visibility = mutableStateOf(false)
 

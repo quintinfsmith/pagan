@@ -1,0 +1,3 @@
+- Fixed inconsistent channel dragging.
+- Improved audio feedback when previewing a preset.
+

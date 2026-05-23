@@ -178,14 +178,26 @@ fun UnsetButton(
     enabled: Boolean,
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
+    val is_percussion = active_line.assigned_offset.value != null
+
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.EventUnset),
-        enabled = enabled,
-        onClick = { opus_manager.unset() },
+        enabled = enabled || is_percussion,
+        onClick = {
+            if (!is_percussion || enabled) {
+                opus_manager.unset()
+            } else {
+                opus_manager.set_percussion_event_at_cursor()
+            }
+        },
         onLongClick = { opus_manager.unset_root_at_cursor() },
-        icon = R.drawable.icon_erase,
+        icon = if (!is_percussion || enabled) {
+            R.drawable.icon_erase
+        } else {
+            R.drawable.percussion_indicator
+        },
         shape = shape,
-        description = if (active_line.assigned_offset.value != null) {
+        description = if (is_percussion) {
             R.string.set_percussion_event
         } else {
             R.string.btn_unset
@@ -218,22 +230,16 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, vm_state: ViewMo
                     vm_state.dlg_duration,
                     vm_state.active_event_descriptor.value,
                     active_event,
-                    shape = if (active_line.assigned_offset.value != null) {
-                        Shapes.ContextMenuButtonPrimaryBottom
-                    } else {
-                        Shapes.ContextMenuButtonPrimary
-                    }
+                    shape = Shapes.ContextMenuButtonPrimary
                 )
             }
-            if (active_line.assigned_offset.value == null) {
-                MediumSpacer()
-                UnsetButton(
-                    opus_manager,
-                    active_line,
-                    unset_enabled,
-                    Shapes.ContextMenuButtonPrimaryBottom
-                )
-            }
+            MediumSpacer()
+            UnsetButton(
+                opus_manager,
+                active_line,
+                unset_enabled,
+                Shapes.ContextMenuButtonPrimaryBottom
+            )
         }
     } else {
         ContextMenuPrimaryRow(modifier) {
@@ -250,22 +256,16 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, vm_state: ViewMo
                     vm_state.dlg_duration,
                     vm_state.active_event_descriptor.value,
                     active_event,
-                    shape = if (active_line.assigned_offset.value != null) {
-                        Shapes.ContextMenuButtonPrimaryEnd
-                    } else {
-                        Shapes.ContextMenuButtonPrimary
-                    }
+                    shape = Shapes.ContextMenuButtonPrimary
                 )
             }
-            if (active_line.assigned_offset.value == null) {
-                MediumSpacer()
-                UnsetButton(
-                    opus_manager,
-                    active_line,
-                    unset_enabled,
-                    Shapes.ContextMenuButtonPrimaryEnd
-                )
-            }
+            MediumSpacer()
+            UnsetButton(
+                opus_manager,
+                active_line,
+                unset_enabled,
+                Shapes.ContextMenuButtonPrimaryEnd
+            )
         }
     }
 }
@@ -420,132 +420,105 @@ fun ContextMenuLeafStdSecondary(vm_state: ViewModelEditorState, opus_manager: Op
     val active_line = vm_state.line_data[cursor.ints[0]]
     val active_event = vm_state.active_event.value
 
-    if (active_line.assigned_offset.value != null) {
-        val checked = remember { mutableStateOf(vm_state.active_event_descriptor.value == ViewModelEditorState.EventDescriptor.Selected && vm_state.active_event.value != null) }
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Switch(
-                checked.value,
-                modifier = Modifier.testTag(TestTag.PercussionToggle),
-                thumbContent = {
-                    Icon(
-                        modifier = Modifier.padding(Dimensions.PercussionSwitchIconPadding),
-                        painter = painterResource(R.drawable.percussion_indicator),
-                        contentDescription = null
-                    )
-                },
-                onCheckedChange = {
-                    checked.value = it
-                    if (!it) {
-                        opus_manager.unset()
-                    } else {
-                        opus_manager.set_percussion_event_at_cursor()
-                    }
-                }
-            )
-        }
-    } else {
-        val octave_dropdown_visible: MutableState<Int?> = remember { mutableStateOf(null) }
-        RelativeInputDropDown(vm_state, opus_manager, octave_dropdown_visible) { i: Int, mode: RelativeInputMode ->
-            opus_manager.set_note_octave_at_cursor(i, mode)
-        }
-        when (layout) {
-            LayoutSize.SmallPortrait,
-            LayoutSize.MediumLandscape,
-            LayoutSize.MediumPortrait,
-            LayoutSize.LargeLandscape,
-            LayoutSize.LargePortrait,
-            LayoutSize.XLargeLandscape,
-            LayoutSize.XLargePortrait -> {
-                val octave = when (active_event) {
-                    is AbsoluteNoteEvent -> active_event.note / vm_state.radix.value
-                    is RelativeNoteEvent -> abs(active_event.offset) / vm_state.radix.value
-                    is PercussionEvent -> 0
-                    null -> null
-                    else -> throw Exception("Invalid Event Type $active_event") // TODO: Specify
-                }
+    if (active_line.assigned_offset.value != null) return
 
-                Row {
-                    NumberSelector(
-                        progression = 0 until Values.OctaveCount,
-                        selected = when (vm_state.active_event_descriptor.value) {
-                            ViewModelEditorState.EventDescriptor.Selected,
-                            ViewModelEditorState.EventDescriptor.Tail -> octave
-                            else -> null
-                        },
-                        highlighted = if (vm_state.latest_input_indicator.value && vm_state.relative_input_mode.value == RelativeInputMode.Absolute) {
-                            vm_state.highlighted_octave.value
-                        } else {
-                            null
-                        },
-                        default = when (vm_state.active_event_descriptor.value) {
-                            ViewModelEditorState.EventDescriptor.Backup -> octave
-                            else -> null
-                        },
-                        alternate = false,
-                        on_click = { opus_manager.set_note_octave_at_cursor(it, vm_state.relative_input_mode.value) },
-                        on_long_click = { octave_dropdown_visible.value = it }
-                    )
-                }
-                Spacer(Modifier.height(Dimensions.NumberSelectorSpacing))
+    val octave_dropdown_visible: MutableState<Int?> = remember { mutableStateOf(null) }
+    RelativeInputDropDown(vm_state, opus_manager, octave_dropdown_visible) { i: Int, mode: RelativeInputMode ->
+        opus_manager.set_note_octave_at_cursor(i, mode)
+    }
+    when (layout) {
+        LayoutSize.SmallPortrait,
+        LayoutSize.MediumLandscape,
+        LayoutSize.MediumPortrait,
+        LayoutSize.LargeLandscape,
+        LayoutSize.LargePortrait,
+        LayoutSize.XLargeLandscape,
+        LayoutSize.XLargePortrait -> {
+            val octave = when (active_event) {
+                is AbsoluteNoteEvent -> active_event.note / vm_state.radix.value
+                is RelativeNoteEvent -> abs(active_event.offset) / vm_state.radix.value
+                is PercussionEvent -> 0
+                null -> null
+                else -> throw Exception("Invalid Event Type $active_event") // TODO: Specify
             }
 
-            LayoutSize.SmallLandscape -> {}
+            Row {
+                NumberSelector(
+                    progression = 0 until Values.OctaveCount,
+                    selected = when (vm_state.active_event_descriptor.value) {
+                        ViewModelEditorState.EventDescriptor.Selected,
+                        ViewModelEditorState.EventDescriptor.Tail -> octave
+                        else -> null
+                    },
+                    highlighted = if (vm_state.latest_input_indicator.value && vm_state.relative_input_mode.value == RelativeInputMode.Absolute) {
+                        vm_state.highlighted_octave.value
+                    } else {
+                        null
+                    },
+                    default = when (vm_state.active_event_descriptor.value) {
+                        ViewModelEditorState.EventDescriptor.Backup -> octave
+                        else -> null
+                    },
+                    alternate = false,
+                    on_click = { opus_manager.set_note_octave_at_cursor(it, vm_state.relative_input_mode.value) },
+                    on_long_click = { octave_dropdown_visible.value = it }
+                )
+            }
+            Spacer(Modifier.height(Dimensions.NumberSelectorSpacing))
         }
 
-        val offset = when (active_event) {
-            is AbsoluteNoteEvent -> active_event.note % vm_state.radix.value
-            is RelativeNoteEvent -> abs(active_event.offset) % vm_state.radix.value
-            is PercussionEvent -> 0
-            null -> null
-            else -> throw Exception("Invalid Event Type") // TODO: Specify
-        }
+        LayoutSize.SmallLandscape -> {}
+    }
 
-        val offset_dropdown_visible: MutableState<Int?> = remember { mutableStateOf(null) }
-        RelativeInputDropDown(vm_state, opus_manager, offset_dropdown_visible) { i: Int, mode: RelativeInputMode ->
-            opus_manager.set_note_offset_at_cursor(i, mode)
-        }
-        Column {
-            val count = ceil(vm_state.radix.value.toFloat() / Values.OffsetModulo).toInt()
-            for (i in count - 1 downTo 0) {
-                Row(modifier) {
-                    NumberSelector(
-                        progression = i until vm_state.radix.value step count,
-                        selected = when (vm_state.active_event_descriptor.value) {
-                            ViewModelEditorState.EventDescriptor.Selected,
-                            ViewModelEditorState.EventDescriptor.Tail -> offset
-                            else -> null
-                        },
-                        highlighted = if (vm_state.latest_input_indicator.value && vm_state.relative_input_mode.value == RelativeInputMode.Absolute) {
-                            vm_state.highlighted_offset.value
-                        } else {
-                            null
-                        },
-                        default = when (vm_state.active_event_descriptor.value) {
-                            ViewModelEditorState.EventDescriptor.Backup -> offset
-                            else -> null
-                        },
-                        alternate = true,
-                        shape_start = if (layout == LayoutSize.SmallLandscape) {
-                            Shapes.NumberSelectorButtonStart
-                        } else {
-                            Shapes.NumberSelectorButton
-                        },
-                        shape_end = if (layout == LayoutSize.SmallLandscape) {
-                            Shapes.NumberSelectorButtonEnd
-                        } else {
-                            Shapes.NumberSelectorButton
-                        },
-                        on_long_click = { offset_dropdown_visible.value = it },
-                        on_click = { opus_manager.set_note_offset_at_cursor(it, vm_state.relative_input_mode.value) }
-                    )
-                }
-                if (i != 0) {
-                    Spacer(Modifier.height(Dimensions.NumberSelectorSpacing))
-                }
+    val offset = when (active_event) {
+        is AbsoluteNoteEvent -> active_event.note % vm_state.radix.value
+        is RelativeNoteEvent -> abs(active_event.offset) % vm_state.radix.value
+        is PercussionEvent -> 0
+        null -> null
+        else -> throw Exception("Invalid Event Type") // TODO: Specify
+    }
+
+    val offset_dropdown_visible: MutableState<Int?> = remember { mutableStateOf(null) }
+    RelativeInputDropDown(vm_state, opus_manager, offset_dropdown_visible) { i: Int, mode: RelativeInputMode ->
+        opus_manager.set_note_offset_at_cursor(i, mode)
+    }
+    Column {
+        val count = ceil(vm_state.radix.value.toFloat() / Values.OffsetModulo).toInt()
+        for (i in count - 1 downTo 0) {
+            Row(modifier) {
+                NumberSelector(
+                    progression = i until vm_state.radix.value step count,
+                    selected = when (vm_state.active_event_descriptor.value) {
+                        ViewModelEditorState.EventDescriptor.Selected,
+                        ViewModelEditorState.EventDescriptor.Tail -> offset
+                        else -> null
+                    },
+                    highlighted = if (vm_state.latest_input_indicator.value && vm_state.relative_input_mode.value == RelativeInputMode.Absolute) {
+                        vm_state.highlighted_offset.value
+                    } else {
+                        null
+                    },
+                    default = when (vm_state.active_event_descriptor.value) {
+                        ViewModelEditorState.EventDescriptor.Backup -> offset
+                        else -> null
+                    },
+                    alternate = true,
+                    shape_start = if (layout == LayoutSize.SmallLandscape) {
+                        Shapes.NumberSelectorButtonStart
+                    } else {
+                        Shapes.NumberSelectorButton
+                    },
+                    shape_end = if (layout == LayoutSize.SmallLandscape) {
+                        Shapes.NumberSelectorButtonEnd
+                    } else {
+                        Shapes.NumberSelectorButton
+                    },
+                    on_long_click = { offset_dropdown_visible.value = it },
+                    on_click = { opus_manager.set_note_offset_at_cursor(it, vm_state.relative_input_mode.value) }
+                )
+            }
+            if (i != 0) {
+                Spacer(Modifier.height(Dimensions.NumberSelectorSpacing))
             }
         }
     }

@@ -261,7 +261,7 @@ class KeyboardInputInterface(var dispatcher: ActionDispatcher) {
             when (key_code) {
                 KEYCODE_0, KEYCODE_1, KEYCODE_2, KEYCODE_3, KEYCODE_4,
                 KEYCODE_5, KEYCODE_6, KEYCODE_7, KEYCODE_8, KEYCODE_9 -> {
-                    println("${key_code - KEYCODE_0} ????")
+                    // println("${key_code - KEYCODE_0} ????")
                     this.input_buffer_value = ((this.input_buffer_value ?: 0) * 10) + key_code - KEYCODE_0
                     true
                 }

@@ -3981,7 +3981,6 @@ open class OpusLayerBase: Effectable {
         output["ts00"] = this.timestamp.toString()
         output["ts01"] = (System.currentTimeMillis() / 1000L).toString()
 
-        println("SAVE ${this.timestamp}")
         return JSONHashMap(
             "d" to output,
             "v" to JSONInteger(OpusManagerJSONInterface.LATEST_VERSION)
@@ -4130,7 +4129,6 @@ open class OpusLayerBase: Effectable {
 
         // Default to zero to differentiate pre/post existence of timestamp
         this.timestamp = inner_map.get_stringn("ts00")?.toLong() ?: 0L
-        println("LOAD ${this.timestamp}")
     }
 
     fun project_change_midi(midi: Midi) {

@@ -603,6 +603,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         this.controller_model.attach_state_model(this.state_model)
+        this.keyboard_interface = KeyboardInputInterface(this)
 
         this.registerReceiver(
             this.broadcast_receiver,
@@ -2501,7 +2502,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     awaitPointerEventScope {
                         while (true) {
                             val event = awaitPointerEvent()
-                            if (vm_state.max_zoom_index.value == 0) continue
+                            if (vm_state.max_zoom_index.intValue == 0) continue
                             //if (!single_zoom_enabled || event.changes.size < 2) {
                             if (event.changes.size < 2) {
                                 zoom_state.value = 0.dp
@@ -3364,8 +3365,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
     override fun on_key_press(e: KeyEvent): Boolean {
-        return false
-        // return this.keyboard_interface.input(e)
+        return this.keyboard_interface.input(e)
     }
 
     @Composable

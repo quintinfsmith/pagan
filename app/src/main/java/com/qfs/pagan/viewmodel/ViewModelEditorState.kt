@@ -334,12 +334,12 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun recenter() {
+        this.zoom_index.intValue = this.queued_zoom_index.intValue
+        this.set_normalized_zoom()
+
         val scroll_triple = this.scroll_x_center.value ?: return
         this.scroll_x_center.value = null
         val (beat, pivot, center) = scroll_triple
-
-        this.zoom_index.intValue = this.queued_zoom_index.intValue
-        this.set_normalized_zoom()
         val pivot_px = (Dimensions.LeafBaseWidth.value * this.pixel_density.floatValue) * this.get_active_zoom(beat) * pivot
         this.scroll_state_x.value.requestScrollToItem(beat, (pivot_px - center).roundToInt())
     }

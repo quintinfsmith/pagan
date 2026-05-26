@@ -929,6 +929,15 @@ open class OpusLayerCursor: OpusLayerBase() {
         }
     }
 
+    fun toggle_percussion_event_at_cursor() {
+        val tree = this.get_tree() ?: return
+        if (tree.has_event()) {
+            this.unset()
+        } else {
+            this.set_percussion_event_at_cursor()
+        }
+    }
+
     open fun set_percussion_event_at_cursor() {
         this.percussion_set_event(
             this.cursor.get_beatkey(),

@@ -6,6 +6,10 @@ import com.qfs.pagan.KeyboardInputInterface.FunctionAlias
 
 object KeyboardMap {
     data class AliasKey(val key_code: Int, val is_shift_pressed: Boolean = false, val is_ctrl_pressed: Boolean = false)
+    class QuickMapEntry(val alias: FunctionAlias, val cursor_context: KeyboardInputInterface.Context, vararg _input_chain: AliasKey) {
+        val input_chain: Array<AliasKey> = Array(_input_chain.size) { i -> _input_chain[i] }
+    }
+
     class SearchTree {
         val branches = hashMapOf<AliasKey, SearchTree>()
         var value: FunctionAlias? = null
@@ -24,21 +28,39 @@ object KeyboardMap {
             }
         }
     }
-
-    private val quick_map = listOf(
-        Triple(
+    private val quick_map: Array<QuickMapEntry> = arrayOf(
+        QuickMapEntry(
+            FunctionAlias.EscapeContext,
             Global,
-            listOf(AliasKey(KEYCODE_ESCAPE)),
-            FunctionAlias.EscapeContext
+            AliasKey(KEYCODE_ESCAPE),
         ),
-        Triple(
-            Global,
-            listOf(AliasKey(KEYCODE_B)),
+        QuickMapEntry(
             FunctionAlias.SelectColumn,
+            Global,
+            AliasKey(KEYCODE_B),
+        ),
+        QuickMapEntry(
+            FunctionAlias.SelectChannel,
+            Global,
+            AliasKey(KEYCODE_C, true),
+        ),
+        QuickMapEntry(
+            FunctionAlias.SelectLine,
+            Global,
+            AliasKey(KEYCODE_L, true)
+        ),
+        QuickMapEntry(
+            FunctionAlias.ZoomIn,
+            Global,
+            AliasKey(KEYCODE_EQUALS)
+        ),
+        QuickMapEntry(
+            FunctionAlias.ZoomOut,
+            Global,
+            AliasKey(KEYCODE_MINUS)
         )
     )
 
-    //    AliasKey(listOf(KEYCODE_C), Global, true) to FunctionAlias.SelectChannel,
     //    AliasKey(listOf(KEYCODE_SPACE), Leaf) to FunctionAlias.LeafUnset,
     //    AliasKey(listOf(KEYCODE_A), Leaf) to FunctionAlias.LeafAdd,
     //    AliasKey(listOf(KEYCODE_S), Leaf) to FunctionAlias.LeafSplit,
@@ -50,20 +72,20 @@ object KeyboardMap {
 
     val search_trees = HashMap<Context, SearchTree>()
     init {
-        for ((context, keys, alias) in this.quick_map) {
+        for (entry in this.quick_map) {
+            val context = entry.cursor_context
             if (! this.search_trees.containsKey(context)) {
                 this.search_trees[context] = SearchTree()
             }
             var top = this.search_trees[context]!!
-            for (key in keys) {
+            for (key in entry.input_chain) {
                 if (! top.branches.containsKey(key)) {
                     top.branches[key] = SearchTree()
                 }
                 top = top.branches[key]!!
             }
-            top.value = alias
+            top.value = entry.alias
         }
-
     }
 
     operator fun get(context: Context, key_codes: List<AliasKey>): Pair<Boolean, FunctionAlias?> {

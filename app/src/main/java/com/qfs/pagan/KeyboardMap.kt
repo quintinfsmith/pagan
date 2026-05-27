@@ -35,7 +35,7 @@ object KeyboardMap {
             AliasKey(KEYCODE_ESCAPE),
         ),
         QuickMapEntry(
-            FunctionAlias.SelectColumn,
+            FunctionAlias.SelectBeat,
             Global,
             AliasKey(KEYCODE_B),
         ),
@@ -58,7 +58,42 @@ object KeyboardMap {
             FunctionAlias.ZoomOut,
             Global,
             AliasKey(KEYCODE_MINUS)
-        )
+        ),
+        // ------------------ UNSET ---------------------//
+        QuickMapEntry(
+            FunctionAlias.SelectLineNext,
+            Context.Unset,
+            AliasKey(KEYCODE_J)
+        ),
+        QuickMapEntry(
+            FunctionAlias.SelectBeatNext,
+            Context.Unset,
+            AliasKey(KEYCODE_L)
+        ),
+        // ------------------ LINE  ---------------------- //
+        QuickMapEntry(
+            FunctionAlias.SelectLineNext,
+            Context.Line,
+            AliasKey(KEYCODE_J)
+        ),
+        QuickMapEntry(
+            FunctionAlias.SelectLinePrev,
+            Context.Line,
+            AliasKey(KEYCODE_K)
+        ),
+        QuickMapEntry(
+            FunctionAlias.SelectFirstLineNextChannel,
+            Context.Line,
+            AliasKey(KEYCODE_J, true)
+        ),
+        QuickMapEntry(
+            FunctionAlias.SelectFirstLinePrevChannel,
+            Context.Line,
+            AliasKey(KEYCODE_K, true)
+        ),
+        // ------------------ LEAF  ---------------------- //
+        // ----------------- CHANNEL --------------------- //
+        // ------------------ RANGE ---------------------- //
     )
 
     //    AliasKey(listOf(KEYCODE_SPACE), Leaf) to FunctionAlias.LeafUnset,

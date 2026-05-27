@@ -51,8 +51,14 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
     enum class FunctionAlias {
         Delete,
         EscapeContext,
-        SelectColumn,
+        SelectBeat,
+        SelectBeatNext,
+        SelectBeatPrev,
         SelectLine,
+        SelectLineNext,
+        SelectLinePrev,
+        SelectFirstLineNextChannel,
+        SelectFirstLinePrevChannel,
         SelectChannel,
         SetOctave,
         SetOffset,
@@ -118,7 +124,7 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
         FunctionAlias.EscapeContext to { context, opus_manager ->
             this.clear_buffer_or_cursor(context)
         },
-        FunctionAlias.SelectColumn to { context, opus_manager ->
+        FunctionAlias.SelectBeat to { context, opus_manager ->
             val column = this.get_buffer_value(0, 0, opus_manager.length - 1)
             opus_manager.cursor_select_column(column)
             true
@@ -130,13 +136,29 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
             val channel = when (opus_manager.cursor.mode) {
                 CursorMode.Single,
                 CursorMode.Channel,
-                CursorMode.Line -> opus_manager.cursor.line_offset
+                CursorMode.Line -> opus_manager.cursor.channel
                 else -> 0
             }
             val default_value = opus_manager.get_channel(channel).lines.size - 1
             val line_offset = this.get_buffer_value(default_value, 0, default_value)
             opus_manager.cursor_select_line(channel, line_offset)
 
+            true
+        },
+        FunctionAlias.SelectLineNext to { context, opus_manager ->
+            opus_manager.cursor_select_next_line_in_channel()
+            true
+        },
+        FunctionAlias.SelectLinePrev to { _, opus_manager ->
+            opus_manager.cursor_select_prev_line_in_channel()
+            true
+        },
+        FunctionAlias.SelectFirstLineNextChannel to { _, opus_manager ->
+            opus_manager.cursor_select_first_line_in_next_channel()
+            true
+        },
+        FunctionAlias.SelectFirstLinePrevChannel to { _, opus_manager ->
+            opus_manager.cursor_select_first_line_in_prev_channel()
             true
         },
         FunctionAlias.SetOctave to { context, opus_manager ->
@@ -267,7 +289,7 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
                     Context.Leaf
                 )
             }
-            CursorMode.Column -> arrayOf(Context.Beat)
+            CursorMode.Beat -> arrayOf(Context.Beat)
             CursorMode.Channel -> arrayOf(Context.Channel)
             CursorMode.Unset -> arrayOf(Context.Unset)
             CursorMode.Range -> TODO()

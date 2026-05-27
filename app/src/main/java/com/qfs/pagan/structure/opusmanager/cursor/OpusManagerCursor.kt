@@ -54,7 +54,7 @@ data class OpusManagerCursor(
                 other.channel == this.channel && this.ctl_level == other.ctl_level && this.ctl_type == other.ctl_type
             }
 
-            CursorMode.Column -> {
+            CursorMode.Beat -> {
                 other.beat == this.beat
             }
 
@@ -149,7 +149,7 @@ data class OpusManagerCursor(
     }
 
     fun select_column(beat: Int) {
-        this.mode = CursorMode.Column
+        this.mode = CursorMode.Beat
         this.beat = beat
         this.ctl_type = null
         this.ctl_level = null

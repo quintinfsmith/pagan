@@ -807,7 +807,7 @@ class ViewModelEditorState: ViewModel() {
 
     private fun populate_selected_leafs(cursor: CacheCursor) {
         when (cursor.type) {
-            CursorMode.Column -> {
+            CursorMode.Beat -> {
                 for (y in 0 until this.line_count.value) {
                     if (cursor.ints[0] >= this.cell_map[y].size) continue // This is ok, the column just hasn't been added yet
                     this.cell_map[y][cursor.ints[0]].value.let {
@@ -932,7 +932,7 @@ class ViewModelEditorState: ViewModel() {
 
     private fun populate_selected_columns(cursor: CacheCursor) {
         when (cursor.type) {
-            CursorMode.Column -> {
+            CursorMode.Beat -> {
                 val x = cursor.ints[0]
                 if (x < this.column_data.size) {
                     this.column_data[x].also {

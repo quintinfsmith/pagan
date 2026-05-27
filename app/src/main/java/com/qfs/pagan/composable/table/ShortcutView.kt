@@ -14,7 +14,6 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SliderColors
@@ -88,7 +87,7 @@ fun BeatSelectDialog(visibility: MutableState<Boolean>, vm_state: ViewModelEdito
         val slider_position = remember {
             mutableFloatStateOf(
                 when (vm_state.active_cursor.value?.type) {
-                    CursorMode.Column -> vm_state.active_cursor.value!!.ints[0]
+                    CursorMode.Beat -> vm_state.active_cursor.value!!.ints[0]
                     CursorMode.Single -> vm_state.active_cursor.value!!.ints[1]
                     CursorMode.Range -> vm_state.active_cursor.value!!.ints[1]
 

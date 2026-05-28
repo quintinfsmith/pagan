@@ -1,0 +1,1 @@
+- Fix crash caused by tapping notes while soundfonts are changing

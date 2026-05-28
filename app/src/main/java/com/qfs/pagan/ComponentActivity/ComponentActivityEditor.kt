@@ -3362,7 +3362,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
     override fun on_key_press(e: KeyEvent): Boolean {
-        return this.keyboard_interface.input(e)
+        return false //this.keyboard_interface.input(e)
     }
 
     @Composable

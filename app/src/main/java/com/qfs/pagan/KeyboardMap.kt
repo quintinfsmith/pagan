@@ -59,6 +59,16 @@ object KeyboardMap {
             Global,
             AliasKey(KEYCODE_MINUS)
         ),
+        QuickMapEntry(
+            FunctionAlias.ZoomInFull,
+            Global,
+            AliasKey(KEYCODE_EQUALS, true)
+        ),
+        QuickMapEntry(
+            FunctionAlias.ZoomOutFull,
+            Global,
+            AliasKey(KEYCODE_MINUS, true)
+        ),
         // ------------------ UNSET ---------------------//
         QuickMapEntry(
             FunctionAlias.SelectLineNext,

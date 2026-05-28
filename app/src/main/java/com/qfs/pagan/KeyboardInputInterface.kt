@@ -124,7 +124,7 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
         FunctionAlias.EscapeContext to { context, opus_manager ->
             this.clear_buffer_or_cursor(context)
         },
-        FunctionAlias.SelectBeat to { context, opus_manager ->
+        FunctionAlias.SelectBeat to { _, opus_manager ->
             val column = this.get_buffer_value(0, 0, opus_manager.length - 1)
             opus_manager.cursor_select_column(column)
             true
@@ -132,7 +132,7 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
         FunctionAlias.SelectChannel to { context, opus_manager ->
             this.go_to_channel(context, opus_manager)
         },
-        FunctionAlias.SelectLine to { context, opus_manager ->
+        FunctionAlias.SelectLine to { _, opus_manager ->
             val channel = when (opus_manager.cursor.mode) {
                 CursorMode.Single,
                 CursorMode.Channel,
@@ -145,22 +145,26 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
 
             true
         },
-        FunctionAlias.SelectLineNext to { context, opus_manager ->
+        FunctionAlias.SelectLineNext to { _, opus_manager ->
             opus_manager.cursor_select_next_line_in_channel()
             true
         },
+
         FunctionAlias.SelectLinePrev to { _, opus_manager ->
             opus_manager.cursor_select_prev_line_in_channel()
             true
         },
+
         FunctionAlias.SelectFirstLineNextChannel to { _, opus_manager ->
             opus_manager.cursor_select_first_line_in_next_channel()
             true
         },
+
         FunctionAlias.SelectFirstLinePrevChannel to { _, opus_manager ->
             opus_manager.cursor_select_first_line_in_prev_channel()
             true
         },
+
         FunctionAlias.SetOctave to { context, opus_manager ->
             val default_octave = opus_manager.latest_set_octave ?: 0
             opus_manager.set_note_octave_at_cursor(
@@ -173,6 +177,7 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
             )
             true
         },
+
         FunctionAlias.SetOffset to { context, opus_manager ->
             val default_offset = opus_manager.latest_set_offset ?: 0
             opus_manager.set_note_octave_at_cursor(
@@ -223,6 +228,18 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
         FunctionAlias.ZoomOut to { context, opus_manager ->
             context.state_model.decrement_zoom()
             context.state_model.recenter()
+            true
+        },
+        FunctionAlias.ZoomInFull to { context, opus_manager ->
+            val state_model = context.state_model
+            state_model.queued_zoom_index.intValue = state_model.max_zoom_index.intValue
+            state_model.recenter()
+            true
+        },
+        FunctionAlias.ZoomOutFull to { context, opus_manager ->
+            val state_model = context.state_model
+            state_model.queued_zoom_index.intValue = 0
+            state_model.recenter()
             true
         }
         //SelectLine to { context, opus_manager ->

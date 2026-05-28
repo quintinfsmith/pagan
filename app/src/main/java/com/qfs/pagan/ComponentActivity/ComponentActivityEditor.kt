@@ -109,7 +109,6 @@ import androidx.lifecycle.viewModelScope
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
 import com.qfs.apres.MidiController
-import com.qfs.apres.VirtualMidiInputDevice
 import com.qfs.apres.VirtualMidiOutputDevice
 import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.soundfont2.SoundFont
@@ -138,7 +137,6 @@ import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.PaganDialog
 import com.qfs.pagan.composable.SettingsColumn
 import com.qfs.pagan.composable.SortableMenu
-import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.composable.button.ConfigDrawerBottomButton
 import com.qfs.pagan.composable.button.ConfigDrawerChannelLeftButton
 import com.qfs.pagan.composable.button.ConfigDrawerChannelRightButton
@@ -178,7 +176,6 @@ import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.testTag
@@ -603,6 +600,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         this.controller_model.attach_state_model(this.state_model)
+        this.keyboard_interface = KeyboardInputInterface(this)
 
         this.registerReceiver(
             this.broadcast_receiver,
@@ -1319,7 +1317,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             CursorMode.Line -> {
                 @Composable { ContextMenuLinePrimary(Modifier, vm_state, opus_manager, layout) }
             }
-            CursorMode.Column -> {
+            CursorMode.Beat -> {
                 @Composable { ContextMenuColumnPrimary(Modifier, vm_state, opus_manager, layout) }
             }
             CursorMode.Single -> {
@@ -1377,7 +1375,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             CursorMode.Channel -> {
                 @Composable { ContextMenuChannelSecondary(vm_state, opus_manager, layout) }
             }
-            CursorMode.Column -> {
+            CursorMode.Beat -> {
                 @Composable { ContextMenuColumnSecondary(modifier, vm_state, opus_manager, layout) }
             }
             CursorMode.Unset -> null
@@ -1625,7 +1623,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                 dialog_visibility,
                                                 vm_state.dlg_insert_beat,
                                                 1,
-                                                2048
+                                                Values.DialogInput.Max.InsertBeat
                                             ) {
                                                 opus_manager.insert_beats(opus_manager.length,it)
                                             }
@@ -2501,7 +2499,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     awaitPointerEventScope {
                         while (true) {
                             val event = awaitPointerEvent()
-                            if (vm_state.max_zoom_index.value == 0) continue
+                            if (vm_state.max_zoom_index.intValue == 0) continue
                             //if (!single_zoom_enabled || event.changes.size < 2) {
                             if (event.changes.size < 2) {
                                 zoom_state.value = 0.dp
@@ -3364,8 +3362,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
     override fun on_key_press(e: KeyEvent): Boolean {
-        return false
-        // return this.keyboard_interface.input(e)
+        return this.keyboard_interface.input(e)
     }
 
     @Composable
@@ -3484,7 +3481,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val cursor = opus_manager.cursor
         val start_beat = when (cursor.mode) {
             CursorMode.Single,
-            CursorMode.Column -> if (cursor.beat == opus_manager.length - 1) {
+            CursorMode.Beat -> if (cursor.beat == opus_manager.length - 1) {
                 0
             } else {
                 cursor.beat
@@ -3520,7 +3517,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             it.play_opus(
                 when (opus_manager.cursor.mode) {
                     CursorMode.Single,
-                    CursorMode.Column -> if (opus_manager.cursor.beat == opus_manager.length - 1) {
+                    CursorMode.Beat -> if (opus_manager.cursor.beat == opus_manager.length - 1) {
                         0
                     } else {
                         opus_manager.cursor.beat

@@ -43,6 +43,7 @@ import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
+import com.qfs.pagan.Values
 import com.qfs.pagan.composable.ColorPickerDialog
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogMenu
@@ -194,7 +195,8 @@ fun InsertLineButton(
         R.string.dlg_insert_lines,
         visibility,
         dialog_value,
-        1
+        1,
+        max_value = Values.DialogInput.Max.InsertLine
     ) { i ->
         val channel = active_line.channel.value ?: return@IntegerInputDialog
         val line_offset = active_line.line_offset.value ?: return@IntegerInputDialog
@@ -229,7 +231,7 @@ fun RemoveLineButton(
         R.string.dlg_remove_lines,
         visibility,
         dialog_value,
-        0
+        0,
     ) { i ->
         val channel = active_line.channel.value ?: return@IntegerInputDialog
         val line_offset = active_line.line_offset.value ?: return@IntegerInputDialog

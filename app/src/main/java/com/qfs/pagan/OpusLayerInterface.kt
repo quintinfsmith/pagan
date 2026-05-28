@@ -2081,7 +2081,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 this.vm_state.set_cursor(ViewModelEditorState.CacheCursor(cursor.mode, y))
             }
 
-            CursorMode.Column -> {
+            CursorMode.Beat -> {
                 this.vm_state.set_cursor(ViewModelEditorState.CacheCursor(cursor.mode, cursor.beat))
             }
 

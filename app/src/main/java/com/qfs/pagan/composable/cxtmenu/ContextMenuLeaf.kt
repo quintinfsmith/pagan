@@ -90,7 +90,8 @@ fun SplitButton(
         title_string_id = R.string.dlg_split,
         visibility = dialog_visibility,
         value = dialog_value,
-        min_value = 1
+        min_value = 1,
+        max_value = Values.DialogInput.Max.Split
     ) {
         opus_manager.split_tree_at_cursor(it)
     }
@@ -114,7 +115,8 @@ fun InsertButton(
         title_string_id = R.string.dlg_insert,
         visibility = dialog_visibility,
         value = dialog_value,
-        min_value = 1
+        min_value = 1,
+        max_value = Values.DialogInput.Max.InsertLeaf
     ) {
         opus_manager.insert_at_cursor(it)
     }
@@ -165,7 +167,7 @@ fun DurationButton(
         title_string_id = R.string.dlg_duration,
         visibility = dialog_visibility,
         value = dialog_value,
-        min_value = 1
+        min_value = 1,
     ) {
         opus_manager.set_duration_at_cursor(it)
     }

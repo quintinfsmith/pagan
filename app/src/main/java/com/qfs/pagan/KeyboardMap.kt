@@ -6,6 +6,10 @@ import com.qfs.pagan.KeyboardInputInterface.FunctionAlias
 
 object KeyboardMap {
     data class AliasKey(val key_code: Int, val is_shift_pressed: Boolean = false, val is_ctrl_pressed: Boolean = false)
+    class QuickMapEntry(val alias: FunctionAlias, val cursor_context: KeyboardInputInterface.Context, vararg _input_chain: AliasKey) {
+        val input_chain: Array<AliasKey> = Array(_input_chain.size) { i -> _input_chain[i] }
+    }
+
     class SearchTree {
         val branches = hashMapOf<AliasKey, SearchTree>()
         var value: FunctionAlias? = null
@@ -24,21 +28,135 @@ object KeyboardMap {
             }
         }
     }
-
-    private val quick_map = listOf(
-        Triple(
+    private val quick_map: Array<QuickMapEntry> = arrayOf(
+        QuickMapEntry(
+            FunctionAlias.EscapeContext,
             Global,
-            listOf(AliasKey(KEYCODE_ESCAPE)),
-            FunctionAlias.EscapeContext
+            AliasKey(KEYCODE_ESCAPE),
         ),
-        Triple(
+        QuickMapEntry(
+            FunctionAlias.SelectBeat,
             Global,
-            listOf(AliasKey(KEYCODE_B)),
-            FunctionAlias.SelectColumn,
-        )
+            AliasKey(KEYCODE_B),
+        ),
+        QuickMapEntry(
+            FunctionAlias.SelectChannel,
+            Global,
+            AliasKey(KEYCODE_C, true),
+        ),
+        QuickMapEntry(
+            FunctionAlias.SelectLine,
+            Global,
+            AliasKey(KEYCODE_L, true)
+        ),
+        QuickMapEntry(
+            FunctionAlias.ZoomIn,
+            Global,
+            AliasKey(KEYCODE_EQUALS)
+        ),
+        QuickMapEntry(
+            FunctionAlias.ZoomOut,
+            Global,
+            AliasKey(KEYCODE_MINUS)
+        ),
+        QuickMapEntry(
+            FunctionAlias.ZoomInFull,
+            Global,
+            AliasKey(KEYCODE_EQUALS, true)
+        ),
+        QuickMapEntry(
+            FunctionAlias.ZoomOutFull,
+            Global,
+            AliasKey(KEYCODE_MINUS, true)
+        ),
+        QuickMapEntry(
+          FunctionAlias.Undo,
+            Global,
+            AliasKey(KEYCODE_U)
+        ),
+        QuickMapEntry(
+            FunctionAlias.Redo,
+            Global,
+            AliasKey(KEYCODE_U, true)
+        ),
+        // ------------------ UNSET ---------------------//
+        QuickMapEntry(
+            FunctionAlias.SelectLineNext,
+            Context.Unset,
+            AliasKey(KEYCODE_J)
+        ),
+        QuickMapEntry(
+            FunctionAlias.SelectBeatNext,
+            Context.Unset,
+            AliasKey(KEYCODE_L)
+        ),
+        // ------------------ LINE  ---------------------- //
+        QuickMapEntry(
+            FunctionAlias.SelectLineNext,
+            Context.Line,
+            AliasKey(KEYCODE_J)
+        ),
+        QuickMapEntry(
+            FunctionAlias.SelectLinePrev,
+            Context.Line,
+            AliasKey(KEYCODE_K)
+        ),
+        QuickMapEntry(
+            FunctionAlias.SelectFirstLineNextChannel,
+            Context.Line,
+            AliasKey(KEYCODE_J, true)
+        ),
+        QuickMapEntry(
+            FunctionAlias.SelectFirstLinePrevChannel,
+            Context.Line,
+            AliasKey(KEYCODE_K, true)
+        ),
+        QuickMapEntry(
+            FunctionAlias.LineInsertAfter,
+            Context.Line,
+            AliasKey(KEYCODE_N)
+        ),
+        QuickMapEntry(
+            FunctionAlias.LineInsert,
+            Context.Line,
+            AliasKey(KEYCODE_LEFT_BRACKET),
+            AliasKey(KEYCODE_N),
+        ),
+        QuickMapEntry(
+            FunctionAlias.LineRemove,
+            Context.Line,
+            AliasKey(KEYCODE_X, true)
+        ),
+        QuickMapEntry(
+            FunctionAlias.LineDuplicate,
+            Context.Line,
+            AliasKey(KEYCODE_D, true)
+        ),
+        QuickMapEntry(
+            FunctionAlias.AdjustOctaveUp,
+            Context.Line,
+            AliasKey(KEYCODE_O, true)
+        ),
+        QuickMapEntry(
+            FunctionAlias.AdjustOctaveDown,
+            Context.Line,
+            AliasKey(KEYCODE_M, true)
+        ),
+        QuickMapEntry(
+            FunctionAlias.AdjustOffsetUp,
+            Context.Line,
+            AliasKey(KEYCODE_O)
+        ),
+        QuickMapEntry(
+            FunctionAlias.AdjustOffsetDown,
+            Context.Line,
+            AliasKey(KEYCODE_M)
+        ),
+        // ------------------ LEAF  ---------------------- //
+        // ----------------- CHANNEL --------------------- //
+        // ------------------ RANGE ---------------------- //
     )
 
-    //    AliasKey(listOf(KEYCODE_C), Global, true) to FunctionAlias.SelectChannel,
     //    AliasKey(listOf(KEYCODE_SPACE), Leaf) to FunctionAlias.LeafUnset,
     //    AliasKey(listOf(KEYCODE_A), Leaf) to FunctionAlias.LeafAdd,
     //    AliasKey(listOf(KEYCODE_S), Leaf) to FunctionAlias.LeafSplit,
@@ -50,20 +168,20 @@ object KeyboardMap {
 
     val search_trees = HashMap<Context, SearchTree>()
     init {
-        for ((context, keys, alias) in this.quick_map) {
+        for (entry in this.quick_map) {
+            val context = entry.cursor_context
             if (! this.search_trees.containsKey(context)) {
                 this.search_trees[context] = SearchTree()
             }
             var top = this.search_trees[context]!!
-            for (key in keys) {
+            for (key in entry.input_chain) {
                 if (! top.branches.containsKey(key)) {
                     top.branches[key] = SearchTree()
                 }
                 top = top.branches[key]!!
             }
-            top.value = alias
+            top.value = entry.alias
         }
-
     }
 
     operator fun get(context: Context, key_codes: List<AliasKey>): Pair<Boolean, FunctionAlias?> {

@@ -334,12 +334,12 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun recenter() {
+        this.zoom_index.intValue = this.queued_zoom_index.intValue
+        this.set_normalized_zoom()
+
         val scroll_triple = this.scroll_x_center.value ?: return
         this.scroll_x_center.value = null
         val (beat, pivot, center) = scroll_triple
-
-        this.zoom_index.intValue = this.queued_zoom_index.intValue
-        this.set_normalized_zoom()
         val pivot_px = (Dimensions.LeafBaseWidth.value * this.pixel_density.floatValue) * this.get_active_zoom(beat) * pivot
         this.scroll_state_x.value.requestScrollToItem(beat, (pivot_px - center).roundToInt())
     }
@@ -807,7 +807,7 @@ class ViewModelEditorState: ViewModel() {
 
     private fun populate_selected_leafs(cursor: CacheCursor) {
         when (cursor.type) {
-            CursorMode.Column -> {
+            CursorMode.Beat -> {
                 for (y in 0 until this.line_count.value) {
                     if (cursor.ints[0] >= this.cell_map[y].size) continue // This is ok, the column just hasn't been added yet
                     this.cell_map[y][cursor.ints[0]].value.let {
@@ -932,7 +932,7 @@ class ViewModelEditorState: ViewModel() {
 
     private fun populate_selected_columns(cursor: CacheCursor) {
         when (cursor.type) {
-            CursorMode.Column -> {
+            CursorMode.Beat -> {
                 val x = cursor.ints[0]
                 if (x < this.column_data.size) {
                     this.column_data[x].also {

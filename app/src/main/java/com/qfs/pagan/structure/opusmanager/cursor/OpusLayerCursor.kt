@@ -1165,14 +1165,26 @@ open class OpusLayerCursor: OpusLayerBase() {
         return Pair(real_count, cursor_position)
     }
 
-    fun insert_line_at_cursor(count: Int = 1) {
+    fun insert_line_after_cursor(count: Int = 1) {
+        if (this.cursor.mode != CursorMode.Line) return
         this.new_line_repeat(
             this.cursor.channel,
             this.cursor.line_offset + 1,
             count
         )
     }
+
+    fun insert_line_at_cursor(count: Int = 1) {
+        if (this.cursor.mode != CursorMode.Line) return
+        this.new_line_repeat(
+            this.cursor.channel,
+            this.cursor.line_offset,
+            count
+        )
+    }
+
     fun remove_line_at_cursor(count: Int) {
+        if (this.cursor.mode != CursorMode.Line) return
         this.remove_line_repeat(
             this.cursor.channel,
             this.cursor.line_offset,
@@ -2641,11 +2653,15 @@ open class OpusLayerCursor: OpusLayerBase() {
         }
     }
 
-    fun duplicate_line_at_cursor() {
+    open fun duplicate_line_at_cursor(repeat: Int = 1) {
         when (this.cursor.mode) {
             CursorMode.Single,
             CursorMode.Line -> {
-                this.duplicate_line(this.cursor.channel, this.cursor.line_offset)
+                this.lock_cursor {
+                    for (i in 0 until repeat) {
+                        this.duplicate_line(this.cursor.channel, this.cursor.line_offset)
+                    }
+                }
             }
             else -> {}
         }

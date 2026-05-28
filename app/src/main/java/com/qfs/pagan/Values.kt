@@ -22,12 +22,17 @@ object Values {
     object DialogInput {
         const val Split = 2
         const val InsertLeaf = 1
-        const val RemoveLeaf = 1
         const val InsertLine = 1
         const val RemoveLine = 1
         const val InsertBeat = 1
         const val RemoveBeat = 1
         const val Duration = 1
+        object Max {
+            const val Split = 128
+            const val InsertLeaf = 127
+            const val InsertLine = 16
+            const val InsertBeat = 1024
+        }
     }
 
     const val OctaveCount = 8

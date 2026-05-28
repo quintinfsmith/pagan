@@ -49,6 +49,8 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
         Range
     }
     enum class FunctionAlias {
+        Undo,
+        Redo,
         Delete,
         EscapeContext,
         SelectBeat,
@@ -62,7 +64,15 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
         SelectChannel,
         SetOctave,
         SetOffset,
+        AdjustOctaveUp,
+        AdjustOffsetUp,
+        AdjustOctaveDown,
+        AdjustOffsetDown,
         TogglePercussion,
+        LineDuplicate,
+        LineInsert,
+        LineInsertAfter,
+        LineRemove,
         LeafUnset,
         LeafAdd,
         LeafRemove,
@@ -121,8 +131,22 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
     }
 
     val cursor_map: HashMap<FunctionAlias, (ComponentActivityEditor, OpusManager) -> Boolean> = hashMapOf(
-        FunctionAlias.EscapeContext to { context, opus_manager ->
+        FunctionAlias.EscapeContext to { context, _ ->
             this.clear_buffer_or_cursor(context)
+        },
+        FunctionAlias.Undo to { _, opus_manager ->
+            val count = this.get_buffer_value(1, 0)
+            if (count > 0) {
+                opus_manager.apply_undo(count)
+            }
+            true
+        },
+        FunctionAlias.Redo to { _, opus_manager ->
+            val count = this.get_buffer_value(1, 0)
+            if (count > 0) {
+                opus_manager.apply_redo(count)
+            }
+            true
         },
         FunctionAlias.SelectBeat to { _, opus_manager ->
             val column = this.get_buffer_value(0, 0, opus_manager.length - 1)
@@ -190,11 +214,82 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
             )
             true
         },
-        FunctionAlias.TogglePercussion to { context, opus_manager ->
+        FunctionAlias.TogglePercussion to { _, opus_manager ->
             opus_manager.toggle_percussion_event_at_cursor()
             true
         },
-        FunctionAlias.LeafSplit to { context, opus_manager ->
+
+        FunctionAlias.LineDuplicate to { _, opus_manager ->
+            val count = this.get_buffer_value(
+                Values.DialogInput.InsertLine,
+                1,
+                Values.DialogInput.Max.InsertLine
+            )
+            opus_manager.duplicate_line_at_cursor(count)
+            true
+        },
+        FunctionAlias.AdjustOffsetUp to { _, opus_manager ->
+            val count = this.get_buffer_value(
+                1,
+                1,
+                opus_manager.get_radix() * Values.OctaveCount
+            )
+            opus_manager.offset_selection(count)
+            true
+        },
+        FunctionAlias.AdjustOffsetDown to { _, opus_manager ->
+            val count = this.get_buffer_value(
+                1,
+                1,
+                opus_manager.get_radix() * Values.OctaveCount
+            )
+            opus_manager.offset_selection(-1 * count)
+            true
+        },
+        FunctionAlias.AdjustOctaveUp to { _, opus_manager ->
+            val count = this.get_buffer_value(
+                1, 1, Values.OctaveCount
+            )
+            opus_manager.offset_selection(count * opus_manager.get_radix())
+            true
+        },
+        FunctionAlias.AdjustOctaveDown to { _, opus_manager ->
+            val count = this.get_buffer_value(
+                1, 1, Values.OctaveCount
+            )
+            opus_manager.offset_selection(-1 * count * opus_manager.get_radix())
+            true
+        },
+        FunctionAlias.LineInsert to { _, opus_manager ->
+            val count = this.get_buffer_value(
+                Values.DialogInput.InsertLine,
+                1,
+                Values.DialogInput.Max.InsertLine
+            )
+            opus_manager.insert_line_at_cursor(count)
+            true
+        },
+
+        FunctionAlias.LineInsertAfter to { _, opus_manager ->
+            val count = this.get_buffer_value(
+                Values.DialogInput.InsertLine,
+                1,
+                Values.DialogInput.Max.InsertLine
+            )
+            opus_manager.insert_line_after_cursor(count)
+            true
+        },
+
+        FunctionAlias.LineRemove to { _, opus_manager ->
+            val count = this.get_buffer_value(
+                Values.DialogInput.RemoveLine,
+                1,
+            )
+            opus_manager.remove_line_at_cursor(count)
+            true
+        },
+
+        FunctionAlias.LeafSplit to { _, opus_manager ->
             opus_manager.split_tree_at_cursor(
                 this.get_buffer_value(
                     Values.DialogInput.Split,
@@ -204,39 +299,39 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
             )
             true
         },
-        FunctionAlias.LeafUnset to  { context, opus_manager ->
+        FunctionAlias.LeafUnset to  { _, opus_manager ->
             opus_manager.unset()
             true
         },
-        FunctionAlias.LeafRemove to { context, opus_manager ->
+        FunctionAlias.LeafRemove to { _, opus_manager ->
             opus_manager.remove_at_cursor(
                 this.get_buffer_value(1, 0)
             )
             true
         },
-        FunctionAlias.LeafAdd to { context, opus_manager ->
+        FunctionAlias.LeafAdd to { _, opus_manager ->
             opus_manager.insert_at_cursor(
                 this.get_buffer_value(1, 0)
             )
             true
         },
-        FunctionAlias.ZoomIn to { context, opus_manager ->
+        FunctionAlias.ZoomIn to { context, _ ->
             context.state_model.increment_zoom()
             context.state_model.recenter()
             true
         },
-        FunctionAlias.ZoomOut to { context, opus_manager ->
+        FunctionAlias.ZoomOut to { context, _ ->
             context.state_model.decrement_zoom()
             context.state_model.recenter()
             true
         },
-        FunctionAlias.ZoomInFull to { context, opus_manager ->
+        FunctionAlias.ZoomInFull to { context, _ ->
             val state_model = context.state_model
             state_model.queued_zoom_index.intValue = state_model.max_zoom_index.intValue
             state_model.recenter()
             true
         },
-        FunctionAlias.ZoomOutFull to { context, opus_manager ->
+        FunctionAlias.ZoomOutFull to { context, _ ->
             val state_model = context.state_model
             state_model.queued_zoom_index.intValue = 0
             state_model.recenter()

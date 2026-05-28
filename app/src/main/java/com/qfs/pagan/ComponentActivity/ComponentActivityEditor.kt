@@ -1623,7 +1623,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                 dialog_visibility,
                                                 vm_state.dlg_insert_beat,
                                                 1,
-                                                2048
+                                                Values.DialogInput.Max.InsertBeat
                                             ) {
                                                 opus_manager.insert_beats(opus_manager.length,it)
                                             }

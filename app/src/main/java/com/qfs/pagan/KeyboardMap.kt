@@ -69,6 +69,16 @@ object KeyboardMap {
             Global,
             AliasKey(KEYCODE_MINUS, true)
         ),
+        QuickMapEntry(
+          FunctionAlias.Undo,
+            Global,
+            AliasKey(KEYCODE_U)
+        ),
+        QuickMapEntry(
+            FunctionAlias.Redo,
+            Global,
+            AliasKey(KEYCODE_U, true)
+        ),
         // ------------------ UNSET ---------------------//
         QuickMapEntry(
             FunctionAlias.SelectLineNext,
@@ -100,6 +110,47 @@ object KeyboardMap {
             FunctionAlias.SelectFirstLinePrevChannel,
             Context.Line,
             AliasKey(KEYCODE_K, true)
+        ),
+        QuickMapEntry(
+            FunctionAlias.LineInsertAfter,
+            Context.Line,
+            AliasKey(KEYCODE_N)
+        ),
+        QuickMapEntry(
+            FunctionAlias.LineInsert,
+            Context.Line,
+            AliasKey(KEYCODE_LEFT_BRACKET),
+            AliasKey(KEYCODE_N),
+        ),
+        QuickMapEntry(
+            FunctionAlias.LineRemove,
+            Context.Line,
+            AliasKey(KEYCODE_X, true)
+        ),
+        QuickMapEntry(
+            FunctionAlias.LineDuplicate,
+            Context.Line,
+            AliasKey(KEYCODE_D, true)
+        ),
+        QuickMapEntry(
+            FunctionAlias.AdjustOctaveUp,
+            Context.Line,
+            AliasKey(KEYCODE_O, true)
+        ),
+        QuickMapEntry(
+            FunctionAlias.AdjustOctaveDown,
+            Context.Line,
+            AliasKey(KEYCODE_M, true)
+        ),
+        QuickMapEntry(
+            FunctionAlias.AdjustOffsetUp,
+            Context.Line,
+            AliasKey(KEYCODE_O)
+        ),
+        QuickMapEntry(
+            FunctionAlias.AdjustOffsetDown,
+            Context.Line,
+            AliasKey(KEYCODE_M)
         ),
         // ------------------ LEAF  ---------------------- //
         // ----------------- CHANNEL --------------------- //

@@ -2170,6 +2170,12 @@ open class OpusLayerHistory: OpusLayerCursor() {
         }
     }
 
+    override fun duplicate_line_at_cursor(repeat: Int) {
+        this._remember {
+            super.duplicate_line_at_cursor(repeat)
+        }
+    }
+
     override fun duplicate_channel(channel: Int): Int {
         return this._remember {
             val uuid = super.duplicate_channel(channel)

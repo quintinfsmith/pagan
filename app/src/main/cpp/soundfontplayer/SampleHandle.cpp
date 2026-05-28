@@ -3,9 +3,11 @@
 
 extern "C" JNIEXPORT jfloatArray JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1next_1frames_1jni(JNIEnv* env, jobject, jlong ptr_long, jint size, jint left_padding) {
-    auto *ptr = (SampleHandle *)ptr_long;
+    auto *ptr = (SampleHandle *) ptr_long;
     jfloat buffer[size * 2];
-    ptr->get_next_frames(buffer, size, left_padding);
+    if (ptr != nullptr) {
+        ptr->get_next_frames(buffer, size, left_padding);
+    }
 
     jfloatArray output = env->NewFloatArray(size * 2);
     env->SetFloatArrayRegion(output, 0, size * 2, buffer);
@@ -118,13 +120,17 @@ Java_com_qfs_apres_soundfontplayer_SampleHandle_copy_1jni(JNIEnv* env, jobject, 
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_is_1dead_1jni(JNIEnv* env, jobject, jlong ptr_long) {
     auto *ptr = (SampleHandle *) ptr_long;
-    return ptr->is_dead;
+    return ptr == nullptr || ptr->is_dead;
 }
 
 extern "C" JNIEXPORT jint JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_get_1working_1frame_1jni(JNIEnv* env, jobject, jlong ptr_long) {
     auto *ptr = (SampleHandle *) ptr_long;
-    return ptr->working_frame;
+    if (ptr == nullptr) {
+        return -1;
+    } else {
+        return ptr->working_frame;
+    }
 }
 
 extern "C" JNIEXPORT void JNICALL
@@ -137,6 +143,8 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_qfs_apres_soundfontplayer_SampleHandle_attach_1pitch_1controller_1jni(JNIEnv* env, jobject, jlong ptr_long, jlong controller_ptr_long) {
     auto *ptr = (SampleHandle *) ptr_long;
     auto *controller_ptr = (PitchEffectBuffer *) controller_ptr_long;
-    ptr->attach_pitch_controller(controller_ptr);
+    if (ptr != nullptr && controller_ptr != nullptr) {
+        ptr->attach_pitch_controller(controller_ptr);
+    }
 }
 

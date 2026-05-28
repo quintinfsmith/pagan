@@ -14,7 +14,7 @@ import com.qfs.apres.soundfont2.SampleData
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.PitchController
 import kotlin.math.abs
 
-class SampleHandle(var ptr: Long) {
+class SampleHandle(override var ptr: Long): JNIObject<SampleHandle> {
     var filter_cutoff: Float? = null
     constructor(
         data: SampleData,
@@ -74,7 +74,7 @@ class SampleHandle(var ptr: Long) {
         ): Long
     }
 
-    class VolumeEnvelope(val ptr: Long) {
+    class VolumeEnvelope(override var ptr: Long): JNIObject<VolumeEnvelope> {
         constructor(
             sample_rate: Int,
             delay: Float = 0F,
@@ -113,7 +113,7 @@ class SampleHandle(var ptr: Long) {
 
         external fun destroy_jni(ptr: Long)
         fun destroy() {
-            this.destroy_jni(this.ptr)
+            this.check()?.destroy_jni(this.ptr)
         }
     }
 
@@ -226,8 +226,8 @@ class SampleHandle(var ptr: Long) {
     }
 
     external fun get_next_frames_jni(ptr: Long, size: Int, left_padding: Int): FloatArray
-    fun get_next_frames(left_padding: Int, size: Int): FloatArray {
-        return this.get_next_frames_jni(this.ptr, size, left_padding)
+    fun get_next_frames(left_padding: Int, size: Int): FloatArray? {
+        return this.check()?.get_next_frames_jni(this.ptr, size, left_padding) ?: null
     }
 
     external fun release_note_jni(ptr: Long)
@@ -250,14 +250,10 @@ class SampleHandle(var ptr: Long) {
         this.attach_pitch_controller_jni(this.ptr, controller.ptr)
     }
 
-    // Need a destroy funciton since PitchedBuffer needs one
+    // Need a destroy function since PitchedBuffer needs one
     external fun destroy_jni(ptr: Long)
     fun destroy() {
-        if (this.ptr.toInt() != 0) {
-            this.destroy_jni(this.ptr)
-        } else {
-            Log.e("MEMORY", "Attempting to destroy destroyed SampleHandle")
-        }
+        this.check()?.destroy_jni(this.ptr)
         this.ptr = 0
     }
 }

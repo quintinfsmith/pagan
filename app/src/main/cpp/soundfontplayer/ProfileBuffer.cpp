@@ -160,6 +160,7 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_set_1frame_1jni(JNIEnv* env, jo
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_qfs_apres_soundfontplayer_ProfileBuffer_allow_1empty_1jni(JNIEnv* env, jobject, jlong ptr_long) {
     auto *ptr = (EffectProfileBuffer *) ptr_long;
+    if (ptr == nullptr) return false;
 
     bool output;
     switch (ptr->data->type) {

@@ -9,7 +9,9 @@
  */
 package com.qfs.apres.soundfont2
 
-class SampleData(var ptr: Long) {
+import com.qfs.apres.soundfontplayer.JNIObject
+
+class SampleData(override var ptr: Long): JNIObject<SampleData> {
     var size: Int = 0
 
     external fun set_data_jni(data_array: ShortArray): Long
@@ -24,6 +26,6 @@ class SampleData(var ptr: Long) {
 
     external fun destroy_jni(ptr: Long)
     fun destroy() {
-        this.destroy_jni(this.ptr)
+        this.check()?.destroy_jni(this.ptr)
     }
 }

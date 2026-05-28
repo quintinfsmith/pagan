@@ -2219,9 +2219,12 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         val (beat_key, position) = this.get_actual_position(this.cursor.get_beatkey(), this.cursor.get_position())
         this._set_note_octave(beat_key, position, octave, mode, this.latest_set_offset ?: 0)
 
-        this.get_absolute_value(beat_key, position)?.let {
-            this.vm_controller.play_event(beat_key.channel, it)
+        if (this.vm_state.soundfont_ready.value) {
+            this.get_absolute_value(beat_key, position)?.let {
+                this.vm_controller.play_event(beat_key.channel, it)
+            }
         }
+
     }
 
     fun set_note_offset_at_cursor(offset: Int, mode: RelativeInputMode) {
@@ -2230,8 +2233,10 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         val (beat_key, position) = this.get_actual_position(this.cursor.get_beatkey(), this.cursor.get_position())
         this._set_note_offset(beat_key, position, offset, mode, this.latest_set_octave ?: 0)
 
-        this.get_absolute_value(beat_key, position)?.let {
-            this.vm_controller.play_event(beat_key.channel, it)
+        if (this.vm_state.soundfont_ready.value) {
+            this.get_absolute_value(beat_key, position)?.let {
+                this.vm_controller.play_event(beat_key.channel, it)
+            }
         }
     }
 
@@ -2736,6 +2741,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         super.set_percussion_event_at_cursor()
 
         if (this.cursor.mode != CursorMode.Single) return
+        if (!this.vm_state.soundfont_ready.value) return
         this.vm_controller.play_event(
             this.cursor.channel,
             this.get_percussion_instrument(

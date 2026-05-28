@@ -134,7 +134,7 @@ fun LeafView(
                             opus_manager.cursor_select(beat_key, position)
 
                             val tree = opus_manager.get_tree() ?: return@combinedClickable
-                            if (tree.has_event()) {
+                            if (vm_state.soundfont_ready.value && tree.has_event()) {
                                 val note = if (opus_manager.is_percussion(channel)) {
                                     opus_manager.get_percussion_instrument(channel, line_offset)
                                 } else {

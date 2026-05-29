@@ -741,7 +741,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 layer_key,
                 ProfileBuffer(
                     ControllerEventData(
-                        this.frame_count,
+                        0,
                         control_event_data,
                         control_type
                     )

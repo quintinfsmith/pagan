@@ -260,10 +260,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
             this.update_result()
 
-            this@ComponentActivitySettings.settings_model.let {
-                it.soundfont_menu_active_choice.value = null
-                it.soundfont_menu_visibility.value = true
-            }
+            this@ComponentActivitySettings.check_file_list_and_show_dialog(null)
         }
 
     private var result_launcher_set_project_directory =
@@ -496,12 +493,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
     @Composable
     fun SoundFontMenu(visibility: MutableState<Boolean>, selected_file_name: MutableState<String?>) {
-        val file_list = this.get_existing_soundfonts()
-        if (file_list.isEmpty()) {
-            this.import_soundfont()
-            return
-        }
-
+        val file_list = this@ComponentActivitySettings.get_existing_soundfonts()
         val active_soundfonts = this.view_model.configuration.soundfonts.value
         val soundfonts = mutableListOf<Pair<Uri, @Composable RowScope.() -> Unit>>()
 
@@ -674,10 +666,9 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                 Text(soundfont_name, textAlign = TextAlign.Center)
                             },
                             onClick = {
-                                this@ComponentActivitySettings.settings_model.let {
-                                    it.soundfont_menu_active_choice.value = soundfont_path.value
-                                    it.soundfont_menu_visibility.value = true
-                                }
+                                this@ComponentActivitySettings.check_file_list_and_show_dialog(
+                                    soundfont_path.value
+                                )
                             }
                         )
                         Icon(
@@ -720,10 +711,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     if (this@ComponentActivitySettings.view_model.configuration.soundfont_directory.value == null) {
                         need_sf_dir_visibility.value = true
                     } else {
-                        this@ComponentActivitySettings.settings_model.let {
-                            it.soundfont_menu_active_choice.value = null
-                            it.soundfont_menu_visibility.value = true
-                        }
+                        this@ComponentActivitySettings.check_file_list_and_show_dialog(null)
                     }
                 }
             )
@@ -740,6 +728,15 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     )
                 }
             )
+        }
+    }
+    fun check_file_list_and_show_dialog(selection: String?) {
+        val file_list = this.get_existing_soundfonts()
+        if (file_list.isEmpty()) {
+            this.import_soundfont()
+        } else {
+            this.settings_model.soundfont_menu_active_choice.value = selection
+            this.settings_model.soundfont_menu_visibility.value = true
         }
     }
 
@@ -779,10 +776,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                         this@ComponentActivitySettings.view_model.configuration.soundfonts.value[0].value
                     }
 
-                    this@ComponentActivitySettings.settings_model.let {
-                        it.soundfont_menu_active_choice.value = selected
-                        it.soundfont_menu_visibility.value = true
-                    }
+                    this@ComponentActivitySettings.check_file_list_and_show_dialog(selected)
                 }
             )
         }

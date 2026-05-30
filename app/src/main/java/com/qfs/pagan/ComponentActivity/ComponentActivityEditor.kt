@@ -174,6 +174,7 @@ import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.enumerate
+import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
@@ -1485,6 +1486,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                         },
 
                                                         on_drag_stop = {
+
                                                             dragging_to_y?.let {
                                                                 val from_line = vm_state.line_data[vm_state.dragging_line.value!!]
                                                                 val to_line = vm_state.line_data[it]
@@ -1495,13 +1497,23 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                                         !is_after
                                                                     )
                                                                 } else if (to_line.line_offset.value != null) {
-                                                                    opus_manager.move_line(
-                                                                        from_line.channel.value!!,
-                                                                        from_line.line_offset.value!!,
-                                                                        to_line.channel.value!!,
-                                                                        to_line.line_offset.value!!,
-                                                                        !is_after
-                                                                    )
+                                                                    try {
+                                                                        opus_manager.move_line(
+                                                                            from_line.channel.value!!,
+                                                                            from_line.line_offset.value!!,
+                                                                            to_line.channel.value!!,
+                                                                            to_line.line_offset.value!!,
+                                                                            !is_after
+                                                                        )
+                                                                    } catch (e: IncompatibleChannelException) {
+                                                                        this@ComponentActivityEditor.runOnUiThread {
+                                                                            Toast.makeText(
+                                                                                this@ComponentActivityEditor,
+                                                                                getString(R.string.feedback_mixed_copy),
+                                                                                Toast.LENGTH_SHORT
+                                                                            ).show()
+                                                                        }
+                                                                    }
                                                                 }
                                                             }
                                                             vm_state.stop_dragging()

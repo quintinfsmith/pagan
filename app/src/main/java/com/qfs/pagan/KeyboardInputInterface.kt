@@ -18,11 +18,15 @@ import android.view.KeyEvent.KEYCODE_6
 import android.view.KeyEvent.KEYCODE_7
 import android.view.KeyEvent.KEYCODE_8
 import android.view.KeyEvent.KEYCODE_9
+import android.widget.Toast
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import com.qfs.pagan.ComponentActivity.ComponentActivityEditor
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
+import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
+import com.qfs.pagan.structure.opusmanager.base.InvalidChannel
+import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import kotlin.math.max
 import kotlin.math.min
@@ -69,6 +73,10 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
         AdjustOctaveDown,
         AdjustOffsetDown,
         TogglePercussion,
+        LineMoveDown,
+        LineMoveUp,
+        LineMoveTo,
+        LineSetChannel,
         LineDuplicate,
         LineInsert,
         LineInsertAfter,
@@ -87,30 +95,6 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
 
     var input_buffer_value: Int? = null
     val running_buffer: MutableList<KeyboardMap.AliasKey> = mutableListOf()
-    val ctl_pressed: Boolean = false
-
-    fun go_to_channel(context: ComponentActivityEditor, opus_manager: OpusManager): Boolean {
-        val visible_channels = opus_manager.get_visible_channels()
-        val channel = this.get_buffer_value(visible_channels.size - 1, 0, visible_channels.size - 1)
-        TODO("cursor select channel")
-        return true
-    }
-
-    fun go_to_first_line_in_channel(context: ComponentActivityEditor, opus_manager: OpusManager): Boolean {
-        val visible_channels = opus_manager.get_visible_channels()
-        val channel = this.get_buffer_value(visible_channels.size - 1, 0, visible_channels.size - 1)
-        TODO("cursor select line")
-        return true
-    }
-
-    fun clear_buffer_or_cursor(context: ComponentActivityEditor): Boolean {
-        if (this.input_buffer_value == null) {
-            TODO("Cursor clear")
-        } else {
-            this.input_buffer_value = null
-        }
-        return true
-    }
 
     fun get_buffer_value(default: Int = 0, minimum: Int? = null, maximum: Int? = null): Int {
         var output = this.input_buffer_value ?: default
@@ -131,8 +115,14 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
     }
 
     val cursor_map: HashMap<FunctionAlias, (ComponentActivityEditor, OpusManager) -> Boolean> = hashMapOf(
-        FunctionAlias.EscapeContext to { context, _ ->
-            this.clear_buffer_or_cursor(context)
+        FunctionAlias.EscapeContext to { _, opus_manager ->
+            if (this.input_buffer_value == null) {
+                opus_manager.cursor_clear()
+            } else {
+                this.input_buffer_value = null
+            }
+
+            true
         },
         FunctionAlias.Undo to { _, opus_manager ->
             val count = this.get_buffer_value(1, 0)
@@ -153,8 +143,17 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
             opus_manager.cursor_select_column(column)
             true
         },
-        FunctionAlias.SelectChannel to { context, opus_manager ->
-            this.go_to_channel(context, opus_manager)
+        FunctionAlias.SelectChannel to { _, opus_manager ->
+            val visible_channels = opus_manager.get_visible_channels()
+            opus_manager.cursor_select_channel(
+                this.get_buffer_value(
+                    visible_channels.size - 1,
+                    0,
+                    visible_channels.size - 1
+                )
+            )
+
+            true
         },
         FunctionAlias.SelectLine to { _, opus_manager ->
             val channel = when (opus_manager.cursor.mode) {
@@ -218,7 +217,36 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
             opus_manager.toggle_percussion_event_at_cursor()
             true
         },
-
+        FunctionAlias.LineMoveDown to { _, opus_manager ->
+            val count = this.get_buffer_value(1, 1)
+            opus_manager.move_selected_line_down(count)
+            true
+        },
+        FunctionAlias.LineMoveUp to { _, opus_manager ->
+            val count = this.get_buffer_value(1, 1)
+            opus_manager.move_selected_line_up(count)
+            true
+        },
+        FunctionAlias.LineMoveTo to { _, opus_manager ->
+            val line_offset = this.get_buffer_value(0, 0)
+            opus_manager.move_selected_line_to(line_offset)
+            true
+        },
+        FunctionAlias.LineSetChannel to { _, opus_manager ->
+            try {
+                opus_manager.move_selected_line_to_channel(
+                    this.get_buffer_value(
+                        0,
+                        0
+                    )
+                )
+            } catch (e: InvalidChannel) {
+                Toast.makeText(this.context, this.context.getString(R.string.invalid_channel, e.channel), Toast.LENGTH_SHORT).show()
+            } catch (e: IncompatibleChannelException) {
+                Toast.makeText(this.context, R.string.feedback_mixed_copy, Toast.LENGTH_SHORT).show()
+            }
+            true
+        },
         FunctionAlias.LineDuplicate to { _, opus_manager ->
             val count = this.get_buffer_value(
                 Values.DialogInput.InsertLine,
@@ -294,7 +322,7 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
                 this.get_buffer_value(
                     Values.DialogInput.Split,
                     1,
-                    1024
+                    Values.DialogInput.Max.Split
                 )
             )
             true

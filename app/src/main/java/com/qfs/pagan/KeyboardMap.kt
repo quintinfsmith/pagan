@@ -152,6 +152,26 @@ object KeyboardMap {
             Context.Line,
             AliasKey(KEYCODE_M)
         ),
+        QuickMapEntry(
+            FunctionAlias.LineMoveUp,
+            Context.Line,
+            AliasKey(KEYCODE_PERIOD, true)
+        ),
+        QuickMapEntry(
+            FunctionAlias.LineMoveDown,
+            Context.Line,
+            AliasKey(KEYCODE_COMMA, true)
+        ),
+        QuickMapEntry(
+            FunctionAlias.LineMoveTo,
+            Context.Line,
+            AliasKey(KEYCODE_PERIOD)
+        ),
+        QuickMapEntry(
+            FunctionAlias.LineSetChannel,
+            Context.Line,
+            AliasKey(KEYCODE_COMMA)
+        ),
         // ------------------ LEAF  ---------------------- //
         // ----------------- CHANNEL --------------------- //
         // ------------------ RANGE ---------------------- //

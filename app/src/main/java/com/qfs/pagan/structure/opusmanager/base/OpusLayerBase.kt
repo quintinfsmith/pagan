@@ -1009,6 +1009,9 @@ open class OpusLayerBase: Effectable {
      * Get the Channel Object @ [channel]
      */
     fun get_channel(channel: Int): OpusChannelAbstract<*, *> {
+        if (channel >= this.channels.size) {
+            throw InvalidChannel(channel)
+        }
         return this.channels[channel]
     }
 
@@ -1490,6 +1493,20 @@ open class OpusLayerBase: Effectable {
             this.remove_channel(channel_index_from)
         }
     }
+
+    fun move_line_up(channel_index: Int, line_offset: Int, repeat: Int) {
+        val adj_repeat = min(line_offset, repeat)
+        if (adj_repeat == 0) return
+        this.move_line(channel_index, line_offset, channel_index, line_offset - adj_repeat)
+    }
+
+    fun move_line_down(channel_index: Int, line_offset: Int, repeat: Int) {
+        val channel = this.get_channel(channel_index)
+        val adj_repeat = min(repeat, channel.size - line_offset - 1)
+        if (adj_repeat == 0) return
+        this.move_line(channel_index, line_offset, channel_index, line_offset + 1 + adj_repeat)
+    }
+
     /**
      * Swap line [line_offset_a] of channel [channel_index_a] with line [line_offset_b] of channel [channel_index_b].
      */

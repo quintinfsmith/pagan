@@ -2445,6 +2445,54 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor_select_line(adj_channel, adj_line_offset)
     }
 
+    fun move_selected_line_down(count: Int) {
+        if (this.cursor.mode != CursorMode.Line) return
+        this.move_line_down(
+            this.cursor.channel,
+            this.cursor.line_offset,
+            count
+        )
+    }
+
+    fun move_selected_line_up(count: Int) {
+        if (this.cursor.mode != CursorMode.Line) return
+        this.move_line_up(
+            this.cursor.channel,
+            this.cursor.line_offset,
+            count
+        )
+    }
+    fun move_selected_line_to(line_offset: Int) {
+        if (this.cursor.mode != CursorMode.Line) return
+        val channel = this.get_channel(this.cursor.channel)
+        var adj_line_offset = if (line_offset >= 0) {
+             min(channel.size, line_offset)
+        } else {
+            channel.size + 1 - min(channel.size, abs(line_offset))
+        }
+
+        if (adj_line_offset > this.cursor.line_offset) {
+            adj_line_offset = min(channel.size, adj_line_offset +1)
+        }
+
+        this.move_line(
+            this.cursor.channel,
+            this.cursor.line_offset,
+            this.cursor.channel,
+            adj_line_offset
+        )
+    }
+
+    fun move_selected_line_to_channel(new_channel: Int) {
+        if (this.cursor.mode != CursorMode.Line) return
+        this.move_line(
+            this.cursor.channel,
+            this.cursor.line_offset,
+            new_channel,
+            0
+        )
+    }
+
     fun get_tree(): ReducibleTree<out OpusEvent>? {
         if (this.cursor.mode != CursorMode.Single) return null
         return when (this.cursor.ctl_level) {

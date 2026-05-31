@@ -508,8 +508,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
         }
 
+    var _result_launcher_set_project_directory_and_save_callback: (() -> Unit)? = null
     private val _result_launcher_set_project_directory_and_save =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            var callback = this._result_launcher_set_project_directory_and_save_callback
+            this._result_launcher_set_project_directory_and_save_callback = null
             if (result.resultCode != RESULT_OK) return@registerForActivityResult
             val result_data = result.data ?: return@registerForActivityResult
             val tree_uri = result_data.data ?: return@registerForActivityResult
@@ -524,6 +527,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             this@ComponentActivityEditor.save()
 
             this.reload_config()
+            callback?.invoke()
         }
 
     internal var result_launcher_settings =
@@ -1288,8 +1292,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             confirm_action_callback.value = null
                         },
                         positive = {
-                            this@ComponentActivityEditor.save()
-                            adj_callback()
+                            this@ComponentActivityEditor.check_for_project_dir_and_save {
+                                adj_callback()
+                            }
                         }
                     )
                 }
@@ -2159,25 +2164,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     description = R.string.btn_cfg_save,
                     onClick = {
                         scope.launch { this@ComponentActivityEditor.close_drawer() }
-                        val configuration = this@ComponentActivityEditor.view_model.configuration
-                        if (configuration.project_directory.value == null || DocumentFile.fromTreeUri(
-                                this@ComponentActivityEditor,
-                                configuration.project_directory.value!!
-                            )?.exists() != true
-                        ) {
-                            this@ComponentActivityEditor._result_launcher_set_project_directory_and_save.launch(
-                                Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also { intent ->
-                                    intent.putExtra(Intent.EXTRA_TITLE, "Pagan Projects")
-                                    intent.flags =
-                                        Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                                    configuration.project_directory.value?.let {
-                                        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, it)
-                                    }
-                                }
-                            )
-                        } else {
-                            this@ComponentActivityEditor.save()
-                        }
+                        this@ComponentActivityEditor.check_for_project_dir_and_save()
                     }
                 )
                 DrawerPadder()
@@ -3447,6 +3434,28 @@ class ComponentActivityEditor: PaganComponentActivity() {
             this.controller_model.active_project = null
             this.controller_model.project_exists.value = false
             Toast.makeText(this, R.string.feedback_on_copy, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun check_for_project_dir_and_save(callback: (() -> Unit)? = null) {
+        val configuration = this.view_model.configuration
+        if (configuration.project_directory.value == null || DocumentFile.fromTreeUri(
+                this,
+                configuration.project_directory.value!!
+            )?.exists() != true
+        ) {
+            this._result_launcher_set_project_directory_and_save_callback = callback
+            this._result_launcher_set_project_directory_and_save.launch(
+                Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also { intent ->
+                    intent.putExtra(Intent.EXTRA_TITLE, "Pagan Projects")
+                    intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    configuration.project_directory.value?.let {
+                        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, it)
+                    }
+                }
+            )
+        } else {
+            this@ComponentActivityEditor.save()
         }
     }
 

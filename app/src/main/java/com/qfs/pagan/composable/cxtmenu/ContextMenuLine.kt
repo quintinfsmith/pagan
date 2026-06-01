@@ -276,8 +276,10 @@ fun PercussionSetInstrumentButton(modifier: Modifier = Modifier, vm_state: ViewM
         val label = if (use_name) {
             if (vm_state.soundfont_active.value != null && !vm_state.use_midi_playback.value) {
                 vm_state.get_instrument_name(active_channel.instrument.value, assigned_offset)
-            } else {
+            } else if (assigned_offset < midi_instruments.size) {
                 midi_instruments[assigned_offset]
+            } else {
+                stringResource(R.string.unknown_instrument, assigned_offset)
             }
         } else {
             "!${"%02d".format(assigned_offset)}"
@@ -381,7 +383,8 @@ fun PercussionInstrumentDialog(visibility: MutableState<Boolean>, vm_state: View
         }
     }
 
-    val current_instrument = (opus_manager.get_channel(channel).lines[line_offset] as OpusLinePercussion).instrument
+    val row_index = opus_manager.get_visible_row_from_pair(channel, line_offset)
+    val current_instrument = vm_state.line_data[row_index].assigned_offset.value
     DialogMenu(
         visibility,
         R.string.dropdown_choose_instrument,

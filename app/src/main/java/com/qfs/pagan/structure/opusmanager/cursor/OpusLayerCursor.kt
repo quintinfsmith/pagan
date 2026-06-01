@@ -26,6 +26,7 @@ import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectControlSet
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -328,6 +329,16 @@ open class OpusLayerCursor: OpusLayerBase() {
     override fun unmute_line(channel: Int, line_offset: Int) {
         super.unmute_line(channel, line_offset)
         this.cursor_select_line(channel, line_offset)
+    }
+
+    fun toggle_selected_line_mute() {
+        if (this.cursor.mode != CursorMode.Line) return
+        val is_mute = this.get_channel(this.cursor.channel).lines[this.cursor.line_offset].muted
+        if (is_mute) {
+            this.unmute_line_at_cursor()
+        } else {
+            this.mute_line_at_cursor()
+        }
     }
     fun unmute_line_at_cursor() {
         when (this.cursor.mode) {
@@ -2945,6 +2956,14 @@ open class OpusLayerCursor: OpusLayerBase() {
             },
             0
         )
+    }
+
+    fun set_selected_line_volume(value: Float) {
+        if (this.cursor.mode != CursorMode.Line) return
+        val controller = this.get_line_controller<OpusVolumeEvent>(EffectType.Volume, this.cursor.channel, this.cursor.line_offset)
+        val initial_event = this.get_line_controller_initial_event<OpusVolumeEvent>(EffectType.Volume, this.cursor.channel, this.cursor.line_offset).copy()
+        initial_event.value = value
+        controller.set_initial_event(initial_event)
     }
 
 }

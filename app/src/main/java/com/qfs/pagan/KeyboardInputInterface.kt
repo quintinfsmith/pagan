@@ -77,10 +77,13 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
         LineMoveUp,
         LineMoveTo,
         LineSetChannel,
+        LineSetPercussionInstrument,
         LineDuplicate,
         LineInsert,
         LineInsertAfter,
         LineRemove,
+        LineMuteToggle,
+        LineSetVolume,
         LeafUnset,
         LeafAdd,
         LeafRemove,
@@ -152,7 +155,6 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
                     visible_channels.size - 1
                 )
             )
-
             true
         },
         FunctionAlias.SelectLine to { _, opus_manager ->
@@ -247,6 +249,11 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
             }
             true
         },
+        FunctionAlias.LineSetPercussionInstrument to { _, opus_manager ->
+            val instrument = this.get_buffer_value(0, 0, 127)
+            opus_manager.set_percussion_instrument(instrument)
+            true
+        },
         FunctionAlias.LineDuplicate to { _, opus_manager ->
             val count = this.get_buffer_value(
                 Values.DialogInput.InsertLine,
@@ -314,6 +321,20 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
                 1,
             )
             opus_manager.remove_line_at_cursor(count)
+            true
+        },
+
+        FunctionAlias.LineSetVolume to { _, opus_manager ->
+            opus_manager.set_selected_line_volume(
+                this.get_buffer_value(
+                    100,
+                    0
+                ).toFloat() / 100F
+            )
+            true
+        },
+        FunctionAlias.LineMuteToggle to { _, opus_manager ->
+            opus_manager.toggle_selected_line_mute()
             true
         },
 
@@ -390,6 +411,7 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
     )
 
     fun input(event: KeyEvent): Boolean {
+        //println("$event")
         val key_code = event.nativeKeyEvent.keyCode
         val current_buffer = this.input_buffer_value
         val opus_manager = this.context.controller_model.opus_manager

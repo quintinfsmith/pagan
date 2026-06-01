@@ -133,6 +133,16 @@ object KeyboardMap {
             AliasKey(KEYCODE_D, true)
         ),
         QuickMapEntry(
+            FunctionAlias.LineMuteToggle,
+            Context.Line,
+            AliasKey(KEYCODE_GRAVE)
+        ),
+        QuickMapEntry(
+            FunctionAlias.LineSetVolume,
+            Context.Line,
+            AliasKey(KEYCODE_V, true)
+        ),
+        QuickMapEntry(
             FunctionAlias.AdjustOctaveUp,
             Context.Line,
             AliasKey(KEYCODE_O, true)
@@ -172,6 +182,11 @@ object KeyboardMap {
             Context.Line,
             AliasKey(KEYCODE_COMMA)
         ),
+        QuickMapEntry(
+            FunctionAlias.LineSetPercussionInstrument,
+            Context.LinePercussion,
+            AliasKey(KEYCODE_I)
+        )
         // ------------------ LEAF  ---------------------- //
         // ----------------- CHANNEL --------------------- //
         // ------------------ RANGE ---------------------- //

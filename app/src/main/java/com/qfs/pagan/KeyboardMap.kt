@@ -1,4 +1,5 @@
 package com.qfs.pagan
+import android.util.Log
 import android.view.KeyEvent.*
 import com.qfs.pagan.KeyboardInputInterface.Context
 import com.qfs.pagan.KeyboardInputInterface.Context.*
@@ -6,7 +7,8 @@ import com.qfs.pagan.KeyboardInputInterface.FunctionAlias
 
 object KeyboardMap {
     data class AliasKey(val key_code: Int, val is_shift_pressed: Boolean = false, val is_ctrl_pressed: Boolean = false)
-    class QuickMapEntry(val alias: FunctionAlias, val cursor_context: KeyboardInputInterface.Context, vararg _input_chain: AliasKey) {
+    class QuickMapEntry(val alias: FunctionAlias, val cursor_contexts: Array<KeyboardInputInterface.Context>, vararg _input_chain: AliasKey) {
+        constructor(alias: FunctionAlias, cursor_context: KeyboardInputInterface.Context, vararg _input_chain: AliasKey): this(alias, arrayOf(cursor_context), *_input_chain)
         val input_chain: Array<AliasKey> = Array(_input_chain.size) { i -> _input_chain[i] }
     }
 
@@ -90,6 +92,27 @@ object KeyboardMap {
             Context.Unset,
             AliasKey(KEYCODE_L)
         ),
+        // ---------------- LINE/LEAF -------------------//
+        QuickMapEntry(
+            FunctionAlias.AdjustOctaveUp,
+            arrayOf(Context.Line, Context.LeafStandard),
+            AliasKey(KEYCODE_O, true)
+        ),
+        QuickMapEntry(
+            FunctionAlias.AdjustOctaveDown,
+            arrayOf(Context.Line, Context.LeafStandard),
+            AliasKey(KEYCODE_M, true)
+        ),
+        QuickMapEntry(
+            FunctionAlias.AdjustOffsetUp,
+            arrayOf(Context.Line, Context.LeafStandard),
+            AliasKey(KEYCODE_O)
+        ),
+        QuickMapEntry(
+            FunctionAlias.AdjustOffsetDown,
+            arrayOf(Context.Line, Context.LeafStandard),
+            AliasKey(KEYCODE_M)
+        ),
         // ------------------ LINE  ---------------------- //
         QuickMapEntry(
             FunctionAlias.SelectLineNext,
@@ -143,26 +166,6 @@ object KeyboardMap {
             AliasKey(KEYCODE_V, true)
         ),
         QuickMapEntry(
-            FunctionAlias.AdjustOctaveUp,
-            Context.Line,
-            AliasKey(KEYCODE_O, true)
-        ),
-        QuickMapEntry(
-            FunctionAlias.AdjustOctaveDown,
-            Context.Line,
-            AliasKey(KEYCODE_M, true)
-        ),
-        QuickMapEntry(
-            FunctionAlias.AdjustOffsetUp,
-            Context.Line,
-            AliasKey(KEYCODE_O)
-        ),
-        QuickMapEntry(
-            FunctionAlias.AdjustOffsetDown,
-            Context.Line,
-            AliasKey(KEYCODE_M)
-        ),
-        QuickMapEntry(
             FunctionAlias.LineMoveUp,
             Context.Line,
             AliasKey(KEYCODE_PERIOD, true)
@@ -186,8 +189,69 @@ object KeyboardMap {
             FunctionAlias.LineSetPercussionInstrument,
             Context.LinePercussion,
             AliasKey(KEYCODE_I)
-        )
+        ),
         // ------------------ LEAF  ---------------------- //
+        QuickMapEntry(
+            FunctionAlias.LeafUnset,
+            Context.Leaf,
+            AliasKey(KEYCODE_Z)
+        ),
+        QuickMapEntry(
+            FunctionAlias.LeafSplit,
+            Context.Leaf,
+            AliasKey(KEYCODE_S)
+        ),
+        QuickMapEntry(
+            FunctionAlias.LeafRemove,
+            Context.Leaf,
+            AliasKey(KEYCODE_X)
+        ),
+        QuickMapEntry(
+            FunctionAlias.LeafAdd,
+            Context.Leaf,
+            AliasKey(KEYCODE_A)
+        ),
+        QuickMapEntry(
+            FunctionAlias.LeafAddBefore,
+            Context.Leaf,
+            AliasKey(KEYCODE_LEFT_BRACKET),
+            AliasKey(KEYCODE_A)
+        ),
+        QuickMapEntry(
+            FunctionAlias.SelectLeafNext,
+            Context.Leaf,
+            AliasKey(KEYCODE_L)
+        ),
+        QuickMapEntry(
+            FunctionAlias.SelectLeafPrevious,
+            Context.Leaf,
+            AliasKey(KEYCODE_H)
+        ),
+        QuickMapEntry(
+            FunctionAlias.SelectLeafUp,
+            Context.Leaf,
+            AliasKey(KEYCODE_K)
+        ),
+        QuickMapEntry(
+            FunctionAlias.SelectLeafDown,
+            Context.Leaf,
+            AliasKey(KEYCODE_J)
+        ),
+        QuickMapEntry(
+            FunctionAlias.SetOffset,
+            Context.LeafStandard,
+            AliasKey(KEYCODE_PERIOD)
+        ),
+        QuickMapEntry(
+            FunctionAlias.SetOctave,
+            Context.LeafStandard,
+            AliasKey(KEYCODE_COMMA)
+        ),
+        QuickMapEntry(
+            FunctionAlias.LeafSetDuration,
+            Context.Leaf,
+            AliasKey(KEYCODE_D)
+        )
         // ----------------- CHANNEL --------------------- //
         // ------------------ RANGE ---------------------- //
     )
@@ -204,18 +268,19 @@ object KeyboardMap {
     val search_trees = HashMap<Context, SearchTree>()
     init {
         for (entry in this.quick_map) {
-            val context = entry.cursor_context
-            if (! this.search_trees.containsKey(context)) {
-                this.search_trees[context] = SearchTree()
-            }
-            var top = this.search_trees[context]!!
-            for (key in entry.input_chain) {
-                if (! top.branches.containsKey(key)) {
-                    top.branches[key] = SearchTree()
+            for (context in entry.cursor_contexts) {
+                if (!this.search_trees.containsKey(context)) {
+                    this.search_trees[context] = SearchTree()
                 }
-                top = top.branches[key]!!
+                var top = this.search_trees[context]!!
+                for (key in entry.input_chain) {
+                    if (!top.branches.containsKey(key)) {
+                        top.branches[key] = SearchTree()
+                    }
+                    top = top.branches[key]!!
+                }
+                top.value = entry.alias
             }
-            top.value = entry.alias
         }
     }
 

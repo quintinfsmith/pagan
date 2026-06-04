@@ -26,7 +26,6 @@ import com.qfs.pagan.ComponentActivity.ComponentActivityEditor
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
 import com.qfs.pagan.structure.opusmanager.base.InvalidChannel
-import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import kotlin.math.max
 import kotlin.math.min
@@ -66,13 +65,11 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
         SelectFirstLineNextChannel,
         SelectFirstLinePrevChannel,
         SelectChannel,
-        SetOctave,
-        SetOffset,
         AdjustOctaveUp,
         AdjustOffsetUp,
         AdjustOctaveDown,
         AdjustOffsetDown,
-        TogglePercussion,
+
         LineMoveDown,
         LineMoveUp,
         LineMoveTo,
@@ -84,10 +81,23 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
         LineRemove,
         LineMuteToggle,
         LineSetVolume,
+
         LeafUnset,
         LeafAdd,
+        LeafAddBefore,
         LeafRemove,
         LeafSplit,
+        LeafSetDuration,
+
+        SelectLeafNext,
+        SelectLeafPrevious,
+        SelectLeafUp,
+        SelectLeafDown,
+
+        SetOctave,
+        SetOffset,
+
+        TogglePercussion,
 
         // ------ UI Function ----------//
         ZoomIn,
@@ -190,6 +200,13 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
             true
         },
 
+        FunctionAlias.LeafSetDuration to { _, opus_manager ->
+            opus_manager.set_duration_at_cursor(
+                this.get_buffer_value(1, 1)
+            )
+            true
+        },
+
         FunctionAlias.SetOctave to { context, opus_manager ->
             val default_octave = opus_manager.latest_set_octave ?: 0
             opus_manager.set_note_octave_at_cursor(
@@ -205,7 +222,7 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
 
         FunctionAlias.SetOffset to { context, opus_manager ->
             val default_offset = opus_manager.latest_set_offset ?: 0
-            opus_manager.set_note_octave_at_cursor(
+            opus_manager.set_note_offset_at_cursor(
                 this.get_buffer_value(
                     default_offset,
                     0,
@@ -359,6 +376,12 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
             true
         },
         FunctionAlias.LeafAdd to { _, opus_manager ->
+            opus_manager.insert_after_cursor(
+                this.get_buffer_value(1, 0)
+            )
+            true
+        },
+        FunctionAlias.LeafAddBefore to { _, opus_manager ->
             opus_manager.insert_at_cursor(
                 this.get_buffer_value(1, 0)
             )
@@ -384,6 +407,30 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
             val state_model = context.state_model
             state_model.queued_zoom_index.intValue = 0
             state_model.recenter()
+            true
+        },
+        FunctionAlias.SelectLeafNext to { _, opus_manager ->
+            opus_manager.select_next_leaf(
+                this.get_buffer_value(1, 0)
+            )
+            true
+        },
+        FunctionAlias.SelectLeafPrevious to { _, opus_manager ->
+            opus_manager.select_previous_leaf(
+                this.get_buffer_value(1, 0)
+            )
+            true
+        },
+        FunctionAlias.SelectLeafUp to { _, opus_manager ->
+            opus_manager.select_leaf_up(
+                this.get_buffer_value(1, 0)
+            )
+            true
+        },
+        FunctionAlias.SelectLeafDown to { _, opus_manager ->
+            opus_manager.select_leaf_down(
+                this.get_buffer_value(1, 0)
+            )
             true
         }
         //SelectLine to { context, opus_manager ->

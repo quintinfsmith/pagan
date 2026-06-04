@@ -416,7 +416,12 @@ open class OpusLayerCursor: OpusLayerBase() {
                     )
                 )
             }
-            CursorMode.Single,
+            CursorMode.Single -> {
+                Pair(
+                    this.cursor.get_beatkey(),
+                    this.cursor.get_beatkey()
+                )
+            }
             CursorMode.Unset -> {
                 return
             }
@@ -457,7 +462,12 @@ open class OpusLayerCursor: OpusLayerBase() {
                     )
                 )
             }
-            CursorMode.Single,
+            CursorMode.Single -> {
+                Pair(
+                    this.cursor.get_beatkey(),
+                    this.cursor.get_beatkey()
+                )
+            }
             CursorMode.Unset -> {
                 return null
             }
@@ -1147,6 +1157,25 @@ open class OpusLayerCursor: OpusLayerBase() {
             }
         } else {
             when (cursor.ctl_level) {
+                CtlLineLevel.Global -> this.controller_global_insert(cursor.ctl_type!!, cursor.beat, position)
+                CtlLineLevel.Channel -> this.controller_channel_insert(cursor.ctl_type!!, cursor.channel, cursor.beat, position)
+                CtlLineLevel.Line -> this.controller_line_insert(cursor.ctl_type!!, cursor.get_beatkey(), position)
+                null -> this.insert_repeat(this.cursor.get_beatkey(), this.cursor.get_position(), repeat)
+            }
+        }
+    }
+
+    fun insert_after_cursor(repeat: Int) {
+        val position = this.cursor.get_position()
+        if (position.isEmpty()) {
+            when (cursor.ctl_level) {
+                CtlLineLevel.Global -> this.controller_global_split_tree(cursor.ctl_type!!, cursor.beat, position, repeat + 1)
+                CtlLineLevel.Channel -> this.controller_channel_split_tree(cursor.ctl_type!!, cursor.channel, cursor.beat, position, repeat + 1)
+                CtlLineLevel.Line -> this.controller_line_split_tree(cursor.ctl_type!!, cursor.get_beatkey(), position, repeat + 1)
+                null -> this.split_tree(this.cursor.get_beatkey(), this.cursor.get_position(), repeat + 1)
+            }
+        } else {
+            when (cursor.ctl_level) {
                 CtlLineLevel.Global -> this.controller_global_insert_after(cursor.ctl_type!!, cursor.beat, position)
                 CtlLineLevel.Channel -> this.controller_channel_insert_after(cursor.ctl_type!!, cursor.channel, cursor.beat, position)
                 CtlLineLevel.Line -> this.controller_line_insert_after(cursor.ctl_type!!, cursor.get_beatkey(), position)
@@ -1472,6 +1501,31 @@ open class OpusLayerCursor: OpusLayerBase() {
         } else {
             this.controller_global_move_leaf(this.cursor.ctl_type!!, first.beat, listOf(), beat, listOf())
         }
+    }
+
+    fun select_leaf_up(repeat: Int = 1) {
+        if (this.cursor.mode != CursorMode.Single) return
+        val original = this.cursor.get_beatkey()
+        val tree = this.get_tree(this.cursor.get_beatkey())
+        val rational_position = tree.get_rational_position(this.cursor.position)
+        val next_line = (original.line_offset - repeat).mod(this.get_channel(original.channel).lines.size)
+
+        val next_beat_key = BeatKey(this.cursor.channel, next_line, this.cursor.beat)
+        val next_tree = this.get_tree(next_beat_key)
+        val next_position = next_tree.get_closest_position(rational_position)
+        this.cursor_select(next_beat_key, next_position)
+    }
+
+    fun select_leaf_down(repeat: Int = 1) {
+        if (this.cursor.mode != CursorMode.Single) return
+        val original = this.cursor.get_beatkey()
+        val tree = this.get_tree(this.cursor.get_beatkey())
+        val rational_position = tree.get_rational_position(this.cursor.position)
+        val next_line = (original.line_offset + repeat) % this.get_channel(original.channel).lines.size
+        val next_beat_key = BeatKey(this.cursor.channel, next_line, this.cursor.beat)
+        val next_tree = this.get_tree(next_beat_key)
+        val next_position = next_tree.get_closest_position(rational_position)
+        this.cursor_select(next_beat_key, next_position)
     }
 
     fun move_to_previous_visible_line(repeat: Int = 1) {
@@ -2763,8 +2817,10 @@ open class OpusLayerCursor: OpusLayerBase() {
             }
         }
     }
+
     fun set_duration_at_cursor(duration: Int) {
         if (this.cursor.mode != CursorMode.Single) throw InvalidCursorState()
+        if (this.get_tree()?.event == null) return
         when (this.cursor.ctl_level) {
             CtlLineLevel.Line -> {
                 val (beat_key, position) = this.controller_line_get_actual_position(
@@ -2884,6 +2940,7 @@ open class OpusLayerCursor: OpusLayerBase() {
         }
         this.cursor_select_visible_line((y + 1) % this.get_row_count())
     }
+
     fun cursor_select_row_prev() {
         if (this.cursor.mode != CursorMode.Line) return
         val y = when (this.cursor.ctl_level) {
@@ -2966,4 +3023,20 @@ open class OpusLayerCursor: OpusLayerBase() {
         controller.set_initial_event(initial_event)
     }
 
+    fun toggle_selection_relativity() {
+        when (cursor.mode) {
+            CursorMode.Line -> TODO()
+            CursorMode.Beat -> TODO()
+            CursorMode.Single -> {
+                when (this.get_tree()?.event) {
+                    is RelativeNoteEvent -> this.convert_event_to_absolute()
+                    is AbsoluteNoteEvent -> this.convert_event_to_relative()
+                    else -> return
+                }
+            }
+            CursorMode.Range -> TODO()
+            CursorMode.Channel -> TODO()
+            CursorMode.Unset -> TODO()
+        }
+    }
 }

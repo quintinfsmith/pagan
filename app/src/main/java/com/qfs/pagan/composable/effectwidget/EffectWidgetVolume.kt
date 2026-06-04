@@ -67,13 +67,14 @@ fun RowScope.VolumeEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusL
             working_value.floatValue = it
         },
         onValueChangeFinished = {
+            working_event.value = working_value.floatValue
             opus_manager.set_event_at_cursor(working_event)
         },
     )
     IntegerInputDialog(
         R.string.dlg_set_volume,
         dialog_visibility,
-        remember { mutableIntStateOf((working_event.value * 100).toInt()) },
+        remember { mutableIntStateOf((working_event.value * 100).roundToInt()) },
         0, 200,
     ) {
         working_event.value = it.toFloat() / 100F

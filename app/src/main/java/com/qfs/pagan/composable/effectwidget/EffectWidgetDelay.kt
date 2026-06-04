@@ -228,6 +228,7 @@ fun RowScope.DelayEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLa
                 },
                 onValueChangeFinished = {
                     fade_expanded.value = false
+                    working_event.fade = fade.floatValue
                     submit()
                 }
             )

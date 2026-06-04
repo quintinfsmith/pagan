@@ -187,7 +187,7 @@ fun LeafView(
                 )
             }
 
-            if (zoom * leaf_data.weight.value >= 1F) {
+            if (zoom * leaf_data.weight.floatValue >= 1F) {
                 when (event) {
                     is AbsoluteNoteEvent -> {
                         val octave = event.note / radix
@@ -260,7 +260,12 @@ fun LeafView(
                     else -> {
                         ProvideTextStyle(Typography.EffectLeaf) {
                             when (event) {
-                                is OpusVolumeEvent -> Text("${(event.value * 100F).toInt()}%", color = text_color)
+                                is OpusVolumeEvent -> {
+                                    Text(
+                                        "${(event.value * 100F).roundToInt()}%",
+                                        color = text_color
+                                    )
+                                }
                                 is OpusPanEvent -> {
                                     Text(
                                         text = if (event.value > 0) {

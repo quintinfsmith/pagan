@@ -1,0 +1,5 @@
+Bugfixes:
+    - Initial Delay text input value not being updated with slider
+    Thanks to studyingegret for finding:
+      - Sliders sometimes not keeping values
+      - Volume widget sometimes displaying incorrect

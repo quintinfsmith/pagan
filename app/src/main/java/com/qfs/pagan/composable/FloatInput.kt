@@ -12,6 +12,7 @@ package com.qfs.pagan.composable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.TextFieldLabelScope
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import com.qfs.pagan.enumerate
@@ -23,7 +24,7 @@ import kotlin.math.roundToInt
 
 @Composable
 fun FloatInput(
-    value: Float,
+    value: MutableState<Float>,
     precision: Int? = null,
     minimum: Float? = null,
     maximum: Float? = null,
@@ -49,7 +50,7 @@ fun FloatInput(
         on_focus_exit,
         revert_on_exit,
         { char_sequence ->
-            var working_string = mutableListOf<Char>()
+            val working_string = mutableListOf<Char>()
             var dot_count = 0
             val current_text = char_sequence.toList().enumerate()
             for ((i, c) in current_text) {

@@ -46,7 +46,7 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, opus_manager: OpusL
 
     val tempo_label = remember { mutableFloatStateOf(working_event.value) }
     FloatInput(
-        tempo_label.floatValue,
+        tempo_label,
         precision = 3,
         revert_on_exit = true,
         prefix = {

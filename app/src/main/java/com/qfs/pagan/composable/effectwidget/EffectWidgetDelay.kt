@@ -87,7 +87,7 @@ fun RowScope.DelayEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLa
             contentDescription = null
         )
         IntegerInput(
-            working_event.numerator,
+            remember { mutableStateOf(working_event.numerator) },
             contentPadding = Unpadded,
             text_align = TextAlign.Center,
             revert_on_exit = true,
@@ -113,7 +113,7 @@ fun RowScope.DelayEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLa
             contentDescription = null
         )
         IntegerInput(
-            working_event.denominator,
+            remember { mutableStateOf(working_event.denominator) },
             minimum = 1,
             contentPadding = Unpadded,
             text_align = TextAlign.Center,
@@ -142,7 +142,7 @@ fun RowScope.DelayEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLa
             contentDescription = null
         )
         IntegerInput(
-            working_event.echo + 1,
+            remember { mutableStateOf(working_event.echo + 1) },
             minimum = 1,
             contentPadding = Unpadded,
             text_align = TextAlign.Center,

@@ -28,7 +28,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -50,14 +49,12 @@ import com.qfs.pagan.TestTag
 import com.qfs.pagan.Values
 import com.qfs.pagan.composable.DivisorSeparator
 import com.qfs.pagan.composable.IntegerInput
-import com.qfs.pagan.composable.IntegerInputDialog
 import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.wrappers.Text
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
@@ -176,29 +173,27 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
 
             MediumSpacer()
 
-            key(working_value.floatValue, velocity_input_value.intValue) {
-                IntegerInput(
-                    (working_event.value * 100F).roundToInt(),
-                    minimum = 0,
-                    maximum = 100,
-                    contentPadding = Unpadded,
-                    text_align = TextAlign.Center,
-                    revert_on_exit = true,
-                    modifier = Modifier
-                        .testTag(TestTag.VelocityInput)
-                        .height(Dimensions.EffectWidget.InputHeight)
-                        .width(Dimensions.EffectWidget.Velocity.InputWidth)
-                ) {
-                    working_event.value = it.toFloat() / 100F
-                    working_value.floatValue = working_event.value
-                    submit()
-                }
+            IntegerInput(
+                velocity_input_value,
+                minimum = 0,
+                maximum = 100,
+                contentPadding = Unpadded,
+                text_align = TextAlign.Center,
+                revert_on_exit = true,
+                modifier = Modifier
+                    .testTag(TestTag.VelocityInput)
+                    .height(Dimensions.EffectWidget.InputHeight)
+                    .width(Dimensions.EffectWidget.Velocity.InputWidth)
+            ) {
+                working_event.value = it.toFloat() / 100F
+                working_value.floatValue = working_event.value
+                submit()
             }
-
         }
     }
 
     MediumSpacer()
+
     if (!is_percussion) {
         if (slide_enabled.value) {
             Column(
@@ -280,7 +275,7 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
                         contentAlignment = Alignment.Center
                     ) {
                         IntegerInput(
-                            denominator_label.value,
+                            denominator_label,
                             minimum = 1,
                             revert_on_exit = true,
                             contentPadding = Unpadded,

@@ -3369,8 +3369,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     fun TuningTableDialog(visibility: MutableState<Boolean>) {
         val opus_manager = this.controller_model.opus_manager
-        val original_radix = opus_manager.get_radix()
         PaganDialog(visibility) {
+            val original_radix = opus_manager.get_radix()
             val transpose_numerator = remember { mutableIntStateOf(opus_manager.transpose.first) }
             val transpose_denominator = remember { mutableIntStateOf(opus_manager.transpose.second) }
             val radix = remember { mutableIntStateOf(original_radix) }

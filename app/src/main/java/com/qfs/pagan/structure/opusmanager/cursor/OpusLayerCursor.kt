@@ -2820,7 +2820,6 @@ open class OpusLayerCursor: OpusLayerBase() {
 
     fun set_duration_at_cursor(duration: Int) {
         if (this.cursor.mode != CursorMode.Single) throw InvalidCursorState()
-        if (this.get_tree()?.event == null) return
         when (this.cursor.ctl_level) {
             CtlLineLevel.Line -> {
                 val (beat_key, position) = this.controller_line_get_actual_position(
@@ -2828,6 +2827,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                     this.cursor.get_beatkey(),
                     this.cursor.get_position()
                 )
+                if (this.get_line_ctl_tree<EffectEvent>(this.cursor.ctl_type!!, beat_key, position).event == null) return
                 this.set_duration(this.cursor.ctl_type!!, beat_key, position, duration)
             }
             CtlLineLevel.Channel -> {
@@ -2837,10 +2837,12 @@ open class OpusLayerCursor: OpusLayerBase() {
                     this.cursor.beat,
                     this.cursor.get_position()
                 )
+                if (this.get_channel_ctl_tree<EffectEvent>(this.cursor.ctl_type!!, this.cursor.channel, beat, position).event == null) return
                 this.set_duration(this.cursor.ctl_type!!, this.cursor.channel, beat, position, duration)
             }
             CtlLineLevel.Global -> {
                 val (beat, position) = this.controller_global_get_actual_position(this.cursor.ctl_type!!, this.cursor.beat, this.cursor.get_position())
+                if (this.get_global_ctl_tree<EffectEvent>(this.cursor.ctl_type!!, beat, position).event == null) return
                 this.set_duration(this.cursor.ctl_type!!, beat, position, duration)
             }
             null -> {
@@ -2848,6 +2850,7 @@ open class OpusLayerCursor: OpusLayerBase() {
                     this.cursor.get_beatkey(),
                     this.cursor.get_position()
                 )
+                if (this.get_tree(beat_key, position).event == null) return
                 this.set_duration(beat_key, position, kotlin.math.max(1, duration))
             }
         }

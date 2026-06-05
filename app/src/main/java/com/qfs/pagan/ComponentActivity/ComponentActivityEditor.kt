@@ -1278,8 +1278,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
         key (this.state_model.confirm_action_callback.value) {
             confirm_action_callback.value?.let { callback ->
                 val adj_callback = {
-                    callback()
                     confirm_action_callback.value = null
+                    this.state_model.confirm_action_visibility.value = false
+                    callback()
                 }
 
                 PaganDialog(this.state_model.confirm_action_visibility) {
@@ -1289,6 +1290,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             adj_callback()
                         },
                         neutral = {
+                            this@ComponentActivityEditor.state_model.confirm_action_visibility.value = false
                             confirm_action_callback.value = null
                         },
                         positive = {
@@ -3456,6 +3458,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             )
         } else {
             this@ComponentActivityEditor.save()
+            callback?.invoke()
         }
     }
 

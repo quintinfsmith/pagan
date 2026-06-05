@@ -1,5 +1,6 @@
 Bugfixes:
     - Initial Delay text input value not being updated with slider
+    - Crash caused by reducing radix, then reopening the tuning map
     Thanks to studyingegret for finding:
       - Sliders sometimes not keeping values
       - Volume widget sometimes displaying incorrect

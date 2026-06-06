@@ -602,7 +602,12 @@ class ViewModelEditorState: ViewModel() {
             }
             this.cell_map.removeAt(y)
         }
+
         this.line_count.value -= count
+
+        for (x in 0 until this.beat_count.value) {
+            this.update_top_weight(x)
+        }
     }
 
     // Call after removing std line's row

@@ -1073,6 +1073,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 row_count += 1
             }
 
+            this.vm_state.refresh_cursor()
             this.vm_state.remove_row(abs_line, row_count)
             this.vm_state.shift_line_offsets_down(channel, line_offset)
             this.vm_state.refresh_cursor()

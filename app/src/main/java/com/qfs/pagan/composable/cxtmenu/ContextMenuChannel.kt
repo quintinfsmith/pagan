@@ -414,7 +414,9 @@ fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
                         .width(Dimensions.ContextMenuPadding)
                         .weight(1F)
                 )
-                AdjustChannelButton(vm_state, opus_manager)
+                if (! is_percussion) {
+                    AdjustChannelButton(vm_state, opus_manager)
+                }
                 ContextMenuSpacer()
                 DuplicateChannelButton(channel_index, opus_manager)
                 ContextMenuSpacer()
@@ -445,7 +447,9 @@ fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
                 )
                 AddKitButton(channel_index, opus_manager)
                 DuplicateChannelButton(channel_index, opus_manager)
-                AdjustChannelButton(vm_state, opus_manager)
+                if (! is_percussion) {
+                    AdjustChannelButton(vm_state, opus_manager)
+                }
                 RemoveChannelButton(channel_index, opus_manager, is_percussion)
                 ShowEffectsButton(
                     channel_index,

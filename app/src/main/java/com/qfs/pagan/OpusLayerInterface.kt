@@ -1973,10 +1973,21 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             }
 
             CursorMode.Range -> {
+                this.vm_state.std_notes_in_range.value = false
+
                 val (top_left, bottom_right) = try {
                     when (cursor.ctl_level) {
                         null -> {
                             val (top_left, bottom_right) = cursor.get_ordered_range()!!
+
+                            // Check if the selectiong can be adjusted via the AdjustButton
+                            for (c in top_left.channel .. bottom_right.channel) {
+                                if (!this.is_percussion(c)) {
+                                    this.vm_state.std_notes_in_range.value = true
+                                    break
+                                }
+                            }
+
                             Pair(
                                 Pair(
                                     this.get_visible_row_from_ctl_line(
@@ -2044,6 +2055,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                         bottom_right.second
                     )
                 )
+
             }
 
             CursorMode.Line -> {

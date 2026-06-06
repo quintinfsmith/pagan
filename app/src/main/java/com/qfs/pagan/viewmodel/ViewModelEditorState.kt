@@ -228,6 +228,7 @@ class ViewModelEditorState: ViewModel() {
     val table_bottom_padding = mutableFloatStateOf(0F)
     val wide_beat_progress = mutableFloatStateOf(0F)
     val active_wide_beat = mutableStateOf<Int?>(null)
+    val std_notes_in_range = mutableStateOf(false)
 
     val has_undoable_actions = mutableStateOf(false)
     val has_redoable_actions = mutableStateOf(false)

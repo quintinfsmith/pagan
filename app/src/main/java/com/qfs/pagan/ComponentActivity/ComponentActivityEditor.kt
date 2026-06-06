@@ -3362,8 +3362,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
             this.new_project()
         }
     }
+
     override fun on_key_press(e: KeyEvent): Boolean {
-        return false //this.keyboard_interface.input(e)
+        return false // this.keyboard_interface.input(e)
     }
 
     @Composable

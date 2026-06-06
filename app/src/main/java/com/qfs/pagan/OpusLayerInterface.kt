@@ -1791,7 +1791,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     }
 
     fun cursor_select_range_next(beat_key: BeatKey) {
-        if (this.cursor.mode == CursorMode.Range) {
+        if (this.cursor.mode == CursorMode.Range && this.cursor.ctl_type == null) {
             this.cursor_select_range(this.cursor.range!!.first, beat_key)
         } else {
             this.cursor_select_range(beat_key, beat_key)

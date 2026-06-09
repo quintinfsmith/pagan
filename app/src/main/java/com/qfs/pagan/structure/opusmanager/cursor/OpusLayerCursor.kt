@@ -2780,14 +2780,17 @@ open class OpusLayerCursor: OpusLayerBase() {
         }
     }
 
-    fun duplicate_channel_at_cursor() {
-        when (this.cursor.mode) {
-            CursorMode.Channel,
-            CursorMode.Single,
-            CursorMode.Line -> {
-                this.duplicate_channel(this.cursor.channel)
+    open fun duplicate_channel_at_cursor(repeat: Int) {
+        for (i in 0 until repeat) {
+            when (this.cursor.mode) {
+                CursorMode.Channel,
+                CursorMode.Single,
+                CursorMode.Line -> {
+                    this.duplicate_channel(this.cursor.channel)
+                }
+
+                else -> {}
             }
-            else -> {}
         }
     }
 
@@ -2979,41 +2982,30 @@ open class OpusLayerCursor: OpusLayerBase() {
         }
     }
 
-    fun cursor_select_next_line_in_channel() {
+    fun cursor_select_next_line_in_channel(count: Int) {
         if (this.cursor.mode != CursorMode.Line) return
         this.cursor_select_line(
             this.cursor.channel,
-            (this.cursor.line_offset + 1) % this.get_channel(this.cursor.channel).lines.size
+            (this.cursor.line_offset + count) % this.get_channel(this.cursor.channel).lines.size
         )
     }
-    fun cursor_select_prev_line_in_channel() {
+    fun cursor_select_prev_line_in_channel(count: Int) {
         if (this.cursor.mode != CursorMode.Line) return
         val channel_size = this.get_channel(this.cursor.channel).lines.size
-        this.cursor_select_line(
-            this.cursor.channel,
-            if (this.cursor.line_offset == 0) {
-                channel_size - 1
-            } else {
-                this.cursor.line_offset - 1
-            }
-        )
+        this.cursor_select_line(this.cursor.channel, (this.cursor.line_offset - count).mod(channel_size))
     }
 
-    fun cursor_select_first_line_in_next_channel() {
+    fun cursor_select_first_line_in_next_channel(count: Int) {
         if (this.cursor.mode != CursorMode.Line) return
         this.cursor_select_line(
-            (this.cursor.channel + 1) % this.channels.size,
+            (this.cursor.channel + count) % this.channels.size,
             0
         )
     }
-    fun cursor_select_first_line_in_prev_channel() {
+    fun cursor_select_first_line_in_prev_channel(count: Int) {
         if (this.cursor.mode != CursorMode.Line) return
         this.cursor_select_line(
-            if (this.cursor.channel == 0) {
-                this.channels.size - 1
-            } else {
-                this.cursor.channel - 1
-            },
+            (this.cursor.channel - count).mod(this.channels.size),
             0
         )
     }
@@ -3040,6 +3032,38 @@ open class OpusLayerCursor: OpusLayerBase() {
             CursorMode.Range -> TODO()
             CursorMode.Channel -> TODO()
             CursorMode.Unset -> TODO()
+        }
+    }
+
+    fun cursor_select_next_channel(count: Int) {
+        if (this.cursor.mode != CursorMode.Channel) return
+        val next_line = (this.cursor.channel + count).mod(this.channels.size)
+        this.cursor_select_channel(next_line)
+    }
+
+    fun cursor_select_previous_channel(count: Int) {
+        if (this.cursor.mode != CursorMode.Channel) return
+        val next_line = (this.cursor.channel - count).mod(this.channels.size)
+        this.cursor_select_channel(next_line)
+    }
+
+    open fun remove_selected_channel(count: Int) {
+        if (this.cursor.mode != CursorMode.Channel) return
+        for (i in 0 until min(count, this.channels.size - 1)) {
+            this.remove_channel(this.cursor.channel)
+        }
+    }
+
+    open fun insert_channel_at_cursor(count: Int, is_percussion: Boolean) {
+        if (this.cursor.mode != CursorMode.Channel) return
+        for (i in 0 until count) {
+            this.new_channel(this.cursor.channel, 1, is_percussion = is_percussion)
+        }
+    }
+    open fun insert_channel_after_cursor(count: Int, is_percussion: Boolean) {
+        if (this.cursor.mode != CursorMode.Channel) return
+        for (i in 0 until count) {
+            this.new_channel(this.cursor.channel + 1, 1, is_percussion = is_percussion)
         }
     }
 }

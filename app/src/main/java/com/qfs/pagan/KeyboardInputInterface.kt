@@ -65,14 +65,24 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
         SelectFirstLineNextChannel,
         SelectFirstLinePrevChannel,
         SelectChannel,
+        SelectChannelNext,
+        SelectChannelPrev,
         AdjustOctaveUp,
         AdjustOffsetUp,
         AdjustOctaveDown,
         AdjustOffsetDown,
 
+        ChannelRemove,
+        ChannelInsert,
+        ChannelInsertAfter,
+        ChannelKitInsert,
+        ChannelKitInsertAfter,
+        ChannelDuplicate,
+
         LineMoveDown,
         LineMoveUp,
         LineMoveTo,
+
         LineSetChannel,
         LineSetPercussionInstrument,
         LineDuplicate,
@@ -167,6 +177,58 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
             )
             true
         },
+        FunctionAlias.SelectChannelNext to { _, opus_manager ->
+            opus_manager.cursor_select_next_channel(
+                this.get_buffer_value(1, 0)
+            )
+            true
+        },
+        FunctionAlias.SelectChannelPrev to { _, opus_manager ->
+            opus_manager.cursor_select_previous_channel(
+                this.get_buffer_value(1, 0)
+            )
+            true
+        },
+        FunctionAlias.ChannelRemove to { _, opus_manager ->
+            opus_manager.remove_selected_channel(
+                this.get_buffer_value(1, 0)
+            )
+            true
+        },
+        FunctionAlias.ChannelInsert to { _, opus_manager ->
+            opus_manager.insert_channel_at_cursor(
+                this.get_buffer_value(1, 0),
+                false
+            )
+            true
+        },
+        FunctionAlias.ChannelInsertAfter to { _, opus_manager ->
+            opus_manager.insert_channel_after_cursor(
+                this.get_buffer_value(1, 0),
+                false
+            )
+            true
+        },
+        FunctionAlias.ChannelKitInsert to { _, opus_manager ->
+            opus_manager.insert_channel_at_cursor(
+                this.get_buffer_value(1, 0),
+                true
+            )
+            true
+        },
+        FunctionAlias.ChannelKitInsertAfter to { _, opus_manager ->
+            opus_manager.insert_channel_after_cursor(
+                this.get_buffer_value(1, 0),
+                true
+            )
+            true
+        },
+        FunctionAlias.ChannelDuplicate to { _, opus_manager ->
+            opus_manager.duplicate_channel_at_cursor(
+                this.get_buffer_value(1, 0)
+            )
+            true
+        },
         FunctionAlias.SelectLine to { _, opus_manager ->
             val channel = when (opus_manager.cursor.mode) {
                 CursorMode.Single,
@@ -181,22 +243,30 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
             true
         },
         FunctionAlias.SelectLineNext to { _, opus_manager ->
-            opus_manager.cursor_select_next_line_in_channel()
+            opus_manager.cursor_select_next_line_in_channel(
+                this.get_buffer_value(1, 0)
+            )
             true
         },
 
         FunctionAlias.SelectLinePrev to { _, opus_manager ->
-            opus_manager.cursor_select_prev_line_in_channel()
+            opus_manager.cursor_select_prev_line_in_channel(
+                this.get_buffer_value(1, 0)
+            )
             true
         },
 
         FunctionAlias.SelectFirstLineNextChannel to { _, opus_manager ->
-            opus_manager.cursor_select_first_line_in_next_channel()
+            opus_manager.cursor_select_first_line_in_next_channel(
+                this.get_buffer_value(1, 0)
+            )
             true
         },
 
         FunctionAlias.SelectFirstLinePrevChannel to { _, opus_manager ->
-            opus_manager.cursor_select_first_line_in_prev_channel()
+            opus_manager.cursor_select_first_line_in_prev_channel(
+                this.get_buffer_value(1, 0)
+            )
             true
         },
 

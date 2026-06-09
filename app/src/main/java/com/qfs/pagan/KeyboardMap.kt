@@ -92,25 +92,25 @@ object KeyboardMap {
             Context.Unset,
             AliasKey(KEYCODE_L)
         ),
-        // ---------------- LINE/LEAF -------------------//
+        // ---------------- LINE/LEAF/CHANNEL -------------------//
         QuickMapEntry(
             FunctionAlias.AdjustOctaveUp,
-            arrayOf(Context.Line, Context.LeafStandard),
+            arrayOf(Context.LineStandard, Context.LeafStandard, Context.Channel),
             AliasKey(KEYCODE_O, true)
         ),
         QuickMapEntry(
             FunctionAlias.AdjustOctaveDown,
-            arrayOf(Context.Line, Context.LeafStandard),
+            arrayOf(Context.LineStandard, Context.LeafStandard, Context.Channel),
             AliasKey(KEYCODE_M, true)
         ),
         QuickMapEntry(
             FunctionAlias.AdjustOffsetUp,
-            arrayOf(Context.Line, Context.LeafStandard),
+            arrayOf(Context.LineStandard, Context.LeafStandard, Context.Channel),
             AliasKey(KEYCODE_O)
         ),
         QuickMapEntry(
             FunctionAlias.AdjustOffsetDown,
-            arrayOf(Context.Line, Context.LeafStandard),
+            arrayOf(Context.LineStandard, Context.LeafStandard, Context.Channel),
             AliasKey(KEYCODE_M)
         ),
         // ------------------ LINE  ---------------------- //
@@ -251,8 +251,50 @@ object KeyboardMap {
             FunctionAlias.LeafSetDuration,
             Context.Leaf,
             AliasKey(KEYCODE_D)
-        )
+        ),
         // ----------------- CHANNEL --------------------- //
+        QuickMapEntry(
+            FunctionAlias.SelectChannelNext,
+            Context.Channel,
+            AliasKey(KEYCODE_J),
+        ),
+        QuickMapEntry(
+            FunctionAlias.SelectChannelPrev,
+            Context.Channel,
+            AliasKey(KEYCODE_K),
+        ),
+        QuickMapEntry(
+            FunctionAlias.ChannelRemove,
+            Context.Channel,
+            AliasKey(KEYCODE_X)
+        ),
+        QuickMapEntry(
+            FunctionAlias.ChannelInsertAfter,
+            Context.Channel,
+            AliasKey(KEYCODE_N)
+        ),
+        QuickMapEntry(
+            FunctionAlias.ChannelInsert,
+            Context.Channel,
+            AliasKey(KEYCODE_LEFT_BRACKET),
+            AliasKey(KEYCODE_N),
+        ),
+        QuickMapEntry(
+            FunctionAlias.ChannelKitInsertAfter,
+            Context.Channel,
+            AliasKey(KEYCODE_P)
+        ),
+        QuickMapEntry(
+            FunctionAlias.ChannelKitInsert,
+            Context.Channel,
+            AliasKey(KEYCODE_LEFT_BRACKET),
+            AliasKey(KEYCODE_P),
+        ),
+        QuickMapEntry(
+            FunctionAlias.ChannelDuplicate,
+            Context.Channel,
+            AliasKey(KEYCODE_D, true)
+        ),
         // ------------------ RANGE ---------------------- //
     )
 

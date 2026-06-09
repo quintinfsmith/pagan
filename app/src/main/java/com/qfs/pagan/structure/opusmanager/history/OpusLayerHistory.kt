@@ -2191,6 +2191,29 @@ open class OpusLayerHistory: OpusLayerCursor() {
     // HISTORY FUNCTIONS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     // CURSOR FUNCTIONS vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+    override fun remove_selected_channel(count: Int) {
+        this._remember {
+            super.remove_selected_channel(count)
+        }
+    }
+
+    override fun insert_channel_at_cursor(count: Int, is_percussion: Boolean) {
+        this._remember {
+            super.insert_channel_at_cursor(count, is_percussion)
+        }
+    }
+
+    override fun insert_channel_after_cursor(count: Int, is_percussion: Boolean) {
+        this._remember {
+            super.insert_channel_after_cursor(count, is_percussion)
+        }
+    }
+
+    override fun duplicate_channel_at_cursor(repeat: Int) {
+        this._remember {
+            super.duplicate_channel_at_cursor(repeat)
+        }
+    }
     // CURSOR FUNCTIONS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 }

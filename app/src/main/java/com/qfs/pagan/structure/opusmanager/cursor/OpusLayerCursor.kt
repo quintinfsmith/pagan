@@ -359,7 +359,36 @@ open class OpusLayerCursor: OpusLayerBase() {
         }
     }
 
+    fun toggle_selected_channel_mute() {
+        if (this.cursor.mode != CursorMode.Channel) return
+        val is_mute = this.get_channel(this.cursor.channel).muted
+        if (is_mute) {
+            this.unmute_channel_at_cursor()
+        } else {
+            this.mute_channel_at_cursor()
+        }
+    }
 
+    fun unmute_channel_at_cursor() {
+        when (this.cursor.mode) {
+            CursorMode.Channel,
+            CursorMode.Line,
+            CursorMode.Single -> {
+                this.unmute_channel(this.cursor.channel)
+            }
+            else -> {}
+        }
+    }
+    fun mute_channel_at_cursor() {
+        when (this.cursor.mode) {
+            CursorMode.Channel,
+            CursorMode.Line,
+            CursorMode.Single -> {
+                this.mute_channel(this.cursor.channel)
+            }
+            else -> {}
+        }
+    }
     /* ------------------- 2nd Order Functions ---------------------------------- */
     override fun insert_beats(beat_index: Int, count: Int) {
         this.lock_cursor {
@@ -3064,6 +3093,17 @@ open class OpusLayerCursor: OpusLayerBase() {
         if (this.cursor.mode != CursorMode.Channel) return
         for (i in 0 until count) {
             this.new_channel(this.cursor.channel + 1, 1, is_percussion = is_percussion)
+        }
+    }
+
+    fun selected_channel_new_line(count: Int) {
+        if (this.cursor.mode != CursorMode.Channel) return
+        this.lock_cursor {
+            this.new_line_repeat(
+                this.cursor.channel,
+                this.channels[this.cursor.channel].size,
+                count
+            )
         }
     }
 }

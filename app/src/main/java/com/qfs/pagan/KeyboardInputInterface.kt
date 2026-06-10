@@ -51,6 +51,7 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
         LeafGlobalEffect,
         Range
     }
+
     enum class FunctionAlias {
         Undo,
         Redo,
@@ -78,6 +79,8 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
         ChannelKitInsert,
         ChannelKitInsertAfter,
         ChannelDuplicate,
+        ChannelMuteToggle,
+        ChannelAppendLine,
 
         LineMoveDown,
         LineMoveUp,
@@ -170,7 +173,11 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
             val visible_channels = opus_manager.get_visible_channels()
             opus_manager.cursor_select_channel(
                 this.get_buffer_value(
-                    visible_channels.size - 1,
+                    when (opus_manager.cursor.mode) {
+                        CursorMode.Line,
+                        CursorMode.Single -> opus_manager.cursor.channel
+                        else -> visible_channels.size - 1
+                    },
                     0,
                     visible_channels.size - 1
                 )
@@ -229,6 +236,16 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
             )
             true
         },
+        FunctionAlias.ChannelMuteToggle to { _, opus_manager ->
+            opus_manager.toggle_selected_channel_mute()
+            true
+        },
+        FunctionAlias.ChannelAppendLine to { _, opus_manager ->
+            opus_manager.selected_channel_new_line(
+                this.get_buffer_value(1, 0)
+            )
+            true
+        },
         FunctionAlias.SelectLine to { _, opus_manager ->
             val channel = when (opus_manager.cursor.mode) {
                 CursorMode.Single,
@@ -237,7 +254,7 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
                 else -> 0
             }
             val default_value = opus_manager.get_channel(channel).lines.size - 1
-            val line_offset = this.get_buffer_value(default_value, 0, default_value)
+            val line_offset = this.get_buffer_value(0, 0, default_value)
             opus_manager.cursor_select_line(channel, line_offset)
 
             true

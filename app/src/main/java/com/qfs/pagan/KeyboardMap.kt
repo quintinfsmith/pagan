@@ -295,6 +295,16 @@ object KeyboardMap {
             Context.Channel,
             AliasKey(KEYCODE_D, true)
         ),
+        QuickMapEntry(
+            FunctionAlias.ChannelMuteToggle,
+            Context.Channel,
+            AliasKey(KEYCODE_GRAVE)
+        ),
+        QuickMapEntry(
+            FunctionAlias.ChannelAppendLine,
+            Context.Channel,
+            AliasKey(KEYCODE_L)
+        )
         // ------------------ RANGE ---------------------- //
     )
 

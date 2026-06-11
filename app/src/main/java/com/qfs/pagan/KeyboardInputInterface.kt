@@ -81,6 +81,9 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
         ChannelDuplicate,
         ChannelMuteToggle,
         ChannelAppendLine,
+        ChannelSetSoundfontIndex,
+        ChannelSetMidiBank,
+        ChannelSetMidiProgram,
 
         LineMoveDown,
         LineMoveUp,
@@ -243,6 +246,24 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
         FunctionAlias.ChannelAppendLine to { _, opus_manager ->
             opus_manager.selected_channel_new_line(
                 this.get_buffer_value(1, 0)
+            )
+            true
+        },
+        FunctionAlias.ChannelSetSoundfontIndex to { context, opus_manager ->
+            opus_manager.channel_set_soundfont_index(
+                this.get_buffer_value(0, 0, max(0, context.state_model.active_soundfonts.value.size - 1))
+            )
+            true
+        },
+        FunctionAlias.ChannelSetMidiBank to { _, opus_manager ->
+            opus_manager.channel_set_midi_bank(
+                this.get_buffer_value(0, 0,127)
+            )
+            true
+        },
+        FunctionAlias.ChannelSetMidiProgram to { _, opus_manager ->
+            opus_manager.channel_set_midi_program(
+                this.get_buffer_value(0,0, 127)
             )
             true
         },

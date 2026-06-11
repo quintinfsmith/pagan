@@ -304,6 +304,21 @@ object KeyboardMap {
             FunctionAlias.ChannelAppendLine,
             Context.Channel,
             AliasKey(KEYCODE_L)
+        ),
+        QuickMapEntry(
+            FunctionAlias.ChannelSetSoundfontIndex,
+            Context.Channel,
+            AliasKey(KEYCODE_T)
+        ),
+        QuickMapEntry(
+            FunctionAlias.ChannelSetMidiBank,
+            Context.Channel,
+            AliasKey(KEYCODE_Y)
+        ),
+        QuickMapEntry(
+            FunctionAlias.ChannelSetMidiProgram,
+            Context.Channel,
+            AliasKey(KEYCODE_U)
         )
         // ------------------ RANGE ---------------------- //
     )

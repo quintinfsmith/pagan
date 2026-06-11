@@ -3106,4 +3106,19 @@ open class OpusLayerCursor: OpusLayerBase() {
             )
         }
     }
+
+    fun channel_set_soundfont_index(soundfont_index: Int) {
+        if (this.cursor.mode != CursorMode.Channel) return
+        this.channel_set_soundfont_index(this.cursor.channel, soundfont_index)
+    }
+
+    fun channel_set_midi_bank(midi_bank: Int) {
+        if (this.cursor.mode != CursorMode.Channel) return
+        this.channel_set_midi_bank(this.cursor.channel, midi_bank)
+    }
+
+    fun channel_set_midi_program(midi_program: Int) {
+        if (this.cursor.mode != CursorMode.Channel) return
+        this.channel_set_midi_program(this.cursor.channel, midi_program)
+    }
 }

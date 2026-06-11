@@ -1386,6 +1386,42 @@ open class OpusLayerBase: Effectable {
         this.set_channel_program(channel, instrument.program)
     }
 
+    fun channel_set_soundfont_index(channel: Int, soundfont_index: Int) {
+        val working_channel = this.get_channel(channel)
+        this.channel_set_preset(
+            channel,
+            PresetKey(
+                soundfont_index,
+                working_channel.get_midi_bank(),
+                working_channel.midi_program
+            )
+        )
+    }
+
+    fun channel_set_midi_bank(channel: Int, bank: Int) {
+        val working_channel = this.get_channel(channel)
+        this.channel_set_preset(
+            channel,
+            PresetKey(
+                working_channel.soundfont_index,
+                bank,
+                working_channel.midi_program
+            )
+        )
+    }
+
+    fun channel_set_midi_program(channel: Int, program: Int) {
+        val working_channel = this.get_channel(channel)
+        this.channel_set_preset(
+            channel,
+            PresetKey(
+                working_channel.soundfont_index,
+                working_channel.get_midi_bank(),
+                program
+            )
+        )
+    }
+
     /**
      * Replace the node at [beat_key]/[position] with [tree]
      */

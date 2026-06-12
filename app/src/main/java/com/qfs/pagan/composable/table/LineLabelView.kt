@@ -33,7 +33,6 @@ import com.qfs.pagan.composable.IntegerInputDialog
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.dashed_border
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
@@ -106,7 +105,7 @@ fun LineLabelView(
                             }
 
                             CursorMode.Single,
-                            CursorMode.Column,
+                            CursorMode.Beat,
                             CursorMode.Channel,
                             CursorMode.Unset -> {
                                 opus_manager.fuzzy_select_line(channel, line_offset, ctl_type)

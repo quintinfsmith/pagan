@@ -38,7 +38,7 @@ import kotlin.concurrent.thread
 import kotlin.math.max
 import kotlin.math.min
 
-class ViewModelEditorController(): ViewModel() {
+class ViewModelEditorController: ViewModel() {
     var opus_manager = OpusLayerInterface(this)
     var active_midi_device: MidiDeviceInfo? = null
     var virtual_midi_device = MidiPlayer()
@@ -68,15 +68,12 @@ class ViewModelEditorController(): ViewModel() {
         this.update_midi_instruments()
     }
 
-    fun set_project_exists(value: Boolean) {
-        this.project_exists.value = value
-    }
-
     fun export_wav(
         opus_manager: OpusLayerBase,
         sample_handle_manager: SampleHandleManager,
         target_output_stream: DataOutputStream,
-        tmp_file: File, configuration: PaganConfiguration? = null,
+        tmp_file: File,
+        configuration: PaganConfiguration? = null,
         handler: WavConverter.ExporterEventHandler,
         ignore_global_effects: Boolean = false,
         ignore_channel_effects: Boolean = false,
@@ -104,10 +101,6 @@ class ViewModelEditorController(): ViewModel() {
     fun cancel_export() {
         val handle = this.export_handle ?: return
         handle.cancel_flagged = true
-    }
-
-    fun is_exporting(): Boolean {
-        return this.export_handle != null
     }
 
     fun unset_soundfont() {
@@ -180,7 +173,7 @@ class ViewModelEditorController(): ViewModel() {
     fun update_midi_instruments() {
         for ((i, channel) in this.opus_manager.channels.enumerate()) {
             val midi_channel = this.opus_manager.get_midi_channel(i)
-            val (soundfont_index, midi_bank, midi_program) = channel.get_preset()
+            val (_, midi_bank, midi_program) = channel.get_preset()
             this.virtual_midi_device.send_event(BankSelect(midi_channel, midi_bank))
             this.virtual_midi_device.send_event(ProgramChange(midi_channel, midi_program))
         }
@@ -203,7 +196,7 @@ class ViewModelEditorController(): ViewModel() {
             val (note, bend) = if (is_percussion) {
                 Pair(event_value + 27, 0)
             } else {
-                this.opus_manager.calculate_note_bend(0, event_value)
+                this.opus_manager.calculate_note_bend(event_value)
             }
 
             AudioInterface.FeedbackRevolver.Event(
@@ -229,7 +222,7 @@ class ViewModelEditorController(): ViewModel() {
                         val (note, bend) = if (this.opus_manager.is_percussion(channel)) {
                             Pair(event_value + 27, 0)
                         } else {
-                            this.opus_manager.calculate_note_bend(channel, event_value)
+                            this.opus_manager.calculate_note_bend(event_value)
                         }
                         this.virtual_midi_device.play_note(
                             midi_channel,
@@ -251,7 +244,7 @@ class ViewModelEditorController(): ViewModel() {
                 val (note, bend) = if (this.opus_manager.is_percussion(channel)) {
                     Pair(event_value + 27, 0)
                 } else {
-                    this.opus_manager.calculate_note_bend(channel, event_value)
+                    this.opus_manager.calculate_note_bend(event_value)
                 }
 
                 AudioInterface.FeedbackRevolver.Event(
@@ -278,7 +271,7 @@ class ViewModelEditorController(): ViewModel() {
         val (note, bend) = if (is_percussion) {
             Pair(event_value + 27, 0)
         } else {
-            this.opus_manager.calculate_note_bend(0, event_value)
+            this.opus_manager.calculate_note_bend(event_value)
         }
 
         if (note > 127) return
@@ -293,7 +286,7 @@ class ViewModelEditorController(): ViewModel() {
         val (note, bend) = if (this.opus_manager.is_percussion(channel)) {
             Pair(event_value + 27, 0)
         } else {
-            this.opus_manager.calculate_note_bend(channel, event_value)
+            this.opus_manager.calculate_note_bend(event_value)
         }
 
         if (note > 127) return

@@ -109,7 +109,6 @@ import androidx.lifecycle.viewModelScope
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
 import com.qfs.apres.MidiController
-import com.qfs.apres.VirtualMidiInputDevice
 import com.qfs.apres.VirtualMidiOutputDevice
 import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.soundfont2.SoundFont
@@ -138,7 +137,6 @@ import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.PaganDialog
 import com.qfs.pagan.composable.SettingsColumn
 import com.qfs.pagan.composable.SortableMenu
-import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.composable.button.ConfigDrawerBottomButton
 import com.qfs.pagan.composable.button.ConfigDrawerChannelLeftButton
 import com.qfs.pagan.composable.button.ConfigDrawerChannelRightButton
@@ -176,9 +174,9 @@ import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.enumerate
+import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.testTag
@@ -510,8 +508,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
         }
 
+    var _result_launcher_set_project_directory_and_save_callback: (() -> Unit)? = null
     private val _result_launcher_set_project_directory_and_save =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            var callback = this._result_launcher_set_project_directory_and_save_callback
+            this._result_launcher_set_project_directory_and_save_callback = null
             if (result.resultCode != RESULT_OK) return@registerForActivityResult
             val result_data = result.data ?: return@registerForActivityResult
             val tree_uri = result_data.data ?: return@registerForActivityResult
@@ -526,6 +527,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             this@ComponentActivityEditor.save()
 
             this.reload_config()
+            callback?.invoke()
         }
 
     internal var result_launcher_settings =
@@ -535,12 +537,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
     internal var result_launcher_import = this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode != RESULT_OK) return@registerForActivityResult
-            val uri = result.data?.data ?: return@registerForActivityResult
-            this.save_confirm_dialog {
-                this.handle_uri(uri)
-            }
+        if (result.resultCode != RESULT_OK) return@registerForActivityResult
+        val uri = result.data?.data ?: return@registerForActivityResult
+        this.save_confirm_dialog {
+            this.handle_uri(uri)
         }
+    }
 
 
     private lateinit var _midi_interface: MidiController
@@ -603,6 +605,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         this.controller_model.attach_state_model(this.state_model)
+        this.keyboard_interface = KeyboardInputInterface(this)
 
         this.registerReceiver(
             this.broadcast_receiver,
@@ -850,6 +853,34 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @Composable
+    fun MasterPlayButton(vm_state: ViewModelEditorState) {
+        if (vm_state.soundfont_ready.value) {
+            if (vm_state.use_midi_playback.value) {
+                PlayMidiButton()
+            } else if (vm_state.soundfont_active.value != null) {
+                PlaySFButton()
+            } else {
+                NoPlayButton()
+            }
+        } else {
+            PlayLoadingButton()
+        }
+    }
+
+    @Composable
+    fun PlayLoadingButton() {
+        Box(contentAlignment = Alignment.Center) {
+            TopBarIcon(
+                modifier = Modifier.alpha(Values.DisabledTopBarIconAlpha),
+                icon = R.drawable.icon_play,
+                description = R.string.menu_item_playpause,
+                onClick = { },
+            )
+            SoundfontLoadingIndicator()
+        }
+    }
+
+    @Composable
     fun NoPlayButton() {
         val dialog_visibility = remember { mutableStateOf(false) }
         TopBarIcon(
@@ -1067,14 +1098,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
         }
 
-        DialogMenu(
+        DialogMenu<MidiDeviceInfo?>(
             device_menu_visibility,
             R.string.playback_device,
-            options = {
-                val options = mutableListOf<Pair<MidiDeviceInfo?, @Composable RowScope.() -> Unit>>(
-                    Pair(null) { Text(R.string.device_menu_default_name) }
-                )
-
+            options = { options ->
+                options.add(Pair(null) { Text(R.string.device_menu_default_name) })
                 for (device_info in this@ComponentActivityEditor._midi_interface.poll_output_devices()) {
                     options.add(
                         Pair(device_info) {
@@ -1085,8 +1113,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         }
                     )
                 }
-
-                options
             },
             default = vm_controller.active_midi_device
         ) { device ->
@@ -1131,20 +1157,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         Spacer(Modifier.weight(1F))
 
-        if (vm_state.soundfont_ready.value) {
-            if (vm_state.use_midi_playback.value) {
-                PlayMidiButton()
-            } else if (vm_state.soundfont_active.value != null) {
-                PlaySFButton()
-            } else {
-                NoPlayButton()
-            }
-        } else {
-            Box(contentAlignment = Alignment.Center) {
-                NoPlayButton()
-                SoundfontLoadingIndicator()
-            }
-        }
+        MasterPlayButton(vm_state)
         Spacer(Modifier.weight(1F))
 
         UndoButton(vm_state, opus_manager)
@@ -1205,20 +1218,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val opus_manager = this@ComponentActivityEditor.controller_model.opus_manager
 
         Spacer(Modifier.width(Dimensions.TopBarItemSpace))
-        if (vm_state.soundfont_ready.value) {
-            if (vm_state.use_midi_playback.value) {
-                PlayMidiButton()
-            } else if (vm_state.soundfont_active.value != null) {
-                PlaySFButton()
-            } else {
-                NoPlayButton()
-            }
-        } else {
-            Box(contentAlignment = Alignment.Center) {
-                NoPlayButton()
-                SoundfontLoadingIndicator()
-            }
-        }
+        MasterPlayButton(vm_state)
         Spacer(Modifier.width(Dimensions.TopBarItemSpace))
         Row(
             modifier = Modifier.weight(1F),
@@ -1275,27 +1275,31 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     fun ConfirmSaveDialog() {
         val confirm_action_callback = this.state_model.confirm_action_callback
-        confirm_action_callback.value?.let { callback ->
-            val adj_callback = {
-                callback()
-                confirm_action_callback.value = null
-            }
-            val visibility = remember { mutableStateOf(true) }
+        key (this.state_model.confirm_action_callback.value) {
+            confirm_action_callback.value?.let { callback ->
+                val adj_callback = {
+                    confirm_action_callback.value = null
+                    this.state_model.confirm_action_visibility.value = false
+                    callback()
+                }
 
-            PaganDialog(visibility) {
-                Row { DialogSTitle(R.string.dialog_save_warning_title, modifier = Modifier.weight(1F)) }
-                DialogBar(
-                    negative = {
-                        adj_callback()
-                    },
-                    neutral = {
-                        confirm_action_callback.value = null
-                    },
-                    positive = {
-                        this@ComponentActivityEditor.save()
-                        adj_callback()
-                    }
-                )
+                PaganDialog(this.state_model.confirm_action_visibility) {
+                    Row { DialogSTitle(R.string.dialog_save_warning_title, modifier = Modifier.weight(1F)) }
+                    DialogBar(
+                        negative = {
+                            adj_callback()
+                        },
+                        neutral = {
+                            this@ComponentActivityEditor.state_model.confirm_action_visibility.value = false
+                            confirm_action_callback.value = null
+                        },
+                        positive = {
+                            this@ComponentActivityEditor.check_for_project_dir_and_save {
+                                adj_callback()
+                            }
+                        }
+                    )
+                }
             }
         }
     }
@@ -1321,7 +1325,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             CursorMode.Line -> {
                 @Composable { ContextMenuLinePrimary(Modifier, vm_state, opus_manager, layout) }
             }
-            CursorMode.Column -> {
+            CursorMode.Beat -> {
                 @Composable { ContextMenuColumnPrimary(Modifier, vm_state, opus_manager, layout) }
             }
             CursorMode.Single -> {
@@ -1358,6 +1362,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             CursorMode.Single -> {
                 val cursor = vm_state.active_cursor.value ?: return null
                 val line_data = vm_state.line_data[cursor.ints[0]]
+                if (line_data.assigned_offset.value != null) return null
 
                 @Composable {
                     key(vm_state.event_change_key.value, vm_state.active_event.value) {
@@ -1378,7 +1383,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             CursorMode.Channel -> {
                 @Composable { ContextMenuChannelSecondary(vm_state, opus_manager, layout) }
             }
-            CursorMode.Column -> {
+            CursorMode.Beat -> {
                 @Composable { ContextMenuColumnSecondary(modifier, vm_state, opus_manager, layout) }
             }
             CursorMode.Unset -> null
@@ -1488,6 +1493,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                         },
 
                                                         on_drag_stop = {
+
                                                             dragging_to_y?.let {
                                                                 val from_line = vm_state.line_data[vm_state.dragging_line.value!!]
                                                                 val to_line = vm_state.line_data[it]
@@ -1498,13 +1504,23 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                                         !is_after
                                                                     )
                                                                 } else if (to_line.line_offset.value != null) {
-                                                                    opus_manager.move_line(
-                                                                        from_line.channel.value!!,
-                                                                        from_line.line_offset.value!!,
-                                                                        to_line.channel.value!!,
-                                                                        to_line.line_offset.value!!,
-                                                                        !is_after
-                                                                    )
+                                                                    try {
+                                                                        opus_manager.move_line(
+                                                                            from_line.channel.value!!,
+                                                                            from_line.line_offset.value!!,
+                                                                            to_line.channel.value!!,
+                                                                            to_line.line_offset.value!!,
+                                                                            !is_after
+                                                                        )
+                                                                    } catch (e: IncompatibleChannelException) {
+                                                                        this@ComponentActivityEditor.runOnUiThread {
+                                                                            Toast.makeText(
+                                                                                this@ComponentActivityEditor,
+                                                                                getString(R.string.feedback_mixed_copy),
+                                                                                Toast.LENGTH_SHORT
+                                                                            ).show()
+                                                                        }
+                                                                    }
                                                                 }
                                                             }
                                                             vm_state.stop_dragging()
@@ -1569,14 +1585,18 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 DialogMenu(
                                     visibility = this@ComponentActivityEditor.view_model.get_dialog_state("global_effects"),
                                     title = R.string.show_global_controls,
-                                    options = {
-                                        // TODO: Work-in-progress
-                                        val options = mutableListOf<Pair<EffectType, @Composable RowScope.() -> Unit>>()
-                                        for (ctl_type in OpusLayerInterface.global_controller_domain) {
-                                            if (this@ComponentActivityEditor.controller_model.opus_manager.is_global_ctl_visible(ctl_type)) continue
-                                            options.add(Pair(ctl_type) { EffectMenuItem(ctl_type) })
+                                    options = { options ->
+                                        val available_effects = OpusLayerInterface.global_controller_domain.toMutableList()
+                                        for (line in vm_state.line_data) {
+                                            if (line.channel.value != null) continue
+                                            val ctl_type = line.ctl_type.value ?: continue
+                                            if (!available_effects.contains(ctl_type)) continue
+                                            available_effects.remove(ctl_type)
                                         }
-                                        options
+
+                                        for (ctl_type in available_effects) {
+                                            options.add( Pair(ctl_type) { EffectMenuItem(ctl_type) } )
+                                        }
                                     }
                                 ) { value ->
                                     opus_manager.toggle_global_controller_visibility(value)
@@ -1622,7 +1642,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                 dialog_visibility,
                                                 vm_state.dlg_insert_beat,
                                                 1,
-                                                2048
+                                                Values.DialogInput.Max.InsertBeat
                                             ) {
                                                 opus_manager.insert_beats(opus_manager.length,it)
                                             }
@@ -2146,25 +2166,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     description = R.string.btn_cfg_save,
                     onClick = {
                         scope.launch { this@ComponentActivityEditor.close_drawer() }
-                        val configuration = this@ComponentActivityEditor.view_model.configuration
-                        if (configuration.project_directory.value == null || DocumentFile.fromTreeUri(
-                                this@ComponentActivityEditor,
-                                configuration.project_directory.value!!
-                            )?.exists() != true
-                        ) {
-                            this@ComponentActivityEditor._result_launcher_set_project_directory_and_save.launch(
-                                Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also { intent ->
-                                    intent.putExtra(Intent.EXTRA_TITLE, "Pagan Projects")
-                                    intent.flags =
-                                        Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                                    configuration.project_directory.value?.let {
-                                        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, it)
-                                    }
-                                }
-                            )
-                        } else {
-                            this@ComponentActivityEditor.save()
-                        }
+                        this@ComponentActivityEditor.check_for_project_dir_and_save()
                     }
                 )
                 DrawerPadder()
@@ -2223,7 +2225,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     DialogMenu(
                         visibility = dialog_visibility,
                         title = R.string.dlg_export,
-                        options = { this@ComponentActivityEditor.get_exportable_options() },
+                        options = { this@ComponentActivityEditor.get_exportable_options(it) },
                         callback = { export_type ->
                             if (export_type == Exportable.MIDI1 && opus_manager.get_percussion_channels().size > 1) {
                                 export_check_dialog_visibility.value = true
@@ -2473,10 +2475,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     override fun Dialogs() {
         ConfirmSaveDialog()
-        ChannelPresetDialog(
-            this@ComponentActivityEditor.state_model.channel_preset_dialog_visibility,
-            this@ComponentActivityEditor.state_model.channel_preset_dialog
-        )
+        key(
+            this@ComponentActivityEditor.state_model.channel_preset_dialog_visibility.value,
+            this@ComponentActivityEditor.state_model.channel_preset_dialog.value
+        ) {
+            ChannelPresetDialog(
+                this@ComponentActivityEditor.state_model.channel_preset_dialog_visibility,
+                this@ComponentActivityEditor.state_model.channel_preset_dialog
+            )
+        }
     }
 
     @Composable
@@ -2493,7 +2500,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     awaitPointerEventScope {
                         while (true) {
                             val event = awaitPointerEvent()
-                            if (vm_state.max_zoom_index.value == 0) continue
+                            if (vm_state.max_zoom_index.intValue == 0) continue
                             //if (!single_zoom_enabled || event.changes.size < 2) {
                             if (event.changes.size < 2) {
                                 zoom_state.value = 0.dp
@@ -2635,7 +2642,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     fun ChannelPresetDialog(visibility: MutableState<Boolean>, channel_state: MutableState<Int?>) {
         val channel = channel_state.value ?: return
-
         fun padded_hex(i: Int): String {
             var s = Integer.toHexString(i)
             while (s.length < 2) {
@@ -2645,12 +2651,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
         val opus_manager = this.controller_model.opus_manager
-        val is_percussion = opus_manager.is_percussion(channel)
-        val default = opus_manager.get_channel_instrument(channel)
+        val channel_data = this.state_model.channel_data[channel]
+        val is_percussion = channel_data.percussion.value
+        val default = channel_data.instrument.value
+
 
         val default_presets = stringArrayResource(R.array.general_midi_presets)
         val pre_option = mutableListOf<Pair<PresetKey, String?>>()
-        val can_preview = this.controller_model.audio_interface.has_soundfont() || this.controller_model.active_midi_device != null
+        val can_preview =
+            this.controller_model.audio_interface.has_soundfont() || this.controller_model.active_midi_device != null
 
         if (!this.controller_model.audio_interface.has_soundfont() || this.controller_model.active_midi_device != null) {
             // Setup default empty preset names
@@ -2675,8 +2684,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
         }
 
-        val options = mutableListOf<MutableList<Pair<PresetKey, @Composable RowScope.() -> Unit>>>()
-        val preset_names =  mutableListOf<MutableList<Pair<PresetKey, String?>>>()
+        val options =
+            mutableListOf<MutableList<Pair<PresetKey, @Composable RowScope.() -> Unit>>>()
+        val preset_names = mutableListOf<MutableList<Pair<PresetKey, String?>>>()
         val existing_keys = mutableSetOf<Int>()
 
         for ((preset_key, name) in pre_option) {
@@ -2727,9 +2737,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                             )
                                         }
                                         if (this@ComponentActivityEditor.controller_model.active_midi_device != null) {
-                                            this@ComponentActivityEditor.controller_model.play_events(channel, events)
+                                            this@ComponentActivityEditor.controller_model.play_events(
+                                                channel,
+                                                events
+                                            )
                                         } else {
-                                            this@ComponentActivityEditor.controller_model.play_events(preset_key, is_percussion, events)
+                                            this@ComponentActivityEditor.controller_model.play_events(
+                                                preset_key,
+                                                is_percussion,
+                                                events
+                                            )
                                         }
                                     }
                                     .height(Dimensions.PreviewIconHeight)
@@ -2764,14 +2781,18 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     preset_names[i][a].first.program.compareTo(preset_names[i][b].first.program)
                 },
                 Pair(R.string.sort_option_abc) { a: Int, b: Int ->
-                    val a_name = preset_names[i][a].second ?: default_presets[preset_names[i][a].first.program]
-                    val b_name = preset_names[i][b].second ?: default_presets[preset_names[i][b].first.program]
+                    val a_name = preset_names[i][a].second
+                        ?: default_presets[preset_names[i][a].first.program]
+                    val b_name = preset_names[i][b].second
+                        ?: default_presets[preset_names[i][b].first.program]
                     a_name.lowercase().compareTo(b_name.lowercase())
                 }
             )
         }
 
-        PaganDialog(visibility) {
+        PaganDialog(
+            visibility,
+        ) {
             val selected_sort: MutableState<Int?> = remember { mutableStateOf(null) }
             val scope = rememberCoroutineScope()
             val sorted_pages = existing_keys.toList().sorted()
@@ -2802,8 +2823,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 onDismissRequest = { expanded.value = false }
                             ) {
                                 for (j in sorted_pages) {
-                                    val soundfont_path = opus_manager.vm_state.active_soundfonts.value[sorted_pages[j]]
-                                    val soundfont_name = soundfont_path.split("/").let { it[it.size - 1].trim() }
+                                    val soundfont_path =
+                                        opus_manager.vm_state.active_soundfonts.value[sorted_pages[j]]
+                                    val soundfont_name =
+                                        soundfont_path.split("/").let { it[it.size - 1].trim() }
                                     DropdownMenuItem(
                                         text = { Text("$j: $soundfont_name") },
                                         onClick = {
@@ -2826,11 +2849,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         .width(Dimensions.PresetMenuArrowWidth)
                                         .height(Dimensions.PresetMenuArrowHeight),
                                     painter = painterResource(R.drawable.icon_arrow_prev),
-                                    contentDescription = (opus_manager.vm_state.active_soundfonts.value[sorted_pages[i - 1]]).split("/").let { it[it.size - 1].trim() },
+                                    contentDescription = (opus_manager.vm_state.active_soundfonts.value[sorted_pages[i - 1]]).split(
+                                        "/"
+                                    ).let { it[it.size - 1].trim() },
                                 )
                             }
                             Text(
-                                (opus_manager.vm_state.active_soundfonts.value[sorted_pages[i]]).split("/").let { it[it.size - 1].trim() },
+                                (opus_manager.vm_state.active_soundfonts.value[sorted_pages[i]]).split(
+                                    "/"
+                                )
+                                    .let { it[it.size - 1].trim() },
                                 maxLines = 1,
                                 textAlign = TextAlign.Center,
                                 modifier = Modifier
@@ -2849,7 +2877,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         .width(Dimensions.PresetMenuArrowWidth)
                                         .height(Dimensions.PresetMenuArrowHeight),
                                     painter = painterResource(R.drawable.icon_arrow_next),
-                                    contentDescription = (opus_manager.vm_state.active_soundfonts.value[sorted_pages[i + 1]]).split("/").let { it[it.size - 1].trim() },
+                                    contentDescription = (opus_manager.vm_state.active_soundfonts.value[sorted_pages[i + 1]]).split(
+                                        "/"
+                                    ).let { it[it.size - 1].trim() },
                                 )
                             }
                             Spacer(Modifier.width(Dimensions.Space.Medium))
@@ -2889,13 +2919,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         }
 
                         state_model.channel_preset_dialog.value = null
-                        this@ComponentActivityEditor.state_model.channel_preset_dialog_visibility.value = false
+                        this@ComponentActivityEditor.state_model.channel_preset_dialog_visibility.value =
+                            false
                     }
                 )
             }
             DialogBar(neutral = {
                 state_model.channel_preset_dialog.value = null
-                this@ComponentActivityEditor.state_model.channel_preset_dialog_visibility.value = false
+                this@ComponentActivityEditor.state_model.channel_preset_dialog_visibility.value =
+                    false
             })
         }
     }
@@ -3179,8 +3211,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
-    private fun get_exportable_options(): List<Pair<Exportable, @Composable RowScope.() -> Unit>> {
-        val export_options = mutableListOf<Pair<Exportable, @Composable RowScope.() -> Unit>>()
+    private fun get_exportable_options(export_options: MutableList<Pair<Exportable, @Composable RowScope.() -> Unit>>) {
         val opus_manager = this.controller_model.opus_manager
 
         export_options.add(Pair(Exportable.JSON) { Text(R.string.export_option_json) })
@@ -3194,8 +3225,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
             export_options.add(Pair(Exportable.WAV_LINES) { Text(R.string.export_option_wav_lines) })
             export_options.add(Pair(Exportable.WAV_CHANNELS) { Text(R.string.export_option_wav_channels) })
         }
-
-        return export_options
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -3333,16 +3362,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
             this.new_project()
         }
     }
+
     override fun on_key_press(e: KeyEvent): Boolean {
-        return false
-        // return this.keyboard_interface.input(e)
+        return this.keyboard_interface.input(e)
     }
 
     @Composable
     fun TuningTableDialog(visibility: MutableState<Boolean>) {
         val opus_manager = this.controller_model.opus_manager
-        val original_radix = opus_manager.get_radix()
         PaganDialog(visibility) {
+            val original_radix = opus_manager.get_radix()
             val transpose_numerator = remember { mutableIntStateOf(opus_manager.transpose.first) }
             val transpose_denominator = remember { mutableIntStateOf(opus_manager.transpose.second) }
             val radix = remember { mutableIntStateOf(original_radix) }
@@ -3384,6 +3413,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             callback()
         } else {
             this.state_model.confirm_action_callback.value = callback
+            this.state_model.confirm_action_visibility.value = true
         }
     }
 
@@ -3407,6 +3437,29 @@ class ComponentActivityEditor: PaganComponentActivity() {
             this.controller_model.active_project = null
             this.controller_model.project_exists.value = false
             Toast.makeText(this, R.string.feedback_on_copy, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun check_for_project_dir_and_save(callback: (() -> Unit)? = null) {
+        val configuration = this.view_model.configuration
+        if (configuration.project_directory.value == null || DocumentFile.fromTreeUri(
+                this,
+                configuration.project_directory.value!!
+            )?.exists() != true
+        ) {
+            this._result_launcher_set_project_directory_and_save_callback = callback
+            this._result_launcher_set_project_directory_and_save.launch(
+                Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also { intent ->
+                    intent.putExtra(Intent.EXTRA_TITLE, "Pagan Projects")
+                    intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    configuration.project_directory.value?.let {
+                        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, it)
+                    }
+                }
+            )
+        } else {
+            this@ComponentActivityEditor.save()
+            callback?.invoke()
         }
     }
 
@@ -3453,7 +3506,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val cursor = opus_manager.cursor
         val start_beat = when (cursor.mode) {
             CursorMode.Single,
-            CursorMode.Column -> if (cursor.beat == opus_manager.length - 1) {
+            CursorMode.Beat -> if (cursor.beat == opus_manager.length - 1) {
                 0
             } else {
                 cursor.beat
@@ -3489,7 +3542,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             it.play_opus(
                 when (opus_manager.cursor.mode) {
                     CursorMode.Single,
-                    CursorMode.Column -> if (opus_manager.cursor.beat == opus_manager.length - 1) {
+                    CursorMode.Beat -> if (opus_manager.cursor.beat == opus_manager.length - 1) {
                         0
                     } else {
                         opus_manager.cursor.beat

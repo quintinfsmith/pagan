@@ -73,8 +73,7 @@ fun EffectTransitionDialog(
     active_event: EffectEvent,
     callback: (EffectTransition) -> Unit
 ) {
-    val options_gen = {
-        val options = mutableListOf<Pair<EffectTransition, @Composable RowScope.() -> Unit>>()
+    val options_gen = { options: MutableList<Pair<EffectTransition, @Composable RowScope.() -> Unit>> ->
         for (transition_option in OpusLayerInterface.get_available_transitions(active_event.event_type)) {
             options.add(
                 Pair(transition_option) {
@@ -108,7 +107,6 @@ fun EffectTransitionDialog(
                 }
             )
         }
-        options
     }
 
     DialogMenu(

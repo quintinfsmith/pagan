@@ -327,6 +327,7 @@
     <string name="soundfont_loading">Soundfont Loading...</string>
     <string name="duplicate_channel">Duplicate Channel</string>
     <string name="range_overflow">Range overflow</string>
+    <string name="invalid_channel">Invalid Channel %d</string>
 
 
     <string-array name="general_midi_presets">

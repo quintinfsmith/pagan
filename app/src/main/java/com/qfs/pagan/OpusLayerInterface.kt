@@ -99,16 +99,11 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     val ui_lock = UILock()
 
-    // Refactored properties  //////////////////////
-    var minimum_percussions = HashMap<Int, Int>()
-    /////////////////////////////////////////////
-
     var temporary_blocker: OpusManagerCursor? = null
 
     var latest_set_octave: Int? = null
     var latest_set_offset: Int? = null
     lateinit var vm_state: ViewModelEditorState
-    var note_memory: Boolean = true
 
     fun attach_state_model(model: ViewModelEditorState) {
         this.vm_state = model
@@ -166,7 +161,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     ) {
         if (this.ui_lock.is_locked()) return
         if (!this.get_channel_controller<EffectEvent>(type, channel).visible) return
-        this.vm_state.blocker_leaf = listOf<Int>(
+        this.vm_state.blocker_leaf = listOf(
             try {
                 this.get_visible_row_from_ctl_line_channel(type, channel)
             } catch (_: ChannelEffectRowNotVisible) { // may reference a channel's line before the channel exists
@@ -192,7 +187,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     private fun _update_facade_blocker_leaf(beat_key: BeatKey, position: List<Int>) {
         if (this.ui_lock.is_locked()) return
-        this.vm_state.blocker_leaf = listOf<Int>(
+        this.vm_state.blocker_leaf = listOf(
             try {
                 this.get_visible_row_from_ctl_line(
                     this.get_actual_line_index(
@@ -330,7 +325,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                     val y = this.get_visible_row_from_pair(beat_key.channel, beat_key.line_offset)
                     try {
                         this.vm_state.cell_map[y][beat_key.beat].value.get_leaf(position).value.is_valid.value = false
-                    } catch (e: ViewModelEditorState.TreeData.LeafNotFound) {
+                    } catch (_: ViewModelEditorState.TreeData.LeafNotFound) {
                         // pass
                     }
                     this.cursor_apply(it)
@@ -343,17 +338,13 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
 
     // BASE FUNCTIONS vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-    override fun offset_range(amount: Int, first_key: BeatKey, second_key: BeatKey) {
-        super.offset_range(amount, first_key, second_key)
-    }
-
     private fun update_has_available_global_controllers(force_true: Boolean = false) {
         if (force_true) {
             this.vm_state.has_global_effects_hidden.value = true
             return
         }
 
-        val available_controllers = OpusLayerInterface.global_controller_domain.toMutableList()
+        val available_controllers = global_controller_domain.toMutableList()
         for ((type, controller) in this.controllers.get_all()) {
             if (!controller.visible) continue
             for ((i, value) in available_controllers.enumerate()) {
@@ -373,10 +364,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         }
         super.remove_global_controller(type)
         this.update_has_available_global_controllers(true)
-    }
-
-    override fun remove_line_repeat(channel: Int, line_offset: Int, count: Int) {
-        super.remove_line_repeat(channel, line_offset, count)
     }
 
     override fun remove_line_controller(type: EffectType, channel_index: Int, line_offset: Int) {
@@ -690,7 +677,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         newly_blocked_leafs: List<Pair<Pair<Int, List<Int>>, List<Pair<Int, List<Int>>>>>
     ) {
         if (this.ui_lock.is_locked()) return
-        for ((head, overlaps) in original_blocked_leafs) {
+        for ((_, overlaps) in original_blocked_leafs) {
             for ((blocked_beat, blocked_position) in overlaps) {
                 if (blocked_beat >= this.vm_state.cell_map[y].size) continue
                 try {
@@ -704,7 +691,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             }
         }
 
-        for ((head, overlaps) in newly_blocked_leafs) {
+        for ((_, overlaps) in newly_blocked_leafs) {
             for ((blocked_beat, blocked_position) in overlaps) {
                 if (blocked_beat >= this.length) continue
                 this.vm_state.cell_map[y][blocked_beat].value.get_leaf(blocked_position).value.is_spillover.value = true
@@ -1010,6 +997,10 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         return Pair(output_index, output_size)
     }
 
+    /**
+     * TODO: swap_line_ui_update could stand to be precise rather than
+     * just being a full refresh, but it's not a high priority.
+     */
     private fun _swap_line_ui_update(channel_a: Int, line_a: Int, channel_b: Int, line_b: Int) {
         this.vm_state.channel_data.clear()
         this.vm_state.cell_map.clear()
@@ -1082,6 +1073,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 row_count += 1
             }
 
+            this.vm_state.refresh_cursor()
             this.vm_state.remove_row(abs_line, row_count)
             this.vm_state.shift_line_offsets_down(channel, line_offset)
             this.vm_state.refresh_cursor()
@@ -1168,7 +1160,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
                 if (!this.ui_lock.is_locked()) {
                     val x = min(beat_index + count - 1, original_beat_count - 1) - (count - 1)
-                    for (i in 0 until count) {
+                    for (_ in 0 until count) {
                         this.vm_state.remove_column(x)
                     }
                     this.vm_state.refresh_cursor()
@@ -1195,7 +1187,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     }
 
     fun all_global_controllers_visible(): Boolean {
-        for (type in OpusLayerInterface.global_controller_domain) {
+        for (type in global_controller_domain) {
             if (!this.has_global_controller(type) || !this.get_controller<EffectEvent>(type).visible) return false
         }
         return true
@@ -1444,12 +1436,14 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     override fun channel_set_preset(channel: Int, instrument: PresetKey) {
         super.channel_set_preset(channel, instrument)
+        val working_channel = this.get_channel(channel)
+        val adj_instrument = working_channel.get_preset()
 
         this.vm_controller.update_channel_preset(
             this.get_midi_channel(channel),
-            instrument.soundfont_index,
-            instrument.bank,
-            instrument.program
+            adj_instrument.soundfont_index,
+            adj_instrument.bank,
+            adj_instrument.program
         )
 
 
@@ -1457,7 +1451,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.vm_state.set_channel_data(
             channel,
             this.is_percussion(channel),
-            instrument,
+            adj_instrument,
             this.channels[channel].muted,
             size = this.channels[channel].lines.size,
             this.channels[channel].palette
@@ -1623,13 +1617,6 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         } else {
             false
         }
-    }
-
-    fun force_cursor_select_column(beat: Int) {
-        if (this.cursor.mode != CursorMode.Unset) {
-            this.cursor_clear()
-        }
-        this.cursor_select_column(beat)
     }
 
     override fun cursor_select_column(beat: Int) {
@@ -1807,7 +1794,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     }
 
     fun cursor_select_range_next(beat_key: BeatKey) {
-        if (this.cursor.mode == CursorMode.Range) {
+        if (this.cursor.mode == CursorMode.Range && this.cursor.ctl_type == null) {
             this.cursor_select_range(this.cursor.range!!.first, beat_key)
         } else {
             this.cursor_select_range(beat_key, beat_key)
@@ -1887,7 +1874,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 val y = this.get_visible_row_from_pair(beat_key.channel, beat_key.line_offset)
                 this.vm_state.cell_map[y][beat_key.beat].value.get_leaf(position).value.is_valid.value = true
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // Pass
         }
 
@@ -1900,40 +1887,40 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         for (channel in channels.indices) {
             for (line_offset in 0 until channels[channel].lines.size) {
                 val line = channels[channel].lines[line_offset]
-                line.overlap_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
+                line.overlap_callback = { blocker: Pair<Int, List<Int>>, _: Pair<Int, List<Int>> ->
                     this._update_facade_blocker_leaf(BeatKey(channel, line_offset, blocker.first), blocker.second)
                 }
-                line.overlap_removed_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
+                line.overlap_removed_callback = { _, _ ->
                     this._clear_facade_blocker_leaf()
                 }
                 for ((type, controller) in line.controllers.get_all()) {
-                    controller.overlap_removed_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
+                    controller.overlap_removed_callback = { blocker: Pair<Int, List<Int>>, _: Pair<Int, List<Int>> ->
                         this._update_facade_blocker_leaf_line_ctl(
                             type,
                             BeatKey(channel, line_offset, blocker.first),
                             blocker.second
                         )
                     }
-                    controller.overlap_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
+                    controller.overlap_callback = { _, _ ->
                         this._clear_facade_blocker_leaf()
                     }
                 }
             }
             for ((type, controller) in channels[channel].controllers.get_all()) {
-                controller.overlap_removed_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
+                controller.overlap_removed_callback = { blocker: Pair<Int, List<Int>>, _: Pair<Int, List<Int>> ->
                     this._update_facade_blocker_leaf_channel_ctl(type, channel, blocker.first, blocker.second)
                 }
-                controller.overlap_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
+                controller.overlap_callback = { _, _ ->
                     this._clear_facade_blocker_leaf()
                 }
             }
         }
 
         for ((type, controller) in this.controllers.get_all()) {
-            controller.overlap_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
+            controller.overlap_callback = { blocker: Pair<Int, List<Int>>, _: Pair<Int, List<Int>> ->
                 this._update_facade_blocker_leaf_global_ctl(type, blocker.first, blocker.second)
             }
-            controller.overlap_removed_callback = { blocker: Pair<Int, List<Int>>, blocked: Pair<Int, List<Int>> ->
+            controller.overlap_removed_callback = { _, _ ->
                 this._clear_facade_blocker_leaf()
             }
         }
@@ -1989,10 +1976,21 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             }
 
             CursorMode.Range -> {
+                this.vm_state.std_notes_in_range.value = false
+
                 val (top_left, bottom_right) = try {
                     when (cursor.ctl_level) {
                         null -> {
                             val (top_left, bottom_right) = cursor.get_ordered_range()!!
+
+                            // Check if the selectiong can be adjusted via the AdjustButton
+                            for (c in top_left.channel .. bottom_right.channel) {
+                                if (!this.is_percussion(c)) {
+                                    this.vm_state.std_notes_in_range.value = true
+                                    break
+                                }
+                            }
+
                             Pair(
                                 Pair(
                                     this.get_visible_row_from_ctl_line(
@@ -2060,6 +2058,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                         bottom_right.second
                     )
                 )
+
             }
 
             CursorMode.Line -> {
@@ -2097,7 +2096,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 this.vm_state.set_cursor(ViewModelEditorState.CacheCursor(cursor.mode, y))
             }
 
-            CursorMode.Column -> {
+            CursorMode.Beat -> {
                 this.vm_state.set_cursor(ViewModelEditorState.CacheCursor(cursor.mode, cursor.beat))
             }
 
@@ -2183,35 +2182,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 )
             )
         ) ?: return
-        this.vm_state.shift_line_offsets_up(channel, adj_line_offset, y)
+        this.vm_state.shift_line_offsets_up(channel, y)
     }
-
-    private fun _new_column_in_column_width_map(index: Int) {
-        if (this.ui_lock.is_locked()) return
-
-        val column = mutableListOf<Int>()
-        for (channel in this.get_visible_channels()) {
-            for (j in channel.lines.indices) {
-                column.add(1)
-                for ((_, controller) in channel.lines[j].controllers.get_all()) {
-                    if (!controller.visible) continue
-                    column.add(1)
-                }
-            }
-
-            for ((_, controller) in channel.controllers.get_all()) {
-                if (!controller.visible) continue
-                column.add(1)
-            }
-        }
-
-        for ((_, controller) in this.controllers.get_all()) {
-            if (!controller.visible) continue
-            column.add(1)
-        }
-
-    }
-
 
     // END UI FUNCS -----------------------
 
@@ -2262,9 +2234,12 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         val (beat_key, position) = this.get_actual_position(this.cursor.get_beatkey(), this.cursor.get_position())
         this._set_note_octave(beat_key, position, octave, mode, this.latest_set_offset ?: 0)
 
-        this.get_absolute_value(beat_key, position)?.let {
-            this.vm_controller.play_event(beat_key.channel, it)
+        if (this.vm_state.soundfont_ready.value) {
+            this.get_absolute_value(beat_key, position)?.let {
+                this.vm_controller.play_event(beat_key.channel, it)
+            }
         }
+
     }
 
     fun set_note_offset_at_cursor(offset: Int, mode: RelativeInputMode) {
@@ -2273,13 +2248,11 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         val (beat_key, position) = this.get_actual_position(this.cursor.get_beatkey(), this.cursor.get_position())
         this._set_note_offset(beat_key, position, offset, mode, this.latest_set_octave ?: 0)
 
-        this.get_absolute_value(beat_key, position)?.let {
-            this.vm_controller.play_event(beat_key.channel, it)
+        if (this.vm_state.soundfont_ready.value) {
+            this.get_absolute_value(beat_key, position)?.let {
+                this.vm_controller.play_event(beat_key.channel, it)
+            }
         }
-    }
-
-    override fun move_beat_range(beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {
-        super.move_beat_range(beat_key, first_corner, second_corner)
     }
 
     override fun tag_section(beat: Int, title: String?) {
@@ -2319,7 +2292,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         ) ?: return // TODO: Throw Exception
         this.vm_state.mute_line(y, true)
         var i = y
-        for ((type, controller) in this.get_channel(channel).get_line(line_offset).controllers.get_all()) {
+        for ((_, controller) in this.get_channel(channel).get_line(line_offset).controllers.get_all()) {
             if (!controller.visible) continue
             this.vm_state.mute_line(++i, true)
         }
@@ -2337,7 +2310,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         ) ?: return // TODO: Throw Exception
         this.vm_state.mute_line(y, false)
         var i = y
-        for ((type, controller) in this.get_channel(channel).get_line(line_offset).controllers.get_all()) {
+        for ((_, controller) in this.get_channel(channel).get_line(line_offset).controllers.get_all()) {
             if (!controller.visible) continue
             this.vm_state.mute_line(++i, false)
         }
@@ -2372,9 +2345,9 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             if (original != Pair(beat_key, position) && head_tree.event != null) {
                 Pair(head_tree.event!!, ViewModelEditorState.EventDescriptor.Tail)
             } else {
-                var (working_beat, working_position) = line.get_preceding_event_position(beat_key.beat, position)
+                val (working_beat, working_position) = line.get_preceding_event_position(beat_key.beat, position)
                     ?: Pair(beat_key.beat, position)
-                var working_event = line.get_tree(working_beat, working_position).event
+                val working_event = line.get_tree(working_beat, working_position).event
                 Pair(
                     working_event,
                     ViewModelEditorState.EventDescriptor.Backup
@@ -2783,6 +2756,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         super.set_percussion_event_at_cursor()
 
         if (this.cursor.mode != CursorMode.Single) return
+        if (!this.vm_state.soundfont_ready.value) return
         this.vm_controller.play_event(
             this.cursor.channel,
             this.get_percussion_instrument(

@@ -1,0 +1,3 @@
+- Fixed crash caused by tapping notes while soundfonts are changing
+- Fixed broken settings menu on fresh installs (Thanks to studyingegret for the bug report)
+- Fixed effects (like volume control) not being applied to fading notes after notated end of project (Also Thanks to studyingegret for the bug report)

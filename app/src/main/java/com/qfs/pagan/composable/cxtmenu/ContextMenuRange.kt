@@ -12,8 +12,11 @@ package com.qfs.pagan.composable.cxtmenu
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +33,7 @@ import com.qfs.pagan.composable.RadioMenu
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.testTag
+import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
@@ -46,6 +50,7 @@ fun AdjustRangeButton(vm_state: ViewModelEditorState, opus_manager: OpusLayerInt
     if (visibility.value) {
         AdjustSelectionDialog(visibility, vm_state.radix.value) { i ->
             opus_manager.offset_selection(i)
+            opus_manager.cursor_clear()
         }
     }
 }
@@ -72,7 +77,15 @@ fun ContextMenuRangeSecondary(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AdjustRangeButton(vm_state, opus_manager)
+            if (vm_state.std_notes_in_range.value) {
+                AdjustRangeButton(vm_state, opus_manager)
+            } else {
+                Spacer(
+                    Modifier
+                        .height(Dimensions.ContextMenuButtonHeight)
+                        .width(Dimensions.ContextMenuButtonWidth)
+                )
+            }
             RadioMenu(
                 options = listOf(
                     Pair(PaganConfiguration.MoveMode.MOVE) {

@@ -46,7 +46,7 @@ fun IntegerInputDialog(
             horizontalArrangement = Arrangement.Center
         ) {
             IntegerInput(
-                value = value.intValue,
+                value = value,
                 label = { Text(title_string_id) },
                 modifier = Modifier
                     .testTag(TestTag.DialogNumberInput)

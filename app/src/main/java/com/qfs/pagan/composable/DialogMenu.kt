@@ -17,7 +17,7 @@ import com.qfs.pagan.ui.theme.Dimensions
 fun <T> DialogMenu(
     visibility: MutableState<Boolean>,
     title: Int,
-    options: () -> List<Pair<T, @Composable RowScope.() -> Unit>>,
+    options: (MutableList<Pair<T, @Composable RowScope.() -> Unit>>) -> Unit,
     default: T? = null,
     on_dismiss_request: (() -> Unit)? = null,
     long_click_callback: ((T) -> Unit)? = null,
@@ -53,7 +53,9 @@ fun <T> DialogMenu(
 
         LaunchedEffect(visibility.value) {
             if (visibility.value) {
-                mutable_options.value = options()
+                val new_list = mutableListOf<Pair<T, @Composable RowScope.() -> Unit>>()
+                options(new_list)
+                mutable_options.value = new_list.toList()
                 options_ready.value = true
             }
         }
@@ -64,7 +66,7 @@ fun <T> DialogMenu(
 fun <T> DialogSortableMenu(
     visibility: MutableState<Boolean>,
     title: Int,
-    options: () -> List<Pair<T, @Composable RowScope.() -> Unit>>,
+    options: (MutableList<Pair<T, @Composable RowScope.() -> Unit>>) -> Unit,
     sort_options: List<Pair<Int, (Int, Int) -> Int>>,
     active_sort_option: Int? = null,
     default: T? = null,
@@ -120,7 +122,9 @@ fun <T> DialogSortableMenu(
 
         LaunchedEffect(visibility.value, refresher?.value) {
             if (visibility.value) {
-                mutable_options.value = options()
+                val new_list = mutableListOf<Pair<T, @Composable RowScope.() -> Unit>>()
+                options(new_list)
+                mutable_options.value = new_list.toList()
                 options_ready.value = true
             }
         }

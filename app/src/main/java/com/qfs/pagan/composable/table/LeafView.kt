@@ -152,7 +152,7 @@ fun LeafView(
                             opus_manager.cursor_select(beat_key, position)
 
                             val tree = opus_manager.get_tree() ?: return@combinedClickable
-                            if (tree.has_event()) {
+                            if (vm_state.soundfont_ready.value && tree.has_event()) {
                                 val note = if (opus_manager.is_percussion(channel)) {
                                     opus_manager.get_percussion_instrument(channel, line_offset)
                                 } else {
@@ -288,7 +288,12 @@ fun LeafView(
                     else -> {
                         ProvideTextStyle(Typography.EffectLeaf) {
                             when (event) {
-                                is OpusVolumeEvent -> Text("${(event.value * 100F).toInt()}%", color = text_color)
+                                is OpusVolumeEvent -> {
+                                    Text(
+                                        "${(event.value * 100F).roundToInt()}%",
+                                        color = text_color
+                                    )
+                                }
                                 is OpusPanEvent -> {
                                     Text(
                                         text = if (event.value > 0) {

@@ -42,7 +42,7 @@ import com.qfs.pagan.ui.theme.Typography
 
 @Composable
 fun <T> NumberInput(
-    value: T,
+    input_value: MutableState<T>,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = Unpadded,
     text_align: TextAlign = TextAlign.End,
@@ -56,10 +56,10 @@ fun <T> NumberInput(
 ) {
 
     val trigger_select_all = remember { mutableStateOf<Boolean?>(null) }
-    val state = rememberTextFieldState(value.toString())
+    val state = rememberTextFieldState(input_value.value.toString())
     // Prevent weird focusing behavior causing on_focus_exit to be called without any initial focus
     val was_focused = remember { mutableStateOf(false) }
-    var backup_value = remember { mutableStateOf(value) }
+
     val focus_change_callback = { focus_state: FocusState ->
         val (validated_value, validated_string) = string_validate(state.text)
         if (focus_state.isFocused) {
@@ -72,11 +72,12 @@ fun <T> NumberInput(
             if (revert_on_exit) {
                 val text = state.text
                 state.edit {
-                    replace(0, text.length, backup_value.value.toString())
+                    replace(0, text.length, input_value.value.toString())
                 }
             }
         }
     }
+
     val focus_manager = LocalFocusManager.current
     OutlinedTextField(
         state = state,
@@ -92,7 +93,7 @@ fun <T> NumberInput(
                         val (validated_value, validated_string) = string_validate(char_sequence)
                         validated_value?.let {
                             callback(it)
-                            backup_value.value = it
+                            input_value.value = it
                             focus_manager.clearFocus()
                         }
                         true
@@ -117,7 +118,7 @@ fun <T> NumberInput(
         onKeyboardAction = { action ->
             val (validated_value, validated_string) = string_validate(state.text)
             validated_value?.let {
-                backup_value.value = it
+                input_value.value = it
                 callback(it)
             }
             action()
@@ -127,7 +128,14 @@ fun <T> NumberInput(
 
     trigger_select_all.value?.let {
         LaunchedEffect(trigger_select_all.value) {
+
             state.edit { selectAll() }
+        }
+    }
+    LaunchedEffect(input_value.value) {
+        val text = state.text
+        state.edit {
+            replace(0, text.length, input_value.value.toString())
         }
     }
 }

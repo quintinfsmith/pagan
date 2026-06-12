@@ -123,7 +123,7 @@ fun InsertBeatButton(
         dialog_visibility,
         dialog_value,
         1,
-        2048
+        Values.DialogInput.Max.InsertBeat
     ) {
         opus_manager.insert_beat_after_cursor(it)
     }

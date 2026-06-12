@@ -14,7 +14,6 @@ import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.BlockedActionException
 import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
-import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.OpusColorPalette
 import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.OpusColorPalette.ColorToken
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusLine
@@ -59,7 +58,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
     fun controller_global_insert_after(type: EffectType, beat: Int, position: List<Int>, repeat: Int) {
         this._remember {
-            for (i in 0 until repeat) {
+            for (_ in 0 until repeat) {
                 this.controller_global_insert_after(type, beat, position)
             }
         }
@@ -67,7 +66,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
     fun controller_channel_insert_after(type: EffectType, channel: Int, beat: Int, position: List<Int>, repeat: Int) {
         this._remember {
-            for (i in 0 until repeat) {
+            for (_ in 0 until repeat) {
                 this.controller_channel_insert_after(type, channel, beat, position)
             }
         }
@@ -75,7 +74,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
     fun controller_line_insert_after(type: EffectType, beat_key: BeatKey, position: List<Int>, repeat: Int) {
         this._remember {
-            for (i in 0 until repeat) {
+            for (_ in 0 until repeat) {
                 this.controller_line_insert_after(type, beat_key, position)
             }
         }
@@ -108,7 +107,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
     fun controller_line_remove(type: EffectType, beat_key: BeatKey, position: List<Int>, count: Int) {
         this._remember {
             val adj_position = position.toMutableList()
-            for (i in 0 until count) {
+            for (_ in 0 until count) {
                 val tree = this.get_line_ctl_tree<EffectEvent>(type, beat_key, adj_position)
                 val parent_size = tree.parent?.size ?: 0
 
@@ -320,10 +319,6 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
     private fun <T> _forget(callback: () -> T): T {
         return this.history_cache.forget(callback)
-    }
-
-    fun prepend_to_history_stack(token: HistoryToken, args: List<Any>) {
-        this.history_cache.prepend_undoer(token, args)
     }
 
     open fun push_to_history_stack(token: HistoryToken, args: List<Any>) {
@@ -873,7 +868,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                 HistoryToken.MULTI -> { }
                 else -> {}
             }
-        } catch (e: ClassCastException) {
+        } catch (_: ClassCastException) {
             // pass
         }
 
@@ -887,7 +882,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
     open fun apply_undo(repeat: Int = 1) {
         this.history_cache.start_undo()
 
-        for (i in 0 until repeat) {
+        for (_ in 0 until repeat) {
             val node = this.history_cache.pop() ?: break
             this._remember { // Keep multi's intact for redo
                 this.apply_history_node(node)
@@ -899,7 +894,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
     open fun apply_redo(repeat: Int = 1) {
         this.history_cache.start_redo()
-        for (i in 0 until repeat) {
+        for (_ in 0 until repeat) {
             val node = this.history_cache.pop() ?: break
             this._remember {
                 this.apply_history_node(node)
@@ -1257,9 +1252,9 @@ open class OpusLayerHistory: OpusLayerCursor() {
         }
     }
 
-    override fun controller_line_move_leaf(type: EffectType, beatkey_from: BeatKey, position_from: List<Int>, beat_key_to: BeatKey, position_to: List<Int>) {
+    override fun controller_line_move_leaf(type: EffectType, beatkey_from: BeatKey, position_from: List<Int>, beatkey_to: BeatKey, position_to: List<Int>) {
         this._remember {
-            super.controller_line_move_leaf(type, beatkey_from, position_from, beat_key_to, position_to)
+            super.controller_line_move_leaf(type, beatkey_from, position_from, beatkey_to, position_to)
         }
     }
 
@@ -1520,8 +1515,8 @@ open class OpusLayerHistory: OpusLayerCursor() {
     override fun new_channel(channel: Int?, lines: Int, uuid: Int?, is_percussion: Boolean) {
         this._remember {
             val channel_to_remove = channel ?: max(0, this.channels.size)
-
             super.new_channel(channel, lines, uuid, is_percussion)
+
             this.push_to_history_stack(
                 HistoryToken.REMOVE_CHANNEL,
                 listOf(this.channels[channel_to_remove].uuid)
@@ -1925,7 +1920,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
         }
     }
 
-    private fun remember_channel_color(channel: Int, original_color: Color?, token: OpusColorPalette.ColorToken) {
+    private fun remember_channel_color(channel: Int, original_color: Color?, token: ColorToken) {
         if (original_color == null) {
             this.push_to_history_stack(
                 HistoryToken.UNSET_CHANNEL_COLOR,
@@ -1939,7 +1934,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
         }
     }
 
-    private fun remember_line_color(channel: Int, line_offset: Int, original_color: Color?, token: OpusColorPalette.ColorToken) {
+    private fun remember_line_color(channel: Int, line_offset: Int, original_color: Color?, token: ColorToken) {
         if (original_color == null) {
             this.push_to_history_stack(
                 HistoryToken.UNSET_LINE_COLOR,
@@ -2168,15 +2163,16 @@ open class OpusLayerHistory: OpusLayerCursor() {
         }
     }
 
-
-    override fun on_action_blocked(blocker_key: BeatKey, blocker_position: List<Int>) {
-        super.on_action_blocked(blocker_key, blocker_position)
-    }
-
     override fun duplicate_line(channel: Int, line_offset: Int) {
         this._remember {
             this.push_remove_line(channel, line_offset)
             super.duplicate_line(channel, line_offset)
+        }
+    }
+
+    override fun duplicate_line_at_cursor(repeat: Int) {
+        this._remember {
+            super.duplicate_line_at_cursor(repeat)
         }
     }
 
@@ -2195,6 +2191,29 @@ open class OpusLayerHistory: OpusLayerCursor() {
     // HISTORY FUNCTIONS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     // CURSOR FUNCTIONS vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+    override fun remove_selected_channel(count: Int) {
+        this._remember {
+            super.remove_selected_channel(count)
+        }
+    }
+
+    override fun insert_channel_at_cursor(count: Int, is_percussion: Boolean) {
+        this._remember {
+            super.insert_channel_at_cursor(count, is_percussion)
+        }
+    }
+
+    override fun insert_channel_after_cursor(count: Int, is_percussion: Boolean) {
+        this._remember {
+            super.insert_channel_after_cursor(count, is_percussion)
+        }
+    }
+
+    override fun duplicate_channel_at_cursor(repeat: Int) {
+        this._remember {
+            super.duplicate_channel_at_cursor(repeat)
+        }
+    }
     // CURSOR FUNCTIONS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 }

@@ -11,7 +11,7 @@ package com.qfs.pagan.structure.opusmanager.cursor
 
 enum class CursorMode {
     Line,
-    Column,
+    Beat,
     Single,
     Range,
     Channel,

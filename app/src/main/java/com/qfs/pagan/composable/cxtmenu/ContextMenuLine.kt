@@ -43,6 +43,7 @@ import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
+import com.qfs.pagan.Values
 import com.qfs.pagan.composable.ColorPickerDialog
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogMenu
@@ -194,7 +195,8 @@ fun InsertLineButton(
         R.string.dlg_insert_lines,
         visibility,
         dialog_value,
-        1
+        1,
+        max_value = Values.DialogInput.Max.InsertLine
     ) { i ->
         val channel = active_line.channel.value ?: return@IntegerInputDialog
         val line_offset = active_line.line_offset.value ?: return@IntegerInputDialog
@@ -229,7 +231,7 @@ fun RemoveLineButton(
         R.string.dlg_remove_lines,
         visibility,
         dialog_value,
-        0
+        0,
     ) { i ->
         val channel = active_line.channel.value ?: return@IntegerInputDialog
         val line_offset = active_line.line_offset.value ?: return@IntegerInputDialog
@@ -274,8 +276,10 @@ fun PercussionSetInstrumentButton(modifier: Modifier = Modifier, vm_state: ViewM
         val label = if (use_name) {
             if (vm_state.soundfont_active.value != null && !vm_state.use_midi_playback.value) {
                 vm_state.get_instrument_name(active_channel.instrument.value, assigned_offset)
-            } else {
+            } else if (assigned_offset < midi_instruments.size) {
                 midi_instruments[assigned_offset]
+            } else {
+                stringResource(R.string.unknown_instrument, assigned_offset)
             }
         } else {
             "!${"%02d".format(assigned_offset)}"
@@ -323,9 +327,8 @@ fun PercussionSetInstrumentButton(modifier: Modifier = Modifier, vm_state: ViewM
 @Composable
 fun PercussionInstrumentDialog(visibility: MutableState<Boolean>, vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, channel: Int, line_offset: Int) {
     val context = LocalContext.current
-    val gen_options = {
+    val gen_options = { options: MutableList<Pair<Int, @Composable RowScope.() -> Unit>> ->
         var use_defaults = true
-        val options = mutableListOf<Pair<Int, @Composable RowScope.() -> Unit>>()
         if (!vm_state.use_midi_playback.value) {
             val preset = opus_manager.get_channel_instrument(channel)
             vm_state.get_available_instruments(preset)?.let { instruments ->
@@ -335,7 +338,7 @@ fun PercussionInstrumentDialog(visibility: MutableState<Boolean>, vm_state: View
                         Pair(index) {
                             Text("$index:")
                             Text(
-                                "$name",
+                                name,
                                 modifier = Modifier.weight(1F),
                                 textAlign = TextAlign.Center,
                                 maxLines = 1
@@ -378,11 +381,10 @@ fun PercussionInstrumentDialog(visibility: MutableState<Boolean>, vm_state: View
                 )
             }
         }
-
-        options
     }
 
-    val current_instrument = (opus_manager.get_channel(channel).lines[line_offset] as OpusLinePercussion).instrument
+    val row_index = opus_manager.get_visible_row_from_pair(channel, line_offset)
+    val current_instrument = vm_state.line_data[row_index].assigned_offset.value
     DialogMenu(
         visibility,
         R.string.dropdown_choose_instrument,
@@ -481,17 +483,19 @@ fun LineEffectMenuDialog(
     DialogMenu(
         visibility = visibility,
         title = R.string.show_line_controls,
-        options = {
+        options = { options ->
             val available_effects = OpusLayerInterface.line_controller_domain.toMutableList()
             for (line in vm_state.line_data) {
-                if (!available_effects.contains(line.ctl_type.value)) continue
-                if (line.ctl_type.value == null) continue
                 if (line.channel.value != active_line.channel.value) continue
                 if (line.line_offset.value != active_line.line_offset.value) continue
-                available_effects.remove(line.ctl_type.value)
+                val ctl_type = line.ctl_type.value ?: continue
+                if (!available_effects.contains(ctl_type)) continue
+
+                available_effects.remove(ctl_type)
             }
-            List<Pair<EffectType, @Composable RowScope.() -> Unit>>(available_effects.size) { i ->
-                Pair(available_effects[i]) { EffectMenuItem(available_effects[i]) }
+
+            for (ctl_type in available_effects) {
+                options.add( Pair(ctl_type) { EffectMenuItem(ctl_type) } )
             }
         },
         long_click_callback = {

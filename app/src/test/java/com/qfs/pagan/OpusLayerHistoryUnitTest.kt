@@ -9,7 +9,6 @@ import com.qfs.pagan.structure.opusmanager.base.TunedInstrumentEvent
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import com.qfs.pagan.structure.opusmanager.history.OpusLayerHistory as OpusManager
 
@@ -313,7 +312,7 @@ class HistoryCacheUnitTest {
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
 
         this.undo_and_check(manager) {
-            it.insert_at_cursor(1)
+            it.insert_after_cursor(1)
         }
 
     }

@@ -9,7 +9,7 @@
  */
 package com.qfs.apres.soundfontplayer
 
-class ProfileBuffer(var ptr: Long, val type: EffectType) {
+class ProfileBuffer(override var ptr: Long, val type: EffectType): JNIObject<ProfileBuffer> {
     constructor(data: ControllerEventData, start_frame: Int = 0): this(
         ProfileBuffer.create(data.ptr, start_frame),
         data.type
@@ -21,12 +21,12 @@ class ProfileBuffer(var ptr: Long, val type: EffectType) {
 
     external fun allow_empty_jni(ptr: Long): Boolean
     fun allow_empty(): Boolean {
-        return this.allow_empty_jni(this.ptr)
+        return this.check()?.allow_empty_jni(this.ptr) ?: false
     }
 
     external fun set_frame_jni(ptr: Long, frame: Int)
     fun set_frame(frame: Int) {
-        this.set_frame_jni(this.ptr, frame)
+        this.check()?.set_frame_jni(this.ptr, frame)
     }
 
     external fun copy_jni(ptr: Long): Long
@@ -36,11 +36,8 @@ class ProfileBuffer(var ptr: Long, val type: EffectType) {
 
     external fun destroy_jni(ptr: Long, deep: Boolean)
     fun destroy(deep: Boolean = false) {
-        if (this.ptr != 0L) {
-            this.destroy_jni(this.ptr, deep)
-        }
-
-        this.ptr = 0
+        this.check()?.destroy_jni(this.ptr, deep)
+        this.ptr = 0L
     }
 
     external fun get_data_ptr_jni(ptr: Long): Long

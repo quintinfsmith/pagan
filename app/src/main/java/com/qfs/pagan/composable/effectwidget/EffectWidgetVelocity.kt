@@ -28,7 +28,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -50,14 +49,12 @@ import com.qfs.pagan.TestTag
 import com.qfs.pagan.Values
 import com.qfs.pagan.composable.DivisorSeparator
 import com.qfs.pagan.composable.IntegerInput
-import com.qfs.pagan.composable.IntegerInputDialog
 import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.wrappers.Text
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
@@ -65,6 +62,7 @@ import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
+import kotlin.math.roundToInt
 
 @Composable
 fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, event: OpusVelocityEvent) {
@@ -72,7 +70,7 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
     val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
     val working_value = remember { mutableFloatStateOf(working_event.value) }
-    val velocity_input_value = remember { mutableIntStateOf((working_event.value * 100F).toInt()) }
+    val velocity_input_value = remember { mutableIntStateOf((working_event.value * 100F).roundToInt()) }
     val slide_enabled = remember { mutableStateOf<Boolean>(working_event.slide != null) }
     val slide_width_mode = remember { mutableStateOf(working_event.slide?.first ?: OpusVelocityEvent.SlideMaxWidth.Note) }
     val denominator_label: MutableState<Int> = remember { mutableStateOf(working_event.slide?.second ?: Values.Defaults.SlideDenominator) }
@@ -159,10 +157,12 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
                             onValueChange = {
                                 working_event.value = it
                                 working_value.floatValue = it
-                                velocity_input_value.intValue = (it * 100).toInt()
+                                velocity_input_value.intValue = (it * 100).roundToInt()
                             },
 
                             onValueChangeFinished = {
+                                working_event.value = working_value.floatValue
+                                velocity_input_value.intValue = (working_value.floatValue * 100).roundToInt()
                                 velocity_expanded.value = false
                                 submit()
                             }
@@ -173,29 +173,27 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
 
             MediumSpacer()
 
-            key(working_value.floatValue) {
-                IntegerInput(
-                    (working_event.value * 100F).toInt(),
-                    minimum = 0,
-                    maximum = 100,
-                    contentPadding = Unpadded,
-                    text_align = TextAlign.Center,
-                    revert_on_exit = true,
-                    modifier = Modifier
-                        .testTag(TestTag.VelocityInput)
-                        .height(Dimensions.EffectWidget.InputHeight)
-                        .width(Dimensions.EffectWidget.Velocity.InputWidth)
-                ) {
-                    working_event.value = it.toFloat() / 100F
-                    working_value.floatValue = working_event.value
-                    submit()
-                }
+            IntegerInput(
+                velocity_input_value,
+                minimum = 0,
+                maximum = 100,
+                contentPadding = Unpadded,
+                text_align = TextAlign.Center,
+                revert_on_exit = true,
+                modifier = Modifier
+                    .testTag(TestTag.VelocityInput)
+                    .height(Dimensions.EffectWidget.InputHeight)
+                    .width(Dimensions.EffectWidget.Velocity.InputWidth)
+            ) {
+                working_event.value = it.toFloat() / 100F
+                working_value.floatValue = working_event.value
+                submit()
             }
-
         }
     }
 
     MediumSpacer()
+
     if (!is_percussion) {
         if (slide_enabled.value) {
             Column(
@@ -277,7 +275,7 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
                         contentAlignment = Alignment.Center
                     ) {
                         IntegerInput(
-                            denominator_label.value,
+                            denominator_label,
                             minimum = 1,
                             revert_on_exit = true,
                             contentPadding = Unpadded,
@@ -336,7 +334,7 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
     //     dialog_visibility,
     //     R.string.dlg_set_velocity,
     //     0, 200,
-    //     (working_event.value * 100).toInt()
+    //     (working_event.value * 100).roundToInt()
     // ) {
     //     working_event.value = it.toFloat() / 100F
     //     working_value.floatValue = working_event.value

@@ -76,9 +76,9 @@ class FeedbackDevice(private var _sample_handle_manager: SampleHandleManager): M
         }
 
         override fun get_effect_buffers(): List<Triple<Int, Int, ProfileBuffer>> {
-            return listOf(
-                Triple(0, 0, ProfileBuffer(this.volume_event_data))
-            )
+            return this.volume_event_data.check()?.let {
+                listOf(Triple(0, 0, ProfileBuffer(it)))
+            } ?: listOf()
         }
 
         override fun get_active_handles(frame: Int): Set<Pair<Int, Pair<SampleHandle, IntArray>>> {

@@ -65,22 +65,24 @@ fun TuningDialogTopLine(
             Text(R.string.dlg_transpose, maxLines = 1)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IntegerInput(
-                    value = transpose_numerator.value,
+                    value = transpose_numerator,
                     minimum = 0,
                     contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
                     modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
+                    revert_on_exit = true,
                     callback = {
-                        transpose_numerator.value = it
+                       // transpose_numerator.value = it
                     }
                 )
                 DivisorSeparator()
                 IntegerInput(
-                    value = transpose_denominator.value,
+                    value = transpose_denominator,
                     minimum = 1,
                     contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
                     modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
+                    revert_on_exit = true,
                     callback = {
-                        transpose_denominator.value = it
+                        //transpose_denominator.value = it
                     }
                 )
             }
@@ -92,14 +94,15 @@ fun TuningDialogTopLine(
                 textAlign = TextAlign.End
             )
             IntegerInput(
-                value = radix.value,
+                value = radix,
                 minimum = 1,
                 maximum = 36,
                 contentPadding = PaddingValues(Dimensions.TransposeDialogInnerPadding),
                 modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
+                revert_on_exit = true,
                 callback = {
                     note_map.clear()
-                    radix.value = it
+                    //radix.value = it
                     for (i in 0 until it) {
                         note_map.add(Pair(i, it))
                     }
@@ -157,7 +160,7 @@ fun ColumnScope.TuningDialogNormal(
                             )
                             Spacer(Modifier.weight(1F))
                             IntegerInput(
-                                value = numer,
+                                value = remember { mutableStateOf(numer) },
                                 minimum = 0,
                                 modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
                                 contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
@@ -166,7 +169,7 @@ fun ColumnScope.TuningDialogNormal(
                             )
                             DivisorSeparator()
                             IntegerInput(
-                                value = denom,
+                                value = remember { mutableStateOf(denom) },
                                 minimum = 1,
                                 modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
                                 contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
@@ -287,7 +290,7 @@ fun ColumnScope.TuningDialogTiny(
                             Spacer(Modifier.weight(1F))
                             key(actively_editting_index.value) {
                                 IntegerInput(
-                                    value = note_map[actively_editting_index.value].first,
+                                    value = remember { mutableStateOf(note_map[actively_editting_index.value].first) },
                                     minimum = 0,
                                     modifier = Modifier.width(Dimensions.TinyTuningDialogInputWidth),
                                     contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
@@ -301,7 +304,7 @@ fun ColumnScope.TuningDialogTiny(
                                 )
                                 DivisorSeparator()
                                 IntegerInput(
-                                    value = note_map[actively_editting_index.value].second,
+                                    value = remember { mutableStateOf(note_map[actively_editting_index.value].second) },
                                     minimum = 1,
                                     modifier = Modifier.width(Dimensions.TinyTuningDialogInputWidth),
                                     contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),

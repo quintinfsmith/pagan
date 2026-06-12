@@ -418,13 +418,10 @@ abstract class PaganComponentActivity: ComponentActivity() {
             DialogSortableMenu(
                 visibility,
                 R.string.menu_item_load_project,
-                options = {
-                    val items = mutableListOf<Pair<Uri, @Composable RowScope.() -> Unit>>()
-                    items.clear()
+                options = { options ->
                     for ((uri, title) in project_list) {
-                        items.add(Pair(uri, { Text(text = title) }))
+                        options.add(Pair(uri, { Text(text = title) }))
                     }
-                    items
                 },
                 sort_options,
                 active_sort_option = current_sort,

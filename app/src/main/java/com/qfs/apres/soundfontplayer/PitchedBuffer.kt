@@ -11,7 +11,7 @@ package com.qfs.apres.soundfontplayer
 
 import com.qfs.apres.soundfont2.SampleData
 
-class PitchedBuffer(var ptr: Long) {
+class PitchedBuffer(override var ptr: Long): JNIObject<PitchedBuffer> {
     constructor(data: SampleData, pitch: Float, known_max: Int? = null, range: IntRange? = null, is_loop: Boolean = false): this(
         PitchedBuffer.create(
             data.ptr,
@@ -49,13 +49,12 @@ class PitchedBuffer(var ptr: Long) {
     external fun free(ptr: Long)
 
     fun destroy() {
-        this.free(this.ptr)
+        this.check()?.free(this.ptr)
     }
 
     fun get_range(): IntRange {
-        var array = IntArray(2) { 0 }
+        val array = IntArray(2)
         this.get_range_inner(this.ptr, array)
-        // TODO: Double check '..' or 'until'
         return array[0] .. array[1]
     }
 

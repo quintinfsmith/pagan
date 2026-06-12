@@ -9,7 +9,7 @@
  */
 package com.qfs.apres.soundfontplayer
 
-class ControllerEventData(val ptr: Long, val type: EffectType) {
+class ControllerEventData(override var ptr: Long, val type: EffectType): JNIObject<ControllerEventData> {
     class IndexedProfileBufferFrame(val first_frame: Int, val last_frame: Int, val value: FloatArray, val increment: FloatArray)
 
     constructor(size: Int, frames: List<IndexedProfileBufferFrame>, type: EffectType): this(
@@ -44,6 +44,6 @@ class ControllerEventData(val ptr: Long, val type: EffectType) {
 
     external fun destroy_jni(ptr: Long)
     fun destroy() {
-        this.destroy_jni(this.ptr)
+        this.check()?.destroy_jni(this.ptr)
     }
 }

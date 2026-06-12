@@ -50,6 +50,7 @@ fun AdjustRangeButton(vm_state: ViewModelEditorState, opus_manager: OpusLayerInt
     if (visibility.value) {
         AdjustSelectionDialog(visibility, vm_state.radix.value) { i ->
             opus_manager.offset_selection(i)
+            opus_manager.cursor_clear()
         }
     }
 }

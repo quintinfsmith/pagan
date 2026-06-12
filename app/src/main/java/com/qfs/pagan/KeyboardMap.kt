@@ -95,22 +95,22 @@ object KeyboardMap {
         // ---------------- LINE/LEAF/CHANNEL -------------------//
         QuickMapEntry(
             FunctionAlias.AdjustOctaveUp,
-            arrayOf(Context.LineStandard, Context.LeafStandard, Context.Channel),
+            arrayOf(Context.LineStandard, Context.LeafStandard, Context.Channel, Context.Beat),
             AliasKey(KEYCODE_O, true)
         ),
         QuickMapEntry(
             FunctionAlias.AdjustOctaveDown,
-            arrayOf(Context.LineStandard, Context.LeafStandard, Context.Channel),
+            arrayOf(Context.LineStandard, Context.LeafStandard, Context.Channel, Context.Beat),
             AliasKey(KEYCODE_M, true)
         ),
         QuickMapEntry(
             FunctionAlias.AdjustOffsetUp,
-            arrayOf(Context.LineStandard, Context.LeafStandard, Context.Channel),
+            arrayOf(Context.LineStandard, Context.LeafStandard, Context.Channel, Context.Beat),
             AliasKey(KEYCODE_O)
         ),
         QuickMapEntry(
             FunctionAlias.AdjustOffsetDown,
-            arrayOf(Context.LineStandard, Context.LeafStandard, Context.Channel),
+            arrayOf(Context.LineStandard, Context.LeafStandard, Context.Channel, Context.Beat),
             AliasKey(KEYCODE_M)
         ),
         // ------------------ LINE  ---------------------- //

@@ -58,6 +58,8 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
         Delete,
         EscapeContext,
         SelectBeat,
+        SelectBeatFromLine,
+        SelectLineFromBeat,
         SelectBeatNext,
         SelectBeatPrev,
         SelectLine,
@@ -540,6 +542,20 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
                 this.get_buffer_value(1, 0)
             )
             true
+        },
+        FunctionAlias.SelectBeatFromLine to { _, opus_manager ->
+            opus_manager.select_first_in_beat(
+                this.get_buffer_value(0, 0, opus_manager.length - 1)
+            )
+            true
+        },
+        FunctionAlias.SelectLineFromBeat to { _, opus_manager ->
+            val beat = opus_manager.cursor.beat
+            opus_manager.cursor_select_first_line_in_channel(
+                this.get_buffer_value(0, 0, opus_manager.channels.size - 1)
+            )
+            opus_manager.select_first_in_beat(beat)
+            true
         }
         //SelectLine to { context, opus_manager ->
         //    this.go_to_first_line_in_channel(context, opus_manager)
@@ -566,7 +582,6 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
     )
 
     fun input(event: KeyEvent): Boolean {
-        //println("$event")
         val key_code = event.nativeKeyEvent.keyCode
         val current_buffer = this.input_buffer_value
         val opus_manager = this.context.controller_model.opus_manager
@@ -642,7 +657,6 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
             when (key_code) {
                 KEYCODE_0, KEYCODE_1, KEYCODE_2, KEYCODE_3, KEYCODE_4,
                 KEYCODE_5, KEYCODE_6, KEYCODE_7, KEYCODE_8, KEYCODE_9 -> {
-                    // println("${key_code - KEYCODE_0} ????")
                     this.input_buffer_value = ((this.input_buffer_value ?: 0) * 10) + key_code - KEYCODE_0
                     true
                 }
@@ -657,7 +671,8 @@ class KeyboardInputInterface(var context: ComponentActivityEditor) {
             this.clear_buffer_value()
         }
 
-        return output
+        //return output
+        return true
     }
 
 //    val key_code_map = hashMapOf(

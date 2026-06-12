@@ -115,6 +115,11 @@ object KeyboardMap {
         ),
         // ------------------ LINE  ---------------------- //
         QuickMapEntry(
+            FunctionAlias.SelectBeatFromLine,
+            Context.Line,
+            AliasKey(KEYCODE_L)
+        ),
+        QuickMapEntry(
             FunctionAlias.SelectLineNext,
             Context.Line,
             AliasKey(KEYCODE_J)
@@ -308,19 +313,25 @@ object KeyboardMap {
         QuickMapEntry(
             FunctionAlias.ChannelSetSoundfontIndex,
             Context.Channel,
-            AliasKey(KEYCODE_T)
+            AliasKey(KEYCODE_Q)
         ),
         QuickMapEntry(
             FunctionAlias.ChannelSetMidiBank,
             Context.Channel,
-            AliasKey(KEYCODE_Y)
+            AliasKey(KEYCODE_W)
         ),
         QuickMapEntry(
             FunctionAlias.ChannelSetMidiProgram,
             Context.Channel,
-            AliasKey(KEYCODE_U)
-        )
+            AliasKey(KEYCODE_E)
+        ),
         // ------------------ RANGE ---------------------- //
+        // ------------------ BEAT ---------------------- //
+        QuickMapEntry(
+            FunctionAlias.SelectLineFromBeat,
+            Context.Beat,
+            AliasKey(KEYCODE_L)
+        ),
     )
 
     //    AliasKey(listOf(KEYCODE_SPACE), Leaf) to FunctionAlias.LeafUnset,

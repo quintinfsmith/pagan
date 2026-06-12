@@ -3024,6 +3024,13 @@ open class OpusLayerCursor: OpusLayerBase() {
         this.cursor_select_line(this.cursor.channel, (this.cursor.line_offset - count).mod(channel_size))
     }
 
+    fun cursor_select_first_line_in_channel(channel: Int) {
+        this.cursor_select_line(
+            (channel) % this.channels.size,
+            0
+        )
+    }
+
     fun cursor_select_first_line_in_next_channel(count: Int) {
         if (this.cursor.mode != CursorMode.Line) return
         this.cursor_select_line(

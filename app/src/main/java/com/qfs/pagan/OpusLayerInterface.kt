@@ -1436,12 +1436,14 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
     override fun channel_set_preset(channel: Int, instrument: PresetKey) {
         super.channel_set_preset(channel, instrument)
+        val working_channel = this.get_channel(channel)
+        val adj_instrument = working_channel.get_preset()
 
         this.vm_controller.update_channel_preset(
             this.get_midi_channel(channel),
-            instrument.soundfont_index,
-            instrument.bank,
-            instrument.program
+            adj_instrument.soundfont_index,
+            adj_instrument.bank,
+            adj_instrument.program
         )
 
 
@@ -1449,7 +1451,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.vm_state.set_channel_data(
             channel,
             this.is_percussion(channel),
-            instrument,
+            adj_instrument,
             this.channels[channel].muted,
             size = this.channels[channel].lines.size,
             this.channels[channel].palette

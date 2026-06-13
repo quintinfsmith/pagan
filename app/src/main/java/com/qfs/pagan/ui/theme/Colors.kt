@@ -11,6 +11,8 @@ package com.qfs.pagan.ui.theme
 
 import androidx.compose.ui.graphics.Color
 import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.OpusColorPalette
+import java.lang.Float.max
+import kotlin.math.abs
 import kotlin.math.min
 
 object Colors {
@@ -259,12 +261,47 @@ object Colors {
                     )
                 }
                 LeafSelection.Unselected -> {
-                    val bg_weight = .65F
-                    val new_bg = (event_color_base * (1f - bg_weight)) + (line_color * bg_weight)
+                    val bg_weight = .95F
+                    var new_bg = (event_color_base * (1f - bg_weight)) + (line_color * bg_weight)
+                    val bg_avg = (new_bg.red + new_bg.blue + new_bg.green) * 255 / 3F
+                    val event_avg = (event_color_base.red + event_color_base.blue + event_color_base.green) * 255 / 3F
+                    var diff = event_avg - bg_avg
+                    val threshold = 64
+
+                    val (adj_base, adj_bg) = if (diff > 0 && diff < threshold) {
+                        val base_red = (255 * event_color_base.red) + (threshold - diff)
+                        val base_green = (255 * event_color_base.green) + (threshold - diff)
+                        val base_blue = (255 * event_color_base.blue) + (threshold - diff)
+                        val max_val = listOf(255F, base_red, base_green, base_blue).max()
+                        Pair(
+                            Color(
+                                base_red / max_val,
+                                base_green / max_val,
+                                base_blue / max_val
+                            ),
+                            new_bg
+                        )
+                    } else if (diff < 0 && diff > 0 - threshold) {
+                        val base_red = (255 * event_color_base.red) - (threshold + diff)
+                        val base_green = (255 * event_color_base.green) - (threshold + diff)
+                        val base_blue = (255 * event_color_base.blue) - (threshold + diff)
+                        val max_val = listOf(255F, base_red, base_green, base_blue).max()
+                        Pair(
+                            Color(
+                                base_red / max_val,
+                                base_green / max_val,
+                                base_blue / max_val
+                            ),
+                            new_bg
+                        )
+                    } else {
+                        Pair(event_color_base, new_bg)
+                    }
+
                     Triple(
-                        new_bg,
-                        get_text(new_bg),
-                        event_color_base
+                        adj_bg,
+                        adj_base,
+                        adj_base
                     )
                 }
             }
@@ -287,7 +324,7 @@ object Colors {
                         )
                     }
                     LeafSelection.Unselected -> {
-                        val bg_weight = .5F
+                        val bg_weight = .8F
                         val new_bg = (spill_color * (1f - bg_weight)) + (line_color * bg_weight)
                         Triple(
                             new_bg,

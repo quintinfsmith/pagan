@@ -112,13 +112,7 @@ fun LeafView(
     val context = LocalContext.current
 
     ProvideContentColorTextStyle(
-        contentColor = text_color,
-        textStyle = LocalTextStyle.current.merge(
-            shadow = Shadow(
-                blurRadius = 4F,
-                color = highlight_color
-            )
-        )
+        contentColor = text_color
     ) {
         Box(
             modifier

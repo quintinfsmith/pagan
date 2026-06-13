@@ -9,6 +9,7 @@
  */
 package com.qfs.pagan.composable.cxtmenu
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -63,16 +64,18 @@ fun TagButton(
 @Composable
 fun AdjustBeatButton(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface) {
     val dialog_visibility = remember { mutableStateOf(false) }
-    IconCMenuButton(
-        modifier = Modifier.testTag(TestTag.AdjustSelection),
-        onClick = { dialog_visibility.value = ! dialog_visibility.value },
-        icon = R.drawable.icon_adjust,
-        shape = Shapes.ContextMenuButtonPrimary,
-        description = R.string.cd_adjust_selection
-    )
+    Box {
+        IconCMenuButton(
+            modifier = Modifier.testTag(TestTag.AdjustSelection),
+            onClick = { dialog_visibility.value = !dialog_visibility.value },
+            icon = R.drawable.icon_adjust,
+            shape = Shapes.ContextMenuButtonPrimary,
+            description = R.string.cd_adjust_selection
+        )
 
-    AdjustSelectionDialog(dialog_visibility, vm_state.radix.value) {
-        opus_manager.offset_selection(it)
+        AdjustSelectionDialog(dialog_visibility, vm_state.radix.value) {
+            opus_manager.offset_selection(it)
+        }
     }
 }
 
@@ -83,23 +86,24 @@ fun RemoveBeatButton(
     enabled: Boolean
 ) {
     val dialog_visibility = remember { mutableStateOf(false) }
+    Box {
+        IconCMenuButton(
+            modifier = Modifier.testTag(TestTag.BeatRemove),
+            enabled = enabled,
+            onClick = { opus_manager.remove_beat_at_cursor(1) },
+            onLongClick = { dialog_visibility.value = true },
+            icon = R.drawable.icon_subtract,
+            description = R.string.cd_remove_beat
+        )
 
-    IconCMenuButton(
-        modifier = Modifier.testTag(TestTag.BeatRemove),
-        enabled = enabled,
-        onClick = { opus_manager.remove_beat_at_cursor(1) },
-        onLongClick = { dialog_visibility.value = true },
-        icon = R.drawable.icon_subtract,
-        description = R.string.cd_remove_beat
-    )
-
-    IntegerInputDialog(
-        R.string.dlg_remove_beats,
-        dialog_visibility,
-        dialog_value,
-        Values.DialogInput.RemoveBeat
-    ) {
-        opus_manager.remove_beat_at_cursor(it)
+        IntegerInputDialog(
+            R.string.dlg_remove_beats,
+            dialog_visibility,
+            dialog_value,
+            Values.DialogInput.RemoveBeat
+        ) {
+            opus_manager.remove_beat_at_cursor(it)
+        }
     }
 }
 
@@ -110,22 +114,24 @@ fun InsertBeatButton(
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
     val dialog_visibility = remember { mutableStateOf(false) }
-    IconCMenuButton(
-        modifier = Modifier.testTag(TestTag.BeatInsert),
-        onClick = { opus_manager.insert_beat_after_cursor(1) },
-        onLongClick = { dialog_visibility.value = true },
-        shape = shape,
-        icon = R.drawable.icon_add,
-        description = R.string.cd_insert_beat
-    )
-    IntegerInputDialog(
-        R.string.dlg_insert_beats,
-        dialog_visibility,
-        dialog_value,
-        1,
-        Values.DialogInput.Max.InsertBeat
-    ) {
-        opus_manager.insert_beat_after_cursor(it)
+    Box {
+        IconCMenuButton(
+            modifier = Modifier.testTag(TestTag.BeatInsert),
+            onClick = { opus_manager.insert_beat_after_cursor(1) },
+            onLongClick = { dialog_visibility.value = true },
+            shape = shape,
+            icon = R.drawable.icon_add,
+            description = R.string.cd_insert_beat
+        )
+        IntegerInputDialog(
+            R.string.dlg_insert_beats,
+            dialog_visibility,
+            dialog_value,
+            1,
+            Values.DialogInput.Max.InsertBeat
+        ) {
+            opus_manager.insert_beat_after_cursor(it)
+        }
     }
 }
 @Composable

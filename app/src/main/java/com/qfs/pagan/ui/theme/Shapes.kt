@@ -104,6 +104,8 @@ object Shapes {
     val LandingButtonShape = RoundedCornerShape(Dimensions.LandingButtonCornerRadius)
     val LandingButtonShapeNeedsSF = RoundedCornerShape(Dimensions.LandingButtonCornerRadius, 0.dp, 0.dp, Dimensions.LandingButtonCornerRadius)
 
+    val NumberInputDialog = Container
+
     val ProjectCardNotes = RoundedCornerShape(4.dp)
 
     object RadioMenu {

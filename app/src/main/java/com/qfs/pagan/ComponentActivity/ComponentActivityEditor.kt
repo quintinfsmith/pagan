@@ -1636,15 +1636,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                     painter = painterResource(R.drawable.icon_add),
                                                     contentDescription = stringResource(R.string.cd_insert_beat)
                                                 )
-                                            }
-                                            IntegerInputDialog(
-                                                R.string.dlg_insert_beats,
-                                                dialog_visibility,
-                                                vm_state.dlg_insert_beat,
-                                                1,
-                                                Values.DialogInput.Max.InsertBeat
-                                            ) {
-                                                opus_manager.insert_beats(opus_manager.length,it)
+                                                IntegerInputDialog(
+                                                    R.string.dlg_insert_beats,
+                                                    dialog_visibility,
+                                                    vm_state.dlg_insert_beat,
+                                                    1,
+                                                    Values.DialogInput.Max.InsertBeat
+                                                ) {
+                                                    opus_manager.insert_beats(opus_manager.length,it)
+                                                }
                                             }
                                         }
 
@@ -2442,26 +2442,19 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     } ?: Spacer(Modifier.weight(1F))
                 }
 
-                AnimatedVisibility(!keyboardAsState().value && vm_state.active_cursor.value != null) {
-                    this@ComponentActivityEditor.get_context_menu_primary(vm_state, opus_manager, layout)?.let {
-                        Row(
-                            Modifier.fillMaxHeight(),
-                            horizontalArrangement = Arrangement.End,
-                            verticalAlignment = Alignment.CenterVertically,
-                            content = {
-                                CMBoxEnd(
-                                    Modifier
-                                        .fillMaxHeight()
-                                        .update_side_padding()
-                                ) { it() }
-                            }
-                        )
-                    }
-                }
-                LaunchedEffect(keyboardAsState().value || vm_state.active_cursor.value == null) {
-                    if (vm_state.active_cursor.value == null) {
-                        this@ComponentActivityEditor.state_model.table_side_padding.value = 0F
-                    }
+                this@ComponentActivityEditor.get_context_menu_primary(vm_state, opus_manager, layout)?.let {
+                    Row(
+                        Modifier.fillMaxHeight(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically,
+                        content = {
+                            CMBoxEnd(
+                                Modifier
+                                    .fillMaxHeight()
+                                    .update_side_padding()
+                            ) { it() }
+                        }
+                    )
                 }
                 LaunchedEffect(vm_state.active_cursor.value == null) {
                     if (vm_state.active_cursor.value == null) {

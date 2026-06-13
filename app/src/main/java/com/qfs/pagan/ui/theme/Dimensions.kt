@@ -291,7 +291,12 @@ object Dimensions {
         start = 2.dp
     )
 
-    val NumberInputDialogPadding = 8.dp
+    val NumberInputDialogPadding = PaddingValues(
+        horizontal = 8.dp,
+        vertical = 4.dp
+    )
+
+    val NumberInputDialogWidth = 128.dp
     val NumberPickerRowHeight = 41.dp
     val NumberPickerRowWidth = 80.dp
     val NumberPickerStrokeWidth = Stroke.Thin

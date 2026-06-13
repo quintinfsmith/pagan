@@ -176,31 +176,33 @@ fun InsertLineButton(
     shape: Shape = Shapes.ContextMenuButtonPrimaryStart
 ) {
     val visibility = remember { mutableStateOf(false) }
-    IconCMenuButton(
-        modifier = Modifier.testTag(TestTag.LineNew),
-        onClick = {
-            val channel = active_line.channel.value ?: return@IconCMenuButton
-            val line_offset = active_line.line_offset.value ?: return@IconCMenuButton
-            opus_manager.new_line(channel, line_offset + 1)
-        },
-        onLongClick = {
-            visibility.value = true
-        },
-        icon = R.drawable.icon_add,
-        shape = shape,
-        description = R.string.cd_insert_line
-    )
+    Box {
+        IconCMenuButton(
+            modifier = Modifier.testTag(TestTag.LineNew),
+            onClick = {
+                val channel = active_line.channel.value ?: return@IconCMenuButton
+                val line_offset = active_line.line_offset.value ?: return@IconCMenuButton
+                opus_manager.new_line(channel, line_offset + 1)
+            },
+            onLongClick = {
+                visibility.value = true
+            },
+            icon = R.drawable.icon_add,
+            shape = shape,
+            description = R.string.cd_insert_line
+        )
 
-    IntegerInputDialog(
-        R.string.dlg_insert_lines,
-        visibility,
-        dialog_value,
-        1,
-        max_value = Values.DialogInput.Max.InsertLine
-    ) { i ->
-        val channel = active_line.channel.value ?: return@IntegerInputDialog
-        val line_offset = active_line.line_offset.value ?: return@IntegerInputDialog
-        opus_manager.new_line_repeat(channel, line_offset, i)
+        IntegerInputDialog(
+            R.string.dlg_insert_lines,
+            visibility,
+            dialog_value,
+            1,
+            max_value = Values.DialogInput.Max.InsertLine
+        ) { i ->
+            val channel = active_line.channel.value ?: return@IntegerInputDialog
+            val line_offset = active_line.line_offset.value ?: return@IntegerInputDialog
+            opus_manager.new_line_repeat(channel, line_offset, i)
+        }
     }
 }
 
@@ -212,30 +214,32 @@ fun RemoveLineButton(
     size: Int
 ) {
     val visibility = remember { mutableStateOf(false) }
-    IconCMenuButton(
-        modifier = Modifier.testTag(TestTag.LineRemove),
-        enabled = size > 1,
-        onClick = {
-            val channel = active_line.channel.value ?: return@IconCMenuButton
-            val line_offset = active_line.line_offset.value ?: return@IconCMenuButton
-            opus_manager.remove_line_repeat(channel, line_offset, 1)
-        },
-        onLongClick = {
-            visibility.value = true
-        },
-        icon = R.drawable.icon_subtract,
-        description = R.string.cd_remove_line
-    )
+    Box {
+        IconCMenuButton(
+            modifier = Modifier.testTag(TestTag.LineRemove),
+            enabled = size > 1,
+            onClick = {
+                val channel = active_line.channel.value ?: return@IconCMenuButton
+                val line_offset = active_line.line_offset.value ?: return@IconCMenuButton
+                opus_manager.remove_line_repeat(channel, line_offset, 1)
+            },
+            onLongClick = {
+                visibility.value = true
+            },
+            icon = R.drawable.icon_subtract,
+            description = R.string.cd_remove_line
+        )
 
-    IntegerInputDialog(
-        R.string.dlg_remove_lines,
-        visibility,
-        dialog_value,
-        0,
-    ) { i ->
-        val channel = active_line.channel.value ?: return@IntegerInputDialog
-        val line_offset = active_line.line_offset.value ?: return@IntegerInputDialog
-        opus_manager.remove_line_repeat(channel, line_offset, i)
+        IntegerInputDialog(
+            R.string.dlg_remove_lines,
+            visibility,
+            dialog_value,
+            0,
+        ) { i ->
+            val channel = active_line.channel.value ?: return@IntegerInputDialog
+            val line_offset = active_line.line_offset.value ?: return@IntegerInputDialog
+            opus_manager.remove_line_repeat(channel, line_offset, i)
+        }
     }
 }
 

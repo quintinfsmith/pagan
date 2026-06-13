@@ -10,6 +10,7 @@
 package com.qfs.pagan.composable.cxtmenu
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -72,24 +73,26 @@ fun SplitButton(
     dialog_value: MutableIntState,
     shape: Shape = Shapes.ContextMenuButtonPrimaryStart
 ) {
-    val dialog_visibility = remember { mutableStateOf(false) }
-    IconCMenuButton(
-        modifier = Modifier.testTag(TestTag.LeafSplit),
-        onClick = { opus_manager.split_tree_at_cursor(2) },
-        onLongClick = { dialog_visibility.value = !dialog_visibility.value },
-        icon = R.drawable.icon_split,
-        shape = shape,
-        description = R.string.btn_split
-    )
+    Box {
+        val dialog_visibility = remember { mutableStateOf(false) }
+        IconCMenuButton(
+            modifier = Modifier.testTag(TestTag.LeafSplit),
+            onClick = { opus_manager.split_tree_at_cursor(2) },
+            onLongClick = { dialog_visibility.value = !dialog_visibility.value },
+            icon = R.drawable.icon_split,
+            shape = shape,
+            description = R.string.btn_split
+        )
 
-    IntegerInputDialog(
-        title_string_id = R.string.dlg_split,
-        visibility = dialog_visibility,
-        value = dialog_value,
-        min_value = 1,
-        max_value = Values.DialogInput.Max.Split
-    ) {
-        opus_manager.split_tree_at_cursor(it)
+        IntegerInputDialog(
+            title_string_id = R.string.dlg_split,
+            visibility = dialog_visibility,
+            value = dialog_value,
+            min_value = 1,
+            max_value = Values.DialogInput.Max.Split
+        ) {
+            opus_manager.split_tree_at_cursor(it)
+        }
     }
 }
 
@@ -98,23 +101,25 @@ fun InsertButton(
     opus_manager: OpusLayerInterface,
     dialog_value: MutableIntState,
 ) {
-    val dialog_visibility = remember { mutableStateOf(false) }
-    IconCMenuButton(
-        modifier = Modifier.testTag(TestTag.LeafInsert),
-        onClick = { opus_manager.insert_after_cursor(1) },
-        onLongClick = { dialog_visibility.value = !dialog_visibility.value },
-        icon = R.drawable.icon_add,
-        description = R.string.btn_insert
-    )
+    Box {
+        val dialog_visibility = remember { mutableStateOf(false) }
+        IconCMenuButton(
+            modifier = Modifier.testTag(TestTag.LeafInsert),
+            onClick = { opus_manager.insert_after_cursor(1) },
+            onLongClick = { dialog_visibility.value = !dialog_visibility.value },
+            icon = R.drawable.icon_add,
+            description = R.string.btn_insert
+        )
 
-    IntegerInputDialog(
-        title_string_id = R.string.dlg_insert,
-        visibility = dialog_visibility,
-        value = dialog_value,
-        min_value = 1,
-        max_value = Values.DialogInput.Max.InsertLeaf
-    ) {
-        opus_manager.insert_after_cursor(it)
+        IntegerInputDialog(
+            title_string_id = R.string.dlg_insert,
+            visibility = dialog_visibility,
+            value = dialog_value,
+            min_value = 1,
+            max_value = Values.DialogInput.Max.InsertLeaf
+        ) {
+            opus_manager.insert_after_cursor(it)
+        }
     }
 }
 
@@ -139,33 +144,37 @@ fun DurationButton(
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
     val dialog_visibility = remember { mutableStateOf(false) }
-    TextCMenuButton(
-        modifier = Modifier
-            .testTag(TestTag.EventDuration)
-            .width(Dimensions.ButtonHeight.Normal),
-        enabled = when (descriptor) {
-            ViewModelEditorState.EventDescriptor.Selected,
-            ViewModelEditorState.EventDescriptor.Tail -> true
-            else -> false
-        },
-        shape = shape,
-        contentPadding = Unpadded,
-        onClick = { dialog_visibility.value = !dialog_visibility.value },
-        onLongClick = { opus_manager.set_duration_at_cursor(1) },
-        text = when (descriptor) {
-            ViewModelEditorState.EventDescriptor.Selected,
-            ViewModelEditorState.EventDescriptor.Tail -> "x${active_event?.duration ?: 1}"
-            else -> ""
-        }
-    )
+    Box {
+        TextCMenuButton(
+            modifier = Modifier
+                .testTag(TestTag.EventDuration)
+                .width(Dimensions.ButtonHeight.Normal),
+            enabled = when (descriptor) {
+                ViewModelEditorState.EventDescriptor.Selected,
+                ViewModelEditorState.EventDescriptor.Tail -> true
 
-    IntegerInputDialog(
-        title_string_id = R.string.dlg_duration,
-        visibility = dialog_visibility,
-        value = dialog_value,
-        min_value = 1,
-    ) {
-        opus_manager.set_duration_at_cursor(it)
+                else -> false
+            },
+            shape = shape,
+            contentPadding = Unpadded,
+            onClick = { dialog_visibility.value = !dialog_visibility.value },
+            onLongClick = { opus_manager.set_duration_at_cursor(1) },
+            text = when (descriptor) {
+                ViewModelEditorState.EventDescriptor.Selected,
+                ViewModelEditorState.EventDescriptor.Tail -> "x${active_event?.duration ?: 1}"
+
+                else -> ""
+            }
+        )
+
+        IntegerInputDialog(
+            title_string_id = R.string.dlg_duration,
+            visibility = dialog_visibility,
+            value = dialog_value,
+            min_value = 1,
+        ) {
+            opus_manager.set_duration_at_cursor(it)
+        }
     }
 }
 

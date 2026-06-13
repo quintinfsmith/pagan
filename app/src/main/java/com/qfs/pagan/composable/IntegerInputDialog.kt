@@ -10,9 +10,12 @@
 package com.qfs.pagan.composable
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableIntState
@@ -24,9 +27,11 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.style.TextAlign
 import com.qfs.pagan.TestTag
+import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Shapes
 
 @Composable
 fun IntegerInputDialog(
@@ -39,40 +44,41 @@ fun IntegerInputDialog(
 ) {
     val focus_requester = remember { FocusRequester() }
     //default ?: this@ActionDispatcher.persistent_number_input_values[title_string_id] ?: min_value
+    DropdownMenu(
+        expanded = visibility.value,
+        onDismissRequest = { visibility.value = false },
+        shape = Shapes.NumberInputDialog
 
-    PaganDialog(visibility) {
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            IntegerInput(
-                value = value,
-                label = { Text(title_string_id) },
-                modifier = Modifier
-                    .testTag(TestTag.DialogNumberInput)
-                    .focusRequester(focus_requester),
-                contentPadding = PaddingValues(Dimensions.NumberInputDialogPadding),
-                text_align = TextAlign.Center,
-                on_focus_exit = { dialog_value ->
-                    dialog_value?.let { value.intValue = it }
-                },
-                minimum = min_value,
-                maximum = max_value
-            ) { new_value ->
-                visibility.value = false
-                // this@ActionDispatcher.persistent_number_input_values[title_string_id] = new_value
-                callback(new_value)
-            }
+    ) {
+        IntegerInput(
+            value = value,
+            label = { Text(title_string_id) },
+            modifier = Modifier
+                .testTag(TestTag.DialogNumberInput)
+                .width(Dimensions.NumberInputDialogWidth)
+                .padding(Dimensions.NumberInputDialogPadding)
+                .focusRequester(focus_requester),
+            contentPadding = Dimensions.NumberInputDialogPadding,
+            text_align = TextAlign.Center,
+            on_focus_exit = { dialog_value ->
+                dialog_value?.let { value.intValue = it }
+            },
+            minimum = min_value,
+            maximum = max_value
+        ) { new_value ->
+            visibility.value = false
+            // this@ActionDispatcher.persistent_number_input_values[title_string_id] = new_value
+            callback(new_value)
         }
 
-        DialogBar(
-            neutral = { visibility.value = false },
-            positive = {
-                // this@ActionDispatcher.persistent_number_input_values[title_string_id] = value.value
-                visibility.value = false
-                callback(value.intValue)
-            }
-        )
+        //DialogBar(
+        //    neutral = { visibility.value = false },
+        //    positive = {
+        //        // this@ActionDispatcher.persistent_number_input_values[title_string_id] = value.value
+        //        visibility.value = false
+        //        callback(value.intValue)
+        //    }
+        //)
 
         LaunchedEffect(Unit) {
             focus_requester.requestFocus()

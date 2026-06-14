@@ -241,6 +241,8 @@ class ViewModelEditorState: ViewModel() {
     val dragging_height = Pair(mutableIntStateOf(0), mutableIntStateOf(0))
     val dragging_line_map = mutableListOf<Triple<ClosedFloatingPointRange<Float>, IntRange, Boolean>>()
 
+    val selecting_beat = mutableStateOf(false)
+
     val queued_zoom_index = mutableIntStateOf(0) // Needed to prevent jitter on zoom
     val zoom_index = mutableIntStateOf(0)
     val active_zoom = mutableFloatStateOf(1F)
@@ -430,6 +432,7 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun clear() {
+        this.selecting_beat.value = false
         this.ready.value = false
         this.project_name.value = null
         this.beat_count.value = 0

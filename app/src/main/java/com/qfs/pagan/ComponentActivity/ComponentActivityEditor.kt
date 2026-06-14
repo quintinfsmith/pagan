@@ -160,6 +160,7 @@ import com.qfs.pagan.composable.SoundfontLoadingIndicator
 import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.TuningDialogNormal
 import com.qfs.pagan.composable.TuningDialogTiny
+import com.qfs.pagan.composable.cxtmenu.ContextMenuBeatSliderSecondary
 import com.qfs.pagan.composable.cxtmenu.EffectMenuItem
 import com.qfs.pagan.composable.dashed_border
 import com.qfs.pagan.composable.dragging_scroll
@@ -1319,6 +1320,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun get_context_menu_primary(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, layout: LayoutSize): (@Composable () -> Unit)? {
         if (vm_state.playback_state_midi.value == PlaybackState.Playing || vm_state.playback_state_soundfont.value == PlaybackState.Playing) return null
         if (vm_state.dragging_line.value != null) return null
+        // Special case for beat selector
+        if (vm_state.selecting_beat.value) return null
 
         val cursor = vm_state.active_cursor.value
         return when (cursor?.type) {
@@ -1352,8 +1355,17 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun get_context_menu_secondary(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, layout: LayoutSize): (@Composable () -> Unit)? {
         if (vm_state.playback_state_midi.value == PlaybackState.Playing || vm_state.playback_state_soundfont.value == PlaybackState.Playing) return null
         if (vm_state.dragging_line.value != null) return null
+
+        // Special case for beat selector
+        if (vm_state.selecting_beat.value) {
+            return {
+                ContextMenuBeatSliderSecondary(modifier,vm_state, opus_manager, layout)
+            }
+        }
+
         val cursor = vm_state.active_cursor.value ?: return null
         if (cursor.type == CursorMode.Unset) return null
+
 
         return when (cursor.type) {
             CursorMode.Line -> {

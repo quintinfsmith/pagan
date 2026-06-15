@@ -33,6 +33,12 @@ object Values {
             const val InsertLine = 16
             const val InsertBeat = 1024
         }
+        object Min {
+            const val InsertLeaf = 1
+            const val InsertLine = 1
+            const val Split = 2
+            const val Duration = 1
+        }
     }
 
     const val OctaveCount = 8

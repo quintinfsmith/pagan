@@ -594,7 +594,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     override fun on_back_press_check(): Boolean {
         val active_cursor = this.state_model.active_cursor.value
-        return if (active_cursor != null && active_cursor.type != CursorMode.Unset) {
+        return if (this.state_model.selecting_beat.value) {
+            this.state_model.selecting_beat.value = false
+                    false
+        } else if (active_cursor != null && active_cursor.type != CursorMode.Unset) {
             this.controller_model.opus_manager.cursor_clear()
             false
         } else {
@@ -1360,14 +1363,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         // Special case for beat selector
         if (vm_state.selecting_beat.value) {
-            return {
-                ContextMenuBeatSliderSecondary(modifier,vm_state, opus_manager, layout)
-            }
+            return { ContextMenuBeatSliderSecondary(modifier,vm_state, opus_manager, layout) }
         }
 
         val cursor = vm_state.active_cursor.value ?: return null
         if (cursor.type == CursorMode.Unset) return null
-
 
         return when (cursor.type) {
             CursorMode.Line -> {
@@ -1393,7 +1393,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     ContextMenuRangeSecondary(vm_state, opus_manager)
                 }
             }
-
             CursorMode.Channel -> {
                 @Composable { ContextMenuChannelSecondary(vm_state, opus_manager, layout) }
             }
@@ -1776,7 +1775,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         .pointerInput(Unit) {
                             awaitEachGesture {
                                 while (true) {
-                                    val event = awaitPointerEvent()
+                                    awaitPointerEvent()
                                     vm_state.selecting_beat.value = false
                                 }
                             }
@@ -2346,6 +2345,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 opus_manager,
                 LayoutSize.LargePortrait
             )
+
             val secondary = this@ComponentActivityEditor.get_context_menu_secondary(
                 Modifier,
                 vm_state,
@@ -2451,7 +2451,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Bottom
             ) {
-                AnimatedVisibility(vm_state.active_cursor.value != null, Modifier.weight(1F)) {
+                AnimatedVisibility(vm_state.active_cursor.value != null || vm_state.selecting_beat.value, Modifier.weight(1F)) {
                     this@ComponentActivityEditor.get_context_menu_secondary(Modifier, vm_state, opus_manager, layout)?.let {
                         Box(
                             Modifier

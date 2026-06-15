@@ -9,24 +9,28 @@
  */
 package com.qfs.pagan.composable
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
+import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.testTag
@@ -43,32 +47,49 @@ fun IntegerInputDialog(
     callback: (value: Int) -> Unit
 ) {
     val focus_requester = remember { FocusRequester() }
-    //default ?: this@ActionDispatcher.persistent_number_input_values[title_string_id] ?: min_value
     DropdownMenu(
         expanded = visibility.value,
         onDismissRequest = { visibility.value = false },
         shape = Shapes.NumberInputDialog
 
     ) {
-        IntegerInput(
-            value = value,
-            label = { Text(title_string_id) },
-            modifier = Modifier
-                .testTag(TestTag.DialogNumberInput)
-                .width(Dimensions.NumberInputDialogWidth)
-                .padding(Dimensions.NumberInputDialogPadding)
-                .focusRequester(focus_requester),
-            contentPadding = Dimensions.NumberInputDialogPadding,
-            text_align = TextAlign.Center,
-            on_focus_exit = { dialog_value ->
-                dialog_value?.let { value.intValue = it }
-            },
-            minimum = min_value,
-            maximum = max_value
-        ) { new_value ->
-            visibility.value = false
-            // this@ActionDispatcher.persistent_number_input_values[title_string_id] = new_value
-            callback(new_value)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IntegerInput(
+                value = value,
+                label = { Text(title_string_id) },
+                modifier = Modifier
+                    .testTag(TestTag.DialogNumberInput)
+                    .width(Dimensions.NumberInputDialogWidth)
+                    .padding(Dimensions.NumberInputDialogPadding)
+                    .focusRequester(focus_requester),
+                contentPadding = Dimensions.NumberInputDialogPadding,
+                text_align = TextAlign.Center,
+                on_focus_exit = { dialog_value ->
+                    dialog_value?.let { value.intValue = it }
+                },
+                minimum = min_value,
+                maximum = max_value
+            ) { new_value ->
+                visibility.value = false
+                callback(new_value)
+            }
+            Button(
+                modifier = Modifier
+                    .padding(Dimensions.NumberInputDialogPadding)
+                    .size(42.dp),
+                onClick = {
+                    visibility.value = false
+                    callback(value.intValue)
+                },
+                contentPadding = PaddingValues(0.dp),
+                content = {
+                    Icon(
+                        modifier = Modifier.padding(4.dp),
+                        painter = painterResource(R.drawable.icon_check),
+                        contentDescription = stringResource(android.R.string.ok)
+                    )
+                }
+            )
         }
 
         //DialogBar(

@@ -62,7 +62,7 @@ fun HexInput(
             } catch (_: Exception) {
                 null
             }
-            Pair(output_value, output_string)
+            Triple(output_value, output_string, output_value != output_string)
         },
         callback = {
             callback(value.value)

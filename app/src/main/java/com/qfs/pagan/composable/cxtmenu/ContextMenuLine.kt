@@ -196,7 +196,7 @@ fun InsertLineButton(
             R.string.dlg_insert_lines,
             visibility,
             dialog_value,
-            1,
+            Values.DialogInput.Min.InsertLine,
             max_value = Values.DialogInput.Max.InsertLine
         ) { i ->
             val channel = active_line.channel.value ?: return@IntegerInputDialog

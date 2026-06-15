@@ -51,17 +51,16 @@ fun <T> NumberInput(
     on_focus_enter: (() -> Unit)? = null,
     on_focus_exit: ((T?) -> Unit)? = null,
     revert_on_exit: Boolean = false,
-    string_validate: (CharSequence) -> Pair<T?, CharSequence>,
+    string_validate: (CharSequence) -> Triple<T?, CharSequence, Boolean>,
     callback: (T) -> Unit
 ) {
-
     val trigger_select_all = remember { mutableStateOf<Boolean?>(null) }
     val state = rememberTextFieldState(input_value.value.toString())
     // Prevent weird focusing behavior causing on_focus_exit to be called without any initial focus
     val was_focused = remember { mutableStateOf(false) }
 
     val focus_change_callback = { focus_state: FocusState ->
-        val (validated_value, validated_string) = string_validate(state.text)
+        val (validated_value, validated_string, valid) = string_validate(state.text)
         if (focus_state.isFocused) {
             trigger_select_all.value = trigger_select_all.value?.let { it -> !it } ?: true
             was_focused.value = true
@@ -90,7 +89,7 @@ fun <T> NumberInput(
                 when (event.key) {
                     Key.Enter -> {
                         val char_sequence = state.text
-                        val (validated_value, validated_string) = string_validate(char_sequence)
+                        val (validated_value, validated_string, changed) = string_validate(char_sequence)
                         validated_value?.let {
                             callback(it)
                             input_value.value = it
@@ -111,12 +110,17 @@ fun <T> NumberInput(
         ),
         inputTransformation = InputTransformation {
             val char_sequence = this.asCharSequence()
-            val (validated_value, validated_string) = string_validate(char_sequence)
-            this.replace(0, char_sequence.count(), validated_string)
+            val (valid_value, validated_string, rewrite_required) = string_validate(char_sequence)
+            if (rewrite_required) {
+                valid_value?.let {
+                    input_value.value = it
+                }
+                this.replace(0, char_sequence.count(), validated_string)
+            }
         },
         lineLimits = TextFieldLineLimits.SingleLine,
         onKeyboardAction = { action ->
-            val (validated_value, validated_string) = string_validate(state.text)
+            val (validated_value, validated_string, changed) = string_validate(state.text)
             validated_value?.let {
                 input_value.value = it
                 callback(it)

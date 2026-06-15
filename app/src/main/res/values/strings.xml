@@ -328,6 +328,7 @@
     <string name="duplicate_channel">Duplicate Channel</string>
     <string name="range_overflow">Range overflow</string>
     <string name="invalid_channel">Invalid Channel %d</string>
+    <string name="close_beat_selector">Close Beat Selector</string>
 
 
     <string-array name="general_midi_presets">

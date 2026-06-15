@@ -1,10 +1,19 @@
 package com.qfs.pagan.composable.cxtmenu
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableFloatStateOf
@@ -12,23 +21,25 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
-import com.qfs.pagan.composable.DialogTitle
-import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.IconCMenuButton
-import com.qfs.pagan.composable.button.TextCMenuButton
+import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.wrappers.Slider
-import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
+import kotlin.math.min
+import kotlin.math.roundToInt
 
 @Composable
 fun ContextMenuBeatSliderPrimary(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, layout: LayoutSize) { }
@@ -50,19 +61,11 @@ fun ContextMenuBeatSliderSecondary(modifier: Modifier = Modifier, vm_state: View
         )
     }
 
-    //Box(
-    //    modifier = Modifier.fillMaxWidth(),
-    //    contentAlignment = Alignment.Center
-    //) {
-    //    DialogTitle(
-    //        stringResource(
-    //            R.string.label_shortcut_scrollbar,
-    //            slider_position.floatValue.toInt(),
-    //            opus_manager.length - 1
-    //        )
-    //    )
-    //}
-    Row (verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.Top
+    ) {
         // TODO:  Use a UI variable here instead of accessing opus_manager.marked_sections
         if (opus_manager.marked_sections.isNotEmpty()) {
             val section_dropdown_visible = remember { mutableStateOf(false) }
@@ -71,9 +74,9 @@ fun ContextMenuBeatSliderSecondary(modifier: Modifier = Modifier, vm_state: View
                     onClick = {
                         section_dropdown_visible.value = !section_dropdown_visible.value
                     },
-                    shape = Shapes.ContextMenuButtonPrimaryStart,
-                    icon = R.drawable.icon_tag,
-                    description = R.string.jump_to_section
+                    icon = R.drawable.icon_tag_jump,
+                    description = R.string.jump_to_section,
+                    shape = Shapes.ContextMenuButtonPrimaryStart
                 )
 
                 DropdownMenu(
@@ -107,27 +110,58 @@ fun ContextMenuBeatSliderSecondary(modifier: Modifier = Modifier, vm_state: View
                     }
                 }
             }
+        } else {
+            Spacer(modifier = Modifier.width(Dimensions.ContextMenuButtonWidth))
         }
 
-        Slider(
-            modifier = Modifier
-                .weight(1F, fill = false)
-                .padding(horizontal = 8.dp),
-            value = slider_position.floatValue / (vm_state.beat_count.value - 1),
-            valueRange = 0F..(opus_manager.length - 1).toFloat(),
-            onValueChange = { value ->
-                slider_position.floatValue = value * (vm_state.beat_count.value - 1)
-                opus_manager.cursor_select_column(value.toInt())
+        Column(
+            modifier = Modifier.weight(1F, fill = false),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    textAlign = TextAlign.Center,
+                    text = "${slider_position.floatValue.roundToInt()}",
+                    modifier = Modifier.padding(PaddingValues(horizontal = 16.dp))
+                )
+                Text("/")
+                Text(
+                    textAlign = TextAlign.Center,
+                    text = "${vm_state.beat_count.value - 1}",
+                    modifier = Modifier.padding(PaddingValues(horizontal = 16.dp))
+                )
             }
-        )
-
-        TextCMenuButton(
-            onClick = {
-                opus_manager.cursor_select_column(vm_state.beat_count.value - 1)
-            },
-            shape = Shapes.ContextMenuButtonPrimaryEnd,
-            text = "/${vm_state.beat_count.value}"
-        )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Slider(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp),
+                    value = slider_position.floatValue,
+                    valueRange = 0F .. (vm_state.beat_count.value - 1).toFloat(),
+                    onValueChange = { value ->
+                        slider_position.floatValue = value
+                        opus_manager.cursor_select_column(min(vm_state.beat_count.value - 1, value.roundToInt()))
+                    },
+                    onValueChangeFinished = {
+                        slider_position.floatValue = slider_position.floatValue.roundToInt().toFloat()
+                    }
+                )
+            }
+        }
+        Box(
+            Modifier
+                .width(41.dp)
+                .height(41.dp)
+                .clip(CircleShape)
+                .clickable { vm_state.selecting_beat.value = false },
+            contentAlignment = Alignment.Center
+        ) {
+            ProvideContentColorTextStyle(MaterialTheme.colorScheme.primary) {
+                Icon(
+                    painter = painterResource(R.drawable.icon_cross_circle),
+                    contentDescription = stringResource(R.string.close_beat_selector),
+                )
+            }
+        }
     }
 }
 

@@ -9,6 +9,7 @@
  */
 package com.qfs.pagan.ui.theme
 
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
@@ -84,7 +85,6 @@ object Shapes {
             small_landscape = ContextMenuButtonPrimaryStart,
             medium_portrait = ContextMenuButtonPrimary,
         )
-
 
     val CMBoxBottom = RoundedCornerShape(
         topStart = Dimensions.ContextMenuRadius,

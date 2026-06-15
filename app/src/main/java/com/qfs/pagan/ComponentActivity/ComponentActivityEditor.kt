@@ -31,7 +31,9 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.snapping.SnapPosition
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -1539,7 +1541,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                         },
 
                                                         on_drag = { delta ->
-                                                            vm_state.dragging_offset.value += delta
+                                                            vm_state.dragging_offset.floatValue += delta
                                                         },
                                                         scroll_state = scroll_state_v
                                                     )
@@ -1765,6 +1767,25 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     }
                 }
             }
+
+            // Declicker
+            if (vm_state.selecting_beat.value) {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .pointerInput(Unit) {
+                            awaitEachGesture {
+                                while (true) {
+                                    val event = awaitPointerEvent()
+                                    vm_state.selecting_beat.value = false
+                                }
+                            }
+                        }
+                ) {
+
+                }
+            }
+
         }
     }
 

@@ -14,6 +14,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SliderColors
@@ -26,6 +27,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -36,22 +39,36 @@ import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.PaganDialog
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
+import com.qfs.pagan.composable.dashed_border
 import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
 fun ShortcutView(modifier: Modifier, vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, scope: CoroutineScope) {
+    val (text_color, background_color) = if (vm_state.selecting_beat.value) {
+        Pair(
+            Colors.get_text(Colors.LINE_SELECTED),
+            Colors.LINE_SELECTED
+        )
+    } else {
+        Pair(
+            MaterialTheme.colorScheme.onSurfaceVariant,
+            MaterialTheme.colorScheme.surfaceVariant
+        )
+    }
+
     HalfBorderBox(
         modifier
             .testTag(TestTag.ShortCut)
-            .background(MaterialTheme.colorScheme.surfaceVariant, shape = RectangleShape)
+            .background(background_color, shape = RectangleShape)
             .combinedClickable(
                 onClick = { vm_state.selecting_beat.value = !vm_state.selecting_beat.value },
                 onLongClick = {
@@ -63,13 +80,12 @@ fun ShortcutView(modifier: Modifier, vm_state: ViewModelEditorState, opus_manage
             ),
         border_color = MaterialTheme.colorScheme.onSurfaceVariant,
         content = {
-            Box(
-                Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                ProvideContentColorTextStyle(MaterialTheme.colorScheme.onSurfaceVariant) {
+            ProvideContentColorTextStyle(text_color) {
+                Box(
+                    Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
                     Icon(
-                        //modifier = Modifier.padding(Dimensions.ShortcutIconPadding),
                         painter = painterResource(R.drawable.icon_shortcut),
                         contentDescription = stringResource(R.string.jump_to_section)
                     )

@@ -332,7 +332,7 @@ object Dimensions {
 
     val SettingsRadioIconHeight = 32.dp
     val SettingsBoxPadding = 12.dp
-
+    val SectionMenuInternalPadding = 8.dp
     val ShortcutIconPadding = 7.dp
 
     val SortableMenuSortButtonDiameter = 36.dp

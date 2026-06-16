@@ -32,7 +32,6 @@ fun ColorPickerDialog(initial_color: Color, visibility: MutableState<Boolean>, c
                 visibility.value = false
                 callback(color_state.value)
             }
-
         )
     }
 }

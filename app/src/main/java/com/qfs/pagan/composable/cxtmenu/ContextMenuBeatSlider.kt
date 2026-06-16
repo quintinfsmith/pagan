@@ -38,6 +38,8 @@ import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
+import kotlin.math.log
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -84,8 +86,14 @@ fun ContextMenuBeatSliderSecondary(modifier: Modifier = Modifier, vm_state: View
                     expanded = section_dropdown_visible.value
                 ) {
                     var section_index = 0
-                    for ((i, tag) in opus_manager.marked_sections.toList()
-                        .sortedBy { it.first }) {
+                    var max_beat_factor = 1
+                    val marked_sections = opus_manager.marked_sections.toList().sortedBy { it.first }
+                    for ((i, tag) in marked_sections) {
+                        max_beat_factor = max(max_beat_factor,log(i.toFloat(), 10F).toInt())
+                    }
+
+                    section_index = 0
+                    for ((i, tag) in marked_sections) {
                         DropdownMenuItem(
                             onClick = {
                                 vm_state.selecting_beat.value = false
@@ -93,16 +101,14 @@ fun ContextMenuBeatSliderSecondary(modifier: Modifier = Modifier, vm_state: View
                                 opus_manager.cursor_select_column(i)
                             },
                             text = {
-                                if (tag == null) {
+                                val beat_string = "%0${max_beat_factor + 1}d".format(i)
+                                val section_string = "%02d".format(section_index)
+                                Row(horizontalArrangement = Arrangement.SpaceBetween) {
                                     Text(
-                                        stringResource(
-                                            R.string.section_spinner_item,
-                                            i,
-                                            section_index
-                                        )
+                                        modifier = Modifier.padding(end = Dimensions.SectionMenuInternalPadding),
+                                        text = "$section_string | $beat_string)"
                                     )
-                                } else {
-                                    Text("${"%02d".format(i)}: $tag")
+                                    Text(tag ?: stringResource(R.string.untitled_section))
                                 }
                             }
                         )
@@ -133,8 +139,7 @@ fun ContextMenuBeatSliderSecondary(modifier: Modifier = Modifier, vm_state: View
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Slider(
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp),
                     value = slider_position.floatValue,
                     valueRange = 0F .. (vm_state.beat_count.value - 1).toFloat(),
                     onValueChange = { value ->

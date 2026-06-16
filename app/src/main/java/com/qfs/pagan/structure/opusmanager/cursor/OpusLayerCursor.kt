@@ -2835,13 +2835,16 @@ open class OpusLayerCursor: OpusLayerBase() {
         when (this.cursor.ctl_level) {
             CtlLineLevel.Global -> {
                 this.cursor_select_ctl_at_global(this.cursor.ctl_type!!, this.cursor.beat, listOf())
+                this.unset()
             }
             CtlLineLevel.Channel -> {
                 this.cursor_select_ctl_at_channel(this.cursor.ctl_type!!, this.cursor.channel, this.cursor.beat, listOf())
+                this.unset()
             }
             CtlLineLevel.Line -> {
                 val beat_key = this.cursor.get_beatkey()
                 this.cursor_select_ctl_at_line(this.cursor.ctl_type!!, beat_key, listOf())
+                this.unset()
             }
             null -> {
                 val beat_key = this.cursor.get_beatkey()

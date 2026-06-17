@@ -2477,7 +2477,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                 this@ComponentActivityEditor.get_context_menu_primary(vm_state, opus_manager, layout)?.let {
                     Row(
-                        Modifier.fillMaxHeight(),
+                        Modifier
+                            .then(if(keyboardAsState().value) {
+                                Modifier.alpha(0F)
+                            } else {
+                                Modifier
+                            })
+                            .fillMaxHeight(),
                         horizontalArrangement = Arrangement.End,
                         verticalAlignment = Alignment.CenterVertically,
                         content = {

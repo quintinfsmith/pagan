@@ -24,13 +24,9 @@ import com.qfs.pagan.LayoutSize.XLargePortrait
 import com.qfs.pagan.LayoutSize as VLayoutSize
 
 object Dimensions {
-    var active_layout_width = 0.dp
-    var active_layout_height = 0.dp
     var active_layout_size = VLayoutSize.SmallPortrait
 
-    fun set_active_layout_dimensions(width: Dp, height: Dp): VLayoutSize {
-        Dimensions.active_layout_height = height
-        Dimensions.active_layout_width = width
+    fun set_active_layout_size(width: Dp, height: Dp): VLayoutSize {
         this.active_layout_size = if (width >= height) {
             if (height >= Layout.XLarge.short) LayoutSize.XLargeLandscape
             else if (height >= Layout.Large.short) LayoutSize.LargeLandscape

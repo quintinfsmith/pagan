@@ -596,7 +596,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val active_cursor = this.state_model.active_cursor.value
         return if (this.state_model.selecting_beat.value) {
             this.state_model.selecting_beat.value = false
-                    false
+            false
         } else if (active_cursor != null && active_cursor.type != CursorMode.Unset) {
             this.controller_model.opus_manager.cursor_clear()
             false

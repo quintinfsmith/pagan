@@ -10,30 +10,13 @@
 package com.qfs.pagan.viewmodel
 
 import android.net.Uri
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.ViewModel
-import com.qfs.pagan.DialogChain
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.PaganConfiguration
-import com.qfs.pagan.composable.DialogBar
-import com.qfs.pagan.composable.DialogSTitle
-import com.qfs.pagan.composable.SortableMenu
-import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.projectmanager.ProjectManager
 import com.qfs.pagan.ui.theme.Dimensions
 
@@ -85,7 +68,7 @@ class ViewModelPagan: ViewModel() {
     }
 
     fun set_layout_size(width: Dp, height: Dp) {
-        this.active_layout_size.value = Dimensions.set_active_layout_dimensions(width, height)
+        this.active_layout_size.value = Dimensions.set_active_layout_size(width, height)
     }
 
     fun get_layout_size(): LayoutSize {

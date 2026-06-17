@@ -9,8 +9,10 @@
  */
 package com.qfs.pagan.ComponentActivity
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.DocumentsContract
 import android.provider.DocumentsContract.Document.COLUMN_DOCUMENT_ID
@@ -68,11 +70,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import androidx.window.layout.WindowMetrics
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.ColorScheme
@@ -216,9 +221,12 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 else -> isSystemInDarkTheme()
             }
 
+            // We're useing the relative dimensions, so the actual sizes aren't
+            // necessary and Android <= 12 seems to mix up the 'correct' method
+            @SuppressLint("ConfigurationScreenWidthHeight")
             view_model.set_layout_size(
-                LocalWindowInfo.current.containerDpSize.width,
-                LocalWindowInfo.current.containerDpSize.height,
+                LocalConfiguration.current.screenWidthDp.dp,
+                LocalConfiguration.current.screenHeightDp.dp
             )
 
             val color_scheme = if (is_night_mode) {

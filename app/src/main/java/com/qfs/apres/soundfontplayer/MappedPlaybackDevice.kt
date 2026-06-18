@@ -174,7 +174,14 @@ abstract class MappedPlaybackDevice(var sample_frame_map: FrameMap, val sample_r
                 private fun _stop(audio_track: AudioTrack?) {
                     val that = this@MappedPlaybackDevice
                     if (audio_track?.state != AudioTrack.STATE_UNINITIALIZED) {
-                        audio_track?.stop()
+                        try {
+                            audio_track?.stop()
+                        } catch (e: IllegalStateException) {
+                            /**
+                             * TODO: Investigate how this can happen. It happened to me in a release version
+                             * For now the try/catch should prevent any issues but i'd prefer a cleaner solution.
+                             */
+                        }
                     }
                     that.active_audio_track_handle = null
                     that.is_playing = false

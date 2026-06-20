@@ -20,35 +20,29 @@ object Colors {
     val LINE_COLOR_NIGHT = Color(0xFF232323)
 
     val SPILL: (Color) -> Color = { base_color ->
-        if ((base_color.red + base_color.green + base_color.blue) / 3F > .5F) {
-            Color(
-                red = base_color.red * .75F,
-                green = base_color.green * .75F,
-                blue = base_color.blue * .75F,
-                alpha = base_color.alpha
-            )
-        } else {
-            Color(
-                red = min(1F, base_color.red / .75F),
-                green = min(1F, base_color.green / .75F),
-                blue = min(1F, base_color.blue / .75F),
-                alpha = base_color.alpha
-            )
-        }
+        val avg = base_color.avg()
+        val weight = .75F
+        Color(
+            red = ((base_color.red * weight) + (avg * (1 - weight))) * .75F,
+            green = ((base_color.green * weight) + (avg * (1 - weight))) * .75F,
+            blue = ((base_color.blue * weight) + (avg * (1 - weight))) * .75F,
+            alpha = base_color.alpha
+        )
     }
 
     val LINE_SELECTED = Color(0xFF5BA1D6)
     val SELECTION = Color(0xFF0033AA)
 
     val SELECTED_PRIMARY: (Boolean, Color) -> Color = { is_empty, base_color ->
-        val weight = .2F
         if (is_empty) {
+            val weight = .2F
             Color(
                 red = (base_color.red * weight) + (LINE_SELECTED.red * (1F - weight)),
                 green = (base_color.green * weight) + (LINE_SELECTED.green * (1F - weight)),
                 blue = (base_color.blue * weight) + (LINE_SELECTED.blue * (1F - weight)),
             )
         } else {
+            val weight = .4F
             Color(
                 red = (base_color.red * weight) + (SELECTION.red * (1F - weight)),
                 green = (base_color.green * weight) + (SELECTION.green * (1F - weight)),
@@ -106,7 +100,7 @@ object Colors {
         is_effect_line: Boolean,
         is_muted: Boolean,
         dark_mode: Boolean = false
-    ): Pair<Color, Color> {
+    ): Triple<Color, Color, Color?> {
         val (event_color, line_color) = if (is_effect_line) {
             Pair(
                 line_palette.effect ?: channel_palette.effect ?: EFFECT_COLOR,
@@ -138,9 +132,10 @@ object Colors {
             leaf_color = MUTED(is_empty, leaf_color)
         }
 
-        return Pair(
+        return Triple(
             leaf_color,
-            this.get_text(leaf_color)
+            this.get_text(leaf_color),
+            null
         )
     }
 }

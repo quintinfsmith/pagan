@@ -89,7 +89,7 @@ fun LeafView(
     else if (leaf_data.is_secondary.value) Colors.LeafSelection.Secondary
     else Colors.LeafSelection.Unselected
 
-    val (leaf_color, text_color) = Colors.get_leaf_color(
+    val (leaf_color, text_color, highlight_color) = Colors.get_leaf_color(
         line_info.palette.value ?: OpusColorPalette(),
         channel_data?.palette?.value ?: OpusColorPalette(),
         leaf_state,

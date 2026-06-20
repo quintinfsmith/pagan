@@ -3555,6 +3555,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         if (!this.controller_model.update_playback_state_midi(PlaybackState.Playing)) return
         opus_manager.vm_state.playback_state_midi.value = this.controller_model.playback_state_midi
+        this.state_model.selecting_beat.value = false
 
         thread {
             try {
@@ -3570,6 +3571,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     fun play_opus(scope: CoroutineScope, loop_playback: Boolean = false) {
         val opus_manager = this.controller_model.opus_manager
+        this.state_model.selecting_beat.value = false
         this.controller_model.playback_device?.let {
             it.play_opus(
                 when (opus_manager.cursor.mode) {

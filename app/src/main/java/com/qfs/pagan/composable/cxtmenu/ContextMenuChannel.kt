@@ -9,6 +9,7 @@
  */
 package com.qfs.pagan.composable.cxtmenu
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +18,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,10 +30,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.qfs.pagan.EffectResourceMap
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.OpusLayerInterface
@@ -284,15 +290,31 @@ fun SetChannelColorButton(
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
     val visibility = remember { mutableStateOf(false) }
+    Box(contentAlignment = Alignment.BottomEnd) {
+        IconCMenuButton(
+            modifier = modifier.testTag(TestTag.ChannelColor),
+            onClick = { visibility.value = true },
+            shape = shape,
+            icon = R.drawable.icon_palette,
+            description = R.string.cd_line_mute
+        )
 
-    IconCMenuButton(
-        modifier = modifier.testTag(TestTag.ChannelColor),
-        onClick = { visibility.value = true },
-        shape = shape,
-        icon = R.drawable.icon_palette,
-        description = R.string.cd_line_mute
-    )
-
+        vm_state.channel_data[channel_index].palette.value.event?.let { color ->
+            Spacer(
+                Modifier
+                    .padding(
+                        end = Dimensions.PaletteDotPaddingEnd,
+                        bottom = Dimensions.PaletteDotPaddingBottom
+                    )
+                    .size(
+                        Dimensions.PaletteDotSize,
+                        Dimensions.PaletteDotSize
+                    )
+                    .clip(CircleShape)
+                    .background(color)
+            )
+        }
+    }
     if (visibility.value) {
         val default_color = opus_manager.get_channel(channel_index).palette.event
             ?: Colors.LEAF_COLOR

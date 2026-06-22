@@ -32,6 +32,7 @@ fun PaganTheme(color_scheme: ColorScheme, content: @Composable () -> Unit) {
         //Font(R.font.fira_sans, FontWeight.Medium),
         //Font(R.font.fira_sans, FontWeight.Bold),
     )
+
     MaterialTheme(
         content = content,
         typography = default.copy(
@@ -53,8 +54,7 @@ fun PaganTheme(color_scheme: ColorScheme, content: @Composable () -> Unit) {
             ),
             labelMedium = default.labelMedium.copy(fontFamily = font),
             labelSmall = default.labelSmall.copy(fontFamily = font)
-        ),
-        colorScheme = color_scheme
+        )
     )
 }
 

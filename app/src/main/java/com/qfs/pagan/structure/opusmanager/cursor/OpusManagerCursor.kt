@@ -201,7 +201,7 @@ data class OpusManagerCursor(
         this.ctl_level = CtlLineLevel.Channel
     }
 
-    fun select_global_ctl_line(type: EffectType) {
+    fun select_global_ctl_line(type: EffectType)    {
         this.mode = CursorMode.Line
         this.channel = 0
         this.line_offset = 0

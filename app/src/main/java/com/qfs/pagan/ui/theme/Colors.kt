@@ -14,64 +14,7 @@ import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.OpusColorPalett
 import kotlin.math.min
 
 object Colors {
-    val LEAF_COLOR = Color(0xFF765bd5)
-    val EFFECT_COLOR = Color(0xFFCB9C20)
-    val LINE_COLOR = Color(0xFFE0E0E0)
-    val LINE_COLOR_NIGHT = Color(0xFF232323)
-
-    val SPILL: (Color) -> Color = { base_color ->
-        if ((base_color.red + base_color.green + base_color.blue) / 3F > .5F) {
-            Color(
-                red = base_color.red * .75F,
-                green = base_color.green * .75F,
-                blue = base_color.blue * .75F,
-                alpha = base_color.alpha
-            )
-        } else {
-            Color(
-                red = min(1F, base_color.red / .75F),
-                green = min(1F, base_color.green / .75F),
-                blue = min(1F, base_color.blue / .75F),
-                alpha = base_color.alpha
-            )
-        }
-    }
-
-    val LINE_SELECTED = Color(0xFF5BA1D6)
-    val SELECTION = Color(0xFF0033AA)
-
-    val SELECTED_PRIMARY: (Boolean, Color) -> Color = { is_empty, base_color ->
-        val weight = .2F
-        if (is_empty) {
-            Color(
-                red = (base_color.red * weight) + (LINE_SELECTED.red * (1F - weight)),
-                green = (base_color.green * weight) + (LINE_SELECTED.green * (1F - weight)),
-                blue = (base_color.blue * weight) + (LINE_SELECTED.blue * (1F - weight)),
-            )
-        } else {
-            Color(
-                red = (base_color.red * weight) + (SELECTION.red * (1F - weight)),
-                green = (base_color.green * weight) + (SELECTION.green * (1F - weight)),
-                blue = (base_color.blue * weight) + (SELECTION.blue * (1F - weight)),
-            )
-        }
-    }
-
-    val SELECTED_SECONDARY: (Boolean, Color) -> Color = SELECTED_PRIMARY
-
-    val MUTED: (Boolean, Color) -> Color = { is_empty, line_color ->
-        val (grey, weight) = if (is_empty) {
-            Pair(.5F, .5F)
-        } else {
-            Pair(line_color.avg(), .3F)
-        }
-        Color(
-            red = (line_color.red * weight) + (grey * (1F - weight)),
-            green = (line_color.green * weight) + (grey * (1F - weight)),
-            blue = (line_color.blue * weight) + (grey * (1F - weight)),
-            line_color.alpha
-        )
-    }
+    var active_color_scheme = PaganColorScheme()
 
     val LEAF_COLOR_INVALID = Color(0xFFe51C3A)
     val LEAF_COLOR_INVALID_SELECTED = Color(0xFF890E21)
@@ -79,12 +22,12 @@ object Colors {
     val EFFECT_LINE_COLOR = Color(0xFFFFFFFF)
     val EFFECT_LINE_COLOR_NIGHT = Color(0xFF000000)
 
-
     enum class LeafState {
         Active,
         Spill,
         Empty
     }
+
     enum class LeafSelection {
         Primary,
         Secondary,
@@ -105,17 +48,17 @@ object Colors {
         selected: LeafSelection,
         is_effect_line: Boolean,
         is_muted: Boolean,
-        dark_mode: Boolean = false
     ): Pair<Color, Color> {
+
         val (event_color, line_color) = if (is_effect_line) {
             Pair(
-                line_palette.effect ?: channel_palette.effect ?: EFFECT_COLOR,
-                line_palette.effect_bg ?: channel_palette.effect_bg ?: if (dark_mode) EFFECT_LINE_COLOR_NIGHT else EFFECT_LINE_COLOR
+                line_palette.effect ?: channel_palette.effect ?: active_color_scheme.EFFECT_COLOR,
+                line_palette.effect_bg ?: channel_palette.effect_bg ?: active_color_scheme.EFFECT_LINE_COLOR
             )
         } else {
             Pair(
-                line_palette.event ?: channel_palette.event ?: LEAF_COLOR,
-                line_palette.event_bg ?: channel_palette.event_bg ?: if (dark_mode) LINE_COLOR_NIGHT else LINE_COLOR
+                line_palette.event ?: channel_palette.event ?: active_color_scheme.LEAF_COLOR,
+                line_palette.event_bg ?: channel_palette.event_bg ?: active_color_scheme.LINE_COLOR
             )
         }
 
@@ -123,19 +66,19 @@ object Colors {
 
         var leaf_color = when(active) {
             LeafState.Active -> event_color
-            LeafState.Spill -> SPILL(event_color)
+            LeafState.Spill -> active_color_scheme.SPILL(event_color)
             LeafState.Empty -> line_color
         }
 
 
         leaf_color = when(selected) {
-            LeafSelection.Primary -> SELECTED_PRIMARY(is_empty, leaf_color)
-            LeafSelection.Secondary -> SELECTED_SECONDARY(is_empty, leaf_color)
+            LeafSelection.Primary -> active_color_scheme.SELECTED_PRIMARY(is_empty, leaf_color)
+            LeafSelection.Secondary -> active_color_scheme.SELECTED_SECONDARY(is_empty, leaf_color)
             LeafSelection.Unselected -> leaf_color
         }
 
         if (is_muted) {
-            leaf_color = MUTED(is_empty, leaf_color)
+            leaf_color = active_color_scheme.MUTED(is_empty, leaf_color)
         }
 
         return Pair(

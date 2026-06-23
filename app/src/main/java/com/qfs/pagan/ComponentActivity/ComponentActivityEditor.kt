@@ -1853,15 +1853,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     val floating_position = (width_px / -2F) + (viewport_width / 4) + scroll_offset
                                     translationX = floating_position
                                 },
+                            // track and background seem to be reversed. not sure whats up with that.
                             color = if (column_info.is_selected.value) {
-                                MaterialTheme.colorScheme.onTertiary
+                                Colors.active_color_scheme.WIDE_BEAT_SLIDER_TRACK_SELECTED
                             } else {
-                                MaterialTheme.colorScheme.onSurface
+                                Colors.active_color_scheme.WIDE_BEAT_SLIDER_TRACK
                             },
                             trackColor = if (column_info.is_selected.value) {
-                                MaterialTheme.colorScheme.tertiaryContainer
+                                Colors.active_color_scheme.WIDE_BEAT_SLIDER_BACKGROUND_SELECTED
                             } else {
-                                MaterialTheme.colorScheme.surfaceContainerHigh
+                                Colors.active_color_scheme.WIDE_BEAT_SLIDER_BACKGROUND
                             },
                             drawStopIndicator = {},
                             progress = { vm_state.wide_beat_progress.floatValue },

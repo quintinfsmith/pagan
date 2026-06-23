@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.composable.wrappers.Text
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
@@ -186,9 +187,8 @@ fun ColorPicker(
 @Composable
 fun HexDisplay(modifier: Modifier = Modifier, value: Float) {
     Surface(
-        tonalElevation = 1.dp,
         shape = Shapes.Container,
-        border = BorderStroke(Dimensions.HexDisplayStrokeWidth, color = MaterialTheme.colorScheme.onSurface)
+        border = BorderStroke(Dimensions.HexDisplayStrokeWidth, color = Colors.active_color_scheme.container_border)
     ) {
         Box(
             modifier = Modifier.height(Dimensions.HexDisplayHeight),

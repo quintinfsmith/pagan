@@ -95,6 +95,7 @@ import com.qfs.pagan.projectmanager.ProjectManager
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.ui.theme.AppBackground
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
@@ -242,7 +243,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                             this@PaganComponentActivity.key_event_wrapper(e)
                         }
                         .imePadding()
-                        .background(MaterialTheme.colorScheme.scrim)
+                        .background(Colors.active_color_scheme.scrim)
                         .systemBarsPadding()
                 ) {
                     ScaffoldWithTopBar(
@@ -258,7 +259,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                 // The Background
                                 Canvas(
                                     Modifier
-                                        .background(MaterialTheme.colorScheme.background)
+                                        .background(Colors.active_color_scheme.background)
                                         .fillMaxSize(),
                                     onDraw = { AppBackground() }
                                 )
@@ -563,7 +564,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 Row(
                     Modifier
                         .dashed_border(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = Colors.active_color_scheme.foreground,
                             shape = Shapes.ProjectCardNotes,
                             width = Dimensions.Stroke.Thin
                         )

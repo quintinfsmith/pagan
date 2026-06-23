@@ -129,7 +129,6 @@ fun ColumnScope.DialogBar(
                     .height(Dimensions.DialogBarButtonHeight)
                     .weight(1F),
                 onClick = it,
-                border = BorderStroke(Dimensions.OutlineButtonStrokeWidth, MaterialTheme.colorScheme.onSurface),
                 content = { Text(neutral_label, maxLines = 1) }
             )
         }

@@ -24,37 +24,34 @@ fun PaganDialog(
     content: @Composable ColumnScope.(MutableState<Boolean>) -> Unit
 ) {
     if (!visibility.value) return
-    PaganTheme(MaterialTheme.colorScheme) {
-        Dialog(onDismissRequest = {
-            visibility.value = false
-            on_dismiss_request?.invoke()
-        }) {
-            val keyboard_controller = LocalSoftwareKeyboardController.current
-            val focus_manager = LocalFocusManager.current
 
-            // Extra Box prevents weird dialog jumping on focus
-            Box(
-                Modifier
-                    .clickable { visibility.value = false }
-                    .fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                DialogCard(
-                    modifier = Modifier
-                        // Allow click-away from text fields
-                        .wrapContentSize()
-                        .pointerInput(Unit) {
-                            detectTapGestures { offset ->
-                                keyboard_controller?.hide()
-                                focus_manager.clearFocus()
-                            }
-                        },
-                    alignment = alignment,
-                    content = {
-                        content(visibility)
-                    }
-                )
-            }
+    Dialog(onDismissRequest = {
+        visibility.value = false
+        on_dismiss_request?.invoke()
+    }) {
+        val keyboard_controller = LocalSoftwareKeyboardController.current
+        val focus_manager = LocalFocusManager.current
+
+        // Extra Box prevents weird dialog jumping on focus
+        Box(
+            Modifier
+                .clickable { visibility.value = false }
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            DialogCard(
+                modifier = Modifier
+                    // Allow click-away from text fields
+                    .wrapContentSize()
+                    .pointerInput(Unit) {
+                        detectTapGestures { offset ->
+                            keyboard_controller?.hide()
+                            focus_manager.clearFocus()
+                        }
+                    },
+                alignment = alignment,
+                content = { content(visibility) }
+            )
         }
     }
 }

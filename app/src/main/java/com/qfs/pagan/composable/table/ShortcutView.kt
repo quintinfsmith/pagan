@@ -79,7 +79,7 @@ fun ShortcutView(modifier: Modifier, vm_state: ViewModelEditorState, opus_manage
                     }
                 }
             ),
-        border_color = MaterialTheme.colorScheme.onSurfaceVariant,
+        border_color = Colors.active_color_scheme.TABLE_LINE,
         content = {
             ProvideContentColorTextStyle(text_color) {
                 Box(

@@ -101,6 +101,7 @@ fun RowScope.PanEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLaye
                     .clip(CircleShape)
                     .background(Colors.active_color_scheme.SLIDER_TRACK_INACTIVE)
             )
+
             Slider(
                 value = working_value.floatValue,
                 onValueChange = {

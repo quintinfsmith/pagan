@@ -199,7 +199,6 @@ fun SmallOutlinedButton(
     onLongClick: () -> Unit = {},
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    border: BorderStroke = ButtonDefaults.outlinedButtonBorder(),
     outerPadding: PaddingValues = Unpadded,
     contentPadding: PaddingValues = Unpadded,
     content: @Composable RowScope.() -> Unit
@@ -210,7 +209,6 @@ fun SmallOutlinedButton(
             onLongClick = onLongClick,
             modifier = modifier,
             enabled = enabled,
-            border = border,
             outerPadding = outerPadding,
             contentPadding = contentPadding,
             content = content

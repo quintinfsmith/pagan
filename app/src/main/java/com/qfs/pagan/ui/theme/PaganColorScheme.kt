@@ -37,7 +37,9 @@ data class PaganColorScheme(
     val topbar_text: Color = Defaults.topbar_foreground,
     val foreground: Color = Defaults.foreground,
     val background: Color = Defaults.background,
+    val scrim: Color = Defaults.scrim,
     val container: Color = Defaults.container,
+    val container_border: Color = Defaults.container_border,
     val button: Color = Defaults.button,
     val button_foreground: Color = Defaults.button_foreground,
     val button_disabled: Color = Defaults.button_disabled,
@@ -82,12 +84,25 @@ data class PaganColorScheme(
 
     val CONTEXT_MENU_BACKGROUND: Color = Defaults.CONTEXT_MENU_BACKGROUND,
     val CONTEXT_MENU_FOREGROUND: Color = Defaults.CONTEXT_MENU_FOREGROUND,
+
+    val SOUNDFONT_WARNING: Color = Defaults.SOUNDFONT_WARNING,
+    val SOUNDFONT_WARNING_BORDER: Color = Defaults.SOUNDFONT_WARNING_BORDER,
+    val SOUNDFONT_WARNING_FOREGROUND: Color = Defaults.SOUNDFONT_WARNING_FOREGROUND,
+
+    val NUMBERPICKER_FOREGROUND: Color = Defaults.NUMBERPICKER_FOREGROUND,
+    val NUMBERPICKER_BACKGROUND: Color = Defaults.NUMBERPICKER_BACKGROUND,
+
+    val WIDE_BEAT_SLIDER_TRACK: Color = Defaults.WIDE_BEAT_SLIDER_TRACK,
+    val WIDE_BEAT_SLIDER_BACKGROUND: Color = Defaults.WIDE_BEAT_SLIDER_BACKGROUND,
+    val WIDE_BEAT_SLIDER_TRACK_SELECTED: Color = Defaults.WIDE_BEAT_SLIDER_TRACK_SELECTED,
+    val WIDE_BEAT_SLIDER_BACKGROUND_SELECTED: Color = Defaults.WIDE_BEAT_SLIDER_BACKGROUND_SELECTED
 ) {
     companion object {
         object Defaults {
             // ----------- UI -------------------------//
             val topbar: Color = Color(0xFF372D40)
             val topbar_foreground: Color = Color(0xFFFFFFFF)
+            val scrim: Color = Color(0xFF000000)
             val button: Color = topbar
             val button_foreground: Color = topbar_foreground
             val button_disabled: Color = Color(0x44372d40)
@@ -95,6 +110,7 @@ data class PaganColorScheme(
             val background: Color = Color(0xFFEFEFEF)
             val foreground: Color = Color(0xFF2D2D2D)
             val container: Color = Color(0xFFFFFFFF)
+            val container_border: Color = foreground
 
             //-------------------Editor------------------------//
             val LEAF_COLOR: Color = Color(0xFF765bd5)
@@ -221,6 +237,17 @@ data class PaganColorScheme(
             val TUNING_TABLE_ITEM = container
             val CONTEXT_MENU_BACKGROUND = background
             val CONTEXT_MENU_FOREGROUND = foreground
+
+            val SOUNDFONT_WARNING = Color(0xFF5BA1D6)
+            val SOUNDFONT_WARNING_BORDER = Color(0xFFBCD3E6)
+            val SOUNDFONT_WARNING_FOREGROUND = Color(0xFF000000)
+            val NUMBERPICKER_FOREGROUND = foreground
+            val NUMBERPICKER_BACKGROUND = container
+
+            val WIDE_BEAT_SLIDER_TRACK = BUTTON_COLUMN_FOREGROUND
+            val WIDE_BEAT_SLIDER_BACKGROUND = BUTTON_COLUMN.merge(Color(0xFF888888))
+            val WIDE_BEAT_SLIDER_TRACK_SELECTED = BUTTON_COLUMN_SELECTED_FOREGROUND
+            val WIDE_BEAT_SLIDER_BACKGROUND_SELECTED = BUTTON_COLUMN_SELECTED.merge(Color(0xFFFFFFFF))
         }
     }
 }

@@ -691,7 +691,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                             contentDescription = stringResource(R.string.unload_soundfont),
                             tint = Colors.active_color_scheme.button
                         )
-                        
+
                     }
                     MenuPadder()
                 }
@@ -915,15 +915,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     for ((i, rate) in options_playback.enumerate()) {
                         DropdownMenuItem(
                             selected = rate == view_model.configuration.sample_rate.value,
-                            text = {
-                                Text("$rate hz")
-                                if (rate == view_model.configuration.sample_rate.value) {
-                                    ProvideContentColorTextStyle(MaterialTheme.colorScheme.onTertiary) {
-                                        Text("$rate hz")
-                                    }
-                                } else {
-                                }
-                            },
+                            text = { Text("$rate hz") },
                             onClick = {
                                 active_playback_option.value = i
                                 view_model.configuration.sample_rate.value = options_playback[i]

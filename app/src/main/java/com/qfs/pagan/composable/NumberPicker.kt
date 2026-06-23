@@ -56,16 +56,16 @@ fun NumberPicker(modifier: Modifier = Modifier, range: IntRange, default: Mutabl
     default.value = (state.currentPage % page_count) + range.first
 
     val scope = rememberCoroutineScope()
-    ProvideContentColorTextStyle(MaterialTheme.colorScheme.onSurface) {
+    ProvideContentColorTextStyle(Colors.active_color_scheme.NUMBERPICKER_FOREGROUND) {
         Box(
             modifier
                 .background(
-                    color = MaterialTheme.colorScheme.surface,
+                    color = Colors.active_color_scheme.NUMBERPICKER_BACKGROUND,
                     shape = Shapes.SettingsBox
                 )
                 .border(
                     width = Dimensions.NumberPickerStrokeWidth,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = Colors.active_color_scheme.NUMBERPICKER_FOREGROUND,
                     shape = Shapes.SettingsBox
                 )
                 .width(Dimensions.NumberPickerRowWidth)
@@ -83,13 +83,13 @@ fun NumberPicker(modifier: Modifier = Modifier, range: IntRange, default: Mutabl
                     Modifier
                         .height(Dimensions.NumberPickerStrokeWidth)
                         .fillMaxWidth(.8F)
-                        .background(MaterialTheme.colorScheme.outline)
+                        .background(Colors.active_color_scheme.container_border)
                 )
                 Spacer(
                     Modifier
                         .height(Dimensions.NumberPickerStrokeWidth)
                         .fillMaxWidth(.8F)
-                        .background(MaterialTheme.colorScheme.outline)
+                        .background(Colors.active_color_scheme.container_border)
                 )
             }
 

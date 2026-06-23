@@ -348,7 +348,7 @@ fun LeafView(
                     }
                 }
             }
-            TableLine(MaterialTheme.colorScheme.onBackground)
+            TableLine(Colors.active_color_scheme.TABLE_LINE)
         }
     }
 }

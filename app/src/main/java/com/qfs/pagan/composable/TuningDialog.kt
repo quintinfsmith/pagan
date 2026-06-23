@@ -131,7 +131,7 @@ fun ColumnScope.TuningDialogNormal(
         modifier = Modifier.weight(1F, fill = false),
         border = BorderStroke(
             Dimensions.TuningDialogStrokeWidth,
-            MaterialTheme.colorScheme.onSurface
+            Colors.active_color_scheme.container_border
         ),
         color = Colors.active_color_scheme.MENU_BACKGROUND,
         shape = Shapes.TuningDialogBox,
@@ -313,10 +313,10 @@ fun ColumnScope.TuningDialogTiny(
         Column(
             Modifier
                 .fillMaxHeight()
-                .background(color = MaterialTheme.colorScheme.surface, shape = Shapes.Container)
+                .background(color = Colors.active_color_scheme.container, shape = Shapes.Container)
                 .border(
                     width = Dimensions.TuningDialogStrokeWidth,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = Colors.active_color_scheme.container_border,
                     shape = Shapes.Container
                 )
                 .padding(horizontal = Dimensions.TuningDialogBoxPadding),

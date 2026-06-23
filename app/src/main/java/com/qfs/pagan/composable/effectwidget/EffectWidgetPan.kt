@@ -10,8 +10,13 @@
 package com.qfs.pagan.composable.effectwidget
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -23,18 +28,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.wrappers.Slider
-import com.qfs.pagan.composable.wrappers.Text
 import androidx.compose.material3.Text
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import com.qfs.pagan.composable.dashed_border
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
@@ -42,7 +46,6 @@ import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.abs
-import kotlin.math.min
 import kotlin.math.roundToInt
 
 @Composable
@@ -60,15 +63,11 @@ fun RowScope.PanEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLaye
 
     val working_value = remember { mutableFloatStateOf(working_event.value * -1) }
 
-    Box(modifier = Modifier.weight(1F)) {
-        Box(
-            Modifier
-                .align(Alignment.TopCenter)
-                .background(colors.thumbColor, CircleShape)
-                .height(Dimensions.EffectWidget.Pan.CenterDotDiameter)
-                .width(Dimensions.EffectWidget.Pan.CenterDotDiameter)
-        )
-
+    Row(
+        modifier = Modifier.weight(1F),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
         ProvideTextStyle(
             MaterialTheme.typography.bodyMedium
         ) {
@@ -86,30 +85,43 @@ fun RowScope.PanEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLaye
                 modifier = Modifier
                     .width(Dimensions.EffectWidget.Pan.SliderPadding)
                     .clip(CircleShape)
-                    .background(Colors.active_color_scheme.button)
-                    .align(Alignment.CenterStart),
+                    .background(Colors.active_color_scheme.button),
                 color = Colors.active_color_scheme.button_foreground
             )
         }
 
-        Slider(
-            value = working_value.floatValue,
-            onValueChange = {
-                working_value.floatValue = it
-            },
-            onValueChangeFinished = {
-                working_value.floatValue = (working_value.floatValue * 10F).roundToInt().toFloat() / 10F
-                working_event.value = working_value.floatValue * -1
-                submit()
-            },
-            valueRange = -1F..1F,
-            colors = colors,
-            modifier = Modifier
-                .padding(horizontal = Dimensions.EffectWidget.Pan.SliderPadding)
-                .testTag(TestTag.PanSlider)
-                .align(Alignment.Center)
-                .fillMaxWidth()
-        )
+        Box(
+            Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ){
+            Spacer(
+                Modifier
+                    .fillMaxHeight()
+                    .width(8.dp)
+                    .clip(CircleShape)
+                    .background(Colors.active_color_scheme.SLIDER_TRACK_INACTIVE)
+            )
+            Slider(
+                value = working_value.floatValue,
+                onValueChange = {
+                    working_value.floatValue = it
+                },
+                onValueChangeFinished = {
+                    working_value.floatValue = (working_value.floatValue * 10F).roundToInt().toFloat() / 10F
+                    working_event.value = working_value.floatValue * -1
+                    submit()
+                },
+                valueRange = -1F..1F,
+                colors = colors,
+                modifier = Modifier
+                    .padding(
+                        start = Dimensions.EffectWidget.Pan.SliderPadding / 2,
+                        end = Dimensions.EffectWidget.Pan.SliderPadding / 2
+                    )
+                    .testTag(TestTag.PanSlider)
+                    .fillMaxWidth()
+            )
+        }
     }
     LaunchedEffect(working_event.value) {
         working_value.floatValue = working_event.value * -1

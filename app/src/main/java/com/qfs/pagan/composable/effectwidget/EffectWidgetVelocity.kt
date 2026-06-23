@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -54,6 +53,7 @@ import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.DropdownMenuItem
+import com.qfs.pagan.composable.wrappers.Switch
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
@@ -227,6 +227,7 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
                                 )
                             }
                             DropdownMenuItem(
+                                selected = slide_width_mode.value == OpusVelocityEvent.SlideMaxWidth.Beat,
                                 text = { Text(R.string.velocity_widget_relative_to_beat) },
                                 onClick = {
                                     if (working_event.slide?.first != OpusVelocityEvent.SlideMaxWidth.Beat) {
@@ -241,6 +242,7 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
                                 }
                             )
                             DropdownMenuItem(
+                                selected = slide_width_mode.value == OpusVelocityEvent.SlideMaxWidth.Note,
                                 text = { Text(R.string.velocity_widget_relative_to_note) },
                                 onClick = {
                                     if (working_event.slide?.first != OpusVelocityEvent.SlideMaxWidth.Note) {

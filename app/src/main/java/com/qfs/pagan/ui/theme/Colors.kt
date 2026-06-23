@@ -9,9 +9,13 @@
  */
 package com.qfs.pagan.ui.theme
 
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.SliderColors
+import androidx.compose.material3.SwitchColors
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.ui.graphics.Color
 import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.OpusColorPalette
-import kotlin.math.min
+import com.qfs.pagan.ui.theme.PaganColorScheme.Companion.Defaults.UNUSED
 
 object Colors {
     var active_color_scheme = PaganColorScheme()
@@ -48,7 +52,7 @@ object Colors {
         selected: LeafSelection,
         is_effect_line: Boolean,
         is_muted: Boolean,
-    ): Pair<Color, Color> {
+    ): Triple<Color, Color, Color?> {
         val (event_color, line_color) = if (is_effect_line) {
             Pair(
                 line_palette.effect ?: channel_palette.effect ?: active_color_scheme.EFFECT_COLOR,
@@ -84,6 +88,75 @@ object Colors {
             leaf_color,
             this.get_text(leaf_color),
             null
+        )
+    }
+
+    fun get_button_colors(): ButtonColors {
+        return ButtonColors(
+            containerColor = this.active_color_scheme.button,
+            contentColor = this.active_color_scheme.button_foreground,
+            disabledContainerColor = this.active_color_scheme.button_disabled,
+            disabledContentColor = this.active_color_scheme.button_disabled_foreground,
+        )
+    }
+
+    fun get_outline_button_colors(): ButtonColors {
+        return ButtonColors(
+            containerColor = Color(0x00000000),
+            disabledContainerColor = Color(0x00000000),
+            contentColor = this.active_color_scheme.button,
+            disabledContentColor = this.active_color_scheme.button_disabled,
+        )
+    }
+
+    fun get_slider_colors(): SliderColors {
+        return SliderColors(
+            thumbColor = this.active_color_scheme.SLIDER_THUMB,
+            activeTrackColor = this.active_color_scheme.SLIDER_TRACK,
+            activeTickColor = this.active_color_scheme.SLIDER_TICK,
+            inactiveTrackColor = this.active_color_scheme.SLIDER_TRACK_INACTIVE,
+            inactiveTickColor = this.active_color_scheme.SLIDER_TICK_INACTIVE,
+            disabledThumbColor = UNUSED,
+            disabledActiveTrackColor = UNUSED,
+            disabledActiveTickColor = UNUSED,
+            disabledInactiveTrackColor = UNUSED,
+            disabledInactiveTickColor = UNUSED
+        )
+    }
+
+    fun get_pan_slider_colors(): SliderColors {
+        return this.get_slider_colors().copy(
+            inactiveTrackColor = this.active_color_scheme.SLIDER_TRACK_INACTIVE,
+            inactiveTickColor = this.active_color_scheme.SLIDER_TRACK,
+            activeTrackColor = this.active_color_scheme.SLIDER_TRACK_INACTIVE,
+            activeTickColor = this.active_color_scheme.SLIDER_TRACK
+        )
+    }
+
+    fun get_switch_colors(): SwitchColors {
+        return SwitchColors(
+            checkedThumbColor = this.active_color_scheme.SWITCH_THUMB_CHECKED,
+            checkedTrackColor = this.active_color_scheme.SWITCH_TRACK_CHECKED,
+            checkedBorderColor = this.active_color_scheme.SWITCH_BORDER_CHECKED,
+            checkedIconColor = this.active_color_scheme.SWITCH_ICON_CHECKED,
+            uncheckedThumbColor = this.active_color_scheme.SWITCH_THUMB_UNCHECKED,
+            uncheckedTrackColor = this.active_color_scheme.SWITCH_TRACK_UNCHECKED,
+            uncheckedBorderColor = this.active_color_scheme.SWITCH_BORDER_UNCHECKED,
+            uncheckedIconColor = this.active_color_scheme.SWITCH_ICON_UNCHECKED,
+            disabledCheckedThumbColor = UNUSED,
+            disabledCheckedTrackColor = UNUSED,
+            disabledCheckedBorderColor = UNUSED,
+            disabledCheckedIconColor = UNUSED,
+            disabledUncheckedThumbColor = UNUSED,
+            disabledUncheckedTrackColor = UNUSED,
+            disabledUncheckedBorderColor = UNUSED,
+            disabledUncheckedIconColor = UNUSED
+        )
+    }
+
+    fun get_textfield_colors(): TextFieldColors {
+        return TextFieldColors(
+
         )
     }
 }

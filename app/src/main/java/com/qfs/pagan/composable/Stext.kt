@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 
@@ -45,14 +46,14 @@ import com.qfs.pagan.ui.theme.Shapes
 fun SettingsBoxWrapper(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Box(
         modifier
-            .border(1.dp, MaterialTheme.colorScheme.onSurface, Shapes.SettingsBox)
+            .border(1.dp, Colors.active_color_scheme.foreground, Shapes.SettingsBox)
             .background(
-                MaterialTheme.colorScheme.surface,
+                Colors.active_color_scheme.background,
                 shape = Shapes.SettingsBox
             ),
         contentAlignment = Alignment.Center,
         content = {
-            ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onSurface) {
+            ProvideContentColorTextStyle(contentColor = Colors.active_color_scheme.foreground) {
                 content()
             }
         }

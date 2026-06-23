@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.enumerate
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 
@@ -54,22 +55,22 @@ fun <T> RadioMenu(
             Button(
                 colors = ButtonDefaults.buttonColors().copy(
                     containerColor = if (active.value == item) {
-                        SwitchDefaults.colors().checkedTrackColor
+                        Colors.active_color_scheme.SWITCH_TRACK_CHECKED
                     } else {
-                        SwitchDefaults.colors().uncheckedTrackColor
+                        Colors.active_color_scheme.SWITCH_TRACK_UNCHECKED
                     },
                     contentColor = if (active.value == item) {
-                        SwitchDefaults.colors().checkedThumbColor
+                        Colors.active_color_scheme.SWITCH_THUMB_CHECKED
                     } else {
-                        SwitchDefaults.colors().uncheckedThumbColor
+                        Colors.active_color_scheme.SWITCH_THUMB_UNCHECKED
                     }
                 ),
                 border = BorderStroke(
                     width = Dimensions.RadioMenu.StrokeWidth,
                     color = if (active.value == item) {
-                        SwitchDefaults.colors().checkedBorderColor
+                        Colors.active_color_scheme.SWITCH_BORDER_CHECKED
                     } else {
-                        SwitchDefaults.colors().uncheckedBorderColor
+                        Colors.active_color_scheme.SWITCH_BORDER_UNCHECKED
                     }
                 ),
                 onClick = {

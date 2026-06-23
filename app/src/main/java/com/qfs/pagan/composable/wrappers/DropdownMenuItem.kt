@@ -9,37 +9,44 @@
  */
 package com.qfs.pagan.composable.wrappers
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
-import androidx.compose.material3.MenuItemColors
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.qfs.pagan.ui.theme.Colors
 
 @Composable
 fun DropdownMenuItem(
     text: @Composable () -> Unit,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
+    selected: Boolean = false,
     enabled: Boolean = true,
-    colors: MenuItemColors = MenuDefaults.itemColors().copy(
-        textColor = MaterialTheme.colorScheme.onSurface,
-    ),
     contentPadding: PaddingValues = MenuDefaults.DropdownMenuItemContentPadding,
     interactionSource: MutableInteractionSource? = null,
 ) {
     DropdownMenuItem(
         text,
         onClick,
-        modifier,
+        Modifier.then(
+            if (selected) {
+                Modifier.background(color = Colors.active_color_scheme.MENU_ITEM_SELECTED)
+            } else {
+                Modifier
+            }
+        ),
         leadingIcon,
         trailingIcon,
         enabled,
-        colors,
+        MenuDefaults.itemColors().copy(
+            textColor = if (selected) Colors.active_color_scheme.MENU_ITEM_FOREGROUND_SELECTED
+            else MaterialTheme.colorScheme.onSurface,
+        ),
         contentPadding,
         interactionSource
     )

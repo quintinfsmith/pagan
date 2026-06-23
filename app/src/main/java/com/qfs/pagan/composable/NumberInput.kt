@@ -19,6 +19,7 @@ import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.selectAll
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.TextFieldLabelScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,6 +38,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import com.qfs.pagan.ui.theme.Typography
 
@@ -127,7 +129,8 @@ fun <T> NumberInput(
             }
             action()
             focus_manager.clearFocus()
-        }
+        },
+        colors = Colors.get_textfield_colors(),
     )
 
     trigger_select_all.value?.let {

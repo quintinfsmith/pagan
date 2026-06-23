@@ -42,7 +42,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -79,6 +78,7 @@ import com.qfs.pagan.composable.button.TopBarIcon
 import com.qfs.pagan.composable.button.TopBarNoIcon
 import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.DropdownMenuItem
+import com.qfs.pagan.composable.wrappers.Switch
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.ui.theme.Dimensions
@@ -910,21 +910,14 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 ) {
                     for ((i, rate) in options_playback.enumerate()) {
                         DropdownMenuItem(
-                            modifier = Modifier
-                                .then(
-                                    if (rate == view_model.configuration.sample_rate.value) {
-                                        Modifier.background(color = MaterialTheme.colorScheme.tertiary)
-                                    } else {
-                                        Modifier
-                                    }
-                                ),
+                            selected = rate == view_model.configuration.sample_rate.value,
                             text = {
+                                Text("$rate hz")
                                 if (rate == view_model.configuration.sample_rate.value) {
                                     ProvideContentColorTextStyle(MaterialTheme.colorScheme.onTertiary) {
                                         Text("$rate hz")
                                     }
                                 } else {
-                                    Text("$rate hz")
                                 }
                             },
                             onClick = {
@@ -1080,23 +1073,8 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 ) {
                     for ((value, label) in options) {
                         DropdownMenuItem(
-                            modifier = Modifier
-                                .then(
-                                    if (value == view_model.configuration.beat_stroke_thickness.value) {
-                                        Modifier.background(color = MaterialTheme.colorScheme.tertiary)
-                                    } else {
-                                        Modifier
-                                    }
-                                ),
-                            text = {
-                                if (value == view_model.configuration.beat_stroke_thickness.value) {
-                                    ProvideContentColorTextStyle(MaterialTheme.colorScheme.onTertiary) {
-                                        label()
-                                    }
-                                } else {
-                                    label()
-                                }
-                            },
+                            selected = value == view_model.configuration.beat_stroke_thickness.value,
+                            text = { label() },
                             onClick = {
                                 view_model.configuration.beat_stroke_thickness.value = value
                                 view_model.save_configuration()

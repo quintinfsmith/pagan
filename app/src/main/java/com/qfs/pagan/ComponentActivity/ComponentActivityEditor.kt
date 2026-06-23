@@ -68,6 +68,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProgressIndicatorDefaults
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -183,6 +184,7 @@ import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.testTag
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shadows
 import com.qfs.pagan.ui.theme.Shapes
@@ -1408,13 +1410,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
         Spacer(
             Modifier
                 .fillMaxHeight()
-                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .background(Colors.active_color_scheme.TABLE_ACCENT)
                 .width(Dimensions.LineLabelWidth),
         )
         Row {
             Spacer(
                 Modifier
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .background(Colors.active_color_scheme.TABLE_ACCENT)
                     .width(Dimensions.LineLabelWidth)
                     .height(Dimensions.LineHeight),
             )
@@ -1422,7 +1424,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             Spacer(
                 Modifier
                     .weight(1F)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .background(Colors.active_color_scheme.TABLE_ACCENT)
                     .height(Dimensions.LineHeight),
             )
         }
@@ -1458,129 +1460,131 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
             val (dragging_to_y, is_after) = vm_state.calculate_dragged_to_line() ?: Pair(null, false)
             Row {
-                ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onSurfaceVariant) {
-                    Column(Modifier.width(line_label_width)) {
-                        Column(Modifier.height(line_height)) {
-                            ShortcutView(Modifier.weight(1F), vm_state, opus_manager, scope)
-                            TableLine(MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+                Column(Modifier.width(line_label_width)) {
+                    Column(Modifier.height(line_height)) {
+                        ShortcutView(Modifier.weight(1F), vm_state, opus_manager, scope)
+                        TableLine(Colors.active_color_scheme.TABLE_ACCENT_FOREGROUND)
+                    }
 
-                        Column(
-                            Modifier
-                                .dragging_scroll(
-                                    vm_state.dragging_line.value != null,
-                                    scroll_state_v
-                                )
-                        ) {
-                            for (y in 0 until vm_state.line_count.value) {
-                                if (y >= vm_state.line_data.size) break
-                                val use_height = if (vm_state.line_data[y].ctl_type.value != null) {
-                                    ctl_line_height
-                                } else {
-                                    line_height
-                                }
-                                val is_dragging = remember { mutableStateOf(false) }
+                    Column(
+                        Modifier
+                            .dragging_scroll(
+                                vm_state.dragging_line.value != null,
+                                scroll_state_v
+                            )
+                    ) {
+                        for (y in 0 until vm_state.line_count.value) {
+                            if (y >= vm_state.line_data.size) break
+                            val use_height = if (vm_state.line_data[y].ctl_type.value != null) {
+                                ctl_line_height
+                            } else {
+                                line_height
+                            }
+                            val is_dragging = remember { mutableStateOf(false) }
 
-                                Column(
-                                    modifier = Modifier
-                                        .draggable_line(y, dragging_to_y, is_after)
-                                        .then(
-                                            // Make std lines draggable
-                                            if (vm_state.line_data[y].ctl_type.value == null) {
-                                                Modifier
-                                                    .onPlaced { coordinates ->
-                                                        if (y == vm_state.dragging_line.value && vm_state.dragging_abs_offset.value == null) {
-                                                            vm_state.dragging_abs_offset.value =
-                                                                coordinates.positionInParent().y
-                                                        }
+                            Column(
+                                modifier = Modifier
+                                    .draggable_line(y, dragging_to_y, is_after)
+                                    .then(
+                                        // Make std lines draggable
+                                        if (vm_state.line_data[y].ctl_type.value == null) {
+                                            Modifier
+                                                .onPlaced { coordinates ->
+                                                    if (y == vm_state.dragging_line.value && vm_state.dragging_abs_offset.value == null) {
+                                                        vm_state.dragging_abs_offset.value =
+                                                            coordinates.positionInParent().y
                                                     }
-                                                    .long_press(
-                                                        onPress = { is_dragging.value = true },
-                                                        onRelease = { is_dragging.value = false }
-                                                    )
-                                                    .conditional_drag(
-                                                        is_dragging,
-                                                        on_drag_start = { position ->
-                                                            vm_state.start_dragging(y, position)
-                                                            vm_state.update_line_map(this@ComponentActivityEditor.build_dragging_line_map())
-                                                        },
+                                                }
+                                                .long_press(
+                                                    onPress = { is_dragging.value = true },
+                                                    onRelease = { is_dragging.value = false }
+                                                )
+                                                .conditional_drag(
+                                                    is_dragging,
+                                                    on_drag_start = { position ->
+                                                        vm_state.start_dragging(y, position)
+                                                        vm_state.update_line_map(this@ComponentActivityEditor.build_dragging_line_map())
+                                                    },
 
-                                                        on_drag_stop = {
+                                                    on_drag_stop = {
 
-                                                            dragging_to_y?.let {
-                                                                val from_line = vm_state.line_data[vm_state.dragging_line.value!!]
-                                                                val to_line = vm_state.line_data[it]
-                                                                if (vm_state.is_dragging_channel()) {
-                                                                    opus_manager.move_channel(
+                                                        dragging_to_y?.let {
+                                                            val from_line = vm_state.line_data[vm_state.dragging_line.value!!]
+                                                            val to_line = vm_state.line_data[it]
+                                                            if (vm_state.is_dragging_channel()) {
+                                                                opus_manager.move_channel(
+                                                                    from_line.channel.value!!,
+                                                                    to_line.channel.value!!,
+                                                                    !is_after
+                                                                )
+                                                            } else if (to_line.line_offset.value != null) {
+                                                                try {
+                                                                    opus_manager.move_line(
                                                                         from_line.channel.value!!,
+                                                                        from_line.line_offset.value!!,
                                                                         to_line.channel.value!!,
+                                                                        to_line.line_offset.value!!,
                                                                         !is_after
                                                                     )
-                                                                } else if (to_line.line_offset.value != null) {
-                                                                    try {
-                                                                        opus_manager.move_line(
-                                                                            from_line.channel.value!!,
-                                                                            from_line.line_offset.value!!,
-                                                                            to_line.channel.value!!,
-                                                                            to_line.line_offset.value!!,
-                                                                            !is_after
-                                                                        )
-                                                                    } catch (e: IncompatibleChannelException) {
-                                                                        this@ComponentActivityEditor.runOnUiThread {
-                                                                            Toast.makeText(
-                                                                                this@ComponentActivityEditor,
-                                                                                getString(R.string.feedback_mixed_copy),
-                                                                                Toast.LENGTH_SHORT
-                                                                            ).show()
-                                                                        }
+                                                                } catch (e: IncompatibleChannelException) {
+                                                                    this@ComponentActivityEditor.runOnUiThread {
+                                                                        Toast.makeText(
+                                                                            this@ComponentActivityEditor,
+                                                                            getString(R.string.feedback_mixed_copy),
+                                                                            Toast.LENGTH_SHORT
+                                                                        ).show()
                                                                     }
                                                                 }
                                                             }
-                                                            vm_state.stop_dragging()
-                                                        },
+                                                        }
+                                                        vm_state.stop_dragging()
+                                                    },
 
-                                                        on_drag = { delta ->
-                                                            vm_state.dragging_offset.floatValue += delta
-                                                        },
-                                                        scroll_state = scroll_state_v
-                                                    )
+                                                    on_drag = { delta ->
+                                                        vm_state.dragging_offset.floatValue += delta
+                                                    },
+                                                    scroll_state = scroll_state_v
+                                                )
 
-                                            } else {
-                                                Modifier
-                                            }
-                                        )
-                                        .height(use_height),
-                                    content = {
-                                        if (vm_state.draw_top_line(y)) {
-                                            TableLine(MaterialTheme.colorScheme.onSurfaceVariant)
+                                        } else {
+                                            Modifier
                                         }
-                                        key(vm_state.line_data[y].hashCode()) {
-                                            LineLabelView(
-                                                modifier = Modifier
-                                                    .weight(1F)
-                                                    .fillMaxWidth(),
-                                                opus_manager,
-                                                vm_state,
-                                                y
-                                            )
-                                        }
-                                        TableLine(MaterialTheme.colorScheme.onSurfaceVariant)
-                                    }
-                                )
-
-                                if ((y == vm_state.line_data.size - 1 || vm_state.line_data[y].channel.value != vm_state.line_data[y + 1].channel.value) && vm_state.line_data[y].channel.value != null) {
-                                    Spacer(
-                                        modifier = Modifier
-                                            .draggable_line(y, dragging_to_y, is_after, true)
-                                            .width(Dimensions.LineLabelWidth)
-                                            .height(channel_gap_height)
-                                            .background(MaterialTheme.colorScheme.onSurfaceVariant)
                                     )
+                                    .height(use_height),
+                                content = {
+                                    if (vm_state.draw_top_line(y)) {
+                                        TableLine(Colors.active_color_scheme.TABLE_ACCENT_FOREGROUND)
+                                    }
+                                    key(vm_state.line_data[y].hashCode()) {
+                                        LineLabelView(
+                                            modifier = Modifier
+                                                .weight(1F)
+                                                .fillMaxWidth(),
+                                            opus_manager,
+                                            vm_state,
+                                            y
+                                        )
+                                    }
+                                    TableLine()
                                 }
-                            }
+                            )
 
-                            Row(Modifier.height(line_height)) {
-                                if (this@ComponentActivityEditor.state_model.has_global_effects_hidden.value) {
+                            if ((y == vm_state.line_data.size - 1 || vm_state.line_data[y].channel.value != vm_state.line_data[y + 1].channel.value) && vm_state.line_data[y].channel.value != null) {
+                                Spacer(
+                                    modifier = Modifier
+                                        .draggable_line(y, dragging_to_y, is_after, true)
+                                        .width(Dimensions.LineLabelWidth)
+                                        .height(channel_gap_height)
+                                        .background(Colors.active_color_scheme.CHANNEL_SEPARATOR)
+                                )
+                            }
+                        }
+
+                        Row(Modifier.height(line_height)) {
+                            if (this@ComponentActivityEditor.state_model.has_global_effects_hidden.value) {
+                                ProvideContentColorTextStyle(
+                                    contentColor = Colors.active_color_scheme.TABLE_ACCENT_FOREGROUND
+                                ) {
                                     Icon(
                                         modifier = Modifier
                                             .clickable {
@@ -1595,28 +1599,28 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     )
                                 }
 
-                                DialogMenu(
-                                    visibility = this@ComponentActivityEditor.view_model.get_dialog_state("global_effects"),
-                                    title = R.string.show_global_controls,
-                                    options = { options ->
-                                        val available_effects = OpusLayerInterface.global_controller_domain.toMutableList()
-                                        for (line in vm_state.line_data) {
-                                            if (line.channel.value != null) continue
-                                            val ctl_type = line.ctl_type.value ?: continue
-                                            if (!available_effects.contains(ctl_type)) continue
-                                            available_effects.remove(ctl_type)
-                                        }
-
-                                        for (ctl_type in available_effects) {
-                                            options.add( Pair(ctl_type) { EffectMenuItem(ctl_type) } )
-                                        }
-                                    }
-                                ) { value ->
-                                    opus_manager.toggle_global_controller_visibility(value)
-                                }
                             }
-                            Spacer(Modifier.height(toDp(this@ComponentActivityEditor.state_model.table_bottom_padding.value)))
+                            DialogMenu(
+                                visibility = this@ComponentActivityEditor.view_model.get_dialog_state("global_effects"),
+                                title = R.string.show_global_controls,
+                                options = { options ->
+                                    val available_effects = OpusLayerInterface.global_controller_domain.toMutableList()
+                                    for (line in vm_state.line_data) {
+                                        if (line.channel.value != null) continue
+                                        val ctl_type = line.ctl_type.value ?: continue
+                                        if (!available_effects.contains(ctl_type)) continue
+                                        available_effects.remove(ctl_type)
+                                    }
+
+                                    for (ctl_type in available_effects) {
+                                        options.add( Pair(ctl_type) { EffectMenuItem(ctl_type) } )
+                                    }
+                                }
+                            ) { value ->
+                                opus_manager.toggle_global_controller_visibility(value)
+                            }
                         }
+                        Spacer(Modifier.height(toDp(this@ComponentActivityEditor.state_model.table_bottom_padding.floatValue)))
                     }
                 }
 
@@ -1630,12 +1634,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             LazyRow(
                                 modifier = Modifier.testTag(TestTag.MainRow),
                                 state = scroll_state_h,
-                                contentPadding = PaddingValues(end = toDp(this@ComponentActivityEditor.state_model.table_side_padding.value)),
+                                contentPadding = PaddingValues(end = toDp(this@ComponentActivityEditor.state_model.table_side_padding.floatValue)),
                                 overscrollEffect = null
                             ) {
                                 itemsIndexed(column_widths + listOf(1)) { x, width ->
                                     if (x == column_widths.size) {
-                                        ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onSurfaceVariant) {
+                                        ProvideContentColorTextStyle(contentColor = Colors.active_color_scheme.TABLE_ACCENT_FOREGROUND) {
                                             val dialog_visibility = remember { mutableStateOf(false) }
                                             Box(
                                                 modifier = Modifier
@@ -1679,7 +1683,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                             Row(Modifier.weight(1F)) {
                                                 if (x > 0 && vm_state.beat_stroke_thickness.value > 0.dp) {
                                                     TableLine(
-                                                        MaterialTheme.colorScheme.onBackground,
                                                         width = vm_state.beat_stroke_thickness.value
                                                     )
                                                 }
@@ -1694,9 +1697,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                     column_width = (column_width)
                                                 )
                                             }
-                                            TableLine(
-                                                MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
+                                            TableLine()
                                         }
 
                                         Column(
@@ -1722,14 +1723,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                         )
                                                 ) {
                                                     if (vm_state.draw_top_line(y)) {
-                                                        TableLine(MaterialTheme.colorScheme.onSurfaceVariant)
+                                                        TableLine(Colors.active_color_scheme.TABLE_ACCENT_FOREGROUND)
                                                     }
                                                     Row(Modifier.weight(1F)) {
                                                         if (x > 0 && vm_state.beat_stroke_thickness.value > 0.dp) {
-                                                            TableLine(
-                                                                MaterialTheme.colorScheme.onBackground,
-                                                                width = vm_state.beat_stroke_thickness.value
-                                                            )
+                                                            TableLine(width = vm_state.beat_stroke_thickness.value)
                                                         }
                                                         CellView(
                                                             Modifier.weight(1F),
@@ -1741,7 +1739,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                             x,
                                                         )
                                                     }
-                                                    TableLine(MaterialTheme.colorScheme.onBackground)
+                                                    TableLine()
                                                 }
 
                                                 if ((y == vm_state.line_data.size - 1 || vm_state.line_data[y].channel.value != vm_state.line_data[y + 1].channel.value) && vm_state.line_data[y].channel.value != null) {
@@ -1750,11 +1748,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                             .draggable_line(y, dragging_to_y, is_after, true)
                                                             .fillMaxWidth()
                                                             .height(channel_gap_height)
-                                                            .background(MaterialTheme.colorScheme.onBackground)
+                                                            .background(Colors.active_color_scheme.CHANNEL_SEPARATOR)
                                                     )
                                                 }
                                             }
-                                            Spacer(Modifier.height(line_height + toDp(this@ComponentActivityEditor.state_model.table_bottom_padding.value)))
+                                            Spacer(Modifier.height(line_height + toDp(this@ComponentActivityEditor.state_model.table_bottom_padding.floatValue)))
                                         }
                                     }
                                 }
@@ -1816,13 +1814,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
     ) {
         val (background, foreground) = if (!column_info.is_selected.value && !column_info.is_secondary.value) {
             Pair(
-                MaterialTheme.colorScheme.surfaceVariant,
-                MaterialTheme.colorScheme.onSurfaceVariant
+                Colors.active_color_scheme.BUTTON_COLUMN,
+                Colors.active_color_scheme.BUTTON_COLUMN_FOREGROUND,
             )
         } else {
             Pair(
-                MaterialTheme.colorScheme.tertiary,
-                MaterialTheme.colorScheme.onTertiary
+                Colors.active_color_scheme.BUTTON_COLUMN_SELECTED,
+                Colors.active_color_scheme.BUTTON_COLUMN_SELECTED_FOREGROUND,
             )
         }
         val zoom = vm_state.active_zoom.floatValue
@@ -1838,9 +1836,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         opus_manager.cursor_select_column(x)
                     }
                     .fillMaxSize(),
-                border_color = MaterialTheme.colorScheme.onSurfaceVariant,
+                border_color = foreground,
                 content = {
-                    if (state_model.active_wide_beat.value == x && LocalContext.current.toPx(Dimensions.LeafBaseWidth * zoom) > vm_state.scroll_state_x.value.layoutInfo.viewportSize.width * 1.5) {
+                    if (vm_state.active_wide_beat.value == x && LocalContext.current.toPx(Dimensions.LeafBaseWidth * zoom) > vm_state.scroll_state_x.value.layoutInfo.viewportSize.width * 1.5) {
                         LinearProgressIndicator(
                             modifier = Modifier
                                 .width(toDp(vm_state.scroll_state_x.value.layoutInfo.viewportSize.width.toFloat() / 3F))
@@ -1862,7 +1860,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 MaterialTheme.colorScheme.surfaceContainerHigh
                             },
                             drawStopIndicator = {},
-                            progress = { state_model.wide_beat_progress.value },
+                            progress = { vm_state.wide_beat_progress.floatValue },
                         )
                     }
 
@@ -1879,29 +1877,29 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         val floating_position = ((viewport_width - width_px) / 2F) + scroll_offset
                                         val end_position = ((width_px - viewport_width) / 2F)
                                         if (floating_position < end_position) {
-                                            state_model.active_wide_beat.value = x
-                                            state_model.wide_beat_progress.value = scroll_offset / (width_px - viewport_width)
+                                            vm_state.active_wide_beat.value = x
+                                            vm_state.wide_beat_progress.floatValue = scroll_offset / (width_px - viewport_width)
                                             floating_position
                                         } else {
-                                            if (state_model.active_wide_beat.value == x) {
-                                                state_model.active_wide_beat.value = null
+                                            if (vm_state.active_wide_beat.value == x) {
+                                                vm_state.active_wide_beat.value = null
                                             }
                                             end_position
                                         }
                                     } else if (visible_items.isNotEmpty() && visible_items.last().index == x) {
-                                        if (state_model.active_wide_beat.value == x) {
-                                            state_model.active_wide_beat.value = null
+                                        if (vm_state.active_wide_beat.value == x) {
+                                            vm_state.active_wide_beat.value = null
                                         }
                                         (viewport_width - width_px) / 2F
                                     } else {
-                                        if (state_model.active_wide_beat.value == x) {
-                                            state_model.active_wide_beat.value = null
+                                        if (vm_state.active_wide_beat.value == x) {
+                                            vm_state.active_wide_beat.value = null
                                         }
                                         0F
                                     }
                                 } else {
-                                    if (x == state_model.active_wide_beat.value) {
-                                        state_model.active_wide_beat.value = null
+                                    if (x == vm_state.active_wide_beat.value) {
+                                        vm_state.active_wide_beat.value = null
                                     }
                                     0F
                                 }

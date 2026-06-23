@@ -29,6 +29,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shadows
 import com.qfs.pagan.ui.theme.Shapes
@@ -59,8 +60,8 @@ fun ScaffoldWithTopBar(
     ) {
         Scaffold(
             topBar = {
-                val background = MaterialTheme.colorScheme.top_bar_container_color()
-                val foreground = MaterialTheme.colorScheme.top_bar_content_color()
+                val background = Colors.active_color_scheme.topbar
+                val foreground = Colors.active_color_scheme.topbar_text
 
                 top_app_bar?.let {
                     ProvideContentColorTextStyle(contentColor = foreground) {

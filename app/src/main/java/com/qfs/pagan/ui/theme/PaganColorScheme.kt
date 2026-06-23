@@ -13,21 +13,57 @@ data class PaganColorScheme(
     val SELECTED_PRIMARY: (Boolean, Color) -> Color = Defaults.SELECTED_PRIMARY,
     val SELECTED_SECONDARY: (Boolean, Color) -> Color = Defaults.SELECTED_SECONDARY,
     val MUTED: (Boolean, Color) -> Color = Defaults.MUTED,
-    val BUTTON_LINE: Color = Defaults.BUTTON_LINE,
-    val BUTTON_LINE_FOREGROUND = Defaults.BUTTON_LINE_FOREGROUND,
-    val BUTTON_COLUMN: Color = Defaults.BUTTON_COLUMN,
-    val BUTTON_COLUMN_FOREGROUND: Color = Defaults.BUTTON_COLUMN_FOREGROUND,
+
     val TABLE_ACCENT: Color = Defaults.TABLE_ACCENT,
     val TABLE_ACCENT_FOREGROUND: Color = Defaults.TABLE_ACCENT_FOREGROUND,
+    val BUTTON_LINE: Color = Defaults.BUTTON_LINE,
+    val BUTTON_LINE_FOREGROUND: Color = Defaults.BUTTON_LINE_FOREGROUND,
+    val BUTTON_LINE_SELECTED: Color = Defaults.BUTTON_LINE_SELECTED,
+    val BUTTON_LINE_SELECTED_FOREGROUND: Color = Defaults.BUTTON_LINE_SELECTED_FOREGROUND,
+    val BUTTON_COLUMN: Color = Defaults.BUTTON_COLUMN,
+    val BUTTON_COLUMN_FOREGROUND: Color = Defaults.BUTTON_COLUMN_FOREGROUND,
+    val BUTTON_COLUMN_SELECTED: Color = Defaults.BUTTON_COLUMN_SELECTED,
+    val BUTTON_COLUMN_SELECTED_FOREGROUND: Color = Defaults.BUTTON_COLUMN_SELECTED_FOREGROUND,
     val CHANNEL_SEPARATOR: Color = Defaults.CHANNEL_SEPARATOR,
     val TABLE_LINE: Color = Defaults.TABLE_LINE,
 
+    val SHORTCUT: Color = Defaults.SHORTCUT,
+    val SHORTCUT_FOREGROUND: Color = Defaults.SHORTCUT_FOREGROUND,
+    val SHORTCUT_SELECTED: Color = Defaults.SHORTCUT_SELECTED,
+    val SHORTCUT_SELECTED_FOREGROUND: Color = Defaults.SHORTCUT_SELECTED_FOREGROUND,
 
     //---------------- UI ----------- //
     val topbar: Color = Defaults.topbar,
     val topbar_text: Color = Defaults.topbar_foreground,
+    val foreground: Color = Defaults.foreground,
+    val background: Color = Defaults.background,
     val button: Color = Defaults.button,
     val button_foreground: Color = Defaults.button_foreground,
+    val button_disabled: Color = Defaults.button_disabled,
+    val button_disabled_foreground: Color = Defaults.button_disabled_foreground,
+    val NUMBER_SELECTOR: Color = Defaults.NUMBER_SELECTOR,
+    val NUMBER_SELECTOR_FOREGROUND: Color = Defaults.NUMBER_SELECTOR_FOREGROUND,
+    val NUMBER_SELECTOR_ALT: Color = Defaults.NUMBER_SELECTOR_ALT,
+    val NUMBER_SELECTOR_ALT_FOREGROUND: Color = Defaults.NUMBER_SELECTOR_ALT_FOREGROUND,
+    val NUMBER_SELECTOR_SELECTED: Color = Defaults.NUMBER_SELECTOR_SELECTED,
+    val NUMBER_SELECTOR_SELECTED_FOREGROUND: Color = Defaults.NUMBER_SELECTOR_SELECTED_FOREGROUND,
+
+    val SLIDER_THUMB: Color = Defaults.SLIDER_THUMB,
+    val SLIDER_TICK: Color = Defaults.SLIDER_TICK,
+    val SLIDER_TRACK: Color = Defaults.SLIDER_TRACK,
+    val SLIDER_TICK_INACTIVE: Color = Defaults.SLIDER_TICK_INACTIVE,
+    val SLIDER_TRACK_INACTIVE: Color = Defaults.SLIDER_TRACK_INACTIVE,
+
+    val SWITCH_THUMB_CHECKED: Color = Defaults.SWITCH_THUMB_CHECKED,
+    val SWITCH_TRACK_CHECKED: Color = Defaults.SWITCH_TRACK_CHECKED,
+    val SWITCH_BORDER_CHECKED: Color = Defaults.SWITCH_BORDER_CHECKED,
+    val SWITCH_ICON_CHECKED: Color = Defaults.SWITCH_ICON_CHECKED,
+    val SWITCH_THUMB_UNCHECKED: Color = Defaults.SWITCH_THUMB_UNCHECKED,
+    val SWITCH_TRACK_UNCHECKED: Color = Defaults.SWITCH_TRACK_UNCHECKED,
+    val SWITCH_BORDER_UNCHECKED: Color = Defaults.SWITCH_BORDER_UNCHECKED,
+    val SWITCH_ICON_UNCHECKED: Color = Defaults.SWITCH_ICON_UNCHECKED,
+    val MENU_ITEM_SELECTED: Color = Defaults.MENU_ITEM_SELECTED,
+    val MENU_ITEM_FOREGROUND_SELECTED: Color = Defaults.MENU_ITEM_FOREGROUND_SELECTED
 ) {
     companion object {
         object Defaults {
@@ -36,8 +72,8 @@ data class PaganColorScheme(
             val topbar_foreground: Color = Color(0xFFFFFFFF)
             val button: Color = topbar
             val button_foreground: Color = topbar_foreground
-            val button_disabled: Color = Color(0xFFFF00FF)
-            val button_disabled_foreground = Color(0xFFFF00FF)
+            val button_disabled: Color = Color(0x44372d40)
+            val button_disabled_foreground = Color(0xCCFFFFFF)
             val background: Color = Color(0xFFEFEFEF)
             val foreground: Color = Color(0xFF2D2D2D)
             val dialog: Color = background
@@ -102,15 +138,57 @@ data class PaganColorScheme(
                     line_color.alpha
                 )
             }
-        }
-        val TABLE_ACCENT = Color(0xFFE6E0DD)
-        val TABLE_ACCENT_FOREGROUND = Color(0xFF2D2D2D)
-        val BUTTON_LINE = TABLE_ACCENT
-        val BUTTON_LINE_FOREGROUND = TABLE_ACCENT_FOREGROUND
-        val BUTTON_COLUMN = TABLE_ACCENT
-        val BUTTON_COLUMN_FOREGROUND = TABLE_ACCENT_FOREGROUND
 
-        val CHANNEL_SEPARATOR = Color(0xFF2D2D2D)
-        val TABLE_LINE = CHANNEL_SEPARATOR
+            val TABLE_ACCENT = Color(0xFFE6E0DD)
+            val TABLE_ACCENT_FOREGROUND = Color(0xFF2D2D2D)
+            val TABLE_ACCENT_SELECTED = Color(0xFF5BA1D6)
+            val TABLE_ACCENT_SELECTED_FOREGROUND = TABLE_ACCENT_FOREGROUND
+
+            val BUTTON_LINE = TABLE_ACCENT
+            val BUTTON_LINE_FOREGROUND = TABLE_ACCENT_FOREGROUND
+            val BUTTON_LINE_SELECTED = TABLE_ACCENT_SELECTED
+            val BUTTON_LINE_SELECTED_FOREGROUND = TABLE_ACCENT_SELECTED_FOREGROUND
+
+            val BUTTON_COLUMN = TABLE_ACCENT
+            val BUTTON_COLUMN_FOREGROUND = TABLE_ACCENT_FOREGROUND
+            val BUTTON_COLUMN_SELECTED = TABLE_ACCENT_SELECTED
+            val BUTTON_COLUMN_SELECTED_FOREGROUND = TABLE_ACCENT_SELECTED_FOREGROUND
+
+            val CHANNEL_SEPARATOR = Color(0xFF2D2D2D)
+            val TABLE_LINE = CHANNEL_SEPARATOR
+
+            val SHORTCUT = TABLE_ACCENT
+            val SHORTCUT_FOREGROUND = TABLE_ACCENT_FOREGROUND
+            val SHORTCUT_SELECTED = TABLE_ACCENT_SELECTED
+            val SHORTCUT_SELECTED_FOREGROUND = TABLE_ACCENT_SELECTED_FOREGROUND
+
+            val NUMBER_SELECTOR = button
+            val NUMBER_SELECTOR_FOREGROUND = button_foreground
+            val NUMBER_SELECTOR_ALT = Color(0xFFDBD0E6)
+            val NUMBER_SELECTOR_ALT_FOREGROUND = Color(0xFF2C2433)
+            val NUMBER_SELECTOR_SELECTED = Color(0xFF5BA1D6)
+            val NUMBER_SELECTOR_SELECTED_FOREGROUND = Color(0xFF000000)
+
+            val SLIDER_THUMB = button
+            val SLIDER_TRACK = button
+            val SLIDER_TICK = button
+            val SLIDER_TRACK_INACTIVE = Color(0xFFB3C1E6)
+            val SLIDER_TICK_INACTIVE = Color(0xFFB3C1E6)
+
+
+            val UNUSED = Color(0xFFFF00FF)
+
+            val SWITCH_THUMB_CHECKED = button_foreground
+            val SWITCH_TRACK_CHECKED = button
+            val SWITCH_BORDER_CHECKED = button
+            val SWITCH_ICON_CHECKED = button
+            val SWITCH_THUMB_UNCHECKED = button_disabled
+            val SWITCH_TRACK_UNCHECKED = UNUSED
+            val SWITCH_BORDER_UNCHECKED = button_disabled
+            val SWITCH_ICON_UNCHECKED = button_disabled_foreground
+
+            val MENU_ITEM_SELECTED = Color(0xFF5BA1D6)
+            val MENU_ITEM_FOREGROUND_SELECTED = Color(0xFF2D2D2D)
+        }
     }
 }

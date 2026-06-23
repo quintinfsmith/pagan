@@ -447,7 +447,8 @@ fun SetLineColorButton(
     if (visibility.value) {
         val default_color = opus_manager.get_channel(channel).lines[line_offset].palette.event
             ?: opus_manager.get_channel(channel).palette.event
-            ?: Colors.LEAF_COLOR
+            ?: Colors.active_color_scheme.LEAF_COLOR
+
         ColorPickerDialog(default_color, visibility) { new_color ->
             opus_manager.set_line_event_color(channel, line_offset, new_color)
         }

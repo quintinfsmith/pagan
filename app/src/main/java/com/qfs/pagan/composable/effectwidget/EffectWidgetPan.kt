@@ -32,6 +32,7 @@ import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
@@ -40,19 +41,7 @@ fun RowScope.PanEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLaye
     val cursor = vm_state.active_cursor.value ?: return
     val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
-    val default_colors = SliderDefaults.colors()
-    val colors = SliderColors(
-        thumbColor = default_colors.thumbColor,
-        activeTrackColor = default_colors.activeTrackColor,
-        activeTickColor = MaterialTheme.colorScheme.surface,
-        inactiveTrackColor = default_colors.activeTrackColor,
-        inactiveTickColor = MaterialTheme.colorScheme.surface,
-        disabledThumbColor = default_colors.disabledThumbColor,
-        disabledActiveTrackColor = default_colors.disabledActiveTrackColor,
-        disabledActiveTickColor = default_colors.disabledActiveTickColor,
-        disabledInactiveTrackColor = default_colors.disabledInactiveTrackColor,
-        disabledInactiveTickColor = default_colors.disabledInactiveTickColor
-    )
+    val colors = Colors.get_pan_slider_colors()
 
     val submit = {
         opus_manager.lock_cursor {

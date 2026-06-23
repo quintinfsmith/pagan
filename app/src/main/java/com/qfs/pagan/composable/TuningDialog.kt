@@ -255,25 +255,9 @@ fun ColumnScope.TuningDialogTiny(
                         ) {
                             for (i in 0 until radix.value) {
                                 DropdownMenuItem(
-                                    modifier = Modifier
-                                        .then(
-                                            if (i == actively_editting_index.value) {
-                                                Modifier.background(MaterialTheme.colorScheme.tertiary)
-                                            } else {
-                                                Modifier
-                                            }
-                                        ),
+                                    selected = i == actively_editting_index.value,
                                     text = {
-                                        androidx.compose.material3.Text(
-                                            "${"%02d".format(i)}: ${note_map[i].first} / ${note_map[i].second}",
-                                            style = LocalTextStyle.current.copy(
-                                                color = if (i == actively_editting_index.value) {
-                                                    MaterialTheme.colorScheme.onTertiary
-                                                } else {
-                                                    LocalTextStyle.current.color
-                                                }
-                                            )
-                                        )
+                                        Text("${"%02d".format(i)}: ${note_map[i].first} / ${note_map[i].second}")
                                     },
                                     onClick = {
                                         actively_editting_index.value = i

@@ -56,13 +56,13 @@ import kotlinx.coroutines.launch
 fun ShortcutView(modifier: Modifier, vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, scope: CoroutineScope) {
     val (text_color, background_color) = if (vm_state.selecting_beat.value) {
         Pair(
-            Colors.get_text(Colors.LINE_SELECTED),
-            Colors.LINE_SELECTED
+            Colors.active_color_scheme.SHORTCUT_SELECTED_FOREGROUND,
+            Colors.active_color_scheme.SHORTCUT_SELECTED
         )
     } else {
         Pair(
-            MaterialTheme.colorScheme.onSurfaceVariant,
-            MaterialTheme.colorScheme.surfaceVariant
+            Colors.active_color_scheme.SHORTCUT_FOREGROUND,
+            Colors.active_color_scheme.SHORTCUT
         )
     }
 

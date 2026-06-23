@@ -96,7 +96,6 @@ fun LeafView(
         leaf_selection,
         line_info.ctl_type.value != null,
         line_info.is_mute.value || channel_data?.is_mute?.value == true,
-        !MaterialTheme.colorScheme.is_light()
     )
 
     val context = LocalContext.current

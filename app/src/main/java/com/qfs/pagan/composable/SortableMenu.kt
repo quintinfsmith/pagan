@@ -148,26 +148,13 @@ fun <T> SortableMenu(
                     ) {
                         for (x in sort_options.indices) {
                             DropdownMenuItem(
-                                modifier = Modifier
-                                    .then(
-                                        if (x == active_sort_option.value) {
-                                            Modifier.background(color = MaterialTheme.colorScheme.tertiary)
-                                        } else {
-                                            Modifier
-                                        }
-                                    ),
+                                selected = x == active_sort_option.value,
                                 text = {
                                     val label_string = stringResource(
                                         R.string.sorted_option,
                                         stringResource(sort_options[x].first)
                                     )
-                                    if (x == active_sort_option.value) {
-                                        ProvideContentColorTextStyle(MaterialTheme.colorScheme.onTertiary) {
-                                            Text(label_string)
-                                        }
-                                    } else {
-                                        Text(label_string)
-                                    }
+                                    Text(label_string)
                                 },
                                 onClick = {
                                     expanded.value = false
@@ -178,26 +165,13 @@ fun <T> SortableMenu(
                             // Same, but reversed
                             val rev_x = (x * -1) - 1
                             DropdownMenuItem(
-                                modifier = Modifier
-                                    .then(
-                                        if (rev_x == active_sort_option.value) {
-                                            Modifier.background(color = MaterialTheme.colorScheme.tertiary)
-                                        } else {
-                                            Modifier
-                                        }
-                                    ),
+                                selected = rev_x == active_sort_option.value,
                                 text = {
                                     val label_string = stringResource(
                                         R.string.reversed_sorted_option,
                                         stringResource(sort_options[x].first)
                                     )
-                                    if (rev_x == active_sort_option.value) {
-                                        ProvideContentColorTextStyle(MaterialTheme.colorScheme.onTertiary) {
-                                            Text(label_string)
-                                        }
-                                    } else {
-                                        Text(label_string)
-                                    }
+                                    Text(label_string)
                                 },
                                 onClick = {
                                     expanded.value = false

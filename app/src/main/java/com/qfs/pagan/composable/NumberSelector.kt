@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontWeight
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.testTag
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shadows
 import com.qfs.pagan.ui.theme.Shapes
@@ -51,11 +52,20 @@ fun NumberSelectorButton(
     on_click: (Int) -> Unit,
 ) {
     val (background, foreground) = if (selected) {
-        Pair(MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.onTertiary)
+        Pair(
+            Colors.active_color_scheme.NUMBER_SELECTOR_SELECTED,
+            Colors.active_color_scheme.NUMBER_SELECTOR_SELECTED_FOREGROUND,
+        )
     } else if (!alternate) {
-        Pair(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer)
+        Pair(
+            Colors.active_color_scheme.NUMBER_SELECTOR_ALT,
+            Colors.active_color_scheme.NUMBER_SELECTOR_ALT_FOREGROUND,
+        )
     } else {
-        Pair(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary)
+        Pair(
+            Colors.active_color_scheme.NUMBER_SELECTOR,
+            Colors.active_color_scheme.NUMBER_SELECTOR_FOREGROUND,
+        )
     }
 
     val pressed = remember { mutableStateOf(false) }

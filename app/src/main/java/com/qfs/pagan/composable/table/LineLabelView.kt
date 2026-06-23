@@ -35,6 +35,7 @@ import com.qfs.pagan.composable.dashed_border
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorState
@@ -52,15 +53,16 @@ fun LineLabelView(
     val channel = line_info.channel.value
     val line_offset = line_info.line_offset.value
     val ctl_type = line_info.ctl_type.value
+
     val (background, foreground) = if (!line_info.is_selected.value && !line_info.is_secondary.value) {
         Pair(
-            MaterialTheme.colorScheme.surfaceVariant,
-            MaterialTheme.colorScheme.onSurfaceVariant
+            Colors.active_color_scheme.BUTTON_LINE,
+            Colors.active_color_scheme.BUTTON_LINE_FOREGROUND
         )
     } else {
         Pair(
-            MaterialTheme.colorScheme.tertiary,
-            MaterialTheme.colorScheme.onTertiary
+            Colors.active_color_scheme.BUTTON_LINE_SELECTED,
+            Colors.active_color_scheme.BUTTON_LINE_SELECTED_FOREGROUND
         )
     }
 
@@ -124,7 +126,7 @@ fun LineLabelView(
                     shape = RectangleShape,
                     color = background
                 ),
-            border_color = MaterialTheme.colorScheme.onSurfaceVariant,
+            border_color = foreground,
             content = {
                 Box(
                     Modifier.fillMaxSize(),
@@ -135,7 +137,7 @@ fun LineLabelView(
                             modifier = Modifier.fillMaxSize(),
                             painter = painterResource(R.drawable.icon_repeat),
                             contentDescription = stringResource(R.string.repeat_selection_in_line),
-                            tint = Color(0x55FFFFFF)
+                            tint = foreground
                         )
                     } else if (line_info.is_selected.value) {
                         Spacer(

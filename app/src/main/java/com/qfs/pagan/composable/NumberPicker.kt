@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.util.lerp
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography

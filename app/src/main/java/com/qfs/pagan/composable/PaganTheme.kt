@@ -54,7 +54,8 @@ fun PaganTheme(color_scheme: ColorScheme, content: @Composable () -> Unit) {
             ),
             labelMedium = default.labelMedium.copy(fontFamily = font),
             labelSmall = default.labelSmall.copy(fontFamily = font)
-        )
+        ),
+        colorScheme = color_scheme
     )
 }
 

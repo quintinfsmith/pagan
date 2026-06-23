@@ -9,15 +9,20 @@
  */
 package com.qfs.pagan.composable.wrappers
 
+import android.view.RoundedCorner
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ui.theme.Colors
+import com.qfs.pagan.ui.theme.Shapes
 
 @Composable
 fun DropdownMenuItem(
@@ -30,22 +35,27 @@ fun DropdownMenuItem(
     contentPadding: PaddingValues = MenuDefaults.DropdownMenuItemContentPadding,
     interactionSource: MutableInteractionSource? = null,
 ) {
+
+    val text_color = if (selected) Colors.active_color_scheme.MENU_ITEM_FOREGROUND_SELECTED
+        else Colors.active_color_scheme.MENU_ITEM_FOREGROUND
+
     DropdownMenuItem(
         text,
         onClick,
-        Modifier.then(
-            if (selected) {
-                Modifier.background(color = Colors.active_color_scheme.MENU_ITEM_SELECTED)
-            } else {
-                Modifier
-            }
-        ),
+        Modifier
+            .padding(4.dp)
+            .background(
+                if (selected) Colors.active_color_scheme.MENU_ITEM_SELECTED
+                else Colors.active_color_scheme.MENU_ITEM,
+                Shapes.SortableMenuBox
+            ),
         leadingIcon,
         trailingIcon,
         enabled,
         MenuDefaults.itemColors().copy(
-            textColor = if (selected) Colors.active_color_scheme.MENU_ITEM_FOREGROUND_SELECTED
-            else MaterialTheme.colorScheme.onSurface,
+            textColor =  text_color,
+            trailingIconColor = text_color,
+            leadingIconColor = text_color,
         ),
         contentPadding,
         interactionSource

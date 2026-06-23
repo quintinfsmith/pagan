@@ -81,6 +81,7 @@ import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.wrappers.Switch
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.enumerate
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorController
@@ -671,6 +672,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                 )
                             }
                         )
+
                         Icon(
                             modifier = Modifier
                                 .padding(
@@ -686,8 +688,10 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                 })
                                 .height(Dimensions.SoundFontMenuIconHeight),
                             painter = painterResource(R.drawable.icon_cross_circle),
-                            contentDescription = stringResource(R.string.unload_soundfont)
+                            contentDescription = stringResource(R.string.unload_soundfont),
+                            tint = Colors.active_color_scheme.button
                         )
+                        
                     }
                     MenuPadder()
                 }

@@ -10,6 +10,7 @@
 package com.qfs.pagan.composable
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -39,14 +40,15 @@ import com.qfs.pagan.composable.button.SmallButton
 import com.qfs.pagan.composable.button.SmallOutlinedButton
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.testTag
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 
 @Composable
 fun DialogCard(
     modifier: Modifier = Modifier,
     colors: CardColors = CardColors(
-        containerColor = MaterialTheme.colorScheme.surface,
-        contentColor = MaterialTheme.colorScheme.onSurface,
+        containerColor = Colors.active_color_scheme.container,
+        contentColor = Colors.active_color_scheme.foreground,
         disabledContentColor = Color.Gray,
         disabledContainerColor = Color.Green,
     ),
@@ -59,7 +61,8 @@ fun DialogCard(
         Surface(
             modifier = modifier
                 .then(if (border != null) modifier.border(border) else Modifier),
-            shape = shape
+            shape = shape,
+            color = colors.containerColor,
         ) {
             Column(
                 modifier = Modifier

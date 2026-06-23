@@ -45,6 +45,7 @@ import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.enumerate
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
@@ -132,8 +133,8 @@ fun ColumnScope.TuningDialogNormal(
             Dimensions.TuningDialogStrokeWidth,
             MaterialTheme.colorScheme.onSurface
         ),
+        color = Colors.active_color_scheme.MENU_BACKGROUND,
         shape = Shapes.TuningDialogBox,
-        tonalElevation = 1.dp
     ) {
         key(radix.value) {
             FlowRow(
@@ -146,8 +147,8 @@ fun ColumnScope.TuningDialogNormal(
                     val (numer, denom) = state
                     Surface(
                         modifier = Modifier.padding(Dimensions.TuningDialogLineSpacing),
+                        color = Colors.active_color_scheme.TUNING_TABLE_ITEM,
                         shape = Shapes.TuningDialogBox,
-                        tonalElevation = 2.dp
                     ) {
                         Row(
                             modifier = Modifier.padding(Dimensions.TuningDialogLinePadding),

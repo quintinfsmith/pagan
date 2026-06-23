@@ -94,6 +94,7 @@ import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.projectmanager.ProjectManager
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
+import com.qfs.pagan.ui.theme.AppBackground
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
@@ -253,55 +254,14 @@ abstract class PaganComponentActivity: ComponentActivity() {
                         drawerContent = { this@PaganComponentActivity.Drawer() },
                         content = {
                             Box(modifier = Modifier.padding(it)) {
+
+                                // The Background
                                 Canvas(
                                     Modifier
                                         .background(MaterialTheme.colorScheme.background)
-                                        .fillMaxSize()
-                                ) {
-                                    val gap_width = Dimensions.Background.Gap.toPx()
-                                    val bar_width = Dimensions.Background.BarWidth.toPx()
-                                    val f = (this.size.width + gap_width + (bar_width / 2)) / (gap_width + bar_width)
-                                    val bar_height_small = Dimensions.Background.BarSmallHeight.toPx()
-                                    val bar_height_large = Dimensions.Background.BarLargeHeight.toPx()
-                                    clipRect {
-                                        for (x in 0 until ceil(f).toInt()) {
-                                            var y_offset = if (x % 2 == 1) {
-                                                bar_height_large
-                                            } else {
-                                                bar_height_small
-                                            } / -2F
-                                            var y = 0
-                                            while (y_offset < this.size.height) {
-                                                val bar_height = if (x % 2 == 1) {
-                                                    if (y % 2 == 0) {
-                                                        bar_height_large
-                                                    } else {
-                                                        bar_height_small
-                                                    }
-                                                } else if (y % 2 == 0) {
-                                                    bar_height_small
-                                                } else {
-                                                    bar_height_large
-                                                }
-                                                drawRoundRect(
-                                                    color = Color(0x10888888),
-                                                    topLeft = Offset(
-                                                        x = (x * (bar_width + gap_width)) - (bar_width / 2),
-                                                        y = y_offset
-                                                    ),
-                                                    size = Size(
-                                                        width = bar_width,
-                                                        height = bar_height
-                                                    ),
-                                                    cornerRadius = CornerRadius(Dimensions.Background.Radius.toPx())
-                                                )
-
-                                                y_offset += bar_height + gap_width
-                                                y++
-                                            }
-                                        }
-                                    }
-                                }
+                                        .fillMaxSize(),
+                                    onDraw = { AppBackground() }
+                                )
 
                                 val layout_size = view_model.get_layout_size()
                                 val modifier = Modifier.fillMaxSize()
@@ -444,10 +404,6 @@ abstract class PaganComponentActivity: ComponentActivity() {
                             modifier = Modifier
                                 .height(Dimensions.SortableMenuSortButtonDiameter)
                                 .width(Dimensions.SortableMenuSortButtonDiameter),
-                            colors = ButtonDefaults.buttonColors().copy(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
-                            ),
                             onClick = {
                                 is_refreshing.value = true
                                 scope.launch(Dispatchers.IO) {

@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shadows
 import com.qfs.pagan.ui.theme.Shapes
@@ -36,6 +37,8 @@ fun CMBoxBottom(modifier: Modifier = Modifier, content: @Composable ColumnScope.
             Shadows.ContextMenu
         ),
         shape = Shapes.CMBoxBottom,
+        color = Colors.active_color_scheme.CONTEXT_MENU_BACKGROUND,
+        contentColor = Colors.active_color_scheme.CONTEXT_MENU_FOREGROUND,
         content = {
             Column(
                 modifier = modifier.padding(Dimensions.ContextMenuPadding),
@@ -54,6 +57,8 @@ fun CMBoxEnd(modifier: Modifier = Modifier, content: @Composable ColumnScope.() 
             Shadows.ContextMenu
         ),
         shape = Shapes.CMBoxEnd,
+        color = Colors.active_color_scheme.CONTEXT_MENU_BACKGROUND,
+        contentColor = Colors.active_color_scheme.CONTEXT_MENU_FOREGROUND,
         content = {
             Column(
                 modifier = modifier.padding(Dimensions.ContextMenuPadding),

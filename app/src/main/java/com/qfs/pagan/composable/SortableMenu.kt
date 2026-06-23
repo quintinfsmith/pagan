@@ -25,9 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -52,6 +50,7 @@ import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import androidx.compose.material3.Text
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.testTag
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import com.qfs.pagan.ui.theme.Shadows
@@ -124,10 +123,6 @@ fun <T> SortableMenu(
                         modifier = Modifier
                             .height(Dimensions.SortableMenuSortButtonDiameter)
                             .width(Dimensions.SortableMenuSortButtonDiameter),
-                        colors = ButtonDefaults.buttonColors().copy(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        ),
                         onClick = {
                             expanded.value = !expanded.value
                         },
@@ -185,7 +180,7 @@ fun <T> SortableMenu(
         Surface(
             modifier = Modifier
                 .clip(Shapes.SortableMenuBox),
-            tonalElevation = 2.dp
+            color = Colors.active_color_scheme.MENU_BACKGROUND
         ) {
             Column(
                 modifier = Modifier
@@ -201,23 +196,21 @@ fun <T> SortableMenu(
 
                     ProvideContentColorTextStyle(
                         if (default_index == i) {
-                            MaterialTheme.colorScheme.onTertiary
+                            Colors.active_color_scheme.MENU_ITEM_FOREGROUND_SELECTED
                         } else {
-                            MaterialTheme.colorScheme.onSurface
+                            Colors.active_color_scheme.MENU_ITEM_FOREGROUND
                         }
                     ) {
                         Row(
                             modifier = Modifier
                                 .testTag(TestTag.MenuItem, i)
-                                .then(
+                                .background(
                                     if (default_index == i) {
-                                        Modifier.background(
-                                            MaterialTheme.colorScheme.tertiary,
-                                            Shapes.SortableMenuBox
-                                        )
+                                        Colors.active_color_scheme.MENU_ITEM_SELECTED
                                     } else {
-                                        Modifier
-                                    }
+                                        Colors.active_color_scheme.MENU_ITEM
+                                    },
+                                    Shapes.SortableMenuBox
                                 )
                                 .heightIn(min = Dimensions.DialogLineHeight)
                                 .combinedClickable(

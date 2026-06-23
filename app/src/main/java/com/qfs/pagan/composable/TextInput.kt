@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
 
@@ -81,6 +82,7 @@ fun TextInput(
             },
             keyboardType = KeyboardType.Text
         ),
-        inputTransformation = InputTransformation { input.value = this.toString() }
+        inputTransformation = InputTransformation { input.value = this.toString() },
+        colors = Colors.get_textfield_colors()
     )
 }

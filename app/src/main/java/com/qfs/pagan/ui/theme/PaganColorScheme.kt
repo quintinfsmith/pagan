@@ -37,7 +37,7 @@ data class PaganColorScheme(
     val topbar_text: Color = Defaults.topbar_foreground,
     val foreground: Color = Defaults.foreground,
     val background: Color = Defaults.background,
-    val container: (Int) -> Color = Defaults.container,
+    val container: Color = Defaults.container,
     val button: Color = Defaults.button,
     val button_foreground: Color = Defaults.button_foreground,
     val button_disabled: Color = Defaults.button_disabled,
@@ -66,12 +66,22 @@ data class PaganColorScheme(
 
     val MENU_ITEM_SELECTED: Color = Defaults.MENU_ITEM_SELECTED,
     val MENU_ITEM_FOREGROUND_SELECTED: Color = Defaults.MENU_ITEM_FOREGROUND_SELECTED,
+    val MENU_ITEM: Color = Defaults.MENU_ITEM,
+    val MENU_ITEM_FOREGROUND: Color = Defaults.MENU_ITEM_FOREGROUND,
+
+    val MENU_BACKGROUND: Color = Defaults.MENU_BACKGROUND,
 
     val TEXT_SELECTION_HANDLE: Color = Defaults.TEXT_SELECTION_HANDLE,
     val TEXT_SELECTION_BACKGROUND: Color = Defaults.TEXT_SELECTION_BACKGROUND,
     val TEXT_FOCUS_COLOR: Color = Defaults.TEXT_FOCUS_COLOR,
+    val TEXT_BACKGROUND_FOCUSED: Color = Defaults.TEXT_BACKGROUND_FOCUSED,
+    val TEXT_BACKGROUND_UNFOCUSED: Color = Defaults.TEXT_BACKGROUND_UNFOCUSED,
 
-    val LOADING_INDICATOR: Color = Defaults.LOADING_INDICATOR
+    val LOADING_INDICATOR: Color = Defaults.LOADING_INDICATOR,
+    val TUNING_TABLE_ITEM: Color = Defaults.TUNING_TABLE_ITEM,
+
+    val CONTEXT_MENU_BACKGROUND: Color = Defaults.CONTEXT_MENU_BACKGROUND,
+    val CONTEXT_MENU_FOREGROUND: Color = Defaults.CONTEXT_MENU_FOREGROUND,
 ) {
     companion object {
         object Defaults {
@@ -84,10 +94,7 @@ data class PaganColorScheme(
             val button_disabled_foreground = Color(0xCCFFFFFF)
             val background: Color = Color(0xFFEFEFEF)
             val foreground: Color = Color(0xFF2D2D2D)
-            val container: (Int) -> Color = { depth ->
-                Color(0xFFFFFFFF)
-            }
-
+            val container: Color = Color(0xFFFFFFFF)
 
             //-------------------Editor------------------------//
             val LEAF_COLOR: Color = Color(0xFF765bd5)
@@ -188,15 +195,20 @@ data class PaganColorScheme(
             val SWITCH_BORDER_CHECKED = button
             val SWITCH_ICON_CHECKED = button
             val SWITCH_THUMB_UNCHECKED = button
-            val SWITCH_TRACK_UNCHECKED = button_foreground
+            val SWITCH_TRACK_UNCHECKED = background
             val SWITCH_BORDER_UNCHECKED = button
             val SWITCH_ICON_UNCHECKED = button_foreground
 
+            val MENU_ITEM = container
+            val MENU_ITEM_FOREGROUND = foreground
             val MENU_ITEM_SELECTED = Color(0xFF5BA1D6)
             val MENU_ITEM_FOREGROUND_SELECTED = Color(0xFF2D2D2D)
+            val MENU_BACKGROUND = background
 
             val LOADING_INDICATOR = MENU_ITEM_SELECTED
 
+            val TEXT_BACKGROUND_FOCUSED = container
+            val TEXT_BACKGROUND_UNFOCUSED = container
             val TEXT_FOCUS_COLOR = MENU_ITEM_SELECTED
             val TEXT_SELECTION_HANDLE = MENU_ITEM_SELECTED
             val TEXT_SELECTION_BACKGROUND = Color(
@@ -205,6 +217,10 @@ data class PaganColorScheme(
                 MENU_ITEM_SELECTED.blue,
                 alpha = .5f
             )
+
+            val TUNING_TABLE_ITEM = container
+            val CONTEXT_MENU_BACKGROUND = background
+            val CONTEXT_MENU_FOREGROUND = foreground
         }
     }
 }

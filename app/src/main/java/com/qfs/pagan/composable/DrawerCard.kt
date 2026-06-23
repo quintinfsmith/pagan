@@ -29,6 +29,7 @@ import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shadows
 import com.qfs.pagan.ui.theme.Shapes
@@ -37,8 +38,8 @@ import com.qfs.pagan.ui.theme.Shapes
 fun DrawerCard(
     modifier: Modifier = Modifier.wrapContentWidth(),
     colors: CardColors = CardColors(
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = Colors.active_color_scheme.foreground,
+        containerColor = Colors.active_color_scheme.container,
         disabledContentColor = Color.Gray,
         disabledContainerColor = Color.Green,
     ),

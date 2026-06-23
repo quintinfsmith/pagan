@@ -162,8 +162,8 @@ object Colors {
             unfocusedTextColor = this.active_color_scheme.foreground,
             disabledTextColor = UNUSED,
             errorTextColor = UNUSED,
-            focusedContainerColor = Color.Transparent,
-            unfocusedContainerColor = Color.Transparent,
+            focusedContainerColor = this.active_color_scheme.TEXT_BACKGROUND_FOCUSED,
+            unfocusedContainerColor = this.active_color_scheme.TEXT_BACKGROUND_UNFOCUSED,
             disabledContainerColor = UNUSED,
             errorContainerColor = UNUSED,
             cursorColor = this.active_color_scheme.foreground,
@@ -176,12 +176,12 @@ object Colors {
             unfocusedIndicatorColor = this.active_color_scheme.foreground,
             disabledIndicatorColor = UNUSED,
             errorIndicatorColor = UNUSED,
-            focusedLeadingIconColor = UNUSED,
-            unfocusedLeadingIconColor = UNUSED,
+            focusedLeadingIconColor = this.active_color_scheme.TEXT_FOCUS_COLOR,
+            unfocusedLeadingIconColor = this.active_color_scheme.foreground,
             disabledLeadingIconColor = UNUSED,
             errorLeadingIconColor = UNUSED,
-            focusedTrailingIconColor = UNUSED,
-            unfocusedTrailingIconColor = UNUSED,
+            focusedTrailingIconColor = this.active_color_scheme.foreground,
+            unfocusedTrailingIconColor = this.active_color_scheme.foreground,
             disabledTrailingIconColor = UNUSED,
             errorTrailingIconColor = UNUSED,
             focusedLabelColor = this.active_color_scheme.TEXT_FOCUS_COLOR,
@@ -214,4 +214,12 @@ fun Color.avg(): Float {
 fun Color.grey(): Color {
     val avg = this.avg()
     return Color(avg, avg,avg, this.alpha)
+}
+fun Color.merge(other: Color, weight: Float = .5F): Color {
+    return Color(
+        (this.red * weight) + (other.red * (1F - weight)),
+        (this.green * weight) + (other.green * (1F - weight)),
+        (this.blue * weight) + (other.blue * (1F - weight)),
+        (this.alpha * weight) + (other.alpha * (1F - weight)),
+    )
 }

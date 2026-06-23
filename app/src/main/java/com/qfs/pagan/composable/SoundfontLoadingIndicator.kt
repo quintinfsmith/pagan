@@ -1,9 +1,11 @@
 package com.qfs.pagan.composable
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import com.qfs.pagan.composable.wrappers.CircularProgressIndicator
+import com.qfs.pagan.ui.theme.Colors
 
 @Composable
-fun SoundfontLoadingIndicator() {
-    CircularProgressIndicator()
+fun SoundfontLoadingIndicator(color: Color = Colors.active_color_scheme.LOADING_INDICATOR) {
+    CircularProgressIndicator(color = color)
 }

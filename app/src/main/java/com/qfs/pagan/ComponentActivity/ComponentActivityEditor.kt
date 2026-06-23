@@ -884,7 +884,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 description = R.string.menu_item_playpause,
                 onClick = { },
             )
-            SoundfontLoadingIndicator()
+            SoundfontLoadingIndicator(Colors.active_color_scheme.topbar_text)
         }
     }
 
@@ -968,7 +968,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
             )
 
             if (PlaybackState.Queued == this@ComponentActivityEditor.controller_model.playback_state_soundfont) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(
+                    color = Colors.active_color_scheme.topbar_text
+                )
             }
         }
     }
@@ -1031,7 +1033,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             )
             if (PlaybackState.Queued == this@ComponentActivityEditor.controller_model.playback_state_midi) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(
+                    color = Colors.active_color_scheme.topbar_text
+                )
             }
         }
     }
@@ -2031,7 +2035,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
             DrawerPadder()
             Surface(
-                tonalElevation = 1.dp,
+                color = Colors.active_color_scheme.MENU_BACKGROUND,
                 shape = Shapes.Container,
                 modifier = Modifier.weight(1F),
             ) {
@@ -2288,9 +2292,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     ) {
                         CircularProgressIndicator(
                             progress = { this@ComponentActivityEditor.state_model.export_progress.value },
-                            color = ProgressIndicatorDefaults.linearColor,
-                            trackColor = ProgressIndicatorDefaults.linearTrackColor,
-                            strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
                         )
                     }
                 }
@@ -2885,9 +2886,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 )
                             }
                             Text(
-                                (opus_manager.vm_state.active_soundfonts.value[sorted_pages[i]]).split(
-                                    "/"
-                                )
+                                (opus_manager.vm_state.active_soundfonts.value[sorted_pages[i]]).split("/")
                                     .let { it[it.size - 1].trim() },
                                 maxLines = 1,
                                 textAlign = TextAlign.Center,

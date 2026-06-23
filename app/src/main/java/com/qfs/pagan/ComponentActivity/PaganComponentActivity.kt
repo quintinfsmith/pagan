@@ -47,7 +47,6 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
@@ -90,6 +89,7 @@ import com.qfs.pagan.composable.ScaffoldWithTopBar
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.OutlinedButton
 import com.qfs.pagan.composable.dashed_border
+import com.qfs.pagan.composable.wrappers.CircularProgressIndicator
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.projectmanager.ProjectManager
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType

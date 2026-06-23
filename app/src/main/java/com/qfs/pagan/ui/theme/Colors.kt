@@ -9,10 +9,12 @@
  */
 package com.qfs.pagan.ui.theme
 
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SwitchColors
 import androidx.compose.material3.TextFieldColors
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.ui.graphics.Color
 import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.OpusColorPalette
 import com.qfs.pagan.ui.theme.PaganColorScheme.Companion.Defaults.UNUSED
@@ -156,7 +158,52 @@ object Colors {
 
     fun get_textfield_colors(): TextFieldColors {
         return TextFieldColors(
-
+            focusedTextColor = this.active_color_scheme.foreground,
+            unfocusedTextColor = this.active_color_scheme.foreground,
+            disabledTextColor = UNUSED,
+            errorTextColor = UNUSED,
+            focusedContainerColor = Color.Transparent,
+            unfocusedContainerColor = Color.Transparent,
+            disabledContainerColor = UNUSED,
+            errorContainerColor = UNUSED,
+            cursorColor = this.active_color_scheme.foreground,
+            errorCursorColor = UNUSED,
+            textSelectionColors = TextSelectionColors(
+                handleColor = this.active_color_scheme.TEXT_SELECTION_HANDLE,
+                backgroundColor = this.active_color_scheme.TEXT_SELECTION_BACKGROUND
+            ),
+            focusedIndicatorColor = this.active_color_scheme.TEXT_FOCUS_COLOR,
+            unfocusedIndicatorColor = this.active_color_scheme.foreground,
+            disabledIndicatorColor = UNUSED,
+            errorIndicatorColor = UNUSED,
+            focusedLeadingIconColor = UNUSED,
+            unfocusedLeadingIconColor = UNUSED,
+            disabledLeadingIconColor = UNUSED,
+            errorLeadingIconColor = UNUSED,
+            focusedTrailingIconColor = UNUSED,
+            unfocusedTrailingIconColor = UNUSED,
+            disabledTrailingIconColor = UNUSED,
+            errorTrailingIconColor = UNUSED,
+            focusedLabelColor = this.active_color_scheme.TEXT_FOCUS_COLOR,
+            unfocusedLabelColor = this.active_color_scheme.foreground,
+            disabledLabelColor = UNUSED,
+            errorLabelColor = UNUSED,
+            focusedPlaceholderColor = UNUSED,
+            unfocusedPlaceholderColor = UNUSED,
+            disabledPlaceholderColor = UNUSED,
+            errorPlaceholderColor = UNUSED,
+            focusedSupportingTextColor = UNUSED,
+            unfocusedSupportingTextColor = UNUSED,
+            disabledSupportingTextColor = UNUSED,
+            errorSupportingTextColor = UNUSED,
+            focusedPrefixColor = UNUSED,
+            unfocusedPrefixColor = UNUSED,
+            disabledPrefixColor = UNUSED,
+            errorPrefixColor = UNUSED,
+            focusedSuffixColor = UNUSED,
+            unfocusedSuffixColor = UNUSED,
+            disabledSuffixColor = UNUSED,
+            errorSuffixColor = UNUSED
         )
     }
 }

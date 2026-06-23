@@ -48,7 +48,7 @@ fun SettingsBoxWrapper(modifier: Modifier = Modifier, content: @Composable () ->
         modifier
             .border(1.dp, Colors.active_color_scheme.foreground, Shapes.SettingsBox)
             .background(
-                Colors.active_color_scheme.background,
+                Colors.active_color_scheme.container(0),
                 shape = Shapes.SettingsBox
             ),
         contentAlignment = Alignment.Center,

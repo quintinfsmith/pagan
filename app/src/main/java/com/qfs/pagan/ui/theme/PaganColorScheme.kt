@@ -37,6 +37,7 @@ data class PaganColorScheme(
     val topbar_text: Color = Defaults.topbar_foreground,
     val foreground: Color = Defaults.foreground,
     val background: Color = Defaults.background,
+    val container: (Int) -> Color = Defaults.container,
     val button: Color = Defaults.button,
     val button_foreground: Color = Defaults.button_foreground,
     val button_disabled: Color = Defaults.button_disabled,
@@ -62,8 +63,15 @@ data class PaganColorScheme(
     val SWITCH_TRACK_UNCHECKED: Color = Defaults.SWITCH_TRACK_UNCHECKED,
     val SWITCH_BORDER_UNCHECKED: Color = Defaults.SWITCH_BORDER_UNCHECKED,
     val SWITCH_ICON_UNCHECKED: Color = Defaults.SWITCH_ICON_UNCHECKED,
+
     val MENU_ITEM_SELECTED: Color = Defaults.MENU_ITEM_SELECTED,
-    val MENU_ITEM_FOREGROUND_SELECTED: Color = Defaults.MENU_ITEM_FOREGROUND_SELECTED
+    val MENU_ITEM_FOREGROUND_SELECTED: Color = Defaults.MENU_ITEM_FOREGROUND_SELECTED,
+
+    val TEXT_SELECTION_HANDLE: Color = Defaults.TEXT_SELECTION_HANDLE,
+    val TEXT_SELECTION_BACKGROUND: Color = Defaults.TEXT_SELECTION_BACKGROUND,
+    val TEXT_FOCUS_COLOR: Color = Defaults.TEXT_FOCUS_COLOR,
+
+    val LOADING_INDICATOR: Color = Defaults.LOADING_INDICATOR
 ) {
     companion object {
         object Defaults {
@@ -76,10 +84,8 @@ data class PaganColorScheme(
             val button_disabled_foreground = Color(0xCCFFFFFF)
             val background: Color = Color(0xFFEFEFEF)
             val foreground: Color = Color(0xFF2D2D2D)
-            val dialog: Color = background
-            val dialog_foreground: Color = foreground
-            val container: (Color, Int) -> Color = { background, depth ->
-                Color(0xFFFF00FF)
+            val container: (Int) -> Color = { depth ->
+                Color(0xFFFFFFFF)
             }
 
 
@@ -175,20 +181,30 @@ data class PaganColorScheme(
             val SLIDER_TRACK_INACTIVE = Color(0xFFB3C1E6)
             val SLIDER_TICK_INACTIVE = Color(0xFFB3C1E6)
 
-
             val UNUSED = Color(0xFFFF00FF)
 
             val SWITCH_THUMB_CHECKED = button_foreground
             val SWITCH_TRACK_CHECKED = button
             val SWITCH_BORDER_CHECKED = button
             val SWITCH_ICON_CHECKED = button
-            val SWITCH_THUMB_UNCHECKED = button_disabled
-            val SWITCH_TRACK_UNCHECKED = UNUSED
-            val SWITCH_BORDER_UNCHECKED = button_disabled
-            val SWITCH_ICON_UNCHECKED = button_disabled_foreground
+            val SWITCH_THUMB_UNCHECKED = button
+            val SWITCH_TRACK_UNCHECKED = button_foreground
+            val SWITCH_BORDER_UNCHECKED = button
+            val SWITCH_ICON_UNCHECKED = button_foreground
 
             val MENU_ITEM_SELECTED = Color(0xFF5BA1D6)
             val MENU_ITEM_FOREGROUND_SELECTED = Color(0xFF2D2D2D)
+
+            val LOADING_INDICATOR = MENU_ITEM_SELECTED
+
+            val TEXT_FOCUS_COLOR = MENU_ITEM_SELECTED
+            val TEXT_SELECTION_HANDLE = MENU_ITEM_SELECTED
+            val TEXT_SELECTION_BACKGROUND = Color(
+                MENU_ITEM_SELECTED.red,
+                MENU_ITEM_SELECTED.green,
+                MENU_ITEM_SELECTED.blue,
+                alpha = .5f
+            )
         }
     }
 }

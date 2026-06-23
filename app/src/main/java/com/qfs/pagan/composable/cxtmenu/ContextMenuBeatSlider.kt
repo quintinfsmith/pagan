@@ -35,6 +35,7 @@ import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
@@ -95,6 +96,7 @@ fun ContextMenuBeatSliderSecondary(modifier: Modifier = Modifier, vm_state: View
                     section_index = 0
                     for ((i, tag) in marked_sections) {
                         DropdownMenuItem(
+                            selected = slider_position.floatValue.roundToInt() == i,
                             onClick = {
                                 vm_state.selecting_beat.value = false
                                 section_dropdown_visible.value = false
@@ -160,7 +162,7 @@ fun ContextMenuBeatSliderSecondary(modifier: Modifier = Modifier, vm_state: View
                 .clickable { vm_state.selecting_beat.value = false },
             contentAlignment = Alignment.Center
         ) {
-            ProvideContentColorTextStyle(MaterialTheme.colorScheme.primary) {
+            ProvideContentColorTextStyle(Colors.active_color_scheme.button) {
                 Icon(
                     painter = painterResource(R.drawable.icon_cross_circle),
                     contentDescription = stringResource(R.string.close_beat_selector),

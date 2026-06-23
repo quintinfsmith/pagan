@@ -58,6 +58,7 @@ import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import com.qfs.pagan.ui.theme.Shapes
@@ -77,11 +78,7 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
     val (channel, line_offset, beat, position) = vm_state.get_location_ints()
     val is_percussion = channel != null && vm_state.channel_data[channel].percussion.value
     val active_layout_size = (LocalActivity.current as PaganComponentActivity).view_model.active_layout_size
-    val default_colors = SliderDefaults.colors()
-    val colors = default_colors.copy(
-        activeTickColor = default_colors.inactiveTickColor,
-        inactiveTickColor = default_colors.activeTickColor
-    )
+    val colors =  Colors.get_slider_colors()
     val submit = {
         opus_manager.lock_cursor {
             opus_manager.set_event_at_cursor(working_event)
@@ -155,14 +152,16 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
                                 },
 
                             onValueChange = {
-                                working_event.value = it
-                                working_value.floatValue = it
-                                velocity_input_value.intValue = (it * 100).roundToInt()
+                                val tmp = (it * 100F).roundToInt()
+                                working_event.value = tmp.toFloat() / 100F
+                                working_value.floatValue = working_event.value
+                                velocity_input_value.intValue = tmp
                             },
 
                             onValueChangeFinished = {
-                                working_event.value = working_value.floatValue
-                                velocity_input_value.intValue = (working_value.floatValue * 100).roundToInt()
+                                val tmp =  (working_value.floatValue * 100F).roundToInt()
+                                working_event.value = tmp.toFloat() / 100F
+                                velocity_input_value.intValue = tmp
                                 velocity_expanded.value = false
                                 submit()
                             }

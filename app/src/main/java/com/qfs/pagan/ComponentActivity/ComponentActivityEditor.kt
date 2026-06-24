@@ -94,6 +94,7 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -1773,6 +1774,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             if (vm_state.selecting_beat.value) {
                 Box(
                     Modifier
+                        .testTag(TestTag.Declicker)
                         .fillMaxSize()
                         .pointerInput(Unit) {
                             awaitEachGesture {

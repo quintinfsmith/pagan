@@ -89,7 +89,7 @@ object Typography {
     val DropdownMenu = TextStyle(fontFamily = Fonts.FiraSans)
     val DrawerTitle = TextStyle(
         fontFamily = Fonts.FiraSans,
-        fontSize = 18.sp,
+        fontSize = 16.sp,
         lineHeight = 20.sp,
         textAlign = TextAlign.Center,
     )

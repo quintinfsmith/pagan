@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
@@ -55,22 +54,22 @@ fun <T> RadioMenu(
             Button(
                 colors = ButtonDefaults.buttonColors().copy(
                     containerColor = if (active.value == item) {
-                        Colors.active_color_scheme.SWITCH_TRACK_CHECKED
+                        Colors.active_color_scheme.switch_track_checked
                     } else {
-                        Colors.active_color_scheme.SWITCH_TRACK_UNCHECKED
+                        Colors.active_color_scheme.switch_track_unchecked
                     },
                     contentColor = if (active.value == item) {
-                        Colors.active_color_scheme.SWITCH_THUMB_CHECKED
+                        Colors.active_color_scheme.switch_thumb_checked
                     } else {
-                        Colors.active_color_scheme.SWITCH_THUMB_UNCHECKED
+                        Colors.active_color_scheme.switch_thumb_unchecked
                     }
                 ),
                 border = BorderStroke(
                     width = Dimensions.RadioMenu.StrokeWidth,
                     color = if (active.value == item) {
-                        Colors.active_color_scheme.SWITCH_BORDER_CHECKED
+                        Colors.active_color_scheme.switch_border_checked
                     } else {
-                        Colors.active_color_scheme.SWITCH_BORDER_UNCHECKED
+                        Colors.active_color_scheme.switch_border_unchecked
                     }
                 ),
                 onClick = {

@@ -13,39 +13,17 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SliderColors
-import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.qfs.pagan.OpusLayerInterface
-import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
-import com.qfs.pagan.composable.DialogTitle
-import com.qfs.pagan.composable.PaganDialog
-import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
-import com.qfs.pagan.composable.dashed_border
-import com.qfs.pagan.composable.wrappers.DropdownMenu
-import com.qfs.pagan.composable.wrappers.DropdownMenuItem
-import com.qfs.pagan.composable.wrappers.Slider
-import com.qfs.pagan.composable.wrappers.Text
-import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.viewmodel.ViewModelEditorState
@@ -56,13 +34,13 @@ import kotlinx.coroutines.launch
 fun ShortcutView(modifier: Modifier, vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, scope: CoroutineScope) {
     val (text_color, background_color) = if (vm_state.selecting_beat.value) {
         Pair(
-            Colors.active_color_scheme.SHORTCUT_SELECTED_FOREGROUND,
-            Colors.active_color_scheme.SHORTCUT_SELECTED
+            Colors.active_color_scheme.shortcut_selected_foreground,
+            Colors.active_color_scheme.shortcut_selected
         )
     } else {
         Pair(
-            Colors.active_color_scheme.SHORTCUT_FOREGROUND,
-            Colors.active_color_scheme.SHORTCUT
+            Colors.active_color_scheme.shortcut_foreground,
+            Colors.active_color_scheme.shortcut
         )
     }
 
@@ -79,7 +57,7 @@ fun ShortcutView(modifier: Modifier, vm_state: ViewModelEditorState, opus_manage
                     }
                 }
             ),
-        border_color = Colors.active_color_scheme.TABLE_LINE,
+        border_color = Colors.active_color_scheme.table_line,
         content = {
             ProvideContentColorTextStyle(text_color) {
                 Box(

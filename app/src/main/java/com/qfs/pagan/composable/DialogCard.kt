@@ -30,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.stringResource
@@ -58,21 +59,20 @@ fun DialogCard(
     alignment: Alignment.Horizontal,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    ProvideContentColorTextStyle(contentColor = colors.contentColor) {
-        Surface(
+    ProvideContentColorTextStyle(
+        textStyle = Typography.Default,
+        contentColor = colors.contentColor
+    ) {
+        Column(
             modifier = modifier
-                .then(if (border != null) modifier.border(border) else Modifier),
-            shape = shape,
-            color = colors.containerColor,
-        ) {
-            Column(
-                modifier = Modifier
-                    .wrapContentSize()
-                    .padding(Dimensions.DialogPadding),
-                horizontalAlignment = alignment,
-                content = content
-            )
-        }
+                .clip(shape)
+                .then(if (border != null) modifier.border(border) else Modifier)
+                .background(colors.containerColor)
+                .wrapContentSize()
+                .padding(Dimensions.DialogPadding),
+            horizontalAlignment = alignment,
+            content = content
+        )
     }
 }
 

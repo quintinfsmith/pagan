@@ -5,32 +5,32 @@ import kotlin.math.min
 
 data class PaganColorScheme(
     // ------------------ Editor -----------------//
-    val LEAF_COLOR: Color = Defaults.LEAF_COLOR,
-    val EFFECT_COLOR: Color = Defaults.EFFECT_COLOR,
-    val LINE_COLOR: Color = Defaults.LINE_COLOR,
-    val EFFECT_LINE_COLOR: Color = Defaults.EFFECT_LINE_COLOR,
-    val SPILL: (Color) -> Color = Defaults.SPILL,
-    val SELECTED_PRIMARY: (Boolean, Color) -> Color = Defaults.SELECTED_PRIMARY,
-    val SELECTED_SECONDARY: (Boolean, Color) -> Color = Defaults.SELECTED_SECONDARY,
-    val MUTED: (Boolean, Color) -> Color = Defaults.MUTED,
+    val leaf: Color = Defaults.leaf,
+    val effect: Color = Defaults.effect,
+    val line: Color = Defaults.line,
+    val effect_line: Color = Defaults.effect_line,
+    val spill: (Color) -> Color = Defaults.spill,
+    val selected_primary: (Boolean, Color) -> Color = Defaults.selected_primary,
+    val selected_secondary: (Boolean, Color) -> Color = Defaults.selected_secondary,
+    val muted: (Boolean, Color) -> Color = Defaults.muted,
 
-    val TABLE_ACCENT: Color = Defaults.TABLE_ACCENT,
-    val TABLE_ACCENT_FOREGROUND: Color = Defaults.TABLE_ACCENT_FOREGROUND,
-    val BUTTON_LINE: Color = Defaults.BUTTON_LINE,
-    val BUTTON_LINE_FOREGROUND: Color = Defaults.BUTTON_LINE_FOREGROUND,
-    val BUTTON_LINE_SELECTED: Color = Defaults.BUTTON_LINE_SELECTED,
-    val BUTTON_LINE_SELECTED_FOREGROUND: Color = Defaults.BUTTON_LINE_SELECTED_FOREGROUND,
-    val BUTTON_COLUMN: Color = Defaults.BUTTON_COLUMN,
-    val BUTTON_COLUMN_FOREGROUND: Color = Defaults.BUTTON_COLUMN_FOREGROUND,
-    val BUTTON_COLUMN_SELECTED: Color = Defaults.BUTTON_COLUMN_SELECTED,
-    val BUTTON_COLUMN_SELECTED_FOREGROUND: Color = Defaults.BUTTON_COLUMN_SELECTED_FOREGROUND,
-    val CHANNEL_SEPARATOR: Color = Defaults.CHANNEL_SEPARATOR,
-    val TABLE_LINE: Color = Defaults.TABLE_LINE,
+    val table_accent: Color = Defaults.table_accent,
+    val table_accent_foreground: Color = Defaults.table_accent_foreground,
+    val button_line: Color = Defaults.button_line,
+    val button_line_foreground: Color = Defaults.button_line_foreground,
+    val button_line_selected: Color = Defaults.button_line_selected,
+    val button_line_selected_foreground: Color = Defaults.button_line_selected_foreground,
+    val button_column: Color = Defaults.button_column,
+    val button_column_foreground: Color = Defaults.button_column_foreground,
+    val button_column_selected: Color = Defaults.button_column_selected,
+    val button_column_selected_foreground: Color = Defaults.button_column_selected_foreground,
+    val channel_separator: Color = Defaults.channel_separator,
+    val table_line: Color = Defaults.table_line,
 
-    val SHORTCUT: Color = Defaults.SHORTCUT,
-    val SHORTCUT_FOREGROUND: Color = Defaults.SHORTCUT_FOREGROUND,
-    val SHORTCUT_SELECTED: Color = Defaults.SHORTCUT_SELECTED,
-    val SHORTCUT_SELECTED_FOREGROUND: Color = Defaults.SHORTCUT_SELECTED_FOREGROUND,
+    val shortcut: Color = Defaults.shortcut,
+    val shortcut_foreground: Color = Defaults.shortcut_foreground,
+    val shortcut_selected: Color = Defaults.shortcut_selected,
+    val shortcut_selected_foreground: Color = Defaults.shortcut_selected_foreground,
 
     //---------------- UI ----------- //
     val topbar: Color = Defaults.topbar,
@@ -44,58 +44,59 @@ data class PaganColorScheme(
     val button_foreground: Color = Defaults.button_foreground,
     val button_disabled: Color = Defaults.button_disabled,
     val button_disabled_foreground: Color = Defaults.button_disabled_foreground,
-    val NUMBER_SELECTOR: Color = Defaults.NUMBER_SELECTOR,
-    val NUMBER_SELECTOR_FOREGROUND: Color = Defaults.NUMBER_SELECTOR_FOREGROUND,
-    val NUMBER_SELECTOR_ALT: Color = Defaults.NUMBER_SELECTOR_ALT,
-    val NUMBER_SELECTOR_ALT_FOREGROUND: Color = Defaults.NUMBER_SELECTOR_ALT_FOREGROUND,
-    val NUMBER_SELECTOR_SELECTED: Color = Defaults.NUMBER_SELECTOR_SELECTED,
-    val NUMBER_SELECTOR_SELECTED_FOREGROUND: Color = Defaults.NUMBER_SELECTOR_SELECTED_FOREGROUND,
 
-    val SLIDER_THUMB: Color = Defaults.SLIDER_THUMB,
-    val SLIDER_TICK: Color = Defaults.SLIDER_TICK,
-    val SLIDER_TRACK: Color = Defaults.SLIDER_TRACK,
-    val SLIDER_TICK_INACTIVE: Color = Defaults.SLIDER_TICK_INACTIVE,
-    val SLIDER_TRACK_INACTIVE: Color = Defaults.SLIDER_TRACK_INACTIVE,
+    val note_picker: Color = Defaults.note_picker,
+    val note_picker_foreground: Color = Defaults.note_picker_foreground,
+    val note_picker_alt: Color = Defaults.note_picker_alt,
+    val note_picker_alt_foreground: Color = Defaults.note_picker_alt_foreground,
+    val note_picker_selected: Color = Defaults.note_picker_selected,
+    val note_picker_selected_foreground: Color = Defaults.note_picker_selected_foreground,
 
-    val SWITCH_THUMB_CHECKED: Color = Defaults.SWITCH_THUMB_CHECKED,
-    val SWITCH_TRACK_CHECKED: Color = Defaults.SWITCH_TRACK_CHECKED,
-    val SWITCH_BORDER_CHECKED: Color = Defaults.SWITCH_BORDER_CHECKED,
-    val SWITCH_ICON_CHECKED: Color = Defaults.SWITCH_ICON_CHECKED,
-    val SWITCH_THUMB_UNCHECKED: Color = Defaults.SWITCH_THUMB_UNCHECKED,
-    val SWITCH_TRACK_UNCHECKED: Color = Defaults.SWITCH_TRACK_UNCHECKED,
-    val SWITCH_BORDER_UNCHECKED: Color = Defaults.SWITCH_BORDER_UNCHECKED,
-    val SWITCH_ICON_UNCHECKED: Color = Defaults.SWITCH_ICON_UNCHECKED,
+    val slider_thumb: Color = Defaults.slider_thumb,
+    val slider_tick: Color = Defaults.slider_tick,
+    val slider_track: Color = Defaults.slider_track,
+    val slider_tick_inactive: Color = Defaults.slider_tick_inactive,
+    val slider_track_inactive: Color = Defaults.slider_track_inactive,
 
-    val MENU_ITEM_SELECTED: Color = Defaults.MENU_ITEM_SELECTED,
-    val MENU_ITEM_FOREGROUND_SELECTED: Color = Defaults.MENU_ITEM_FOREGROUND_SELECTED,
-    val MENU_ITEM: Color = Defaults.MENU_ITEM,
-    val MENU_ITEM_FOREGROUND: Color = Defaults.MENU_ITEM_FOREGROUND,
+    val switch_thumb_checked: Color = Defaults.switch_thumb_checked,
+    val switch_track_checked: Color = Defaults.switch_track_checked,
+    val switch_border_checked: Color = Defaults.switch_border_checked,
+    val switch_icon_checked: Color = Defaults.switch_icon_checked,
+    val switch_thumb_unchecked: Color = Defaults.switch_thumb_unchecked,
+    val switch_track_unchecked: Color = Defaults.switch_track_unchecked,
+    val switch_border_unchecked: Color = Defaults.switch_border_unchecked,
+    val switch_icon_unchecked: Color = Defaults.switch_icon_unchecked,
 
-    val MENU_BACKGROUND: Color = Defaults.MENU_BACKGROUND,
+    val menu_item_selected: Color = Defaults.menu_item_selected,
+    val menu_item_foreground_selected: Color = Defaults.menu_item_foreground_selected,
+    val menu_item: Color = Defaults.menu_item,
+    val menu_item_foreground: Color = Defaults.menu_item_foreground,
 
-    val TEXT_SELECTION_HANDLE: Color = Defaults.TEXT_SELECTION_HANDLE,
-    val TEXT_SELECTION_BACKGROUND: Color = Defaults.TEXT_SELECTION_BACKGROUND,
-    val TEXT_FOCUS_COLOR: Color = Defaults.TEXT_FOCUS_COLOR,
-    val TEXT_BACKGROUND_FOCUSED: Color = Defaults.TEXT_BACKGROUND_FOCUSED,
-    val TEXT_BACKGROUND_UNFOCUSED: Color = Defaults.TEXT_BACKGROUND_UNFOCUSED,
+    val menu_background: Color = Defaults.menu_background,
 
-    val LOADING_INDICATOR: Color = Defaults.LOADING_INDICATOR,
-    val TUNING_TABLE_ITEM: Color = Defaults.TUNING_TABLE_ITEM,
+    val text_selection_handle: Color = Defaults.text_selection_handle,
+    val text_selection_background: Color = Defaults.text_selection_background,
+    val text_focus_color: Color = Defaults.text_focus_color,
+    val text_background_focused: Color = Defaults.text_background_focused,
+    val text_background_unfocused: Color = Defaults.text_background_unfocused,
 
-    val CONTEXT_MENU_BACKGROUND: Color = Defaults.CONTEXT_MENU_BACKGROUND,
-    val CONTEXT_MENU_FOREGROUND: Color = Defaults.CONTEXT_MENU_FOREGROUND,
+    val loading_indicator: Color = Defaults.loading_indicator,
+    val tuning_table_item: Color = Defaults.tuning_table_item,
 
-    val SOUNDFONT_WARNING: Color = Defaults.SOUNDFONT_WARNING,
-    val SOUNDFONT_WARNING_BORDER: Color = Defaults.SOUNDFONT_WARNING_BORDER,
-    val SOUNDFONT_WARNING_FOREGROUND: Color = Defaults.SOUNDFONT_WARNING_FOREGROUND,
+    val context_menu_background: Color = Defaults.context_menu_background,
+    val context_menu_foreground: Color = Defaults.context_menu_foreground,
 
-    val NUMBERPICKER_FOREGROUND: Color = Defaults.NUMBERPICKER_FOREGROUND,
-    val NUMBERPICKER_BACKGROUND: Color = Defaults.NUMBERPICKER_BACKGROUND,
+    val soundfont_warning: Color = Defaults.soundfont_warning,
+    val soundfont_warning_border: Color = Defaults.soundfont_warning_border,
+    val soundfont_warning_foreground: Color = Defaults.soundfont_warning_foreground,
 
-    val WIDE_BEAT_SLIDER_TRACK: Color = Defaults.WIDE_BEAT_SLIDER_TRACK,
-    val WIDE_BEAT_SLIDER_BACKGROUND: Color = Defaults.WIDE_BEAT_SLIDER_BACKGROUND,
-    val WIDE_BEAT_SLIDER_TRACK_SELECTED: Color = Defaults.WIDE_BEAT_SLIDER_TRACK_SELECTED,
-    val WIDE_BEAT_SLIDER_BACKGROUND_SELECTED: Color = Defaults.WIDE_BEAT_SLIDER_BACKGROUND_SELECTED
+    val number_picker_foreground: Color = Defaults.number_picker_foreground,
+    val number_picker_background: Color = Defaults.number_picker_background,
+
+    val wide_beat_slider_track: Color = Defaults.wide_beat_slider_track,
+    val wide_beat_slider_background: Color = Defaults.wide_beat_slider_background,
+    val wide_beat_slider_track_selected: Color = Defaults.wide_beat_slider_track_selected,
+    val wide_beat_slider_background_selected: Color = Defaults.wide_beat_slider_background_selected
 ) {
     companion object {
         fun Dark(): PaganColorScheme {
@@ -119,54 +120,54 @@ data class PaganColorScheme(
 
                 container = container,
                 container_border = foreground,
-                CONTEXT_MENU_BACKGROUND = background,
-                CONTEXT_MENU_FOREGROUND = foreground,
+                context_menu_background = background,
+                context_menu_foreground = foreground,
 
-                TABLE_ACCENT = table_accent,
-                TABLE_ACCENT_FOREGROUND = table_line,
+                table_accent = table_accent,
+                table_accent_foreground = table_line,
 
-                BUTTON_LINE = table_accent,
-                BUTTON_LINE_FOREGROUND = table_line,
+                button_line = table_accent,
+                button_line_foreground = table_line,
 
-                BUTTON_COLUMN = table_accent,
-                BUTTON_COLUMN_FOREGROUND = table_line,
+                button_column = table_accent,
+                button_column_foreground = table_line,
 
-                CHANNEL_SEPARATOR = table_line,
-                TABLE_LINE = table_line,
+                channel_separator = table_line,
+                table_line = table_line,
 
-                SHORTCUT = table_accent,
-                SHORTCUT_FOREGROUND = table_line,
+                shortcut = table_accent,
+                shortcut_foreground = table_line,
 
-                NUMBER_SELECTOR = button,
-                NUMBER_SELECTOR_FOREGROUND = button_foreground,
-                NUMBER_SELECTOR_ALT = Color(0xFF3d3d3d),
-                NUMBER_SELECTOR_ALT_FOREGROUND = Color(0xFFEFEFEF),
+                note_picker = button,
+                note_picker_foreground = button_foreground,
+                note_picker_alt = Color(0xFF3d3d3d),
+                note_picker_alt_foreground = Color(0xFFEFEFEF),
 
-                MENU_ITEM = container,
-                MENU_ITEM_FOREGROUND = foreground,
-                MENU_BACKGROUND = background,
+                menu_item = container,
+                menu_item_foreground = foreground,
+                menu_background = background,
 
-                TUNING_TABLE_ITEM = container,
+                tuning_table_item = container,
 
-                SWITCH_THUMB_CHECKED = button_foreground,
-                SWITCH_TRACK_CHECKED = button,
-                SWITCH_BORDER_CHECKED = button,
-                SWITCH_ICON_CHECKED = button,
-                SWITCH_THUMB_UNCHECKED = button,
-                SWITCH_TRACK_UNCHECKED = background,
-                SWITCH_BORDER_UNCHECKED = button,
-                SWITCH_ICON_UNCHECKED = button_foreground,
+                switch_thumb_checked = button_foreground,
+                switch_track_checked = button,
+                switch_border_checked = button,
+                switch_icon_checked = button,
+                switch_thumb_unchecked = button,
+                switch_track_unchecked = background,
+                switch_border_unchecked = button,
+                switch_icon_unchecked = button_foreground,
 
-                SLIDER_THUMB = button,
-                SLIDER_TRACK = button,
-                SLIDER_TICK = button,
+                slider_thumb = button,
+                slider_track = button,
+                slider_tick = button,
 
-                WIDE_BEAT_SLIDER_TRACK = table_line,
-                WIDE_BEAT_SLIDER_BACKGROUND = table_line.merge(table_accent, .3F),
+                wide_beat_slider_track = table_line,
+                wide_beat_slider_background = table_line.merge(table_accent, .3F),
                 // ------------ Editor --------------------//
 
-                LINE_COLOR = Color(0xFF2D2D2D),
-                EFFECT_LINE_COLOR = Color(0xFF000000)
+                line = Color(0xFF2D2D2D),
+                effect_line = Color(0xFF000000)
             )
         }
 
@@ -188,51 +189,51 @@ data class PaganColorScheme(
 
                 container = color_a,
                 container_border = color_c,
-                CONTEXT_MENU_BACKGROUND = color_a,
-                CONTEXT_MENU_FOREGROUND = color_d,
+                context_menu_background = color_a,
+                context_menu_foreground = color_d,
 
-                TABLE_ACCENT = color_b,
-                TABLE_ACCENT_FOREGROUND = color_d,
+                table_accent = color_b,
+                table_accent_foreground = color_d,
 
-                BUTTON_LINE = color_b,
-                BUTTON_LINE_FOREGROUND = color_d,
+                button_line = color_b,
+                button_line_foreground = color_d,
 
-                BUTTON_COLUMN = color_b,
-                BUTTON_COLUMN_FOREGROUND = color_d,
+                button_column = color_b,
+                button_column_foreground = color_d,
 
-                CHANNEL_SEPARATOR = color_d,
-                TABLE_LINE = color_d,
+                channel_separator = color_d,
+                table_line = color_d,
 
-                SHORTCUT = color_b,
-                SHORTCUT_FOREGROUND = color_d,
+                shortcut = color_b,
+                shortcut_foreground = color_d,
 
-                NUMBER_SELECTOR = color_b,
-                NUMBER_SELECTOR_FOREGROUND = color_d,
-                NUMBER_SELECTOR_ALT = color_b,
-                NUMBER_SELECTOR_ALT_FOREGROUND = color_d,
+                note_picker = color_b,
+                note_picker_foreground = color_d,
+                note_picker_alt = color_b,
+                note_picker_alt_foreground = color_d,
 
-                MENU_ITEM = color_b,
-                MENU_ITEM_FOREGROUND = color_d,
-                MENU_BACKGROUND = color_a,
+                menu_item = color_b,
+                menu_item_foreground = color_d,
+                menu_background = color_a,
 
-                TUNING_TABLE_ITEM = color_b,
+                tuning_table_item = color_b,
 
-                SWITCH_THUMB_CHECKED = color_d,
-                SWITCH_TRACK_CHECKED = color_b,
-                SWITCH_BORDER_CHECKED = color_b,
-                SWITCH_ICON_CHECKED = color_a,
-                SWITCH_THUMB_UNCHECKED = color_b,
-                SWITCH_TRACK_UNCHECKED = color_a,
-                SWITCH_BORDER_UNCHECKED = color_b,
-                SWITCH_ICON_UNCHECKED = color_c,
+                switch_thumb_checked = color_d,
+                switch_track_checked = color_b,
+                switch_border_checked = color_b,
+                switch_icon_checked = color_a,
+                switch_thumb_unchecked = color_b,
+                switch_track_unchecked = color_a,
+                switch_border_unchecked = color_b,
+                switch_icon_unchecked = color_c,
 
-                SLIDER_THUMB = color_b,
-                SLIDER_TRACK = color_c,
-                SLIDER_TICK = color_b,
+                slider_thumb = color_b,
+                slider_track = color_c,
+                slider_tick = color_b,
                 // ------------ Editor --------------------//
 
-                LINE_COLOR = Color(0xFF2D2D2D),
-                EFFECT_LINE_COLOR = Color(0xFF000000)
+                line = Color(0xFF2D2D2D),
+                effect_line = Color(0xFF000000)
             )
         }
 
@@ -252,11 +253,11 @@ data class PaganColorScheme(
             val container_border: Color = foreground
 
             //-------------------Editor------------------------//
-            val LEAF_COLOR: Color = Color(0xFF765bd5)
-            val EFFECT_COLOR: Color = Color(0xFFCB9C20)
-            val LINE_COLOR: Color = Color(0xFFE0E0E0)
-            val EFFECT_LINE_COLOR: Color = Color(0xFFFFFFFF)
-            val SPILL: (Color) -> Color = { base_color ->
+            val leaf: Color = Color(0xFF765bd5)
+            val effect: Color = Color(0xFFCB9C20)
+            val line: Color = Color(0xFFE0E0E0)
+            val effect_line: Color = Color(0xFFFFFFFF)
+            val spill: (Color) -> Color = { base_color ->
                 if ((base_color.red + base_color.green + base_color.blue) / 3F > .5F) {
                     Color(
                         red = base_color.red * .75F,
@@ -273,7 +274,7 @@ data class PaganColorScheme(
                     )
                 }
             }
-            val SELECTED_PRIMARY: (Boolean, Color) -> Color = { is_empty, base_color ->
+            val selected_primary: (Boolean, Color) -> Color = { is_empty, base_color ->
                 val weight = .2F
                 if (is_empty) {
                     val LINE_SELECTED = Color(0xFF5BA1D6)
@@ -291,8 +292,8 @@ data class PaganColorScheme(
                     )
                 }
             }
-            val SELECTED_SECONDARY: (Boolean, Color) -> Color = SELECTED_PRIMARY
-            val MUTED: (Boolean, Color) -> Color = { is_empty, line_color ->
+            val selected_secondary: (Boolean, Color) -> Color = selected_primary
+            val muted: (Boolean, Color) -> Color = { is_empty, line_color ->
                 val (grey, weight) = if (is_empty) {
                     Pair(.5F, .4F)
                 } else {
@@ -307,85 +308,84 @@ data class PaganColorScheme(
                 )
             }
 
-            val TABLE_ACCENT = Color(0xFFE6E0DD)
-            val TABLE_ACCENT_FOREGROUND = Color(0xFF2D2D2D)
-            val TABLE_ACCENT_SELECTED = Color(0xFF5BA1D6)
-            val TABLE_ACCENT_SELECTED_FOREGROUND = TABLE_ACCENT_FOREGROUND
+            val table_accent = Color(0xFFE6E0DD)
+            val table_accent_foreground = Color(0xFF2D2D2D)
+            val table_accent_selected = Color(0xFF5BA1D6)
+            val TABLE_ACCENT_SELECTED_FOREGROUND = table_accent_foreground
 
-            val BUTTON_LINE = TABLE_ACCENT
-            val BUTTON_LINE_FOREGROUND = TABLE_ACCENT_FOREGROUND
-            val BUTTON_LINE_SELECTED = TABLE_ACCENT_SELECTED
-            val BUTTON_LINE_SELECTED_FOREGROUND = TABLE_ACCENT_SELECTED_FOREGROUND
+            val button_line = table_accent
+            val button_line_foreground = table_accent_foreground
+            val button_line_selected = table_accent_selected
+            val button_line_selected_foreground = TABLE_ACCENT_SELECTED_FOREGROUND
 
-            val BUTTON_COLUMN = TABLE_ACCENT
-            val BUTTON_COLUMN_FOREGROUND = TABLE_ACCENT_FOREGROUND
-            val BUTTON_COLUMN_SELECTED = TABLE_ACCENT_SELECTED
-            val BUTTON_COLUMN_SELECTED_FOREGROUND = TABLE_ACCENT_SELECTED_FOREGROUND
+            val button_column = table_accent
+            val button_column_foreground = table_accent_foreground
+            val button_column_selected = table_accent_selected
+            val button_column_selected_foreground = TABLE_ACCENT_SELECTED_FOREGROUND
 
-            val CHANNEL_SEPARATOR = Color(0xFF2D2D2D)
-            val TABLE_LINE = CHANNEL_SEPARATOR
+            val channel_separator = Color(0xFF2D2D2D)
+            val table_line = channel_separator
 
-            val SHORTCUT = TABLE_ACCENT
-            val SHORTCUT_FOREGROUND = TABLE_ACCENT_FOREGROUND
-            val SHORTCUT_SELECTED = TABLE_ACCENT_SELECTED
-            val SHORTCUT_SELECTED_FOREGROUND = TABLE_ACCENT_SELECTED_FOREGROUND
+            val shortcut = table_accent
+            val shortcut_foreground = table_accent_foreground
+            val shortcut_selected = table_accent_selected
+            val shortcut_selected_foreground = TABLE_ACCENT_SELECTED_FOREGROUND
 
-            val NUMBER_SELECTOR = button
-            val NUMBER_SELECTOR_FOREGROUND = button_foreground
-            val NUMBER_SELECTOR_ALT = Color(0xFFE2DFE7)
-            val NUMBER_SELECTOR_ALT_FOREGROUND = Color(0xFF372D40)
-            val NUMBER_SELECTOR_SELECTED = Color(0xFF5BA1D6)
-            val NUMBER_SELECTOR_SELECTED_FOREGROUND = Color(0xFF000000)
+            val note_picker = button
+            val note_picker_foreground = button_foreground
+            val note_picker_alt = Color(0xFFE2DFE7)
+            val note_picker_alt_foreground = Color(0xFF372D40)
+            val note_picker_selected = Color(0xFF5BA1D6)
+            val note_picker_selected_foreground = Color(0xFF000000)
 
-            val SLIDER_THUMB = button
-            val SLIDER_TRACK = button
-            val SLIDER_TICK = button
-            val SLIDER_TRACK_INACTIVE = Color(0xFFB3C1E6)
-            val SLIDER_TICK_INACTIVE = Color(0xFFB3C1E6)
+            val slider_thumb = button
+            val slider_track = button
+            val slider_tick = button
+            val slider_track_inactive = Color(0xFFB3C1E6)
+            val slider_tick_inactive = Color(0xFFB3C1E6)
 
+            val switch_thumb_checked = button_foreground
+            val switch_track_checked = button
+            val switch_border_checked = button
+            val switch_icon_checked = button
+            val switch_thumb_unchecked = button
+            val switch_track_unchecked = background
+            val switch_border_unchecked = button
+            val switch_icon_unchecked = button_foreground
 
-            val SWITCH_THUMB_CHECKED = button_foreground
-            val SWITCH_TRACK_CHECKED = button
-            val SWITCH_BORDER_CHECKED = button
-            val SWITCH_ICON_CHECKED = button
-            val SWITCH_THUMB_UNCHECKED = button
-            val SWITCH_TRACK_UNCHECKED = background
-            val SWITCH_BORDER_UNCHECKED = button
-            val SWITCH_ICON_UNCHECKED = button_foreground
+            val menu_item = container
+            val menu_item_foreground = foreground
+            val menu_item_selected = Color(0xFF5BA1D6)
+            val menu_item_foreground_selected = Color(0xFF2D2D2D)
+            val menu_background = background
 
-            val MENU_ITEM = container
-            val MENU_ITEM_FOREGROUND = foreground
-            val MENU_ITEM_SELECTED = Color(0xFF5BA1D6)
-            val MENU_ITEM_FOREGROUND_SELECTED = Color(0xFF2D2D2D)
-            val MENU_BACKGROUND = background
+            val loading_indicator = menu_item_selected
 
-            val LOADING_INDICATOR = MENU_ITEM_SELECTED
-
-            val TEXT_BACKGROUND_FOCUSED = Color(0x00000000)
-            val TEXT_BACKGROUND_UNFOCUSED = Color(0x00000000)
-            val TEXT_FOCUS_COLOR = MENU_ITEM_SELECTED
-            val TEXT_SELECTION_HANDLE = MENU_ITEM_SELECTED
-            val TEXT_SELECTION_BACKGROUND = Color(
-                MENU_ITEM_SELECTED.red,
-                MENU_ITEM_SELECTED.green,
-                MENU_ITEM_SELECTED.blue,
+            val text_background_focused = Color(0x00000000)
+            val text_background_unfocused = Color(0x00000000)
+            val text_focus_color = menu_item_selected
+            val text_selection_handle = menu_item_selected
+            val text_selection_background = Color(
+                menu_item_selected.red,
+                menu_item_selected.green,
+                menu_item_selected.blue,
                 alpha = .5f
             )
 
-            val TUNING_TABLE_ITEM = container
-            val CONTEXT_MENU_BACKGROUND = background
-            val CONTEXT_MENU_FOREGROUND = foreground
+            val tuning_table_item = container
+            val context_menu_background = background
+            val context_menu_foreground = foreground
 
-            val SOUNDFONT_WARNING = Color(0xFF5BA1D6)
-            val SOUNDFONT_WARNING_BORDER = Color(0xFFBCD3E6)
-            val SOUNDFONT_WARNING_FOREGROUND = Color(0xFF000000)
-            val NUMBERPICKER_FOREGROUND = foreground
-            val NUMBERPICKER_BACKGROUND = container
+            val soundfont_warning = Color(0xFF5BA1D6)
+            val soundfont_warning_border = Color(0xFFBCD3E6)
+            val soundfont_warning_foreground = Color(0xFF000000)
+            val number_picker_foreground = foreground
+            val number_picker_background = container
 
-            val WIDE_BEAT_SLIDER_TRACK = BUTTON_COLUMN_FOREGROUND
-            val WIDE_BEAT_SLIDER_BACKGROUND = BUTTON_COLUMN.merge(Color(0xFF888888))
-            val WIDE_BEAT_SLIDER_TRACK_SELECTED = BUTTON_COLUMN_SELECTED_FOREGROUND
-            val WIDE_BEAT_SLIDER_BACKGROUND_SELECTED = BUTTON_COLUMN_SELECTED.merge(Color(0xFFFFFFFF))
+            val wide_beat_slider_track = button_column_foreground
+            val wide_beat_slider_background = button_column.merge(Color(0xFF888888))
+            val wide_beat_slider_track_selected = button_column_selected_foreground
+            val wide_beat_slider_background_selected = button_column_selected.merge(Color(0xFFFFFFFF))
         }
     }
 }

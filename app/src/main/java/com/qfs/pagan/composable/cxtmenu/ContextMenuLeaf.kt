@@ -36,7 +36,7 @@ import com.qfs.pagan.TestTag
 import com.qfs.pagan.Values
 import com.qfs.pagan.composable.IntegerInputDialog
 import com.qfs.pagan.composable.MediumSpacer
-import com.qfs.pagan.composable.NumberSelector
+import com.qfs.pagan.composable.NotePicker
 import com.qfs.pagan.composable.RadioMenu
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.button.TextCMenuButton
@@ -305,9 +305,9 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, vm_state: ViewModelEdi
                 Row {
                     ContextMenuStructureControls(Modifier, vm_state, opus_manager, true)
                     MediumSpacer()
-                    Column(Modifier.width(Dimensions.NumberSelectorColumnWidth)) {
+                    Column(Modifier.width(Dimensions.NotePickerColumnWidth)) {
                         val octave_dropdown_visible: MutableState<Int?> = remember { mutableStateOf(null) }
-                        NumberSelector(
+                        NotePicker(
                             progression = 7 downTo 0,
                             selected = when (vm_state.active_event_descriptor.value) {
                                 ViewModelEditorState.EventDescriptor.Tail,
@@ -450,7 +450,7 @@ fun ContextMenuLeafStdSecondary(vm_state: ViewModelEditorState, opus_manager: Op
             }
 
             Row {
-                NumberSelector(
+                NotePicker(
                     progression = 0 until Values.OctaveCount,
                     selected = when (vm_state.active_event_descriptor.value) {
                         ViewModelEditorState.EventDescriptor.Selected,
@@ -471,7 +471,7 @@ fun ContextMenuLeafStdSecondary(vm_state: ViewModelEditorState, opus_manager: Op
                     on_long_click = { octave_dropdown_visible.value = it }
                 )
             }
-            Spacer(Modifier.height(Dimensions.NumberSelectorSpacing))
+            Spacer(Modifier.height(Dimensions.NotePickerSpacing))
         }
 
         LayoutSize.SmallLandscape -> {}
@@ -493,7 +493,7 @@ fun ContextMenuLeafStdSecondary(vm_state: ViewModelEditorState, opus_manager: Op
         val count = ceil(vm_state.radix.value.toFloat() / Values.OffsetModulo).toInt()
         for (i in count - 1 downTo 0) {
             Row(modifier) {
-                NumberSelector(
+                NotePicker(
                     progression = i until vm_state.radix.value step count,
                     selected = when (vm_state.active_event_descriptor.value) {
                         ViewModelEditorState.EventDescriptor.Selected,
@@ -525,7 +525,7 @@ fun ContextMenuLeafStdSecondary(vm_state: ViewModelEditorState, opus_manager: Op
                 )
             }
             if (i != 0) {
-                Spacer(Modifier.height(Dimensions.NumberSelectorSpacing))
+                Spacer(Modifier.height(Dimensions.NotePickerSpacing))
             }
         }
     }

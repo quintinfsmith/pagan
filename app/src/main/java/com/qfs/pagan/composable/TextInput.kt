@@ -16,6 +16,7 @@ import androidx.compose.foundation.text.input.TextFieldBuffer
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.TextFieldLabelScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -64,7 +65,9 @@ fun TextInput(
     OutlinedTextField(
         state = state,
         lineLimits = lineLimits,
-        label = label,
+        label = label?.let {
+            { ProvideTextStyle(Typography.NumberInputLabel, { label() }) }
+        },
         placeholder = placeholder,
         textStyle = Typography.TextField.copy(textAlign = textAlign),
         modifier = modifier.onFocusChanged { focus_change_callback(it) },

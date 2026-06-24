@@ -10,6 +10,7 @@
 package com.qfs.pagan.ComponentActivity
 
 import android.content.Intent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -83,16 +85,17 @@ class ComponentActivityAbout: PaganComponentActivity() {
         val bytes = ByteArray(stream.available())
         stream.read(bytes)
         stream.close()
-        Column {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Spacer(Modifier.height(Dimensions.AboutPadding))
             HorizontalDivider(thickness = Dimensions.Stroke.Thin)
-            ProvideTextStyle(Typography.About.License) {
-                SelectionContainer {
-                    Text(
-                        string_id = R.string.fira_sans_license_blurb,
-                        modifier = Modifier.padding(Dimensions.AboutPadding)
-                    )
-                }
+            SelectionContainer {
+                Text(
+                    string_id = R.string.fira_sans_license_blurb,
+                    modifier = Modifier.padding(vertical = Dimensions.AboutPadding),
+                    style = Typography.About.License
+                )
             }
 
             HorizontalDivider(thickness = Dimensions.Stroke.Thin)
@@ -101,7 +104,7 @@ class ComponentActivityAbout: PaganComponentActivity() {
             SelectionContainer {
                 Text(
                     bytes.toString(charset = Charsets.UTF_8),
-                    textAlign = TextAlign.Center
+                    style = Typography.About.License
                 )
             }
         }
@@ -246,7 +249,9 @@ class ComponentActivityAbout: PaganComponentActivity() {
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("v${this@ComponentActivityAbout.get_version_name()}")
+                ProvideTextStyle(Typography.Default) {
+                    Text("v${this@ComponentActivityAbout.get_version_name()}")
+                }
                 SectionUrls()
                 SectionLicense()
             }

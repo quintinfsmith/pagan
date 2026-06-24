@@ -296,15 +296,15 @@ object Dimensions {
     val NumberPickerRowHeight = 41.dp
     val NumberPickerRowWidth = 80.dp
     val NumberPickerStrokeWidth = Stroke.Thin
-    val NumberSelectorButtonHeight: Dp
+
+    val NotePickerButtonHeight: Dp
         get() = getter(
             small_portrait = 41.dp,
             medium_portrait = 48.dp,
         )
-
-    val NumberSelectorButtonRadius = 4.dp
-    val NumberSelectorColumnWidth = 41.dp
-    val NumberSelectorSpacing = 3.dp
+    val NotePickerButtonRadius = 4.dp
+    val NotePickerColumnWidth = 41.dp
+    val NotePickerSpacing = 3.dp
 
     val OutlineButtonStrokeWidth = Stroke.Thin
 

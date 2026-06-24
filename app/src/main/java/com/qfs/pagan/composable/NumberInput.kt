@@ -20,6 +20,7 @@ import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.selectAll
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.TextFieldLabelScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -82,9 +83,11 @@ fun <T> NumberInput(
     val focus_manager = LocalFocusManager.current
     OutlinedTextField(
         state = state,
-        label = label,
+        label = label?.let {
+            { ProvideTextStyle(Typography.NumberInputLabel, { label() }) }
+        },
         contentPadding = contentPadding,
-        textStyle = Typography.TextField.copy(textAlign = text_align),
+        textStyle = Typography.NumberInput,
         prefix = prefix,
         modifier = modifier
             .onKeyEvent { event ->
@@ -135,7 +138,6 @@ fun <T> NumberInput(
 
     trigger_select_all.value?.let {
         LaunchedEffect(trigger_select_all.value) {
-
             state.edit { selectAll() }
         }
     }

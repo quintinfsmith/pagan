@@ -13,7 +13,7 @@ import androidx.compose.material3.CircularProgressIndicator as OriginalIndicator
 @Composable
 fun CircularProgressIndicator(
     modifier: Modifier = Modifier,
-    color: Color = Colors.active_color_scheme.LOADING_INDICATOR,
+    color: Color = Colors.active_color_scheme.loading_indicator,
     strokeWidth: Dp = ProgressIndicatorDefaults.CircularStrokeWidth,
     trackColor: Color = Color.Transparent,
     strokeCap: StrokeCap = ProgressIndicatorDefaults.CircularIndeterminateStrokeCap,
@@ -33,7 +33,7 @@ fun CircularProgressIndicator(
 fun CircularProgressIndicator(
     progress: () -> Float,
     modifier: Modifier = Modifier,
-    color: Color = Colors.active_color_scheme.LOADING_INDICATOR,
+    color: Color = Colors.active_color_scheme.loading_indicator,
     strokeWidth: Dp = ProgressIndicatorDefaults.CircularStrokeWidth,
     trackColor: Color = Color.Transparent,
     strokeCap: StrokeCap = ProgressIndicatorDefaults.CircularIndeterminateStrokeCap,

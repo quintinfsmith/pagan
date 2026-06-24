@@ -21,10 +21,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
-import androidx.compose.material3.SegmentedButtonDefaults.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,7 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.OutlinedButton
@@ -133,7 +129,7 @@ fun ColumnScope.TuningDialogNormal(
             Dimensions.TuningDialogStrokeWidth,
             Colors.active_color_scheme.container_border
         ),
-        color = Colors.active_color_scheme.MENU_BACKGROUND,
+        color = Colors.active_color_scheme.menu_background,
         shape = Shapes.TuningDialogBox,
     ) {
         key(radix.value) {
@@ -147,7 +143,7 @@ fun ColumnScope.TuningDialogNormal(
                     val (numer, denom) = state
                     Surface(
                         modifier = Modifier.padding(Dimensions.TuningDialogLineSpacing),
-                        color = Colors.active_color_scheme.TUNING_TABLE_ITEM,
+                        color = Colors.active_color_scheme.tuning_table_item,
                         shape = Shapes.TuningDialogBox,
                     ) {
                         Row(
@@ -241,7 +237,7 @@ fun ColumnScope.TuningDialogTiny(
                 )
                 Surface(
                     shape = Shapes.Container,
-                    color = Colors.active_color_scheme.MENU_BACKGROUND
+                    color = Colors.active_color_scheme.menu_background
                 ) {
                     Row(
                         modifier = Modifier
@@ -278,7 +274,7 @@ fun ColumnScope.TuningDialogTiny(
                                     value = remember { mutableStateOf(note_map[actively_editting_index.value].first) },
                                     minimum = 0,
                                     modifier = Modifier
-                                        .background(Colors.active_color_scheme.TUNING_TABLE_ITEM)
+                                        .background(Colors.active_color_scheme.tuning_table_item)
                                         .width(Dimensions.TinyTuningDialogInputWidth),
                                     contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
                                     revert_on_exit = true,
@@ -294,7 +290,7 @@ fun ColumnScope.TuningDialogTiny(
                                     value = remember { mutableStateOf(note_map[actively_editting_index.value].second) },
                                     minimum = 1,
                                     modifier = Modifier
-                                        .background(Colors.active_color_scheme.TUNING_TABLE_ITEM)
+                                        .background(Colors.active_color_scheme.tuning_table_item)
                                         .width(Dimensions.TinyTuningDialogInputWidth),
                                     contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
                                     revert_on_exit = true,

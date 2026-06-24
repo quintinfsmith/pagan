@@ -61,13 +61,13 @@ object Colors {
     ): Triple<Color, Color, Color?> {
         val (event_color, line_color) = if (is_effect_line) {
             Pair(
-                line_palette.effect ?: channel_palette.effect ?: active_color_scheme.EFFECT_COLOR,
-                line_palette.effect_bg ?: channel_palette.effect_bg ?: active_color_scheme.EFFECT_LINE_COLOR
+                line_palette.effect ?: channel_palette.effect ?: active_color_scheme.effect,
+                line_palette.effect_bg ?: channel_palette.effect_bg ?: active_color_scheme.effect_line
             )
         } else {
             Pair(
-                line_palette.event ?: channel_palette.event ?: active_color_scheme.LEAF_COLOR,
-                line_palette.event_bg ?: channel_palette.event_bg ?: active_color_scheme.LINE_COLOR
+                line_palette.event ?: channel_palette.event ?: active_color_scheme.leaf,
+                line_palette.event_bg ?: channel_palette.event_bg ?: active_color_scheme.line
             )
         }
 
@@ -75,19 +75,19 @@ object Colors {
 
         var leaf_color = when(active) {
             LeafState.Active -> event_color
-            LeafState.Spill -> active_color_scheme.SPILL(event_color)
+            LeafState.Spill -> active_color_scheme.spill(event_color)
             LeafState.Empty -> line_color
         }
 
 
         leaf_color = when(selected) {
-            LeafSelection.Primary -> active_color_scheme.SELECTED_PRIMARY(is_empty, leaf_color)
-            LeafSelection.Secondary -> active_color_scheme.SELECTED_SECONDARY(is_empty, leaf_color)
+            LeafSelection.Primary -> active_color_scheme.selected_primary(is_empty, leaf_color)
+            LeafSelection.Secondary -> active_color_scheme.selected_secondary(is_empty, leaf_color)
             LeafSelection.Unselected -> leaf_color
         }
 
         if (is_muted) {
-            leaf_color = active_color_scheme.MUTED(is_empty, leaf_color)
+            leaf_color = active_color_scheme.muted(is_empty, leaf_color)
         }
 
         return Triple(
@@ -117,11 +117,11 @@ object Colors {
 
     fun get_slider_colors(): SliderColors {
         return SliderColors(
-            thumbColor = this.active_color_scheme.SLIDER_THUMB,
-            activeTrackColor = this.active_color_scheme.SLIDER_TRACK,
-            activeTickColor = this.active_color_scheme.SLIDER_TICK,
-            inactiveTrackColor = this.active_color_scheme.SLIDER_TRACK_INACTIVE,
-            inactiveTickColor = this.active_color_scheme.SLIDER_TICK_INACTIVE,
+            thumbColor = this.active_color_scheme.slider_thumb,
+            activeTrackColor = this.active_color_scheme.slider_track,
+            activeTickColor = this.active_color_scheme.slider_tick,
+            inactiveTrackColor = this.active_color_scheme.slider_track_inactive,
+            inactiveTickColor = this.active_color_scheme.slider_tick_inactive,
             disabledThumbColor = UNUSED,
             disabledActiveTrackColor = UNUSED,
             disabledActiveTickColor = UNUSED,
@@ -132,23 +132,23 @@ object Colors {
 
     fun get_pan_slider_colors(): SliderColors {
         return this.get_slider_colors().copy(
-            inactiveTrackColor = this.active_color_scheme.SLIDER_TRACK_INACTIVE,
-            inactiveTickColor = this.active_color_scheme.SLIDER_TRACK,
-            activeTrackColor = this.active_color_scheme.SLIDER_TRACK_INACTIVE,
-            activeTickColor = this.active_color_scheme.SLIDER_TRACK
+            inactiveTrackColor = this.active_color_scheme.slider_track_inactive,
+            inactiveTickColor = this.active_color_scheme.slider_track,
+            activeTrackColor = this.active_color_scheme.slider_track_inactive,
+            activeTickColor = this.active_color_scheme.slider_track
         )
     }
 
     fun get_switch_colors(): SwitchColors {
         return SwitchColors(
-            checkedThumbColor = this.active_color_scheme.SWITCH_THUMB_CHECKED,
-            checkedTrackColor = this.active_color_scheme.SWITCH_TRACK_CHECKED,
-            checkedBorderColor = this.active_color_scheme.SWITCH_BORDER_CHECKED,
-            checkedIconColor = this.active_color_scheme.SWITCH_ICON_CHECKED,
-            uncheckedThumbColor = this.active_color_scheme.SWITCH_THUMB_UNCHECKED,
-            uncheckedTrackColor = this.active_color_scheme.SWITCH_TRACK_UNCHECKED,
-            uncheckedBorderColor = this.active_color_scheme.SWITCH_BORDER_UNCHECKED,
-            uncheckedIconColor = this.active_color_scheme.SWITCH_ICON_UNCHECKED,
+            checkedThumbColor = this.active_color_scheme.switch_thumb_checked,
+            checkedTrackColor = this.active_color_scheme.switch_track_checked,
+            checkedBorderColor = this.active_color_scheme.switch_border_checked,
+            checkedIconColor = this.active_color_scheme.switch_icon_checked,
+            uncheckedThumbColor = this.active_color_scheme.switch_thumb_unchecked,
+            uncheckedTrackColor = this.active_color_scheme.switch_track_unchecked,
+            uncheckedBorderColor = this.active_color_scheme.switch_border_unchecked,
+            uncheckedIconColor = this.active_color_scheme.switch_icon_unchecked,
             disabledCheckedThumbColor = UNUSED,
             disabledCheckedTrackColor = UNUSED,
             disabledCheckedBorderColor = UNUSED,
@@ -166,21 +166,21 @@ object Colors {
             unfocusedTextColor = this.active_color_scheme.foreground,
             disabledTextColor = UNUSED,
             errorTextColor = UNUSED,
-            focusedContainerColor = this.active_color_scheme.TEXT_BACKGROUND_FOCUSED,
-            unfocusedContainerColor = this.active_color_scheme.TEXT_BACKGROUND_UNFOCUSED,
+            focusedContainerColor = this.active_color_scheme.text_background_focused,
+            unfocusedContainerColor = this.active_color_scheme.text_background_unfocused,
             disabledContainerColor = UNUSED,
             errorContainerColor = UNUSED,
             cursorColor = this.active_color_scheme.foreground,
             errorCursorColor = UNUSED,
             textSelectionColors = TextSelectionColors(
-                handleColor = this.active_color_scheme.TEXT_SELECTION_HANDLE,
-                backgroundColor = this.active_color_scheme.TEXT_SELECTION_BACKGROUND
+                handleColor = this.active_color_scheme.text_selection_handle,
+                backgroundColor = this.active_color_scheme.text_selection_background
             ),
-            focusedIndicatorColor = this.active_color_scheme.TEXT_FOCUS_COLOR,
+            focusedIndicatorColor = this.active_color_scheme.text_focus_color,
             unfocusedIndicatorColor = this.active_color_scheme.foreground,
             disabledIndicatorColor = UNUSED,
             errorIndicatorColor = UNUSED,
-            focusedLeadingIconColor = this.active_color_scheme.TEXT_FOCUS_COLOR,
+            focusedLeadingIconColor = this.active_color_scheme.text_focus_color,
             unfocusedLeadingIconColor = this.active_color_scheme.foreground,
             disabledLeadingIconColor = UNUSED,
             errorLeadingIconColor = UNUSED,
@@ -188,7 +188,7 @@ object Colors {
             unfocusedTrailingIconColor = this.active_color_scheme.foreground,
             disabledTrailingIconColor = UNUSED,
             errorTrailingIconColor = UNUSED,
-            focusedLabelColor = this.active_color_scheme.TEXT_FOCUS_COLOR,
+            focusedLabelColor = this.active_color_scheme.text_focus_color,
             unfocusedLabelColor = this.active_color_scheme.foreground,
             disabledLabelColor = UNUSED,
             errorLabelColor = UNUSED,
@@ -200,7 +200,7 @@ object Colors {
             unfocusedSupportingTextColor = UNUSED,
             disabledSupportingTextColor = UNUSED,
             errorSupportingTextColor = UNUSED,
-            focusedPrefixColor = this.active_color_scheme.TEXT_FOCUS_COLOR,
+            focusedPrefixColor = this.active_color_scheme.text_focus_color,
             unfocusedPrefixColor = this.active_color_scheme.foreground,
             disabledPrefixColor = UNUSED,
             errorPrefixColor = UNUSED,

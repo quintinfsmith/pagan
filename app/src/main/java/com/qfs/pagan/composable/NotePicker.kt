@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -40,7 +39,7 @@ import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
 
 @Composable
-fun NumberSelectorButton(
+fun NotePickerButton(
     modifier: Modifier = Modifier,
     index: Int,
     alternate: Boolean,
@@ -53,18 +52,18 @@ fun NumberSelectorButton(
 ) {
     val (background, foreground) = if (selected) {
         Pair(
-            Colors.active_color_scheme.NUMBER_SELECTOR_SELECTED,
-            Colors.active_color_scheme.NUMBER_SELECTOR_SELECTED_FOREGROUND,
+            Colors.active_color_scheme.note_picker_selected,
+            Colors.active_color_scheme.note_picker_selected_foreground,
         )
     } else if (!alternate) {
         Pair(
-            Colors.active_color_scheme.NUMBER_SELECTOR_ALT,
-            Colors.active_color_scheme.NUMBER_SELECTOR_ALT_FOREGROUND,
+            Colors.active_color_scheme.note_picker_alt,
+            Colors.active_color_scheme.note_picker_alt_foreground,
         )
     } else {
         Pair(
-            Colors.active_color_scheme.NUMBER_SELECTOR,
-            Colors.active_color_scheme.NUMBER_SELECTOR_FOREGROUND,
+            Colors.active_color_scheme.note_picker,
+            Colors.active_color_scheme.note_picker_foreground,
         )
     }
 
@@ -80,7 +79,7 @@ fun NumberSelectorButton(
                     Modifier.testTag(TestTag.EventOctave, index)
                 }
             )
-            .height(Dimensions.NumberSelectorButtonHeight)
+            .height(Dimensions.NotePickerButtonHeight)
             .pressable(pressed)
             .then(
                 if (selected || pressed.value) {
@@ -107,7 +106,7 @@ fun NumberSelectorButton(
                 "$index",
                 maxLines = 1,
                 color = foreground,
-                style = Typography.NoteSelector.copy(
+                style = Typography.NotePicker.copy(
                     fontWeight = if (selected) {
                         FontWeight.Bold
                     } else {
@@ -143,7 +142,7 @@ fun NumberSelectorButton(
 }
 
 @Composable
-fun RowScope.NumberSelector(
+fun RowScope.NotePicker(
     progression: IntProgression,
     selected: Int?,
     highlighted: Int?,
@@ -157,9 +156,9 @@ fun RowScope.NumberSelector(
 ) {
     for (i in progression) {
         if (i != progression.first) {
-            Spacer(Modifier.width(Dimensions.NumberSelectorSpacing))
+            Spacer(Modifier.width(Dimensions.NotePickerSpacing))
         }
-        NumberSelectorButton(
+        NotePickerButton(
             modifier = Modifier.weight(1F),
             index = i,
             selected = selected == i,
@@ -178,7 +177,7 @@ fun RowScope.NumberSelector(
 }
 
 @Composable
-fun ColumnScope.NumberSelector(
+fun ColumnScope.NotePicker(
     progression: IntProgression,
     selected: Int?,
     highlighted: Int?,
@@ -192,10 +191,10 @@ fun ColumnScope.NumberSelector(
 ) {
     for (i in progression) {
         if (i != progression.first) {
-            Spacer(Modifier.height(Dimensions.NumberSelectorSpacing))
+            Spacer(Modifier.height(Dimensions.NotePickerSpacing))
         }
 
-        NumberSelectorButton(
+        NotePickerButton(
             modifier = Modifier
                 .weight(1F),
             index = i,

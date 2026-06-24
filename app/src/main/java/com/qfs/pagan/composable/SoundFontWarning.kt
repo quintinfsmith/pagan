@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,13 +43,13 @@ fun SoundFontWarning(in_settings: Boolean = false) {
     val url = stringResource(R.string.url_fluid)
     val context = LocalContext.current.find_activity() ?: return
 
-    ProvideContentColorTextStyle(contentColor = Colors.active_color_scheme.SOUNDFONT_WARNING_FOREGROUND) {
+    ProvideContentColorTextStyle(contentColor = Colors.active_color_scheme.soundfont_warning_foreground) {
         Column(
             Modifier
-                .background(Colors.active_color_scheme.SOUNDFONT_WARNING, shape = Shapes.SoundFontWarningBox)
+                .background(Colors.active_color_scheme.soundfont_warning, shape = Shapes.SoundFontWarningBox)
                 .border(
                     Dimensions.SoundFontWarningBorderWidth,
-                    Colors.active_color_scheme.SOUNDFONT_WARNING_BORDER,
+                    Colors.active_color_scheme.soundfont_warning_border,
                     shape = Shapes.SoundFontWarningBox
                 )
                 .padding(Dimensions.SoundFontWarningPadding),

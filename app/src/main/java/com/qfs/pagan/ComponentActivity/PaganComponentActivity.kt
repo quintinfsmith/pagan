@@ -72,7 +72,6 @@ import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSortableMenu
 import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.PaganDialog
-import com.qfs.pagan.composable.PaganTheme
 import com.qfs.pagan.composable.ScaffoldWithTopBar
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.OutlinedButton
@@ -225,56 +224,54 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 LocalConfiguration.current.screenHeightDp.dp
             )
 
-            PaganTheme {
-                Box(
-                    Modifier
-                        .onKeyEvent { e ->
-                            this@PaganComponentActivity.key_event_wrapper(e)
-                        }
-                        .imePadding()
-                        .background(Colors.active_color_scheme.scrim)
-                        .systemBarsPadding()
-                ) {
-                    ScaffoldWithTopBar(
-                        modifier = Modifier.wrapContentWidth(),
-                        top_app_bar = this@PaganComponentActivity.top_bar_wrapper,
-                        drawerState = this@PaganComponentActivity.drawer_state,
-                        gesturesEnabled = this@PaganComponentActivity.drawer_gesture_enabled.value,
-                        drawerContent = { this@PaganComponentActivity.Drawer() },
-                        content = {
-                            Box(modifier = Modifier.padding(it)) {
+            Box(
+                Modifier
+                    .onKeyEvent { e ->
+                        this@PaganComponentActivity.key_event_wrapper(e)
+                    }
+                    .imePadding()
+                    .background(Colors.active_color_scheme.scrim)
+                    .systemBarsPadding()
+            ) {
+                ScaffoldWithTopBar(
+                    modifier = Modifier.wrapContentWidth(),
+                    top_app_bar = this@PaganComponentActivity.top_bar_wrapper,
+                    drawerState = this@PaganComponentActivity.drawer_state,
+                    gesturesEnabled = this@PaganComponentActivity.drawer_gesture_enabled.value,
+                    drawerContent = { this@PaganComponentActivity.Drawer() },
+                    content = {
+                        Box(modifier = Modifier.padding(it)) {
 
-                                // The Background
-                                Canvas(
-                                    Modifier
-                                        .background(Colors.active_color_scheme.background)
-                                        .fillMaxSize(),
-                                    onDraw = { AppBackground() }
-                                )
+                            // The Background
+                            Canvas(
+                                Modifier
+                                    .background(Colors.active_color_scheme.background)
+                                    .fillMaxSize(),
+                                onDraw = { AppBackground() }
+                            )
 
-                                val layout_size = view_model.get_layout_size()
-                                val modifier = Modifier.fillMaxSize()
-                                ProvideContentColorTextStyle(
-                                    contentColor = Colors.active_color_scheme.foreground
-                                ) {
-                                    when (layout_size) {
-                                        LayoutSize.SmallPortrait -> LayoutSmallPortrait(modifier)
-                                        LayoutSize.MediumPortrait -> LayoutMediumPortrait(modifier)
-                                        LayoutSize.LargePortrait -> LayoutLargePortrait(modifier)
-                                        LayoutSize.XLargePortrait -> LayoutXLargePortrait(modifier)
-                                        LayoutSize.SmallLandscape -> LayoutSmallLandscape(modifier)
-                                        LayoutSize.MediumLandscape -> LayoutMediumLandscape(modifier)
-                                        LayoutSize.LargeLandscape -> LayoutLargeLandscape(modifier)
-                                        LayoutSize.XLargeLandscape -> LayoutXLargeLandscape(modifier)
-                                    }
+                            val layout_size = view_model.get_layout_size()
+                            val modifier = Modifier.fillMaxSize()
+                            ProvideContentColorTextStyle(
+                                contentColor = Colors.active_color_scheme.foreground
+                            ) {
+                                when (layout_size) {
+                                    LayoutSize.SmallPortrait -> LayoutSmallPortrait(modifier)
+                                    LayoutSize.MediumPortrait -> LayoutMediumPortrait(modifier)
+                                    LayoutSize.LargePortrait -> LayoutLargePortrait(modifier)
+                                    LayoutSize.XLargePortrait -> LayoutXLargePortrait(modifier)
+                                    LayoutSize.SmallLandscape -> LayoutSmallLandscape(modifier)
+                                    LayoutSize.MediumLandscape -> LayoutMediumLandscape(modifier)
+                                    LayoutSize.LargeLandscape -> LayoutLargeLandscape(modifier)
+                                    LayoutSize.XLargeLandscape -> LayoutXLargeLandscape(modifier)
                                 }
-
                             }
+
                         }
-                    )
-                }
-                Dialogs()
+                    }
+                )
             }
+            Dialogs()
         }
     }
 

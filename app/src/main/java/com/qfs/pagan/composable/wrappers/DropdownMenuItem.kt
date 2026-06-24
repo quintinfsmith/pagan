@@ -9,20 +9,19 @@
  */
 package com.qfs.pagan.composable.wrappers
 
-import android.view.RoundedCorner
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.Typography
 
 @Composable
 fun DropdownMenuItem(
@@ -36,17 +35,21 @@ fun DropdownMenuItem(
     interactionSource: MutableInteractionSource? = null,
 ) {
 
-    val text_color = if (selected) Colors.active_color_scheme.MENU_ITEM_FOREGROUND_SELECTED
-        else Colors.active_color_scheme.MENU_ITEM_FOREGROUND
+    val text_color = if (selected) Colors.active_color_scheme.menu_item_foreground_selected
+        else Colors.active_color_scheme.menu_item_foreground
 
     DropdownMenuItem(
-        text,
+        {
+            ProvideTextStyle(Typography.DropdownMenu) {
+                text()
+            }
+        },
         onClick,
         Modifier
             .padding(4.dp)
             .background(
-                if (selected) Colors.active_color_scheme.MENU_ITEM_SELECTED
-                else Colors.active_color_scheme.MENU_ITEM,
+                if (selected) Colors.active_color_scheme.menu_item_selected
+                else Colors.active_color_scheme.menu_item,
                 Shapes.SortableMenuBox
             ),
         leadingIcon,

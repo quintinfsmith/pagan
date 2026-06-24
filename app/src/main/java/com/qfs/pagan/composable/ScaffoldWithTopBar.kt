@@ -33,6 +33,7 @@ import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shadows
 import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.Typography
 
 @Composable
 fun ScaffoldWithTopBar(
@@ -64,7 +65,10 @@ fun ScaffoldWithTopBar(
                 val foreground = Colors.active_color_scheme.topbar_text
 
                 top_app_bar?.let {
-                    ProvideContentColorTextStyle(contentColor = foreground) {
+                    ProvideContentColorTextStyle(
+                        textStyle = Typography.TopBar,
+                        contentColor = foreground
+                    ) {
                         Row(
                             modifier = Modifier
                                 .height(Dimensions.TopBarHeight)

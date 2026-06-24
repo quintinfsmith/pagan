@@ -13,8 +13,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
-import com.qfs.pagan.ui.theme.Fonts
 
 object Typography {
 
@@ -23,7 +23,12 @@ object Typography {
     )
 
     object About {
-        val License = TextStyle(fontFamily = Fonts.FiraSans)
+        val License = TextStyle(
+            fontFamily = Fonts.FiraSans,
+            fontSize = 14.sp,
+            lineHeight = 1.4.em,
+            textAlign = TextAlign.Justify
+        )
         val LinkTitle = TextStyle(
             fontFamily = Fonts.FiraSans,
             fontSize = 20.sp
@@ -115,7 +120,7 @@ object Typography {
         lineHeight = 16.sp,
     )
 
-    val NoteSelector = TextStyle(
+    val NotePicker = TextStyle(
         fontFamily = Fonts.FiraSans,
         fontSize = 18.sp
     )
@@ -145,11 +150,31 @@ object Typography {
         )
     }
 
-    val TopBar = TextStyle(fontFamily = Fonts.FiraSans)
+    val TopBar = TextStyle(
+        fontFamily = Fonts.FiraSans,
+    )
+
+    val NumberInput = TextStyle(
+        fontFamily = Fonts.FiraMono,
+        textAlign = TextAlign.Center,
+        fontSize = 16.sp,
+        lineHeight = 1.em
+    )
+    val NumberInputLabel = TextStyle(
+        fontFamily = Fonts.FiraMono,
+        fontSize = 14.sp,
+        lineHeight = 1.em
+    )
+
     val TextField = TextStyle(
         fontFamily = Fonts.FiraMono,
         fontSize = 16.sp,
         lineHeight = 16.sp
+    )
+    val TextFieldLabel = TextStyle(
+        fontFamily = Fonts.FiraMono,
+        fontSize = 14.sp,
+        lineHeight = 14.sp
     )
 
     val TinyTuningDialogLabel = TextStyle(

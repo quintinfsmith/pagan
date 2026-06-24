@@ -40,7 +40,6 @@ import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.button.Button
@@ -180,7 +179,7 @@ fun <T> SortableMenu(
         Surface(
             modifier = Modifier
                 .clip(Shapes.SortableMenuBox),
-            color = Colors.active_color_scheme.MENU_BACKGROUND
+            color = Colors.active_color_scheme.menu_background
         ) {
             Column(
                 modifier = Modifier
@@ -196,9 +195,9 @@ fun <T> SortableMenu(
 
                     ProvideContentColorTextStyle(
                         if (default_index == i) {
-                            Colors.active_color_scheme.MENU_ITEM_FOREGROUND_SELECTED
+                            Colors.active_color_scheme.menu_item_foreground_selected
                         } else {
-                            Colors.active_color_scheme.MENU_ITEM_FOREGROUND
+                            Colors.active_color_scheme.menu_item_foreground
                         }
                     ) {
                         Row(
@@ -206,9 +205,9 @@ fun <T> SortableMenu(
                                 .testTag(TestTag.MenuItem, i)
                                 .background(
                                     if (default_index == i) {
-                                        Colors.active_color_scheme.MENU_ITEM_SELECTED
+                                        Colors.active_color_scheme.menu_item_selected
                                     } else {
-                                        Colors.active_color_scheme.MENU_ITEM
+                                        Colors.active_color_scheme.menu_item
                                     },
                                     Shapes.SortableMenuBox
                                 )

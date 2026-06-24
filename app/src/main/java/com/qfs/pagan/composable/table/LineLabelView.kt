@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
@@ -55,16 +54,24 @@ fun LineLabelView(
     val line_offset = line_info.line_offset.value
     val ctl_type = line_info.ctl_type.value
 
-    val (background, foreground) = if (!line_info.is_selected.value && !line_info.is_secondary.value) {
+    val is_mute = line_info.is_mute.value || (channel != null && vm_state.channel_data[channel].is_mute.value)
+    val is_selected = !line_info.is_selected.value && !line_info.is_secondary.value
+
+    var (background, foreground) = if (is_selected) {
         Pair(
-            Colors.active_color_scheme.BUTTON_LINE,
-            Colors.active_color_scheme.BUTTON_LINE_FOREGROUND
+            Colors.active_color_scheme.button_line,
+            Colors.active_color_scheme.button_line_foreground
         )
     } else {
         Pair(
-            Colors.active_color_scheme.BUTTON_LINE_SELECTED,
-            Colors.active_color_scheme.BUTTON_LINE_SELECTED_FOREGROUND
+            Colors.active_color_scheme.button_line_selected,
+            Colors.active_color_scheme.button_line_selected_foreground
         )
+    }
+
+    if (is_mute) {
+        background = Colors.active_color_scheme.muted(true, background)
+        foreground = Colors.active_color_scheme.muted(true, foreground)
     }
 
     val repeat_selection_dialog_visibility = remember { mutableStateOf(false) }
@@ -127,7 +134,7 @@ fun LineLabelView(
                     shape = RectangleShape,
                     color = background
                 ),
-            border_color = Colors.active_color_scheme.TABLE_LINE,
+            border_color = Colors.active_color_scheme.table_line,
             content = {
                 Box(
                     Modifier.fillMaxSize(),
@@ -138,7 +145,7 @@ fun LineLabelView(
                             modifier = Modifier.fillMaxSize(),
                             painter = painterResource(R.drawable.icon_repeat),
                             contentDescription = stringResource(R.string.repeat_selection_in_line),
-                            tint = Colors.active_color_scheme.BUTTON_LINE_SELECTED.merge(Color(0xFFFFFFFF))
+                            tint = Colors.active_color_scheme.button_line_selected.merge(Color(0xFFFFFFFF))
                         )
                     } else if (line_info.is_selected.value) {
                         Spacer(

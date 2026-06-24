@@ -27,7 +27,7 @@ import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 
 @Composable
-fun ColumnScope.TableLine(color: Color = Colors.active_color_scheme.TABLE_LINE) {
+fun ColumnScope.TableLine(color: Color = Colors.active_color_scheme.table_line) {
     Spacer(
         Modifier.Companion
             .background(color = color)
@@ -38,7 +38,7 @@ fun ColumnScope.TableLine(color: Color = Colors.active_color_scheme.TABLE_LINE) 
 
 @Composable
 fun RowScope.TableLine(
-    color: Color = Colors.active_color_scheme.TABLE_LINE,
+    color: Color = Colors.active_color_scheme.table_line,
     width: Dp = Dimensions.TableLineStroke
 ) {
     Spacer(
@@ -50,7 +50,7 @@ fun RowScope.TableLine(
 }
 
 @Composable
-fun BoxScope.TableLine(color: Color = Colors.active_color_scheme.TABLE_LINE) {
+fun BoxScope.TableLine(color: Color = Colors.active_color_scheme.table_line) {
     Spacer(
         Modifier.Companion
             .background(color = color)

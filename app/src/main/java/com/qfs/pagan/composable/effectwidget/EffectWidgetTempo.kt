@@ -9,13 +9,13 @@
  */
 package com.qfs.pagan.composable.effectwidget
 
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
@@ -27,8 +27,8 @@ import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.FloatInput
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
+import com.qfs.pagan.composable.cxtmenu.InsertButton
 import com.qfs.pagan.composable.wrappers.Text
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
@@ -52,7 +52,8 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, opus_manager: OpusL
         revert_on_exit = true,
         prefix = {
             Icon(
-                modifier = Modifier.width(Dimensions.ContextMenuButtonIconWidth),
+                modifier = Modifier
+                    .width(Dimensions.ContextMenuButtonIconWidth),
                 painter = painterResource(R.drawable.icon_tempo),
                 contentDescription = null
             )
@@ -72,7 +73,7 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, opus_manager: OpusL
     }
 
     ProvideContentColorTextStyle(
-        contentColor = Colors.active_color_scheme.CONTEXT_MENU_FOREGROUND,
+        contentColor = Colors.active_color_scheme.context_menu_foreground,
         content = {
             Text(R.string.bpm, Modifier.padding(start = Dimensions.Space.Medium))
         }

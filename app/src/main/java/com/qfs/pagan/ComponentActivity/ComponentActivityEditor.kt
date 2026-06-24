@@ -33,7 +33,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.snapping.SnapPosition
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -65,9 +64,6 @@ import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ProgressIndicatorDefaults
-import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -94,7 +90,6 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -1415,13 +1410,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
         Spacer(
             Modifier
                 .fillMaxHeight()
-                .background(Colors.active_color_scheme.TABLE_ACCENT)
+                .background(Colors.active_color_scheme.table_accent)
                 .width(Dimensions.LineLabelWidth),
         )
         Row {
             Spacer(
                 Modifier
-                    .background(Colors.active_color_scheme.TABLE_ACCENT)
+                    .background(Colors.active_color_scheme.table_accent)
                     .width(Dimensions.LineLabelWidth)
                     .height(Dimensions.LineHeight),
             )
@@ -1429,7 +1424,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             Spacer(
                 Modifier
                     .weight(1F)
-                    .background(Colors.active_color_scheme.TABLE_ACCENT)
+                    .background(Colors.active_color_scheme.table_accent)
                     .height(Dimensions.LineHeight),
             )
         }
@@ -1468,7 +1463,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 Column(Modifier.width(line_label_width)) {
                     Column(Modifier.height(line_height)) {
                         ShortcutView(Modifier.weight(1F), vm_state, opus_manager, scope)
-                        TableLine(Colors.active_color_scheme.TABLE_ACCENT_FOREGROUND)
+                        TableLine(Colors.active_color_scheme.table_accent_foreground)
                     }
 
                     Column(
@@ -1558,7 +1553,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     .height(use_height),
                                 content = {
                                     if (vm_state.draw_top_line(y)) {
-                                        TableLine(Colors.active_color_scheme.TABLE_ACCENT_FOREGROUND)
+                                        TableLine(Colors.active_color_scheme.table_accent_foreground)
                                     }
                                     key(vm_state.line_data[y].hashCode()) {
                                         LineLabelView(
@@ -1580,7 +1575,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         .draggable_line(y, dragging_to_y, is_after, true)
                                         .width(Dimensions.LineLabelWidth)
                                         .height(channel_gap_height)
-                                        .background(Colors.active_color_scheme.CHANNEL_SEPARATOR)
+                                        .background(Colors.active_color_scheme.channel_separator)
                                 )
                             }
                         }
@@ -1588,7 +1583,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         Row(Modifier.height(line_height)) {
                             if (this@ComponentActivityEditor.state_model.has_global_effects_hidden.value) {
                                 ProvideContentColorTextStyle(
-                                    contentColor = Colors.active_color_scheme.TABLE_ACCENT_FOREGROUND
+                                    contentColor = Colors.active_color_scheme.table_accent_foreground
                                 ) {
                                     Icon(
                                         modifier = Modifier
@@ -1644,7 +1639,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             ) {
                                 itemsIndexed(column_widths + listOf(1)) { x, width ->
                                     if (x == column_widths.size) {
-                                        ProvideContentColorTextStyle(contentColor = Colors.active_color_scheme.TABLE_ACCENT_FOREGROUND) {
+                                        ProvideContentColorTextStyle(contentColor = Colors.active_color_scheme.table_accent_foreground) {
                                             val dialog_visibility = remember { mutableStateOf(false) }
                                             Box(
                                                 modifier = Modifier
@@ -1728,7 +1723,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                         )
                                                 ) {
                                                     if (vm_state.draw_top_line(y)) {
-                                                        TableLine(Colors.active_color_scheme.TABLE_ACCENT_FOREGROUND)
+                                                        TableLine(Colors.active_color_scheme.table_accent_foreground)
                                                     }
                                                     Row(Modifier.weight(1F)) {
                                                         if (x > 0 && vm_state.beat_stroke_thickness.value > 0.dp) {
@@ -1753,7 +1748,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                             .draggable_line(y, dragging_to_y, is_after, true)
                                                             .fillMaxWidth()
                                                             .height(channel_gap_height)
-                                                            .background(Colors.active_color_scheme.CHANNEL_SEPARATOR)
+                                                            .background(Colors.active_color_scheme.channel_separator)
                                                     )
                                                 }
                                             }
@@ -1820,13 +1815,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
     ) {
         val (background, foreground) = if (!column_info.is_selected.value && !column_info.is_secondary.value) {
             Pair(
-                Colors.active_color_scheme.BUTTON_COLUMN,
-                Colors.active_color_scheme.BUTTON_COLUMN_FOREGROUND,
+                Colors.active_color_scheme.button_column,
+                Colors.active_color_scheme.button_column_foreground,
             )
         } else {
             Pair(
-                Colors.active_color_scheme.BUTTON_COLUMN_SELECTED,
-                Colors.active_color_scheme.BUTTON_COLUMN_SELECTED_FOREGROUND,
+                Colors.active_color_scheme.button_column_selected,
+                Colors.active_color_scheme.button_column_selected_foreground,
             )
         }
         val zoom = vm_state.active_zoom.floatValue
@@ -1842,7 +1837,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         opus_manager.cursor_select_column(x)
                     }
                     .fillMaxSize(),
-                border_color = Colors.active_color_scheme.TABLE_LINE,
+                border_color = Colors.active_color_scheme.table_line,
                 content = {
                     if (vm_state.active_wide_beat.value == x && LocalContext.current.toPx(Dimensions.LeafBaseWidth * zoom) > vm_state.scroll_state_x.value.layoutInfo.viewportSize.width * 1.5) {
                         LinearProgressIndicator(
@@ -1857,14 +1852,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 },
                             // track and background seem to be reversed. not sure whats up with that.
                             color = if (column_info.is_selected.value || column_info.is_secondary.value) {
-                                Colors.active_color_scheme.WIDE_BEAT_SLIDER_TRACK_SELECTED
+                                Colors.active_color_scheme.wide_beat_slider_track_selected
                             } else {
-                                Colors.active_color_scheme.WIDE_BEAT_SLIDER_TRACK
+                                Colors.active_color_scheme.wide_beat_slider_track
                             },
                             trackColor = if (column_info.is_selected.value || column_info.is_secondary.value) {
-                                Colors.active_color_scheme.WIDE_BEAT_SLIDER_BACKGROUND_SELECTED
+                                Colors.active_color_scheme.wide_beat_slider_background_selected
                             } else {
-                                Colors.active_color_scheme.WIDE_BEAT_SLIDER_BACKGROUND
+                                Colors.active_color_scheme.wide_beat_slider_background
                             },
                             drawStopIndicator = {},
                             progress = { vm_state.wide_beat_progress.floatValue },
@@ -2038,7 +2033,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
             DrawerPadder()
             Surface(
-                color = Colors.active_color_scheme.MENU_BACKGROUND,
+                color = Colors.active_color_scheme.menu_background,
                 shape = Shapes.Container,
                 modifier = Modifier.weight(1F),
             ) {

@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -56,16 +55,16 @@ fun NumberPicker(modifier: Modifier = Modifier, range: IntRange, default: Mutabl
     default.value = (state.currentPage % page_count) + range.first
 
     val scope = rememberCoroutineScope()
-    ProvideContentColorTextStyle(Colors.active_color_scheme.NUMBERPICKER_FOREGROUND) {
+    ProvideContentColorTextStyle(Colors.active_color_scheme.number_picker_foreground) {
         Box(
             modifier
                 .background(
-                    color = Colors.active_color_scheme.NUMBERPICKER_BACKGROUND,
+                    color = Colors.active_color_scheme.number_picker_background,
                     shape = Shapes.SettingsBox
                 )
                 .border(
                     width = Dimensions.NumberPickerStrokeWidth,
-                    color = Colors.active_color_scheme.NUMBERPICKER_FOREGROUND,
+                    color = Colors.active_color_scheme.number_picker_foreground,
                     shape = Shapes.SettingsBox
                 )
                 .width(Dimensions.NumberPickerRowWidth)

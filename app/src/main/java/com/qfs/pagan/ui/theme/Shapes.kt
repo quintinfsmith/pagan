@@ -21,18 +21,18 @@ import com.qfs.pagan.ui.theme.Dimensions.getter
 
 object Shapes {
     val ButtonDefault = CircleShape
-    val NumberSelectorButton = RoundedCornerShape(Dimensions.NumberSelectorButtonRadius)
+    val NumberSelectorButton = RoundedCornerShape(Dimensions.NotePickerButtonRadius)
     val NumberSelectorButtonStart = RoundedCornerShape(
         topStart = Dimensions.ContextMenuRadius,
-        topEnd = Dimensions.NumberSelectorButtonRadius,
-        bottomStart = Dimensions.NumberSelectorButtonRadius,
-        bottomEnd = Dimensions.NumberSelectorButtonRadius,
+        topEnd = Dimensions.NotePickerButtonRadius,
+        bottomStart = Dimensions.NotePickerButtonRadius,
+        bottomEnd = Dimensions.NotePickerButtonRadius,
     )
     val NumberSelectorButtonEnd = RoundedCornerShape(
-        topStart = Dimensions.NumberSelectorButtonRadius,
+        topStart = Dimensions.NotePickerButtonRadius,
         topEnd = Dimensions.ContextMenuRadius,
-        bottomStart = Dimensions.NumberSelectorButtonRadius,
-        bottomEnd = Dimensions.NumberSelectorButtonRadius,
+        bottomStart = Dimensions.NotePickerButtonRadius,
+        bottomEnd = Dimensions.NotePickerButtonRadius,
     )
 
     val ConfigChannelButtonEnd = RoundedCornerShape(

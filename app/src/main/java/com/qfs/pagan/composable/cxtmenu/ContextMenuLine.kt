@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -36,14 +35,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ComponentActivity.ComponentActivityEditor
 import com.qfs.pagan.EffectResourceMap
 import com.qfs.pagan.OpusLayerInterface
@@ -71,8 +68,6 @@ import com.qfs.pagan.composable.effectwidget.TempoEventMenu
 import com.qfs.pagan.composable.effectwidget.VelocityEventMenu
 import com.qfs.pagan.composable.effectwidget.VolumeEventMenu
 import com.qfs.pagan.composable.wrappers.Text
-import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
-import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
@@ -447,7 +442,7 @@ fun SetLineColorButton(
     if (visibility.value) {
         val default_color = opus_manager.get_channel(channel).lines[line_offset].palette.event
             ?: opus_manager.get_channel(channel).palette.event
-            ?: Colors.active_color_scheme.LEAF_COLOR
+            ?: Colors.active_color_scheme.leaf
 
         ColorPickerDialog(default_color, visibility) { new_color ->
             opus_manager.set_line_event_color(channel, line_offset, new_color)

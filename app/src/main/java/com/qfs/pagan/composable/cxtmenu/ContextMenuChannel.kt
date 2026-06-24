@@ -13,7 +13,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,7 +34,6 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.qfs.pagan.EffectResourceMap
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.OpusLayerInterface
@@ -316,7 +314,7 @@ fun SetChannelColorButton(
         }
     }
     if (visibility.value) {
-        val default_color = opus_manager.get_channel(channel_index).palette.event ?: Colors.active_color_scheme.LEAF_COLOR
+        val default_color = opus_manager.get_channel(channel_index).palette.event ?: Colors.active_color_scheme.leaf
         ColorPickerDialog(default_color, visibility) { new_color ->
             opus_manager.set_channel_event_color(channel_index, new_color)
         }

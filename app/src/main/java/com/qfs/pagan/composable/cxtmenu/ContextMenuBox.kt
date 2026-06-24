@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -27,6 +28,7 @@ import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shadows
 import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.Typography
 
 
 @Composable
@@ -37,14 +39,16 @@ fun CMBoxBottom(modifier: Modifier = Modifier, content: @Composable ColumnScope.
             Shadows.ContextMenu
         ),
         shape = Shapes.CMBoxBottom,
-        color = Colors.active_color_scheme.CONTEXT_MENU_BACKGROUND,
-        contentColor = Colors.active_color_scheme.CONTEXT_MENU_FOREGROUND,
+        color = Colors.active_color_scheme.context_menu_background,
+        contentColor = Colors.active_color_scheme.context_menu_foreground,
         content = {
-            Column(
-                modifier = modifier.padding(Dimensions.ContextMenuPadding),
-                content = content,
-                verticalArrangement = Arrangement.Center
-            )
+            ProvideTextStyle(Typography.Default) {
+                Column(
+                    modifier = modifier.padding(Dimensions.ContextMenuPadding),
+                    content = content,
+                    verticalArrangement = Arrangement.Center
+                )
+            }
         }
     )
 }
@@ -57,13 +61,15 @@ fun CMBoxEnd(modifier: Modifier = Modifier, content: @Composable ColumnScope.() 
             Shadows.ContextMenu
         ),
         shape = Shapes.CMBoxEnd,
-        color = Colors.active_color_scheme.CONTEXT_MENU_BACKGROUND,
-        contentColor = Colors.active_color_scheme.CONTEXT_MENU_FOREGROUND,
+        color = Colors.active_color_scheme.context_menu_background,
+        contentColor = Colors.active_color_scheme.context_menu_foreground,
         content = {
-            Column(
-                modifier = modifier.padding(Dimensions.ContextMenuPadding),
-                content = content
-            )
+            ProvideTextStyle(Typography.Default) {
+                Column(
+                    modifier = modifier.padding(Dimensions.ContextMenuPadding),
+                    content = content
+                )
+            }
         }
     )
 }

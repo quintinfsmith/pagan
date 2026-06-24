@@ -241,7 +241,7 @@ fun ColumnScope.TuningDialogTiny(
                 )
                 Surface(
                     shape = Shapes.Container,
-                    tonalElevation = 1.dp
+                    color = Colors.active_color_scheme.MENU_BACKGROUND
                 ) {
                     Row(
                         modifier = Modifier
@@ -277,7 +277,9 @@ fun ColumnScope.TuningDialogTiny(
                                 IntegerInput(
                                     value = remember { mutableStateOf(note_map[actively_editting_index.value].first) },
                                     minimum = 0,
-                                    modifier = Modifier.width(Dimensions.TinyTuningDialogInputWidth),
+                                    modifier = Modifier
+                                        .background(Colors.active_color_scheme.TUNING_TABLE_ITEM)
+                                        .width(Dimensions.TinyTuningDialogInputWidth),
                                     contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
                                     revert_on_exit = true,
                                     callback = {
@@ -291,7 +293,9 @@ fun ColumnScope.TuningDialogTiny(
                                 IntegerInput(
                                     value = remember { mutableStateOf(note_map[actively_editting_index.value].second) },
                                     minimum = 1,
-                                    modifier = Modifier.width(Dimensions.TinyTuningDialogInputWidth),
+                                    modifier = Modifier
+                                        .background(Colors.active_color_scheme.TUNING_TABLE_ITEM)
+                                        .width(Dimensions.TinyTuningDialogInputWidth),
                                     contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
                                     revert_on_exit = true,
                                     callback = {

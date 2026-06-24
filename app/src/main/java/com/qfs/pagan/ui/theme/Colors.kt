@@ -15,12 +15,17 @@ import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SwitchColors
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
 import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.OpusColorPalette
 import com.qfs.pagan.ui.theme.PaganColorScheme.Companion.Defaults.UNUSED
 
 object Colors {
-    var active_color_scheme = PaganColorScheme()
+    var _active_color_scheme = mutableStateOf(PaganColorScheme())
+
+    var active_color_scheme: PaganColorScheme
+        get() { return this._active_color_scheme.value }
+        set(value) { this._active_color_scheme.value = value }
 
     val LEAF_COLOR_INVALID = Color(0xFFe51C3A)
     val LEAF_COLOR_INVALID_SELECTED = Color(0xFF890E21)

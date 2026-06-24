@@ -1,6 +1,12 @@
 package com.qfs.pagan.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import com.qfs.pagan.ui.theme.PaganColorScheme.Companion.Defaults
+import com.qfs.pagan.ui.theme.PaganColorScheme.Companion.Defaults.TABLE_ACCENT
+import com.qfs.pagan.ui.theme.PaganColorScheme.Companion.Defaults.TABLE_ACCENT_FOREGROUND
+import com.qfs.pagan.ui.theme.PaganColorScheme.Companion.Defaults.TABLE_ACCENT_SELECTED
+import com.qfs.pagan.ui.theme.PaganColorScheme.Companion.Defaults.TABLE_ACCENT_SELECTED_FOREGROUND
+import com.qfs.pagan.ui.theme.PaganColorScheme.Companion.Defaults.container
 import kotlin.math.min
 
 data class PaganColorScheme(
@@ -98,7 +104,80 @@ data class PaganColorScheme(
     val WIDE_BEAT_SLIDER_BACKGROUND_SELECTED: Color = Defaults.WIDE_BEAT_SLIDER_BACKGROUND_SELECTED
 ) {
     companion object {
+        fun Dark(): PaganColorScheme {
+            val background = Color(0xFF1D1D1D)
+            val foreground = Color(0xFFE6E4E3)
+            val table_line = Color(0xFFe6ded9)
+            val table_accent = Color(0xFF3d3d3d)
+            val button = Color(0xFFACACAC)
+            val button_foreground = Color(0xFF2D2D2D)
+            val container = Color(0xFF2D2D2D)
+
+            return PaganColorScheme(
+                topbar = container,
+                topbar_text = foreground,
+                background = background,
+                foreground = foreground,
+                button = button,
+                button_foreground = button_foreground,
+                button_disabled = button.merge(background, .3f),
+                button_disabled_foreground = button_foreground.merge(background, .3f),
+
+                container = container,
+                container_border = foreground,
+                CONTEXT_MENU_BACKGROUND = background,
+                CONTEXT_MENU_FOREGROUND = foreground,
+
+                TABLE_ACCENT = table_accent,
+                TABLE_ACCENT_FOREGROUND = table_line,
+
+                BUTTON_LINE = table_accent,
+                BUTTON_LINE_FOREGROUND = table_line,
+
+                BUTTON_COLUMN = table_accent,
+                BUTTON_COLUMN_FOREGROUND = table_line,
+
+                CHANNEL_SEPARATOR = table_line,
+                TABLE_LINE = table_line,
+
+                SHORTCUT = table_accent,
+                SHORTCUT_FOREGROUND = table_line,
+
+                NUMBER_SELECTOR = button,
+                NUMBER_SELECTOR_FOREGROUND = button_foreground,
+                NUMBER_SELECTOR_ALT = Color(0xFF3d3d3d),
+                NUMBER_SELECTOR_ALT_FOREGROUND = Color(0xFFEFEFEF),
+
+                TEXT_BACKGROUND_FOCUSED = container,
+                TEXT_BACKGROUND_UNFOCUSED = container,
+
+                MENU_ITEM = container,
+                MENU_ITEM_FOREGROUND = foreground,
+                MENU_BACKGROUND = background,
+
+                TUNING_TABLE_ITEM = container,
+
+                SWITCH_THUMB_CHECKED = button_foreground,
+                SWITCH_TRACK_CHECKED = button,
+                SWITCH_BORDER_CHECKED = button,
+                SWITCH_ICON_CHECKED = button,
+                SWITCH_THUMB_UNCHECKED = button,
+                SWITCH_TRACK_UNCHECKED = background,
+                SWITCH_BORDER_UNCHECKED = button,
+                SWITCH_ICON_UNCHECKED = button_foreground,
+
+                SLIDER_THUMB = button,
+                SLIDER_TRACK = button,
+                SLIDER_TICK = button,
+                // ------------ Editor --------------------//
+
+                LINE_COLOR = Color(0xFF2D2D2D),
+                EFFECT_LINE_COLOR = Color(0xFF000000)
+            )
+        }
+
         object Defaults {
+            val UNUSED = Color(0xFFFF00FF)
             // ----------- UI -------------------------//
             val topbar: Color = Color(0xFF372D40)
             val topbar_foreground: Color = Color(0xFFFFFFFF)
@@ -193,8 +272,8 @@ data class PaganColorScheme(
 
             val NUMBER_SELECTOR = button
             val NUMBER_SELECTOR_FOREGROUND = button_foreground
-            val NUMBER_SELECTOR_ALT = Color(0xFFDBD0E6)
-            val NUMBER_SELECTOR_ALT_FOREGROUND = Color(0xFF2C2433)
+            val NUMBER_SELECTOR_ALT = Color(0xFF4D5058)
+            val NUMBER_SELECTOR_ALT_FOREGROUND = Color(0xFFFFFFFF)
             val NUMBER_SELECTOR_SELECTED = Color(0xFF5BA1D6)
             val NUMBER_SELECTOR_SELECTED_FOREGROUND = Color(0xFF000000)
 
@@ -204,7 +283,6 @@ data class PaganColorScheme(
             val SLIDER_TRACK_INACTIVE = Color(0xFFB3C1E6)
             val SLIDER_TICK_INACTIVE = Color(0xFFB3C1E6)
 
-            val UNUSED = Color(0xFFFF00FF)
 
             val SWITCH_THUMB_CHECKED = button_foreground
             val SWITCH_TRACK_CHECKED = button

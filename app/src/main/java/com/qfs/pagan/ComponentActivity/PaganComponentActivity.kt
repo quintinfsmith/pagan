@@ -11,6 +11,7 @@ package com.qfs.pagan.ComponentActivity
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -97,6 +98,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEve
 import com.qfs.pagan.ui.theme.AppBackground
 import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.PaganColorScheme
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelPagan
@@ -174,6 +176,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
         this.debug_mode = this.packageName == "com.qfs.pagandev"
         super.onCreate(savedInstanceState)
 
+
         if (!this.debug_mode) {
             Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
                 Log.d("pagandebug", "$paramThrowable")
@@ -205,6 +208,17 @@ abstract class PaganComponentActivity: ComponentActivity() {
         )
 
         setContent {
+            val is_night_mode = when (this.view_model.configuration.night_mode.value) {
+                AppCompatDelegate.MODE_NIGHT_YES -> true
+                AppCompatDelegate.MODE_NIGHT_NO -> false
+                else -> isSystemInDarkTheme()
+            }
+            if (is_night_mode) {
+                Colors.active_color_scheme = PaganColorScheme.Dark()
+            } else {
+                Colors.active_color_scheme = PaganColorScheme()
+            }
+
             this.drawer_state = rememberDrawerState(DrawerValue.Closed) { state ->
                 this.drawer_gesture_enabled.value = state == DrawerValue.Open
                 true
@@ -217,12 +231,6 @@ abstract class PaganComponentActivity: ComponentActivity() {
                     this.finish()
                 }
             }
-            val is_night_mode = when (this.view_model.configuration.night_mode.value) {
-                AppCompatDelegate.MODE_NIGHT_YES -> true
-                AppCompatDelegate.MODE_NIGHT_NO -> false
-                else -> isSystemInDarkTheme()
-            }
-
             // We're useing the relative dimensions, so the actual sizes aren't
             // necessary and Android <= 12 seems to mix up the 'correct' method
             @SuppressLint("ConfigurationScreenWidthHeight")
@@ -231,12 +239,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 LocalConfiguration.current.screenHeightDp.dp
             )
 
-            val color_scheme = if (is_night_mode) {
-                ColorScheme.Dark
-            } else {
-                ColorScheme.Light
-            }
-            PaganTheme(color_scheme) {
+            PaganTheme {
                 Box(
                     Modifier
                         .onKeyEvent { e ->
@@ -247,8 +250,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                         .systemBarsPadding()
                 ) {
                     ScaffoldWithTopBar(
-                        modifier = Modifier
-                            .wrapContentWidth(),
+                        modifier = Modifier.wrapContentWidth(),
                         top_app_bar = this@PaganComponentActivity.top_bar_wrapper,
                         drawerState = this@PaganComponentActivity.drawer_state,
                         gesturesEnabled = this@PaganComponentActivity.drawer_gesture_enabled.value,

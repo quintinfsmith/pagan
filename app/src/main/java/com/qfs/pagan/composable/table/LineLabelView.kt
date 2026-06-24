@@ -126,7 +126,7 @@ fun LineLabelView(
                     shape = RectangleShape,
                     color = background
                 ),
-            border_color = foreground,
+            border_color = Colors.active_color_scheme.TABLE_LINE,
             content = {
                 Box(
                     Modifier.fillMaxSize(),
@@ -165,16 +165,14 @@ fun LineLabelView(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column(
-                                modifier = Modifier
-                                    .fillMaxHeight(),
+                                modifier = Modifier.fillMaxHeight(),
                                 verticalArrangement = Arrangement.Top,
                                 horizontalAlignment = Alignment.End
                             ) {
                                 Text(label_a, maxLines = 1)
                             }
                             Column(
-                                modifier = Modifier
-                                    .fillMaxHeight(),
+                                modifier = Modifier.fillMaxHeight(),
                                 verticalArrangement = Arrangement.Bottom,
                                 horizontalAlignment = Alignment.End
                             ) {

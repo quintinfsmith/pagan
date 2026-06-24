@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.qfs.pagan.R
 
 @Composable
-fun PaganTheme(color_scheme: ColorScheme, content: @Composable () -> Unit) {
+fun PaganTheme(content: @Composable () -> Unit) {
     val default = Typography()
     val font = FontFamily(
         //Font(R.font.fira_sans, FontWeight.Light),
@@ -54,8 +54,7 @@ fun PaganTheme(color_scheme: ColorScheme, content: @Composable () -> Unit) {
             ),
             labelMedium = default.labelMedium.copy(fontFamily = font),
             labelSmall = default.labelSmall.copy(fontFamily = font)
-        ),
-        colorScheme = color_scheme
+        )
     )
 }
 

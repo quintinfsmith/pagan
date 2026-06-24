@@ -44,6 +44,7 @@ import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -69,7 +70,7 @@ fun RowScope.PanEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLaye
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         ProvideTextStyle(
-            MaterialTheme.typography.bodyMedium
+            Typography.EffectWidget.Pan.Indicator
         ) {
             Text(
                 text = if (working_value.floatValue < 0F) {

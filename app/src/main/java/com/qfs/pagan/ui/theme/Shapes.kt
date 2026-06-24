@@ -20,6 +20,7 @@ import com.qfs.pagan.ui.theme.Dimensions.ContextMenuButtonRadius
 import com.qfs.pagan.ui.theme.Dimensions.getter
 
 object Shapes {
+    val ButtonDefault = CircleShape
     val NumberSelectorButton = RoundedCornerShape(Dimensions.NumberSelectorButtonRadius)
     val NumberSelectorButtonStart = RoundedCornerShape(
         topStart = Dimensions.ContextMenuRadius,

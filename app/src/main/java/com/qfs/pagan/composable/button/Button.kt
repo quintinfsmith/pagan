@@ -47,6 +47,7 @@ import com.qfs.pagan.composable.pressable
 import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import com.qfs.pagan.ui.theme.Shadows
+import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
 
 @Composable
@@ -85,7 +86,7 @@ fun Button(
     onLongClick: () -> Unit = {},
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    shape: Shape = ButtonDefaults.shape,
+    shape: Shape = Shapes.ButtonDefault,
     colors: ButtonColors = Colors.get_button_colors(),
     border: BorderStroke? = null,
     shadow: Shadow? = Shadows.Button,
@@ -176,7 +177,7 @@ fun SmallButton(
     contentPadding: PaddingValues = Unpadded,
     content: @Composable RowScope.() -> Unit
 ) {
-    ProvideTextStyle(MaterialTheme.typography.bodySmall) {
+    ProvideTextStyle(Typography.Button) {
         Button(
             onClick= onClick,
             onLongClick = onLongClick,
@@ -203,7 +204,7 @@ fun SmallOutlinedButton(
     contentPadding: PaddingValues = Unpadded,
     content: @Composable RowScope.() -> Unit
 ) {
-    ProvideTextStyle(MaterialTheme.typography.bodySmall) {
+    ProvideTextStyle(Typography.Button) {
         OutlinedButton(
             onClick = onClick,
             onLongClick = onLongClick,

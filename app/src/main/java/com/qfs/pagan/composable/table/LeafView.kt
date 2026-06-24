@@ -33,10 +33,12 @@ import androidx.compose.runtime.currentCompositionLocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.R
@@ -221,7 +223,7 @@ fun LeafView(
                             Box(
                                 contentAlignment = Alignment.Center
                             ) {
-                                ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+                                ProvideTextStyle(Typography.Leaf.RelativePrefix) {
                                     Text(
                                         text = if (event.offset > 0) "+" else "-",
                                         modifier = Modifier
@@ -295,30 +297,32 @@ fun LeafView(
                                                     .width(Dimensions.LeafBaseWidth)
                                             ) {
                                                 drawLine(
-                                                    start = Offset((.1F * size.width), (.65F * size.height)),
-                                                    end = Offset((size.width * .9F), (.35F * size.height)),
+                                                    start = Offset((.1F * size.width), (.5F * size.height)),
+                                                    end = Offset((size.width * .9F), (.5F * size.height)),
                                                     color = text_color,
                                                     strokeWidth = 1F
                                                 )
                                             }
-                                            ProvideTextStyle(MaterialTheme.typography.labelMedium) {
-                                                Row(horizontalArrangement = Arrangement.Center) {
-                                                    Column(
-                                                        verticalArrangement = Arrangement.Top,
-                                                        modifier = Modifier.fillMaxHeight(),
-                                                        content = {
-                                                            Text("${event.numerator}")
-                                                        }
-                                                    )
-                                                    Spacer(Modifier.width(3.dp))
-                                                    Column(
-                                                        verticalArrangement = Arrangement.Bottom,
-                                                        modifier = Modifier.fillMaxHeight(),
-                                                        content = {
-                                                            Text("${event.denominator}")
-                                                        }
-                                                    )
-                                                }
+                                            ProvideTextStyle(Typography.EffectLeafDelay) {
+                                                Column(
+                                                    verticalArrangement = Arrangement.SpaceBetween,
+                                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                                    modifier = Modifier
+                                                        .padding(vertical = 2.dp)
+                                                        .fillMaxHeight(),
+                                                    content = {
+                                                        Text(
+                                                            "${event.numerator}",
+                                                            maxLines = 1,
+                                                            lineHeight = 1.em
+                                                        )
+                                                        Text(
+                                                            "${event.denominator}",
+                                                            maxLines = 1,
+                                                            lineHeight = 1.em
+                                                        )
+                                                    }
+                                                )
                                             }
                                         }
                                     }

@@ -14,8 +14,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.sp
+import com.qfs.pagan.ui.theme.Fonts
 
 object Typography {
+
+    val Default = TextStyle(
+        fontFamily = Fonts.FiraSans
+    )
+
     object About {
         val License = TextStyle(fontFamily = Fonts.FiraSans)
         val LinkTitle = TextStyle(
@@ -69,12 +75,22 @@ object Typography {
     )
     val DropdownMenu = TextStyle(fontFamily = Fonts.FiraSans)
     val EffectLeaf = TextStyle(fontFamily = Fonts.FiraSans, fontSize = 12.sp)
+    val EffectLeafDelay = TextStyle(fontFamily = Fonts.FiraSans, fontSize = 10.sp)
 
     val LineLabel = TextStyle(
         fontFamily = Fonts.FiraSans,
         fontSize = 14.sp,
         lineHeight = 14.sp
     )
+
+    object EffectWidget {
+        object Pan {
+            val Indicator = TextStyle(
+                fontFamily = Fonts.FiraSans,
+                fontSize = 14.sp
+            )
+        }
+    }
 
     object Leaf {
         val Octave = TextStyle(
@@ -84,6 +100,11 @@ object Typography {
         val Offset = TextStyle(
             fontFamily = Fonts.FiraSans,
             fontSize = 18.sp,
+            fontWeight = FontWeight.Bold
+        )
+        val RelativePrefix = TextStyle(
+            fontFamily = Fonts.FiraSans,
+            fontSize = 16.sp,
             fontWeight = FontWeight.Bold
         )
     }

@@ -42,6 +42,7 @@ import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Typography
 
 @Composable
 fun DialogCard(
@@ -77,7 +78,7 @@ fun DialogCard(
 
 @Composable
 fun DialogTitle(text: String, modifier: Modifier = Modifier) {
-    ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+    ProvideTextStyle(Typography.DialogTitle) {
         Text(
             text = text,
             modifier = modifier.padding(Dimensions.DialogTitlePadding)

@@ -38,6 +38,7 @@ import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Typography
+import com.qfs.pagan.ui.theme.merge
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.ceil
 
@@ -137,7 +138,7 @@ fun LineLabelView(
                             modifier = Modifier.fillMaxSize(),
                             painter = painterResource(R.drawable.icon_repeat),
                             contentDescription = stringResource(R.string.repeat_selection_in_line),
-                            tint = foreground
+                            tint = Colors.active_color_scheme.BUTTON_LINE_SELECTED.merge(Color(0xFFFFFFFF))
                         )
                     } else if (line_info.is_selected.value) {
                         Spacer(

@@ -160,6 +160,9 @@ data class PaganColorScheme(
                 SLIDER_THUMB = button,
                 SLIDER_TRACK = button,
                 SLIDER_TICK = button,
+
+                WIDE_BEAT_SLIDER_TRACK = table_line,
+                WIDE_BEAT_SLIDER_BACKGROUND = table_line.merge(table_accent, .3F),
                 // ------------ Editor --------------------//
 
                 LINE_COLOR = Color(0xFF2D2D2D),

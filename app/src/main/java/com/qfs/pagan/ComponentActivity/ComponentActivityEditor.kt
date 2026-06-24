@@ -1856,12 +1856,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     translationX = floating_position
                                 },
                             // track and background seem to be reversed. not sure whats up with that.
-                            color = if (column_info.is_selected.value) {
+                            color = if (column_info.is_selected.value || column_info.is_secondary.value) {
                                 Colors.active_color_scheme.WIDE_BEAT_SLIDER_TRACK_SELECTED
                             } else {
                                 Colors.active_color_scheme.WIDE_BEAT_SLIDER_TRACK
                             },
-                            trackColor = if (column_info.is_selected.value) {
+                            trackColor = if (column_info.is_selected.value || column_info.is_secondary.value) {
                                 Colors.active_color_scheme.WIDE_BEAT_SLIDER_BACKGROUND_SELECTED
                             } else {
                                 Colors.active_color_scheme.WIDE_BEAT_SLIDER_BACKGROUND

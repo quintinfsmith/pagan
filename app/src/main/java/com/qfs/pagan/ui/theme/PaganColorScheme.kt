@@ -329,8 +329,8 @@ data class PaganColorScheme(
 
             val NUMBER_SELECTOR = button
             val NUMBER_SELECTOR_FOREGROUND = button_foreground
-            val NUMBER_SELECTOR_ALT = Color(0xFF4D5058)
-            val NUMBER_SELECTOR_ALT_FOREGROUND = Color(0xFFFFFFFF)
+            val NUMBER_SELECTOR_ALT = Color(0xFFE2DFE7)
+            val NUMBER_SELECTOR_ALT_FOREGROUND = Color(0xFF372D40)
             val NUMBER_SELECTOR_SELECTED = Color(0xFF5BA1D6)
             val NUMBER_SELECTOR_SELECTED_FOREGROUND = Color(0xFF000000)
 

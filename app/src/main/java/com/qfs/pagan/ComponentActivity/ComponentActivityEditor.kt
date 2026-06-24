@@ -1993,9 +1993,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             onClick = { dialog_visible.value = true }
                         ),
                     overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center,
                     maxLines = 1,
-                    text = state_model.project_name.value ?: stringResource(R.string.untitled_opus)
+                    text = state_model.project_name.value ?: stringResource(R.string.untitled_opus),
+                    style = Typography.DrawerTitle
                 )
                 NameAndNotesDialog(dialog_visible)
             }
@@ -2890,7 +2890,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 modifier = Modifier
                                     .weight(1F)
                                     .clickable { expanded.value = true },
-                                overflow = TextOverflow.StartEllipsis
+                                overflow = TextOverflow.StartEllipsis,
+                                style = Typography.DialogTitle
                             )
                             if (i < sorted_pages.size - 1) {
                                 Icon(

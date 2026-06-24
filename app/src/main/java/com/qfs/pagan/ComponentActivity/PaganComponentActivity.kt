@@ -80,7 +80,6 @@ import androidx.documentfile.provider.DocumentFile
 import androidx.window.layout.WindowMetrics
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
-import com.qfs.pagan.composable.ColorScheme
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSortableMenu
 import com.qfs.pagan.composable.DialogTitle

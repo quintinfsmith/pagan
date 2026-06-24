@@ -1840,7 +1840,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         opus_manager.cursor_select_column(x)
                     }
                     .fillMaxSize(),
-                border_color = foreground,
+                border_color = Colors.active_color_scheme.TABLE_LINE,
                 content = {
                     if (vm_state.active_wide_beat.value == x && LocalContext.current.toPx(Dimensions.LeafBaseWidth * zoom) > vm_state.scroll_state_x.value.layoutInfo.viewportSize.width * 1.5) {
                         LinearProgressIndicator(

@@ -148,9 +148,6 @@ data class PaganColorScheme(
                 NUMBER_SELECTOR_ALT = Color(0xFF3d3d3d),
                 NUMBER_SELECTOR_ALT_FOREGROUND = Color(0xFFEFEFEF),
 
-                TEXT_BACKGROUND_FOCUSED = container,
-                TEXT_BACKGROUND_UNFOCUSED = container,
-
                 MENU_ITEM = container,
                 MENU_ITEM_FOREGROUND = foreground,
                 MENU_BACKGROUND = background,
@@ -301,8 +298,8 @@ data class PaganColorScheme(
 
             val LOADING_INDICATOR = MENU_ITEM_SELECTED
 
-            val TEXT_BACKGROUND_FOCUSED = container
-            val TEXT_BACKGROUND_UNFOCUSED = container
+            val TEXT_BACKGROUND_FOCUSED = Color(0x00000000)
+            val TEXT_BACKGROUND_UNFOCUSED = Color(0x00000000)
             val TEXT_FOCUS_COLOR = MENU_ITEM_SELECTED
             val TEXT_SELECTION_HANDLE = MENU_ITEM_SELECTED
             val TEXT_SELECTION_BACKGROUND = Color(

@@ -88,6 +88,7 @@ import com.qfs.pagan.composable.PaganTheme
 import com.qfs.pagan.composable.ScaffoldWithTopBar
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.OutlinedButton
+import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.dashed_border
 import com.qfs.pagan.composable.wrappers.CircularProgressIndicator
 import com.qfs.pagan.composable.wrappers.Text
@@ -267,15 +268,19 @@ abstract class PaganComponentActivity: ComponentActivity() {
 
                                 val layout_size = view_model.get_layout_size()
                                 val modifier = Modifier.fillMaxSize()
-                                when (layout_size) {
-                                    LayoutSize.SmallPortrait -> LayoutSmallPortrait(modifier)
-                                    LayoutSize.MediumPortrait -> LayoutMediumPortrait(modifier)
-                                    LayoutSize.LargePortrait -> LayoutLargePortrait(modifier)
-                                    LayoutSize.XLargePortrait -> LayoutXLargePortrait(modifier)
-                                    LayoutSize.SmallLandscape -> LayoutSmallLandscape(modifier)
-                                    LayoutSize.MediumLandscape -> LayoutMediumLandscape(modifier)
-                                    LayoutSize.LargeLandscape -> LayoutLargeLandscape(modifier)
-                                    LayoutSize.XLargeLandscape -> LayoutXLargeLandscape(modifier)
+                                ProvideContentColorTextStyle(
+                                    contentColor = Colors.active_color_scheme.foreground
+                                ) {
+                                    when (layout_size) {
+                                        LayoutSize.SmallPortrait -> LayoutSmallPortrait(modifier)
+                                        LayoutSize.MediumPortrait -> LayoutMediumPortrait(modifier)
+                                        LayoutSize.LargePortrait -> LayoutLargePortrait(modifier)
+                                        LayoutSize.XLargePortrait -> LayoutXLargePortrait(modifier)
+                                        LayoutSize.SmallLandscape -> LayoutSmallLandscape(modifier)
+                                        LayoutSize.MediumLandscape -> LayoutMediumLandscape(modifier)
+                                        LayoutSize.LargeLandscape -> LayoutLargeLandscape(modifier)
+                                        LayoutSize.XLargeLandscape -> LayoutXLargeLandscape(modifier)
+                                    }
                                 }
 
                             }

@@ -47,6 +47,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import com.qfs.pagan.ui.theme.Shapes
@@ -61,11 +62,7 @@ fun RowScope.DelayEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLa
     val is_initial = cursor.type == CursorMode.Line
     val fade = remember { mutableFloatStateOf(working_event.fade) }
 
-    val default_colors = SliderDefaults.colors()
-    val colors = default_colors.copy(
-        activeTickColor = default_colors.inactiveTickColor,
-        inactiveTickColor = default_colors.activeTickColor
-    )
+    val colors = Colors.get_slider_colors()
 
     val submit = {
         opus_manager.lock_cursor {

@@ -2713,8 +2713,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
         }
 
-        val options =
-            mutableListOf<MutableList<Pair<PresetKey, @Composable RowScope.() -> Unit>>>()
+        val options = mutableListOf<MutableList<Pair<PresetKey, @Composable RowScope.() -> Unit>>>()
         val preset_names = mutableListOf<MutableList<Pair<PresetKey, String?>>>()
         val existing_keys = mutableSetOf<Int>()
 
@@ -2913,7 +2912,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         } else {
                             DialogSTitle(R.string.dropdown_choose_instrument)
                         }
-
                     },
                     default_menu = options[sorted_pages[i]],
                     sort_row_padding = PaddingValues(

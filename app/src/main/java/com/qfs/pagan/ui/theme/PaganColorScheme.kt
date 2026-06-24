@@ -1,6 +1,7 @@
 package com.qfs.pagan.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import com.qfs.pagan.ui.theme.PaganColorScheme.Companion.Defaults
 import kotlin.math.min
 
 data class PaganColorScheme(
@@ -164,6 +165,9 @@ data class PaganColorScheme(
 
                 wide_beat_slider_track = table_line,
                 wide_beat_slider_background = table_line.merge(table_accent, .3F),
+
+                number_picker_background = container,
+                number_picker_foreground = foreground,
                 // ------------ Editor --------------------//
 
                 line = Color(0xFF2D2D2D),

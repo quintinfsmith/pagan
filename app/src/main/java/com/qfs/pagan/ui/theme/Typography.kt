@@ -72,11 +72,15 @@ object Typography {
         lineHeight = 12.sp
     )
 
-    val DialogTitle = TextStyle(fontFamily = Fonts.FiraSans)
+    val DialogTitle = TextStyle(fontFamily = Fonts.FiraSans, fontSize = 20.sp)
     val DialogBody = TextStyle(fontFamily = Fonts.FiraSans)
     val DialogBodyMono = TextStyle(
         fontFamily = Fonts.FiraMono,
         fontSize = 13.sp
+    )
+    val DialogMenuItem = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 16.sp
     )
     val DropdownMenu = TextStyle(fontFamily = Fonts.FiraSans)
     val EffectLeaf = TextStyle(fontFamily = Fonts.FiraSans, fontSize = 12.sp)

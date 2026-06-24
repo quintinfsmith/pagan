@@ -54,6 +54,7 @@ import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import com.qfs.pagan.ui.theme.Shadows
 import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.Typography
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -194,11 +195,13 @@ fun <T> SortableMenu(
                     }
 
                     ProvideContentColorTextStyle(
+
                         if (default_index == i) {
                             Colors.active_color_scheme.menu_item_foreground_selected
                         } else {
                             Colors.active_color_scheme.menu_item_foreground
-                        }
+                        },
+                        textStyle = Typography.DialogMenuItem
                     ) {
                         Row(
                             modifier = Modifier

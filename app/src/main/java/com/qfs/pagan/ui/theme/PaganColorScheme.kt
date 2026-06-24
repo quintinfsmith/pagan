@@ -1,12 +1,6 @@
 package com.qfs.pagan.ui.theme
 
 import androidx.compose.ui.graphics.Color
-import com.qfs.pagan.ui.theme.PaganColorScheme.Companion.Defaults
-import com.qfs.pagan.ui.theme.PaganColorScheme.Companion.Defaults.TABLE_ACCENT
-import com.qfs.pagan.ui.theme.PaganColorScheme.Companion.Defaults.TABLE_ACCENT_FOREGROUND
-import com.qfs.pagan.ui.theme.PaganColorScheme.Companion.Defaults.TABLE_ACCENT_SELECTED
-import com.qfs.pagan.ui.theme.PaganColorScheme.Companion.Defaults.TABLE_ACCENT_SELECTED_FOREGROUND
-import com.qfs.pagan.ui.theme.PaganColorScheme.Companion.Defaults.container
 import kotlin.math.min
 
 data class PaganColorScheme(
@@ -166,6 +160,72 @@ data class PaganColorScheme(
                 SLIDER_THUMB = button,
                 SLIDER_TRACK = button,
                 SLIDER_TICK = button,
+                // ------------ Editor --------------------//
+
+                LINE_COLOR = Color(0xFF2D2D2D),
+                EFFECT_LINE_COLOR = Color(0xFF000000)
+            )
+        }
+
+        fun FourColor(): PaganColorScheme {
+            val color_a = Color(0xFF0a1e0a)
+            val color_b = Color(0xFF466446)
+            val color_c = Color(0xFF96c896)
+            val color_d = Color(0xFFFFFFFF)
+
+            return PaganColorScheme(
+                topbar = color_a,
+                topbar_text = color_c,
+                background = color_a,
+                foreground = color_d,
+                button = color_b,
+                button_foreground = color_a,
+                button_disabled = color_c,
+                button_disabled_foreground = color_d,
+
+                container = color_a,
+                container_border = color_c,
+                CONTEXT_MENU_BACKGROUND = color_a,
+                CONTEXT_MENU_FOREGROUND = color_d,
+
+                TABLE_ACCENT = color_b,
+                TABLE_ACCENT_FOREGROUND = color_d,
+
+                BUTTON_LINE = color_b,
+                BUTTON_LINE_FOREGROUND = color_d,
+
+                BUTTON_COLUMN = color_b,
+                BUTTON_COLUMN_FOREGROUND = color_d,
+
+                CHANNEL_SEPARATOR = color_d,
+                TABLE_LINE = color_d,
+
+                SHORTCUT = color_b,
+                SHORTCUT_FOREGROUND = color_d,
+
+                NUMBER_SELECTOR = color_b,
+                NUMBER_SELECTOR_FOREGROUND = color_d,
+                NUMBER_SELECTOR_ALT = color_b,
+                NUMBER_SELECTOR_ALT_FOREGROUND = color_d,
+
+                MENU_ITEM = color_b,
+                MENU_ITEM_FOREGROUND = color_d,
+                MENU_BACKGROUND = color_a,
+
+                TUNING_TABLE_ITEM = color_b,
+
+                SWITCH_THUMB_CHECKED = color_d,
+                SWITCH_TRACK_CHECKED = color_b,
+                SWITCH_BORDER_CHECKED = color_b,
+                SWITCH_ICON_CHECKED = color_a,
+                SWITCH_THUMB_UNCHECKED = color_b,
+                SWITCH_TRACK_UNCHECKED = color_a,
+                SWITCH_BORDER_UNCHECKED = color_b,
+                SWITCH_ICON_UNCHECKED = color_c,
+
+                SLIDER_THUMB = color_b,
+                SLIDER_TRACK = color_c,
+                SLIDER_TICK = color_b,
                 // ------------ Editor --------------------//
 
                 LINE_COLOR = Color(0xFF2D2D2D),

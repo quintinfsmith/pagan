@@ -1122,6 +1122,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 callback = { mode ->
                     view_model.save_configuration()
                     this@ComponentActivitySettings.update_result()
+                    this@ComponentActivitySettings.requestedOrientation = mode
                 }
             )
         }

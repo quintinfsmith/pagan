@@ -30,8 +30,6 @@ import com.qfs.pagan.EffectResourceMap
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
-import com.qfs.pagan.composable.IntegerInputDialog
-import com.qfs.pagan.composable.IntegerInputDropDown
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.dashed_border
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel

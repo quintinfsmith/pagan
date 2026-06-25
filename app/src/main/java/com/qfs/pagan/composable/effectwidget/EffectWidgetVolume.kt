@@ -21,7 +21,7 @@ import androidx.compose.ui.Modifier
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
-import com.qfs.pagan.composable.IntegerInputDialog
+import com.qfs.pagan.composable.IntegerInputDropDown
 import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.composable.button.TextCMenuButton
 import com.qfs.pagan.composable.MediumSpacer
@@ -71,7 +71,7 @@ fun RowScope.VolumeEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusL
             opus_manager.set_event_at_cursor(working_event)
         },
     )
-    IntegerInputDialog(
+    IntegerInputDropDown(
         R.string.dlg_set_volume,
         dialog_visibility,
         remember { mutableIntStateOf((working_event.value * 100).roundToInt()) },

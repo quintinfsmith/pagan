@@ -51,7 +51,7 @@ import com.qfs.pagan.Values
 import com.qfs.pagan.composable.ColorPickerDialog
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogMenu
-import com.qfs.pagan.composable.IntegerInputDialog
+import com.qfs.pagan.composable.IntegerInputDropDown
 import com.qfs.pagan.composable.LargeSpacer
 import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.NumberPicker
@@ -194,15 +194,15 @@ fun InsertLineButton(
             description = R.string.cd_insert_line
         )
 
-        IntegerInputDialog(
+        IntegerInputDropDown(
             R.string.dlg_insert_lines,
             visibility,
             dialog_value,
             Values.DialogInput.Min.InsertLine,
             max_value = Values.DialogInput.Max.InsertLine
         ) { i ->
-            val channel = active_line.channel.value ?: return@IntegerInputDialog
-            val line_offset = active_line.line_offset.value ?: return@IntegerInputDialog
+            val channel = active_line.channel.value ?: return@IntegerInputDropDown
+            val line_offset = active_line.line_offset.value ?: return@IntegerInputDropDown
             opus_manager.new_line_repeat(channel, line_offset, i)
         }
     }
@@ -232,14 +232,14 @@ fun RemoveLineButton(
             description = R.string.cd_remove_line
         )
 
-        IntegerInputDialog(
+        IntegerInputDropDown(
             R.string.dlg_remove_lines,
             visibility,
             dialog_value,
             0,
         ) { i ->
-            val channel = active_line.channel.value ?: return@IntegerInputDialog
-            val line_offset = active_line.line_offset.value ?: return@IntegerInputDialog
+            val channel = active_line.channel.value ?: return@IntegerInputDropDown
+            val line_offset = active_line.line_offset.value ?: return@IntegerInputDropDown
             opus_manager.remove_line_repeat(channel, line_offset, i)
         }
     }

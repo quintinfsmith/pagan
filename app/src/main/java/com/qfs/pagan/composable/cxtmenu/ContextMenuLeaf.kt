@@ -34,7 +34,7 @@ import com.qfs.pagan.R
 import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.Values
-import com.qfs.pagan.composable.IntegerInputDialog
+import com.qfs.pagan.composable.IntegerInputDropDown
 import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.NotePicker
 import com.qfs.pagan.composable.RadioMenu
@@ -84,7 +84,7 @@ fun SplitButton(
             description = R.string.btn_split
         )
 
-        IntegerInputDialog(
+        IntegerInputDropDown(
             title_string_id = R.string.dlg_split,
             visibility = dialog_visibility,
             value = dialog_value,
@@ -111,7 +111,7 @@ fun InsertButton(
             description = R.string.btn_insert
         )
 
-        IntegerInputDialog(
+        IntegerInputDropDown(
             title_string_id = R.string.dlg_insert,
             visibility = dialog_visibility,
             value = dialog_value,
@@ -167,7 +167,7 @@ fun DurationButton(
             }
         )
 
-        IntegerInputDialog(
+        IntegerInputDropDown(
             title_string_id = R.string.dlg_duration,
             visibility = dialog_visibility,
             value = dialog_value,

@@ -159,6 +159,7 @@ import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.TuningDialogNormal
 import com.qfs.pagan.composable.TuningDialogTiny
 import com.qfs.pagan.composable.cxtmenu.ContextMenuBeatSliderSecondary
+import com.qfs.pagan.composable.cxtmenu.ContextMenuRangePrimary
 import com.qfs.pagan.composable.cxtmenu.EffectMenuItem
 import com.qfs.pagan.composable.dashed_border
 import com.qfs.pagan.composable.dragging_scroll
@@ -1351,7 +1352,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
             CursorMode.Channel -> {
                 @Composable { ContextMenuChannelPrimary(Modifier, vm_state, opus_manager, layout) }
             }
-            CursorMode.Range,
+            CursorMode.Range -> {
+                @Composable { ContextMenuRangePrimary(vm_state, opus_manager, layout) }
+            }
             CursorMode.Unset,
             null -> {
                 null
@@ -1391,9 +1394,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             }
             CursorMode.Range -> {
-                @Composable {
-                    ContextMenuRangeSecondary(vm_state, opus_manager)
-                }
+                @Composable { ContextMenuRangeSecondary(vm_state, opus_manager, layout) }
             }
             CursorMode.Channel -> {
                 @Composable { ContextMenuChannelSecondary(vm_state, opus_manager, layout) }

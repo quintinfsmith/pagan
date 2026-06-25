@@ -330,6 +330,7 @@
     <string name="invalid_channel">Invalid Channel %d</string>
     <string name="close_beat_selector">Close Beat Selector</string>
     <string name="untitled_section">untitled section</string>
+    <string name="back_to_leaf_selection">Back to leaf selection</string>
 
 
     <string-array name="general_midi_presets">

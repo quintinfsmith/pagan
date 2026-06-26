@@ -780,6 +780,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             )
         }
     }
+
     fun check_file_list_and_show_dialog(selection: String?) {
         val file_list = this.get_existing_soundfonts()
         if (file_list.isEmpty()) {

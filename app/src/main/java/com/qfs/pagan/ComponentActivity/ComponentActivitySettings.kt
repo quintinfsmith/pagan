@@ -279,7 +279,6 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     }
                 }
 
-                this.view_model.save_configuration()
                 this.view_model.requires_soundfont.value = false
             } catch (e: Exception) {
                 //this.feedback_msg(this.getString(R.string.feedback_invalid_sf2_file))
@@ -289,7 +288,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             }
         }
 
-        this.update_result()
+        this.save_configuration()
     }
 
     private var result_launcher_set_soundfont_directory_and_import =
@@ -302,11 +301,9 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
             this.view_model.configuration.soundfonts.value = arrayOf()
             this.view_model.configuration.soundfont_directory.value = uri
-            this.view_model.save_configuration()
             this.view_model.requires_soundfont.value = !this.is_soundfont_available()
 
-            this.update_result()
-
+            this.save_configuration()
             this@ComponentActivitySettings.check_file_list_and_show_dialog(null)
         }
 
@@ -319,19 +316,12 @@ class ComponentActivitySettings: PaganComponentActivity() {
             val new_flags = result_data.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
             this.contentResolver.takePersistableUriPermission(uri, new_flags)
             this.view_model.configuration.project_directory.value = uri
-            this.view_model.save_configuration()
 
             this.view_model.change_project_path(uri, this.intent.data)
 
-            this.update_result()
+            this.save_configuration()
         }
 
-    var result_intent = Intent()
-    private fun update_result() {
-        this.result_intent.putExtra("json_config", this.view_model.configuration.to_json().toString())
-        // RESULT_OK lets the other activities know they need to reload the configuration
-        this.setResult(RESULT_OK, this.result_intent)
-    }
 
     private fun parse_file_name(uri: Uri): String? {
         var result: String? = null
@@ -585,8 +575,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                         shape = CircleShape,
                         onClick = {
                             view_model.configuration.soundfonts.value = arrayOf()
-                            view_model.save_configuration()
-                            this@ComponentActivitySettings.update_result()
+                            this@ComponentActivitySettings.save_configuration()
                             selected_file_name.value = null
                             this@ComponentActivitySettings.settings_model.soundfont_menu_visibility.value = false
                         }
@@ -621,8 +610,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                 }
                                 view_model.set_soundfont_uri(uri, index)
                             }
-                            view_model.save_configuration()
-                            this@ComponentActivitySettings.update_result()
+                            this@ComponentActivitySettings.save_configuration()
                             visibility.value = false
                         } catch (_: Exception) {
                             this@ComponentActivitySettings.toast(R.string.invalid_soundfont)
@@ -730,8 +718,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                 )
                                 .clickable(onClick = {
                                     view_model.remove_soundfont(index)
-                                    view_model.save_configuration()
-                                    this@ComponentActivitySettings.update_result()
+                                    this@ComponentActivitySettings.save_configuration()
                                 })
                                 .height(Dimensions.SoundFontMenuIconHeight),
                             painter = painterResource(R.drawable.icon_cross_circle),
@@ -957,8 +944,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                             onClick = {
                                 active_playback_option.value = i
                                 view_model.configuration.sample_rate.value = options_playback[i]
-                                view_model.save_configuration()
-                                this@ComponentActivitySettings.update_result()
+                                this@ComponentActivitySettings.save_configuration()
                                 playback_expanded.value = false
                             }
                         )
@@ -990,8 +976,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                         view_model.configuration.soundfonts.value = view_model.configuration.soundfonts.value.sliceArray(0 until min(1, view_model.configuration.soundfonts.value.size))
                     }
 
-                    view_model.save_configuration()
-                    this@ComponentActivitySettings.update_result()
+                    this@ComponentActivitySettings.save_configuration()
                 }
             )
         }
@@ -1013,8 +998,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 checked = view_model.configuration.normalize_beat_widths.value,
                 onCheckedChange = {
                     view_model.configuration.normalize_beat_widths.value = it
-                    view_model.save_configuration()
-                    this@ComponentActivitySettings.update_result()
+                    this@ComponentActivitySettings.save_configuration()
                 }
             )
         }
@@ -1036,8 +1020,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 checked = view_model.configuration.latest_input_indicator.value,
                 onCheckedChange = {
                     view_model.configuration.latest_input_indicator.value = it
-                    view_model.save_configuration()
-                    this@ComponentActivitySettings.update_result()
+                    this@ComponentActivitySettings.save_configuration()
                 }
             )
         }
@@ -1059,8 +1042,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 checked = view_model.configuration.use_preferred_soundfont.value,
                 onCheckedChange = {
                     view_model.configuration.use_preferred_soundfont.value = it
-                    view_model.save_configuration()
-                    this@ComponentActivitySettings.update_result()
+                    this@ComponentActivitySettings.save_configuration()
                 }
             )
         }
@@ -1111,8 +1093,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                             text = { label() },
                             onClick = {
                                 view_model.configuration.beat_stroke_thickness.value = value
-                                view_model.save_configuration()
-                                this@ComponentActivitySettings.update_result()
+                                this@ComponentActivitySettings.save_configuration()
                                 expanded.value = false
                             }
                         )
@@ -1139,8 +1120,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 checked = view_model.configuration.allow_std_percussion.value,
                 onCheckedChange = {
                     view_model.configuration.allow_std_percussion.value = it
-                    view_model.save_configuration()
-                    this@ComponentActivitySettings.update_result()
+                    this@ComponentActivitySettings.save_configuration()
                 }
             )
         }
@@ -1158,8 +1138,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 options = options_orientation,
                 active = view_model.configuration.force_orientation,
                 callback = { mode ->
-                    view_model.save_configuration()
-                    this@ComponentActivitySettings.update_result()
+                    this@ComponentActivitySettings.save_configuration()
                     this@ComponentActivitySettings.requestedOrientation = mode
                 }
             )
@@ -1178,8 +1157,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 options = options_nightmode,
                 active = view_model.configuration.night_mode,
                 callback = { mode ->
-                    view_model.save_configuration()
-                    this@ComponentActivitySettings.update_result()
+                    this@ComponentActivitySettings.save_configuration()
                 }
             )
         }

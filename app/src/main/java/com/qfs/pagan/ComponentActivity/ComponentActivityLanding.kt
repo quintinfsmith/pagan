@@ -114,7 +114,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
             shape = shape,
             onClick = {
                 val config = this.view_model.configuration
-                this@ComponentActivityLanding.startActivity(
+                this@ComponentActivityLanding.result_update_config.launch(
                     Intent(this, ComponentActivityEditor::class.java).apply {
                         this.put_config(config)
                         this.putExtra("load_backup", true)
@@ -137,7 +137,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
             shape = shape,
             onClick = {
                 val config = this.view_model.configuration
-                this@ComponentActivityLanding.startActivity(
+                this@ComponentActivityLanding.result_update_config.launch(
                     Intent(this@ComponentActivityLanding, ComponentActivityEditor::class.java)
                         .put_config(config)
                 )
@@ -162,7 +162,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
         LoadMenuDialog(load_menu_visibility, view_model.configuration.sort_load) {
             val config = this.view_model.configuration
-            this@ComponentActivityLanding.startActivity(
+            this@ComponentActivityLanding.result_update_config.launch(
                 Intent(this@ComponentActivityLanding, ComponentActivityEditor::class.java).apply {
                     this.data = it
                     this.put_config(config)
@@ -217,7 +217,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
             modifier = modifier.testTag(TestTag.LandingSettings),
             onClick = {
                 val config = this.view_model.configuration
-                this@ComponentActivityLanding.result_launcher_settings.launch(
+                this@ComponentActivityLanding.result_update_config.launch(
                     Intent(this@ComponentActivityLanding, ComponentActivitySettings::class.java)
                         .put_config(config)
                 )

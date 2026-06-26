@@ -95,7 +95,6 @@ class PaganConfiguration(
                     soundfont_uris.add(it.get_string(i).toUri())
                 }
             }
-
             return PaganConfiguration(
                 soundfonts = soundfonts.toTypedArray(),
                 soundfont_uris = soundfont_uris.toTypedArray(),
@@ -128,8 +127,7 @@ class PaganConfiguration(
         }
     }
 
-    fun update_from_path(path: String) {
-        val config = PaganConfiguration.from_path(path)
+    fun from_other(config: PaganConfiguration) {
         val soundfonts_size = if (config.allow_multiple_soundfonts.value) {
             config.soundfonts.value.size
         } else {
@@ -158,6 +156,11 @@ class PaganConfiguration(
         this.beat_stroke_thickness.value = config.beat_stroke_thickness.value
         this.allow_multiple_soundfonts.value = config.allow_multiple_soundfonts.value
         this.sort_load.value = config.sort_load.value
+    }
+
+    fun update_from_path(path: String) {
+        val config = PaganConfiguration.from_path(path)
+        this.from_other(config)
     }
 
     fun save(path: String) {

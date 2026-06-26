@@ -52,7 +52,6 @@ class ViewModelPagan: ViewModel() {
     var project_manager: ProjectManager? = null
     var configuration_path: String? = null
     var configuration = PaganConfiguration()
-    val sort_load = mutableStateOf<Int?>(-3)
 
     // MutableStates
     val requires_soundfont: MutableState<Boolean> = mutableStateOf(false)
@@ -94,7 +93,7 @@ class ViewModelPagan: ViewModel() {
 
     fun set_config(config: PaganConfiguration) {
         println("SET CONFIG: $config")
-        this.configuration = config
+        this.configuration.from_other(config)
         this.has_saved_project.value = this.project_manager?.has_projects_saved() ?: false
         this.has_backup_saved.value = this.project_manager?.has_backup_saved() == true
     }

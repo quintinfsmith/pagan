@@ -119,7 +119,6 @@ import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.MultiExporterEventHandler
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.PaganBroadcastReceiver
-import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.PresetKey
 import com.qfs.pagan.R
@@ -176,6 +175,7 @@ import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.enumerate
+import com.qfs.pagan.put_config
 import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
@@ -722,7 +722,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
             state_model.enable_soundfont(file_paths)
             state_model.soundfont_ready.value = true
-            view_model.save_configuration()
         }
     }
 
@@ -831,6 +830,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     override fun onPause() {
+        this.save_configuration()
         this.save_to_backup()
         super.onPause()
     }
@@ -3018,8 +3018,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     fun open_settings() {
-        this.result_launcher_settings.launch(
+        this.result_update_config.launch(
             Intent(this, ComponentActivitySettings::class.java)
+                .put_config(this.view_model.configuration)
         )
     }
 

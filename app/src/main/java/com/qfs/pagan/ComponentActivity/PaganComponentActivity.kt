@@ -83,6 +83,7 @@ import com.qfs.pagan.composable.wrappers.CircularProgressIndicator
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.on_config
 import com.qfs.pagan.projectmanager.ProjectManager
+import com.qfs.pagan.put_config
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.ui.theme.AppBackground
@@ -103,11 +104,12 @@ import java.util.TimeZone
 import kotlin.math.roundToInt
 
 abstract class PaganComponentActivity: ComponentActivity() {
-    internal var result_launcher_settings =
+    internal var result_update_config =
         this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode != RESULT_OK) return@registerForActivityResult
             result.data?.on_config { config ->
                 this.view_model.set_config(config)
+                this.on_config_load()
             }
         }
 
@@ -231,6 +233,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 if (this.drawer_state.isOpen) {
                     scope.launch { this@PaganComponentActivity.close_drawer() }
                 } else if (this.on_back_press_check()) {
+                    this.save_configuration()
                     this.finish()
                 }
             }
@@ -498,6 +501,10 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 }
             }
         }
+
+       // LaunchedEffect(current_sort.value) {
+       //     this@PaganComponentActivity.save_configuration()
+       // }
     }
 
     @Composable
@@ -607,4 +614,13 @@ abstract class PaganComponentActivity: ComponentActivity() {
         }
     }
     abstract fun on_key_press(e: KeyEvent): Boolean
+
+    var result_intent = Intent()
+
+    fun save_configuration() {
+        this.view_model.save_configuration()
+        this.result_intent.put_config(this.view_model.configuration)
+        // RESULT_OK lets the other activities know they need to reload the configuration
+        this.setResult(RESULT_OK, this.result_intent)
+    }
 }

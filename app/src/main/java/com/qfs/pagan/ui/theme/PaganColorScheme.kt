@@ -242,7 +242,7 @@ data class PaganColorScheme(
         }
 
         object Defaults {
-            val UNUSED = Color(0xFFFF00FF)
+            val UNUSED = Color(0x00000000)
             // ----------- UI -------------------------//
             val topbar: Color = Color(0xFF372D40)
             val topbar_foreground: Color = Color(0xFFFFFFFF)

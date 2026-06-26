@@ -261,16 +261,14 @@ abstract class PaganComponentActivity: ComponentActivity() {
                     gesturesEnabled = this@PaganComponentActivity.drawer_gesture_enabled.value,
                     drawerContent = { this@PaganComponentActivity.Drawer() },
                     content = {
+                        // The Background
+                        Canvas(
+                            Modifier
+                                .background(Colors.active_color_scheme.background)
+                                .fillMaxSize(),
+                            onDraw = { AppBackground() }
+                        )
                         Box(modifier = Modifier.padding(it)) {
-
-                            // The Background
-                            Canvas(
-                                Modifier
-                                    .background(Colors.active_color_scheme.background)
-                                    .fillMaxSize(),
-                                onDraw = { AppBackground() }
-                            )
-
                             val layout_size = view_model.get_layout_size()
                             val modifier = Modifier.fillMaxSize()
                             ProvideContentColorTextStyle(

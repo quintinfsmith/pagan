@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.DrawerState
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -84,6 +83,7 @@ fun ScaffoldWithTopBar(
                     }
                 }
             },
+            containerColor = Colors.active_color_scheme.background,
             content = content,
             modifier = Modifier.fillMaxSize()
         )

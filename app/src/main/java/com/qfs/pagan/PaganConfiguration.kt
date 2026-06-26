@@ -69,6 +69,12 @@ class PaganConfiguration(
     }
 
     companion object {
+        fun from_string(config_json: String): PaganConfiguration? {
+            val content = JSONParser.parse<JSONHashMap>(config_json)
+            return content?.let {
+                PaganConfiguration.from_json(it)
+            }
+        }
         fun from_json(content: JSONHashMap): PaganConfiguration {
             val soundfonts = mutableListOf<String>()
             // Handle old-style single soundfont
@@ -90,7 +96,6 @@ class PaganConfiguration(
                 }
             }
 
-            println("LOADING... ${content.get_intn("sort_load")}")
             return PaganConfiguration(
                 soundfonts = soundfonts.toTypedArray(),
                 soundfont_uris = soundfont_uris.toTypedArray(),
@@ -189,7 +194,6 @@ class PaganConfiguration(
         output["latest_input_indicator"] = this.latest_input_indicator.value
         output["normalize_beat_widths"] = this.normalize_beat_widths.value
         output["beat_stroke_thickness"] = this.beat_stroke_thickness.value.value
-        println("SAVING.... ${this.sort_load.value}")
         output["sort_load"] = this.sort_load.value
 
         // output["channel_colors"] = JSONList(*Array(this.channel_colors.size) {
@@ -197,8 +201,20 @@ class PaganConfiguration(
         // })
         return output
     }
+}
 
-    fun to_intent(intent: Intent) {
-        intent.putExtra("config_json", this.to_json().toString())
+fun Intent.put_config(config: PaganConfiguration): Intent {
+    this.putExtra("json_config", config.to_json().toString())
+    return this
+}
+
+fun Intent.on_config(callback: (PaganConfiguration) -> Unit): Boolean {
+    var output = false
+    this.getStringExtra("json_config")?.let { json_string ->
+        PaganConfiguration.from_string(json_string)?.let { config ->
+            output = true
+            callback(config)
+        }
     }
+    return output
 }

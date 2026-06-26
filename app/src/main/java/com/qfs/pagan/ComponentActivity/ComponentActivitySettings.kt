@@ -328,6 +328,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
     var result_intent = Intent()
     private fun update_result() {
+        this.result_intent.putExtra("json_config", this.view_model.configuration.to_json().toString())
         // RESULT_OK lets the other activities know they need to reload the configuration
         this.setResult(RESULT_OK, this.result_intent)
     }

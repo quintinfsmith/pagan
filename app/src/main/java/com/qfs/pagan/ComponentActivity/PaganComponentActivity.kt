@@ -25,6 +25,7 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.Canvas
@@ -66,8 +67,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import com.qfs.json.JSONHashMap
-import com.qfs.json.JSONParser
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.R
@@ -82,6 +81,7 @@ import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.dashed_border
 import com.qfs.pagan.composable.wrappers.CircularProgressIndicator
 import com.qfs.pagan.composable.wrappers.Text
+import com.qfs.pagan.on_config
 import com.qfs.pagan.projectmanager.ProjectManager
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
@@ -103,6 +103,14 @@ import java.util.TimeZone
 import kotlin.math.roundToInt
 
 abstract class PaganComponentActivity: ComponentActivity() {
+    internal var result_launcher_settings =
+        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            result.data?.on_config { config ->
+                this.view_model.set_config(config)
+            }
+        }
+
     @Composable
     abstract fun LayoutXLargePortrait(modifier: Modifier = Modifier)
     @Composable
@@ -147,11 +155,6 @@ abstract class PaganComponentActivity: ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        this.reload_config()
-
-        view_model.sort_load.value = this.intent.getIntExtra("sort_load", -3)
-        println("........${view_model.sort_load.value}...............")
-
     }
 
     open fun on_crash() { }
@@ -168,8 +171,6 @@ abstract class PaganComponentActivity: ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         this.debug_mode = this.packageName == "com.qfs.pagandev"
         super.onCreate(savedInstanceState)
-
-
 
         if (!this.debug_mode) {
             Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
@@ -188,7 +189,15 @@ abstract class PaganComponentActivity: ComponentActivity() {
         }
 
         val view_model = this.view_model
-        view_model.load_config("${this.applicationContext.filesDir}/pagan.cfg")
+
+        this.view_model.configuration_path = "${this.applicationContext.filesDir}/pagan.cfg"
+
+        val config_in_intent = this.intent.on_config { this.view_model.set_config(it) }
+        if (!config_in_intent) {
+            this.view_model.set_config(
+                PaganConfiguration.from_path(this.view_model.configuration_path!!)
+            )
+        }
         this.on_config_load()
 
         enableEdgeToEdge(
@@ -282,16 +291,6 @@ abstract class PaganComponentActivity: ComponentActivity() {
             }
             Dialogs()
         }
-    }
-
-    fun reload_config() {
-        this.intent.getStringExtra("config_json")?.let { config_json ->
-            val content = JSONParser.parse<JSONHashMap>(config_json)
-            val config = content?.let { PaganConfiguration.from_json(it) } ?: PaganConfiguration()
-            this.view_model.set_config(config)
-        } ?: this.view_model.reload_config()
-
-        this.on_config_load()
     }
 
     open fun on_config_load() {

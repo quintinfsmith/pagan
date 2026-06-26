@@ -119,6 +119,7 @@ import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.MultiExporterEventHandler
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.PaganBroadcastReceiver
+import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.PresetKey
 import com.qfs.pagan.R
@@ -527,16 +528,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
             this.view_model.change_project_path(tree_uri, this.controller_model.active_project)
             this@ComponentActivityEditor.save()
-
-            this.reload_config()
             callback?.invoke()
         }
 
-    internal var result_launcher_settings =
-        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode != RESULT_OK) return@registerForActivityResult
-            this.reload_config()
-        }
 
     internal var result_launcher_import = this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode != RESULT_OK) return@registerForActivityResult

@@ -92,16 +92,13 @@ class ViewModelPagan: ViewModel() {
         }
     }
 
-    fun reload_config() {
-        this.load_config(this.configuration_path ?: return)
-        this.has_saved_project.value = this.project_manager?.has_projects_saved() ?: false
-        this.has_backup_saved.value = this.project_manager?.has_backup_saved() == true
-    }
     fun set_config(config: PaganConfiguration) {
+        println("SET CONFIG: $config")
         this.configuration = config
         this.has_saved_project.value = this.project_manager?.has_projects_saved() ?: false
         this.has_backup_saved.value = this.project_manager?.has_backup_saved() == true
     }
+
     fun set_project_manager(project_manager: ProjectManager) {
         this.project_manager = project_manager
         this.project_list.value = this.project_manager?.get_project_list() ?: listOf()

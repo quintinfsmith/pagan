@@ -10,7 +10,6 @@
 package com.qfs.pagan.ComponentActivity
 
 import android.content.Intent
-import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,7 +31,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.ComposableOpenTarget
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -51,6 +49,7 @@ import com.qfs.pagan.composable.SettingsRow
 import com.qfs.pagan.composable.SoundFontWarning
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.wrappers.Text
+import com.qfs.pagan.put_config
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
@@ -89,12 +88,6 @@ class ComponentActivityLanding: PaganComponentActivity() {
             }
         }
 
-    internal var result_launcher_settings =
-        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode != RESULT_OK) return@registerForActivityResult
-            this.reload_config()
-        }
-
     override fun on_back_press_check(): Boolean {
         return true
     }
@@ -120,8 +113,10 @@ class ComponentActivityLanding: PaganComponentActivity() {
             content = { Text(stringResource(R.string.btn_landing_most_recent)) },
             shape = shape,
             onClick = {
+                val config = this.view_model.configuration
                 this@ComponentActivityLanding.startActivity(
                     Intent(this, ComponentActivityEditor::class.java).apply {
+                        this.put_config(config)
                         this.putExtra("load_backup", true)
                     }
                 )
@@ -141,11 +136,10 @@ class ComponentActivityLanding: PaganComponentActivity() {
             content = { Text(stringResource(R.string.btn_landing_new)) },
             shape = shape,
             onClick = {
+                val config = this.view_model.configuration
                 this@ComponentActivityLanding.startActivity(
-                    Intent(
-                        this@ComponentActivityLanding,
-                        ComponentActivityEditor::class.java
-                    )
+                    Intent(this@ComponentActivityLanding, ComponentActivityEditor::class.java)
+                        .put_config(config)
                 )
             }
         )
@@ -167,10 +161,11 @@ class ComponentActivityLanding: PaganComponentActivity() {
         )
 
         LoadMenuDialog(load_menu_visibility, view_model.configuration.sort_load) {
+            val config = this.view_model.configuration
             this@ComponentActivityLanding.startActivity(
                 Intent(this@ComponentActivityLanding, ComponentActivityEditor::class.java).apply {
                     this.data = it
-                    this.putExtra("sort_load", this@ComponentActivityLanding.view_model.sort_load.value)
+                    this.put_config(config)
                 }
             )
         }
@@ -221,8 +216,10 @@ class ComponentActivityLanding: PaganComponentActivity() {
         SmallIconButton(
             modifier = modifier.testTag(TestTag.LandingSettings),
             onClick = {
+                val config = this.view_model.configuration
                 this@ComponentActivityLanding.result_launcher_settings.launch(
                     Intent(this@ComponentActivityLanding, ComponentActivitySettings::class.java)
+                        .put_config(config)
                 )
             },
             content = {
@@ -243,8 +240,10 @@ class ComponentActivityLanding: PaganComponentActivity() {
         SmallIconButton(
             modifier = modifier.testTag(TestTag.LandingAbout),
             onClick = {
+                val config = this.view_model.configuration
                 this@ComponentActivityLanding.startActivity(
                     Intent(this@ComponentActivityLanding, ComponentActivityAbout::class.java)
+                        .put_config(config)
                 )
             },
             content =  {
@@ -436,7 +435,6 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
     @Composable
     override fun Dialogs() {
-
         val file = File("${this.dataDir}/bkp_crashreport.log")
         if (!file.isFile) return
 

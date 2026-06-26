@@ -604,10 +604,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         this.controller_model.attach_state_model(this.state_model)
         this.keyboard_interface = KeyboardInputInterface(this)
@@ -1133,7 +1129,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             vm_state.playback_state_midi.value = vm_controller.playback_state_midi
         }
 
-        LoadMenuDialog(load_menu_visibility) { uri ->
+        LoadMenuDialog(load_menu_visibility, view_model.configuration.sort_load) { uri ->
             this.save_confirm_dialog {
                 this@ComponentActivityEditor.load_project(uri)
             }

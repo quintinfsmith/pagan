@@ -452,9 +452,13 @@ class ViewModelEditorState: ViewModel() {
         this.column_data.clear()
         this.cell_map.clear()
         this.channel_data.clear()
+
         this.zoom_index.intValue = 0
+        this.active_zoom.floatValue = 1F
         this.zoom_notches.clear()
         this.active_wide_beat.value = null
+        this.queued_zoom_index.value = 0
+        this.max_zoom_index.value = 0
 
         this.coroutine_scope.value.launch {
             this@ViewModelEditorState.scroll_state_x.value.requestScrollToItem(0)

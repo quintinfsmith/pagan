@@ -66,7 +66,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONParser
 import com.qfs.pagan.LayoutSize
+import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSortableMenu
@@ -144,6 +147,11 @@ abstract class PaganComponentActivity: ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        this.reload_config()
+
+        view_model.sort_load.value = this.intent.getIntExtra("sort_load", -3)
+        println("........${view_model.sort_load.value}...............")
+
     }
 
     open fun on_crash() { }
@@ -160,6 +168,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         this.debug_mode = this.packageName == "com.qfs.pagandev"
         super.onCreate(savedInstanceState)
+
 
 
         if (!this.debug_mode) {
@@ -276,7 +285,12 @@ abstract class PaganComponentActivity: ComponentActivity() {
     }
 
     fun reload_config() {
-        this.view_model.reload_config()
+        this.intent.getStringExtra("config_json")?.let { config_json ->
+            val content = JSONParser.parse<JSONHashMap>(config_json)
+            val config = content?.let { PaganConfiguration.from_json(it) } ?: PaganConfiguration()
+            this.view_model.set_config(config)
+        } ?: this.view_model.reload_config()
+
         this.on_config_load()
     }
 
@@ -353,7 +367,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
     open fun on_delete_project(uri: Uri) { }
 
     @Composable
-    fun LoadMenuDialog(visibility: MutableState<Boolean>, current_sort: Int? = -3, load_callback: (Uri) -> Unit) {
+    fun LoadMenuDialog(visibility: MutableState<Boolean>, current_sort: MutableState<Int?>, load_callback: (Uri) -> Unit) {
         key(this.view_model.project_list.value.hashCode()) {
             val project_list = this.view_model.project_list.value.toMutableList()
 

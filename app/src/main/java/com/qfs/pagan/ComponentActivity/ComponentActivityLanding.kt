@@ -95,11 +95,6 @@ class ComponentActivityLanding: PaganComponentActivity() {
             this.reload_config()
         }
 
-    override fun onResume() {
-        super.onResume()
-        this.reload_config()
-    }
-
     override fun on_back_press_check(): Boolean {
         return true
     }
@@ -171,10 +166,11 @@ class ComponentActivityLanding: PaganComponentActivity() {
             onClick = { load_menu_visibility.value = true }
         )
 
-        LoadMenuDialog(load_menu_visibility) {
+        LoadMenuDialog(load_menu_visibility, view_model.configuration.sort_load) {
             this@ComponentActivityLanding.startActivity(
                 Intent(this@ComponentActivityLanding, ComponentActivityEditor::class.java).apply {
                     this.data = it
+                    this.putExtra("sort_load", this@ComponentActivityLanding.view_model.sort_load.value)
                 }
             )
         }

@@ -92,7 +92,6 @@ class ViewModelPagan: ViewModel() {
     }
 
     fun set_config(config: PaganConfiguration) {
-        println("SET CONFIG: $config")
         this.configuration.from_other(config)
         this.has_saved_project.value = this.project_manager?.has_projects_saved() ?: false
         this.has_backup_saved.value = this.project_manager?.has_backup_saved() == true

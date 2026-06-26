@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -29,6 +31,7 @@ import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.IntegerInputDialog
+import com.qfs.pagan.composable.IntegerInputDropDown
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.dashed_border
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
@@ -46,6 +49,8 @@ fun LineLabelView(
     modifier: Modifier = Modifier,
     opus_manager: OpusLayerInterface,
     vm_state: ViewModelEditorState,
+    repeat_selection_dialog_visibility: MutableState<Boolean>,
+    repeat_select_dialog_default: MutableIntState,
     y: Int
 ) {
     val line_info = vm_state.line_data[y]
@@ -73,9 +78,6 @@ fun LineLabelView(
         background = Colors.active_color_scheme.muted(true, background)
         foreground = Colors.active_color_scheme.muted(true, foreground)
     }
-
-    val repeat_selection_dialog_visibility = remember { mutableStateOf(false) }
-    val repeat_select_dialog_default = remember { mutableIntStateOf(1) }
 
     ProvideContentColorTextStyle(foreground, Typography.LineLabel) {
         HalfBorderBox(
@@ -206,18 +208,6 @@ fun LineLabelView(
                     }
 
                 }
-            }
-        )
-    }
-
-    key(repeat_select_dialog_default.value) {
-        IntegerInputDialog(
-            title_string_id = R.string.repeat_selection_in_line,
-            visibility = repeat_selection_dialog_visibility,
-            repeat_select_dialog_default,
-            min_value = 1,
-            callback = { count ->
-                opus_manager.repeat_selection(count)
             }
         )
     }

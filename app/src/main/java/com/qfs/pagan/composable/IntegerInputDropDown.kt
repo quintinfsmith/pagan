@@ -11,6 +11,7 @@ package com.qfs.pagan.composable
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -38,7 +39,7 @@ import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 
 @Composable
-fun IntegerInputDialog(
+fun IntegerInputDropDown(
     title_string_id: Int,
     visibility: MutableState<Boolean>,
     value: MutableIntState,

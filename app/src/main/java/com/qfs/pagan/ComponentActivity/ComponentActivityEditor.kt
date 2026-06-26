@@ -130,7 +130,7 @@ import com.qfs.pagan.composable.DialogMenu
 import com.qfs.pagan.composable.DialogSTitle
 import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.DrawerCard
-import com.qfs.pagan.composable.IntegerInputDialog
+import com.qfs.pagan.composable.IntegerInputDropDown
 import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.PaganDialog
 import com.qfs.pagan.composable.SettingsColumn
@@ -159,6 +159,7 @@ import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.TuningDialogNormal
 import com.qfs.pagan.composable.TuningDialogTiny
 import com.qfs.pagan.composable.cxtmenu.ContextMenuBeatSliderSecondary
+import com.qfs.pagan.composable.cxtmenu.ContextMenuRangePrimary
 import com.qfs.pagan.composable.cxtmenu.EffectMenuItem
 import com.qfs.pagan.composable.dashed_border
 import com.qfs.pagan.composable.dragging_scroll
@@ -1351,7 +1352,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
             CursorMode.Channel -> {
                 @Composable { ContextMenuChannelPrimary(Modifier, vm_state, opus_manager, layout) }
             }
-            CursorMode.Range,
+            CursorMode.Range -> {
+                @Composable { ContextMenuRangePrimary(vm_state, opus_manager, layout) }
+            }
             CursorMode.Unset,
             null -> {
                 null
@@ -1391,9 +1394,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             }
             CursorMode.Range -> {
-                @Composable {
-                    ContextMenuRangeSecondary(vm_state, opus_manager)
-                }
+                @Composable { ContextMenuRangeSecondary(vm_state, opus_manager, layout) }
             }
             CursorMode.Channel -> {
                 @Composable { ContextMenuChannelSecondary(vm_state, opus_manager, layout) }
@@ -1450,6 +1451,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val scope = rememberCoroutineScope()
         val scroll_state_v = vm_state.scroll_state_y.value
         val scroll_state_h = vm_state.scroll_state_x.value
+
+        val repeat_selection_dialog_visibility = remember { mutableStateOf(false) }
+        val repeat_select_dialog_default = remember { mutableIntStateOf(1) }
 
         Box(
             modifier,
@@ -1562,6 +1566,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                 .fillMaxWidth(),
                                             opus_manager,
                                             vm_state,
+                                            repeat_selection_dialog_visibility,
+                                            repeat_select_dialog_default,
                                             y
                                         )
                                     }
@@ -1653,14 +1659,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                     painter = painterResource(R.drawable.icon_add),
                                                     contentDescription = stringResource(R.string.cd_insert_beat)
                                                 )
-                                                IntegerInputDialog(
+                                                IntegerInputDropDown(
                                                     R.string.dlg_insert_beats,
                                                     dialog_visibility,
                                                     vm_state.dlg_insert_beat,
                                                     1,
                                                     Values.DialogInput.Max.InsertBeat
                                                 ) {
-                                                    opus_manager.insert_beats(opus_manager.length,it)
+                                                    opus_manager.insert_beats(opus_manager.length, it)
                                                 }
                                             }
                                         }
@@ -1763,6 +1769,20 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         }
                     }
                 }
+            }
+
+            // Need to have this out here rather than in with the LineLabelView
+            // so it can shift up when the keyboard appears
+            key(repeat_select_dialog_default.intValue) {
+                IntegerInputDropDown(
+                    title_string_id = R.string.repeat_selection_in_line,
+                    visibility = repeat_selection_dialog_visibility,
+                    repeat_select_dialog_default,
+                    min_value = 1,
+                    callback = { count ->
+                        opus_manager.repeat_selection(count)
+                    }
+                )
             }
 
             // Declicker

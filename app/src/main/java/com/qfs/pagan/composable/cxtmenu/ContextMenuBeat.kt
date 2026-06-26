@@ -17,7 +17,6 @@ import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -28,7 +27,7 @@ import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.Values
-import com.qfs.pagan.composable.IntegerInputDialog
+import com.qfs.pagan.composable.IntegerInputDropDown
 import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.button.IconCMenuButton
@@ -96,7 +95,7 @@ fun RemoveBeatButton(
             description = R.string.cd_remove_beat
         )
 
-        IntegerInputDialog(
+        IntegerInputDropDown(
             R.string.dlg_remove_beats,
             dialog_visibility,
             dialog_value,
@@ -123,7 +122,7 @@ fun InsertBeatButton(
             icon = R.drawable.icon_add,
             description = R.string.cd_insert_beat
         )
-        IntegerInputDialog(
+        IntegerInputDropDown(
             R.string.dlg_insert_beats,
             dialog_visibility,
             dialog_value,

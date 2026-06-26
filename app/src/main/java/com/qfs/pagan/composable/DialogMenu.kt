@@ -68,7 +68,7 @@ fun <T> DialogSortableMenu(
     title: Int,
     options: (MutableList<Pair<T, @Composable RowScope.() -> Unit>>) -> Unit,
     sort_options: List<Pair<Int, (Int, Int) -> Int>>,
-    active_sort_option: Int? = null,
+    active_sort_option: MutableState<Int?>,
     default: T? = null,
     refresher: MutableState<Boolean>? = null,
     extra_content: (@Composable RowScope.(() -> Unit, Int?) -> Unit)? = null,
@@ -78,7 +78,6 @@ fun <T> DialogSortableMenu(
 ) {
     val mutable_options = remember { mutableStateOf<List<Pair<T, @Composable RowScope.() -> Unit>>>(listOf()) }
     val options_ready = remember { mutableStateOf(false) }
-    val selected_sort = remember { mutableStateOf(active_sort_option) }
     PaganDialog(
         visibility = visibility,
         on_dismiss_request = on_dismiss_request,
@@ -92,7 +91,7 @@ fun <T> DialogSortableMenu(
                     DialogSTitle(title)
                     extra_content?.let {
                         Row {
-                            it( { visibility.value = false }, selected_sort.value)
+                            it( { visibility.value = false }, active_sort_option.value)
                         }
                     }
                 },
@@ -101,7 +100,7 @@ fun <T> DialogSortableMenu(
                     bottom = Dimensions.DialogBarPaddingVertical,
                 ),
                 sort_options = sort_options,
-                active_sort_option = selected_sort,
+                active_sort_option = active_sort_option,
                 onLongClick = { value: T ->
                     long_click_callback?.let {
                         visibility.value = false

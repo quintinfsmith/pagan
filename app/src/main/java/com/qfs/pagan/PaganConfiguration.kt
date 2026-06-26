@@ -9,6 +9,7 @@
  */
 package com.qfs.pagan
 
+import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.net.Uri
 import androidx.appcompat.app.AppCompatDelegate
@@ -41,7 +42,8 @@ class PaganConfiguration(
     normalize_beat_widths: Boolean = false,
     beat_stroke_thickness: Dp = 0.dp,
     allow_multiple_soundfonts: Boolean = false,
-    soundfont_uris: Array<Uri> = arrayOf()
+    soundfont_uris: Array<Uri> = arrayOf(),
+    sort_load: Int = -3
 ) {
     val soundfonts: MutableState<Array<MutableState<String>>> = mutableStateOf(Array(if (allow_multiple_soundfonts) soundfonts.size else min(1, soundfonts.size)) { mutableStateOf(soundfonts[it]) })
     val soundfont_uris: MutableState<Array<MutableState<Uri>>> = mutableStateOf(Array(if (allow_multiple_soundfonts) soundfont_uris.size else min(1, soundfont_uris.size)) { mutableStateOf(soundfont_uris[it]) })
@@ -58,6 +60,7 @@ class PaganConfiguration(
     val normalize_beat_widths: MutableState<Boolean> = mutableStateOf(normalize_beat_widths)
     val beat_stroke_thickness: MutableState<Dp> = mutableStateOf(beat_stroke_thickness)
     val allow_multiple_soundfonts: MutableState<Boolean> = mutableStateOf(allow_multiple_soundfonts)
+    val sort_load: MutableState<Int?> = mutableStateOf(sort_load)
 
     enum class MoveMode {
         MOVE,
@@ -87,6 +90,7 @@ class PaganConfiguration(
                 }
             }
 
+            println("LOADING... ${content.get_intn("sort_load")}")
             return PaganConfiguration(
                 soundfonts = soundfonts.toTypedArray(),
                 soundfont_uris = soundfont_uris.toTypedArray(),
@@ -102,7 +106,8 @@ class PaganConfiguration(
                 latest_input_indicator = content.get_boolean("latest_input_indicator", true),
                 normalize_beat_widths = content.get_boolean("normalize_beat_widths", false),
                 beat_stroke_thickness = content.get_floatn("beat_stroke_thickness")?.dp ?: 0.dp,
-                allow_multiple_soundfonts = content.get_boolean("allow_multiple_soundfonts", false)
+                allow_multiple_soundfonts = content.get_boolean("allow_multiple_soundfonts", false),
+                sort_load = content.get_int("sort_load", -3)
             )
         }
 
@@ -147,6 +152,7 @@ class PaganConfiguration(
         this.normalize_beat_widths.value = config.normalize_beat_widths.value
         this.beat_stroke_thickness.value = config.beat_stroke_thickness.value
         this.allow_multiple_soundfonts.value = config.allow_multiple_soundfonts.value
+        this.sort_load.value = config.sort_load.value
     }
 
     fun save(path: String) {
@@ -183,10 +189,16 @@ class PaganConfiguration(
         output["latest_input_indicator"] = this.latest_input_indicator.value
         output["normalize_beat_widths"] = this.normalize_beat_widths.value
         output["beat_stroke_thickness"] = this.beat_stroke_thickness.value.value
+        println("SAVING.... ${this.sort_load.value}")
+        output["sort_load"] = this.sort_load.value
 
         // output["channel_colors"] = JSONList(*Array(this.channel_colors.size) {
         //     JSONString(this.channel_colors[it].toHexString(HexFormat.Default))
         // })
         return output
+    }
+
+    fun to_intent(intent: Intent) {
+        intent.putExtra("config_json", this.to_json().toString())
     }
 }

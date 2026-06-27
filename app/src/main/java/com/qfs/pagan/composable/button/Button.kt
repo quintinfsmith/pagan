@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.shadow.Shadow
@@ -43,8 +44,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.composable.pressable
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import com.qfs.pagan.ui.theme.Shadows
+import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
 
 @Composable
@@ -53,8 +56,10 @@ fun OutlinedButton(
     onLongClick: () -> Unit = {},
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    border: BorderStroke = ButtonDefaults.outlinedButtonBorder(),
-
+    border: BorderStroke = BorderStroke(
+        ButtonDefaults.outlinedButtonBorder().width,
+        Colors.active_color_scheme.button
+    ),
     shape: Shape = ButtonDefaults.shape,
     outerPadding: PaddingValues = Unpadded,
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
@@ -65,7 +70,7 @@ fun OutlinedButton(
         onLongClick = onLongClick,
         modifier = modifier,
         enabled = enabled,
-        colors = ButtonDefaults.outlinedButtonColors(),
+        colors = Colors.get_outline_button_colors(),
         shape = shape,
         border = border,
         outerPadding = outerPadding,
@@ -81,9 +86,8 @@ fun Button(
     onLongClick: () -> Unit = {},
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-
-    shape: Shape = ButtonDefaults.shape,
-    colors: ButtonColors = ButtonDefaults.buttonColors(),
+    shape: Shape = Shapes.ButtonDefault,
+    colors: ButtonColors = Colors.get_button_colors(),
     border: BorderStroke? = null,
     shadow: Shadow? = Shadows.Button,
     outerPadding: PaddingValues = Unpadded,
@@ -92,7 +96,11 @@ fun Button(
 ) {
     val focus_manager = LocalFocusManager.current
     val pressed = remember { mutableStateOf(false) }
-    ProvideContentColorTextStyle(contentColor = colors.contentColor, textStyle = Typography.Button) {
+    ProvideContentColorTextStyle(
+        contentColor = if (enabled) colors.contentColor
+            else colors.disabledContentColor,
+        textStyle = Typography.Button
+    ) {
         Box(
             modifier = modifier
                 .pressable(pressed)
@@ -123,10 +131,9 @@ fun Button(
                         )
                         .background(color = colors.containerColor, shape)
                     } else {
-                        Modifier.background(color = colors.disabledContentColor, shape)
+                        Modifier.background(color = colors.disabledContainerColor, shape)
                     }
                 )
-                //.minimumInteractiveComponentSize()
                 .semantics { role = Role.Button },
             contentAlignment = Alignment.Center,
         ) {
@@ -162,7 +169,7 @@ fun SmallButton(
     enabled: Boolean = true,
 
     shape: Shape = ButtonDefaults.shape,
-    colors: ButtonColors = ButtonDefaults.buttonColors(),
+    colors: ButtonColors = Colors.get_button_colors(),
     border: BorderStroke? = null,
 
     shadow: Shadow? = Shadows.Button,
@@ -170,7 +177,7 @@ fun SmallButton(
     contentPadding: PaddingValues = Unpadded,
     content: @Composable RowScope.() -> Unit
 ) {
-    ProvideTextStyle(MaterialTheme.typography.bodySmall) {
+    ProvideTextStyle(Typography.Button) {
         Button(
             onClick= onClick,
             onLongClick = onLongClick,
@@ -193,18 +200,16 @@ fun SmallOutlinedButton(
     onLongClick: () -> Unit = {},
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    border: BorderStroke = ButtonDefaults.outlinedButtonBorder(),
     outerPadding: PaddingValues = Unpadded,
     contentPadding: PaddingValues = Unpadded,
     content: @Composable RowScope.() -> Unit
 ) {
-    ProvideTextStyle(MaterialTheme.typography.bodySmall) {
+    ProvideTextStyle(Typography.Button) {
         OutlinedButton(
             onClick = onClick,
             onLongClick = onLongClick,
             modifier = modifier,
             enabled = enabled,
-            border = border,
             outerPadding = outerPadding,
             contentPadding = contentPadding,
             content = content

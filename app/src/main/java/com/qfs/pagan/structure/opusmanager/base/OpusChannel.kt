@@ -10,6 +10,8 @@
 package com.qfs.pagan.structure.opusmanager.base
 
 import com.qfs.pagan.PresetKey
+import com.qfs.pagan.structure.opusmanager.OpusChannelJSONInterface
+import com.qfs.pagan.structure.opusmanager.OpusLineJSONInterface
 import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.ColorPalettable
 import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.OpusColorPalette
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectControlSet
@@ -371,6 +373,18 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
     }
     override fun <T : EffectEvent> get_controller(type: EffectType): EffectController<T> {
         return this.controllers.get<T>(type)
+    }
+
+    fun duplicate_line(index: Int) {
+        val new_line = this.get_line(index).copy()
+        this.insert_line(index, new_line as T)
+    }
+
+    fun copy(): OpusChannelAbstract<U, T> {
+        return OpusChannelJSONInterface.interpret(
+            OpusChannelJSONInterface.generalize(this),
+            this.get_beat_count()
+        ) as OpusChannelAbstract<U, T>
     }
 }
 

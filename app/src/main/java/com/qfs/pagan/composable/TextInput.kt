@@ -16,6 +16,7 @@ import androidx.compose.foundation.text.input.TextFieldBuffer
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.TextFieldLabelScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -29,6 +30,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
 
@@ -63,7 +65,9 @@ fun TextInput(
     OutlinedTextField(
         state = state,
         lineLimits = lineLimits,
-        label = label,
+        label = label?.let {
+            { ProvideTextStyle(Typography.NumberInputLabel, { label() }) }
+        },
         placeholder = placeholder,
         textStyle = Typography.TextField.copy(textAlign = textAlign),
         modifier = modifier.onFocusChanged { focus_change_callback(it) },
@@ -81,6 +85,7 @@ fun TextInput(
             },
             keyboardType = KeyboardType.Text
         ),
-        inputTransformation = InputTransformation { input.value = this.toString() }
+        inputTransformation = InputTransformation { input.value = this.toString() },
+        colors = Colors.get_textfield_colors()
     )
 }

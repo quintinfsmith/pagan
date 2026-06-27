@@ -26,6 +26,7 @@ import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileNotFoundException
 import java.io.InputStreamReader
 import java.time.Instant
 import java.time.LocalDateTime
@@ -37,71 +38,13 @@ import java.util.TimeZone
  * Handles project file management. ie caching files, generating file names, etc
  */
 class ProjectManager(val context: Context, var uri: Uri?) {
+    data class CachedProjectData(var uri: Uri, var title: String, var modified: Long?, var created: Long?)
     // Where the cached list of projects is stored
     private val _cache_path = "${this.context.cacheDir}/project_list.json"
     // Where backup data is stored
     private val _bkp_path = "${this.context.cacheDir}/.bkp.json"
     // Where the uri of the backed up data is stored, if it has a uri associated.
     private val _bkp_path_path = "${this.context.cacheDir}/.bkp_path"
-
-    /**
-     * Call before showing Load Projects menu
-     */
-    fun check() {
-        this.ucheck_recache_external_storage_projects()
-        this.scan_and_update_project_list()
-    }
-
-    /**
-     * Deprecated. Potential source of project corruption
-     * Move files from [old_uri] to the ProjectManger's current [uri],
-     * return the new uri associated with given [active_project_uri] if it was moved
-     **/
-    fun move_old_projects_directory(old_uri: Uri, active_project_uri: Uri? = null): Uri? {
-        val bkp_path_file = File(this._bkp_path_path)
-        val bkp_uri = if (!bkp_path_file.exists()) {
-            null
-        } else {
-            bkp_path_file.readText().toUri()
-        }
-
-        val old_directory = DocumentFile.fromTreeUri(this.context, old_uri) ?: return null
-        if (!old_directory.isDirectory || old_uri == this.uri) return null
-
-        var output: Uri? = null
-        val buffer_size = 1024 * 1024
-        for (project in old_directory.listFiles()) {
-            if (!project.isFile) continue
-            // Use new path instead of copying file name to avoid collisions
-            val new_uri = this.get_new_file_uri() ?: continue
-            val output_stream = this.context.contentResolver.openOutputStream(new_uri, "wt")
-            val input_stream = this.context.contentResolver.openInputStream(project.uri)
-
-            when (project.uri) {
-                active_project_uri -> { output = new_uri }
-                bkp_uri -> { bkp_path_file.writeText(new_uri.toString()) }
-                else -> { }
-            }
-
-            val buffer = ByteArray(buffer_size)
-            while (true) {
-                val read_size = input_stream?.read(buffer) ?: break
-                if (read_size == -1) {
-                    break
-                }
-                output_stream?.write(buffer, 0, read_size)
-            }
-
-            input_stream?.close()
-            output_stream?.flush()
-            output_stream?.close()
-
-            project.delete()
-        }
-
-        this.scan_and_update_project_list()
-        return output
-    }
 
     /**
      * Change the where projects are saved to [new_uri]. Also moves existing projects.
@@ -113,9 +56,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         if (new_directory == null || !new_directory.isDirectory) throw InvalidDirectoryException(new_uri)
 
         this.uri = new_uri
-
         this.ucheck_update_move_project_files(active_project_uri)
-        this.scan_and_update_project_list()
     }
 
     /**
@@ -140,7 +81,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
             document_file.delete()
         }
 
-        this.scan_and_update_project_list()
+        this.scan_and_update_project_list(full_refresh = false)
     }
 
     /**
@@ -199,24 +140,6 @@ class ProjectManager(val context: Context, var uri: Uri?) {
     }
 
     /**
-     * Generate a default project name.
-     */
-    private fun generate_file_project_name(uri: Uri? = null): String {
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-        return if (uri == null) {
-            val now = LocalDateTime.now()
-            this.context.getString(R.string.untitled_op, now.format(formatter))
-        } else {
-            val file = DocumentFile.fromSingleUri(this.context, uri) ?: return "Untitled Op."
-            val date = LocalDateTime.ofInstant(
-                Instant.ofEpochMilli(file.lastModified()),
-                TimeZone.getDefault().toZoneId()
-            )
-            this.context.getString(R.string.untitled_op, date.format(formatter))
-        }
-    }
-
-    /**
      * Temporary function. Check if the user has projects saved in the ExternalFilesDir where
      * projects were stored before v1.7.7.
      */
@@ -231,94 +154,73 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         }
     }
 
-    /**
-     * Temporary Function.
-     * Move projects from external storage (where projects were stored before v1.7.7) to
-     * the current uri
-     */
-    fun ucheck_recache_external_storage_projects(): Boolean {
-        // V1.7.7, moved project storage out of ExternalFilesDir
-        val old_directory = try {
-            val external_path = this.context.getExternalFilesDir(null) ?: return false
-            File("$external_path/projects")
-        } catch (_: SecurityException) {
-            return false
-        }
-        if (!old_directory.isDirectory || old_directory.listFiles()?.isEmpty() ?: false) return false
-
-        val working_directory = DocumentFile.fromFile(old_directory)
-
-        val project_list = JSONList()
-        for (json_file in working_directory.listFiles()) {
-            val project_name = try {
-                this.get_file_project_name(json_file.uri) ?: this.generate_file_project_name(json_file.uri)
-            } catch (_: Exception) {
-                continue
-            }
-
-            project_list.add(
-                JSONList(
-                    JSONString(json_file.uri.toString()),
-                    JSONString(project_name)
-                )
-            )
-        }
-
-        project_list.sort_by { it ->
-            (it as JSONList).get_string(1)
-        }
-
-        val file = File(this._cache_path)
-        file.writeText(project_list.to_string())
-        return true
-    }
 
     /**
      * Get the stored project's title given the projects location at [uri]
      */
-    fun get_file_project_name(uri: Uri): String? {
+    fun get_file_project_name(uri: Uri): String {
         val input_stream = this.context.contentResolver.openInputStream(uri)
         val reader = BufferedReader(InputStreamReader(input_stream))
 
         val content = reader.readText()
         reader.close()
 
-        val json_obj = JSONParser.parse<JSONHashMap>(content) ?: return null
+        val json_obj = JSONParser.parse<JSONHashMap>(content) ?: throw InvalidJSON(content)
+        return this.get_file_project_name(json_obj, uri)
+    }
+
+    fun get_file_project_name(json_obj: JSONHashMap, uri: Uri): String {
         val version = OpusManagerJSONInterface.detect_version(json_obj)
         return when (version) {
             0, 1, 2 -> json_obj.get_string("name")
             else -> {
-                var title = json_obj.get_hashmap("d").get_stringn("title")
+                val hashmap = json_obj.get_hashmap("d")
+                val title = hashmap.get_stringn("title")
 
-                if (title == null) {
-                    json_obj.get_stringn("ts00")?.let {
-                        val local_date_time = LocalDateTime.ofInstant(
-                            Instant.ofEpochMilli(it.toLong() * 1000),
-                            TimeZone.getDefault().toZoneId()
-                        )
-                        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-                        title = this.context.getString(
-                            R.string.untitled_op,
-                            local_date_time.format(formatter)
-                        )
-                    }
+                if (title != null) {
+                    title
+                } else {
+
+                    val localdatetime = LocalDateTime.ofInstant(
+                        Instant.ofEpochMilli(this.get_file_timestamp(json_obj, uri)),
+                        TimeZone.getDefault().toZoneId()
+                    )
+
+                    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                    this.context.getString(
+                        R.string.untitled_op,
+                        localdatetime.format(formatter)
+                    )
                 }
-
-                title ?: this.generate_file_project_name(uri)
             }
         }
+    }
+
+    fun get_project_created_timestamp(json_obj: JSONHashMap): Long? {
+        return json_obj.get_hashmapn("d")?.get_stringn("ts00")?.toLong()?.times(1000)
+    }
+    fun get_project_modified_timestamp(json_obj: JSONHashMap, uri: Uri): Long {
+        return json_obj.get_hashmap("d").get_stringn("ts01")?.toLong()?.times(1000)
+            ?: DocumentFile.fromSingleUri(this.context, uri)?.lastModified()
+            ?: 0L
+    }
+
+    fun get_file_timestamp(json_obj: JSONHashMap, uri: Uri): Long {
+        return this.get_project_created_timestamp(json_obj) ?: this.get_project_modified_timestamp(json_obj, uri)
     }
 
     /**
      * Get a List of Uris paired with their Projects' titles.
      */
-    fun get_project_list(): List<Pair<Uri, String>> {
+    fun get_project_list(): List<CachedProjectData> {
         val json_list = this.get_json_project_list()
         return List(json_list.size) { i: Int ->
-            val entry = json_list.get_list(i)
-            Pair(
-                entry.get_string(0).toUri(),
-                entry.get_string(1)
+            val entry = json_list.get_hashmap(i)
+            CachedProjectData(
+                entry.get_string("uri").toUri(),
+                entry.get_string("title"),
+                entry.get_stringn("modified")?.toLong(),
+                entry.get_stringn("created")?.toLong()
             )
         }
     }
@@ -329,51 +231,93 @@ class ProjectManager(val context: Context, var uri: Uri?) {
     fun get_json_project_list(): JSONList {
         val file = File(this._cache_path)
         if (!file.exists()) return JSONList()
-
         val string_content = file.readText(Charsets.UTF_8)
 
         return try {
-            JSONParser.parse(string_content)!!
+            val project_list = JSONParser.parse<JSONList>(string_content)
+            var needs_save = false
+            // Check if timestamp is included in project list, if not, add it.
+            val output = JSONList()
+            for (i in 0 until (project_list as JSONList).size) {
+                if (project_list[i] is JSONList) {
+                    val entry = project_list.get_list(i)
+                    needs_save = true
+                    val uri = entry.get_string(0).toUri()
+
+                    val (modified, created) = try {
+                        this.get_json(uri)?.let {
+                            Pair(
+                                this.get_project_modified_timestamp(it, uri).toString(),
+                                this.get_project_created_timestamp(it)?.toString()
+                            )
+                        } ?: Pair(
+                            DocumentFile.fromSingleUri(this.context, uri)?.lastModified().toString(),
+                            null
+                        )
+                    } catch (e: IllegalArgumentException) {
+                        continue
+                    }
+
+                    output.add(
+                        JSONHashMap(
+                            "uri" to entry[0],
+                            "title" to entry[1],
+                            "modified" to JSONString(modified),
+                            "created" to created?.let { JSONString(it) }
+                        )
+                    )
+                } else {
+                    output.add(project_list[i])
+                }
+            }
+
+            if (needs_save) {
+                val file = File(this._cache_path)
+                file.writeText(output.to_string())
+            }
+            output
         } catch (_: InvalidJSON) {
             File(this._cache_path).delete()
             JSONList()
         }
     }
 
-    fun scan_and_update_project_list() {
-        val cached_list = this.get_json_project_list()
+    fun scan_and_update_project_list(full_refresh: Boolean = false) {
+        val cached_list = if (full_refresh) {
+            JSONList()
+        } else {
+            this.get_json_project_list()
+        }
+
         // Check for new
         val uris = this.get_existing_uris()
         val cached_uri_to_remove = mutableListOf<Int>()
+
         // Create list of cached uris, remove none existing ones while we're here.
         val cached_uris_list = Array(cached_list.size) { i: Int ->
-            val uri = cached_list.get_list(i).get_string(0).toUri()
+            val uri = cached_list.get_hashmap(i).get_string("uri").toUri()
             if (!uris.contains(uri)) {
                 cached_uri_to_remove.add(i)
             }
             uri
         }
+
         for (i in cached_uri_to_remove.reversed()) {
             cached_list.remove_at(i)
         }
 
         for (uri in uris) {
             if (cached_uris_list.contains(uri)) continue
+            val json_obj = this.get_json(uri) ?: continue
+            val project_name = this.get_file_project_name(json_obj, uri)
 
-            val project_name = try {
-                this.get_file_project_name(uri) ?: this.generate_file_project_name(uri)
-            } catch (e: Exception) {
-                continue
-            }
-
-            cached_list.add(JSONList(
-                JSONString(uri.toString()),
-                JSONString(project_name)
+            val modified = this.get_project_modified_timestamp(json_obj, uri).toString()
+            cached_list.add(JSONHashMap(
+                "uri" to JSONString(uri.toString()),
+                "title" to JSONString(project_name),
+                "modified" to JSONString(modified),
+                "created" to this.get_project_created_timestamp(json_obj)?.let { JSONString(it.toString()) }
             ))
-        }
-
-        cached_list.sort_by { it ->
-            (it as JSONList).get_string(1)
         }
 
         val file = File(this._cache_path)
@@ -384,6 +328,15 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         file.writeText(cached_list.to_string())
     }
 
+    fun get_json(uri: Uri): JSONHashMap? {
+        val input_stream = this.context.contentResolver.openInputStream(uri)
+        val reader = BufferedReader(InputStreamReader(input_stream))
+        val content = reader.readText()
+        reader.close()
+
+        return JSONParser.parse(content)
+    }
+
     /**
      * Add [uri] to cached list of projects.
      */
@@ -392,7 +345,7 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         var is_tracking = false
 
         for (i in 0 until project_list.size) {
-            if (project_list.get_list(i).get_string(0).toUri() == uri) {
+            if (project_list.get_hashmap(i).get_string("uri").toUri() == uri) {
                 is_tracking = true
                 break
             }
@@ -400,17 +353,17 @@ class ProjectManager(val context: Context, var uri: Uri?) {
 
         if (is_tracking) return
 
-        val project_name = this.get_file_project_name(uri) ?: return
+        val json_obj = this.get_json(uri) ?: return
+        val project_name = this.get_file_project_name(json_obj, uri)
+        val modified = this.get_project_modified_timestamp(json_obj, uri).toString()
         project_list.add(
-            JSONList(
-                JSONString(uri.toString()),
-                JSONString(project_name)
+            JSONHashMap(
+                "uri" to JSONString(uri.toString()),
+                "title" to JSONString(project_name),
+                "modified" to JSONString(modified),
+                "created" to this.get_project_created_timestamp(json_obj)?.let { JSONString(it.toString()) }
             )
         )
-
-        project_list.sort_by { it ->
-            (it as JSONList).get_string(1)
-        }
 
         val file = File(this._cache_path)
         file.writeText(project_list.to_string())
@@ -423,16 +376,13 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         val project_list = this.get_json_project_list()
         var index_to_pop = 0
         for (i in 0 until project_list.size) {
-            if (project_list.get_list(i).get_string(0).toUri() == uri) break
+            if (project_list.get_hashmap(i).get_string("uri").toUri() == uri) break
             index_to_pop += 1
         }
 
         if (index_to_pop == project_list.size) return
 
         project_list.remove_at(index_to_pop)
-        project_list.sort_by { it ->
-            (it as JSONList).get_string(1)
-        }
 
         val file = File(this._cache_path)
         file.writeText(project_list.to_string())
@@ -488,7 +438,6 @@ class ProjectManager(val context: Context, var uri: Uri?) {
                     output_stream?.close()
                 }
 
-                this.scan_and_update_project_list()
                 old_directory.deleteRecursively()
             }
         } catch (_: SecurityException) {

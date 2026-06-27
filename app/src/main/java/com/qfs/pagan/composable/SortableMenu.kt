@@ -25,14 +25,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableIntState
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -43,20 +40,22 @@ import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.DropdownMenuItem
-import com.qfs.pagan.composable.wrappers.Text
+import androidx.compose.material3.Text
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.testTag
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import com.qfs.pagan.ui.theme.Shadows
 import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.Typography
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @Composable
@@ -65,16 +64,27 @@ fun <T> SortableMenu(
     sort_row_padding: PaddingValues = Unpadded,
     default_menu: List<Pair<T, @Composable RowScope.() -> Unit>>,
     sort_options: List<Pair<Int, (Int, Int) -> Int>>,
-    active_sort_option: MutableIntState = mutableIntStateOf(-1),
+    active_sort_option: MutableState<Int?> = mutableStateOf(null),
     default_value: T? = null,
     title_content: @Composable (RowScope.() -> Unit)? = null,
     onLongClick: (T) -> Unit = {},
     onClick: (T) -> Unit
 ) {
-    val sorted_menu = if (sort_options.isEmpty() || active_sort_option.intValue == -1) {
+    val sorted_menu = if (sort_options.isEmpty() || active_sort_option.value == null) {
         default_menu
     } else {
-        val indices = default_menu.indices.sortedWith(sort_options[active_sort_option.intValue].second)
+        val (abs_sort_index, reversed) = if (active_sort_option.value!! >= 0) {
+            Pair(active_sort_option.value!!, false)
+        } else {
+            Pair(abs(active_sort_option.value!! + 1), true)
+        }
+
+        val indices = if (reversed) {
+            default_menu.indices.sortedWith(sort_options[abs_sort_index].second).reversed()
+        } else {
+            default_menu.indices.sortedWith(sort_options[abs_sort_index].second)
+        }
+
         List(default_menu.size) { i -> default_menu[indices[i]] }
     }
 
@@ -113,11 +123,9 @@ fun <T> SortableMenu(
                         modifier = Modifier
                             .height(Dimensions.SortableMenuSortButtonDiameter)
                             .width(Dimensions.SortableMenuSortButtonDiameter),
-                        colors = ButtonDefaults.buttonColors().copy(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        ),
-                        onClick = { expanded.value = !expanded.value },
+                        onClick = {
+                            expanded.value = !expanded.value
+                        },
                         contentPadding = Dimensions.SortableMenuSortButtonPadding,
                         content = {
                             Icon(
@@ -132,26 +140,34 @@ fun <T> SortableMenu(
                     ) {
                         for (x in sort_options.indices) {
                             DropdownMenuItem(
-                                modifier = Modifier
-                                    .then(
-                                        if (x == active_sort_option.value) {
-                                            Modifier.background(color = MaterialTheme.colorScheme.tertiary)
-                                        } else {
-                                            Modifier
-                                        }
-                                    ),
+                                selected = x == active_sort_option.value,
                                 text = {
-                                    if (x == active_sort_option.value) {
-                                        ProvideContentColorTextStyle(MaterialTheme.colorScheme.onTertiary) {
-                                            Text(sort_options[x].first)
-                                        }
-                                    } else {
-                                        Text(sort_options[x].first)
-                                    }
+                                    val label_string = stringResource(
+                                        R.string.sorted_option,
+                                        stringResource(sort_options[x].first)
+                                    )
+                                    Text(label_string)
                                 },
                                 onClick = {
                                     expanded.value = false
                                     active_sort_option.value = x
+                                }
+                            )
+
+                            // Same, but reversed
+                            val rev_x = (x * -1) - 1
+                            DropdownMenuItem(
+                                selected = rev_x == active_sort_option.value,
+                                text = {
+                                    val label_string = stringResource(
+                                        R.string.reversed_sorted_option,
+                                        stringResource(sort_options[x].first)
+                                    )
+                                    Text(label_string)
+                                },
+                                onClick = {
+                                    expanded.value = false
+                                    active_sort_option.value = rev_x
                                 }
                             )
                         }
@@ -164,7 +180,7 @@ fun <T> SortableMenu(
         Surface(
             modifier = Modifier
                 .clip(Shapes.SortableMenuBox),
-            tonalElevation = 2.dp
+            color = Colors.active_color_scheme.menu_background
         ) {
             Column(
                 modifier = Modifier
@@ -179,24 +195,24 @@ fun <T> SortableMenu(
                     }
 
                     ProvideContentColorTextStyle(
+
                         if (default_index == i) {
-                            MaterialTheme.colorScheme.onTertiary
+                            Colors.active_color_scheme.menu_item_foreground_selected
                         } else {
-                            MaterialTheme.colorScheme.onSurface
-                        }
+                            Colors.active_color_scheme.menu_item_foreground
+                        },
+                        textStyle = Typography.DialogMenuItem
                     ) {
                         Row(
                             modifier = Modifier
                                 .testTag(TestTag.MenuItem, i)
-                                .then(
+                                .background(
                                     if (default_index == i) {
-                                        Modifier.background(
-                                            MaterialTheme.colorScheme.tertiary,
-                                            Shapes.SortableMenuBox
-                                        )
+                                        Colors.active_color_scheme.menu_item_selected
                                     } else {
-                                        Modifier
-                                    }
+                                        Colors.active_color_scheme.menu_item
+                                    },
+                                    Shapes.SortableMenuBox
                                 )
                                 .heightIn(min = Dimensions.DialogLineHeight)
                                 .combinedClickable(
@@ -230,6 +246,7 @@ fun <T> UnSortableMenu(
     modifier: Modifier = Modifier,
     options: List<Pair<T, @Composable RowScope.() -> Unit>>,
     default_value: T? = null,
+    long_click_callback: (T) -> Unit = {},
     callback: (T) -> Unit
 ) {
     SortableMenu(
@@ -238,6 +255,7 @@ fun <T> UnSortableMenu(
         options,
         listOf(),
         default_value = default_value,
+        onLongClick = long_click_callback,
         onClick = callback
     )
 }

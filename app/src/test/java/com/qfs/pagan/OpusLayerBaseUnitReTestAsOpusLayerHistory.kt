@@ -55,10 +55,11 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
     fun test_set_channel_instrument() {
         val manager = OpusManager()
         manager._project_change_new()
-        manager.channel_set_preset(0, Pair(5,2))
+        val key = PresetKey(0, 5, 2)
+        manager.channel_set_preset(0, key)
         assertEquals(
             "Failed to set channel instrument",
-            Pair(5,2),
+            key,
             manager.get_channel_instrument(0)
         )
     }

@@ -218,7 +218,6 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                     EffectType.Delay -> this.convert_delay_event_values(adjusted_event.end_value, frames_per_beat)
                     else -> adjusted_event.end_value
                 }
-
                 return listOf(
                     ControllerEventData.IndexedProfileBufferFrame(
                         first_frame = max(0, start_frame - offset_frame),
@@ -742,7 +741,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
                 layer_key,
                 ProfileBuffer(
                     ControllerEventData(
-                        this.frame_count,
+                        0,
                         control_event_data,
                         control_type
                     )

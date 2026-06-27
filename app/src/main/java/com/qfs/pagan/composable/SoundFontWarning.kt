@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,6 +32,7 @@ import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.find_activity
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
@@ -43,13 +43,13 @@ fun SoundFontWarning(in_settings: Boolean = false) {
     val url = stringResource(R.string.url_fluid)
     val context = LocalContext.current.find_activity() ?: return
 
-    ProvideContentColorTextStyle(contentColor = MaterialTheme.colorScheme.onTertiary) {
+    ProvideContentColorTextStyle(contentColor = Colors.active_color_scheme.soundfont_warning_foreground) {
         Column(
             Modifier
-                .background(MaterialTheme.colorScheme.tertiary, shape = Shapes.SoundFontWarningBox)
+                .background(Colors.active_color_scheme.soundfont_warning, shape = Shapes.SoundFontWarningBox)
                 .border(
                     Dimensions.SoundFontWarningBorderWidth,
-                    MaterialTheme.colorScheme.tertiaryContainer,
+                    Colors.active_color_scheme.soundfont_warning_border,
                     shape = Shapes.SoundFontWarningBox
                 )
                 .padding(Dimensions.SoundFontWarningPadding),

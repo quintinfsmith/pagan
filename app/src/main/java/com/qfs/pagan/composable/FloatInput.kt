@@ -12,6 +12,7 @@ package com.qfs.pagan.composable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.TextFieldLabelScope
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import com.qfs.pagan.enumerate
@@ -23,7 +24,7 @@ import kotlin.math.roundToInt
 
 @Composable
 fun FloatInput(
-    value: Float,
+    value: MutableState<Float>,
     precision: Int? = null,
     minimum: Float? = null,
     maximum: Float? = null,
@@ -49,17 +50,20 @@ fun FloatInput(
         on_focus_exit,
         revert_on_exit,
         { char_sequence ->
-            var working_string = mutableListOf<Char>()
+            val working_string = mutableListOf<Char>()
             var dot_count = 0
             val current_text = char_sequence.toList().enumerate()
+            var bad_char_found = false
             for ((i, c) in current_text) {
                 if (c == '.') dot_count++
                 if ((i == 0 && c == '-') || (c == '.' && dot_count == 1) || c.isDigit()) {
                     working_string.add(c)
+                } else {
+                    bad_char_found = true
                 }
             }
             val output_string = working_string.joinToString("")
-            val output_value = try {
+            try {
                 var tmp = output_string.toFloat()
                 maximum?.let { tmp = min(tmp, it) }
                 minimum?.let { tmp = max(tmp, it) }
@@ -67,11 +71,18 @@ fun FloatInput(
                     val factor = 10.pow(it)
                     tmp = ((tmp * factor).roundToInt()).toFloat() / factor.toFloat()
                 }
-                tmp
+                Triple(
+                    tmp,
+                    if (dot_count == 0) {
+                        tmp.toInt().toString()
+                    } else {
+                        tmp.toString()
+                    },
+                    tmp != output_string.toFloat() || bad_char_found
+                )
             } catch (_: Exception) {
-                null
+                Triple(null, output_string, bad_char_found)
             }
-            Pair(output_value, output_string)
         },
         callback
     )

@@ -12,6 +12,7 @@ package com.qfs.pagan.composable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.TextFieldLabelScope
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import com.qfs.pagan.enumerate
@@ -21,7 +22,7 @@ import kotlin.math.min
 
 @Composable
 fun IntegerInput(
-    value: Int,
+    value: MutableState<Int>,
     minimum: Int? = null,
     maximum: Int? = null,
     modifier: Modifier = Modifier,
@@ -47,21 +48,27 @@ fun IntegerInput(
         { char_sequence ->
             val working_string = mutableListOf<Char>()
             val current_text = char_sequence.toList().enumerate()
+            var bad_char_found = false
+
             for ((i, c) in current_text) {
-                if ((i == 0 && c == '-') ||  c.isDigit()) {
+                if ((i == 0 && c == '-') || c.isDigit()) {
                     working_string.add(c)
+                } else {
+                    bad_char_found = true
                 }
             }
-            val output_string = working_string.joinToString("")
-            val output_value = try {
-                var tmp = output_string.toInt()
+
+            val stripped_string = working_string.joinToString("")
+
+            try {
+                var tmp = stripped_string.toInt()
                 maximum?.let { tmp = min(tmp, it) }
                 minimum?.let { tmp = max(tmp, it) }
-                tmp
+                Triple(tmp, tmp.toString(), tmp != stripped_string.toInt() || bad_char_found)
             } catch (_: Exception) {
-                null
+                Triple(null, stripped_string, bad_char_found)
             }
-            Pair(output_value, output_string)
+
         },
         callback
     )

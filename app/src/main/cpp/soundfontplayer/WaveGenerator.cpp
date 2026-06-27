@@ -12,6 +12,8 @@ bool array_contains(const int* array, int array_size, int value) {
 }
 
 bool apply_effect_buffer(EffectProfileBuffer* effect_buffer, float* working_array, int array_size) {
+    if (effect_buffer == nullptr) return false;
+
     switch (effect_buffer->data->type) {
         case TYPE_DELAY: {
             auto* buffer = (DelayBuffer *) effect_buffer;
@@ -119,6 +121,7 @@ Java_com_qfs_apres_soundfontplayer_WaveGenerator_merge_1arrays(
 
     for (int i = 0; i < effect_buffer_count; i++) {
         if (!array_contains(effect_buffers_applied, effect_buffers_applied_count, i)) {
+            if (effect_buffers[i] == 0L) continue;
             auto* effect_buffer = (EffectProfileBuffer*)effect_buffers[i];
             effect_buffer->drain((int)frames);
         }

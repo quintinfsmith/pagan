@@ -1,0 +1,10 @@
+UI Improvements:
+    - Moved beat selector/slider into context menu (suggested by studyingegret)
+    - Number Inputs moved from dialogs to popups (also suggested by studyingegret)
+    - Sections' labels in section menu are now more consistent
+
+Bugfixes:
+    - Layouts mixed up on androids < 13 (Thanks to studyingegret for the bug report)
+    - Integer inputs weren't filtering letters and large/small numbers out.
+    - Hold-to-clear beat on remove/unset buttons in effect controls weren't doing anything  
+    - Column widths weren't being adjusted when a lines were removed

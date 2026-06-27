@@ -1,0 +1,2 @@
+- Fixed misapplication of presets' low pass filters.
+- Fixed missing percussion options when unavailable kit is selected.

@@ -19,6 +19,8 @@ import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.selectAll
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.TextFieldLabelScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,12 +39,13 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import com.qfs.pagan.ui.theme.Typography
 
 @Composable
 fun <T> NumberInput(
-    value: T,
+    input_value: MutableState<T>,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = Unpadded,
     text_align: TextAlign = TextAlign.End,
@@ -51,17 +54,16 @@ fun <T> NumberInput(
     on_focus_enter: (() -> Unit)? = null,
     on_focus_exit: ((T?) -> Unit)? = null,
     revert_on_exit: Boolean = false,
-    string_validate: (CharSequence) -> Pair<T?, CharSequence>,
+    string_validate: (CharSequence) -> Triple<T?, CharSequence, Boolean>,
     callback: (T) -> Unit
 ) {
-
     val trigger_select_all = remember { mutableStateOf<Boolean?>(null) }
-    val state = rememberTextFieldState(value.toString())
+    val state = rememberTextFieldState(input_value.value.toString())
     // Prevent weird focusing behavior causing on_focus_exit to be called without any initial focus
     val was_focused = remember { mutableStateOf(false) }
-    var backup_value = remember { mutableStateOf(value) }
+
     val focus_change_callback = { focus_state: FocusState ->
-        val (validated_value, validated_string) = string_validate(state.text)
+        val (validated_value, validated_string, valid) = string_validate(state.text)
         if (focus_state.isFocused) {
             trigger_select_all.value = trigger_select_all.value?.let { it -> !it } ?: true
             was_focused.value = true
@@ -72,27 +74,30 @@ fun <T> NumberInput(
             if (revert_on_exit) {
                 val text = state.text
                 state.edit {
-                    replace(0, text.length, backup_value.value.toString())
+                    replace(0, text.length, input_value.value.toString())
                 }
             }
         }
     }
+
     val focus_manager = LocalFocusManager.current
     OutlinedTextField(
         state = state,
-        label = label,
+        label = label?.let {
+            { ProvideTextStyle(Typography.NumberInputLabel, { label() }) }
+        },
         contentPadding = contentPadding,
-        textStyle = Typography.TextField.copy(textAlign = text_align),
+        textStyle = Typography.NumberInput,
         prefix = prefix,
         modifier = modifier
             .onKeyEvent { event ->
                 when (event.key) {
                     Key.Enter -> {
                         val char_sequence = state.text
-                        val (validated_value, validated_string) = string_validate(char_sequence)
+                        val (validated_value, validated_string, changed) = string_validate(char_sequence)
                         validated_value?.let {
                             callback(it)
-                            backup_value.value = it
+                            input_value.value = it
                             focus_manager.clearFocus()
                         }
                         true
@@ -110,24 +115,36 @@ fun <T> NumberInput(
         ),
         inputTransformation = InputTransformation {
             val char_sequence = this.asCharSequence()
-            val (validated_value, validated_string) = string_validate(char_sequence)
-            this.replace(0, char_sequence.count(), validated_string)
+            val (valid_value, validated_string, rewrite_required) = string_validate(char_sequence)
+            if (rewrite_required) {
+                valid_value?.let {
+                    input_value.value = it
+                }
+                this.replace(0, char_sequence.count(), validated_string)
+            }
         },
         lineLimits = TextFieldLineLimits.SingleLine,
         onKeyboardAction = { action ->
-            val (validated_value, validated_string) = string_validate(state.text)
+            val (validated_value, validated_string, changed) = string_validate(state.text)
             validated_value?.let {
-                backup_value.value = it
+                input_value.value = it
                 callback(it)
             }
             action()
             focus_manager.clearFocus()
-        }
+        },
+        colors = Colors.get_textfield_colors(),
     )
 
     trigger_select_all.value?.let {
         LaunchedEffect(trigger_select_all.value) {
             state.edit { selectAll() }
+        }
+    }
+    LaunchedEffect(input_value.value) {
+        val text = state.text
+        state.edit {
+            replace(0, text.length, input_value.value.toString())
         }
     }
 }

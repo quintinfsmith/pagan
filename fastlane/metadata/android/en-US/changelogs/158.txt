@@ -1,0 +1,8 @@
+UI Changes:
+    - Tweaks to color palette and typography
+    - Load Project Menu remembers sorting method
+    - reorganized Range Selection menu and added (x) button
+BugFixes:
+    - fixed off-by-one values in velocity widget
+    - caught bug randomly (and rarely) causing crash during playback
+    - reset zoom levels on project change

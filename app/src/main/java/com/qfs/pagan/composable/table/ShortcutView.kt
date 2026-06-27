@@ -13,45 +13,58 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import com.qfs.pagan.ActionDispatcher
+import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.testTag
+import com.qfs.pagan.ui.theme.Colors
+import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
-fun ShortcutView(modifier: Modifier, dispatcher: ActionDispatcher, scope: CoroutineScope, scroll_state: LazyListState) {
+fun ShortcutView(modifier: Modifier, vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, scope: CoroutineScope) {
+    val (text_color, background_color) = if (vm_state.selecting_beat.value) {
+        Pair(
+            Colors.active_color_scheme.shortcut_selected_foreground,
+            Colors.active_color_scheme.shortcut_selected
+        )
+    } else {
+        Pair(
+            Colors.active_color_scheme.shortcut_foreground,
+            Colors.active_color_scheme.shortcut
+        )
+    }
+
     HalfBorderBox(
         modifier
             .testTag(TestTag.ShortCut)
-            .background(MaterialTheme.colorScheme.surfaceVariant, shape = RectangleShape)
+            .background(background_color, shape = RectangleShape)
             .combinedClickable(
-                onClick = { dispatcher.cursor_select_column() },
+                onClick = { vm_state.selecting_beat.value = !vm_state.selecting_beat.value },
                 onLongClick = {
-                    dispatcher.cursor_select_column(0)
-                    scope.launch { scroll_state.scrollToItem(0) }
+                    opus_manager.cursor_select_column(0)
+                    scope.launch {
+                        vm_state.scroll_state_x.value.scrollToItem(0)
+                    }
                 }
             ),
-        border_color = MaterialTheme.colorScheme.onSurfaceVariant,
+        border_color = Colors.active_color_scheme.table_line,
         content = {
-            Box(
-                Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                ProvideContentColorTextStyle(MaterialTheme.colorScheme.onSurfaceVariant) {
+            ProvideContentColorTextStyle(text_color) {
+                Box(
+                    Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
                     Icon(
-                        //modifier = Modifier.padding(Dimensions.ShortcutIconPadding),
                         painter = painterResource(R.drawable.icon_shortcut),
                         contentDescription = stringResource(R.string.jump_to_section)
                     )

@@ -70,7 +70,6 @@ fun Modifier.conditional_drag(
             if (is_dragging.value) {
                 awaitPointerEventScope {
                     var relative_start_position = 0F
-                    var absolute_start_position = 0F
                     var absolute_latest_position = 0F
                     // get drag start
                     while (true) {
@@ -242,7 +241,9 @@ fun Modifier.long_press(
                                 onPress()
                             }
                         }
-                        PointerEventType.Release -> onRelease()
+                        PointerEventType.Release -> {
+                            onRelease()
+                        }
                     }
                 }
             }

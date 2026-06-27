@@ -9,6 +9,7 @@
  */
 package com.qfs.pagan.ComponentActivity
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -17,18 +18,18 @@ import android.provider.DocumentsContract.Document.COLUMN_DOCUMENT_ID
 import android.provider.DocumentsContract.Document.COLUMN_MIME_TYPE
 import android.provider.DocumentsContract.Document.MIME_TYPE_DIR
 import android.util.Log
+import android.view.KeyEvent.ACTION_DOWN
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,70 +44,75 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.clipRect
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import com.qfs.pagan.DialogChain
 import com.qfs.pagan.LayoutSize
+import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.DialogBar
-import com.qfs.pagan.composable.DialogCard
+import com.qfs.pagan.composable.DialogSortableMenu
 import com.qfs.pagan.composable.DialogTitle
-import com.qfs.pagan.composable.PaganTheme
+import com.qfs.pagan.composable.PaganDialog
 import com.qfs.pagan.composable.ScaffoldWithTopBar
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.OutlinedButton
+import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.dashed_border
+import com.qfs.pagan.composable.wrappers.CircularProgressIndicator
 import com.qfs.pagan.composable.wrappers.Text
+import com.qfs.pagan.on_config
 import com.qfs.pagan.projectmanager.ProjectManager
+import com.qfs.pagan.put_config
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
+import com.qfs.pagan.ui.theme.AppBackground
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.PaganColorScheme
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelPagan
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileNotFoundException
-import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.Date
 import java.util.TimeZone
-import kotlin.math.ceil
 import kotlin.math.roundToInt
 
 abstract class PaganComponentActivity: ComponentActivity() {
+    internal var result_update_config =
+        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            result.data?.on_config { config ->
+                this.view_model.set_config(config)
+                this.on_config_load()
+            }
+        }
+
     @Composable
     abstract fun LayoutXLargePortrait(modifier: Modifier = Modifier)
     @Composable
@@ -125,6 +131,9 @@ abstract class PaganComponentActivity: ComponentActivity() {
     abstract fun LayoutSmallLandscape(modifier: Modifier = Modifier)
     @Composable
     abstract fun Drawer(modifier: Modifier = Modifier)
+
+    @Composable
+    open fun Dialogs() {}
 
     open val top_bar_wrapper: (@Composable RowScope.() -> Unit)? = null
 
@@ -182,7 +191,15 @@ abstract class PaganComponentActivity: ComponentActivity() {
         }
 
         val view_model = this.view_model
-        view_model.load_config("${this.applicationContext.filesDir}/pagan.cfg")
+
+        this.view_model.configuration_path = "${this.applicationContext.filesDir}/pagan.cfg"
+
+        val config_in_intent = this.intent.on_config { this.view_model.set_config(it) }
+        if (!config_in_intent) {
+            this.view_model.set_config(
+                PaganConfiguration.from_path(this.view_model.configuration_path!!)
+            )
+        }
         this.on_config_load()
 
         enableEdgeToEdge(
@@ -196,6 +213,17 @@ abstract class PaganComponentActivity: ComponentActivity() {
         )
 
         setContent {
+            val is_night_mode = when (this.view_model.configuration.night_mode.value) {
+                AppCompatDelegate.MODE_NIGHT_YES -> true
+                AppCompatDelegate.MODE_NIGHT_NO -> false
+                else -> isSystemInDarkTheme()
+            }
+            if (is_night_mode) {
+                Colors.active_color_scheme = PaganColorScheme.Dark()
+            } else {
+                Colors.active_color_scheme = PaganColorScheme()
+            }
+
             this.drawer_state = rememberDrawerState(DrawerValue.Closed) { state ->
                 this.drawer_gesture_enabled.value = state == DrawerValue.Open
                 true
@@ -205,125 +233,47 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 if (this.drawer_state.isOpen) {
                     scope.launch { this@PaganComponentActivity.close_drawer() }
                 } else if (this.on_back_press_check()) {
+                    this.save_configuration()
                     this.finish()
                 }
             }
-            val is_night_mode = when (this.view_model.configuration.night_mode.value) {
-                AppCompatDelegate.MODE_NIGHT_YES -> true
-                AppCompatDelegate.MODE_NIGHT_NO -> false
-                else -> isSystemInDarkTheme()
-            }
-
+            // We're useing the relative dimensions, so the actual sizes aren't
+            // necessary and Android <= 12 seems to mix up the 'correct' method
+            @SuppressLint("ConfigurationScreenWidthHeight")
             view_model.set_layout_size(
-                LocalWindowInfo.current.containerDpSize.width,
-                LocalWindowInfo.current.containerDpSize.height,
+                LocalConfiguration.current.screenWidthDp.dp,
+                LocalConfiguration.current.screenHeightDp.dp
             )
 
-            PaganTheme(is_night_mode) {
-                // Popup Dialogs --------------------------------
-                var current_dialog = view_model.dialog_queue.value
-                val dialogs = mutableListOf<DialogChain>()
-                while (current_dialog != null) {
-                    dialogs.add(current_dialog)
-                    current_dialog = current_dialog.parent
-                }
-                for (dialog in dialogs.reversed()) {
-                    Dialog(
-                        onDismissRequest = { view_model.dialog_queue.value = dialog.parent }
-                    ) {
-                        val keyboard_controller = LocalSoftwareKeyboardController.current
-                        val focus_manager = LocalFocusManager.current
-                        // Extra Box prevents weird dialog jumping on focus
-                        Box(
-                            Modifier
-                                .clickable { view_model.dialog_queue.value = dialog.parent }
-                                .fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            DialogCard(
-                                modifier = Modifier
-                                    // Allow click-away from text fields
-                                    .wrapContentSize()
-                                    .pointerInput(Unit) {
-                                        detectTapGestures { offset ->
-                                            keyboard_controller?.hide()
-                                            focus_manager.clearFocus()
-                                        }
-                                    },
-                                content = dialog.dialog
-                            )
-                        }
+            Box(
+                Modifier
+                    .onKeyEvent { e ->
+                        this@PaganComponentActivity.key_event_wrapper(e)
                     }
-                }
-                // -----------------------------------------------
-
-                Box(
-                    Modifier
-                        .imePadding()
-                        .background(MaterialTheme.colorScheme.scrim)
-                        .systemBarsPadding()
-                ) {
-                    ScaffoldWithTopBar(
-                        modifier = Modifier
-                            .wrapContentWidth(),
-                        top_app_bar = this@PaganComponentActivity.top_bar_wrapper,
-                        drawerState = this@PaganComponentActivity.drawer_state,
-                        gesturesEnabled = this@PaganComponentActivity.drawer_gesture_enabled.value,
-                        drawerContent = { this@PaganComponentActivity.Drawer() },
-                        content = {
-                            Box(modifier = Modifier.padding(it)) {
-                                Canvas(
-                                    Modifier
-                                        .background(MaterialTheme.colorScheme.background)
-                                        .fillMaxSize()
-                                ) {
-                                    val gap_width = Dimensions.Background.Gap.toPx()
-                                    val bar_width = Dimensions.Background.BarWidth.toPx()
-                                    val f = (this.size.width + gap_width + (bar_width / 2)) / (gap_width + bar_width)
-                                    val bar_height_small = Dimensions.Background.BarSmallHeight.toPx()
-                                    val bar_height_large = Dimensions.Background.BarLargeHeight.toPx()
-                                    clipRect {
-                                        for (x in 0 until ceil(f).toInt()) {
-                                            var y_offset = if (x % 2 == 1) {
-                                                bar_height_large
-                                            } else {
-                                                bar_height_small
-                                            } / -2F
-                                            var y = 0
-                                            while (y_offset < this.size.height) {
-                                                val bar_height = if (x % 2 == 1) {
-                                                    if (y % 2 == 0) {
-                                                        bar_height_large
-                                                    } else {
-                                                        bar_height_small
-                                                    }
-                                                } else if (y % 2 == 0) {
-                                                    bar_height_small
-                                                } else {
-                                                    bar_height_large
-                                                }
-                                                drawRoundRect(
-                                                    color = Color(0x10888888),
-                                                    topLeft = Offset(
-                                                        x = (x * (bar_width + gap_width)) - (bar_width / 2),
-                                                        y = y_offset
-                                                    ),
-                                                    size = Size(
-                                                        width = bar_width,
-                                                        height = bar_height
-                                                    ),
-                                                    cornerRadius = CornerRadius(Dimensions.Background.Radius.toPx())
-                                                )
-
-                                                y_offset += bar_height + gap_width
-                                                y++
-                                            }
-                                        }
-                                    }
-                                }
-
-                                val layout_size = view_model.get_layout_size()
-                                val modifier = Modifier.fillMaxSize()
+                    .imePadding()
+                    .background(Colors.active_color_scheme.scrim)
+                    .systemBarsPadding()
+            ) {
+                ScaffoldWithTopBar(
+                    modifier = Modifier.wrapContentWidth(),
+                    top_app_bar = this@PaganComponentActivity.top_bar_wrapper,
+                    drawerState = this@PaganComponentActivity.drawer_state,
+                    gesturesEnabled = this@PaganComponentActivity.drawer_gesture_enabled.value,
+                    drawerContent = { this@PaganComponentActivity.Drawer() },
+                    content = {
+                        // The Background
+                        Canvas(
+                            Modifier
+                                .background(Colors.active_color_scheme.background)
+                                .fillMaxSize(),
+                            onDraw = { AppBackground() }
+                        )
+                        Box(modifier = Modifier.padding(it)) {
+                            val layout_size = view_model.get_layout_size()
+                            val modifier = Modifier.fillMaxSize()
+                            ProvideContentColorTextStyle(
+                                contentColor = Colors.active_color_scheme.foreground
+                            ) {
                                 when (layout_size) {
                                     LayoutSize.SmallPortrait -> LayoutSmallPortrait(modifier)
                                     LayoutSize.MediumPortrait -> LayoutMediumPortrait(modifier)
@@ -334,18 +284,14 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                     LayoutSize.LargeLandscape -> LayoutLargeLandscape(modifier)
                                     LayoutSize.XLargeLandscape -> LayoutXLargeLandscape(modifier)
                                 }
-
                             }
-                        }
-                    )
-                }
-            }
-        }
-    }
 
-    fun reload_config() {
-        this.view_model.reload_config()
-        this.on_config_load()
+                        }
+                    }
+                )
+            }
+            Dialogs()
+        }
     }
 
     open fun on_config_load() {
@@ -413,71 +359,6 @@ abstract class PaganComponentActivity: ComponentActivity() {
         }
     }
 
-    private fun create_project_card_dialog(title: String, uri: Uri, close_top_callback: () -> Unit, load_callback: (Uri) -> Unit) {
-        this.view_model.create_dialog(level = 1) { close ->
-            @Composable {
-                Column {
-                    ProjectCard(modifier = Modifier.fillMaxWidth(), uri = uri)
-                    Spacer(Modifier.height(Dimensions.Space.Large))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        OutlinedButton(
-                            modifier = Modifier.height(Dimensions.ButtonHeight.Small),
-                            onClick = close,
-                            content = { Text(android.R.string.cancel) }
-                        )
-                        Spacer(Modifier.width(Dimensions.Space.Medium))
-                        Button(
-                            modifier = Modifier.height(Dimensions.ButtonHeight.Small),
-                            onClick = {
-                                this@PaganComponentActivity.view_model.create_dialog { close_subdialog ->
-                                    @Composable {
-                                        Column {
-                                            Row {
-                                                DialogTitle(
-                                                    stringResource(R.string.dlg_delete_title, title),
-                                                    modifier = Modifier.weight(1F)
-                                                )
-                                            }
-                                            DialogBar(
-                                                neutral = close_subdialog,
-                                                positive = {
-                                                    this@PaganComponentActivity.delete_project(uri)
-                                                    close()
-                                                    close_subdialog()
-                                                    close_top_callback()
-                                                }
-                                            )
-                                        }
-                                    }
-                                }
-                            },
-                            content = {
-                                Icon(
-                                    painter = painterResource(R.drawable.icon_trash),
-                                    contentDescription = stringResource(R.string.delete_project)
-                                )
-                            }
-                        )
-                        Spacer(Modifier.width(Dimensions.Space.Medium))
-                        Button(
-                            modifier = Modifier.height(Dimensions.ButtonHeight.Small),
-                            onClick = {
-                                close()
-                                close_top_callback()
-                                load_callback(uri)
-                            },
-                            content = { Text(R.string.details_load_project) }
-                        )
-                    }
-                }
-            }
-        }
-    }
-
     fun delete_project(uri: Uri) {
         this.view_model.delete_project(uri)
         this.on_delete_project(uri)
@@ -485,76 +366,143 @@ abstract class PaganComponentActivity: ComponentActivity() {
 
     open fun on_delete_project(uri: Uri) { }
 
-    fun load_menu_dialog(current_sort: Int = 0, load_callback: (Uri) -> Unit) {
-        val project_list = this.view_model.project_manager?.get_project_list() ?: return
-        val items = mutableListOf<Pair<Uri, @Composable RowScope.() -> Unit>>()
-        for ((uri, title) in project_list) {
-            items.add(
-                Pair(uri, {
-                    Text(text = title)
-                })
+    @Composable
+    fun LoadMenuDialog(visibility: MutableState<Boolean>, current_sort: MutableState<Int?>, load_callback: (Uri) -> Unit) {
+        key(this.view_model.project_list.value.hashCode()) {
+            val project_list = this.view_model.project_list.value.toMutableList()
+
+            val sort_options = listOf(
+                Pair(R.string.sort_option_abc) { a: Int, b: Int ->
+                    project_list[a].title.lowercase().compareTo(project_list[b].title.lowercase())
+                },
+                Pair(R.string.sort_option_date_created) { a: Int, b: Int ->
+                    (project_list[a].created ?: 0L).compareTo(project_list[b].created ?: 0L)
+                },
+                Pair(R.string.sort_option_date_modified) { a: Int, b: Int ->
+                    (project_list[a].modified ?: 0L).compareTo(project_list[b].modified ?: 0L)
+                }
             )
-        }
 
-        val sort_options = listOf(
-            Pair(R.string.sort_option_abc) { a: Int, b: Int -> project_list[a].second.lowercase().compareTo(project_list[b].second.lowercase()) },
-            Pair(R.string.sort_option_date_modified) { a: Int, b: Int ->
-                val df_a = DocumentFile.fromSingleUri(this, project_list[a].first) ?: return@Pair -1
-                val df_b = DocumentFile.fromSingleUri(this, project_list[b].first) ?: return@Pair 1
-                df_a.lastModified().compareTo(df_b.lastModified())
-            },
-        )
+            val refresher = remember { mutableStateOf(false) }
+            val project_card_visibility = remember { mutableStateOf(false) }
+            val project_card_pair = remember { mutableStateOf<Pair<String?, Uri>?>(null) }
 
-        this.view_model.sortable_list_dialog(
-            R.string.menu_item_load_project,
-            items,
-            sort_options,
-            selected_sort = mutableIntStateOf(current_sort),
-            content = @Composable { close, active_sort ->
-                val is_refreshing = remember { mutableStateOf(false) }
-                if (is_refreshing.value) {
-                    CircularProgressIndicator(
-                        Modifier
-                            .height(Dimensions.SortableMenuSortButtonDiameter)
-                            .width(Dimensions.SortableMenuSortButtonDiameter),
+            DialogSortableMenu(
+                visibility,
+                R.string.menu_item_load_project,
+                options = { options ->
+                    for ((uri, title) in project_list) {
+                        options.add(Pair(uri, { Text(text = title) }))
+                    }
+                },
+                sort_options,
+                active_sort_option = current_sort,
+                refresher = refresher,
+                extra_content = @Composable { close, active_sort ->
+                    val scope = rememberCoroutineScope()
+                    val is_refreshing = remember { mutableStateOf(false) }
+                    if (is_refreshing.value) {
+                        CircularProgressIndicator()
+                    } else {
+                        Button(
+                            modifier = Modifier
+                                .height(Dimensions.SortableMenuSortButtonDiameter)
+                                .width(Dimensions.SortableMenuSortButtonDiameter),
+                            onClick = {
+                                is_refreshing.value = true
+                                scope.launch(Dispatchers.IO) {
+                                    this@PaganComponentActivity.view_model.scan_and_update_project_list(
+                                        full_refresh = true
+                                    )
+                                    project_list.clear()
+                                    project_list.addAll(this@PaganComponentActivity.view_model.project_list.value)
+
+                                    is_refreshing.value = false
+                                }
+                            },
+                            contentPadding = Dimensions.SortableMenuSortButtonPadding,
+                            content = {
+                                Icon(
+                                    painter = painterResource(R.drawable.icon_refresh),
+                                    contentDescription = stringResource(R.string.cd_sort_options)
+                                )
+                            }
+                        )
+                    }
+                    Spacer(Modifier.width(Dimensions.Space.Large))
+                },
+                long_click_callback = { value ->
+                    for ((uri, title) in project_list) {
+                        if (uri != value) continue
+                        project_card_pair.value = Pair(title, uri)
+                        project_card_visibility.value = true
+                        break
+                    }
+                },
+                callback = load_callback
+            )
+
+            PaganDialog(project_card_visibility) {
+                val confirm_visibility = remember { mutableStateOf(false) }
+
+                ProjectCard(modifier = Modifier.fillMaxWidth(), uri = project_card_pair.value!!.second)
+                Spacer(Modifier.height(Dimensions.Space.Large))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    OutlinedButton(
+                        modifier = Modifier.height(Dimensions.ButtonHeight.Small),
+                        onClick = { project_card_visibility.value = false },
+                        content = { Text(android.R.string.cancel) }
                     )
-                } else {
+                    Spacer(Modifier.width(Dimensions.Space.Medium))
                     Button(
-                        modifier = Modifier
-                            .height(Dimensions.SortableMenuSortButtonDiameter)
-                            .width(Dimensions.SortableMenuSortButtonDiameter),
-                        colors = ButtonDefaults.buttonColors().copy(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        ),
-                        onClick = {
-                            is_refreshing.value = true
-                            this@PaganComponentActivity.view_model.project_manager?.scan_and_update_project_list()
-                            close()
-                            is_refreshing.value = false
-                            load_menu_dialog(active_sort, load_callback)
-                        },
-                        contentPadding = Dimensions.SortableMenuSortButtonPadding,
+                        modifier = Modifier.height(Dimensions.ButtonHeight.Small),
+                        onClick = { confirm_visibility.value = true },
                         content = {
                             Icon(
-                                painter = painterResource(R.drawable.icon_refresh),
-                                contentDescription = stringResource(R.string.cd_sort_options)
+                                painter = painterResource(R.drawable.icon_trash),
+                                contentDescription = stringResource(R.string.delete_project)
                             )
                         }
                     )
-                }
-            },
-            onClick = load_callback,
-            onLongClick = { it, close_callback ->
-                for ((uri, title) in project_list) {
-                    if (uri != it) continue
-                    this.create_project_card_dialog(title, it, close_callback) {
-                        load_callback(it)
+                    Spacer(Modifier.width(Dimensions.Space.Medium))
+                    Button(
+                        modifier = Modifier.height(Dimensions.ButtonHeight.Small),
+                        onClick = {
+                            project_card_visibility.value = false
+                            visibility.value = false
+                            load_callback(project_card_pair.value!!.second)
+                        },
+                        content = { Text(R.string.details_load_project) }
+                    )
+
+                    PaganDialog(confirm_visibility) {
+                        Row {
+                            DialogTitle(
+                                stringResource(R.string.dlg_delete_title, project_card_pair.value!!.first ?: ""),
+                                modifier = Modifier.weight(1F)
+                            )
+                        }
+                        DialogBar(
+                            neutral = { confirm_visibility.value = false },
+                            positive = {
+                                this@PaganComponentActivity.delete_project(project_card_pair.value!!.second)
+                                confirm_visibility.value = false
+                                project_card_visibility.value = false
+                                visibility.value = false
+                            }
+                        )
                     }
-                    break
                 }
             }
-        )
+        }
+
+       // LaunchedEffect(current_sort.value) {
+       //     this@PaganComponentActivity.save_configuration()
+       // }
     }
 
     @Composable
@@ -580,7 +528,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
             }
             Spacer(Modifier.height(padding))
 
-            ProvideTextStyle(Typography.DialogBody) {
+            ProvideTextStyle(Typography.DialogBodyMono) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -588,7 +536,11 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 ) {
                     Text(R.string.date_created)
                     Spacer(Modifier.width(padding))
-                    Text(date_created.format(formatter))
+                    if (other_project.timestamp != 0L) {
+                        Text(date_created.format(formatter))
+                    } else {
+                        Text(R.string.created_before_tracked)
+                    }
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -619,7 +571,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 Row(
                     Modifier
                         .dashed_border(
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = Colors.active_color_scheme.foreground,
                             shape = Shapes.ProjectCardNotes,
                             width = Dimensions.Stroke.Thin
                         )
@@ -652,4 +604,21 @@ abstract class PaganComponentActivity: ComponentActivity() {
         Toast.makeText(this.baseContext, msg, length).show()
     }
 
+    fun key_event_wrapper(e: KeyEvent): Boolean {
+        return if (e.nativeKeyEvent.action == ACTION_DOWN) {
+            this.on_key_press(e)
+        } else {
+            false
+        }
+    }
+    abstract fun on_key_press(e: KeyEvent): Boolean
+
+    var result_intent = Intent()
+
+    fun save_configuration() {
+        this.view_model.save_configuration()
+        this.result_intent.put_config(this.view_model.configuration)
+        // RESULT_OK lets the other activities know they need to reload the configuration
+        this.setResult(RESULT_OK, this.result_intent)
+    }
 }

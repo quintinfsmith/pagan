@@ -10,7 +10,6 @@
 package com.qfs.pagan.ComponentActivity
 
 import android.content.Intent
-import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,9 +31,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -42,10 +44,12 @@ import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
+import com.qfs.pagan.composable.PaganDialog
 import com.qfs.pagan.composable.SettingsRow
 import com.qfs.pagan.composable.SoundFontWarning
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.wrappers.Text
+import com.qfs.pagan.put_config
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
@@ -84,26 +88,9 @@ class ComponentActivityLanding: PaganComponentActivity() {
             }
         }
 
-    internal var result_launcher_settings =
-        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode != RESULT_OK) return@registerForActivityResult
-            this.reload_config()
-        }
-
-    override fun onResume() {
-        super.onResume()
-        this.reload_config()
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        this.check_for_crash_report()
-    }
-
     override fun on_back_press_check(): Boolean {
         return true
     }
-
 
     @Composable
     fun RowScope.Padder(factor: Float = 1F) {
@@ -126,8 +113,10 @@ class ComponentActivityLanding: PaganComponentActivity() {
             content = { Text(stringResource(R.string.btn_landing_most_recent)) },
             shape = shape,
             onClick = {
-                this@ComponentActivityLanding.startActivity(
+                val config = this.view_model.configuration
+                this@ComponentActivityLanding.result_update_config.launch(
                     Intent(this, ComponentActivityEditor::class.java).apply {
+                        this.put_config(config)
                         this.putExtra("load_backup", true)
                     }
                 )
@@ -147,12 +136,10 @@ class ComponentActivityLanding: PaganComponentActivity() {
             content = { Text(stringResource(R.string.btn_landing_new)) },
             shape = shape,
             onClick = {
-
-                this@ComponentActivityLanding.startActivity(
-                    Intent(
-                        this@ComponentActivityLanding,
-                        ComponentActivityEditor::class.java
-                    )
+                val config = this.view_model.configuration
+                this@ComponentActivityLanding.result_update_config.launch(
+                    Intent(this@ComponentActivityLanding, ComponentActivityEditor::class.java)
+                        .put_config(config)
                 )
             }
         )
@@ -163,22 +150,25 @@ class ComponentActivityLanding: PaganComponentActivity() {
         modifier: Modifier = Modifier,
         shape: Shape = Shapes.LandingButtonShape
     ) {
+        val load_menu_visibility = remember { mutableStateOf(false) }
         Button(
             modifier = modifier
                 .testTag(TestTag.LandingLoadProject)
                 .height(Dimensions.LandingButtonHeight),
             content = { Text(stringResource(R.string.btn_landing_load)) },
             shape = shape,
-            onClick = {
-                this.load_menu_dialog {
-                    this@ComponentActivityLanding.startActivity(
-                        Intent(this@ComponentActivityLanding, ComponentActivityEditor::class.java).apply {
-                            this.data = it
-                        }
-                    )
-                }
-            }
+            onClick = { load_menu_visibility.value = true }
         )
+
+        LoadMenuDialog(load_menu_visibility, view_model.configuration.sort_load) {
+            val config = this.view_model.configuration
+            this@ComponentActivityLanding.result_update_config.launch(
+                Intent(this@ComponentActivityLanding, ComponentActivityEditor::class.java).apply {
+                    this.data = it
+                    this.put_config(config)
+                }
+            )
+        }
     }
 
 
@@ -226,8 +216,10 @@ class ComponentActivityLanding: PaganComponentActivity() {
         SmallIconButton(
             modifier = modifier.testTag(TestTag.LandingSettings),
             onClick = {
-                this@ComponentActivityLanding.result_launcher_settings.launch(
+                val config = this.view_model.configuration
+                this@ComponentActivityLanding.result_update_config.launch(
                     Intent(this@ComponentActivityLanding, ComponentActivitySettings::class.java)
+                        .put_config(config)
                 )
             },
             content = {
@@ -248,8 +240,10 @@ class ComponentActivityLanding: PaganComponentActivity() {
         SmallIconButton(
             modifier = modifier.testTag(TestTag.LandingAbout),
             onClick = {
+                val config = this.view_model.configuration
                 this@ComponentActivityLanding.startActivity(
                     Intent(this@ComponentActivityLanding, ComponentActivityAbout::class.java)
+                        .put_config(config)
                 )
             },
             content =  {
@@ -437,7 +431,31 @@ class ComponentActivityLanding: PaganComponentActivity() {
                 LayoutSmallIconLinks()
             }
         }
+    }
 
+    @Composable
+    override fun Dialogs() {
+        val file = File("${this.dataDir}/bkp_crashreport.log")
+        if (!file.isFile) return
+
+        val crash_dialog_visibility = remember { mutableStateOf(true) }
+        PaganDialog(crash_dialog_visibility) {
+            DialogSTitle(R.string.crash_report_save)
+            Text(
+                R.string.crash_report_desc,
+                modifier = Modifier.padding(vertical = Dimensions.BugReportPadding)
+            )
+            DialogBar(
+                negative = {
+                    file.delete()
+                    crash_dialog_visibility.value = false
+                },
+                positive = {
+                    this@ComponentActivityLanding.export_crash_report()
+                    crash_dialog_visibility.value = false
+                }
+            )
+        }
     }
 
     @Composable
@@ -454,31 +472,6 @@ class ComponentActivityLanding: PaganComponentActivity() {
         }
     }
 
-    fun check_for_crash_report() {
-        val file = File("${this.dataDir}/bkp_crashreport.log")
-        if (!file.isFile) return
-
-        this.view_model.create_dialog { close ->
-            @Composable {
-                DialogSTitle(R.string.crash_report_save)
-                Text(
-                    R.string.crash_report_desc,
-                    modifier = Modifier.padding(vertical = Dimensions.BugReportPadding)
-                )
-                DialogBar(
-                    negative = {
-                        file.delete()
-                        close()
-                    },
-                    positive = {
-                        this@ComponentActivityLanding.export_crash_report()
-                        close()
-                    }
-                )
-            }
-        }
-    }
-
     fun export_crash_report() {
         val now = LocalDateTime.now()
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
@@ -489,6 +482,10 @@ class ComponentActivityLanding: PaganComponentActivity() {
                 intent.putExtra(Intent.EXTRA_TITLE, "pagan.cr-${now.format(formatter)}.log")
             }
         )
+    }
+
+    override fun on_key_press(e: KeyEvent): Boolean {
+        return false
     }
 
 }

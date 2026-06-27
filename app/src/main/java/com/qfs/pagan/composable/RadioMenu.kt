@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
@@ -23,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.enumerate
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 
@@ -54,22 +54,22 @@ fun <T> RadioMenu(
             Button(
                 colors = ButtonDefaults.buttonColors().copy(
                     containerColor = if (active.value == item) {
-                        SwitchDefaults.colors().checkedTrackColor
+                        Colors.active_color_scheme.switch_track_checked
                     } else {
-                        SwitchDefaults.colors().uncheckedTrackColor
+                        Colors.active_color_scheme.switch_track_unchecked
                     },
                     contentColor = if (active.value == item) {
-                        SwitchDefaults.colors().checkedThumbColor
+                        Colors.active_color_scheme.switch_thumb_checked
                     } else {
-                        SwitchDefaults.colors().uncheckedThumbColor
+                        Colors.active_color_scheme.switch_thumb_unchecked
                     }
                 ),
                 border = BorderStroke(
                     width = Dimensions.RadioMenu.StrokeWidth,
                     color = if (active.value == item) {
-                        SwitchDefaults.colors().checkedBorderColor
+                        Colors.active_color_scheme.switch_border_checked
                     } else {
-                        SwitchDefaults.colors().uncheckedBorderColor
+                        Colors.active_color_scheme.switch_border_unchecked
                     }
                 ),
                 onClick = {

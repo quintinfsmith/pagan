@@ -10,6 +10,7 @@
 package com.qfs.pagan.composable
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -29,9 +30,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.sp
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
@@ -39,41 +42,44 @@ import com.qfs.pagan.composable.button.SmallButton
 import com.qfs.pagan.composable.button.SmallOutlinedButton
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.testTag
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Typography
 
 @Composable
 fun DialogCard(
     modifier: Modifier = Modifier,
     colors: CardColors = CardColors(
-        containerColor = MaterialTheme.colorScheme.surface,
-        contentColor = MaterialTheme.colorScheme.onSurface,
+        containerColor = Colors.active_color_scheme.container,
+        contentColor = Colors.active_color_scheme.foreground,
         disabledContentColor = Color.Gray,
         disabledContainerColor = Color.Green,
     ),
     shape: Shape = RoundedCornerShape(Dimensions.DialogRadius),
     border: BorderStroke? = null,
+    alignment: Alignment.Horizontal,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    ProvideContentColorTextStyle(contentColor = colors.contentColor) {
-        Surface(
+    ProvideContentColorTextStyle(
+        textStyle = Typography.Default,
+        contentColor = colors.contentColor
+    ) {
+        Column(
             modifier = modifier
-                .then(if (border != null) modifier.border(border) else Modifier),
-            shape = shape
-        ) {
-            Column(
-                modifier = Modifier
-                    .wrapContentSize()
-                    .padding(Dimensions.DialogPadding),
-                horizontalAlignment = Alignment.Start,
-                content = content
-            )
-        }
+                .clip(shape)
+                .then(if (border != null) modifier.border(border) else Modifier)
+                .background(colors.containerColor)
+                .wrapContentSize()
+                .padding(Dimensions.DialogPadding),
+            horizontalAlignment = alignment,
+            content = content
+        )
     }
 }
 
 @Composable
 fun DialogTitle(text: String, modifier: Modifier = Modifier) {
-    ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+    ProvideTextStyle(Typography.DialogTitle) {
         Text(
             text = text,
             modifier = modifier.padding(Dimensions.DialogTitlePadding)
@@ -125,7 +131,6 @@ fun ColumnScope.DialogBar(
                     .height(Dimensions.DialogBarButtonHeight)
                     .weight(1F),
                 onClick = it,
-                border = BorderStroke(Dimensions.OutlineButtonStrokeWidth, MaterialTheme.colorScheme.onSurface),
                 content = { Text(neutral_label, maxLines = 1) }
             )
         }

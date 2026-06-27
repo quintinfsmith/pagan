@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -35,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.util.lerp
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
@@ -55,16 +55,16 @@ fun NumberPicker(modifier: Modifier = Modifier, range: IntRange, default: Mutabl
     default.value = (state.currentPage % page_count) + range.first
 
     val scope = rememberCoroutineScope()
-    ProvideContentColorTextStyle(MaterialTheme.colorScheme.onSurface) {
+    ProvideContentColorTextStyle(Colors.active_color_scheme.number_picker_foreground) {
         Box(
             modifier
                 .background(
-                    color = MaterialTheme.colorScheme.surface,
+                    color = Colors.active_color_scheme.number_picker_background,
                     shape = Shapes.SettingsBox
                 )
                 .border(
                     width = Dimensions.NumberPickerStrokeWidth,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = Colors.active_color_scheme.number_picker_foreground,
                     shape = Shapes.SettingsBox
                 )
                 .width(Dimensions.NumberPickerRowWidth)
@@ -82,13 +82,13 @@ fun NumberPicker(modifier: Modifier = Modifier, range: IntRange, default: Mutabl
                     Modifier
                         .height(Dimensions.NumberPickerStrokeWidth)
                         .fillMaxWidth(.8F)
-                        .background(MaterialTheme.colorScheme.outline)
+                        .background(Colors.active_color_scheme.container_border)
                 )
                 Spacer(
                     Modifier
                         .height(Dimensions.NumberPickerStrokeWidth)
                         .fillMaxWidth(.8F)
-                        .background(MaterialTheme.colorScheme.outline)
+                        .background(Colors.active_color_scheme.container_border)
                 )
             }
 

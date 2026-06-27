@@ -9,6 +9,7 @@
  */
 package com.qfs.pagan.ui.theme
 
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
@@ -19,18 +20,19 @@ import com.qfs.pagan.ui.theme.Dimensions.ContextMenuButtonRadius
 import com.qfs.pagan.ui.theme.Dimensions.getter
 
 object Shapes {
-    val NumberSelectorButton = RoundedCornerShape(Dimensions.NumberSelectorButtonRadius)
+    val ButtonDefault = CircleShape
+    val NumberSelectorButton = RoundedCornerShape(Dimensions.NotePickerButtonRadius)
     val NumberSelectorButtonStart = RoundedCornerShape(
         topStart = Dimensions.ContextMenuRadius,
-        topEnd = Dimensions.NumberSelectorButtonRadius,
-        bottomStart = Dimensions.NumberSelectorButtonRadius,
-        bottomEnd = Dimensions.NumberSelectorButtonRadius,
+        topEnd = Dimensions.NotePickerButtonRadius,
+        bottomStart = Dimensions.NotePickerButtonRadius,
+        bottomEnd = Dimensions.NotePickerButtonRadius,
     )
     val NumberSelectorButtonEnd = RoundedCornerShape(
-        topStart = Dimensions.NumberSelectorButtonRadius,
+        topStart = Dimensions.NotePickerButtonRadius,
         topEnd = Dimensions.ContextMenuRadius,
-        bottomStart = Dimensions.NumberSelectorButtonRadius,
-        bottomEnd = Dimensions.NumberSelectorButtonRadius,
+        bottomStart = Dimensions.NotePickerButtonRadius,
+        bottomEnd = Dimensions.NotePickerButtonRadius,
     )
 
     val ConfigChannelButtonEnd = RoundedCornerShape(
@@ -85,7 +87,6 @@ object Shapes {
             medium_portrait = ContextMenuButtonPrimary,
         )
 
-
     val CMBoxBottom = RoundedCornerShape(
         topStart = Dimensions.ContextMenuRadius,
         topEnd = Dimensions.ContextMenuRadius,
@@ -103,6 +104,8 @@ object Shapes {
 
     val LandingButtonShape = RoundedCornerShape(Dimensions.LandingButtonCornerRadius)
     val LandingButtonShapeNeedsSF = RoundedCornerShape(Dimensions.LandingButtonCornerRadius, 0.dp, 0.dp, Dimensions.LandingButtonCornerRadius)
+
+    val NumberInputDialog = Container
 
     val ProjectCardNotes = RoundedCornerShape(4.dp)
 

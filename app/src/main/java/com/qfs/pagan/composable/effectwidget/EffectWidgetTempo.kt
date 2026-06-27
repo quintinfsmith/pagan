@@ -9,52 +9,51 @@
  */
 package com.qfs.pagan.composable.effectwidget
 
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
-import com.qfs.pagan.ActionDispatcher
+import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.FloatInput
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
+import com.qfs.pagan.composable.cxtmenu.InsertButton
 import com.qfs.pagan.composable.wrappers.Text
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, event: OpusTempoEvent) {
+fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, opus_manager: OpusLayerInterface, event: OpusTempoEvent) {
     val cursor = ui_facade.active_cursor.value ?: return
     val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
-    val (channel, line_offset, beat, position) = ui_facade.get_location_ints()
 
     Spacer(Modifier.weight(.5F))
 
     val tempo_label = remember { mutableFloatStateOf(working_event.value) }
     FloatInput(
-        tempo_label.value,
+        tempo_label,
         precision = 3,
         revert_on_exit = true,
         prefix = {
             Icon(
-                modifier = Modifier.width(Dimensions.ContextMenuButtonIconWidth),
+                modifier = Modifier
+                    .width(Dimensions.ContextMenuButtonIconWidth),
                 painter = painterResource(R.drawable.icon_tempo),
                 contentDescription = null
             )
@@ -68,15 +67,13 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionD
             .weight(1F, fill = true)
     ) {
         working_event.value = it
-        if (beat != null) {
-            dispatcher.set_effect(EffectType.Tempo, working_event, channel, line_offset, beat, position!!, lock_cursor = true)
-        } else {
-            dispatcher.set_initial_effect(EffectType.Tempo, working_event, channel, line_offset, lock_cursor = true)
+        opus_manager.lock_cursor {
+            opus_manager.set_event_at_cursor(working_event)
         }
     }
 
     ProvideContentColorTextStyle(
-        contentColor = MaterialTheme.colorScheme.onSurface,
+        contentColor = Colors.active_color_scheme.context_menu_foreground,
         content = {
             Text(R.string.bpm, Modifier.padding(start = Dimensions.Space.Medium))
         }
@@ -84,5 +81,5 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionD
 
     Spacer(Modifier.weight(.5F))
 
-    EffectTransitionButton(working_event, dispatcher, is_initial)
+    EffectTransitionButton(working_event, opus_manager, is_initial)
 }

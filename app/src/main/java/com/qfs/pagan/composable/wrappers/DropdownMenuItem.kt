@@ -9,37 +9,57 @@
  */
 package com.qfs.pagan.composable.wrappers
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
-import androidx.compose.material3.MenuItemColors
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.qfs.pagan.ui.theme.Colors
+import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.Typography
 
 @Composable
 fun DropdownMenuItem(
     text: @Composable () -> Unit,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
+    selected: Boolean = false,
     enabled: Boolean = true,
-    colors: MenuItemColors = MenuDefaults.itemColors().copy(
-        textColor = MaterialTheme.colorScheme.onSurface,
-    ),
     contentPadding: PaddingValues = MenuDefaults.DropdownMenuItemContentPadding,
     interactionSource: MutableInteractionSource? = null,
 ) {
+
+    val text_color = if (selected) Colors.active_color_scheme.menu_item_foreground_selected
+        else Colors.active_color_scheme.menu_item_foreground
+
     DropdownMenuItem(
-        text,
+        {
+            ProvideTextStyle(Typography.DropdownMenu) {
+                text()
+            }
+        },
         onClick,
-        modifier,
+        Modifier
+            .padding(4.dp)
+            .background(
+                if (selected) Colors.active_color_scheme.menu_item_selected
+                else Colors.active_color_scheme.menu_item,
+                Shapes.SortableMenuBox
+            ),
         leadingIcon,
         trailingIcon,
         enabled,
-        colors,
+        MenuDefaults.itemColors().copy(
+            textColor =  text_color,
+            trailingIconColor = text_color,
+            leadingIconColor = text_color,
+        ),
         contentPadding,
         interactionSource
     )

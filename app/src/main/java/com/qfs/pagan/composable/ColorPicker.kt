@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.composable.wrappers.Text
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
@@ -48,7 +49,7 @@ fun ColorPicker(
     val red = remember { mutableFloatStateOf(color.value.red) }
     val green = remember { mutableFloatStateOf(color.value.green) }
     val blue = remember { mutableFloatStateOf(color.value.blue) }
-
+    val slider_colors = Colors.get_slider_colors()
     Column(modifier) {
         Spacer(
             Modifier
@@ -69,8 +70,9 @@ fun ColorPicker(
             Spacer(Modifier.width(Dimensions.ColorPickerInnerPadding))
             Slider(
                 red.floatValue,
-                colors = SliderDefaults.colors().copy(
-                    activeTrackColor = Color(red = red.floatValue, green = 0F, blue = 0F)
+                colors = slider_colors.copy(
+                    activeTrackColor = Color(red = red.floatValue, green = 0F, blue = 0F),
+                    thumbColor = Color(red = red.floatValue, green = 0F, blue = 0F)
                 ),
                 modifier = Modifier
                     .weight(1F, fill = false),
@@ -100,8 +102,9 @@ fun ColorPicker(
             Spacer(Modifier.width(Dimensions.ColorPickerInnerPadding))
             Slider(
                 green.floatValue,
-                colors = SliderDefaults.colors().copy(
-                    activeTrackColor = Color(red = 0F, green = green.floatValue, blue = 0F)
+                colors = slider_colors.copy(
+                    activeTrackColor = Color(red = 0F, green = green.floatValue, blue = 0F),
+                    thumbColor = Color(red = 0F, green = green.floatValue, blue = 0F)
                 ),
                 modifier = Modifier
                     .weight(1F, fill = false),
@@ -131,8 +134,9 @@ fun ColorPicker(
             Spacer(Modifier.width(Dimensions.ColorPickerInnerPadding))
             Slider(
                 blue.floatValue,
-                colors = SliderDefaults.colors().copy(
-                    activeTrackColor = Color(red = 0F, green = 0F, blue = blue.floatValue)
+                colors = slider_colors.copy(
+                    activeTrackColor = Color(red = 0F, green = 0F, blue = blue.floatValue),
+                    thumbColor = Color(red = 0F, green = 0F, blue = blue.floatValue)
                 ),
                 modifier = Modifier
                     .weight(1F, fill = false),
@@ -186,17 +190,17 @@ fun ColorPicker(
 @Composable
 fun HexDisplay(modifier: Modifier = Modifier, value: Float) {
     Surface(
-        tonalElevation = 1.dp,
         shape = Shapes.Container,
-        border = BorderStroke(Dimensions.HexDisplayStrokeWidth, color = MaterialTheme.colorScheme.onSurface)
+        color = Colors.active_color_scheme.container,
+        contentColor = Colors.active_color_scheme.foreground,
+        border = BorderStroke(Dimensions.HexDisplayStrokeWidth, color = Colors.active_color_scheme.container_border)
     ) {
         Box(
             modifier = Modifier.height(Dimensions.HexDisplayHeight),
             contentAlignment = Alignment.Center
         ) {
             Text(
-                modifier = modifier
-                    .width(Dimensions.ColorPickerHexInputWidth),
+                modifier = modifier.width(Dimensions.ColorPickerHexInputWidth),
                 text = "%02X".format((value * 255F).toInt()),
                 style = Typography.ColorPickerHexLabel
             )

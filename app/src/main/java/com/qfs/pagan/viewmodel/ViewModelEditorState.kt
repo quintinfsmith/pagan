@@ -14,12 +14,13 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.Coordinate
+import com.qfs.pagan.PaganConfiguration.MoveMode
 import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.PresetKey
 import com.qfs.pagan.RelativeInputMode
@@ -41,12 +42,6 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 
 class ViewModelEditorState: ViewModel() {
-    enum class SelectionLevel {
-        Unselected,
-        Primary,
-        Secondary
-    }
-
     enum class EventDescriptor {
         Selected,
         Tail,
@@ -70,7 +65,7 @@ class ViewModelEditorState: ViewModel() {
         val tag_content = mutableStateOf(tag_content)
         val is_selected = mutableStateOf(is_selected)
         val is_secondary = mutableStateOf(is_secondary)
-        val top_weight = mutableStateOf(max_leaf_count)
+        val top_weight = mutableIntStateOf(max_leaf_count)
         val zoom_notches: MutableList<Float> = zoom_widths.toList().let {
             MutableList(it.size) { i -> it[i].toFloat() }
         }
@@ -93,7 +88,7 @@ class ViewModelEditorState: ViewModel() {
         val active_name = mutableStateOf(name)
         val size = mutableIntStateOf(size)
         val palette = mutableStateOf(palette)
-        val update_key = mutableStateOf(System.currentTimeMillis())
+        val update_key = mutableLongStateOf(System.currentTimeMillis())
 
         fun update(percussion: Boolean, instrument: PresetKey, is_mute: Boolean, is_selected: Boolean = false, name: String?, size: Int = 0, palette: OpusColorPalette) {
             this.percussion.value = percussion
@@ -103,13 +98,13 @@ class ViewModelEditorState: ViewModel() {
             this.active_name.value = name
             this.size.intValue = size
             this.palette.value = palette.copy()
-            this.update_key.value = System.currentTimeMillis()
+            this.update_key.longValue = System.currentTimeMillis()
         }
     }
 
     class TreeData(tree: ReducibleTree<out OpusEvent>) {
         class LeafNotFound(path: List<Int>): Exception("Leaf $path not found")
-        var key: MutableState<Long> = mutableStateOf(System.currentTimeMillis())
+        var key: MutableState<Long> = mutableLongStateOf(System.currentTimeMillis())
         val top_weight: MutableState<Int> = mutableIntStateOf(tree.weighted_size)
         val leafs: MutableList<Pair<List<Int>, MutableState<LeafData>>> = mutableListOf()
         init {
@@ -181,6 +176,7 @@ class ViewModelEditorState: ViewModel() {
 
     val ready = mutableStateOf(false)
     val project_name: MutableState<String?> = mutableStateOf(null)
+    val project_notes: MutableState<String?> = mutableStateOf(null)
     val beat_count: MutableState<Int> = mutableIntStateOf(0)
     val line_count: MutableState<Int> = mutableIntStateOf(0)
     var channel_count: MutableState<Int> = mutableIntStateOf(0)
@@ -200,68 +196,85 @@ class ViewModelEditorState: ViewModel() {
     var selected_leafs: MutableList<LeafData> = mutableListOf()
 
     var blocker_leaf: List<Int>? = null
-    val use_midi_playback: MutableState<Boolean> = mutableStateOf(false)
-    val midi_device_connected: MutableState<Boolean> = mutableStateOf(false)
-    val playback_state_soundfont: MutableState<PlaybackState> = mutableStateOf(PlaybackState.NotReady)
-    val looping_playback: MutableState<Boolean> = mutableStateOf(false)
-    val playback_state_midi: MutableState<PlaybackState> = mutableStateOf(PlaybackState.NotReady)
-    val relative_input_mode: MutableState<RelativeInputMode> = mutableStateOf(RelativeInputMode.Absolute)
-    val latest_input_indicator: MutableState<Boolean> = mutableStateOf(false)
+    val use_midi_playback = mutableStateOf(false)
+    val midi_device_connected = mutableStateOf(false)
+    val soundfont_ready = mutableStateOf(false)
+    val playback_state_soundfont = mutableStateOf(PlaybackState.NotReady)
+    val looping_playback = mutableStateOf(false)
+    val playback_state_midi = mutableStateOf(PlaybackState.NotReady)
+    val relative_input_mode = mutableStateOf(RelativeInputMode.Absolute)
+    val latest_input_indicator  = mutableStateOf(false)
+    val move_mode = mutableStateOf(MoveMode.COPY)
 
-    val highlighted_offset: MutableState<Int?> = mutableStateOf(null)
-    val highlighted_octave: MutableState<Int?> = mutableStateOf(null)
+    val highlighted_offset = mutableStateOf<Int?>(null)
+    val highlighted_octave = mutableStateOf<Int?>(null)
 
-    val is_buffering: MutableState<Boolean> = mutableStateOf(false)
+    val is_buffering = mutableStateOf(false)
 
     val scroll_state_x = mutableStateOf(LazyListState())
     val scroll_state_y: MutableState<ScrollState> = mutableStateOf(ScrollState(0))
     val coroutine_scope: MutableState<CoroutineScope> = mutableStateOf(CoroutineScope(Dispatchers.Default))
-    val export_progress: MutableState<Float> = mutableStateOf(0F)
+    val export_progress: MutableState<Float> = mutableFloatStateOf(0F)
     val export_in_progress = mutableStateOf(false)
 
-    private val working_path = mutableListOf<Int>()
     val preset_names: MutableList<HashMap<Int, HashMap<Int, String>>> = mutableListOf()
     val available_instruments = HashMap<PresetKey, List<Pair<String, Int>>>()
-    val pixel_density = mutableStateOf(1F)
+    val pixel_density = mutableFloatStateOf(1F)
 
     val has_global_effects_hidden = mutableStateOf(true)
-    val soundfont_active: MutableState<Long?> = mutableStateOf(null) // can use as key if we specify some indicator
-    val active_soundfonts: MutableState<Array<String>> = mutableStateOf(arrayOf())
-    val table_side_padding: MutableState<Float> = mutableStateOf(0F)
-    val table_bottom_padding: MutableState<Float> = mutableStateOf(0F)
-    val wide_beat_progress: MutableState<Float> = mutableStateOf(0F)
-    val active_wide_beat: MutableState<Int?> = mutableStateOf(null)
+    val soundfont_active = mutableStateOf<Long?>(null) // can use as key if we specify some indicator
+    val active_soundfonts = mutableStateOf<Array<String>>(arrayOf())
+    val table_side_padding = mutableFloatStateOf(0F)
+    val table_bottom_padding = mutableFloatStateOf(0F)
+    val wide_beat_progress = mutableFloatStateOf(0F)
+    val active_wide_beat = mutableStateOf<Int?>(null)
+    val std_notes_in_range = mutableStateOf(false)
 
-    val has_undoable_actions: MutableState<Boolean> = mutableStateOf(false)
-    val has_redoable_actions: MutableState<Boolean> = mutableStateOf(false)
+    val has_undoable_actions = mutableStateOf(false)
+    val has_redoable_actions = mutableStateOf(false)
 
     val dragging_line: MutableState<Int?> = mutableStateOf(null)
     val dragging_abs_offset: MutableState<Float?> = mutableStateOf(null)
-    val dragging_initial_offset: MutableState<Float> = mutableStateOf(0F)
+    val dragging_initial_offset = mutableFloatStateOf(0F)
     val dragging_first_line: MutableState<Int?> = mutableStateOf(null)
-    val dragging_offset: MutableState<Float> = mutableStateOf(0F)
-    val dragging_height: Pair<MutableState<Int>, MutableState<Int>> = Pair(mutableStateOf(0), mutableStateOf(0))
+    val dragging_offset = mutableFloatStateOf(0F)
+    val dragging_height = Pair(mutableIntStateOf(0), mutableIntStateOf(0))
     val dragging_line_map = mutableListOf<Triple<ClosedFloatingPointRange<Float>, IntRange, Boolean>>()
+
+    val selecting_beat = mutableStateOf(false)
 
     val queued_zoom_index = mutableIntStateOf(0) // Needed to prevent jitter on zoom
     val zoom_index = mutableIntStateOf(0)
     val active_zoom = mutableFloatStateOf(1F)
     val max_zoom_index = mutableIntStateOf(0)
-    var zoom_sensitivity = Values.Defaults.ZoomSensitivity
-    val zoom_notches = mutableListOf<Float>(1F) // Used only when beat widths are normalized
-    val normalize_beat_widths = mutableStateOf<Boolean>(false)
-    val beat_stroke_thickness = mutableStateOf<Dp>(0.dp)
+    val zoom_notches = mutableListOf(1F) // Used only when beat widths are normalized
+    val normalize_beat_widths = mutableStateOf(false)
+    val beat_stroke_thickness = mutableStateOf(0.dp)
     val scroll_x_center = mutableStateOf<Triple<Int, Float, Float>?>(null)
+
+    val confirm_action_callback: MutableState<(() -> Unit)?> = mutableStateOf(null)
+    val confirm_action_visibility = mutableStateOf(false)
+
+    val channel_preset_dialog = mutableStateOf<Int?>(null)
+    val channel_preset_dialog_visibility = mutableStateOf(false)
+
+    // Store number input values so user doesn't have to keep inputting the same value
+    val dlg_split = mutableIntStateOf(Values.DialogInput.Split)
+    val dlg_insert_leaf = mutableIntStateOf(Values.DialogInput.InsertLeaf)
+    val dlg_insert_line = mutableIntStateOf(Values.DialogInput.InsertLine)
+    val dlg_remove_line = mutableIntStateOf(Values.DialogInput.RemoveLine)
+    val dlg_insert_beat = mutableIntStateOf(Values.DialogInput.InsertBeat)
+    val dlg_remove_beat = mutableIntStateOf(Values.DialogInput.RemoveBeat)
+    val dlg_duration = mutableIntStateOf(Values.DialogInput.Duration)
 
     fun get_active_zoom(x: Int): Float {
         return if (this.normalize_beat_widths.value) {
             this.get_active_zoom()
         } else {
             min(
-                this.column_data[x].top_weight.value.toFloat(),
+                this.column_data[x].top_weight.intValue.toFloat(),
                 this.get_active_zoom()
             )
-
         }
     }
 
@@ -271,7 +284,7 @@ class ViewModelEditorState: ViewModel() {
 
     private fun set_normalized_zoom() {
         val pegs = this.zoom_notches
-        this.active_zoom.value = if (pegs.isEmpty()) {
+        this.active_zoom.floatValue = if (pegs.isEmpty()) {
             1F
         } else {
             val i = this.zoom_index.intValue.coerceIn(0, pegs.size - 1)
@@ -281,27 +294,27 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun set_zoom(beat: Int, position: Rational, new_zoom: Float) {
-        if (new_zoom <= this.active_zoom.value) return
+        if (new_zoom <= this.active_zoom.floatValue) return
         val new_zoom_index = this.zoom_notches.indexOf(new_zoom)
-        val base_leaf_width = this.pixel_density.value * Dimensions.LeafBaseWidth.value
-        val beat_stroke_width = this.pixel_density.value * this.beat_stroke_thickness.value.value
+        val base_leaf_width = this.pixel_density.floatValue * Dimensions.LeafBaseWidth.value
+        val beat_stroke_width = this.pixel_density.floatValue * this.beat_stroke_thickness.value.value
         val target_position = ((Array(beat) { this.get_active_zoom(it) }.sum() + (get_active_zoom(beat) * position.toFloat())) * base_leaf_width) + (beat_stroke_width * beat.toFloat())
         val first_visible_beat = this.scroll_state_x.value.firstVisibleItemIndex
         val first_visible_position = (Array(first_visible_beat) { this.get_active_zoom(it) }.sum() * base_leaf_width) + this.scroll_state_x.value.firstVisibleItemScrollOffset + (beat_stroke_width * first_visible_beat.toFloat())
         this.queue_recenter(target_position - first_visible_position) {
-            this.queued_zoom_index.value = new_zoom_index
+            this.queued_zoom_index.intValue = new_zoom_index
         }
     }
 
     fun increment_zoom(center: Float? = null) {
         this.queue_recenter(center) {
-            this.queued_zoom_index.value = this.zoom_index.value + 1
+            this.queued_zoom_index.intValue = this.zoom_index.intValue + 1
         }
     }
 
     fun decrement_zoom(center: Float? = null) {
         this.queue_recenter(center) {
-            this.queued_zoom_index.value = this.zoom_index.value - 1
+            this.queued_zoom_index.intValue = max(0, this.zoom_index.intValue - 1)
         }
     }
 
@@ -311,10 +324,10 @@ class ViewModelEditorState: ViewModel() {
         var targeted_x = this.scroll_state_x.value.firstVisibleItemIndex
         var working_offset = initial_center + this.scroll_state_x.value.firstVisibleItemScrollOffset
 
-        var working_chunk_size = this.get_active_zoom(targeted_x) * (Dimensions.LeafBaseWidth.value * this.pixel_density.value)
+        var working_chunk_size = this.get_active_zoom(targeted_x) * (Dimensions.LeafBaseWidth.value * this.pixel_density.floatValue)
         while (working_offset - working_chunk_size > 0F && targeted_x < this.column_data.size - 1) {
             working_offset -= working_chunk_size
-            working_chunk_size = this.get_active_zoom(++targeted_x) * (Dimensions.LeafBaseWidth.value * this.pixel_density.value)
+            working_chunk_size = this.get_active_zoom(++targeted_x) * (Dimensions.LeafBaseWidth.value * this.pixel_density.floatValue)
         }
 
         callback()
@@ -324,13 +337,13 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun recenter() {
+        this.zoom_index.intValue = this.queued_zoom_index.intValue
+        this.set_normalized_zoom()
+
         val scroll_triple = this.scroll_x_center.value ?: return
         this.scroll_x_center.value = null
         val (beat, pivot, center) = scroll_triple
-
-        this.zoom_index.value = this.queued_zoom_index.value
-        this.set_normalized_zoom()
-        val pivot_px = (Dimensions.LeafBaseWidth.value * this.pixel_density.value) * this.get_active_zoom(beat) * pivot
+        val pivot_px = (Dimensions.LeafBaseWidth.value * this.pixel_density.floatValue) * this.get_active_zoom(beat) * pivot
         this.scroll_state_x.value.requestScrollToItem(beat, (pivot_px - center).roundToInt())
     }
 
@@ -347,9 +360,9 @@ class ViewModelEditorState: ViewModel() {
 
     fun start_dragging(y: Int, initial_offset: Float) {
         this.dragging_line.value = y
-        this.dragging_initial_offset.value = initial_offset
-        this.dragging_height.first.value = 0
-        this.dragging_height.second.value = 0
+        this.dragging_initial_offset.floatValue = initial_offset
+        this.dragging_height.first.intValue = 0
+        this.dragging_height.second.intValue = 0
         val main_line = this.line_data[y]
         val is_dragging_channel = this.is_dragging_channel()
 
@@ -361,9 +374,9 @@ class ViewModelEditorState: ViewModel() {
                     this.dragging_first_line.value = i
                 }
                 if (line.ctl_type.value != null) {
-                    this.dragging_height.second.value += 1
+                    this.dragging_height.second.intValue += 1
                 } else {
-                    this.dragging_height.first.value += 1
+                    this.dragging_height.first.intValue += 1
                 }
             }
         }
@@ -371,13 +384,13 @@ class ViewModelEditorState: ViewModel() {
 
     fun stop_dragging() {
         this.dragging_abs_offset.value = null
-        this.dragging_height.first.value = 0
+        this.dragging_height.first.intValue = 0
         this.dragging_line_map.clear()
-        this.dragging_height.second.value = 0
+        this.dragging_height.second.intValue = 0
         this.dragging_line.value = null
         this.dragging_first_line.value = null
-        this.dragging_offset.value = 0F
-        this.dragging_initial_offset.value = 0F
+        this.dragging_offset.floatValue = 0F
+        this.dragging_initial_offset.floatValue = 0F
         for (line in this.line_data) {
             line.is_dragging.value = false
         }
@@ -385,7 +398,7 @@ class ViewModelEditorState: ViewModel() {
 
     fun calculate_dragged_to_line(): Pair<Int, Boolean>? {
         val y = this.dragging_line.value ?: return null
-        val dragged_offset = this.dragging_initial_offset.value + this.dragging_offset.value
+        val dragged_offset = this.dragging_initial_offset.floatValue + this.dragging_offset.floatValue
         var adjusted_y = -1F
         val sorted_pairs = this.dragging_line_map.toList().sortedBy { it.first.start }
         if (y > sorted_pairs.last().second.last) {
@@ -419,6 +432,7 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun clear() {
+        this.selecting_beat.value = false
         this.ready.value = false
         this.project_name.value = null
         this.beat_count.value = 0
@@ -438,9 +452,13 @@ class ViewModelEditorState: ViewModel() {
         this.column_data.clear()
         this.cell_map.clear()
         this.channel_data.clear()
+
         this.zoom_index.intValue = 0
+        this.active_zoom.floatValue = 1F
         this.zoom_notches.clear()
         this.active_wide_beat.value = null
+        this.queued_zoom_index.value = 0
+        this.max_zoom_index.value = 0
 
         this.coroutine_scope.value.launch {
             this@ViewModelEditorState.scroll_state_x.value.requestScrollToItem(0)
@@ -524,7 +542,7 @@ class ViewModelEditorState: ViewModel() {
         for (y in 0 until this.line_count.value) {
             pegs.add(this.cell_map[y][x].value.top_weight.value.toFloat())
             for ((_, leaf_data) in this.cell_map[y][x].value.leafs) {
-                val notch = this.column_data[x].top_weight.value / (this.cell_map[y][x].value.top_weight.value * leaf_data.value.weight.value)
+                val notch = this.column_data[x].top_weight.intValue / (this.cell_map[y][x].value.top_weight.value * leaf_data.value.weight.floatValue)
                 pegs.add(notch)
             }
         }
@@ -536,7 +554,7 @@ class ViewModelEditorState: ViewModel() {
     }
 
     fun update_top_weight(x: Int) {
-        this.column_data[x].top_weight.value = Array(this.line_count.value) { this.cell_map[it][x].value.top_weight.value }.max()
+        this.column_data[x].top_weight.intValue = Array(this.line_count.value) { this.cell_map[it][x].value.top_weight.value }.max()
     }
 
     fun update_column(column: Int, is_tagged: Boolean, tag_content: String?) {
@@ -583,39 +601,20 @@ class ViewModelEditorState: ViewModel() {
         this.update_global_zoom_notches()
     }
 
-    fun update_zoom_levels() {
-        this.max_zoom_index.intValue = if (this.normalize_beat_widths.value) {
-            max(0, this.zoom_notches.size - 1)
-        } else {
-            if (this.column_data.isNotEmpty()) {
-                Array(this.column_data.size) { this.column_data[it].zoom_notches.size - 1 }.max()
-            } else {
-                0
-            }
-        }
-        this.zoom_index.intValue = this.zoom_index.intValue.coerceIn(0, this.max_zoom_index.intValue)
-    }
-
-    fun update_line(y: Int, channel: Int?, line_offset: Int?, ctl_type: EffectType?, assigned_offset: Int?, is_mute: Boolean, is_selected: Boolean) {
-        this.line_data[y].let {
-            it.channel.value = channel
-            it.line_offset.value = line_offset
-            it.ctl_type.value = ctl_type
-            it.assigned_offset.value = assigned_offset
-            it.is_mute.value = is_mute
-            it.is_selected.value = is_selected
-        }
-    }
-
     fun remove_row(y: Int, count: Int) {
-        for (i in 0 until count) {
+        for (_ in 0 until count) {
             val line = this.line_data.removeAt(y)
             if (line.channel.value != null && line.line_offset.value != null && line.ctl_type.value == null) {
                 this.channel_data[line.channel.value!!].size.intValue -= 1
             }
             this.cell_map.removeAt(y)
         }
+
         this.line_count.value -= count
+
+        for (x in 0 until this.beat_count.value) {
+            this.update_top_weight(x)
+        }
     }
 
     // Call after removing std line's row
@@ -630,7 +629,7 @@ class ViewModelEditorState: ViewModel() {
     }
 
     // Call after adding std line's row
-    fun shift_line_offsets_up(channel: Int, line_offset: Int, initial_y: Int, count: Int = 1) {
+    fun shift_line_offsets_up(channel: Int, initial_y: Int, count: Int = 1) {
         var offset = 1
         // we don't want to increment the effects of the working line, so skip over them
         for (line_data in this.line_data.subList(initial_y + 1, this.line_data.size)) {
@@ -756,7 +755,7 @@ class ViewModelEditorState: ViewModel() {
             this.channel_data.add(new_channel_index - 1, this.channel_data.removeAt(channel_index))
         }
         for (i in min(new_channel_index, channel_index) until this.channel_data.size) {
-            this.channel_data[i].update_key.value = System.currentTimeMillis()
+            this.channel_data[i].update_key.longValue = System.currentTimeMillis()
         }
 
         // ... Finally update the channels
@@ -821,7 +820,7 @@ class ViewModelEditorState: ViewModel() {
 
     private fun populate_selected_leafs(cursor: CacheCursor) {
         when (cursor.type) {
-            CursorMode.Column -> {
+            CursorMode.Beat -> {
                 for (y in 0 until this.line_count.value) {
                     if (cursor.ints[0] >= this.cell_map[y].size) continue // This is ok, the column just hasn't been added yet
                     this.cell_map[y][cursor.ints[0]].value.let {
@@ -870,7 +869,7 @@ class ViewModelEditorState: ViewModel() {
             }
             CursorMode.Single -> {
                 val y = cursor.ints[0]
-                var x = cursor.ints[1]
+                val x = cursor.ints[1]
                 if (this.cell_map.size > y && this.cell_map[y].size > x) {
                     this.cell_map[y][x].value.also {
                         for ((i, pair) in it.leafs.enumerate()) {
@@ -946,7 +945,7 @@ class ViewModelEditorState: ViewModel() {
 
     private fun populate_selected_columns(cursor: CacheCursor) {
         when (cursor.type) {
-            CursorMode.Column -> {
+            CursorMode.Beat -> {
                 val x = cursor.ints[0]
                 if (x < this.column_data.size) {
                     this.column_data[x].also {
@@ -1047,10 +1046,6 @@ class ViewModelEditorState: ViewModel() {
         this.is_buffering.value = value
     }
 
-    fun set_relative_mode(value: RelativeInputMode) {
-        this.relative_input_mode.value = value
-    }
-
     fun clear_presets() {
         this.preset_names.clear()
         this.available_instruments.clear()
@@ -1132,13 +1127,15 @@ class ViewModelEditorState: ViewModel() {
         }
     }
 
-    fun get_available_instruments(preset_key: PresetKey): List<Pair<String, Int>> {
-        return this.available_instruments[preset_key] ?: listOf()
+    fun get_available_instruments(preset_key: PresetKey): List<Pair<String, Int>>? {
+        return this.available_instruments[preset_key]
     }
 
     fun get_instrument_name(preset_key: PresetKey, offset: Int): String? {
-        for ((name, index) in this.get_available_instruments(preset_key)) {
-            if (index == offset) return name
+        this.get_available_instruments(preset_key)?.let { instruments ->
+            for ((name, index) in instruments) {
+                if (index == offset) return name
+            }
         }
         return null
     }
@@ -1154,14 +1151,14 @@ class ViewModelEditorState: ViewModel() {
         } else if (state.firstVisibleItemIndex >= beat) {
             Pair(beat, 0)
         } else if (state.layoutInfo.visibleItemsInfo.last().index <= beat) {
-            val base_leaf_width = Dimensions.LeafBaseWidth.value * this.pixel_density.value
+            val base_leaf_width = Dimensions.LeafBaseWidth.value * this.pixel_density.floatValue
             Pair(beat, (0 - state.layoutInfo.viewportSize.width + (base_leaf_width * this.get_active_zoom(beat)).toInt()))
         } else {
             return
         }
 
         val beat_stroke = if (beat > 0 && this.beat_stroke_thickness.value > 0.dp) {
-            (this.beat_stroke_thickness.value.value * this.pixel_density.value).toInt()
+            (this.beat_stroke_thickness.value.value * this.pixel_density.floatValue).toInt()
         } else {
             0
         }
@@ -1172,13 +1169,9 @@ class ViewModelEditorState: ViewModel() {
         }
     }
 
-    private fun get_beat_width(beat: Int): Int {
-        return this.column_data[beat].top_weight.value
-    }
-
     fun scroll_to_leaf(beat: Int, offset: Rational, width: Rational) {
         val beat_width = this.get_active_zoom(beat)
-        val base_leaf_width = Dimensions.LeafBaseWidth.value * this.pixel_density.value
+        val base_leaf_width = Dimensions.LeafBaseWidth.value * this.pixel_density.floatValue
         val offset_px = (beat_width * offset.toFloat() * base_leaf_width)
 
         val state = this.scroll_state_x.value
@@ -1198,7 +1191,7 @@ class ViewModelEditorState: ViewModel() {
         val end_offset = beat_width * (offset + width).toFloat() * base_leaf_width
 
         val beat_stroke = if (beat > 0 && this.beat_stroke_thickness.value > 0.dp) {
-            (this.beat_stroke_thickness.value.value * this.pixel_density.value).toInt()
+            (this.beat_stroke_thickness.value.value * this.pixel_density.floatValue).toInt()
         } else {
             0
         }
@@ -1209,8 +1202,8 @@ class ViewModelEditorState: ViewModel() {
             CoroutineScope(Dispatchers.Default).launch {
                 state.requestScrollToItem(beat, offset_px.toInt() + beat_stroke)
             }
-        } else if (last_visible_beat < beat || (state.layoutInfo.visibleItemsInfo.last().offset + end_offset > state.layoutInfo.viewportSize.width - this.table_side_padding.value)) {
-            val screen_width = state.layoutInfo.viewportSize.width - this.table_side_padding.value.toInt()
+        } else if (last_visible_beat < beat || (state.layoutInfo.visibleItemsInfo.last().offset + end_offset > state.layoutInfo.viewportSize.width - this.table_side_padding.floatValue)) {
+            val screen_width = state.layoutInfo.viewportSize.width - this.table_side_padding.floatValue.toInt()
             CoroutineScope(Dispatchers.Default).launch {
                 state.requestScrollToItem(
                     beat,
@@ -1254,7 +1247,7 @@ class ViewModelEditorState: ViewModel() {
     // check if we need to draw the lin *above* the cell (when dragging)
     fun draw_top_line(y: Int): Boolean {
         val first_drag_y = this.dragging_first_line.value ?: return false
-        val selection_height = + this.dragging_height.first.value + this.dragging_height.second.value
+        val selection_height = + this.dragging_height.first.intValue + this.dragging_height.second.intValue
         val last_drag_y = first_drag_y + selection_height
 
         if (y == first_drag_y) return true
@@ -1270,6 +1263,5 @@ class ViewModelEditorState: ViewModel() {
             y == dragging_to_line && !after_line || (y == dragging_to_line + selection_height && after_line)
         }
     }
-
 
 }

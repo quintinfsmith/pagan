@@ -10,7 +10,6 @@
 package com.qfs.pagan.composable.effectwidget
 
 import androidx.activity.compose.LocalActivity
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,33 +23,26 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.dp
-import com.qfs.pagan.ActionDispatcher
 import com.qfs.pagan.ComponentActivity.PaganComponentActivity
 import com.qfs.pagan.LayoutSize
+import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.Values
@@ -61,40 +53,35 @@ import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.DropdownMenuItem
+import com.qfs.pagan.composable.wrappers.Switch
 import com.qfs.pagan.composable.wrappers.Text
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
+import kotlin.math.roundToInt
 
 @Composable
-fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: ActionDispatcher, event: OpusVelocityEvent) {
-    val cursor = ui_facade.active_cursor.value ?: return
+fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, event: OpusVelocityEvent) {
+    val cursor = vm_state.active_cursor.value ?: return
     val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
     val working_value = remember { mutableFloatStateOf(working_event.value) }
-    val velocity_input_value = remember { mutableIntStateOf((working_event.value * 100F).toInt()) }
+    val velocity_input_value = remember { mutableIntStateOf((working_event.value * 100F).roundToInt()) }
     val slide_enabled = remember { mutableStateOf<Boolean>(working_event.slide != null) }
     val slide_width_mode = remember { mutableStateOf(working_event.slide?.first ?: OpusVelocityEvent.SlideMaxWidth.Note) }
     val denominator_label: MutableState<Int> = remember { mutableStateOf(working_event.slide?.second ?: Values.Defaults.SlideDenominator) }
-    val (channel, line_offset, beat, position) = ui_facade.get_location_ints()
-    val is_percussion = channel != null && ui_facade.channel_data[channel].percussion.value
+    val (channel, line_offset, beat, position) = vm_state.get_location_ints()
+    val is_percussion = channel != null && vm_state.channel_data[channel].percussion.value
     val active_layout_size = (LocalActivity.current as PaganComponentActivity).view_model.active_layout_size
-    val default_colors = SliderDefaults.colors()
-    val colors = default_colors.copy(
-        activeTickColor = default_colors.inactiveTickColor,
-        inactiveTickColor = default_colors.activeTickColor
-    )
-
+    val colors =  Colors.get_slider_colors()
     val submit = {
-        if (beat != null) {
-            dispatcher.set_effect(EffectType.Velocity, working_event, channel, line_offset, beat, position!!, true)
-        } else {
-            dispatcher.set_initial_effect(EffectType.Velocity, working_event, channel, line_offset, true)
+        opus_manager.lock_cursor {
+            opus_manager.set_event_at_cursor(working_event)
         }
     }
 
@@ -127,9 +114,7 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
                                 )
                             }
                         },
-                        onClick = {
-                            velocity_expanded.value = !velocity_expanded.value
-                        }
+                        onClick = { velocity_expanded.value = !velocity_expanded.value }
                     )
                     DropdownMenu(
                         velocity_expanded.value,
@@ -167,32 +152,18 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
                                 },
 
                             onValueChange = {
-                                working_event.value = it
-                                working_value.floatValue = it
-                                velocity_input_value.intValue = (it * 100).toInt()
+                                val tmp = (it * 100F).roundToInt()
+                                working_event.value = tmp.toFloat() / 100F
+                                working_value.floatValue = working_event.value
+                                velocity_input_value.intValue = tmp
                             },
 
                             onValueChangeFinished = {
+                                val tmp =  (working_value.floatValue * 100F).roundToInt()
+                                working_event.value = tmp.toFloat() / 100F
+                                velocity_input_value.intValue = tmp
                                 velocity_expanded.value = false
-                                if (beat != null) {
-                                    dispatcher.set_effect(
-                                        EffectType.Velocity,
-                                        working_event,
-                                        channel,
-                                        line_offset,
-                                        beat,
-                                        position!!,
-                                        true
-                                    )
-                                } else {
-                                    dispatcher.set_initial_effect(
-                                        EffectType.Velocity,
-                                        working_event,
-                                        channel,
-                                        line_offset,
-                                        true
-                                    )
-                                }
+                                submit()
                             }
                         )
                     }
@@ -201,29 +172,27 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
 
             MediumSpacer()
 
-            key(working_value.floatValue) {
-                IntegerInput(
-                    (working_event.value * 100F).toInt(),
-                    minimum = 0,
-                    maximum = 100,
-                    contentPadding = Unpadded,
-                    text_align = TextAlign.Center,
-                    revert_on_exit = true,
-                    modifier = Modifier
-                        .testTag(TestTag.VelocityInput)
-                        .height(Dimensions.EffectWidget.InputHeight)
-                        .width(Dimensions.EffectWidget.Velocity.InputWidth)
-                ) {
-                    working_event.value = it.toFloat() / 100F
-                    working_value.floatValue = working_event.value
-                    submit()
-                }
+            IntegerInput(
+                velocity_input_value,
+                minimum = 0,
+                maximum = 100,
+                contentPadding = Unpadded,
+                text_align = TextAlign.Center,
+                revert_on_exit = true,
+                modifier = Modifier
+                    .testTag(TestTag.VelocityInput)
+                    .height(Dimensions.EffectWidget.InputHeight)
+                    .width(Dimensions.EffectWidget.Velocity.InputWidth)
+            ) {
+                working_event.value = it.toFloat() / 100F
+                working_value.floatValue = working_event.value
+                submit()
             }
-
         }
     }
 
     MediumSpacer()
+
     if (!is_percussion) {
         if (slide_enabled.value) {
             Column(
@@ -257,6 +226,7 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
                                 )
                             }
                             DropdownMenuItem(
+                                selected = slide_width_mode.value == OpusVelocityEvent.SlideMaxWidth.Beat,
                                 text = { Text(R.string.velocity_widget_relative_to_beat) },
                                 onClick = {
                                     if (working_event.slide?.first != OpusVelocityEvent.SlideMaxWidth.Beat) {
@@ -271,6 +241,7 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
                                 }
                             )
                             DropdownMenuItem(
+                                selected = slide_width_mode.value == OpusVelocityEvent.SlideMaxWidth.Note,
                                 text = { Text(R.string.velocity_widget_relative_to_note) },
                                 onClick = {
                                     if (working_event.slide?.first != OpusVelocityEvent.SlideMaxWidth.Note) {
@@ -305,7 +276,7 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
                         contentAlignment = Alignment.Center
                     ) {
                         IntegerInput(
-                            denominator_label.value,
+                            denominator_label,
                             minimum = 1,
                             revert_on_exit = true,
                             contentPadding = Unpadded,
@@ -353,10 +324,21 @@ fun RowScope.VelocityEventMenu(ui_facade: ViewModelEditorState, dispatcher: Acti
                     MediumSpacer()
                 }
 
-                EffectTransitionButton(working_event, dispatcher, is_initial)
+                EffectTransitionButton(working_event, opus_manager, is_initial)
             }
         }
     } else {
-        EffectTransitionButton(working_event, dispatcher, is_initial)
+        EffectTransitionButton(working_event, opus_manager, is_initial)
     }
+
+    // IntegerInputDialog(
+    //     dialog_visibility,
+    //     R.string.dlg_set_velocity,
+    //     0, 200,
+    //     (working_event.value * 100).roundToInt()
+    // ) {
+    //     working_event.value = it.toFloat() / 100F
+    //     working_value.floatValue = working_event.value
+    //     submit()
+    // }
 }

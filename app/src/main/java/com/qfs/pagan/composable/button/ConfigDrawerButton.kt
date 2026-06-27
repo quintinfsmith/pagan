@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 
@@ -58,7 +59,7 @@ fun ConfigDrawerBottomButton(modifier: Modifier = Modifier, icon: Int, descripti
 fun ConfigDrawerChannelLeftButton(
     modifier: Modifier = Modifier,
     content: @Composable RowScope.() -> Unit,
-    colors: ButtonColors = ButtonDefaults.buttonColors(),
+    colors: ButtonColors = Colors.get_button_colors(),
     onClick: () -> Unit
 ) {
     Button(
@@ -79,7 +80,7 @@ fun ConfigDrawerChannelLeftButton(
 fun ConfigDrawerChannelRightButton(
     modifier: Modifier = Modifier,
     content: @Composable RowScope.() -> Unit,
-    colors: ButtonColors = ButtonDefaults.buttonColors(),
+    colors: ButtonColors = Colors.get_button_colors(),
     onClick: () -> Unit)
 {
     Button(

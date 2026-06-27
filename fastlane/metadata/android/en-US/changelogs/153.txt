@@ -1,0 +1,1 @@
+Fixed crash when repeating effect that extends past selection

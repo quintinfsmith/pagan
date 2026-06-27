@@ -23,12 +23,12 @@
  </a>
 </p>
 
-<p align="center">
- <b>
-    <a href="https://burnsomni.net/manual/pagan">Manual</a>
- </b>
-</p>
-
+<table align="center">
+    <tr>
+        <td><a href="https://burnsomni.net/manual/pagan">Manual</a></td>
+        <td><a href="https://www.reddit.com/r/pagansequencer/">r/pagansequencer</a></td>
+    </tr>
+</table>
 
 ## Features
 

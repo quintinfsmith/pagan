@@ -24,13 +24,9 @@ import com.qfs.pagan.LayoutSize.XLargePortrait
 import com.qfs.pagan.LayoutSize as VLayoutSize
 
 object Dimensions {
-    var active_layout_width = 0.dp
-    var active_layout_height = 0.dp
     var active_layout_size = VLayoutSize.SmallPortrait
 
-    fun set_active_layout_dimensions(width: Dp, height: Dp): VLayoutSize {
-        Dimensions.active_layout_height = height
-        Dimensions.active_layout_width = width
+    fun set_active_layout_size(width: Dp, height: Dp): VLayoutSize {
         this.active_layout_size = if (width >= height) {
             if (height >= Layout.XLarge.short) LayoutSize.XLargeLandscape
             else if (height >= Layout.Large.short) LayoutSize.LargeLandscape
@@ -177,9 +173,20 @@ object Dimensions {
         )
     val ContextMenuButtonIconWidth = 32.dp
 
-    val ContextMenuButtonPadding = PaddingValues(8.dp)
+    val ContextMenuButtonPadding: PaddingValues
+        get() = getter(
+            small_portrait = PaddingValues(8.dp),
+            small_landscape = PaddingValues(6.dp),
+            medium_portrait = PaddingValues(8.dp)
+        )
     val ContextMenuButtonRadius = 8.dp
     val ContextMenuPadding = Space.Medium
+    val ContextMenuSpacing: Dp
+        get() = getter(
+            small_portrait = Space.Medium,
+            small_landscape = Space.Small,
+            medium_portrait = Space.Medium,
+        )
     val ContextMenuRadius = 16.dp
 
     object DashedBorder {
@@ -202,6 +209,7 @@ object Dimensions {
 
     val EffectLineHeight = 30.dp
     val EffectDialogIconWidth = 32.dp
+    val EffectDialogIconHeight = 32.dp
     val EffectTransitionDialogIconHeight = 32.dp
 
     val ExtraTableIconsPadding = 6.dp
@@ -214,6 +222,7 @@ object Dimensions {
     object EffectWidget {
         object Pan {
             val CenterDotDiameter = 12.dp
+            val SliderPadding = ContextMenuButtonWidth
         }
         object Velocity {
             val FadePopupHeight = 250.dp
@@ -278,27 +287,37 @@ object Dimensions {
         start = 2.dp
     )
 
-    val NumberInputDialogPadding = 8.dp
+    val NumberInputDialogPadding = PaddingValues(
+        horizontal = 8.dp,
+        vertical = 4.dp
+    )
+
+    val NumberInputDialogWidth = 128.dp
     val NumberPickerRowHeight = 41.dp
     val NumberPickerRowWidth = 80.dp
     val NumberPickerStrokeWidth = Stroke.Thin
-    val NumberSelectorButtonHeight: Dp
+
+    val NotePickerButtonHeight: Dp
         get() = getter(
             small_portrait = 41.dp,
             medium_portrait = 48.dp,
         )
-
-    val NumberSelectorButtonRadius = 4.dp
-    val NumberSelectorColumnWidth = 41.dp
-    val NumberSelectorSpacing = 3.dp
+    val NotePickerButtonRadius = 4.dp
+    val NotePickerColumnWidth = 41.dp
+    val NotePickerSpacing = 3.dp
 
     val OutlineButtonStrokeWidth = Stroke.Thin
 
-    val PresetMenuArrowWidth = 24.dp
-    val PresetMenuArrowHeight = 24.dp
-    val ProjectCardNotesPadding = 6.dp
+    val PaletteDotPaddingEnd = 4.dp
+    val PaletteDotPaddingBottom = 6.dp
+    val PaletteDotSize = 12.dp
 
     val PercussionSwitchIconPadding = 4.dp
+    val PresetMenuArrowWidth = 24.dp
+    val PresetMenuArrowHeight = 24.dp
+    val PreviewIconHeight = 41.dp
+    val PreviewIconPadding = 8.dp
+    val ProjectCardNotesPadding = 6.dp
 
     object RadioMenu {
         val Gap = 4.dp
@@ -313,7 +332,7 @@ object Dimensions {
 
     val SettingsRadioIconHeight = 32.dp
     val SettingsBoxPadding = 12.dp
-
+    val SectionMenuInternalPadding = 8.dp
     val ShortcutIconPadding = 7.dp
 
     val SortableMenuSortButtonDiameter = 36.dp

@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.DrawerState
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -29,9 +28,11 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
+import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shadows
 import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.Typography
 
 @Composable
 fun ScaffoldWithTopBar(
@@ -59,11 +60,14 @@ fun ScaffoldWithTopBar(
     ) {
         Scaffold(
             topBar = {
-                val background = MaterialTheme.colorScheme.top_bar_container_color()
-                val foreground = MaterialTheme.colorScheme.top_bar_content_color()
+                val background = Colors.active_color_scheme.topbar
+                val foreground = Colors.active_color_scheme.topbar_text
 
                 top_app_bar?.let {
-                    ProvideContentColorTextStyle(contentColor = foreground) {
+                    ProvideContentColorTextStyle(
+                        textStyle = Typography.TopBar,
+                        contentColor = foreground
+                    ) {
                         Row(
                             modifier = Modifier
                                 .height(Dimensions.TopBarHeight)
@@ -79,6 +83,7 @@ fun ScaffoldWithTopBar(
                     }
                 }
             },
+            containerColor = Colors.active_color_scheme.background,
             content = content,
             modifier = Modifier.fillMaxSize()
         )

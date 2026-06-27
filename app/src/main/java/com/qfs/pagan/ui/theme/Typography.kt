@@ -13,11 +13,22 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 
 object Typography {
+
+    val Default = TextStyle(
+        fontFamily = Fonts.FiraSans
+    )
+
     object About {
-        val License = TextStyle(fontFamily = Fonts.FiraSans)
+        val License = TextStyle(
+            fontFamily = Fonts.FiraSans,
+            fontSize = 14.sp,
+            lineHeight = 1.4.em,
+            textAlign = TextAlign.Justify
+        )
         val LinkTitle = TextStyle(
             fontFamily = Fonts.FiraSans,
             fontSize = 20.sp
@@ -61,16 +72,44 @@ object Typography {
         lineHeight = 12.sp
     )
 
-    val DialogTitle = TextStyle(fontFamily = Fonts.FiraSans)
+    val DialogTitle = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 16.sp,
+        lineHeight = 20.sp
+    )
     val DialogBody = TextStyle(fontFamily = Fonts.FiraSans)
+    val DialogBodyMono = TextStyle(
+        fontFamily = Fonts.FiraMono,
+        fontSize = 13.sp
+    )
+    val DialogMenuItem = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 16.sp
+    )
     val DropdownMenu = TextStyle(fontFamily = Fonts.FiraSans)
+    val DrawerTitle = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 16.sp,
+        lineHeight = 20.sp,
+        textAlign = TextAlign.Center,
+    )
     val EffectLeaf = TextStyle(fontFamily = Fonts.FiraSans, fontSize = 12.sp)
+    val EffectLeafDelay = TextStyle(fontFamily = Fonts.FiraSans, fontSize = 10.sp)
 
     val LineLabel = TextStyle(
         fontFamily = Fonts.FiraSans,
         fontSize = 14.sp,
         lineHeight = 14.sp
     )
+
+    object EffectWidget {
+        object Pan {
+            val Indicator = TextStyle(
+                fontFamily = Fonts.FiraSans,
+                fontSize = 14.sp
+            )
+        }
+    }
 
     object Leaf {
         val Octave = TextStyle(
@@ -82,6 +121,11 @@ object Typography {
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold
         )
+        val RelativePrefix = TextStyle(
+            fontFamily = Fonts.FiraSans,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold
+        )
     }
 
     val NumberPicker = TextStyle(
@@ -90,7 +134,7 @@ object Typography {
         lineHeight = 16.sp,
     )
 
-    val NoteSelector = TextStyle(
+    val NotePicker = TextStyle(
         fontFamily = Fonts.FiraSans,
         fontSize = 18.sp
     )
@@ -120,11 +164,31 @@ object Typography {
         )
     }
 
-    val TopBar = TextStyle(fontFamily = Fonts.FiraSans)
+    val TopBar = TextStyle(
+        fontFamily = Fonts.FiraSans,
+    )
+
+    val NumberInput = TextStyle(
+        fontFamily = Fonts.FiraMono,
+        textAlign = TextAlign.Center,
+        fontSize = 16.sp,
+        lineHeight = 1.em
+    )
+    val NumberInputLabel = TextStyle(
+        fontFamily = Fonts.FiraMono,
+        fontSize = 14.sp,
+        lineHeight = 1.em
+    )
+
     val TextField = TextStyle(
         fontFamily = Fonts.FiraMono,
         fontSize = 16.sp,
         lineHeight = 16.sp
+    )
+    val TextFieldLabel = TextStyle(
+        fontFamily = Fonts.FiraMono,
+        fontSize = 14.sp,
+        lineHeight = 14.sp
     )
 
     val TinyTuningDialogLabel = TextStyle(

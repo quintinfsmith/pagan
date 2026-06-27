@@ -54,7 +54,7 @@ data class OpusManagerCursor(
                 other.channel == this.channel && this.ctl_level == other.ctl_level && this.ctl_type == other.ctl_type
             }
 
-            CursorMode.Column -> {
+            CursorMode.Beat -> {
                 other.beat == this.beat
             }
 
@@ -149,7 +149,7 @@ data class OpusManagerCursor(
     }
 
     fun select_column(beat: Int) {
-        this.mode = CursorMode.Column
+        this.mode = CursorMode.Beat
         this.beat = beat
         this.ctl_type = null
         this.ctl_level = null
@@ -201,7 +201,7 @@ data class OpusManagerCursor(
         this.ctl_level = CtlLineLevel.Channel
     }
 
-    fun select_global_ctl_line(type: EffectType) {
+    fun select_global_ctl_line(type: EffectType)    {
         this.mode = CursorMode.Line
         this.channel = 0
         this.line_offset = 0
@@ -219,9 +219,7 @@ data class OpusManagerCursor(
     }
 
     fun get_ordered_range(): Pair<BeatKey, BeatKey>? {
-        if (this.mode != CursorMode.Range) {
-            return null
-        }
+        if (this.mode != CursorMode.Range) return null
 
         return OpusLayerBase.get_ordered_beat_key_pair(this.range!!.first, this.range!!.second)
     }

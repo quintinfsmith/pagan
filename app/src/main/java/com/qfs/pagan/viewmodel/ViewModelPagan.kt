@@ -10,28 +10,13 @@
 package com.qfs.pagan.viewmodel
 
 import android.net.Uri
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.ViewModel
-import com.qfs.pagan.DialogChain
 import com.qfs.pagan.LayoutSize
+import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.PaganConfiguration
-import com.qfs.pagan.composable.DialogBar
-import com.qfs.pagan.composable.DialogSTitle
-import com.qfs.pagan.composable.SortableMenu
-import com.qfs.pagan.composable.UnSortableMenu
 import com.qfs.pagan.projectmanager.ProjectManager
 import com.qfs.pagan.ui.theme.Dimensions
 
@@ -69,13 +54,21 @@ class ViewModelPagan: ViewModel() {
     var configuration = PaganConfiguration()
 
     // MutableStates
-    var dialog_queue: MutableState<DialogChain?> = mutableStateOf(null)
     val requires_soundfont: MutableState<Boolean> = mutableStateOf(false)
     val has_saved_project: MutableState<Boolean> = mutableStateOf(false)
     val has_backup_saved: MutableState<Boolean> = mutableStateOf(false)
+    val dialog_states = HashMap<String, MutableState<Boolean>>()
+    val project_list = mutableStateOf<List<ProjectManager.CachedProjectData>>(listOf())
+
+    fun get_dialog_state(key: String): MutableState<Boolean> {
+        if (!this.dialog_states.contains(key)) {
+            this.dialog_states[key] = mutableStateOf(false)
+        }
+        return this.dialog_states[key]!!
+    }
 
     fun set_layout_size(width: Dp, height: Dp) {
-        this.active_layout_size.value = Dimensions.set_active_layout_dimensions(width, height)
+        this.active_layout_size.value = Dimensions.set_active_layout_size(width, height)
     }
 
     fun get_layout_size(): LayoutSize {
@@ -84,6 +77,7 @@ class ViewModelPagan: ViewModel() {
 
     fun delete_project(uri: Uri) {
         this.project_manager?.delete(uri)
+        this.project_list.value = this.project_manager?.get_project_list() ?: listOf()
         this.has_saved_project.value = this.project_manager?.has_projects_saved() ?: false
         this.has_backup_saved.value = this.project_manager?.has_backup_saved() == true
     }
@@ -97,87 +91,17 @@ class ViewModelPagan: ViewModel() {
         }
     }
 
-    fun reload_config() {
-        this.load_config(this.configuration_path ?: return)
+    fun set_config(config: PaganConfiguration) {
+        this.configuration.from_other(config)
         this.has_saved_project.value = this.project_manager?.has_projects_saved() ?: false
         this.has_backup_saved.value = this.project_manager?.has_backup_saved() == true
     }
+
     fun set_project_manager(project_manager: ProjectManager) {
         this.project_manager = project_manager
+        this.project_list.value = this.project_manager?.get_project_list() ?: listOf()
         this.has_saved_project.value = this.project_manager?.has_projects_saved() ?: false
         this.has_backup_saved.value = this.project_manager?.has_backup_saved() == true
-    }
-
-    fun create_dialog(level: Int = 0, alignment: Alignment = Alignment.Center, dialog_callback: (() -> Unit) -> (@Composable (ColumnScope.() -> Unit))) {
-        // Use level to block Dup dialogs. set it to allow for dialogs opened from other dialogs
-        if (this.dialog_queue.value?.level == level) return
-        this.dialog_queue.value = DialogChain(
-            parent = this.dialog_queue.value,
-            alignment = alignment,
-            dialog = dialog_callback {
-                this.dialog_queue.value?.let {
-                    this.dialog_queue.value = it.parent
-                }
-            },
-            level = level
-        )
-    }
-
-    fun <T> unsortable_list_dialog(title: Int, options: List<Pair<T, @Composable RowScope.() -> Unit>>, default_value: T? = null, callback: (T) -> Unit) {
-        this.create_dialog { close ->
-            @Composable {
-                DialogSTitle(title)
-                UnSortableMenu(Modifier.weight(1F, fill=false), options, default_value) {
-                    close()
-                    callback(it)
-                }
-                DialogBar(neutral = close)
-            }
-        }
-    }
-
-    fun <T> sortable_list_dialog(
-        title: Int,
-        default_menu: List<Pair<T, @Composable RowScope.() -> Unit>>,
-        sort_options: List<Pair<Int, (Int, Int) -> Int>>,
-        selected_sort: MutableIntState = mutableIntStateOf(-1),
-        default_value: T? = null,
-        content: (@Composable RowScope.(() -> Unit, Int) -> Unit)? = null,
-        onLongClick: (T, (() -> Unit)) -> Unit = {_, _ -> },
-        onClick: (T) -> Unit
-    ) {
-        this.create_dialog { close ->
-            @Composable {
-                SortableMenu(
-                    modifier = Modifier
-                        .weight(1F, fill = false)
-                        .fillMaxWidth(),
-                    title_content = {
-                        DialogSTitle(title)
-                        content?.let {
-                            Row {
-                                it(close, selected_sort.intValue)
-                            }
-                        }
-                    },
-                    default_menu = default_menu,
-                    sort_row_padding = PaddingValues(
-                        bottom = Dimensions.DialogBarPaddingVertical,
-                    ),
-                    sort_options = sort_options,
-                    active_sort_option = selected_sort,
-                    onLongClick = {
-                        onLongClick(it, close)
-                    },
-                    default_value = default_value,
-                    onClick = {
-                        close()
-                        onClick(it)
-                    }
-                )
-                DialogBar(neutral = close)
-            }
-        }
     }
 
     internal fun save_configuration() {
@@ -202,5 +126,26 @@ class ViewModelPagan: ViewModel() {
         this.coerce_relative_soundfont_path(uri)?.let { path ->
             this.configuration.soundfonts.value[index].value = path
         }
+    }
+
+
+    fun scan_and_update_project_list(full_refresh: Boolean = false) {
+        this.project_manager?.scan_and_update_project_list(full_refresh)
+        this.project_list.value = this.project_manager?.get_project_list() ?: listOf()
+    }
+
+    fun change_project_path(new_uri: Uri, active_project_uri: Uri? = null) {
+        this.project_manager?.change_project_path(new_uri, active_project_uri)
+        this.scan_and_update_project_list(true)
+    }
+
+    fun save(opus_manager: OpusLayerInterface, active_project: Uri?): Uri? {
+        val project_manager = this.project_manager ?: return null
+
+        val uri = project_manager.save(opus_manager, active_project)
+        this.has_saved_project.value = true
+        this.project_list.value = project_manager.get_project_list()
+
+        return uri
     }
 }

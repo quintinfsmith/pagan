@@ -27,7 +27,7 @@ class RangeOverflow(from_key: BeatKey, to_key: BeatKey, startkey: BeatKey) : Exc
 class EventlessTreeException : Exception("Tree requires event for operation")
 class InvalidMergeException : Exception()
 class RemovingRootException : Exception()
-class InvalidChannel(channel: Int) : Exception("Channel $channel doesn't exist")
+class InvalidChannel(var channel: Int) : Exception("Channel $channel doesn't exist")
 class NoteOutOfRange(var n: Int) : Exception("Attempting to use unsupported note $n")
 class InvalidLineException: Exception("Attempting to add a percussion line to the non-percussion channel")
 class EmptyPath : Exception("Path Required but not given")
@@ -40,5 +40,5 @@ class ChannelEffectRowNotVisible(type: EffectType, channel: Int): Exception("Cha
 class LineEffectRowNotVisible(type: EffectType, channel: Int, line_offset: Int): Exception("Line ($channel|$line_offset)'s $type row is either disabled or invisible.")
 
 /** Used to indicate to higher layers that the action was blocked, doesn't need more than a message since the actual handling is done with callbacks in this layer */
-class BlockedActionException(msg: String? = null) : Exception(msg)
+class BlockedActionException(msg: String? = null, var processed: Boolean = false) : Exception(msg)
 

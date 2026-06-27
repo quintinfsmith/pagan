@@ -25,8 +25,10 @@ class AudioInterface {
     var minimum_instrument_index_cache: MutableList<HashMap<Pair<Int, Int>, Int>> = mutableListOf() // <Program, Bank>: index
 
     class FeedbackRevolver(var size: Int = 4) {
+        data class Event(val channel: Int, val note: Int, val bend: Int, val velocity: Int, val duration: Int)
         var sample_handle_manager: SampleHandleManager? = null
         private var _current_index: Int = 0
+        private var _current_note_index: Int = 0
         private var devices = Array<FeedbackDevice?>(this.size) { null }
 
         fun set_handle_manager(sample_handle_manager: SampleHandleManager) {
@@ -37,9 +39,49 @@ class AudioInterface {
             }
         }
 
+        fun play(events: List<FeedbackRevolver.Event>, forced_preset: PresetKey? = null) {
+            val events = List(events.size) { i ->
+                val event = events[i]
+                Pair(
+                    NoteOn79(
+                        index = this._current_note_index++,
+                        channel = event.channel,
+                        note = event.note,
+                        bend = event.bend,
+                        velocity = event.velocity
+                    ),
+                    event.duration
+                )
+            }
+
+            this.devices[this._current_index]?.let {
+                thread {
+                    it.new_events(events, forced_preset)
+                }
+            }
+            this._current_index = (this._current_index + 1) % this.size
+        }
+
+        fun play(preset: PresetKey, note: Int, bend: Int, velocity: Int, duration: Int = 250) {
+            val event = NoteOn79(
+                index = this._current_note_index++,
+                channel = 0, // channel will not be considered with forced preset
+                note = note,
+                bend = bend,
+                velocity = velocity
+            )
+
+            this.devices[this._current_index]?.let {
+                thread {
+                    it.new_event(event, duration, preset)
+                }
+            }
+            this._current_index = (this._current_index + 1) % this.size
+        }
+
         fun play(channel: Int, note: Int, bend: Int, velocity: Int, duration: Int = 250) {
             val event = NoteOn79(
-                index = this._current_index++,
+                index = this._current_note_index++,
                 channel = channel,
                 note = note,
                 bend = bend,
@@ -172,6 +214,14 @@ class AudioInterface {
 
     fun disconnect_feedback_device() {
         this.feedback_revolver.clear()
+    }
+
+    fun play_feedback(events: List<FeedbackRevolver.Event>, preset: PresetKey? = null) {
+        this.feedback_revolver.play(events, preset)
+    }
+
+    fun play_feedback(preset: PresetKey, note: Int, bend: Int, velocity: Int) {
+        this.feedback_revolver.play(preset, note, bend, velocity, 250)
     }
 
     fun play_feedback(channel: Int, note: Int, bend: Int, velocity: Int) {

@@ -219,15 +219,17 @@
     <string name="cd_mark_section">Tag Section</string>
     <string name="cd_remove_section_mark">Remove Section Tag</string>
     <string name="dialog_mark_section">Tag Section</string>
-    <string name="section_spinner_item">%02$d: Section %1$02d</string>
+    <string name="section_spinner_item">%02$d|%02$d</string>
     <string name="sorted_list_desc">%1$s desc.</string>
     <string name="sorting_by">Sorting By:</string>
-    <string name="sort_option_date_created">Date Created</string>
-    <string name="sort_option_date_modified">Date Modified</string>
+    <string name="sort_option_date_created">Date Created...</string>
+    <string name="sort_option_date_modified">Date Modified...</string>
     <string name="sort_option_abc">ABC...</string>
     <string name="sort_option_bank">Bank...</string>
     <string name="sort_option_program">Program...</string>
     <string name="sort_option_soundfont">Soundfont...</string>
+    <string name="sorted_option">&#8593; %s</string>
+    <string name="reversed_sorted_option">&#8595; %s</string>
     <string name="hexcode">HexCode</string>
     <string name="red">Red</string>
     <string name="green">Green</string>
@@ -289,8 +291,8 @@
     <string name="move_mode_merge">Merge</string>
     <string name="remove_channel">Remove Channel %1$d</string>
     <string name="no">No</string>
-    <string name="last_modified">Last Modified</string>
-    <string name="date_created">Date Created</string>
+    <string name="last_modified">Modified</string>
+    <string name="date_created">Created</string>
     <string name="unsorted">Unsorted</string>
     <string name="unavailable_preset">Unavailable %s</string>
     <string name="unavailable_kit">Unavailable Kit</string>
@@ -315,6 +317,20 @@
     <string name="velocity_widget_relative_to_beat">Relative to Beat</string>
     <string name="velocity_widget_disable_sliding">Disable Sliding</string>
     <string name="velocity_widget_slide_duration">Slide Duration</string>
+    <string name="show_line_controls_this">This Line</string>
+    <string name="show_line_controls_channel">Channel Lines</string>
+    <string name="show_line_controls_all">All Lines</string>
+    <string name="show_channel_controls_all">All Channels</string>
+    <string name="show_channel_controls_single">This Channel</string>
+    <string name="repeat_selection_in_line">Repeat selection</string>
+    <string name="created_before_tracked">[Pre v1.8.7]</string>
+    <string name="soundfont_loading">Soundfont Loading...</string>
+    <string name="duplicate_channel">Duplicate Channel</string>
+    <string name="range_overflow">Range overflow</string>
+    <string name="invalid_channel">Invalid Channel %d</string>
+    <string name="close_beat_selector">Close Beat Selector</string>
+    <string name="untitled_section">untitled section</string>
+    <string name="back_to_leaf_selection">Back to leaf selection</string>
 
 
     <string-array name="general_midi_presets">

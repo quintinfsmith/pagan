@@ -171,7 +171,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         for ((key, handle_pair, left_pad) in sample_handles_to_use) {
             val (sample_handle, merge_keys) = handle_pair
             output[key] = Pair(
-                sample_handle.get_next_frames(left_pad, this.buffer_size),
+                sample_handle.get_next_frames(left_pad, this.buffer_size) ?: continue,
                 merge_keys
             )
         }
@@ -213,6 +213,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
         val handles_adj: MutableList<Pair<SampleHandle, IntArray>> = mutableListOf()
         for ((first_frame, handle_pair) in handles) {
             val (handle, _) = handle_pair
+            handle.check() ?: continue
             if (first_frame == frame) continue
             handle.set_working_frame(frame - first_frame)
             handles_adj.add(handle_pair)
@@ -224,7 +225,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     fun activate_sample_handles(handles: Set<Pair<SampleHandle, IntArray>>, initial_frame: Int, offset: Int) {
         // then populate the next active frames with upcoming sample handles
         for ((handle, merge_keys) in handles) {
-            val new_handle = handle.copy()
+            val new_handle = handle.check()?.copy() ?: continue
             this._active_sample_handles[handle.uuid] = ActiveHandleMapItem(
                 initial_frame + offset,
                 new_handle,
@@ -239,8 +240,8 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
                         0,
                         listOf(
                             ControllerEventData.IndexedProfileBufferFrame(
-                                initial_frame + offset,
-                                initial_frame + offset,
+                                0,
+                                0,
                                 floatArrayOf(this.sample_rate.toFloat(), filter_cutoff, 0F),
                                 FloatArray(3)
                             )
@@ -266,7 +267,7 @@ class WaveGenerator(val midi_frame_map: FrameMap, val sample_rate: Int, val buff
     fun set_position(frame: Int, look_back: Boolean = false) {
         this.clear()
         if (look_back) {
-          this.activate_active_handles(frame)
+            this.activate_active_handles(frame)
         }
         this.frame = frame
         for ((_,_,buffer) in this.midi_frame_map.get_effect_buffers()) {

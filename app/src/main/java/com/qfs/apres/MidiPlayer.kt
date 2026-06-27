@@ -59,7 +59,7 @@ class MidiPlayer: VirtualMidiInputDevice() {
         }
     }
 
-    fun play_note(channel: Int, note: Int, bend: Int = 0, velocity: Int = 64, midi2: Boolean = true) {
+    fun play_note(channel: Int, note: Int, bend: Int = 0, duration: Long = 400L, velocity: Int = 64, midi2: Boolean = true) {
         val handle = if (midi2) {
             val index = this.gen_index(channel)
             Triple(channel, index, true)
@@ -119,7 +119,7 @@ class MidiPlayer: VirtualMidiInputDevice() {
         }
 
         thread {
-            Thread.sleep(this._note_duration)
+            Thread.sleep(duration)
             val do_cancel = runBlocking {
                 this@MidiPlayer._handle_mutex.withLock {
                     if (this@MidiPlayer._active_handles[handle] == now) {

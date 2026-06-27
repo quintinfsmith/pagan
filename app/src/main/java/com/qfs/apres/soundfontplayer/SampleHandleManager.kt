@@ -121,8 +121,12 @@ class SampleHandleManager(
         }
     }
 
-    fun gen_sample_handles(event: NoteOn79): Set<SampleHandle> {
-        val preset = this.get_preset(event.channel) ?: return setOf()
+    fun gen_sample_handles(event: NoteOn79, force_preset: PresetKey? = null): Set<SampleHandle> {
+        val preset = if (force_preset != null) {
+            this.get_preset(force_preset) ?: this.soundfonts[force_preset.soundfont_index].get_preset(force_preset.program, force_preset.bank)
+        } else {
+            this.get_preset(event.channel) ?: return setOf()
+        }
         val output = mutableSetOf<SampleHandle>()
         val velocity = event.velocity shr 8
         val potential_instruments = preset.get_instruments(event.note, velocity)

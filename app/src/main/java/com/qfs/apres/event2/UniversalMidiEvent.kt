@@ -11,6 +11,7 @@ package com.qfs.apres.event2
 
 import com.qfs.apres.event.GeneralMIDIEvent
 import kotlin.experimental.or
+import kotlin.math.ceil
 
 interface UMPEvent: GeneralMIDIEvent
 interface UtilityMessage: GeneralMIDIEvent
@@ -34,12 +35,34 @@ interface FlexDataMessage: UMPEvent {
     fun get_data(): ByteArray
 
     override fun as_bytes(): ByteArray {
-        return byteArrayOf(
-            0xD0.toByte() or this.get_group(),
-            (this.get_form() shl 6) or (this.get_addrs() shl 4) or this.get_channel(),
-            this.get_status_bank(),
-            this.get_status()
-        ) + this.get_data()
+        val data_bytes = this.get_data()
+        val chunk_size = 12
+        val chunk_count = ceil(data_bytes.size / chunk_size.toFloat()).toInt()
+
+        val chunks = Array(chunk_count) { chunk ->
+            val form = if (chunk_count == 1) 0
+            else if (chunk == 0) 1
+            else if (chunk < chunk_count) 2
+            else 3
+
+            byteArrayOf(
+                0xD0.toByte() or this.get_group(),
+                ((form.toByte() shl 6) or (this.get_addrs() shl 4) or this.get_channel()),
+                this.get_status_bank(),
+                this.get_status()
+            ) + ByteArray(chunk_size) { i ->
+                val x = (chunk * chunk_size) + i
+                if (x < data_bytes.size) {
+                    data_bytes[x]
+                } else {
+                    0x00
+                }
+            }
+        }
+
+        return ByteArray(16 * chunks.size) { i ->
+            chunks[i / 16][i % 16]
+        }
     }
 }
 
@@ -678,7 +701,7 @@ class SetKeySignatureMessage(var tonic: Int, var sharps: Int): FlexDataMessage {
 class DeltaClockStamp(var ticks: Int): UtilityMessage {
     override fun as_bytes(): ByteArray {
         return byteArrayOf(
-            0,
+            0x00,
             0x30,
             (this.ticks and 0xFFFF).toByte()
         )

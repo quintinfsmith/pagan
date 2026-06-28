@@ -506,7 +506,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             val uri = result.data?.data ?: return@registerForActivityResult
             val opus_manager = this.controller_model.opus_manager
             this.applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
-                FileOutputStream(it.fileDescriptor).write(opus_manager.get_midi().as_bytes())
+                FileOutputStream(it.fileDescriptor).write(opus_manager.get_midi().as_bytes(Midi.VERSION_2_CLIP))
                 Toast.makeText(this, this.getString(R.string.feedback_exported_to_midi), Toast.LENGTH_SHORT)
             }
         }
@@ -3253,7 +3253,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         export_options.add(Pair(Exportable.JSON) { Text(R.string.export_option_json) })
 
-        if (opus_manager.is_tuning_standard()) {
+        if (true || opus_manager.is_tuning_standard()) {
             export_options.add(Pair(Exportable.MIDI1) { Text(R.string.export_option_midi) })
         }
 

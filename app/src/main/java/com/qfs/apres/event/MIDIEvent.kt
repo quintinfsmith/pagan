@@ -9,12 +9,21 @@
  */
 package com.qfs.apres.event
 
+import com.qfs.apres.event2.FlexDataMessage
+import com.qfs.apres.event2.UMPEvent
+
 interface GeneralMIDIEvent {
     fun as_bytes(): ByteArray
 }
 
 interface MIDIEvent: GeneralMIDIEvent {
-    fun as_ump_bytes(): ByteArray {
-        TODO()
+}
+
+interface UMPTranslatable: MIDIEvent {
+    fun as_ump_bytes(): ByteArray
+}
+
+interface TextMIDIEvent: UMPTranslatable {
+    override fun as_ump_bytes(): ByteArray {
     }
 }

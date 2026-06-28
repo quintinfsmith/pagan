@@ -11,6 +11,10 @@ package com.qfs.apres.event
 
 import com.qfs.apres.to_variable_length_bytes
 
+interface MIDITextEvent: MIDIEvent {
+
+}
+
 data class CopyRightNotice(var text: String): MIDIEvent {
     override fun as_bytes(): ByteArray {
         val text_bytes = this.text.toByteArray()

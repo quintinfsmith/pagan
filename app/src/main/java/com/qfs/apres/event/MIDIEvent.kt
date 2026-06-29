@@ -18,12 +18,3 @@ interface GeneralMIDIEvent {
 
 interface MIDIEvent: GeneralMIDIEvent {
 }
-
-interface UMPTranslatable: MIDIEvent {
-    fun as_ump_bytes(): ByteArray
-}
-
-interface TextMIDIEvent: UMPTranslatable {
-    override fun as_ump_bytes(): ByteArray {
-    }
-}

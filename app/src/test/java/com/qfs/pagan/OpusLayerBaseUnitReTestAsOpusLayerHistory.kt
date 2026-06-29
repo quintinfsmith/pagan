@@ -892,7 +892,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
         manager.controller_global_set_event(EffectType.Tempo, 1, listOf(), OpusTempoEvent(120F))
         manager.controller_global_set_event(EffectType.Tempo, 2, listOf(), OpusTempoEvent(60F))
 
-        val full_midi = manager.get_midi()
+        val full_midi = get_midi(manager)
         val event_map = HashMap<Int, List<GeneralMIDIEvent>>()
         for ((position, events) in full_midi.get_all_events_grouped()) {
             event_map[position] = events
@@ -929,7 +929,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerHistory {
             event_map[1920]!!.size
         )
 
-        val partial_midi = manager.get_midi(1, 2)
+        val partial_midi = get_midi(manager, 1, 2)
         val event_map_b = HashMap<Int, List<GeneralMIDIEvent>>()
         for ((position, events) in partial_midi.get_all_events_grouped()) {
             event_map_b[position] = events

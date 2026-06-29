@@ -121,6 +121,7 @@ import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.PaganBroadcastReceiver
 import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.PresetKey
+import com.qfs.pagan.ProjectToMIDIConverter
 import com.qfs.pagan.R
 import com.qfs.pagan.SingleExporterEventHandler
 import com.qfs.pagan.TestTag
@@ -506,7 +507,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             val uri = result.data?.data ?: return@registerForActivityResult
             val opus_manager = this.controller_model.opus_manager
             this.applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
-                FileOutputStream(it.fileDescriptor).write(opus_manager.get_midi().as_bytes(Midi.VERSION_2_CLIP))
+                FileOutputStream(it.fileDescriptor).write(ProjectToMIDIConverter.get_midi(opus_manager).as_bytes(Midi.VERSION_2_CLIP))
                 Toast.makeText(this, this.getString(R.string.feedback_exported_to_midi), Toast.LENGTH_SHORT)
             }
         }
@@ -3556,7 +3557,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             CursorMode.Unset -> 0
         }
 
-        val midi = opus_manager.get_midi(start_beat, include_pointers = true)
+        val midi = ProjectToMIDIConverter.get_midi(opus_manager, start_beat, include_pointers = true)
 
         if (!this.controller_model.update_playback_state_midi(PlaybackState.Playing)) return
         opus_manager.vm_state.playback_state_midi.value = this.controller_model.playback_state_midi

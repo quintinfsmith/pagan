@@ -26,12 +26,10 @@ private infix fun Byte.shl(i: Int): Byte {
 
 interface FlexDataMessage: UMPEvent {
     fun get_group(): Byte
-    fun get_form(): Byte
     fun get_addrs(): Byte
     fun get_channel(): Byte
     fun get_status_bank(): Byte
     fun get_status(): Byte
-
     fun get_data(): ByteArray
 
     override fun as_bytes(): ByteArray {
@@ -556,10 +554,6 @@ class SetTempoMessage(var bpm: Float): FlexDataMessage {
         return 0.toByte()
     }
 
-    override fun get_form(): Byte {
-        return 0.toByte()
-    }
-
     override fun get_addrs(): Byte {
         return 1.toByte()
     }
@@ -587,10 +581,6 @@ class SetTempoMessage(var bpm: Float): FlexDataMessage {
 
 class SetTimeSignatureMessage(var numerator: Int, var denominator: Int, var thirtysecondths_per_quarter: Int): FlexDataMessage {
     override fun get_group(): Byte {
-        return 0
-    }
-
-    override fun get_form(): Byte {
         return 0
     }
 
@@ -632,10 +622,6 @@ class SetMetronomeMessage(
         return 0
     }
 
-    override fun get_form(): Byte {
-        return 0
-    }
-
     override fun get_addrs(): Byte {
         return 1
     }
@@ -662,16 +648,10 @@ class SetMetronomeMessage(
             this.subdivision_clicks_second.toByte()
         ) + ByteArray(6)
     }
-
 }
-
 
 class SetKeySignatureMessage(var tonic: Int, var sharps: Int): FlexDataMessage {
     override fun get_group(): Byte {
-        return 0
-    }
-
-    override fun get_form(): Byte {
         return 0
     }
 
@@ -706,4 +686,109 @@ class DeltaClockStamp(var ticks: Int): UtilityMessage {
             (this.ticks and 0xFFFF).toByte()
         )
     }
+}
+
+abstract class FlexCommonText(var message: String, var channel: Int = 0): FlexDataMessage {
+    abstract val status_bank: Byte
+    abstract val status: Byte
+
+    override fun get_status_bank(): Byte {
+        return this.status_bank
+    }
+
+    override fun get_status(): Byte {
+        return this.status
+    }
+
+    override fun get_channel(): Byte {
+        return this.channel.toByte()
+    }
+
+    override fun get_data(): ByteArray {
+        return this.message.toByteArray()
+    }
+
+    override fun get_group(): Byte {
+        TODO("Not yet implemented")
+    }
+
+    override fun get_addrs(): Byte {
+        TODO("Not yet implemented")
+    }
+}
+
+class FlexGenericText(message: String): FlexCommonText(message) {
+    override val status_bank: Byte = 0x01
+    override val status: Byte = 0x00
+}
+class FlexProjectName(title: String): FlexCommonText(title) {
+    // Address should be set to 1 (Group)
+    override val status_bank: Byte = 0x01
+    override val status: Byte = 0x01
+}
+class FlexCompositionTitle(title: String): FlexCommonText(title) {
+    override val status_bank: Byte = 0x01
+    override val status: Byte = 0x02
+}
+class FlexMidiClipName(title: String): FlexCommonText(title) {
+    // Address should be set to 1 (Group)
+    override val status_bank: Byte = 0x01
+    override val status: Byte = 0x03
+}
+class FlexCopyrightNotice(title: String): FlexCommonText(title) {
+    override val status_bank: Byte = 0x01
+    override val status: Byte = 0x04
+}
+class FlexComposerName(title: String): FlexCommonText(title) {
+    override val status_bank: Byte = 0x01
+    override val status: Byte = 0x05
+}
+class FlexLyricistName(title: String): FlexCommonText(title) {
+    override val status_bank: Byte = 0x01
+    override val status: Byte = 0x06
+}
+class FlexArrangerName(title: String): FlexCommonText(title) {
+    override val status_bank: Byte = 0x01
+    override val status: Byte = 0x07
+}
+class FlexPublisherName(title: String): FlexCommonText(title) {
+    override val status_bank: Byte = 0x01
+    override val status: Byte = 0x08
+}
+class FlexPrimaryPerformerName(title: String): FlexCommonText(title) {
+    override val status_bank: Byte = 0x01
+    override val status: Byte = 0x09
+}
+class FlexAccompanyingPerformerName(title: String): FlexCommonText(title) {
+    override val status_bank: Byte = 0x01
+    override val status: Byte = 0x0A
+}
+class FlexRecordingDate(title: String): FlexCommonText(title) {
+    // 8601
+    override val status_bank: Byte = 0x01
+    override val status: Byte = 0x0B
+}
+class FlexRecordingLocation(title: String): FlexCommonText(title) {
+    override val status_bank: Byte = 0x01
+    override val status: Byte = 0x0C
+}
+class FlexGenericPerformanceText(title: String): FlexCommonText(title) {
+    override val status_bank: Byte = 0x02
+    override val status: Byte = 0x00
+}
+class FlexLyrics(title: String): FlexCommonText(title) {
+    override val status_bank: Byte = 0x02
+    override val status: Byte = 0x01
+}
+class FlexLyricsLanguage(title: String): FlexCommonText(title) {
+    override val status_bank: Byte = 0x02
+    override val status: Byte = 0x02
+}
+class FlexRuby(title: String): FlexCommonText(title) {
+    override val status_bank: Byte = 0x02
+    override val status: Byte = 0x03
+}
+class FlexRubyLanguage(title: String): FlexCommonText(title) {
+    override val status_bank: Byte = 0x02
+    override val status: Byte = 0x04
 }

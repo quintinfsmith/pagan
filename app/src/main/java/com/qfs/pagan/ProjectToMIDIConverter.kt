@@ -1,14 +1,21 @@
 package com.qfs.pagan
 
 import com.qfs.apres.Midi
+import com.qfs.apres.event.BalanceMSB
 import com.qfs.apres.event.BankSelect
+import com.qfs.apres.event.GeneralMIDIEvent
+import com.qfs.apres.event.MIDIEvent
 import com.qfs.apres.event.NoteOff
 import com.qfs.apres.event.NoteOn
 import com.qfs.apres.event.ProgramChange
+import com.qfs.apres.event.SetTempo
 import com.qfs.apres.event.SongPositionPointer
+import com.qfs.apres.event.Text
 import com.qfs.apres.event.VolumeMSB
+import com.qfs.apres.event2.FlexGenericText
 import com.qfs.apres.event2.NoteOff79
 import com.qfs.apres.event2.NoteOn79
+import com.qfs.apres.event2.UMPEvent
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
@@ -29,13 +36,116 @@ import kotlin.math.floor
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-abstract class CEvent(val tick: Int, val channel: Int? = null)
-class TextEvent(tick: Int, val msg: String): CEvent(tick, null)
-class NoteEvent(tick: Int, channel: Int, var note: Int, var bend: Int, var velocity: Int, var uuid: Int, var duration: Int): CEvent(tick, channel)
-class VolumeEvent(tick: Int, channel: Int, val value: Float): CEvent(tick, channel)
-class TempoEvent(tick: Int, val bpm: Float): CEvent(tick, null)
-class PanEvent(tick: Int, channel: Int, val pan: Float): CEvent(tick, channel)
-class BeatPointer(tick: Int, val beat: Int): CEvent(tick, null)
+abstract class CEvent(val tick: Int, val channel: Int? = null) {
+    fun get_midi_event(version: Int = Midi.VERSION_1): Array<out Pair<Int, GeneralMIDIEvent>> {
+        val events = when (version) {
+            Midi.VERSION_1 -> this.get_v1()
+            Midi.VERSION_2_CLIP -> this.get_v2()
+            else -> TODO()
+        }
+        val ticks = this.get_ticks(events.size)
+        return Array(events.size) { i -> Pair(ticks[i], events[i]) }
+    }
+    abstract fun get_v1(): Array<MIDIEvent>
+    abstract fun get_v2(): Array<UMPEvent>
+
+    open fun get_ticks(size: Int): Array<Int> {
+        return Array(size) { this.tick }
+    }
+}
+
+class TextEvent(tick: Int, val msg: String): CEvent(tick, null) {
+    override fun get_v1(): Array<MIDIEvent> {
+        return arrayOf(Text(this.msg))
+    }
+    override fun get_v2(): Array<UMPEvent> {
+        return arrayOf(FlexGenericText(this.msg))
+    }
+}
+
+class NoteEvent(tick: Int, channel: Int, var note: Int, var bend: Int, var velocity: Int, var uuid: Int, var duration: Int): CEvent(tick, channel) {
+    override fun get_v1(): Array<MIDIEvent> {
+        return arrayOf(
+            NoteOn(
+                this.channel!!,
+                this.note,
+                this.velocity
+            ),
+            NoteOff(
+                this.channel,
+                this.note,
+                0x00
+            )
+        )
+    }
+
+    override fun get_v2(): Array<UMPEvent> {
+        TODO()
+        //                 NoteOff79(
+        //                     index = index_map.remove(pseudo_event)!!,
+        //                     note = pseudo_event.note,
+        //                     bend = pseudo_event.bend,
+        //                     channel = pseudo_event.channel,
+        //                     velocity = pseudo_event.velocity shl 8
+        //                 )
+    }
+
+    override fun get_ticks(size: Int): Array<Int> {
+        return arrayOf(this.tick, this.tick + this.duration)
+    }
+}
+class VolumeEvent(tick: Int, channel: Int, val value: Float): CEvent(tick, channel) {
+    override fun get_v1(): Array<MIDIEvent> {
+        return arrayOf(VolumeMSB(this.channel!!, min((100 * this.value).roundToInt(), 127)))
+    }
+
+    override fun get_v2(): Array<UMPEvent> {
+        TODO("Not yet implemented")
+    }
+}
+
+class TempoEvent(tick: Int, val bpm: Float): CEvent(tick, null) {
+    override fun get_v1(): Array<MIDIEvent> {
+        return arrayOf(SetTempo.from_bpm(this.bpm))
+    }
+
+    override fun get_v2(): Array<UMPEvent> {
+        TODO("Not yet implemented")
+    }
+
+}
+class PanEvent(tick: Int, channel: Int, val pan: Float): CEvent(tick, channel) {
+    override fun get_v1(): Array<MIDIEvent> {
+        return arrayOf(BalanceMSB(this.channel!!, min(((this.pan + 1F) * 64).roundToInt(), 127)))
+    }
+
+    override fun get_v2(): Array<UMPEvent> {
+        TODO("Not yet implemented")
+    }
+
+}
+class BeatPointer(tick: Int, val beat: Int): CEvent(tick, null) {
+    override fun get_v1(): Array<MIDIEvent> {
+        return arrayOf(SongPositionPointer(this.beat))
+    }
+
+    override fun get_v2(): Array<UMPEvent> {
+        TODO("Not yet implemented")
+    }
+
+}
+class ProgramChangeEvent(tick: Int, channel: Int, val bank: Int, val program: Int): CEvent(tick, channel) {
+    override fun get_v1(): Array<MIDIEvent> {
+        return arrayOf(
+            BankSelect(this.channel!!, this.bank),
+            ProgramChange(this.channel!!, this.program)
+        )
+    }
+
+    override fun get_v2(): Array<UMPEvent> {
+        TODO("Not yet implemented")
+    }
+}
 
 
 class ProjectToMIDIConverter {
@@ -132,17 +242,18 @@ class ProjectToMIDIConverter {
             val channels = opus_manager.get_all_channels()
             for (c in channels.indices) {
                 val pan_controller = channels[c].get_controller<OpusPanEvent>(EffectType.Pan)
+                val midi_channel = opus_manager.get_midi_channel(c)
                 apply_active_controller(pan_controller) { event: OpusPanEvent, previous_event: OpusPanEvent?, frame_offset: Int, frames: Int ->
                     when (event.transition) {
                         EffectTransition.Instant -> {
                          //   val value = min(((event.value + 1F) * 64).toInt(), 127)
-                            listOf(PanEvent(frame_offset, c,event.value))
+                            listOf(PanEvent(frame_offset, midi_channel, event.value))
                         }
 
                         EffectTransition.InstantB -> {
                             listOf(
-                                PanEvent(frame_offset, c,event.value),
-                                PanEvent(frame_offset + frames, c,previous_event?.value ?: 0F)
+                                PanEvent(frame_offset, midi_channel, event.value),
+                                PanEvent(frame_offset + frames, midi_channel, previous_event?.value ?: 0F)
                             )
                         }
 
@@ -155,7 +266,7 @@ class ProjectToMIDIConverter {
                             for (x in 0 until frames * event.duration) {
                                 val mid_val = latest_value + (x * diff)
                                 if (last_val != mid_val) {
-                                    working_list.add(PanEvent(frame_offset + x, c, mid_val))
+                                    working_list.add(PanEvent(frame_offset + x, midi_channel, mid_val))
                                 }
                                 last_val = mid_val
                             }
@@ -163,7 +274,7 @@ class ProjectToMIDIConverter {
                             // Restore original value after slide
                             if (event.transition == EffectTransition.LinearB) {
                                 val value = previous_event?.value ?: 0F
-                                working_list.add(PanEvent(frame_offset + (frames * event.duration), c, value))
+                                working_list.add(PanEvent(frame_offset + (frames * event.duration), midi_channel, value))
                             }
 
                             working_list
@@ -177,7 +288,7 @@ class ProjectToMIDIConverter {
                             for (x in 0 until frames * event.duration) {
                                 val value = event.value + (x * diff)
                                 if (last_val != value) {
-                                    working_list.add(PanEvent(frame_offset + x, c, value))
+                                    working_list.add(PanEvent(frame_offset + x, midi_channel, value))
                                 }
                                 last_val = value
                             }
@@ -191,13 +302,13 @@ class ProjectToMIDIConverter {
                     apply_active_controller(volume_controller) { event: OpusVolumeEvent, previous_event: OpusVolumeEvent?, frame_offset: Int, frames: Int ->
                         when (event.transition) {
                             EffectTransition.Instant -> {
-                                listOf(VolumeEvent(frame_offset, c, event.value))
+                                listOf(VolumeEvent(frame_offset, midi_channel, event.value))
                             }
 
                             EffectTransition.InstantB -> {
                                 listOf(
-                                    VolumeEvent(frame_offset, c, event.value),
-                                    VolumeEvent(frame_offset + frames, c, previous_event?.value ?: 0F)
+                                    VolumeEvent(frame_offset, midi_channel, event.value),
+                                    VolumeEvent(frame_offset + frames, midi_channel, previous_event?.value ?: 0F)
                                 )
                             }
 
@@ -210,7 +321,7 @@ class ProjectToMIDIConverter {
                                 for (x in 0 until frames * event.duration) {
                                     val value = working_value + (x * diff)
                                     if (last_val != value) {
-                                        working_list.add(VolumeEvent(frame_offset + x,c, value))
+                                        working_list.add(VolumeEvent(frame_offset + x, midi_channel, value))
                                     }
                                     last_val = value
                                 }
@@ -218,8 +329,7 @@ class ProjectToMIDIConverter {
                                 // Restore original value after slide
                                 if (event.transition == EffectTransition.LinearB) {
                                     val value = (previous_event?.value ?: 1F)
-
-                                    working_list.add(VolumeEvent(frame_offset + (frames * event.duration), c, value))
+                                    working_list.add(VolumeEvent(frame_offset + (frames * event.duration), midi_channel, value))
                                 }
 
                                 working_list
@@ -233,7 +343,7 @@ class ProjectToMIDIConverter {
                                 for (x in 0 until frames * event.duration) {
                                     val value = event.value + (x * diff)
                                     if (last_val != value) {
-                                        working_list.add(VolumeEvent(frame_offset + x, c, value))
+                                        working_list.add(VolumeEvent(frame_offset + x, midi_channel, value))
                                     }
                                     last_val = value
                                 }
@@ -359,10 +469,10 @@ class ProjectToMIDIConverter {
                 val midi_channel = if (opus_manager.is_percussion(c)) {
                     if (percussion_exported) continue
                     percussion_exported = true
-                    Midi.Companion.PERCUSSION_CHANNEL
+                    Midi.PERCUSSION_CHANNEL
                 } else {
                     if (working_midi_channel > 15) continue
-                    if (working_midi_channel == Midi.Companion.PERCUSSION_CHANNEL) {
+                    if (working_midi_channel == Midi.PERCUSSION_CHANNEL) {
                         working_midi_channel++
                     }
                     working_midi_channel++
@@ -374,8 +484,7 @@ class ProjectToMIDIConverter {
                     null
                 }
 
-                midi.insert_event(0, 0, BankSelect(midi_channel, channel.get_midi_bank()))
-                midi.insert_event(0, 0, ProgramChange(midi_channel, channel.midi_program))
+                cevents.add(ProgramChangeEvent(0, midi_channel, channel.get_midi_bank(), channel.midi_program))
 
                 for (l in channel.lines.indices) {
                     val line = channel.lines[l]
@@ -425,12 +534,7 @@ class ProjectToMIDIConverter {
                                 }
 
                                 if (!(b < start_beat || b >= (end_beat ?: opus_manager.length))) {
-                                    val event_velocity = (opus_manager.get_current_velocity(
-                                        BeatKey(
-                                            c,
-                                            l,
-                                            b
-                                        ), current.position) * 100F).toInt()
+                                    val event_velocity = (opus_manager.get_current_velocity(BeatKey(c, l, b), current.position) * 100F).toInt()
                                     val pseudo_event = NoteEvent(
                                         current.offset,
                                         midi_channel,
@@ -478,63 +582,19 @@ class ProjectToMIDIConverter {
                 }
             }
 
-            // pseudo_midi_map.sortBy {
-            //     (it.first * 2) + if (it.third) { 1 } else { 0 }
-            // }
-
-            // val index_map = HashMap<NoteEvent, Int>()
-            // val std_tuning = opus_manager.is_tuning_standard()
-
-            // for ((tick, pseudo_event, is_on) in pseudo_midi_map) {
-            //     midi.insert_event(
-            //         0,
-            //         tick,
-            //         if (is_on) {
-            //             if (!std_tuning) {
-            //                 var current_index = 0
-            //                 while (index_map.containsValue(current_index)) {
-            //                     current_index += 1
-            //                 }
-            //                 index_map[pseudo_event] = current_index
-            //                 NoteOn79(
-            //                     index = current_index,
-            //                     note = pseudo_event.note,
-            //                     bend = pseudo_event.bend,
-            //                     channel = pseudo_event.channel,
-            //                     velocity = pseudo_event.velocity shl 8
-            //                 )
-            //             } else {
-            //                 NoteOn(
-            //                     channel = pseudo_event.channel,
-            //                     note = pseudo_event.note,
-            //                     velocity = pseudo_event.velocity
-            //                 )
-            //             }
-            //         } else {
-            //             if (!std_tuning) {
-            //                 NoteOff79(
-            //                     index = index_map.remove(pseudo_event)!!,
-            //                     note = pseudo_event.note,
-            //                     bend = pseudo_event.bend,
-            //                     channel = pseudo_event.channel,
-            //                     velocity = pseudo_event.velocity shl 8
-            //                 )
-            //             } else {
-            //                 NoteOff(
-            //                     channel = pseudo_event.channel,
-            //                     note = pseudo_event.note,
-            //                     velocity = pseudo_event.velocity
-            //                 )
-            //             }
-            //         }
-            //     )
-            // }
-
             if (include_pointers) {
                 for (beat in start_beat until (end_beat ?: opus_manager.length)) {
                     cevents.add(
                         BeatPointer(midi.ppqn * (beat - start_beat), beat)
                     )
+                }
+            }
+
+            cevents.sortBy { it.tick }
+
+            for (event in cevents) {
+                for ((tick, midi_event) in event.get_midi_event(version)) {
+                    midi.insert_event(tick, midi_event)
                 }
             }
 

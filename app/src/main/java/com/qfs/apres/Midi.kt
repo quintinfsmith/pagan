@@ -580,6 +580,7 @@ class MidiClipFileInterface {
             output += SetTempoMessage(120F).as_bytes().toList()
             output += listOf(0x00, 0x40, 0x00, 0x00)
             output += StartOfClip().as_bytes().toList()
+            output += listOf(0x00, 0x40, 0x00, 0x00)
 
 
             val ticks = midi.get_clips()[clip_index]
@@ -593,10 +594,7 @@ class MidiClipFileInterface {
                 if (working_event != null) {
                     has_eot = has_eot || (working_event is EndOfClip)
                     clip_event_bytes += DeltaClockStamp(tick_delay).as_bytes().toList()
-                    clip_event_bytes += when (working_event) {
-                        is MIDIEvent -> working_event.as_ump_bytes()
-                        else -> working_event.as_bytes()
-                    }.toMutableList()
+                    clip_event_bytes += working_event.as_bytes().toList()
                 }
             }
 

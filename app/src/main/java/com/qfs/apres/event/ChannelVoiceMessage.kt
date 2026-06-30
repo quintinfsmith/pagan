@@ -25,9 +25,9 @@ open class ChannelVoiceMessage(
         return output.toByteArray()
     }
 
-    override fun as_ump_bytes(): ByteArray {
-        return byteArrayOf(0x20) + this.as_bytes()
-    }
+    // override fun as_ump_bytes(): ByteArray {
+    //     return byteArrayOf(0x20) + this.as_bytes()
+    // }
 
     fun get_channel(): Int {
         return this.channel

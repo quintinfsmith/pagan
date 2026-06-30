@@ -507,7 +507,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             val uri = result.data?.data ?: return@registerForActivityResult
             val opus_manager = this.controller_model.opus_manager
             this.applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
-                FileOutputStream(it.fileDescriptor).write(ProjectToMIDIConverter.get_midi(opus_manager).as_bytes(Midi.VERSION_2_CLIP))
+                FileOutputStream(it.fileDescriptor).write(ProjectToMIDIConverter.get_midi(opus_manager, version = Midi.VERSION_2_CLIP).as_bytes(Midi.VERSION_2_CLIP))
                 Toast.makeText(this, this.getString(R.string.feedback_exported_to_midi), Toast.LENGTH_SHORT)
             }
         }

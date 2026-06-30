@@ -9,6 +9,7 @@
  */
 package com.qfs.apres.event2
 
+import com.qfs.apres.event.CompoundEvent
 import com.qfs.apres.event.GeneralMIDIEvent
 import kotlin.experimental.or
 import kotlin.math.ceil
@@ -501,7 +502,7 @@ class NoteOff79(
     }
 }
 
-class ProgramChange(
+class ProgramChangeMessage(
     var index: Int,
     var channel: Int,
     var group: Int,
@@ -535,6 +536,17 @@ class ControlChange(
     var channel: Int,
     var value: Int
 ): UMPEvent {
+    companion object {
+        fun from_compound(e: CompoundEvent): ControlChange {
+            return ControlChange(
+                0,
+                0,
+                0xB,
+                e.channel,
+                e.value
+            )
+        }
+    }
     override fun as_bytes(): ByteArray {
         return byteArrayOf(
             (0x40 or (this.group and 0x0F)).toByte(),
@@ -548,6 +560,7 @@ class ControlChange(
         )
     }
 }
+
 
 class SetTempoMessage(var bpm: Float): FlexDataMessage {
     override fun get_group(): Byte {
@@ -709,11 +722,11 @@ abstract class FlexCommonText(var message: String, var channel: Int = 0): FlexDa
     }
 
     override fun get_group(): Byte {
-        TODO("Not yet implemented")
+        return 0x00 // TODO
     }
 
     override fun get_addrs(): Byte {
-        TODO("Not yet implemented")
+        return 0x01 // TODO
     }
 }
 

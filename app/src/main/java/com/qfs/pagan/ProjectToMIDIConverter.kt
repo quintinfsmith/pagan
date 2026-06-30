@@ -1,6 +1,7 @@
 package com.qfs.pagan
 
 import com.qfs.apres.Midi
+import com.qfs.apres.event.Balance
 import com.qfs.apres.event.BalanceMSB
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.GeneralMIDIEvent
@@ -11,10 +12,14 @@ import com.qfs.apres.event.ProgramChange
 import com.qfs.apres.event.SetTempo
 import com.qfs.apres.event.SongPositionPointer
 import com.qfs.apres.event.Text
+import com.qfs.apres.event.Volume
 import com.qfs.apres.event.VolumeMSB
+import com.qfs.apres.event2.ControlChange
 import com.qfs.apres.event2.FlexGenericText
 import com.qfs.apres.event2.NoteOff79
 import com.qfs.apres.event2.NoteOn79
+import com.qfs.apres.event2.ProgramChangeMessage
+import com.qfs.apres.event2.SetTempoMessage
 import com.qfs.apres.event2.UMPEvent
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
@@ -31,6 +36,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
+import kotlin.Int
 import kotlin.collections.iterator
 import kotlin.math.floor
 import kotlin.math.min
@@ -48,7 +54,6 @@ abstract class CEvent(val tick: Int, val channel: Int? = null) {
     }
     abstract fun get_v1(): Array<MIDIEvent>
     abstract fun get_v2(): Array<UMPEvent>
-
     open fun get_ticks(size: Int): Array<Int> {
         return Array(size) { this.tick }
     }
@@ -80,27 +85,38 @@ class NoteEvent(tick: Int, channel: Int, var note: Int, var bend: Int, var veloc
     }
 
     override fun get_v2(): Array<UMPEvent> {
-        TODO()
-        //                 NoteOff79(
-        //                     index = index_map.remove(pseudo_event)!!,
-        //                     note = pseudo_event.note,
-        //                     bend = pseudo_event.bend,
-        //                     channel = pseudo_event.channel,
-        //                     velocity = pseudo_event.velocity shl 8
-        //                 )
+        return arrayOf(
+            NoteOn79(
+                index = uuid,
+                note = this.note,
+                bend = this.bend,
+                channel = this.channel!!,
+                velocity = this.velocity
+            ),
+            NoteOff79(
+                index = uuid,
+                note = this.note,
+                bend = this.bend,
+                channel = this.channel!!,
+                velocity = this.velocity
+            )
+        )
     }
 
     override fun get_ticks(size: Int): Array<Int> {
         return arrayOf(this.tick, this.tick + this.duration)
     }
 }
+
 class VolumeEvent(tick: Int, channel: Int, val value: Float): CEvent(tick, channel) {
     override fun get_v1(): Array<MIDIEvent> {
         return arrayOf(VolumeMSB(this.channel!!, min((100 * this.value).roundToInt(), 127)))
     }
 
     override fun get_v2(): Array<UMPEvent> {
-        TODO("Not yet implemented")
+        return arrayOf(
+            ControlChange.from_compound(Volume(this.channel!!, (this.value * 100).roundToInt()))
+        )
     }
 }
 
@@ -110,7 +126,7 @@ class TempoEvent(tick: Int, val bpm: Float): CEvent(tick, null) {
     }
 
     override fun get_v2(): Array<UMPEvent> {
-        TODO("Not yet implemented")
+        return arrayOf(SetTempoMessage(this.bpm))
     }
 
 }
@@ -120,7 +136,9 @@ class PanEvent(tick: Int, channel: Int, val pan: Float): CEvent(tick, channel) {
     }
 
     override fun get_v2(): Array<UMPEvent> {
-        TODO("Not yet implemented")
+        return arrayOf(
+            ControlChange.from_compound(Balance(this.channel!!, ((this.pan + 1F) * 64).roundToInt()))
+        )
     }
 
 }
@@ -130,7 +148,7 @@ class BeatPointer(tick: Int, val beat: Int): CEvent(tick, null) {
     }
 
     override fun get_v2(): Array<UMPEvent> {
-        TODO("Not yet implemented")
+        return arrayOf() // TODO
     }
 
 }
@@ -138,12 +156,21 @@ class ProgramChangeEvent(tick: Int, channel: Int, val bank: Int, val program: In
     override fun get_v1(): Array<MIDIEvent> {
         return arrayOf(
             BankSelect(this.channel!!, this.bank),
-            ProgramChange(this.channel!!, this.program)
+            ProgramChange(this.channel, this.program)
         )
     }
 
     override fun get_v2(): Array<UMPEvent> {
-        TODO("Not yet implemented")
+        return arrayOf(
+            ProgramChangeMessage(
+                0, // Not sure about this.
+                this.channel!!,
+                0, // Not sure about this.
+                this.program,
+                this.bank,
+                true
+            )
+        )
     }
 }
 

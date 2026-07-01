@@ -569,19 +569,18 @@ class MidiClipFileInterface {
         }
         fun to_bytes(midi: Midi, clip_index: Int = 0): ByteArray {
             val output = "SMF2CLIP".toByteArray().toMutableList()
-            output += listOf(0x00, 0x40, 0x00, 0x00)
+            val zero_stamp = DeltaClockStamp(0).as_bytes().toList()
+
+            output += zero_stamp
 
             val ppqn = midi.get_ppqn()
-            output.add(0x00)
-            output.add(0x30)
-            output.add((ppqn / 256).toByte())
-            output.add((ppqn % 256).toByte())
+
+            output += listOf(0x00, 0x30, (ppqn / 256).toByte(), (ppqn % 256).toByte())
 
             output += SetTempoMessage(120F).as_bytes().toList()
-            output += listOf(0x00, 0x40, 0x00, 0x00)
+            output += zero_stamp
             output += StartOfClip().as_bytes().toList()
-            output += listOf(0x00, 0x40, 0x00, 0x00)
-
+            //output += zero_stamp
 
             val ticks = midi.get_clips()[clip_index]
 
@@ -605,11 +604,11 @@ class MidiClipFileInterface {
             }
 
             // clip length in bytes
-            val clip_byte_length = clip_event_bytes.size
-            output.add((clip_byte_length shr 24).toByte())
-            output.add(((clip_byte_length shr 16) and 0xFF).toByte())
-            output.add(((clip_byte_length shr 8) and 0xFF).toByte())
-            output.add((clip_byte_length and 0xFF).toByte())
+            //val clip_byte_length = clip_event_bytes.size
+            //output.add((clip_byte_length shr 24).toByte())
+            //output.add(((clip_byte_length shr 16) and 0xFF).toByte())
+            //output.add(((clip_byte_length shr 8) and 0xFF).toByte())
+            //output.add((clip_byte_length and 0xFF).toByte())
             output += clip_event_bytes.toList()
 
             return output.toByteArray()

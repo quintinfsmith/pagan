@@ -41,7 +41,7 @@ interface FlexDataMessage: UMPEvent {
         val chunks = Array(chunk_count) { chunk ->
             val form = if (chunk_count == 1) 0
             else if (chunk == 0) 1
-            else if (chunk < chunk_count) 2
+            else if (chunk < chunk_count - 1) 2
             else 3
 
             byteArrayOf(
@@ -469,6 +469,8 @@ class NoteOn79(
     var group: Int = 0
 ): UMPEvent {
     override fun as_bytes(): ByteArray {
+        val end_value = ((this.note and 0x7F) shl 9) + (this.bend and 0x01FF)
+
         return byteArrayOf(
             (0x40 or (this.group and 0x0F)).toByte(),
             (0x90 or (this.channel and 0x0F)).toByte(),
@@ -476,7 +478,8 @@ class NoteOn79(
             0x03.toByte(),
             ((this.velocity and 0xFF00) shr 8).toByte(),
             (this.velocity and 0x00FF).toByte(),
-            (((this.note and 0x7F) shl 9) or (this.bend and 0x01FF)).toByte()
+            (end_value shr 8).toByte(),
+            (end_value and 0xFF).toByte()
         )
     }
 }
@@ -490,6 +493,7 @@ class NoteOff79(
     var group: Int = 0
 ): UMPEvent {
     override fun as_bytes(): ByteArray {
+        val end_value = ((this.note and 0x7F) shl 9) + (this.bend and 0x01FF)
         return byteArrayOf(
             (0x40 or (this.group and 0x0F)).toByte(),
             (0x80 or (this.channel and 0x0F)).toByte(),
@@ -497,7 +501,8 @@ class NoteOff79(
             0x03.toByte(),
             ((this.velocity and 0xFF00) shr 8).toByte(),
             (this.velocity and 0x00FF).toByte(),
-            (((this.note and 0x7F) shl 9) or (this.bend and 0x01FF)).toByte()
+            (end_value shr 8).toByte(),
+            (end_value and 0xFF).toByte()
         )
     }
 }
@@ -585,9 +590,9 @@ class SetTempoMessage(var bpm: Float): FlexDataMessage {
 
     override fun get_data(): ByteArray {
         // deca-nano seconds per quarter note
-        val tnspqn = (6000000000.toFloat() / this.bpm).toInt()
+        val tnspqn = (60_000_000_000.toFloat() / this.bpm).toInt()
         return ByteArray(4) { i: Int ->
-            ((tnspqn shr i) and 0xFF).toByte()
+            ((tnspqn shr (i * 8)) and 0xFF).toByte()
         }
     }
 }
@@ -693,10 +698,14 @@ class SetKeySignatureMessage(var tonic: Int, var sharps: Int): FlexDataMessage {
 
 class DeltaClockStamp(var ticks: Int): UtilityMessage {
     override fun as_bytes(): ByteArray {
+        val listtick = ByteArray(2) { i ->
+            ((this.ticks shl (8 * i)) and 0xFF).toByte()
+        }
+
         return byteArrayOf(
             0x00,
-            0x30,
-            (this.ticks and 0xFFFF).toByte()
+            0x40,
+            *listtick
         )
     }
 }

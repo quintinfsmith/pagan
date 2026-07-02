@@ -11,6 +11,7 @@ package com.qfs.apres.event2
 
 import com.qfs.apres.event.CompoundEvent
 import com.qfs.apres.event.GeneralMIDIEvent
+import com.qfs.apres.event2.DeltaClockStamp
 import kotlin.experimental.or
 import kotlin.math.ceil
 
@@ -515,12 +516,22 @@ class ProgramChangeMessage(
     var bank: Int,
     var bank_select: Boolean = false,
 ): UMPEvent {
+    constructor(bytes: ByteArray): this(
+        index = TODO(),
+        channel = bytes[1].toInt() and 0x0F,
+        group = bytes[0].toInt() and 0x0F,
+        program = 0x7F and bytes[4].toInt(),
+        bank = bytes
+
+
+    )
     override fun as_bytes(): ByteArray {
         var option_flags = 0x00
         if (this.bank_select) {
             option_flags += 1
         }
 
+        TODO(" Missing index")
         return byteArrayOf(
             (0x40 or (this.group and 0x0F)).toByte(),
             (0xC0 or (this.channel and 0x0F)).toByte(),
@@ -528,7 +539,7 @@ class ProgramChangeMessage(
             option_flags.toByte(),
             (0x7F and this.program).toByte(),
             0x00.toByte(),
-            ((this.bank and 0x3f80) shr 7).toByte(),
+            ((this.bank and 0x3f80) shr 7).toByte(), // This doesn't feel Right FIXME
             (this.bank and 0x007F).toByte()
         )
     }
@@ -697,15 +708,26 @@ class SetKeySignatureMessage(var tonic: Int, var sharps: Int): FlexDataMessage {
 }
 
 class DeltaClockStamp(var ticks: Int): UtilityMessage {
-    override fun as_bytes(): ByteArray {
-        val listtick = ByteArray(2) { i ->
-            ((this.ticks shl (8 * i)) and 0xFF).toByte()
-        }
+    constructor(bytes: ByteArray): this((bytes[2] shl 8) + bytes[3])
 
+    override fun as_bytes(): ByteArray {
         return byteArrayOf(
             0x00,
             0x40,
-            *listtick
+            ((this.ticks shr 8) and 0xFF).toByte(),
+            (this.ticks and 0xFF).toByte()
+        )
+    }
+}
+
+class TicksPerQuarterNote(var tpqn: Int): UtilityMessage {
+    constructor(bytes: ByteArray): this((bytes[2] shl 8) + bytes[3])
+    override fun as_bytes(): ByteArray {
+        return byteArrayOf(
+            0x00,
+            0x30,
+            ((this.tpqn shr 8) and 0xFF).toByte(),
+            (this.tpqn and 0xFF).toByte()
         )
     }
 }

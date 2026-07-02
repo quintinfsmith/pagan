@@ -109,8 +109,10 @@ import com.qfs.apres.event2.DeltaClockStamp
 import com.qfs.apres.event2.EndOfClip
 import com.qfs.apres.event2.NoteOff79
 import com.qfs.apres.event2.NoteOn79
+import com.qfs.apres.event2.ProgramChangeMessage
 import com.qfs.apres.event2.SetTempoMessage
 import com.qfs.apres.event2.StartOfClip
+import com.qfs.apres.event2.TicksPerQuarterNote
 import com.qfs.apres.event2.UMPEvent
 import java.io.File
 import kotlin.experimental.or
@@ -292,9 +294,7 @@ class StandardMidiFileInterface {
         }
 
         fun event_from_bytes(bytes: MutableList<Byte>, default: Byte): MIDIEvent? {
-            if (bytes.isEmpty()) {
-                return null
-            }
+            if (bytes.isEmpty()) return null
 
             var output: MIDIEvent? = null
             val leadbyte = toUInt(bytes.removeAt(0))
@@ -460,68 +460,38 @@ class StandardMidiFileInterface {
                         bytedump_list.add(bytes.removeAt(0))
                     }
                     val bytedump: ByteArray = bytedump_list.toByteArray()
-                    when (meta_byte) {
-                        0x00 -> {
-                            output = SequenceNumber(
-                                ((bytedump[0].toInt()) * 256) + bytedump[1].toInt()
-                            )
-                        }
-                        0x01 -> {
-                            output = Text(String(bytedump))
-                        }
-                        0x02 -> {
-                            output = CopyRightNotice(String(bytedump))
-                        }
-                        0x03 -> {
-                            output = TrackName(String(bytedump))
-                        }
-                        0x04 -> {
-                            output = InstrumentName(String(bytedump))
-                        }
-                        0x05 -> {
-                            output = Lyric(String(bytedump))
-                        }
-                        0x06 -> {
-                            output = Marker(String(bytedump))
-                        }
-                        0x07 -> {
-                            output = CuePoint(String(bytedump))
-                        }
-                        0x20 -> {
-                            output = ChannelPrefix(bytedump[0].toInt())
-                        }
-                        0x2F -> {
-                            output = EndOfTrack()
-                        }
-                        0x54 -> {
-                            output = SMPTEOffset(
-                                bytedump[0].toInt(),
-                                bytedump[1].toInt(),
-                                bytedump[2].toInt(),
-                                bytedump[3].toInt(),
-                                bytedump[4].toInt()
-                            )
-                        }
-                        0x58 -> {
-                            output = TimeSignature(
-                                bytedump[0].toInt(),
-                                bytedump[1].toInt(),
-                                bytedump[2].toInt(),
-                                bytedump[3].toInt()
-                            )
-                        }
-                        0x59 -> {
-                            output = build_key_signature(bytedump[1], bytedump[0])
-                        }
+                    output = when (meta_byte) {
+                        0x00 -> SequenceNumber(((bytedump[0].toInt()) * 256) + bytedump[1].toInt())
+                        0x01 -> Text(String(bytedump))
+                        0x02 -> CopyRightNotice(String(bytedump))
+                        0x03 -> TrackName(String(bytedump))
+                        0x04 -> InstrumentName(String(bytedump))
+                        0x05 -> Lyric(String(bytedump))
+                        0x06 -> Marker(String(bytedump))
+                        0x07 -> CuePoint(String(bytedump))
+                        0x20 -> ChannelPrefix(bytedump[0].toInt())
+                        0x2F -> EndOfTrack()
+                        0x54 -> SMPTEOffset(
+                            bytedump[0].toInt(),
+                            bytedump[1].toInt(),
+                            bytedump[2].toInt(),
+                            bytedump[3].toInt(),
+                            bytedump[4].toInt()
+                        )
+                        0x58 -> TimeSignature(
+                            bytedump[0].toInt(),
+                            bytedump[1].toInt(),
+                            bytedump[2].toInt(),
+                            bytedump[3].toInt()
+                        )
+                        0x59 -> build_key_signature(bytedump[1], bytedump[0])
                         0x7F -> {
                             for (i in 0 until 3) {
                                 bytedump_list.removeAt(0)
                             }
-                            output = SequencerSpecific(bytedump_list.toByteArray())
+                            SequencerSpecific(bytedump_list.toByteArray())
                         }
-                        else -> {
-                            output = MetaEvent(meta_byte.toByte(), bytedump_list.toByteArray())
-                        }
+                        else -> MetaEvent(meta_byte.toByte(), bytedump_list.toByteArray())
                     }
                 }
             } else if (realtimes.contains(leadbyte)) {
@@ -564,9 +534,33 @@ class MidiClipFileInterface {
                 false
             }
         }
-        fun from_bytes(bytes: ByteArray): Midi {
-            TODO("Not implemented yet")
+
+        fun message_from_bytes(bytes: MutableList<Byte>): MIDIEvent? {
+            if (bytes.isEmpty()) return null
+            when (bytes[0].toInt() shr 4) {
+                // utility
+                0x0 -> {
+                    when (bytes[1].toInt() shr 4) {
+                        0x3 -> TicksPerQuarterNote(ByteArray(4) { bytes[it] })
+                        0x4 -> DeltaClockStamp(ByteArray(4) { bytes[it] })
+                    }
+                }
+                0x4 -> {
+                    when (bytes[1].toInt() shr 4) {
+                        0x9 -> TODO()
+                        0xC -> ProgramChangeMessage(ByteArray(8) { bytes[it] })
+                    }
+
+                } // Midi2 channel voice
+                0xD -> {} // Flex data
+                0xF -> {} // ENDPOINT
+            }
         }
+
+        fun from_bytes(bytes: ByteArray): Midi {
+            TODO()
+        }
+
         fun to_bytes(midi: Midi, clip_index: Int = 0): ByteArray {
             val output = "SMF2CLIP".toByteArray().toMutableList()
             val zero_stamp = DeltaClockStamp(0).as_bytes().toList()
@@ -575,15 +569,12 @@ class MidiClipFileInterface {
 
             val ppqn = midi.get_ppqn()
 
-            output += listOf(0x00, 0x30, (ppqn / 256).toByte(), (ppqn % 256).toByte())
-
+            output += TicksPerQuarterNote(ppqn).as_bytes().toList()
             output += SetTempoMessage(120F).as_bytes().toList()
             output += zero_stamp
             output += StartOfClip().as_bytes().toList()
-            //output += zero_stamp
 
             val ticks = midi.get_clips()[clip_index]
-
             val clip_event_bytes = mutableListOf<Byte>()
             var has_eot = false
             for (pair in ticks) {

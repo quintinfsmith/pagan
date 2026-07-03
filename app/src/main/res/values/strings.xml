@@ -331,6 +331,7 @@
     <string name="close_beat_selector">Close Beat Selector</string>
     <string name="untitled_section">untitled section</string>
     <string name="back_to_leaf_selection">Back to leaf selection</string>
+    <string name="export_option_midi2">MIDI 2.0 Clip File</string>
 
 
     <string-array name="general_midi_presets">

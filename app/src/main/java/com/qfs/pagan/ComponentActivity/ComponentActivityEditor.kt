@@ -506,6 +506,18 @@ class ComponentActivityEditor: PaganComponentActivity() {
             if (result.resultCode != RESULT_OK) return@registerForActivityResult
             val uri = result.data?.data ?: return@registerForActivityResult
             val opus_manager = this.controller_model.opus_manager
+
+            this.applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
+                FileOutputStream(it.fileDescriptor).write(ProjectToMIDIConverter.get_midi(opus_manager, version = Midi.VERSION_1).as_bytes(Midi.VERSION_1))
+                Toast.makeText(this, this.getString(R.string.feedback_exported_to_midi), Toast.LENGTH_SHORT)
+            }
+        }
+    private var _result_launcher_export_midi2 =
+        this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            val uri = result.data?.data ?: return@registerForActivityResult
+            val opus_manager = this.controller_model.opus_manager
+
             this.applicationContext.contentResolver.openFileDescriptor(uri, "w")?.use {
                 FileOutputStream(it.fileDescriptor).write(ProjectToMIDIConverter.get_midi(opus_manager, version = Midi.VERSION_2_CLIP).as_bytes(Midi.VERSION_2_CLIP))
                 Toast.makeText(this, this.getString(R.string.feedback_exported_to_midi), Toast.LENGTH_SHORT)
@@ -1504,7 +1516,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                     on_drag_stop = {
 
                                                         dragging_to_y?.let {
-                                                            val from_line = vm_state.line_data[vm_state.dragging_line.value!!]
+                                                            val from_line =
+                                                                vm_state.line_data[vm_state.dragging_line.value!!]
                                                             val to_line = vm_state.line_data[it]
                                                             if (vm_state.is_dragging_channel()) {
                                                                 opus_manager.move_channel(
@@ -1585,7 +1598,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     Icon(
                                         modifier = Modifier
                                             .clickable {
-                                                this@ComponentActivityEditor.view_model.get_dialog_state("global_effects").let {
+                                                this@ComponentActivityEditor.view_model.get_dialog_state(
+                                                    "global_effects"
+                                                ).let {
                                                     it.value = !it.value
                                                 }
                                             }
@@ -1699,7 +1714,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                                         Column(
                                             Modifier
-                                                .verticalScroll(scroll_state_v, overscrollEffect = null)
+                                                .verticalScroll(
+                                                    scroll_state_v,
+                                                    overscrollEffect = null
+                                                )
                                                 .width(
                                                     column_width + if (x == 0) {
                                                         0.dp
@@ -1742,7 +1760,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                 if ((y == vm_state.line_data.size - 1 || vm_state.line_data[y].channel.value != vm_state.line_data[y + 1].channel.value) && vm_state.line_data[y].channel.value != null) {
                                                     Spacer(
                                                         Modifier
-                                                            .draggable_line(y, dragging_to_y, is_after, true)
+                                                            .draggable_line(
+                                                                y,
+                                                                dragging_to_y,
+                                                                is_after,
+                                                                true
+                                                            )
                                                             .fillMaxWidth()
                                                             .height(channel_gap_height)
                                                             .background(Colors.active_color_scheme.channel_separator)
@@ -1809,7 +1832,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
             .offset {
                 IntOffset(
                     0,
-                    this@ComponentActivityEditor.get_dragged_offset(y, dragging_to_y, is_after, is_channel_gap)
+                    this@ComponentActivityEditor.get_dragged_offset(
+                        y,
+                        dragging_to_y,
+                        is_after,
+                        is_channel_gap
+                    )
                 )
             }
 
@@ -1856,9 +1884,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 .width(toDp(vm_state.scroll_state_x.value.layoutInfo.viewportSize.width.toFloat() / 3F))
                                 .graphicsLayer {
                                     val width_px = column_width.toPx()
-                                    val scroll_offset = vm_state.scroll_state_x.value.firstVisibleItemScrollOffset.toFloat()
-                                    val viewport_width = vm_state.scroll_state_x.value.layoutInfo.viewportSize.width
-                                    val floating_position = (width_px / -2F) + (viewport_width / 4) + scroll_offset
+                                    val scroll_offset =
+                                        vm_state.scroll_state_x.value.firstVisibleItemScrollOffset.toFloat()
+                                    val viewport_width =
+                                        vm_state.scroll_state_x.value.layoutInfo.viewportSize.width
+                                    val floating_position =
+                                        (width_px / -2F) + (viewport_width / 4) + scroll_offset
                                     translationX = floating_position
                                 },
                             // track and background seem to be reversed. not sure whats up with that.
@@ -1881,41 +1912,46 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         modifier = Modifier
                             .graphicsLayer {
                                 val width_px = column_width.toPx()
-                                val viewport_width = vm_state.scroll_state_x.value.layoutInfo.viewportSize.width
-                                translationX = if (width_px >= viewport_width && viewport_width > 0) {
-                                    val visible_items = vm_state.scroll_state_x.value.layoutInfo.visibleItemsInfo
-                                    if (vm_state.scroll_state_x.value.firstVisibleItemIndex == x) {
-                                        val scroll_offset =
-                                            vm_state.scroll_state_x.value.firstVisibleItemScrollOffset.toFloat()
-                                        val floating_position = ((viewport_width - width_px) / 2F) + scroll_offset
-                                        val end_position = ((width_px - viewport_width) / 2F)
-                                        if (floating_position < end_position) {
-                                            vm_state.active_wide_beat.value = x
-                                            vm_state.wide_beat_progress.floatValue = scroll_offset / (width_px - viewport_width)
-                                            floating_position
+                                val viewport_width =
+                                    vm_state.scroll_state_x.value.layoutInfo.viewportSize.width
+                                translationX =
+                                    if (width_px >= viewport_width && viewport_width > 0) {
+                                        val visible_items =
+                                            vm_state.scroll_state_x.value.layoutInfo.visibleItemsInfo
+                                        if (vm_state.scroll_state_x.value.firstVisibleItemIndex == x) {
+                                            val scroll_offset =
+                                                vm_state.scroll_state_x.value.firstVisibleItemScrollOffset.toFloat()
+                                            val floating_position =
+                                                ((viewport_width - width_px) / 2F) + scroll_offset
+                                            val end_position = ((width_px - viewport_width) / 2F)
+                                            if (floating_position < end_position) {
+                                                vm_state.active_wide_beat.value = x
+                                                vm_state.wide_beat_progress.floatValue =
+                                                    scroll_offset / (width_px - viewport_width)
+                                                floating_position
+                                            } else {
+                                                if (vm_state.active_wide_beat.value == x) {
+                                                    vm_state.active_wide_beat.value = null
+                                                }
+                                                end_position
+                                            }
+                                        } else if (visible_items.isNotEmpty() && visible_items.last().index == x) {
+                                            if (vm_state.active_wide_beat.value == x) {
+                                                vm_state.active_wide_beat.value = null
+                                            }
+                                            (viewport_width - width_px) / 2F
                                         } else {
                                             if (vm_state.active_wide_beat.value == x) {
                                                 vm_state.active_wide_beat.value = null
                                             }
-                                            end_position
+                                            0F
                                         }
-                                    } else if (visible_items.isNotEmpty() && visible_items.last().index == x) {
-                                        if (vm_state.active_wide_beat.value == x) {
-                                            vm_state.active_wide_beat.value = null
-                                        }
-                                        (viewport_width - width_px) / 2F
                                     } else {
-                                        if (vm_state.active_wide_beat.value == x) {
+                                        if (x == vm_state.active_wide_beat.value) {
                                             vm_state.active_wide_beat.value = null
                                         }
                                         0F
                                     }
-                                } else {
-                                    if (x == vm_state.active_wide_beat.value) {
-                                        vm_state.active_wide_beat.value = null
-                                    }
-                                    0F
-                                }
                             }
                             .fillMaxHeight()
                             .widthIn(Dimensions.LeafBaseWidth - (Dimensions.BeatLabelHorizontalPadding * 2))
@@ -2089,7 +2125,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                         0.dp
                                                     }
                                                 } else {
-                                                    val dragged_position = (padding_height_px * dragging_row_index.value!!) + (row_height_px * dragging_row_index.value!!) + dragging_row_offset.value!!
+                                                    val dragged_position =
+                                                        (padding_height_px * dragging_row_index.value!!) + (row_height_px * dragging_row_index.value!!) + dragging_row_offset.value!!
                                                     if (((padding_height_px + row_height_px) * i) > dragged_position) {
                                                         row_height
                                                     } else {
@@ -2114,16 +2151,27 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                                                 on_drag_stop = {
                                                     dragging_row_index.value?.let {
-                                                        val dragged_position = (padding_height_px * it) + (row_height_px * it) + dragging_row_offset.value!!
-                                                        val new_channel_position = min(opus_manager.channels.size, max(0F, ceil(dragged_position / (row_height_px + padding_height_px))).toInt())
-                                                        opus_manager.move_channel(i, new_channel_position)
+                                                        val dragged_position =
+                                                            (padding_height_px * it) + (row_height_px * it) + dragging_row_offset.value!!
+                                                        val new_channel_position = min(
+                                                            opus_manager.channels.size,
+                                                            max(
+                                                                0F,
+                                                                ceil(dragged_position / (row_height_px + padding_height_px))
+                                                            ).toInt()
+                                                        )
+                                                        opus_manager.move_channel(
+                                                            i,
+                                                            new_channel_position
+                                                        )
                                                     }
                                                     dragging_row_offset.value = null
                                                     dragging_row_index.value = null
                                                 },
 
                                                 on_drag = { delta ->
-                                                    dragging_row_offset.value = dragging_row_offset.value!! + delta
+                                                    dragging_row_offset.value =
+                                                        dragging_row_offset.value!! + delta
                                                 },
                                                 scroll_state = scroll_state
                                             )
@@ -2315,7 +2363,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     export_check_dialog_visibility.value = false
                 },
                 positive = {
-                    this@ComponentActivityEditor.export_midi()
+                    this@ComponentActivityEditor.export_midi1()
                     export_check_dialog_visibility.value = false
                 }
             )
@@ -2486,11 +2534,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 this@ComponentActivityEditor.get_context_menu_primary(vm_state, opus_manager, layout)?.let {
                     Row(
                         Modifier
-                            .then(if(keyboardAsState().value) {
-                                Modifier.alpha(0F)
-                            } else {
-                                Modifier
-                            })
+                            .then(
+                                if (keyboardAsState().value) {
+                                    Modifier.alpha(0F)
+                                } else {
+                                    Modifier
+                                }
+                            )
                             .fillMaxHeight(),
                         horizontalArrangement = Arrangement.End,
                         verticalAlignment = Alignment.CenterVertically,
@@ -3155,12 +3205,22 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.controller_model.cancel_export()
     }
 
-    fun export_midi() {
+    fun export_midi1() {
         this._result_launcher_export_midi.launch(
             Intent(Intent.ACTION_CREATE_DOCUMENT).also {
                 it.addCategory(Intent.CATEGORY_OPENABLE)
                 it.type = "audio/midi"
                 it.putExtra(Intent.EXTRA_TITLE, "${this.get_export_name()}.mid")
+            }
+        )
+    }
+
+    fun export_midi2() {
+        this._result_launcher_export_midi2.launch(
+            Intent(Intent.ACTION_CREATE_DOCUMENT).also {
+                it.addCategory(Intent.CATEGORY_OPENABLE)
+                it.type = "audio/midi"
+                it.putExtra(Intent.EXTRA_TITLE, "${this.get_export_name()}.midi2")
             }
         )
     }
@@ -3242,7 +3302,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun export(type: Exportable) {
         when (type) {
             Exportable.JSON -> { this.export_project() }
-            Exportable.MIDI1 -> { this.export_midi() }
+            Exportable.MIDI1 -> { this.export_midi1() }
+            Exportable.MIDI2 -> { this.export_midi2() }
             Exportable.WAV_SINGLE -> { this.export_wav() }
             Exportable.WAV_LINES -> { this.export_multi_lines_wav() }
             Exportable.WAV_CHANNELS -> { this.export_multi_channels_wav() }
@@ -3254,9 +3315,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         export_options.add(Pair(Exportable.JSON) { Text(R.string.export_option_json) })
 
-        if (true || opus_manager.is_tuning_standard()) {
+        if (opus_manager.is_tuning_standard()) {
             export_options.add(Pair(Exportable.MIDI1) { Text(R.string.export_option_midi) })
         }
+
+        // In-Development
+        // export_options.add(Pair(Exportable.MIDI2) { Text(R.string.export_option_midi2)} )
 
         if (this.controller_model.audio_interface.has_soundfont()) {
             export_options.add(Pair(Exportable.WAV_SINGLE) { Text(R.string.export_option_wav) })

@@ -15,6 +15,7 @@ package com.qfs.pagan
 enum class Exportable {
     JSON,
     MIDI1,
+    MIDI2,
     WAV_SINGLE,
     WAV_LINES,
     WAV_CHANNELS

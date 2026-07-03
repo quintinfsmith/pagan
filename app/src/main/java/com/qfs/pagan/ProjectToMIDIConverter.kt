@@ -163,7 +163,6 @@ class ProgramChangeEvent(tick: Int, channel: Int, val bank: Int, val program: In
     override fun get_v2(): Array<UMPEvent> {
         return arrayOf(
             ProgramChangeMessage(
-                0, // Not sure about this.
                 this.channel!!,
                 0, // Not sure about this.
                 this.program,

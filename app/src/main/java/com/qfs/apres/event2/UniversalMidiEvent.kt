@@ -12,6 +12,7 @@ package com.qfs.apres.event2
 import com.qfs.apres.event.CompoundEvent
 import com.qfs.apres.event.GeneralMIDIEvent
 import com.qfs.apres.event2.DeltaClockStamp
+import com.qfs.apres.event2.NoteOn79
 import kotlin.experimental.or
 import kotlin.math.ceil
 
@@ -469,9 +470,17 @@ class NoteOn79(
     var bend: Int = 0, // 512ths of a semitone
     var group: Int = 0
 ): UMPEvent {
+    constructor(bytes: ByteArray): this(
+        index = bytes[2].toInt(),
+        channel = bytes[1] % 16,
+        note = (bytes[6].toInt() shr 1),
+        velocity = (bytes[4].toInt() shl 8) + bytes[5].toInt(),
+        bend = ((bytes[6].toInt() and 1) shl 8) + bytes[7],
+        group = bytes[0].toInt() and 0xF
+    )
+
     override fun as_bytes(): ByteArray {
         val end_value = ((this.note and 0x7F) shl 9) + (this.bend and 0x01FF)
-
         return byteArrayOf(
             (0x40 or (this.group and 0x0F)).toByte(),
             (0x90 or (this.channel and 0x0F)).toByte(),
@@ -493,6 +502,14 @@ class NoteOff79(
     var bend: Int = 0, // 512ths of a semitone
     var group: Int = 0
 ): UMPEvent {
+    constructor(bytes: ByteArray): this(
+        index = bytes[2].toInt(),
+        channel = bytes[1] % 16,
+        note = (bytes[6].toInt() shr 1),
+        velocity = (bytes[4].toInt() shl 8) + bytes[5].toInt(),
+        bend = ((bytes[6].toInt() and 1) shl 8) + bytes[7],
+        group = bytes[0].toInt() and 0xF
+    )
     override fun as_bytes(): ByteArray {
         val end_value = ((this.note and 0x7F) shl 9) + (this.bend and 0x01FF)
         return byteArrayOf(
@@ -509,7 +526,6 @@ class NoteOff79(
 }
 
 class ProgramChangeMessage(
-    var index: Int,
     var channel: Int,
     var group: Int,
     var program: Int,
@@ -517,29 +533,26 @@ class ProgramChangeMessage(
     var bank_select: Boolean = false,
 ): UMPEvent {
     constructor(bytes: ByteArray): this(
-        index = TODO(),
         channel = bytes[1].toInt() and 0x0F,
         group = bytes[0].toInt() and 0x0F,
         program = 0x7F and bytes[4].toInt(),
-        bank = bytes
-
-
+        bank = bytes[7] + (bytes[6] shl 7)
     )
+
     override fun as_bytes(): ByteArray {
         var option_flags = 0x00
         if (this.bank_select) {
             option_flags += 1
         }
 
-        TODO(" Missing index")
         return byteArrayOf(
             (0x40 or (this.group and 0x0F)).toByte(),
             (0xC0 or (this.channel and 0x0F)).toByte(),
-            0x00.toByte(),
+            0x00.toByte(), // Reserved
             option_flags.toByte(),
             (0x7F and this.program).toByte(),
-            0x00.toByte(),
-            ((this.bank and 0x3f80) shr 7).toByte(), // This doesn't feel Right FIXME
+            0x00.toByte(), // Reserved
+            ((this.bank and 0x3f80) shr 7).toByte(),
             (this.bank and 0x007F).toByte()
         )
     }
@@ -579,6 +592,8 @@ class ControlChange(
 
 
 class SetTempoMessage(var bpm: Float): FlexDataMessage {
+    constructor(bytes: ByteArray): this(6_000_000_000F / (bytes[7].toInt() shl 24) + (bytes[6].toInt() shl 16) + (bytes[5].toInt() shl 8) + bytes[4].toInt())
+
     override fun get_group(): Byte {
         return 0.toByte()
     }
@@ -601,14 +616,20 @@ class SetTempoMessage(var bpm: Float): FlexDataMessage {
 
     override fun get_data(): ByteArray {
         // deca-nano seconds per quarter note
-        val tnspqn = (60_000_000_000.toFloat() / this.bpm).toInt()
+        val tnspqn = (6_000_000_000.toFloat() / this.bpm).toInt()
         return ByteArray(4) { i: Int ->
-            ((tnspqn shr (i * 8)) and 0xFF).toByte()
+            ((tnspqn shr ((3 - i) * 8)) and 0xFF).toByte()
         }
     }
 }
 
 class SetTimeSignatureMessage(var numerator: Int, var denominator: Int, var thirtysecondths_per_quarter: Int): FlexDataMessage {
+    constructor(bytes: ByteArray): this(
+        numerator = bytes[4].toInt(),
+        denominator = bytes[5].toInt(),
+        thirtysecondths_per_quarter = bytes[6].toInt()
+    )
+
     override fun get_group(): Byte {
         return 0
     }
@@ -645,7 +666,16 @@ class SetMetronomeMessage(
     var accent_second: Int = 0,
     var accent_third: Int = 0,
     var subdivision_clicks_first: Int = 0,
-    var subdivision_clicks_second: Int = 0): FlexDataMessage {
+    var subdivision_clicks_second: Int = 0
+): FlexDataMessage {
+    constructor(bytes: ByteArray): this(
+        clocks_per_click = bytes[4].toInt(),
+        accent_first = bytes[5].toInt(),
+        accent_second = bytes[6].toInt(),
+        accent_third = bytes[7].toInt(),
+        subdivision_clicks_first = bytes[8].toInt(),
+        subdivision_clicks_second = bytes[9].toInt()
+    )
 
     override fun get_group(): Byte {
         return 0
@@ -680,6 +710,11 @@ class SetMetronomeMessage(
 }
 
 class SetKeySignatureMessage(var tonic: Int, var sharps: Int): FlexDataMessage {
+    constructor(bytes: ByteArray): this(
+        tonic = bytes[4].toInt() and 0x0F,
+        sharps = bytes[4].toInt() shr 4
+    )
+
     override fun get_group(): Byte {
         return 0
     }

@@ -107,10 +107,15 @@ import com.qfs.apres.event.VolumeLSB
 import com.qfs.apres.event.VolumeMSB
 import com.qfs.apres.event2.DeltaClockStamp
 import com.qfs.apres.event2.EndOfClip
+import com.qfs.apres.event2.FlexCommonText
+import com.qfs.apres.event2.FlexDataMessage
 import com.qfs.apres.event2.NoteOff79
 import com.qfs.apres.event2.NoteOn79
 import com.qfs.apres.event2.ProgramChangeMessage
+import com.qfs.apres.event2.SetKeySignatureMessage
+import com.qfs.apres.event2.SetMetronomeMessage
 import com.qfs.apres.event2.SetTempoMessage
+import com.qfs.apres.event2.SetTimeSignatureMessage
 import com.qfs.apres.event2.StartOfClip
 import com.qfs.apres.event2.TicksPerQuarterNote
 import com.qfs.apres.event2.UMPEvent
@@ -535,30 +540,106 @@ class MidiClipFileInterface {
             }
         }
 
-        fun message_from_bytes(bytes: MutableList<Byte>): MIDIEvent? {
-            if (bytes.isEmpty()) return null
-            when (bytes[0].toInt() shr 4) {
+        fun message_from_bytes(bytes: ByteArray, offset: Int): Pair<Int, GeneralMIDIEvent?> {
+            if (offset >= bytes.size) return Pair(0, null)
+
+            return when (bytes[offset].toInt() shr 4) {
                 // utility
                 0x0 -> {
-                    when (bytes[1].toInt() shr 4) {
-                        0x3 -> TicksPerQuarterNote(ByteArray(4) { bytes[it] })
-                        0x4 -> DeltaClockStamp(ByteArray(4) { bytes[it] })
-                    }
+                    val msg_bytes = ByteArray(4) { bytes[offset + it] }
+                    Pair(4,
+                        when (msg_bytes[1].toInt() shr 4) {
+                            0x3 -> TicksPerQuarterNote(msg_bytes)
+                            0x4 -> DeltaClockStamp(msg_bytes)
+                            else -> null
+                        }
+                    )
                 }
-                0x4 -> {
-                    when (bytes[1].toInt() shr 4) {
-                        0x9 -> TODO()
-                        0xC -> ProgramChangeMessage(ByteArray(8) { bytes[it] })
-                    }
 
-                } // Midi2 channel voice
-                0xD -> {} // Flex data
-                0xF -> {} // ENDPOINT
+                // Midi2 channel voice
+                0x4 -> {
+                    val msg_bytes = ByteArray(8) { bytes[offset + it] }
+                    Pair(8,
+                        when (msg_bytes[1].toInt() shr 4) {
+                            0x8 -> when (msg_bytes[3].toInt()) {
+                                0x3 -> NoteOff79(msg_bytes)
+                                else -> null
+                            }
+                            0x9 -> when (msg_bytes[3].toInt()) {
+                                0x3 -> NoteOn79(msg_bytes)
+                                else -> null
+                            }
+                            0xC -> ProgramChangeMessage(msg_bytes)
+                            else -> null
+                        }
+                    )
+                }
+
+                // Flex data
+                0xD -> {
+                    val msg_bytes = ByteArray(16) { bytes[offset + it] }
+                    Pair(
+                        16,
+                        when (msg_bytes[3].toInt()) {
+                            0x00 -> SetTempoMessage(msg_bytes)
+                            0x01 -> SetTimeSignatureMessage(msg_bytes)
+                            0x02 -> SetMetronomeMessage(msg_bytes)
+                            0x05 -> SetKeySignatureMessage(msg_bytes)
+                            else -> null
+                        }
+                    )
+                }
+                //// ENDPOINT
+                //0xF -> {}
+                else -> Pair(0, null)
             }
         }
 
         fun from_bytes(bytes: ByteArray): Midi {
-            TODO()
+            val new_midi = Midi()
+            var working_offset = 0
+            var working_tick = 0
+            var incomplete_flex_messages = mutableListOf<FlexCommonText>()
+
+            while (true) {
+                val (consumed, working_event) = message_from_bytes(bytes, working_offset)
+                when (working_event) {
+                    is FlexCommonText-> when (bytes[working_offset + 1].toInt() shr 6) {
+                        1, 2 -> {
+                            incomplete_flex_messages.add(working_event)
+                        }
+                        3 -> {
+                            var string_msg = ""
+                            for (event in incomplete_flex_messages) {
+                                string_msg += event.message
+                            }
+                            incomplete_flex_messages.clear()
+
+                            working_event.message = string_msg + working_event.message
+                            new_midi.insert_event(working_tick, working_event)
+                        }
+                        0 -> {
+                            new_midi.insert_event(working_tick, working_event)
+                        }
+                    }
+                    is TicksPerQuarterNote -> {
+                        new_midi.set_ppqn(working_event.tpqn)
+                    }
+                    null -> break
+                    else -> {
+                        new_midi.insert_event(working_tick, working_event)
+                    }
+                }
+
+
+                if (working_event is DeltaClockStamp) {
+                    working_tick += working_event.ticks
+                }
+
+                working_offset += consumed
+            }
+
+            return new_midi
         }
 
         fun to_bytes(midi: Midi, clip_index: Int = 0): ByteArray {

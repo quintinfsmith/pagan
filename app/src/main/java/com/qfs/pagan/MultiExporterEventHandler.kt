@@ -13,11 +13,8 @@ import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Intent
 import android.net.Uri
-import android.view.View
-import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.core.app.NotificationManagerCompat
-import com.google.android.material.button.MaterialButton
 import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.pagan.ComponentActivity.ComponentActivityEditor
 import com.qfs.pagan.viewmodel.ViewModelEditorState
@@ -38,7 +35,7 @@ class MultiExporterEventHandler(var activity: ComponentActivityEditor, val state
         this.state_model.export_progress.value = 0F
         this.state_model.export_in_progress.value = true
 
-        val builder = this.activity.get_notification() ?: return
+        val builder = this.activity.get_export_notification() ?: return
         @SuppressLint("MissingPermission")
         if (this.activity.has_notification_permission()) {
             this.notification_manager.notify(this.activity.NOTIFICATION_ID, builder.build())
@@ -48,7 +45,7 @@ class MultiExporterEventHandler(var activity: ComponentActivityEditor, val state
     override fun on_complete() {
         if (this.working_y < this.total_count - 1) return
 
-        this.activity.get_notification()?.let { builder ->
+        this.activity.get_export_notification()?.let { builder ->
             // NON functional ATM, Open file from notification
             val go_to_file_intent = Intent()
             go_to_file_intent.action = Intent.ACTION_VIEW
@@ -79,7 +76,7 @@ class MultiExporterEventHandler(var activity: ComponentActivityEditor, val state
             Toast.makeText(this.activity, this.activity.getString(R.string.export_wav_feedback_complete), Toast.LENGTH_SHORT).show()
         }
 
-        this.activity.active_notification = null
+        this.activity.active_export_notification = null
 
         this.state_model.export_in_progress.value = false
         this.state_model.export_progress.value = 0F
@@ -91,7 +88,7 @@ class MultiExporterEventHandler(var activity: ComponentActivityEditor, val state
             Toast.makeText(this.activity, this.activity.getString(R.string.export_cancelled), Toast.LENGTH_SHORT).show()
         }
 
-        val builder = this.activity.get_notification() ?: return
+        val builder = this.activity.get_export_notification() ?: return
         builder.setContentText(this.activity.getString(R.string.export_cancelled))
             .setProgress(0, 0, false)
             .setAutoCancel(true)
@@ -103,7 +100,7 @@ class MultiExporterEventHandler(var activity: ComponentActivityEditor, val state
             val notification_manager = NotificationManagerCompat.from(this.activity)
             notification_manager.notify(this.activity.NOTIFICATION_ID, builder.build())
         }
-        this.activity.active_notification = null
+        this.activity.active_export_notification = null
         this.state_model.export_in_progress.value = false
         this.state_model.export_progress.value = 0F
     }
@@ -113,7 +110,7 @@ class MultiExporterEventHandler(var activity: ComponentActivityEditor, val state
         val progress_rounded = (progress_relative * this.MAX_PROGRESS).roundToInt()
         this.state_model.export_progress.value = progress_relative.toFloat()
 
-        val builder = this.activity.get_notification() ?: return
+        val builder = this.activity.get_export_notification() ?: return
         builder.setProgress(this.MAX_PROGRESS, progress_rounded, false)
 
         @SuppressLint("MissingPermission")

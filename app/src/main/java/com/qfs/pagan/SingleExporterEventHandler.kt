@@ -34,7 +34,7 @@ class SingleExporterEventHandler(val context: ComponentActivityEditor, val state
             Toast.makeText(this.context, this.context.resources.getString(R.string.export_wav_feedback), Toast.LENGTH_SHORT).show()
         }
 
-        val builder = this.context.get_notification() ?: return
+        val builder = this.context.get_export_notification() ?: return
         @SuppressLint("MissingPermission")
         if (this.context.has_notification_permission()) {
             this.notification_manager.notify(
@@ -47,7 +47,7 @@ class SingleExporterEventHandler(val context: ComponentActivityEditor, val state
     override fun on_complete() {
         this.callback()
 
-        this.context.get_notification()?.let { builder ->
+        this.context.get_export_notification()?.let { builder ->
             // NON functional ATM, Open file from notification
             val go_to_file_intent = Intent()
             go_to_file_intent.action = Intent.ACTION_VIEW
@@ -86,7 +86,7 @@ class SingleExporterEventHandler(val context: ComponentActivityEditor, val state
         }
 
         this.state_model.export_in_progress.value = false
-        this.context.active_notification = null
+        this.context.active_export_notification = null
     }
 
     override fun on_cancel() {
@@ -100,7 +100,7 @@ class SingleExporterEventHandler(val context: ComponentActivityEditor, val state
             ).show()
         }
 
-        val builder = this.context.get_notification() ?: return
+        val builder = this.context.get_export_notification() ?: return
         builder.setContentText(this.context.getString(R.string.export_cancelled))
             .setProgress(0, 0, false)
             .setAutoCancel(true)
@@ -113,7 +113,7 @@ class SingleExporterEventHandler(val context: ComponentActivityEditor, val state
             notification_manager.notify(this.context.NOTIFICATION_ID, builder.build())
         }
 
-        this.context.active_notification = null
+        this.context.active_export_notification = null
         this.state_model.export_in_progress.value = false
     }
 
@@ -121,7 +121,7 @@ class SingleExporterEventHandler(val context: ComponentActivityEditor, val state
         val progress_rounded = (progress * MAX_PROGRESS).toInt()
         this.state_model.export_progress.value = progress.toFloat()
 
-        val builder = this.context.get_notification() ?: return
+        val builder = this.context.get_export_notification() ?: return
         builder.setProgress(MAX_PROGRESS, progress_rounded, false)
 
         @SuppressLint("MissingPermission")

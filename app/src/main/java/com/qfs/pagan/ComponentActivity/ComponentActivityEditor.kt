@@ -10,6 +10,7 @@
 package com.qfs.pagan.ComponentActivity
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -103,6 +104,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.documentfile.provider.DocumentFile
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import com.qfs.apres.InvalidMIDIFile
 import com.qfs.apres.Midi
@@ -192,6 +194,8 @@ import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.io.BufferedOutputStream
 import java.io.BufferedReader
@@ -226,7 +230,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     var NOTIFICATION_ID = 0
     val CHANNEL_ID = "com.qfs.pagan" // TODO: Use String Resource
     private var _notification_channel: NotificationChannel? = null
-    var active_notification: NotificationCompat.Builder? = null
+    var active_export_notification: NotificationCompat.Builder? = null
     // -------------------------------------------------------------------
 
     private var _result_launcher_export_multi_line_wav =
@@ -611,6 +615,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
+    val persistant_notification_manager = NotificationManagerCompat.from(this)
     override fun onCreate(savedInstanceState: Bundle?) {
         this.controller_model.attach_state_model(this.state_model)
         this.keyboard_interface = KeyboardInputInterface(this)
@@ -3205,6 +3210,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.controller_model.cancel_export()
     }
 
+    fun control_play() {
+        lifecycleScope.launch {
+            this@ComponentActivityEditor.play_opus(this, false)
+        }
+    }
+
     fun export_midi1() {
         this._result_launcher_export_midi.launch(
             Intent(Intent.ACTION_CREATE_DOCUMENT).also {
@@ -3247,12 +3258,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
         return this.has_notification_permission()
     }
 
-    fun get_notification(): NotificationCompat.Builder? {
+    fun get_export_notification(): NotificationCompat.Builder? {
         if (!this.has_notification_permission()) return null
 
-        if (this.active_notification == null) {
+        if (this.active_export_notification == null) {
             this.get_notification_channel()
-
             val cancel_export_flag = "com.qfs.pagan.CANCEL_EXPORT_WAV"
             val intent = Intent()
             intent.setAction(cancel_export_flag)
@@ -3273,10 +3283,41 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 .setSilent(true)
                 .addAction(R.drawable.baseline_cancel_24, this.getString(android.R.string.cancel), pending_cancel_intent)
 
-            this.active_notification = builder
+            this.active_export_notification = builder
         }
 
-        return this.active_notification!!
+        return this.active_export_notification!!
+    }
+
+    fun get_persistent_notification(): NotificationCompat.Builder? {
+        if (!this.has_notification_permission()) return null
+
+        if (this.active_export_notification == null) {
+            this.get_notification_channel()
+            val flag_play = "com.qfs.pagan.PLAY"
+            val intent_play = Intent()
+            intent_play.setAction(flag_play)
+            intent_play.setPackage(this.packageName)
+
+            val pending_play_intent = PendingIntent.getBroadcast(
+                this,
+                1,
+                intent_play,
+                PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val opus_manager = this.controller_model.opus_manager
+            val builder = NotificationCompat.Builder(this, this.CHANNEL_ID)
+                .setContentTitle( opus_manager.project_name ?: "Untitled Project")
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setSmallIcon(R.drawable.small_logo_rowan)
+                .setSilent(true)
+                .addAction(R.drawable.icon_play, this.getString(R.string.menu_item_playpause), pending_play_intent)
+
+            this.active_export_notification = builder
+        }
+
+        return this.active_export_notification!!
     }
 
     fun get_notification_channel(): NotificationChannel? {
@@ -3284,16 +3325,18 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         if (this._notification_channel == null) {
             val notification_manager = NotificationManagerCompat.from(this)
+
             // Create the NotificationChannel.
             val name = this.getString(R.string.export_wav_file_progress)
-            val descriptionText = this.getString(R.string.export_wav_notification_description)
             val importance = NotificationManager.IMPORTANCE_DEFAULT
-            val mChannel = NotificationChannel(this.CHANNEL_ID, name, importance)
-            mChannel.description = descriptionText
-            // Register the channel with the system. You can't change the importance
-            // or other notification behaviors after this.
-            notification_manager.createNotificationChannel(mChannel)
-            this._notification_channel = mChannel
+
+            NotificationChannel(this.CHANNEL_ID, name, importance).let {
+                it.description = this.getString(R.string.export_wav_notification_description)
+                // Register the channel with the system. You can't change the importance
+                // or other notification behaviors after this.
+                notification_manager.createNotificationChannel(it)
+                this._notification_channel = it
+            }
         }
 
         return this._notification_channel

@@ -38,7 +38,10 @@ class MultiExporterEventHandler(var activity: ComponentActivityEditor, val state
         val builder = this.activity.get_export_notification() ?: return
         @SuppressLint("MissingPermission")
         if (this.activity.has_notification_permission()) {
-            this.notification_manager.notify(this.activity.NOTIFICATION_ID, builder.build())
+            this.notification_manager.notify(
+                this.activity.NOTIFICATION_ID_EXPORT,
+                builder.build()
+            )
         }
     }
 
@@ -68,7 +71,10 @@ class MultiExporterEventHandler(var activity: ComponentActivityEditor, val state
 
             @SuppressLint("MissingPermission")
             if (this.activity.has_notification_permission()) {
-                this.notification_manager.notify(this.activity.NOTIFICATION_ID, builder.build())
+                this.notification_manager.notify(
+                    this.activity.NOTIFICATION_ID_EXPORT,
+                    builder.build()
+                )
             }
         }
 
@@ -98,7 +104,10 @@ class MultiExporterEventHandler(var activity: ComponentActivityEditor, val state
         @SuppressLint("MissingPermission")
         if (this.activity.has_notification_permission()) {
             val notification_manager = NotificationManagerCompat.from(this.activity)
-            notification_manager.notify(this.activity.NOTIFICATION_ID, builder.build())
+            notification_manager.notify(
+                this.activity.NOTIFICATION_ID_EXPORT,
+                builder.build()
+            )
         }
         this.activity.active_export_notification = null
         this.state_model.export_in_progress.value = false
@@ -116,7 +125,7 @@ class MultiExporterEventHandler(var activity: ComponentActivityEditor, val state
         @SuppressLint("MissingPermission")
         if (this.activity.has_notification_permission()) {
             this.notification_manager.notify(
-                this.activity.NOTIFICATION_ID,
+                this.activity.NOTIFICATION_ID_EXPORT,
                 builder.build()
             )
         }

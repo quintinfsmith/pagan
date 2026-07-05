@@ -102,6 +102,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationCompat.VISIBILITY_PUBLIC
 import androidx.core.app.NotificationManagerCompat
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.lifecycleScope
@@ -119,8 +120,10 @@ import com.qfs.pagan.Exportable
 import com.qfs.pagan.KeyboardInputInterface
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.MultiExporterEventHandler
+import com.qfs.pagan.NotificationChannelKey
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.PaganBroadcastReceiver
+import com.qfs.pagan.PaganIntentAction
 import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.PresetKey
 import com.qfs.pagan.ProjectToMIDIConverter
@@ -179,6 +182,7 @@ import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.enumerate
 import com.qfs.pagan.put_config
+import com.qfs.pagan.setAction
 import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
@@ -194,8 +198,6 @@ import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.io.BufferedOutputStream
 import java.io.BufferedReader
@@ -224,16 +226,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
     lateinit var keyboard_interface: KeyboardInputInterface
 
     private var broadcast_receiver = PaganBroadcastReceiver()
-    private var receiver_intent_filters = listOf(
-        "com.qfs.pagan.CANCEL_EXPORT_WAV",
-        "com.qfs.pagan.PLAY"
-    )
-
     // Notification shiz -------------------------------------------------
-    var NOTIFICATION_ID = 0
-    val CHANNEL_ID = "com.qfs.pagan" // TODO: Use String Resource
-    private var _notification_channel: NotificationChannel? = null
+    var NOTIFICATION_ID_PERSISTENT = 0
+    var NOTIFICATION_ID_EXPORT = 1
+    private var _notification_channels = HashMap<NotificationChannelKey, NotificationChannel>()
+
     var active_export_notification: NotificationCompat.Builder? = null
+    var active_persistent_notification: NotificationCompat.Builder? = null
     var notification_manager: NotificationManagerCompat? = null
     // -------------------------------------------------------------------
 
@@ -623,10 +622,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.controller_model.attach_state_model(this.state_model)
         this.keyboard_interface = KeyboardInputInterface(this)
 
-        for (action in this.receiver_intent_filters) {
+        for (action in PaganIntentAction.entries) {
             this.registerReceiver(
                 this.broadcast_receiver,
-                IntentFilter(action),
+                IntentFilter(action.toString()),
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     RECEIVER_NOT_EXPORTED
                 } else {
@@ -637,6 +636,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         this.bind_midi_interface()
         super.onCreate(savedInstanceState)
+        this.getNotificationPermission()
 
         this.state_model.pixel_density.value = this.resources.displayMetrics.density
 
@@ -696,6 +696,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             this.controller_model.unset_soundfont()
             this.state_model.unset_soundfont()
             this.state_model.soundfont_ready.value = true
+            this.update_persistent_notification()
             return
         }
 
@@ -746,6 +747,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
             state_model.enable_soundfont(file_paths)
             state_model.soundfont_ready.value = true
+            this@ComponentActivityEditor.update_persistent_notification()
         }
     }
 
@@ -861,11 +863,19 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     override fun onStop() {
         super.onStop()
+        if (!this.has_notification_permission()) {
+            this.stop_opus_midi()
+            this.stop_opus()
+        }
     }
 
     override fun onDestroy() {
-        this.stop_opus_midi()
-        this.stop_opus()
+        if (this.has_notification_permission()) {
+            this.stop_opus_midi()
+            this.stop_opus()
+            this.destroy_persistent_notification()
+        }
+
         this.controller_model.playback_device?.detach_activity()
         this.unregisterReceiver(this.broadcast_receiver)
         super.onDestroy()
@@ -3216,13 +3226,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.controller_model.cancel_export()
     }
 
-    fun control_play_toggle() {
+    fun control_play_toggle(loop_playback: Boolean = false) {
         lifecycleScope.launch {
             if (this@ComponentActivityEditor.controller_model.in_playback()) {
                 this@ComponentActivityEditor.stop_opus_midi()
                 this@ComponentActivityEditor.stop_opus()
             } else {
-                this@ComponentActivityEditor.play_opus(this, false)
+                this@ComponentActivityEditor.play_opus(this, loop_playback)
             }
         }
     }
@@ -3273,25 +3283,25 @@ class ComponentActivityEditor: PaganComponentActivity() {
         if (!this.has_notification_permission()) return null
 
         if (this.active_export_notification == null) {
-            this.get_notification_channel()
-            val cancel_export_flag = "com.qfs.pagan.CANCEL_EXPORT_WAV"
-            val intent = Intent()
-            intent.setAction(cancel_export_flag)
-            intent.setPackage(this.packageName)
+            this.get_notification_channel(NotificationChannelKey.Export)
 
             val pending_cancel_intent = PendingIntent.getBroadcast(
                 this,
                 1,
-                intent,
+                Intent()
+                    .setAction(PaganIntentAction.CancelExport)
+                    .setPackage(this.packageName),
                 PendingIntent.FLAG_IMMUTABLE
             )
 
             val opus_manager = this.controller_model.opus_manager
-            val builder = NotificationCompat.Builder(this, this.CHANNEL_ID)
+            val builder = NotificationCompat.Builder(this, NotificationChannelKey.Export.toString())
+                .setSilent(true)
+                .setOngoing(true)
+                .setShowWhen(false)
                 .setContentTitle(this.getString(R.string.export_wav_notification_title, opus_manager.project_name ?: "Untitled Project"))
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setSmallIcon(R.drawable.small_logo_rowan)
-                .setSilent(true)
                 .addAction(R.drawable.baseline_cancel_24, this.getString(android.R.string.cancel), pending_cancel_intent)
 
             this.active_export_notification = builder
@@ -3303,54 +3313,46 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun get_persistent_notification(): NotificationCompat.Builder? {
         if (!this.has_notification_permission()) return null
 
-        if (this.active_export_notification == null) {
-            this.get_notification_channel()
-            val flag_play = "com.qfs.pagan.PLAY"
-            val intent_play = Intent()
-            intent_play.action = flag_play
-            intent_play.setPackage(this.packageName)
+        if (this.active_persistent_notification == null) {
+            this.get_notification_channel(NotificationChannelKey.Persistent)
 
-            val pending_play_intent = PendingIntent.getBroadcast(
-                this,
-                1,
-                intent_play,
-                PendingIntent.FLAG_IMMUTABLE
-            )
-
-            val opus_manager = this.controller_model.opus_manager
-            val builder = NotificationCompat.Builder(this, this.CHANNEL_ID)
-                .setContentTitle( opus_manager.project_name ?: "Untitled Project")
+            val builder = NotificationCompat.Builder(this, NotificationChannelKey.Persistent.toString())
+                .setSilent(true)
+                .setOngoing(true)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setSmallIcon(R.drawable.small_logo_rowan)
-                .setSilent(true)
-                .addAction(R.drawable.icon_play, this.getString(R.string.menu_item_playpause), pending_play_intent)
+                .setVisibility(VISIBILITY_PUBLIC)
 
-            this.active_export_notification = builder
+
+            this.active_persistent_notification = builder
         }
 
-        return this.active_export_notification!!
+        return this.active_persistent_notification!!
     }
 
-    fun get_notification_channel(): NotificationChannel? {
+    fun get_notification_channel(channel_id: NotificationChannelKey): NotificationChannel? {
         if (!this.has_notification_permission()) return null
 
-        if (this._notification_channel == null) {
-            val notification_manager = NotificationManagerCompat.from(this)
+        if (this.notification_manager == null) {
+            this.notification_manager = NotificationManagerCompat.from(this)
+        }
 
-            // Create the NotificationChannel.
+        if (!this._notification_channels.containsKey(channel_id)) {
             val name = this.getString(R.string.export_wav_file_progress)
             val importance = NotificationManager.IMPORTANCE_DEFAULT
 
-            NotificationChannel(this.CHANNEL_ID, name, importance).let {
-                it.description = this.getString(R.string.export_wav_notification_description)
-                // Register the channel with the system. You can't change the importance
-                // or other notification behaviors after this.
-                notification_manager.createNotificationChannel(it)
-                this._notification_channel = it
+            NotificationChannel(channel_id.toString(), name, importance).let {
+                // TODO
+                //it.description = this.getString(R.string.export_wav_notification_description)
+                it.description = channel_id.toString()
+
+
+                this.notification_manager!!.createNotificationChannel(it)
+                this._notification_channels[channel_id] = it
             }
         }
 
-        return this._notification_channel
+        return this._notification_channels[channel_id]
     }
 
     fun export(type: Exportable) {
@@ -3644,14 +3646,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
         if (!this.controller_model.opus_manager.vm_state.soundfont_ready.value) return
         this.controller_model.play_event(channel, event_value, velocity)
     }
-
     fun stop_opus_midi() {
         this.controller_model.stop_opus_midi()
         this.update_persistent_notification()
     }
 
     fun stop_opus() {
-        this.controller_model.playback_device?.kill()
+        this.controller_model.stop_opus()
         this.update_persistent_notification()
     }
 
@@ -3726,27 +3727,82 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     @SuppressLint("MissingPermission")
+    fun destroy_persistent_notification() {
+        val builder = this.get_persistent_notification() ?: return
+        if (!this.has_notification_permission()) return
+        if (this.notification_manager == null) return
+        builder
+            .setAutoCancel(true)
+            .setTimeoutAfter(1)
+        this.notification_manager?.notify(
+            this.NOTIFICATION_ID_PERSISTENT,
+            builder.build()
+        )
+    }
+    @SuppressLint("MissingPermission")
     fun update_persistent_notification() {
         val builder = this.get_persistent_notification() ?: return
         if (!this.has_notification_permission()) return
         if (this.notification_manager == null) {
             this.notification_manager = NotificationManagerCompat.from(this)
         }
-        // val icon = when (this@ComponentActivityEditor.state_model.playback_state_soundfont.value) {
-        //     PlaybackState.NotReady -> R.drawable.baseline_play_disabled_24
+        val opus_manager = this.controller_model.opus_manager
+        val opus_title = opus_manager.project_name ?: getString(R.string.untitled_opus)
+        val vm_state = this.state_model
+        if (!vm_state.use_midi_playback.value && vm_state.soundfont_active.value == null) {
+            builder
+                .setAutoCancel(true)
+                .setTimeoutAfter(1)
+        } else {
+            builder
+                .setAutoCancel(false)
+                .setTimeoutAfter(0)
 
-        //     PlaybackState.Queued,
-        //     PlaybackState.Ready -> R.drawable.icon_play
+            builder.clearActions()
+            val play_intent = PendingIntent.getBroadcast(
+                this,
+                1,
+                Intent()
+                    .setPackage(this.packageName)
+                    .setAction(PaganIntentAction.TogglePlay),
+                PendingIntent.FLAG_IMMUTABLE
+            )
 
-        //     PlaybackState.Stopping,
-        //     PlaybackState.Playing -> if (this@ComponentActivityEditor.state_model.looping_playback.value) {
-        //         R.drawable.icon_pause_loop
-        //     } else {
-        //         R.drawable.icon_pause
-        //     }
-        // }
+            if (this.controller_model.in_playback()) {
+                val icon = if (this.state_model.looping_playback.value) {
+                    R.drawable.icon_pause_loop
+                } else {
+                    R.drawable.icon_pause
+                }
+                builder
+                    .addAction(icon, getString(R.string.notification_pause), play_intent)
+                    .setContentTitle(
+                        if (this.state_model.looping_playback.value) {
+                            getString(R.string.notification_title_looping, opus_title)
+                        } else {
+                            getString(R.string.notification_title_playing, opus_title)
+                        }
+                    )
+            } else {
+                builder
+                    .addAction(R.drawable.icon_play, getString(R.string.notification_play), play_intent)
+                    .addAction(
+                        R.drawable.icon_play,
+                        getString(R.string.notification_loop),
+                        PendingIntent.getBroadcast(
+                            this,
+                            1,
+                            Intent()
+                                .setPackage(this.packageName)
+                                .setAction(PaganIntentAction.Loop),
+                            PendingIntent.FLAG_IMMUTABLE
+                        )
+                    )
+                    .setContentTitle(getString(R.string.notification_title_idle, opus_title))
+            }
+        }
         this.notification_manager?.notify(
-            this.NOTIFICATION_ID,
+            this.NOTIFICATION_ID_PERSISTENT,
             builder.build()
         )
     }

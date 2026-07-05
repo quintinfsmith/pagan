@@ -42,7 +42,7 @@ class SingleExporterEventHandler(
         @SuppressLint("MissingPermission")
         if (this.context.has_notification_permission()) {
             this.context.notification_manager?.notify(
-                this.context.NOTIFICATION_ID,
+                this.context.NOTIFICATION_ID_EXPORT,
                 builder.build()
             )
         }
@@ -75,7 +75,7 @@ class SingleExporterEventHandler(
             @SuppressLint("MissingPermission")
             if (this.context.has_notification_permission()) {
                 this.context.notification_manager?.notify(
-                    this.context.NOTIFICATION_ID,
+                    this.context.NOTIFICATION_ID_EXPORT,
                     builder.build()
                 )
             }
@@ -114,7 +114,7 @@ class SingleExporterEventHandler(
         @SuppressLint("MissingPermission")
         if (this.context.has_notification_permission()) {
             val notification_manager = NotificationManagerCompat.from(this.context)
-            notification_manager.notify(this.context.NOTIFICATION_ID, builder.build())
+            notification_manager.notify(this.context.NOTIFICATION_ID_EXPORT, builder.build())
         }
 
         this.context.active_export_notification = null
@@ -130,7 +130,7 @@ class SingleExporterEventHandler(
 
         @SuppressLint("MissingPermission")
         if (this.context.has_notification_permission()) {
-            this.context.notification_manager?.notify(this.context.NOTIFICATION_ID, builder.build())
+            this.context.notification_manager?.notify(this.context.NOTIFICATION_ID_EXPORT, builder.build())
         }
     }
 }

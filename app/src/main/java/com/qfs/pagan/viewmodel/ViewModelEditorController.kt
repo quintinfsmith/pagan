@@ -185,7 +185,10 @@ class ViewModelEditorController: ViewModel() {
         this.update_playback_state_midi(PlaybackState.Ready)
         this.opus_manager.vm_state.playback_state_midi.value = this.playback_state_midi
     }
-
+    fun stop_opus() {
+        this.update_playback_state_soundfont(PlaybackState.Stopping)
+        this.playback_device?.kill()
+    }
     fun play_events(preset: PresetKey, is_percussion: Boolean, event_values: List<Triple<Int, Int, Float>>) {
         if (this.in_playback()) return // disable feedback during playback
         if (!this.opus_manager.vm_state.soundfont_ready.value) return // TODO this check should be somewhere else

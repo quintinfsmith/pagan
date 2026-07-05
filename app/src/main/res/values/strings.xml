@@ -332,6 +332,12 @@
     <string name="untitled_section">untitled section</string>
     <string name="back_to_leaf_selection">Back to leaf selection</string>
     <string name="export_option_midi2">MIDI 2.0 Clip File</string>
+    <string name="notification_pause">Pause</string>
+    <string name="notification_play">Play</string>
+    <string name="notification_loop">Loop</string>
+    <string name="notification_title_playing">Playing %1$s</string>
+    <string name="notification_title_looping">Looping %1$s</string>
+    <string name="notification_title_idle">%1$s</string>
 
 
     <string-array name="general_midi_presets">

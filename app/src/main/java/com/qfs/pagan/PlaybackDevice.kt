@@ -64,6 +64,7 @@ class PlaybackDevice(
 
     override fun on_stop() {
         this.restore_playback_state()
+        this.activity?.update_persistent_notification()
     }
 
     fun attach_activity(activity: ComponentActivityEditor) {
@@ -81,6 +82,7 @@ class PlaybackDevice(
             activity.runOnUiThread {
                 activity.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             }
+            activity.update_persistent_notification()
         }
 
     }

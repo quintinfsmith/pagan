@@ -16,14 +16,25 @@ import com.qfs.pagan.ComponentActivity.ComponentActivityEditor
 
 class PaganBroadcastReceiver: BroadcastReceiver() {
     override fun onReceive(p0: Context?, intent: Intent?) {
-        when (intent?.action) {
-            "com.qfs.pagan.CANCEL_EXPORT_WAV" -> {
+        if (intent?.action == null) return
+        val action = try {
+            PaganIntentAction.valueOf(intent.action!!)
+        } catch (e: Exception) {
+            // Shouldn't be possible
+            return
+        }
+        when (action) {
+            PaganIntentAction.CancelExport -> {
                 (p0!! as ComponentActivityEditor).export_wav_cancel()
             }
-            "com.qfs.pagan.PLAY" -> {
+
+            PaganIntentAction.TogglePlay -> {
                 (p0!! as ComponentActivityEditor).control_play_toggle()
             }
-            else -> {}
+
+            PaganIntentAction.Loop -> {
+                (p0!! as ComponentActivityEditor).control_play_toggle(true)
+            }
         }
     }
 }

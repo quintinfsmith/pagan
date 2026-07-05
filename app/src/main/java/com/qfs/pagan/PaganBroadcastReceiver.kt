@@ -21,7 +21,7 @@ class PaganBroadcastReceiver: BroadcastReceiver() {
                 (p0!! as ComponentActivityEditor).export_wav_cancel()
             }
             "com.qfs.pagan.PLAY" -> {
-                (p0!! as ComponentActivityEditor).control_play()
+                (p0!! as ComponentActivityEditor).control_play_toggle()
             }
             else -> {}
         }

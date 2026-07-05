@@ -224,13 +224,17 @@ class ComponentActivityEditor: PaganComponentActivity() {
     lateinit var keyboard_interface: KeyboardInputInterface
 
     private var broadcast_receiver = PaganBroadcastReceiver()
-    private var receiver_intent_filter = IntentFilter("com.qfs.pagan.CANCEL_EXPORT_WAV")
+    private var receiver_intent_filters = listOf(
+        "com.qfs.pagan.CANCEL_EXPORT_WAV",
+        "com.qfs.pagan.PLAY"
+    )
 
     // Notification shiz -------------------------------------------------
     var NOTIFICATION_ID = 0
     val CHANNEL_ID = "com.qfs.pagan" // TODO: Use String Resource
     private var _notification_channel: NotificationChannel? = null
     var active_export_notification: NotificationCompat.Builder? = null
+    var notification_manager: NotificationManagerCompat? = null
     // -------------------------------------------------------------------
 
     private var _result_launcher_export_multi_line_wav =
@@ -615,20 +619,21 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
-    val persistant_notification_manager = NotificationManagerCompat.from(this)
     override fun onCreate(savedInstanceState: Bundle?) {
         this.controller_model.attach_state_model(this.state_model)
         this.keyboard_interface = KeyboardInputInterface(this)
 
-        this.registerReceiver(
-            this.broadcast_receiver,
-            this.receiver_intent_filter,
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                RECEIVER_NOT_EXPORTED
-            } else {
-                0
-            }
-        )
+        for (action in this.receiver_intent_filters) {
+            this.registerReceiver(
+                this.broadcast_receiver,
+                IntentFilter(action),
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    RECEIVER_NOT_EXPORTED
+                } else {
+                    0
+                }
+            )
+        }
 
         this.bind_midi_interface()
         super.onCreate(savedInstanceState)
@@ -733,7 +738,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
 
             controller_model.set_soundfonts(*soundfonts.toTypedArray())
-            controller_model.playback_device?.activity = this@ComponentActivityEditor
+
+            controller_model.playback_device?.attach_activity(this@ComponentActivityEditor)
             controller_model.active_soundfont_relative_paths = List(file_paths.size) { i ->
                 file_paths[i].value
             }
@@ -854,13 +860,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     override fun onStop() {
-        this.stop_opus_midi()
-        this.stop_opus()
         super.onStop()
     }
 
     override fun onDestroy() {
-        this.controller_model.playback_device?.activity = null
+        this.stop_opus_midi()
+        this.stop_opus()
+        this.controller_model.playback_device?.detach_activity()
         this.unregisterReceiver(this.broadcast_receiver)
         super.onDestroy()
     }
@@ -3210,9 +3216,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.controller_model.cancel_export()
     }
 
-    fun control_play() {
+    fun control_play_toggle() {
         lifecycleScope.launch {
-            this@ComponentActivityEditor.play_opus(this, false)
+            if (this@ComponentActivityEditor.controller_model.in_playback()) {
+                this@ComponentActivityEditor.stop_opus_midi()
+                this@ComponentActivityEditor.stop_opus()
+            } else {
+                this@ComponentActivityEditor.play_opus(this, false)
+            }
         }
     }
 
@@ -3296,7 +3307,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             this.get_notification_channel()
             val flag_play = "com.qfs.pagan.PLAY"
             val intent_play = Intent()
-            intent_play.setAction(flag_play)
+            intent_play.action = flag_play
             intent_play.setPackage(this.packageName)
 
             val pending_play_intent = PendingIntent.getBroadcast(
@@ -3636,10 +3647,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     fun stop_opus_midi() {
         this.controller_model.stop_opus_midi()
+        this.update_persistent_notification()
     }
 
     fun stop_opus() {
         this.controller_model.playback_device?.kill()
+        this.update_persistent_notification()
     }
 
     fun play_opus_midi(loop_playback: Boolean = false) {
@@ -3669,6 +3682,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         if (!this.controller_model.update_playback_state_midi(PlaybackState.Playing)) return
         opus_manager.vm_state.playback_state_midi.value = this.controller_model.playback_state_midi
         this.state_model.selecting_beat.value = false
+        this.update_persistent_notification()
 
         thread {
             try {
@@ -3707,7 +3721,34 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 loop_playback
             )
             opus_manager.vm_state.looping_playback.value = loop_playback
+            this.update_persistent_notification()
         }
+    }
+
+    @SuppressLint("MissingPermission")
+    fun update_persistent_notification() {
+        val builder = this.get_persistent_notification() ?: return
+        if (!this.has_notification_permission()) return
+        if (this.notification_manager == null) {
+            this.notification_manager = NotificationManagerCompat.from(this)
+        }
+        // val icon = when (this@ComponentActivityEditor.state_model.playback_state_soundfont.value) {
+        //     PlaybackState.NotReady -> R.drawable.baseline_play_disabled_24
+
+        //     PlaybackState.Queued,
+        //     PlaybackState.Ready -> R.drawable.icon_play
+
+        //     PlaybackState.Stopping,
+        //     PlaybackState.Playing -> if (this@ComponentActivityEditor.state_model.looping_playback.value) {
+        //         R.drawable.icon_pause_loop
+        //     } else {
+        //         R.drawable.icon_pause
+        //     }
+        // }
+        this.notification_manager?.notify(
+            this.NOTIFICATION_ID,
+            builder.build()
+        )
     }
 
     fun new_project() {

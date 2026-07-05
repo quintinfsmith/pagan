@@ -9,14 +9,13 @@
  */
 package com.qfs.pagan
 
-import android.app.Activity
+import android.annotation.SuppressLint
 import android.view.WindowManager
+import androidx.core.app.NotificationManagerCompat
 import com.qfs.apres.soundfontplayer.MappedPlaybackDevice
 import com.qfs.apres.soundfontplayer.SampleHandleManager
 import com.qfs.apres.soundfontplayer.WaveGenerator
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import com.qfs.pagan.ComponentActivity.ComponentActivityEditor
 import kotlinx.coroutines.sync.Mutex
 import kotlin.math.max
 import com.qfs.pagan.OpusLayerInterface as OpusManager
@@ -34,7 +33,8 @@ class PlaybackDevice(
     private var _first_beat_passed = false
     private var _buffering_cancelled = false
     private var _buffering_mutex = Mutex()
-    var activity: Activity? = null
+    var activity: ComponentActivityEditor? = null
+
     /*
         All of this notification stuff is used with the understanding that the PaganPlaybackDevice
         used to export wavs will be discarded after a single use. It'll need to be cleaned up to
@@ -66,16 +66,23 @@ class PlaybackDevice(
         this.restore_playback_state()
     }
 
+    fun attach_activity(activity: ComponentActivityEditor) {
+        this.activity = activity
+    }
+    fun detach_activity() {
+        this.activity = null
+    }
+
     override fun on_start() {
         val vm_controller = this.opus_manager.vm_controller
         vm_controller.update_playback_state_soundfont(PlaybackState.Playing)
 
-
-        this.activity?.let {
-            it.runOnUiThread {
-                it.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        this.activity?.let { activity ->
+            activity.runOnUiThread {
+                activity.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             }
         }
+
     }
 
     override fun on_mark(i: Int) {

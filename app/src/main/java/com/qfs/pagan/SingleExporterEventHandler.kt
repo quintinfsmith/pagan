@@ -19,8 +19,12 @@ import com.qfs.apres.soundfontplayer.WavConverter
 import com.qfs.pagan.ComponentActivity.ComponentActivityEditor
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
-class SingleExporterEventHandler(val context: ComponentActivityEditor, val state_model: ViewModelEditorState, val uri: Uri, val callback: () -> Unit): WavConverter.ExporterEventHandler {
-    val notification_manager = NotificationManagerCompat.from(this.context)
+class SingleExporterEventHandler(
+    val context: ComponentActivityEditor,
+    val state_model: ViewModelEditorState,
+    val uri: Uri,
+    val callback: () -> Unit
+): WavConverter.ExporterEventHandler {
     companion object {
         const val MAX_PROGRESS = 100
         const val TIMEOUT = 5000L
@@ -37,7 +41,7 @@ class SingleExporterEventHandler(val context: ComponentActivityEditor, val state
         val builder = this.context.get_export_notification() ?: return
         @SuppressLint("MissingPermission")
         if (this.context.has_notification_permission()) {
-            this.notification_manager.notify(
+            this.context.notification_manager?.notify(
                 this.context.NOTIFICATION_ID,
                 builder.build()
             )
@@ -70,7 +74,7 @@ class SingleExporterEventHandler(val context: ComponentActivityEditor, val state
 
             @SuppressLint("MissingPermission")
             if (this.context.has_notification_permission()) {
-                this.notification_manager.notify(
+                this.context.notification_manager?.notify(
                     this.context.NOTIFICATION_ID,
                     builder.build()
                 )
@@ -126,7 +130,7 @@ class SingleExporterEventHandler(val context: ComponentActivityEditor, val state
 
         @SuppressLint("MissingPermission")
         if (this.context.has_notification_permission()) {
-            this.notification_manager.notify(this.context.NOTIFICATION_ID, builder.build())
+            this.context.notification_manager?.notify(this.context.NOTIFICATION_ID, builder.build())
         }
     }
 }

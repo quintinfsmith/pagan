@@ -19,6 +19,7 @@ import com.qfs.pagan.jsoninterfaces.UnknownControllerException
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.DelayController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.LowPassController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.PanController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.TempoController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.VelocityController
@@ -56,6 +57,12 @@ object ActiveControllerJSONInterface {
                 val controller = DelayController(size)
                 controller.set_initial_event(OpusControlEventJSONInterface.delay_event(obj.get_hashmap("initial")))
                 this.populate_controller(obj, controller, OpusControlEventJSONInterface::delay_event)
+                controller
+            }
+            "lowpass" -> {
+                val controller = LowPassController(size)
+                controller.set_initial_event(OpusControlEventJSONInterface.lowpass_event(obj.get_hashmap("initial")))
+                this.populate_controller(obj, controller, OpusControlEventJSONInterface::lowpass_event)
                 controller
             }
             else -> throw UnknownControllerException(label)
@@ -144,6 +151,7 @@ object ActiveControllerJSONInterface {
             is VelocityController -> "velocity"
             is PanController -> "pan"
             is DelayController -> "delay"
+            is LowPassController -> "lowpass"
             else -> throw UnhandledControllerException(controller)
         }
         map["visible"] = controller.visible

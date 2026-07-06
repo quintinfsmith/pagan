@@ -16,15 +16,18 @@ import com.qfs.pagan.jsoninterfaces.UnknownControllerException
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectControlSet
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.DelayController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.LowPassController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.PanController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.ReverbController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.TempoController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.VelocityController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.VolumeController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
 
 object ActiveControlSetJSONInterface {
     fun from_json(json_obj: JSONHashMap, size: Int): EffectControlSet {
@@ -36,6 +39,7 @@ object ActiveControlSetJSONInterface {
                 "velocity" -> ActiveControllerJSONInterface.from_json<OpusVelocityEvent>(json_controller, size)
                 "pan" -> ActiveControllerJSONInterface.from_json<OpusPanEvent>(json_controller, size)
                 "delay" -> ActiveControllerJSONInterface.from_json<DelayEvent>(json_controller, size)
+                "lowpass" -> ActiveControllerJSONInterface.from_json<LowPassEvent>(json_controller, size)
                 else -> throw UnknownControllerException(label)
             }
 
@@ -45,7 +49,8 @@ object ActiveControlSetJSONInterface {
                 is PanController -> EffectType.Pan
                 is VelocityController -> EffectType.Velocity
                 is DelayController -> EffectType.Delay
-                //is ReverbController -> ControlEventType.Reverb
+                is LowPassController -> EffectType.LowPass
+                is ReverbController -> EffectType.Reverb
                 else -> throw UnhandledControllerException(controller)
             }
             control_set.new_controller(key, controller)

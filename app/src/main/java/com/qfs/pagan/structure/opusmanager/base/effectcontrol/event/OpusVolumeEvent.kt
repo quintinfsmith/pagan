@@ -13,7 +13,11 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import kotlin.math.pow
 
-class OpusVolumeEvent(value: Float, duration: Int = 1, transition: EffectTransition = EffectTransition.Instant): SingleFloatEvent(value, duration, transition) {
+class OpusVolumeEvent(
+    value: Float,
+    duration: Int = 1,
+    transition: EffectTransition = EffectTransition.Instant
+): SingleFloatEvent(value, duration, transition) {
     override val event_type = EffectType.Volume
     override fun to_float_array(): FloatArray {
         val adjusted = this.value / 1.27F

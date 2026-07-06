@@ -62,6 +62,7 @@ import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.button.OutlinedButton
 import com.qfs.pagan.composable.button.TextCMenuButton
 import com.qfs.pagan.composable.effectwidget.DelayEventMenu
+import com.qfs.pagan.composable.effectwidget.LowPassEventMenu
 import com.qfs.pagan.composable.effectwidget.PanEventMenu
 import com.qfs.pagan.composable.effectwidget.ReverbEventMenu
 import com.qfs.pagan.composable.effectwidget.TempoEventMenu
@@ -70,6 +71,7 @@ import com.qfs.pagan.composable.effectwidget.VolumeEventMenu
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
@@ -787,6 +789,7 @@ fun ContextMenuLineCtlSecondary(vm_state: ViewModelEditorState, opus_manager: Op
             is OpusReverbEvent -> ReverbEventMenu(vm_state, opus_manager, initial_event)
             is DelayEvent -> DelayEventMenu(vm_state, opus_manager, initial_event)
             is OpusVelocityEvent -> VelocityEventMenu(vm_state, opus_manager, initial_event)
+            is LowPassEvent -> LowPassEventMenu(vm_state, opus_manager, initial_event)
             else -> {}
         }
     }

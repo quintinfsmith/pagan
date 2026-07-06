@@ -60,7 +60,7 @@ fun FloatInputDropDown(
                 label = { Text(title_string_id) },
                 modifier = Modifier
                     .testTag(TestTag.DialogNumberInput)
-                    .width(Dimensions.NumberInputDialogWidth)
+                    .width(Dimensions.FloatInputDialogWidth)
                     .padding(Dimensions.NumberInputDialogPadding)
                     .focusRequester(focus_requester),
                 contentPadding = Dimensions.NumberInputDialogPadding,

@@ -292,6 +292,7 @@ object Dimensions {
         vertical = 4.dp
     )
 
+    val FloatInputDialogWidth = 200.dp
     val NumberInputDialogWidth = 128.dp
     val NumberPickerRowHeight = 41.dp
     val NumberPickerRowWidth = 80.dp

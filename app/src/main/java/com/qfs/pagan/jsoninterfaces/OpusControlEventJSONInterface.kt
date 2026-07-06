@@ -18,6 +18,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.asEffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
@@ -58,6 +59,10 @@ object OpusControlEventJSONInterface {
                 )
                 output["echo"] = input.echo
                 output["fade"] = input.fade
+            }
+            is LowPassEvent -> {
+                output["cutoff"] = input.filter_cutoff
+                output["res"] = input.resonance
             }
         }
         return output
@@ -156,6 +161,15 @@ object OpusControlEventJSONInterface {
             freq.get_int(1),
             map.get_int("echo"),
             map.get_float("fade"),
+            map.get_int("duration", 1),
+            map.get_string("transition", "Instant").asEffectTransition()
+        )
+    }
+
+    fun lowpass_event(map: JSONHashMap): LowPassEvent {
+        return LowPassEvent(
+            filter_cutoff = map.get_floatn("cutoff"),
+            resonance = map.get_floatn("res"),
             map.get_int("duration", 1),
             map.get_string("transition", "Instant").asEffectTransition()
         )

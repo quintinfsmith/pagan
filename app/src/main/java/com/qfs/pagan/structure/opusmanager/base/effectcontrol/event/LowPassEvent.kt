@@ -13,7 +13,12 @@ import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 
-class LowPassEvent(var filter_cutoff: Float?, var resonance: Float?, duration: Int = 1, transition: EffectTransition = EffectTransition.Instant): EffectEvent(duration, transition) {
+class LowPassEvent(
+    var filter_cutoff: Float?,
+    var resonance: Float?,
+    duration: Int = 1,
+    transition: EffectTransition = EffectTransition.Instant
+): EffectEvent(duration, transition) {
     override val event_type = EffectType.LowPass
     override fun to_float_array(): FloatArray {
         return floatArrayOf(this.filter_cutoff ?: 0F, this.resonance ?: 0F)
@@ -24,7 +29,9 @@ class LowPassEvent(var filter_cutoff: Float?, var resonance: Float?, duration: I
     override fun copy(): LowPassEvent {
         return LowPassEvent(
             this.filter_cutoff,
-            this.resonance
+            this.resonance,
+            this.duration,
+            this.transition
         )
     }
 

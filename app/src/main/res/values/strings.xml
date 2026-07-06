@@ -282,6 +282,7 @@
     <string name="ctl_desc_bend_transition">Note Transitions</string>
     <string name="ctl_desc_volume">Volume</string>
     <string name="ctl_desc_velocity">Velocity</string>
+    <string name="ctl_desc_lowpass">Low Pass Filter</string>
     <string name="ctl_desc_pan">Pan</string>
     <string name="go_back">Go Back</string>
     <string name="song_configuration">Song Configuration</string>
@@ -339,7 +340,7 @@
     <string name="notification_title_looping">Looping %1$s</string>
     <string name="notification_title_idle">%1$s</string>
     <string name="settings_play_in_background">Allow playback in background</string>
-    <string name="dlg_set_low_pass_frequency">Set Low Pass Frequency</string>
+    <string name="dlg_set_low_pass_frequency">Low-Pass Frequency</string>
 
 
     <string-array name="general_midi_presets">

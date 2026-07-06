@@ -1163,6 +1163,28 @@ class ComponentActivitySettings: PaganComponentActivity() {
         }
     }
 
+    @Composable
+    fun OptionPlayInBackground(modifier: Modifier = Modifier) {
+        SettingsRow(
+            modifier = modifier,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                stringResource(R.string.settings_play_in_background),
+                modifier = Modifier.weight(1F),
+                style = Typography.Settings.Label
+            )
+            Switch(
+                checked = view_model.configuration.play_in_background.value,
+                onCheckedChange = {
+                    view_model.configuration.play_in_background.value = it
+                    this@ComponentActivitySettings.save_configuration()
+                }
+            )
+        }
+    }
+
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun SettingsSectionB(modifier: Modifier = Modifier) {
@@ -1180,6 +1202,8 @@ class ComponentActivitySettings: PaganComponentActivity() {
             OptionAllowStdPercussion(Modifier.fillMaxWidth())
             MenuPadder()
             OptionMultipleSoundfonts(Modifier.fillMaxWidth())
+            MenuPadder()
+            OptionPlayInBackground(Modifier.fillMaxWidth())
         }
     }
 

@@ -680,6 +680,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.state_model.beat_stroke_thickness.value = this.view_model.configuration.beat_stroke_thickness.value
         this.state_model.update_global_zoom_notches()
         this.state_model.move_mode.value = this.view_model.configuration.move_mode.value
+
+        if (this.view_model.configuration.play_in_background.value) {
+            this.update_persistent_notification()
+        } else {
+            this.destroy_persistent_notification()
+        }
+
         this.set_soundfont {
             this.view_model.configuration.soundfonts.value = arrayOf()
             this.set_soundfont()
@@ -687,11 +694,16 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     fun set_soundfont(bad_soundfont_callback: ((Uri) -> Unit)? = null) {
+        val file_paths = this.view_model.configuration.soundfonts.value
+        if (List(file_paths.size) { file_paths[it].value } == this.controller_model.active_soundfont_relative_paths) {
+            return
+        }
+
         // Ensure playback is stopped
         this.stop_opus_midi()
         this.stop_opus()
 
-        val file_paths = this.view_model.configuration.soundfonts.value
+
         if (file_paths.isEmpty()) {
             this.controller_model.unset_soundfont()
             this.state_model.unset_soundfont()
@@ -863,14 +875,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     override fun onStop() {
         super.onStop()
-        if (!this.has_notification_permission()) {
+        if (!this.view_model.configuration.play_in_background.value || !this.has_notification_permission()) {
             this.stop_opus_midi()
             this.stop_opus()
         }
     }
 
     override fun onDestroy() {
-        if (this.has_notification_permission()) {
+        if (this.view_model.configuration.play_in_background.value && this.has_notification_permission()) {
             this.stop_opus_midi()
             this.stop_opus()
             this.destroy_persistent_notification()
@@ -3743,6 +3755,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun update_persistent_notification() {
         val builder = this.get_persistent_notification() ?: return
         if (!this.has_notification_permission()) return
+        if (!this.view_model.configuration.play_in_background.value) return
         if (this.notification_manager == null) {
             this.notification_manager = NotificationManagerCompat.from(this)
         }

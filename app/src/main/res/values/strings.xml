@@ -338,6 +338,7 @@
     <string name="notification_title_playing">Playing %1$s</string>
     <string name="notification_title_looping">Looping %1$s</string>
     <string name="notification_title_idle">%1$s</string>
+    <string name="settings_play_in_background">Allow playback in background</string>
 
 
     <string-array name="general_midi_presets">

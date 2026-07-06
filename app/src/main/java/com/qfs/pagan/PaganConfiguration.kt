@@ -43,7 +43,8 @@ class PaganConfiguration(
     beat_stroke_thickness: Dp = 0.dp,
     allow_multiple_soundfonts: Boolean = false,
     soundfont_uris: Array<Uri> = arrayOf(),
-    sort_load: Int = -3
+    sort_load: Int = -3,
+    play_in_background: Boolean = true
 ) {
     val soundfonts: MutableState<Array<MutableState<String>>> = mutableStateOf(Array(if (allow_multiple_soundfonts) soundfonts.size else min(1, soundfonts.size)) { mutableStateOf(soundfonts[it]) })
     val soundfont_uris: MutableState<Array<MutableState<Uri>>> = mutableStateOf(Array(if (allow_multiple_soundfonts) soundfont_uris.size else min(1, soundfont_uris.size)) { mutableStateOf(soundfont_uris[it]) })
@@ -61,6 +62,7 @@ class PaganConfiguration(
     val beat_stroke_thickness: MutableState<Dp> = mutableStateOf(beat_stroke_thickness)
     val allow_multiple_soundfonts: MutableState<Boolean> = mutableStateOf(allow_multiple_soundfonts)
     val sort_load: MutableState<Int?> = mutableStateOf(sort_load)
+    val play_in_background: MutableState<Boolean> = mutableStateOf(play_in_background)
 
     enum class MoveMode {
         MOVE,
@@ -111,7 +113,8 @@ class PaganConfiguration(
                 normalize_beat_widths = content.get_boolean("normalize_beat_widths", false),
                 beat_stroke_thickness = content.get_floatn("beat_stroke_thickness")?.dp ?: 0.dp,
                 allow_multiple_soundfonts = content.get_boolean("allow_multiple_soundfonts", false),
-                sort_load = content.get_int("sort_load", -3)
+                sort_load = content.get_int("sort_load", -3),
+                play_in_background = content.get_boolean("play_in_background", true),
             )
         }
 
@@ -156,6 +159,7 @@ class PaganConfiguration(
         this.beat_stroke_thickness.value = config.beat_stroke_thickness.value
         this.allow_multiple_soundfonts.value = config.allow_multiple_soundfonts.value
         this.sort_load.value = config.sort_load.value
+        this.play_in_background.value = config.play_in_background.value
     }
 
     fun update_from_path(path: String) {
@@ -198,10 +202,12 @@ class PaganConfiguration(
         output["normalize_beat_widths"] = this.normalize_beat_widths.value
         output["beat_stroke_thickness"] = this.beat_stroke_thickness.value.value
         output["sort_load"] = this.sort_load.value
+        output["play_in_background"] = this.play_in_background.value
 
         // output["channel_colors"] = JSONList(*Array(this.channel_colors.size) {
         //     JSONString(this.channel_colors[it].toHexString(HexFormat.Default))
         // })
+
         return output
     }
 }

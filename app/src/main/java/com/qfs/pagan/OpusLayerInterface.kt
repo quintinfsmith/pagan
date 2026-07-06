@@ -51,14 +51,14 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         val global_controller_domain = listOf(
             EffectType.Tempo,
             EffectType.Delay,
-            EffectType.LowPass
+            //EffectType.LowPass
         )
 
         val channel_controller_domain = listOf(
             EffectType.Volume,
             EffectType.Pan,
             EffectType.Delay,
-            EffectType.LowPass
+            //EffectType.LowPass
         )
 
         val line_controller_domain = listOf(
@@ -66,7 +66,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             EffectType.Velocity,
             EffectType.Pan,
             EffectType.Delay,
-            EffectType.LowPass
+            //EffectType.LowPass
         )
 
         fun get_available_transitions(type: EffectType): Set<EffectTransition> {
@@ -80,6 +80,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                     )
                 }
 
+                //EffectType.LowPass,
                 EffectType.Pan,
                 EffectType.Volume -> {
                     setOf(
@@ -90,11 +91,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                         EffectTransition.LinearB,
                     )
                 }
-
-                EffectType.LowPass,
                 EffectType.Reverb -> setOf(EffectTransition.Instant)
-
-                EffectType.Pitch -> TODO()
+                else -> TODO()
             }
 
         }
@@ -2413,26 +2411,15 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             Pair(this_event, ViewModelEditorState.EventDescriptor.Selected)
         } else {
             val original = this.controller_channel_get_actual_position(type, channel, beat, position)
-            val head_tree = this.get_channel_ctl_tree<EffectEvent>(type, channel, original.first, original.second)
+            val head_tree = this.get_channel_ctl_tree<EffectEvent>(type, channel,original.first, original.second)
             if (original != Pair(beat, position) && head_tree.event != null) {
                 Pair(head_tree.event!!, ViewModelEditorState.EventDescriptor.Tail)
             } else {
-                var (working_beat, working_position) = controller.get_preceding_event_position(beat, position) ?: Pair(
-                    beat,
-                    position
-                )
-                var working_event = controller.get_tree(beat, position).event
-                while (working_event == null || !working_event.is_persistent()) {
-                    controller.get_preceding_event_position(working_beat, working_position)?.let {
-                        working_beat = it.first
-                        working_position = it.second
-                        working_event = controller.get_tree(it.first, it.second).get_event()
-                    } ?: break
-                }
-                Pair(
-                    working_event ?: controller.initial_event,
-                    ViewModelEditorState.EventDescriptor.Backup
-                )
+                val event_copy = (controller.get_latest_persistent_position(beat, position)?.let {
+                    controller.get_tree(it.first, it.second).event
+                } ?: controller.initial_event).copy()
+                event_copy.duration = 1
+                Pair(event_copy, ViewModelEditorState.EventDescriptor.Backup)
             }
         }
 
@@ -2461,27 +2448,11 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             if (original != Pair(beat, position) && head_tree.event != null) {
                 Pair(head_tree.event!!, ViewModelEditorState.EventDescriptor.Tail)
             } else {
-                val original = this.controller_global_get_actual_position(type, beat, position)
-                val head_tree = this.get_global_ctl_tree<EffectEvent>(type, original.first, original.second)
-                if (original != Pair(beat, position) && head_tree.event != null) {
-                    Pair(head_tree.event!!, ViewModelEditorState.EventDescriptor.Tail)
-                } else {
-                    var (working_beat, working_position) = controller.get_preceding_event_position(beat, position)
-                        ?: Pair(beat, position)
-                    var working_event = controller.get_tree(beat, position).event
-                    while (working_event == null || !working_event.is_persistent()) {
-                        controller.get_preceding_event_position(working_beat, working_position)?.let {
-                            working_beat = it.first
-                            working_position = it.second
-                            working_event = controller.get_tree(it.first, it.second).get_event()
-                        } ?: break
-                    }
-
-                    Pair(
-                        working_event ?: controller.initial_event,
-                        ViewModelEditorState.EventDescriptor.Backup
-                    )
-                }
+                val event_copy = (controller.get_latest_persistent_position(beat, position)?.let {
+                    controller.get_tree(it.first, it.second).event
+                } ?: controller.initial_event).copy()
+                event_copy.duration = 1
+                Pair(event_copy, ViewModelEditorState.EventDescriptor.Backup)
             }
         }
 

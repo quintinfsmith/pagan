@@ -26,12 +26,6 @@ object Colors {
         get() { return this._active_color_scheme.value }
         set(value) { this._active_color_scheme.value = value }
 
-    val LEAF_COLOR_INVALID = Color(0xFFe51C3A)
-    val LEAF_COLOR_INVALID_SELECTED = Color(0xFF890E21)
-
-    val EFFECT_LINE_COLOR = Color(0xFFFFFFFF)
-    val EFFECT_LINE_COLOR_NIGHT = Color(0xFF000000)
-
     enum class LeafState {
         Active,
         Spill,

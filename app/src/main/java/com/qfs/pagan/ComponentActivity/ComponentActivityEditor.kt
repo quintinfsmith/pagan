@@ -3753,9 +3753,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
     @SuppressLint("MissingPermission")
     fun update_persistent_notification() {
+        if (!this.view_model.configuration.play_in_background.value) return
         val builder = this.get_persistent_notification() ?: return
         if (!this.has_notification_permission()) return
-        if (!this.view_model.configuration.play_in_background.value) return
         if (this.notification_manager == null) {
             this.notification_manager = NotificationManagerCompat.from(this)
         }
@@ -3788,6 +3788,18 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     R.drawable.icon_pause
                 }
                 builder
+                    .setProgress(
+                        opus_manager.length,
+                        when (opus_manager.cursor.mode) {
+                            CursorMode.Single,
+                            CursorMode.Beat -> opus_manager.cursor.beat
+                            CursorMode.Range -> opus_manager.cursor.get_ordered_range()!!.first.beat
+                            CursorMode.Line,
+                            CursorMode.Channel,
+                            CursorMode.Unset -> opus_manager.vm_state.scroll_state_x.value.firstVisibleItemIndex
+                        },
+                        false
+                    )
                     .addAction(icon, getString(R.string.notification_pause), play_intent)
                     .setContentTitle(
                         if (this.state_model.looping_playback.value) {
@@ -3798,6 +3810,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     )
             } else {
                 builder
+                    .setProgress(0,0, false)
                     .addAction(R.drawable.icon_play, getString(R.string.notification_play), play_intent)
                     .addAction(
                         R.drawable.icon_play,

@@ -110,6 +110,7 @@ class PlaybackDevice(
         }
 
         this.opus_manager.cursor_select_column(max(i % this.opus_manager.length, 0))
+        this.activity?.update_persistent_notification()
     }
 
     override fun on_cancelled() {

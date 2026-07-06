@@ -14,18 +14,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
-import com.qfs.pagan.composable.IntegerInputDropDown
+import com.qfs.pagan.Values
+import com.qfs.pagan.composable.FloatInputDropDown
 import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.composable.button.TextCMenuButton
 import com.qfs.pagan.composable.MediumSpacer
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
@@ -34,52 +34,60 @@ import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.roundToInt
 
 @Composable
-fun RowScope.VolumeEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, event: OpusVolumeEvent) {
+fun RowScope.LowPassEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, event: LowPassEvent) {
     val cursor = vm_state.active_cursor.value ?: return
     val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
-    val working_value = remember { mutableFloatStateOf(working_event.value) }
+    val working_cutoff = remember { mutableStateOf(working_event.filter_cutoff) }
     val dialog_visibility = remember { mutableStateOf(false) }
 
     TextCMenuButton(
         modifier = Modifier
-            .testTag(TestTag.VolumeButton)
+            .testTag(TestTag.LowPassButton)
             .width(Dimensions.ContextMenuButtonWidth),
-        text = "%02d".format((working_value.floatValue * 100).roundToInt()),
+        text = if (working_cutoff.value == null) {
+            "Disabled"
+        } else {
+            "%02d Hz".format((working_cutoff.value!!).roundToInt())
+        },
         shape = Shapes.ContextMenuSecondaryButtonStart,
         onClick = { dialog_visibility.value = true },
         onLongClick = {
-            working_value.floatValue = 1F
-            working_event.value = 1F
+            working_cutoff.value = 1F
+            working_event.filter_cutoff = 1F
             opus_manager.set_event_at_cursor(working_event)
         },
     )
+
     MediumSpacer()
     Slider(
         modifier = Modifier
-            .testTag(TestTag.VolumeSlider)
+            .testTag(TestTag.LowPassSlider)
             .height(Dimensions.ContextMenuButtonHeight)
             .weight(1F),
-        value = working_value.floatValue,
-        valueRange = 0F .. 1.27F,
+        value = working_cutoff.value ?: 0F,
+        valueRange = Values.LowPassMinimum .. Values.LowPassMaximum,
         onValueChange = {
-            working_event.value = it
-            working_value.floatValue = it
+            working_event.filter_cutoff = it
+            working_cutoff.value = it
         },
         onValueChangeFinished = {
-            working_event.value = working_value.floatValue
+            working_event.filter_cutoff = working_cutoff.value
             opus_manager.set_event_at_cursor(working_event)
         },
     )
-    IntegerInputDropDown(
-        R.string.dlg_set_volume,
+
+    FloatInputDropDown(
+        R.string.dlg_set_low_pass_frequency,
         dialog_visibility,
-        remember { mutableIntStateOf((working_event.value * 100).roundToInt()) },
-        0, 200,
+        remember { mutableFloatStateOf(working_event.filter_cutoff ?: 0F) },
+        Values.LowPassMinimum,
+        Values.LowPassMaximum,
     ) {
-        working_event.value = it.toFloat() / 100F
-        working_value.floatValue = working_event.value
+        working_event.filter_cutoff = it
+        working_cutoff.value = it
         opus_manager.set_event_at_cursor(working_event)
     }
+
     EffectTransitionButton(working_event, opus_manager, is_initial)
 }

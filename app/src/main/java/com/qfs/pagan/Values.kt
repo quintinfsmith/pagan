@@ -46,6 +46,9 @@ object Values {
     const val MaximumOctaveSize = 36
     const val MinimumOctaveSize = 1
 
+    const val LowPassMinimum = 0F
+    const val LowPassMaximum = 44100F
+
     const val DisabledTopBarIconAlpha = .3F
 }
 

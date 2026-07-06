@@ -93,15 +93,6 @@ fun IntegerInputDropDown(
             )
         }
 
-        //DialogBar(
-        //    neutral = { visibility.value = false },
-        //    positive = {
-        //        // this@ActionDispatcher.persistent_number_input_values[title_string_id] = value.value
-        //        visibility.value = false
-        //        callback(value.intValue)
-        //    }
-        //)
-
         LaunchedEffect(Unit) {
             focus_requester.requestFocus()
         }

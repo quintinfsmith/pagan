@@ -18,7 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -39,13 +39,13 @@ import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
 
 @Composable
-fun IntegerInputDropDown(
+fun FloatInputDropDown(
     title_string_id: Int,
     visibility: MutableState<Boolean>,
-    value: MutableIntState,
-    min_value: Int,
-    max_value: Int? = null,
-    callback: (value: Int) -> Unit
+    value: MutableFloatState,
+    min_value: Float,
+    max_value: Float? = null,
+    callback: (value: Float) -> Unit
 ) {
     val focus_requester = remember { FocusRequester() }
     DropdownMenu(
@@ -55,7 +55,7 @@ fun IntegerInputDropDown(
 
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IntegerInput(
+            FloatInput(
                 value = value,
                 label = { Text(title_string_id) },
                 modifier = Modifier
@@ -66,7 +66,7 @@ fun IntegerInputDropDown(
                 contentPadding = Dimensions.NumberInputDialogPadding,
                 text_align = TextAlign.Center,
                 on_focus_exit = { dialog_value ->
-                    dialog_value?.let { value.intValue = it }
+                    dialog_value?.let { value.floatValue = it }
                 },
                 minimum = min_value,
                 maximum = max_value
@@ -80,7 +80,7 @@ fun IntegerInputDropDown(
                     .size(42.dp),
                 onClick = {
                     visibility.value = false
-                    callback(value.intValue)
+                    callback(value.floatValue)
                 },
                 contentPadding = PaddingValues(0.dp),
                 content = {

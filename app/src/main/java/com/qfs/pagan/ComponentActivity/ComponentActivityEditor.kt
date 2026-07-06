@@ -882,11 +882,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     override fun onDestroy() {
-        if (this.view_model.configuration.play_in_background.value && this.has_notification_permission()) {
-            this.stop_opus_midi()
-            this.stop_opus()
-            this.destroy_persistent_notification()
-        }
+        this.stop_opus_midi()
+        this.stop_opus()
+        this.destroy_persistent_notification()
 
         this.controller_model.playback_device?.detach_activity()
         this.unregisterReceiver(this.broadcast_receiver)

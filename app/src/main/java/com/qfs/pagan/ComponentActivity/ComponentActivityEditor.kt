@@ -1272,7 +1272,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
-                text = vm_state.project_name.value ?: stringResource(R.string.untitled_opus)
+                text = vm_state.project_name.value ?: stringResource(R.string.untitled_opus),
+                style = Typography.TopBar
             )
             NameAndNotesDialog(dialog_visible)
         }

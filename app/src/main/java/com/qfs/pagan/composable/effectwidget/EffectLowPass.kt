@@ -10,7 +10,9 @@
 package com.qfs.pagan.composable.effectwidget
 
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -25,89 +27,80 @@ import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.Values
 import com.qfs.pagan.composable.FloatInput
-import com.qfs.pagan.composable.PinchKnob
+import com.qfs.pagan.composable.Knob
+import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.wrappers.Switch
+import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Dimensions.Unpadded
+import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorState
+import kotlin.math.roundToInt
 
 @Composable
 fun RowScope.LowPassEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, event: LowPassEvent) {
     val cursor = vm_state.active_cursor.value ?: return
     val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
-    val working_cutoff = remember { mutableStateOf(working_event.filter_cutoff) }
-    val enabled = remember { mutableStateOf(working_cutoff.value != null) }
+    val working_cutoff = remember { mutableFloatStateOf(working_event.filter_cutoff) }
 
-    Switch(
-        enabled.value,
-        onCheckedChange = { checked ->
-            if (checked) {
-                working_cutoff.value = Values.LowPassDefault
-            } else {
-                working_cutoff.value = null
-            }
-            enabled.value = checked
-            working_event.filter_cutoff = working_cutoff.value
-            opus_manager.set_event_at_cursor(working_event)
-        }
+    Knob(
+        Modifier
+            .size(
+                Dimensions.ContextMenuButtonWidth,
+                Dimensions.ContextMenuButtonHeight,
+            )
+            .testTag(TestTag.LowPassNob),
+        working_cutoff,
+        Values.LowPassMinimum,
+        Values.LowPassMaximum,
+        precision = 0,
+        rotations = 2
+    ) { knob_value ->
+        working_cutoff.floatValue = knob_value.roundToInt().toFloat()
+        working_event.filter_cutoff = working_cutoff.floatValue
+        opus_manager.set_event_at_cursor(working_event)
+    }
+
+    Spacer(Modifier.weight(.5F))
+
+    FloatInput(
+        working_cutoff,
+        precision = 3,
+        revert_on_exit = true,
+        prefix = {
+            Icon(
+                modifier = Modifier
+                    .width(Dimensions.ContextMenuButtonIconWidth),
+                painter = painterResource(R.drawable.icon_lowpass),
+                contentDescription = null
+            )
+        },
+        minimum = Values.LowPassMinimum,
+        maximum = Values.LowPassMaximum,
+        contentPadding = Unpadded,
+        text_align = TextAlign.Center,
+        modifier = Modifier
+            .testTag(TestTag.Tempo)
+            .height(Dimensions.EffectWidget.InputHeight)
+            .weight(1F, fill = false)
+    ) {
+        working_event.filter_cutoff = it
+        working_cutoff.floatValue = it
+        opus_manager.set_event_at_cursor(working_event)
+    }
+
+    MediumSpacer()
+
+    Text(
+        R.string.hz,
+        style = Typography.ContextMenuUnits
     )
 
-    working_cutoff.value?.let {
-        PinchKnob(
-            Modifier
-                .testTag(TestTag.LowPassNob),
-            remember { mutableFloatStateOf(0F) }
-        )
-        // Slider(
-        //     modifier = Modifier
-        //         .height(Dimensions.ContextMenuButtonHeight)
-        //         .weight(1F),
-        //     value = working_cutoff.value ?: 0F,
-        //     valueRange = Values.LowPassMinimum .. Values.LowPassMaximum,
-        //     onValueChange = {
-        //         working_event.filter_cutoff = it
-        //         working_cutoff.value = it
-        //     },
-        //     onValueChangeFinished = {
-        //         working_event.filter_cutoff = working_cutoff.value
-        //         opus_manager.set_event_at_cursor(working_event)
-        //     },
-        // )
-        val tempo_label = remember { mutableFloatStateOf(working_cutoff.value ?: 0F) }
-        FloatInput(
-            tempo_label,
-            precision = 3,
-            revert_on_exit = true,
-            prefix = {
-                Icon(
-                    modifier = Modifier
-                        .width(Dimensions.ContextMenuButtonIconWidth),
-                    painter = painterResource(R.drawable.icon_tempo),
-                    contentDescription = null
-                )
-            },
-            minimum = 1F,
-            contentPadding = Unpadded,
-            text_align = TextAlign.Center,
-            modifier = Modifier
-                .testTag(TestTag.Tempo)
-                .height(Dimensions.EffectWidget.InputHeight)
-                .weight(1F, fill = true)
-        ) {
-            if (it == 0F) {
-                working_event.filter_cutoff = null
-                working_cutoff.value = null
-            } else {
-                working_event.filter_cutoff = it
-                working_cutoff.value = it
-            }
-            opus_manager.set_event_at_cursor(working_event)
-        }
-    }
+    Spacer(Modifier.weight(.5F))
 
     EffectTransitionButton(working_event, opus_manager, is_initial)
 }

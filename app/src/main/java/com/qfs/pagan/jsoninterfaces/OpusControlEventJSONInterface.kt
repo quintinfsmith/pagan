@@ -168,7 +168,7 @@ object OpusControlEventJSONInterface {
 
     fun lowpass_event(map: JSONHashMap): LowPassEvent {
         return LowPassEvent(
-            filter_cutoff = map.get_floatn("cutoff"),
+            filter_cutoff = map.get_float("cutoff"),
             resonance = map.get_floatn("res"),
             map.get_int("duration", 1),
             map.get_string("transition", "Instant").asEffectTransition()

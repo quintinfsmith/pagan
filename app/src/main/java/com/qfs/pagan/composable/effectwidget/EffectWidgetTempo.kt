@@ -35,6 +35,7 @@ import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Dimensions.Unpadded
+import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
@@ -75,7 +76,10 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, opus_manager: OpusL
     ProvideContentColorTextStyle(
         contentColor = Colors.active_color_scheme.context_menu_foreground,
         content = {
-            Text(R.string.bpm, Modifier.padding(start = Dimensions.Space.Medium))
+            Text(
+                R.string.bpm, Modifier.padding(start = Dimensions.Space.Medium),
+                style = Typography.ContextMenuUnits
+            )
         }
     )
 

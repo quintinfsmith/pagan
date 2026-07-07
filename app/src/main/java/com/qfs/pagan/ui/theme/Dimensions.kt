@@ -217,6 +217,8 @@ object Dimensions {
     val HexDisplayStrokeWidth = Stroke.Thin
     val HexDisplayHeight = 48.dp
 
+    val KnobPadding = PaddingValues(4.dp)
+
     val NumberInputPadding = PaddingValues(12.dp)
 
     object EffectWidget {

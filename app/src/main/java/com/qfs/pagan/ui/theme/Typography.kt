@@ -17,7 +17,6 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 
 object Typography {
-
     val Default = TextStyle(
         fontFamily = Fonts.FiraSans
     )
@@ -70,6 +69,12 @@ object Typography {
         fontWeight = FontWeight.Bold,
         fontSize = 12.sp,
         lineHeight = 12.sp
+    )
+
+    val ContextMenuUnits = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 16.sp,
+        letterSpacing = 1.sp
     )
 
     val DialogTitle = TextStyle(
@@ -166,6 +171,8 @@ object Typography {
 
     val TopBar = TextStyle(
         fontFamily = Fonts.FiraSans,
+        fontSize = 14.sp,
+        lineHeight = 14.sp
     )
 
     val NumberInput = TextStyle(

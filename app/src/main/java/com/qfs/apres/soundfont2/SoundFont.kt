@@ -12,6 +12,9 @@ package com.qfs.apres.soundfont2
 import android.content.Context
 import android.net.Uri
 import com.qfs.apres.toUInt
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -24,6 +27,7 @@ class SoundFont(val context: Context, uri: Uri) {
 
     // TODO: Cache isn't currently being cleared when count == 0
     data class CachedSampleData(var data: SampleData, var count: Int = 1)
+    var destroy_mutex = Mutex()
 
     // Mandatory INFO
     private var ifil: Pair<Int, Int> = Pair(0,0)
@@ -581,11 +585,17 @@ class SoundFont(val context: Context, uri: Uri) {
 
     private fun get_sample_data(start_index: Int, end_index: Int): SampleData {
         val cache_key = Pair(start_index, end_index)
+        var output: SampleData? = null
 
-        if (this.sample_data_cache.containsKey(cache_key)) {
-            this.sample_data_cache[cache_key]!!.count += 1
-            return this.sample_data_cache[cache_key]!!.data
+        runBlocking {
+            this@SoundFont.destroy_mutex.withLock {
+                if (this@SoundFont.sample_data_cache.containsKey(cache_key)) {
+                    this@SoundFont.sample_data_cache[cache_key]!!.count += 1
+                    output = this@SoundFont.sample_data_cache[cache_key]!!.data
+                }
+            }
         }
+        output?.let { return it }
 
         val smpl = this.riff.get_sub_chunk_data(this.riff.sub_chunks[1][0],  (start_index * 2), 2 * (end_index - start_index))
         // TODO: Implement sm24 usage
@@ -597,7 +607,7 @@ class SoundFont(val context: Context, uri: Uri) {
 
         val inbuffer = ByteBuffer.wrap(smpl)
         inbuffer.order(ByteOrder.LITTLE_ENDIAN)
-        val output = SampleData(0)
+        output = SampleData(0)
         output.set_data(
             ShortArray(smpl.size / 2) {
                 inbuffer.getShort()
@@ -618,19 +628,28 @@ class SoundFont(val context: Context, uri: Uri) {
         //    //}
         //}
 
-        if (!this.sample_data_cache.containsKey(cache_key)) {
-            this.sample_data_cache[cache_key] = CachedSampleData(
-                data = output,
-                count = 1
-            )
+        runBlocking {
+            this@SoundFont.destroy_mutex.withLock {
+                if (!this@SoundFont.sample_data_cache.containsKey(cache_key)) {
+                    this@SoundFont.sample_data_cache[cache_key] = CachedSampleData(
+                        data = output,
+                        count = 1
+                    )
+                }
+            }
         }
+
         return output
     }
 
     fun destroy() {
-        for ((_, data_obj) in this.sample_data_cache) {
-            if (data_obj.data.ptr != 0.toLong()) {
-                data_obj.data.destroy()
+        runBlocking {
+            this@SoundFont.destroy_mutex.withLock {
+                for ((_, data_obj) in this@SoundFont.sample_data_cache) {
+                    if (data_obj.data.ptr != 0.toLong()) {
+                        data_obj.data.destroy()
+                    }
+                }
             }
         }
     }

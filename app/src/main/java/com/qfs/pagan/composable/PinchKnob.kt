@@ -11,7 +11,7 @@ import com.qfs.pagan.R
 import com.qfs.pagan.process_zoom
 
 @Composable
-fun PinchNob(
+fun PinchKnob(
     modifier: Modifier = Modifier,
     value: MutableFloatState,
     minimum: Float = 0F,
@@ -25,6 +25,7 @@ fun PinchNob(
                     // Main drag loop
                     while (true) {
                         process_zoom(awaitPointerEvent()) { zoom, _, _ ->
+                            println("$zoom ---")
                             value.floatValue = (value.floatValue + zoom).coerceIn(minimum, maximum)
                         }
                     }

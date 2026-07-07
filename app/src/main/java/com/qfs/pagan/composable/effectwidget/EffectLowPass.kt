@@ -25,7 +25,7 @@ import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.Values
 import com.qfs.pagan.composable.FloatInput
-import com.qfs.pagan.composable.PinchNob
+import com.qfs.pagan.composable.PinchKnob
 import com.qfs.pagan.composable.wrappers.Switch
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
@@ -57,7 +57,7 @@ fun RowScope.LowPassEventMenu(vm_state: ViewModelEditorState, opus_manager: Opus
     )
 
     working_cutoff.value?.let {
-        PinchNob(
+        PinchKnob(
             Modifier
                 .testTag(TestTag.LowPassNob),
             remember { mutableFloatStateOf(0F) }

@@ -359,8 +359,8 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, vm_state: ViewModelEdi
 }
 
 @Composable
-fun ContextMenuLeafSecondary(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, modifier: Modifier = Modifier, layout: LayoutSize) {
-}
+fun ContextMenuLeafSecondary(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, modifier: Modifier = Modifier, layout: LayoutSize) { }
+
 @Composable
 fun ContextMenuLeafCtlSecondary(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, modifier: Modifier = Modifier, layout: LayoutSize) {
     ContextMenuSecondaryRow(modifier) {

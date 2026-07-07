@@ -8,6 +8,7 @@
 #include "EffectProfileBuffer.h"
 
 class LowPassBuffer: public EffectProfileBuffer {
+    constexpr static float maximum_cutoff = 20000;
     constexpr static float minimum_threshold = .0001;
     constexpr static int lag = 2;
     float previous_filtered_left[LowPassBuffer::lag]{};
@@ -48,7 +49,7 @@ class LowPassBuffer: public EffectProfileBuffer {
             }
 
             this->working_sample_rate = 0;
-            this->working_cutoff = 0;
+            this->working_cutoff = maximum_cutoff;
             this->working_q = 0;
 
         }
@@ -63,7 +64,7 @@ class LowPassBuffer: public EffectProfileBuffer {
             this->working_cutoff = cutoff;
             this->working_q = q;
 
-            if (cutoff == 0) return;
+            if (cutoff >= maximum_cutoff) return;
             // Limit cutoff to sample rate / 2
             float cutoff_freq = tan(M_PI * fmin(this->working_cutoff / sample_rate, .5));
 
@@ -79,7 +80,7 @@ class LowPassBuffer: public EffectProfileBuffer {
         void apply(float* working_array, int array_size) override {
             for (int i = 0; i < array_size; i++) {
                 this->value_check();
-                if (this->working_cutoff == 0) continue;
+                if (this->working_cutoff >= maximum_cutoff) continue;
 
                 float input_left = working_array[i];
                 float input_right = working_array[i + array_size];

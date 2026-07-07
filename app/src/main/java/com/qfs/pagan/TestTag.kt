@@ -72,6 +72,7 @@ enum class TestTag {
     DelayFadeSlider,
     PanSlider,
     Tempo,
+    TempoKnob,
     VelocityInput,
     VelocityVSlider,
     VelocitySlideDenominator,

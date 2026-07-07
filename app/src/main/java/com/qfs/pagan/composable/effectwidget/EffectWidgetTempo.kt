@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -25,7 +26,9 @@ import androidx.compose.ui.text.style.TextAlign
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
+import com.qfs.pagan.Values
 import com.qfs.pagan.composable.FloatInput
+import com.qfs.pagan.composable.Knob
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.cxtmenu.InsertButton
 import com.qfs.pagan.composable.wrappers.Text
@@ -37,6 +40,7 @@ import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorState
+import kotlin.math.roundToInt
 
 @Composable
 fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, opus_manager: OpusLayerInterface, event: OpusTempoEvent) {
@@ -47,6 +51,28 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, opus_manager: OpusL
     Spacer(Modifier.weight(.5F))
 
     val tempo_label = remember { mutableFloatStateOf(working_event.value) }
+
+    Knob(
+        Modifier
+            .testTag(TestTag.TempoKnob)
+            .size(
+                Dimensions.ContextMenuButtonWidth,
+                Dimensions.ContextMenuButtonHeight,
+            ),
+        tempo_label,
+        minimum = Values.TempoMinimum,
+        maximum = Values.TempoMaximum,
+        precision = 0,
+        rotations = 2,
+    ) {
+        working_event.value = it
+        opus_manager.lock_cursor {
+            opus_manager.set_event_at_cursor(working_event)
+        }
+    }
+
+    Spacer(Modifier.weight(.5F))
+
     FloatInput(
         tempo_label,
         precision = 3,
@@ -77,7 +103,8 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, opus_manager: OpusL
         contentColor = Colors.active_color_scheme.context_menu_foreground,
         content = {
             Text(
-                R.string.bpm, Modifier.padding(start = Dimensions.Space.Medium),
+                R.string.bpm,
+                Modifier.padding(start = Dimensions.Space.Medium),
                 style = Typography.ContextMenuUnits
             )
         }

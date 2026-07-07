@@ -49,10 +49,7 @@ fun RowScope.LowPassEventMenu(vm_state: ViewModelEditorState, opus_manager: Opus
 
     Knob(
         Modifier
-            .size(
-                Dimensions.ContextMenuButtonWidth,
-                Dimensions.ContextMenuButtonHeight,
-            )
+            .size(Dimensions.ContextMenuButtonWidth, Dimensions.ContextMenuButtonHeight)
             .testTag(TestTag.LowPassNob),
         working_cutoff,
         Values.LowPassMinimum,
@@ -60,7 +57,7 @@ fun RowScope.LowPassEventMenu(vm_state: ViewModelEditorState, opus_manager: Opus
         precision = 0,
         rotations = 2
     ) { knob_value ->
-        working_cutoff.floatValue = knob_value.roundToInt().toFloat()
+        working_cutoff.floatValue = knob_value
         working_event.filter_cutoff = working_cutoff.floatValue
         opus_manager.set_event_at_cursor(working_event)
     }

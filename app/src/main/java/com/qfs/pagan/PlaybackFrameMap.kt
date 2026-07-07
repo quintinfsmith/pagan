@@ -190,7 +190,14 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             return Pair(frame, min(tempo_map.size - 1, tempo_index))
         }
 
-        private fun convert_to_indexed_profile_buffer_frames(sample_rate: Int, tempo_map: List<Pair<Rational, Float>>, beat_map: IntArray, effect_event: ControllerProfile.ProfileEffectEvent, event_type: EffectType, start_offset: Rational = Rational(0,1)): List<ControllerEventData.IndexedProfileBufferFrame> {
+        private fun convert_to_indexed_profile_buffer_frames(
+            sample_rate: Int,
+            tempo_map: List<Pair<Rational, Float>>,
+            beat_map: IntArray,
+            effect_event: ControllerProfile.ProfileEffectEvent,
+            event_type: EffectType,
+            start_offset: Rational = Rational(0,1)
+        ): List<ControllerEventData.IndexedProfileBufferFrame> {
             val adjusted_event = when (event_type) {
                 EffectType.LowPass -> ControllerProfile.ProfileEffectEvent(
                         effect_event.start_position,

@@ -50,6 +50,9 @@ object Values {
     const val LowPassMaximum = 20000F
     const val LowPassDefault = 880F
 
+    const val TempoMinimum = 1F
+    const val TempoMaximum = 1024F
+
     const val DisabledTopBarIconAlpha = .3F
 }
 

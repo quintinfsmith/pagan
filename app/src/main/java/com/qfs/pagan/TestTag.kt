@@ -79,7 +79,7 @@ enum class TestTag {
     VolumeSlider,
     VolumeButton,
     LowPassButton,
-    LowPassSlider,
+    LowPassNob,
     LineLabel,
     Leaf,
     ZoomSlider

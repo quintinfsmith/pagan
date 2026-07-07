@@ -86,7 +86,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
@@ -181,6 +180,7 @@ import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.enumerate
+import com.qfs.pagan.process_zoom
 import com.qfs.pagan.put_config
 import com.qfs.pagan.setAction
 import com.qfs.pagan.structure.opusmanager.base.IncompatibleChannelException
@@ -216,9 +216,7 @@ import kotlin.concurrent.thread
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.pow
 import kotlin.math.roundToInt
-import kotlin.math.sqrt
 
 class ComponentActivityEditor: PaganComponentActivity() {
     val controller_model: ViewModelEditorController by this.viewModels()
@@ -2614,6 +2612,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val consume_events = remember { mutableStateOf(false) }
         val zoom_bar_visible = remember { mutableStateOf(false) }
 
+
         Box(
             modifier
                 .fillMaxSize()
@@ -2630,39 +2629,19 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                             if (event.changes.size == 2) {
                                 consume_events.value = true
-                                if (event.type == PointerEventType.Move) {
-                                    val (lesser, larger) = if (event.changes[0].position.x < event.changes[1].position.x) {
-                                        Pair(event.changes[0], event.changes[1])
-                                    } else {
-                                        Pair(event.changes[1], event.changes[0])
-                                    }
-                                    val current_diff = sqrt(
-                                        (larger.position.x - lesser.position.x).pow(2F) + (larger.position.y - lesser.position.y).pow(
-                                            2F
-                                        )
-                                    )
-                                    val previous_diff = sqrt(
-                                        ((larger.position.x - larger.positionChange().x) - (lesser.position.x - lesser.positionChange().x)).pow(
-                                            2F
-                                        )
-                                                + ((larger.position.y - larger.positionChange().y) - (lesser.position.y - lesser.positionChange().y)).pow(
-                                            2F
-                                        )
-                                    )
-
-                                    val zoom = (current_diff - previous_diff).toDp()
-                                    zoom_state.value += zoom
-                                    if (zoom > 0.dp) {
+                                process_zoom(event) { zoom, center_x, center_y ->
+                                    zoom_state.value += zoom.toDp()
+                                    if (zoom > 0F) {
                                         if (zoom_state.value >= zoom_unit) {
                                             if (vm_state.zoom_index.intValue > 0) {
-                                                vm_state.decrement_zoom(lesser.position.x + (current_diff / 2F))
+                                                vm_state.decrement_zoom(center_x)
                                             }
                                             zoom_state.value = 0.dp // TODO: Include overflow
                                         }
-                                    } else if (zoom < 0.dp) {
+                                    } else if (zoom < 0F) {
                                         if (zoom_state.value < zoom_unit * -1) {
                                             if (vm_state.zoom_index.intValue < vm_state.max_zoom_index.intValue) {
-                                                vm_state.increment_zoom(lesser.position.x + (current_diff / 2F))
+                                                vm_state.increment_zoom(center_x)
                                             }
                                             zoom_state.value = 0.dp // TODO: Include overflow
                                         }

@@ -48,6 +48,7 @@ object Values {
 
     const val LowPassMinimum = 0F
     const val LowPassMaximum = 44100F
+    const val LowPassDefault = 880F
 
     const val DisabledTopBarIconAlpha = .3F
 }

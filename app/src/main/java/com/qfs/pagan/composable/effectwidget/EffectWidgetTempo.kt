@@ -63,7 +63,7 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, opus_manager: OpusL
         minimum = Values.TempoMinimum,
         maximum = Values.TempoMaximum,
         precision = 0,
-        rotations = 2,
+        rotations = 8,
     ) {
         working_event.value = it
         opus_manager.lock_cursor {
@@ -79,13 +79,12 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, opus_manager: OpusL
         revert_on_exit = true,
         prefix = {
             Icon(
-                modifier = Modifier
-                    .width(Dimensions.ContextMenuButtonIconWidth),
+                modifier = Modifier.width(Dimensions.ContextMenuButtonIconWidth),
                 painter = painterResource(R.drawable.icon_tempo),
                 contentDescription = null
             )
         },
-        minimum = 1F,
+        minimum = Values.TempoMinimum,
         contentPadding = Unpadded,
         text_align = TextAlign.Center,
         modifier = Modifier

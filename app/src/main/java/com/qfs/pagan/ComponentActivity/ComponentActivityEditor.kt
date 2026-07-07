@@ -3721,6 +3721,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val builder = this.get_persistent_notification() ?: return
         if (!this.has_notification_permission()) return
         if (this.notification_manager == null) return
+
         builder
             .setAutoCancel(true)
             .setTimeoutAfter(1)

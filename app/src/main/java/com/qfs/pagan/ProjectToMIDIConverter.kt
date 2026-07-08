@@ -104,7 +104,6 @@ class NoteEvent(tick: Int, channel: Int, var note: Int, var bend: Int, var veloc
     }
 
     override fun get_ticks(size: Int): Array<Int> {
-        println("${this.tick} + ${this.duration}")
         return arrayOf(this.tick, this.tick + this.duration)
     }
 }

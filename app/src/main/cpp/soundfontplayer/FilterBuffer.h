@@ -41,7 +41,6 @@ class FilterBuffer: public EffectProfileBuffer {
         }
 
         FilterBuffer(ControllerEventData* controller_event_data, int start_frame, bool low_pass): EffectProfileBuffer(controller_event_data, start_frame) {
-
             for (int i = 0; i < FilterBuffer::lag; i++) {
                 this->previous_filtered_left[i] = 0;
                 this->previous_filtered_right[i] = 0;
@@ -52,10 +51,13 @@ class FilterBuffer: public EffectProfileBuffer {
             }
 
             this->working_sample_rate = 0;
-            this->working_cutoff = maximum_cutoff;
+            if (low_pass) {
+                this->working_cutoff = maximum_cutoff;
+            } else {
+                this->working_cutoff = 0;
+            }
             this->working_q = 0;
             this->is_low = low_pass;
-
         }
 
         void value_check() {

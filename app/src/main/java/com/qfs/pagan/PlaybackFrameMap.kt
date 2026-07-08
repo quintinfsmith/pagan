@@ -199,6 +199,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             start_offset: Rational = Rational(0,1)
         ): List<ControllerEventData.IndexedProfileBufferFrame> {
             val adjusted_event = when (event_type) {
+                EffectType.HighPass,
                 EffectType.LowPass -> ControllerProfile.ProfileEffectEvent(
                         effect_event.start_position,
                         effect_event.end_position,

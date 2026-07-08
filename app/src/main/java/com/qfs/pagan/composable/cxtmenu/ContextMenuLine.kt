@@ -71,6 +71,7 @@ import com.qfs.pagan.composable.effectwidget.VolumeEventMenu
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEvent
@@ -521,7 +522,8 @@ fun LineEffectMenuDialog(
             }
 
             for (ctl_type in available_effects) {
-                options.add( Pair(ctl_type) { EffectMenuItem(ctl_type) } )
+                val controller_exists = opus_manager.has_line_controller(ctl_type, active_line.channel.value!!, active_line.line_offset.value!!)
+                options.add( Pair(ctl_type) { EffectMenuItem(ctl_type, controller_exists) } )
             }
         },
         long_click_callback = {

@@ -1655,7 +1655,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     }
 
                                     for (ctl_type in available_effects) {
-                                        options.add( Pair(ctl_type) { EffectMenuItem(ctl_type) } )
+                                        val controller_exists = opus_manager.has_global_controller(ctl_type)
+                                        options.add( Pair(ctl_type) { EffectMenuItem(ctl_type, controller_exists) } )
                                     }
                                 }
                             ) { value ->

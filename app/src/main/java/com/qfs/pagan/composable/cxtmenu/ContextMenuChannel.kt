@@ -344,7 +344,8 @@ fun ChannelEffectMenuDialog(
                 available_effects.remove(ctl_type)
             }
             for (ctl_type in available_effects) {
-                options.add( Pair(ctl_type) { EffectMenuItem(ctl_type) } )
+                val controller_exists = opus_manager.has_channel_controller(ctl_type, active_channel)
+                options.add( Pair(ctl_type) { EffectMenuItem(ctl_type, controller_exists) } )
             }
         },
         long_click_callback = {

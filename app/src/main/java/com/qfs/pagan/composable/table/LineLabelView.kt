@@ -193,9 +193,9 @@ fun LineLabelView(
                         }
                     } else {
                         val (drawable_id, description_id) = EffectResourceMap[ctl_type]
-                        Box(
+                        Row(
                             Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Icon(
                                 modifier = Modifier.padding(Dimensions.LineLabelIconPadding),

@@ -33,12 +33,16 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
+import com.qfs.pagan.Values
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
+import com.qfs.pagan.composable.conditional_drag
 import com.qfs.pagan.composable.dashed_border
+import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.InvalidOverwriteCall
@@ -48,6 +52,8 @@ import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
 import com.qfs.pagan.structure.opusmanager.base.RangeOverflow
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.FilterEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.HighPassEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
@@ -344,14 +350,35 @@ fun LeafView(
                                     )
                                 }
 
-                                is LowPassEvent -> {
-                                    Text(
-                                        stringResource(
-                                            R.string.low_pass_event_text,
-                                            event.filter_cutoff / 1000F
-                                        ),
-                                        style = Typography.EffectLeaf
-                                    )
+                                is FilterEvent -> {
+                                    if ((event is HighPassEvent && event.filter_cutoff <= Values.LowPassMinimum) || (event is LowPassEvent && event.filter_cutoff >= Values.LowPassMaximum)) {
+                                        Canvas(modifier = Modifier.fillMaxSize()) {
+                                            drawCircle(
+                                                color = text_color,
+                                                radius = (size.height * .1F),
+                                                center = Offset(size.width / 2F, size.height / 2F)
+                                            )
+                                        }
+                                    } else {
+                                        Column(
+                                            verticalArrangement = Arrangement.Center,
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Text(
+                                                stringResource(
+                                                    R.string.low_pass_event_text_top,
+                                                    event.filter_cutoff / 1000F
+                                                ),
+                                                textAlign = TextAlign.Center,
+                                                style = Typography.EffectLeafFilterTop
+                                            )
+                                            Text(
+                                                R.string.khz,
+                                                textAlign = TextAlign.Center,
+                                                style = Typography.EffectLeafFilterKhz
+                                            )
+                                        }
+                                    }
                                 }
 
                                 null -> {}

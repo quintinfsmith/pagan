@@ -20,6 +20,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
@@ -28,8 +29,12 @@ import com.qfs.pagan.Values
 import com.qfs.pagan.composable.FloatInput
 import com.qfs.pagan.composable.Knob
 import com.qfs.pagan.composable.MediumSpacer
+import com.qfs.pagan.composable.button.Button
+import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.FilterEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.HighPassEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
@@ -43,6 +48,28 @@ fun <T: FilterEvent> RowScope.FilterEventMenu(vm_state: ViewModelEditorState, op
     val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
     val working_cutoff = remember { mutableFloatStateOf(working_event.filter_cutoff) }
+
+
+    IconCMenuButton(
+        modifier = Modifier
+            .testTag(TestTag.EventUnset)
+            .height(Dimensions.ContextMenuButtonHeight)
+            .width(Dimensions.ContextMenuButtonWidth),
+        enabled = (working_event is HighPassEvent && working_cutoff.floatValue > Values.LowPassMinimum) || (working_event is LowPassEvent && working_cutoff.floatValue < Values.LowPassMaximum),
+        onClick = {
+            working_cutoff.floatValue = when (working_event) {
+                is HighPassEvent -> Values.LowPassMinimum
+                is LowPassEvent -> Values.LowPassMaximum
+                else -> return@IconCMenuButton
+            }
+            working_event.filter_cutoff = working_cutoff.floatValue
+            opus_manager.set_event_at_cursor(working_event)
+        },
+        icon = R.drawable.no_soundfont,
+        description = R.string.disable_filter,
+    )
+
+    MediumSpacer()
 
     Knob(
         Modifier
@@ -59,7 +86,7 @@ fun <T: FilterEvent> RowScope.FilterEventMenu(vm_state: ViewModelEditorState, op
         opus_manager.set_event_at_cursor(working_event)
     }
 
-    Spacer(Modifier.weight(.5F))
+    Spacer(Modifier.weight(.25F))
 
     FloatInput(
         working_cutoff,
@@ -94,7 +121,7 @@ fun <T: FilterEvent> RowScope.FilterEventMenu(vm_state: ViewModelEditorState, op
         style = Typography.ContextMenuUnits
     )
 
-    Spacer(Modifier.weight(.5F))
+    Spacer(Modifier.weight(.25F))
 
     EffectTransitionButton(working_event, opus_manager, is_initial)
 }

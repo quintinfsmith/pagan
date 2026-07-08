@@ -342,8 +342,10 @@
     <string name="notification_title_idle">%1$s</string>
     <string name="settings_play_in_background">Allow playback in background</string>
     <string name="dlg_set_low_pass_frequency">Low-Pass Frequency</string>
-    <string name="low_pass_event_text">%1$.2f Khz</string>
+    <string name="low_pass_event_text_top">%1$.2f</string>
+    <string name="khz">KHz</string>
     <string name="hz">Hz</string>
+    <string name="disable_filter">Disable Filter</string>
 
 
     <string-array name="general_midi_presets">

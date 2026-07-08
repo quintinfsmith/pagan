@@ -100,6 +100,8 @@ object Typography {
     )
     val EffectLeaf = TextStyle(fontFamily = Fonts.FiraSans, fontSize = 12.sp)
     val EffectLeafDelay = TextStyle(fontFamily = Fonts.FiraSans, fontSize = 10.sp)
+    val EffectLeafFilterTop = TextStyle(fontFamily = Fonts.FiraMono, fontSize = 10.sp)
+    val EffectLeafFilterKhz = TextStyle(fontFamily = Fonts.FiraSans, fontSize = 8.sp)
 
     val LineLabel = TextStyle(
         fontFamily = Fonts.FiraSans,

@@ -40,6 +40,7 @@ import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.dashed_border
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
+import com.qfs.pagan.structure.opusmanager.base.InvalidOverwriteCall
 import com.qfs.pagan.structure.opusmanager.base.MixedInstrumentException
 import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.OpusColorPalette
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
@@ -122,6 +123,8 @@ fun LeafView(
                                 Toast.makeText(context, R.string.range_overflow, Toast.LENGTH_SHORT).show()
                             } catch (_: MixedInstrumentException) {
                                 Toast.makeText(context, R.string.feedback_mixed_copy, Toast.LENGTH_SHORT).show()
+                            } catch (_: InvalidOverwriteCall) {
+
                             }
                         } else if (ctl_type == null) {
                             val beat_key = BeatKey(channel!!, line_offset!!, beat)

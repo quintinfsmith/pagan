@@ -55,7 +55,7 @@ fun RowScope.LowPassEventMenu(vm_state: ViewModelEditorState, opus_manager: Opus
         Values.LowPassMinimum,
         Values.LowPassMaximum,
         precision = 0,
-        rotations = 2
+        rotations = 4
     ) { knob_value ->
         working_cutoff.floatValue = knob_value
         working_event.filter_cutoff = working_cutoff.floatValue

@@ -279,7 +279,14 @@ object Dimensions {
 
     val LineHeight = 41.dp
     val LineLabelWidth = 41.dp
-    val LineLabelPadding = 4.dp
+    val LineLabelPadding = PaddingValues(
+        horizontal = 4.dp,
+        vertical = 2.dp
+    )
+    val LineCtlLabelPadding = PaddingValues(
+        horizontal = 1.dp,
+        vertical = 0.dp
+    )
     val LineLabelIconPadding = 4.dp
 
     val SelectionBorderPadding = PaddingValues(

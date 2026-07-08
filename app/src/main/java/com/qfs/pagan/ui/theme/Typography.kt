@@ -106,7 +106,12 @@ object Typography {
     val LineLabel = TextStyle(
         fontFamily = Fonts.FiraSans,
         fontSize = 14.sp,
-        lineHeight = 14.sp
+        lineHeight = 12.sp
+    )
+    val LineCtlLabel = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 12.sp,
+        lineHeight = 12.sp
     )
 
     object EffectWidget {

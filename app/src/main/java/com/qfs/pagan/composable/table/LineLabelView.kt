@@ -5,6 +5,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -26,6 +27,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import com.qfs.pagan.EffectResourceMap
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
@@ -59,6 +61,7 @@ fun LineLabelView(
 
     val is_mute = line_info.is_mute.value || (channel != null && vm_state.channel_data[channel].is_mute.value)
     val is_selected = !line_info.is_selected.value && !line_info.is_secondary.value
+    val is_percussion = line_info.channel.value != null && vm_state.channel_data[line_info.channel.value!!].percussion.value
 
     var (background, foreground) = if (is_selected) {
         Pair(
@@ -76,8 +79,13 @@ fun LineLabelView(
         background = Colors.active_color_scheme.muted(true, background)
         foreground = Colors.active_color_scheme.muted(true, foreground)
     }
+    val text_style = if (ctl_type == null) {
+        Typography.LineLabel
+    } else {
+        Typography.LineCtlLabel
+    }
 
-    ProvideContentColorTextStyle(foreground, Typography.LineLabel) {
+    ProvideContentColorTextStyle(foreground, text_style) {
         HalfBorderBox(
             modifier
                 .testTag(
@@ -159,21 +167,41 @@ fun LineLabelView(
                         )
                     }
 
-                    if (ctl_type == null) {
-                        val (label_a, label_b) = if (line_info.assigned_offset.value != null) {
-                            Pair("!${line_info.channel.value}", "${line_info.assigned_offset.value}")
+                    line_info.channel.value?.let { channel ->
+
+                        val label_a = if (ctl_type == null || line_info.line_offset.value == null) {
+                            if (is_percussion) {
+                                "!$channel"
+                            } else {
+                                "$channel"
+                            }
                         } else {
-                            Pair("${line_info.channel.value}", "${line_info.line_offset.value}")
+                            ""
+                        }
+
+                        val label_b = if (ctl_type == null || line_info.line_offset.value != null) {
+                            if (line_info.assigned_offset.value != null) {
+                                "${line_info.assigned_offset.value!!}"
+                            } else {
+                                "${line_info.line_offset.value!!}"
+                            }
+                        } else {
+                            ""
                         }
 
                         Row(
                             Modifier
                                 .fillMaxSize()
-                                .padding(Dimensions.LineLabelPadding),
+                                .padding(if (ctl_type != null) {
+                                    Dimensions.LineCtlLabelPadding
+                                } else {
+                                    Dimensions.LineLabelPadding
+                                }),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column(
-                                modifier = Modifier.fillMaxHeight(),
+                                modifier = Modifier
+                                    .fillMaxHeight(),
                                 verticalArrangement = Arrangement.Top,
                                 horizontalAlignment = Alignment.End
                             ) {
@@ -191,18 +219,15 @@ fun LineLabelView(
                                 )
                             }
                         }
-                    } else {
+                    }
+
+                    if (ctl_type != null) {
                         val (drawable_id, description_id) = EffectResourceMap[ctl_type]
-                        Row(
-                            Modifier.fillMaxSize(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Icon(
-                                modifier = Modifier.padding(Dimensions.LineLabelIconPadding),
-                                painter = painterResource(drawable_id),
-                                contentDescription = stringResource(description_id)
-                            )
-                        }
+                        Icon(
+                            modifier = Modifier.padding(Dimensions.LineLabelIconPadding),
+                            painter = painterResource(drawable_id),
+                            contentDescription = stringResource(description_id)
+                        )
                     }
 
                 }

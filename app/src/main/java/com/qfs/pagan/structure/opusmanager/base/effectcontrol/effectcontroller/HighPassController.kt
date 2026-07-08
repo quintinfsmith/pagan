@@ -1,5 +1,5 @@
 /*
- * Apres, A Midi & Soundfont library
+ * Pagan, A Music Sequencer
  * Copyright (C) 2022  Quintin Foster Smith
  * 
  * This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
@@ -7,13 +7,8 @@
  * You should have received a copy of the GNU General Public License along with this program.  If not, see <https://www.gnu.org/licenses/>.
  * Inquiries can be made to Quintin via email at smith.quintin@protonmail.com
  */
-package com.qfs.apres.soundfontplayer
+package com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller
 
-enum class EffectType(var i: Int) {
-    Volume(1),
-    LowPass(2),
-    Delay(3),
-    HighPass(4),
-    Pan(5),
-    Pitch(7)
-}
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.HighPassEvent
+
+class HighPassController(beat_count: Int): EffectController<HighPassEvent>(beat_count, HighPassEvent(0F))

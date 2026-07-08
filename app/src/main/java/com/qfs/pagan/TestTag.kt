@@ -79,8 +79,8 @@ enum class TestTag {
     VelocityButton,
     VolumeSlider,
     VolumeButton,
-    LowPassButton,
-    LowPassNob,
+    FilterKnob,
+    FilterInput,
     LineLabel,
     Leaf,
     ZoomSlider

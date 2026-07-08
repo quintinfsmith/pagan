@@ -23,6 +23,7 @@ float MAX_VOLUME = 1 / 1.27;
 const int TYPE_VOLUME = 1;
 const int TYPE_LOWPASS = 2;
 const int TYPE_DELAY = 3;
+const int TYPE_HIGHPASS = 4;
 const int TYPE_PAN = 5;
 const int TYPE_PITCH = 7;
 

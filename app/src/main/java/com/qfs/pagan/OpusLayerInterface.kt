@@ -51,14 +51,16 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         val global_controller_domain = listOf(
             EffectType.Tempo,
             EffectType.Delay,
-            EffectType.LowPass
+            EffectType.LowPass,
+            EffectType.HighPass
         )
 
         val channel_controller_domain = listOf(
             EffectType.Volume,
             EffectType.Pan,
             EffectType.Delay,
-            EffectType.LowPass
+            EffectType.LowPass,
+            EffectType.HighPass
         )
 
         val line_controller_domain = listOf(
@@ -66,7 +68,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             EffectType.Velocity,
             EffectType.Pan,
             EffectType.Delay,
-            EffectType.LowPass
+            EffectType.LowPass,
+            EffectType.HighPass
         )
 
         fun get_available_transitions(type: EffectType): Set<EffectTransition> {
@@ -81,6 +84,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 }
 
                 EffectType.LowPass,
+                EffectType.HighPass,
                 EffectType.Pan,
                 EffectType.Volume -> {
                     setOf(

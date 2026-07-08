@@ -10,7 +10,8 @@ object EffectResourceMap {
         EffectType.Volume to EffectData(R.drawable.icon_volume, R.string.ctl_desc_volume),
         EffectType.Pan to EffectData(R.drawable.icon_pan, R.string.ctl_desc_pan),
         EffectType.Velocity to EffectData(R.drawable.icon_velocity, R.string.ctl_desc_velocity),
-        EffectType.LowPass to EffectData(R.drawable.icon_lowpass, R.string.ctl_desc_lowpass)
+        EffectType.LowPass to EffectData(R.drawable.icon_lowpass, R.string.ctl_desc_lowpass),
+        EffectType.HighPass to EffectData(R.drawable.icon_highpass, R.string.ctl_desc_highpass)
         //     EffectType.Reverb -> TODO()
         //     EffectType.Pitch -> TODO()
     )

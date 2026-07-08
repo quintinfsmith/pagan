@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -29,19 +28,17 @@ import com.qfs.pagan.Values
 import com.qfs.pagan.composable.FloatInput
 import com.qfs.pagan.composable.Knob
 import com.qfs.pagan.composable.MediumSpacer
-import com.qfs.pagan.composable.wrappers.Switch
 import com.qfs.pagan.composable.wrappers.Text
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.FilterEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Dimensions.Unpadded
 import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorState
-import kotlin.math.roundToInt
 
 @Composable
-fun RowScope.LowPassEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, event: LowPassEvent) {
+fun <T: FilterEvent> RowScope.FilterEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, event: T) {
     val cursor = vm_state.active_cursor.value ?: return
     val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
@@ -50,7 +47,7 @@ fun RowScope.LowPassEventMenu(vm_state: ViewModelEditorState, opus_manager: Opus
     Knob(
         Modifier
             .size(Dimensions.ContextMenuButtonWidth, Dimensions.ContextMenuButtonHeight)
-            .testTag(TestTag.LowPassNob),
+            .testTag(TestTag.FilterKnob),
         working_cutoff,
         Values.LowPassMinimum,
         Values.LowPassMaximum,
@@ -81,7 +78,7 @@ fun RowScope.LowPassEventMenu(vm_state: ViewModelEditorState, opus_manager: Opus
         contentPadding = Unpadded,
         text_align = TextAlign.Center,
         modifier = Modifier
-            .testTag(TestTag.Tempo)
+            .testTag(TestTag.FilterInput)
             .height(Dimensions.EffectWidget.InputHeight)
             .weight(1F, fill = false)
     ) {

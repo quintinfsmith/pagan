@@ -12,6 +12,7 @@ package com.qfs.pagan.structure.opusmanager.base.effectcontrol
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.LowPassController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.DelayController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.HighPassController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.PanController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.PitchController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.ReverbController
@@ -56,6 +57,7 @@ class EffectControlSet(var beat_count: Int, default_enabled: Set<EffectType>? = 
                 EffectType.Velocity -> VelocityController(this.beat_count)
                 EffectType.Delay -> DelayController(this.beat_count)
                 EffectType.LowPass -> LowPassController(this.beat_count)
+                EffectType.HighPass -> HighPassController(this.beat_count)
                 EffectType.Pitch -> PitchController(this.beat_count)
             }
         } else {

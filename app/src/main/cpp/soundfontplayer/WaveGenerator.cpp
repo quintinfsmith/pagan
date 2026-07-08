@@ -1,5 +1,5 @@
 
-#include "LowPassBuffer.h"
+#include "FilterBuffer.h"
 #include "VolumeBuffer.h"
 #include "DelayBuffer.h"
 #include "PanBuffer.h"
@@ -41,7 +41,12 @@ bool apply_effect_buffer(EffectProfileBuffer* effect_buffer, float* working_arra
         //     break;
         // }
         case TYPE_LOWPASS: {
-            auto* buffer = (LowPassBuffer *) effect_buffer;
+            auto* buffer = (FilterBuffer *) effect_buffer;
+            buffer->apply(working_array, array_size);
+            break;
+        }
+        case TYPE_HIGHPASS: {
+            auto* buffer = (FilterBuffer *) effect_buffer;
             buffer->apply(working_array, array_size);
             break;
         }

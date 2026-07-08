@@ -282,7 +282,8 @@
     <string name="ctl_desc_bend_transition">Note Transitions</string>
     <string name="ctl_desc_volume">Volume</string>
     <string name="ctl_desc_velocity">Velocity</string>
-    <string name="ctl_desc_lowpass">Low Pass Filter</string>
+    <string name="ctl_desc_lowpass">Low-Pass Filter</string>
+    <string name="ctl_desc_highpass">High-Pass Filter</string>
     <string name="ctl_desc_pan">Pan</string>
     <string name="go_back">Go Back</string>
     <string name="song_configuration">Song Configuration</string>

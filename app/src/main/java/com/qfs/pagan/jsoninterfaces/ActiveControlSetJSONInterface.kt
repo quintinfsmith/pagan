@@ -16,6 +16,7 @@ import com.qfs.pagan.jsoninterfaces.UnknownControllerException
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectControlSet
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.DelayController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.HighPassController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.LowPassController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
@@ -27,6 +28,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.T
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.VelocityController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.VolumeController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.HighPassEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
 
 object ActiveControlSetJSONInterface {
@@ -40,6 +42,7 @@ object ActiveControlSetJSONInterface {
                 "pan" -> ActiveControllerJSONInterface.from_json<OpusPanEvent>(json_controller, size)
                 "delay" -> ActiveControllerJSONInterface.from_json<DelayEvent>(json_controller, size)
                 "lowpass" -> ActiveControllerJSONInterface.from_json<LowPassEvent>(json_controller, size)
+                "highpass" -> ActiveControllerJSONInterface.from_json<HighPassEvent>(json_controller, size)
                 else -> throw UnknownControllerException(label)
             }
 
@@ -50,6 +53,7 @@ object ActiveControlSetJSONInterface {
                 is VelocityController -> EffectType.Velocity
                 is DelayController -> EffectType.Delay
                 is LowPassController -> EffectType.LowPass
+                is HighPassController -> EffectType.HighPass
                 is ReverbController -> EffectType.Reverb
                 else -> throw UnhandledControllerException(controller)
             }

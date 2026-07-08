@@ -3,7 +3,7 @@
 #include "EffectProfileBuffer.h"
 #include "ControllerEventData.h"
 #include "SampleHandle.h"
-#include "LowPassBuffer.h"
+#include "FilterBuffer.h"
 #include "VolumeBuffer.h"
 #include "DelayBuffer.h"
 #include "PanBuffer.h"
@@ -33,8 +33,14 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_00024Companion_create(JNIEnv* e
             break;
         }
         case TYPE_LOWPASS: {
-            auto* derived_buffer = (LowPassBuffer*)malloc(sizeof(LowPassBuffer));
-            new (derived_buffer) LowPassBuffer(controller_event_data, start_frame);
+            auto* derived_buffer = (FilterBuffer*)malloc(sizeof(FilterBuffer));
+            new (derived_buffer) FilterBuffer(controller_event_data, start_frame, true);
+            buffer = derived_buffer;
+            break;
+        }
+        case TYPE_HIGHPASS: {
+            auto* derived_buffer = (FilterBuffer*)malloc(sizeof(FilterBuffer));
+            new (derived_buffer) FilterBuffer(controller_event_data, start_frame, false);
             buffer = derived_buffer;
             break;
         }
@@ -79,9 +85,16 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_copy_1jni(JNIEnv* env, jobject,
             break;
         }
         case TYPE_LOWPASS: {
-            auto* original = (LowPassBuffer*)ptr;
-            auto* derived_buffer = (LowPassBuffer*)malloc(sizeof(LowPassBuffer));
-            new (derived_buffer) LowPassBuffer(original);
+            auto* original = (FilterBuffer*)ptr;
+            auto* derived_buffer = (FilterBuffer*)malloc(sizeof(FilterBuffer));
+            new (derived_buffer) FilterBuffer(original);
+            buffer = derived_buffer;
+            break;
+        }
+        case TYPE_HIGHPASS: {
+            auto* original = (FilterBuffer*)ptr;
+            auto* derived_buffer = (FilterBuffer*)malloc(sizeof(FilterBuffer));
+            new (derived_buffer) FilterBuffer(original);
             buffer = derived_buffer;
             break;
         }
@@ -133,8 +146,14 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_destroy_1jni(JNIEnv* env, jobje
             break;
         }
         case TYPE_LOWPASS: {
-            auto* original =(LowPassBuffer*)ptr;
-            original->~LowPassBuffer();
+            auto* original = (FilterBuffer*)ptr;
+            original->~FilterBuffer();
+            free(original);
+            break;
+        }
+        case TYPE_HIGHPASS: {
+            auto* original = (FilterBuffer*)ptr;
+            original->~FilterBuffer();
             free(original);
             break;
         }
@@ -170,7 +189,12 @@ Java_com_qfs_apres_soundfontplayer_ProfileBuffer_allow_1empty_1jni(JNIEnv* env, 
             break;
         }
         case TYPE_LOWPASS: {
-            auto* typed_ptr = (LowPassBuffer*) ptr_long;
+            auto* typed_ptr = (FilterBuffer*) ptr_long;
+            output = typed_ptr->in_smoothing();
+            break;
+        }
+        case TYPE_HIGHPASS: {
+            auto* typed_ptr = (FilterBuffer*) ptr_long;
             output = typed_ptr->in_smoothing();
             break;
         }

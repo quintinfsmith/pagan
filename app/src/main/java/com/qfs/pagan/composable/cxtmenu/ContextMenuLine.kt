@@ -62,7 +62,7 @@ import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.button.OutlinedButton
 import com.qfs.pagan.composable.button.TextCMenuButton
 import com.qfs.pagan.composable.effectwidget.DelayEventMenu
-import com.qfs.pagan.composable.effectwidget.LowPassEventMenu
+import com.qfs.pagan.composable.effectwidget.FilterEventMenu
 import com.qfs.pagan.composable.effectwidget.PanEventMenu
 import com.qfs.pagan.composable.effectwidget.ReverbEventMenu
 import com.qfs.pagan.composable.effectwidget.TempoEventMenu
@@ -71,6 +71,7 @@ import com.qfs.pagan.composable.effectwidget.VolumeEventMenu
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.HighPassEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEvent
@@ -252,11 +253,6 @@ fun RemoveEffectButton(active_line: ViewModelEditorState.LineData, opus_manager:
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.LineEffectRemove),
         onClick = {
-            active_line.ctl_type.value?.let { type ->
-                val channel = active_line.channel.value ?: return@let
-                val line_offset = active_line.line_offset.value ?: return@let
-                opus_manager.remove_line_controller(type, channel, line_offset)
-            }
             active_line.ctl_type.value?.let { type ->
                 val channel = active_line.channel.value
                 val line_offset = active_line.line_offset.value
@@ -789,7 +785,8 @@ fun ContextMenuLineCtlSecondary(vm_state: ViewModelEditorState, opus_manager: Op
             is OpusReverbEvent -> ReverbEventMenu(vm_state, opus_manager, initial_event)
             is DelayEvent -> DelayEventMenu(vm_state, opus_manager, initial_event)
             is OpusVelocityEvent -> VelocityEventMenu(vm_state, opus_manager, initial_event)
-            is LowPassEvent -> LowPassEventMenu(vm_state, opus_manager, initial_event)
+            is HighPassEvent,
+            is LowPassEvent -> FilterEventMenu(vm_state, opus_manager, initial_event)
             else -> {}
         }
     }

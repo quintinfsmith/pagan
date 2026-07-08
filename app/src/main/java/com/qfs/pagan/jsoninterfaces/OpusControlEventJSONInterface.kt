@@ -16,8 +16,10 @@ import com.qfs.pagan.jsoninterfaces.UnknownEventTypeException
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.asEffectTransition
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.HighPassController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.HighPassEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEvent
@@ -59,6 +61,9 @@ object OpusControlEventJSONInterface {
                 )
                 output["echo"] = input.echo
                 output["fade"] = input.fade
+            }
+            is HighPassEvent -> {
+                output["cutoff"] = input.filter_cutoff
             }
             is LowPassEvent -> {
                 output["cutoff"] = input.filter_cutoff
@@ -172,6 +177,13 @@ object OpusControlEventJSONInterface {
             resonance = map.get_floatn("res"),
             map.get_int("duration", 1),
             map.get_string("transition", "Instant").asEffectTransition()
+        )
+    }
+    fun highpass_event(map: JSONHashMap): HighPassEvent {
+        return HighPassEvent(
+            filter_cutoff = map.get_float("cutoff"),
+            duration = map.get_int("duration", 1),
+            transition = map.get_string("transition", "Instant").asEffectTransition()
         )
     }
     // ------------------------

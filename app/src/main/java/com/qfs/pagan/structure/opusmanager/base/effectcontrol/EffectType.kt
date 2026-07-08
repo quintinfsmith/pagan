@@ -15,6 +15,7 @@ enum class EffectType(val apres_type: ApresEffectType?) {
 
     Volume(ApresEffectType.Volume),
     LowPass(ApresEffectType.LowPass),
+    HighPass(ApresEffectType.HighPass),
     Delay(ApresEffectType.Delay),
     Pan(ApresEffectType.Pan),
     Pitch(ApresEffectType.Pitch),

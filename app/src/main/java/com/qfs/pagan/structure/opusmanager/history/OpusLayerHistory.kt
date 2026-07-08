@@ -326,6 +326,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
     }
 
     open fun apply_history_node(current_node: HistoryCache.HistoryNode, depth: Int = 0) {
+        println("APPLY: ${current_node.token}")
         try {
             when (current_node.token) {
                 HistoryToken.SET_PROJECT_NAME -> {
@@ -1741,6 +1742,13 @@ open class OpusLayerHistory: OpusLayerCursor() {
         this._remember {
             if (this.has_global_controller(type)) {
                 val controller = this.get_controller<EffectEvent>(type)
+                for (beat in controller.beats.indices) {
+                    if (controller.beats[beat].is_leaf() && !controller.beats[beat].has_event()) continue
+                    this.push_to_history_stack(
+                        HistoryToken.REPLACE_GLOBAL_CTL_TREE,
+                        listOf(type, beat, listOf<Int>(), controller.beats[beat])
+                    )
+                }
                 this.push_to_history_stack(
                     HistoryToken.SET_GLOBAL_CTL_INITIAL_EVENT,
                     listOf(
@@ -1768,8 +1776,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
                     this.push_to_history_stack(
                         HistoryToken.REPLACE_LINE_CTL_TREE,
-                        listOf(type,
-                            BeatKey(channel_index, line_offset, beat), listOf<Int>(), controller.beats[beat])
+                        listOf(type, BeatKey(channel_index, line_offset, beat), listOf<Int>(), controller.beats[beat])
                     )
                 }
                 this.push_to_history_stack(
@@ -1778,7 +1785,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                         type,
                         channel_index,
                         line_offset,
-                        this.get_channel(channel_index).lines[line_offset].get_controller<EffectEvent>(type).initial_event
+                        controller.initial_event
                     )
                 )
                 this.push_to_history_stack(
@@ -1808,7 +1815,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
                     listOf(
                         type,
                         channel_index,
-                        this.get_channel(channel_index).get_controller<EffectEvent>(type).initial_event
+                        controller.initial_event
                     )
                 )
                 this.push_to_history_stack(

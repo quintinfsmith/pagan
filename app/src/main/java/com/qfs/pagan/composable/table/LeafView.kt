@@ -32,6 +32,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import com.qfs.pagan.OpusLayerInterface
@@ -47,6 +48,7 @@ import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
 import com.qfs.pagan.structure.opusmanager.base.RangeOverflow
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
@@ -338,6 +340,16 @@ fun LeafView(
                                     Text(
                                         label_string,
                                         color = text_color,
+                                        style = Typography.EffectLeaf
+                                    )
+                                }
+
+                                is LowPassEvent -> {
+                                    Text(
+                                        stringResource(
+                                            R.string.low_pass_event_text,
+                                            event.filter_cutoff / 1000F
+                                        ),
                                         style = Typography.EffectLeaf
                                     )
                                 }

@@ -342,6 +342,7 @@
     <string name="notification_title_idle">%1$s</string>
     <string name="settings_play_in_background">Allow playback in background</string>
     <string name="dlg_set_low_pass_frequency">Low-Pass Frequency</string>
+    <string name="low_pass_event_text">%1$.2f Khz</string>
     <string name="hz">Hz</string>
 
 

@@ -2133,8 +2133,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 line_offset,
                 ctl_type,
                 null,
-                line.muted,
-                palette = line.palette
+                channel_index != null && line.muted,
+                palette = if (channel_index != null) line.palette else null
             )
         )
     }

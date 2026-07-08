@@ -564,9 +564,11 @@ class ViewModelEditorState: ViewModel() {
 
     fun add_row(y: Int, cells: ReducibleTreeArray<*>, new_line_data: LineData) {
         this.line_data.add(y, new_line_data)
+
         if (new_line_data.channel.value != null && new_line_data.line_offset.value != null && new_line_data.ctl_type.value == null) {
             this.channel_data[new_line_data.channel.value!!].size.intValue += 1
         }
+
         this.cell_map.add(y, MutableList(cells.beats.size) { i -> mutableStateOf(TreeData(cells.beats[i])) })
         this.line_count.value += 1
 

@@ -48,7 +48,7 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, opus_manager: OpusL
     val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
 
-    Spacer(Modifier.weight(.5F))
+    Spacer(Modifier.weight(.25F))
 
     val tempo_label = remember { mutableFloatStateOf(working_event.value) }
 
@@ -71,7 +71,7 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, opus_manager: OpusL
         }
     }
 
-    Spacer(Modifier.weight(.5F))
+    Spacer(Modifier.weight(.25F))
 
     FloatInput(
         tempo_label,

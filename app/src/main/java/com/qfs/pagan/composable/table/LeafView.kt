@@ -365,15 +365,23 @@ fun LeafView(
                                             horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
                                             Text(
-                                                stringResource(
-                                                    R.string.low_pass_event_text_top,
-                                                    event.filter_cutoff / 1000F
-                                                ),
+                                                if (event.filter_cutoff >= 1000F) {
+                                                    stringResource(
+                                                        R.string.low_pass_event_text_top,
+                                                        event.filter_cutoff / 1000F
+                                                    )
+                                                } else {
+                                                    "${event.filter_cutoff.roundToInt()}"
+                                                },
                                                 textAlign = TextAlign.Center,
                                                 style = Typography.EffectLeafFilterTop
                                             )
                                             Text(
-                                                R.string.khz,
+                                                if (event.filter_cutoff >= 1000F) {
+                                                    R.string.khz
+                                                } else {
+                                                    R.string.hz
+                                                },
                                                 textAlign = TextAlign.Center,
                                                 style = Typography.EffectLeafFilterKhz
                                             )

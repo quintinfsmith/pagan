@@ -40,7 +40,6 @@ import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.Values
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
-import com.qfs.pagan.composable.conditional_drag
 import com.qfs.pagan.composable.dashed_border
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
@@ -121,11 +120,11 @@ fun LeafView(
                                     opus_manager.cmove_to_beat(beat_key, move_mode)
                                 } else if (line_offset != null) {
                                     val beat_key = BeatKey(channel!!, line_offset, beat)
-                                    opus_manager.cmove_line_ctl_to_beat(beat_key, move_mode)
+                                    opus_manager.move_effect_to_line_beat(beat_key, move_mode)
                                 } else if (channel != null) {
-                                    opus_manager.cmove_channel_ctl_to_beat(channel, beat, move_mode)
+                                    opus_manager.move_effect_to_channel_beat(channel, beat, move_mode)
                                 } else {
-                                    opus_manager.cmove_global_ctl_to_beat(beat, move_mode)
+                                    opus_manager.move_effect_to_global_beat(beat, move_mode)
                                 }
                             } catch (_: RangeOverflow) {
                                 Toast.makeText(context, R.string.range_overflow, Toast.LENGTH_SHORT).show()

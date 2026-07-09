@@ -16,7 +16,6 @@ import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.base.InstrumentEvent
-import com.qfs.pagan.structure.opusmanager.base.InvalidOverwriteCall
 import com.qfs.pagan.structure.opusmanager.base.MixedInstrumentException
 import com.qfs.pagan.structure.opusmanager.base.OpusChannelAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
@@ -1287,172 +1286,131 @@ open class OpusLayerCursor: OpusLayerBase() {
     }
 
     fun move_to_beat(beat_key: BeatKey) {
-        if (this.cursor.is_selecting_range()) {
-            val (first, second) = this.cursor.get_ordered_range()!!
-            if (first != second) {
-                this.move_beat_range(beat_key, first, second)
-            } else {
-                if (this.is_percussion(first.channel) != this.is_percussion(beat_key.channel)) {
-                    throw MixedInstrumentException(first, beat_key)
-                }
-                this.move_beat_range(beat_key, first, first)
-            }
-        } else {
-            throw InvalidCursorState()
-        }
+        val (first, second) = this.cursor.get_ordered_range() ?: throw InvalidCursorState()
+        this.move_beat_range(beat_key, first, second)
     }
 
     fun copy_to_beat(beat_key: BeatKey) {
-        if (this.cursor.is_selecting_range()) {
-            val (first, second) = this.cursor.get_ordered_range()!!
-            if (first != second) {
-                this.overwrite_beat_range(beat_key, first, second)
-            } else {
-                if (this.is_percussion(first.channel) != this.is_percussion(beat_key.channel)) {
-                    throw MixedInstrumentException(first, beat_key)
-                }
-                this.overwrite_beat_range(beat_key, first, second)
+        val (first, second) = this.cursor.get_ordered_range() ?: throw InvalidCursorState()
+        this.overwrite_beat_range(beat_key, first, second)
+    }
+
+    fun move_effect_to_line_beat(beat_key: BeatKey, mode: PaganConfiguration.MoveMode) {
+        val (first, second) = this.cursor.get_ordered_range() ?: throw InvalidCursorState()
+        val unset_original = mode == PaganConfiguration.MoveMode.MOVE
+
+        when (this.cursor.ctl_level) {
+            CtlLineLevel.Line -> {
+                this._controller_line_copy_range(
+                    this.cursor.ctl_type!!,
+                    beat_key,
+                    first,
+                    second,
+                    unset_original
+                )
             }
-        } else {
-            throw InvalidCursorState()
+            CtlLineLevel.Channel -> {
+                this._controller_channel_to_line_copy_range(
+                    this.cursor.ctl_type!!,
+                    first.channel,
+                    first.beat,
+                    second.beat,
+                    beat_key,
+                    unset_original
+                )
+            }
+            CtlLineLevel.Global -> {
+                this._controller_global_to_line_copy_range(
+                    this.cursor.ctl_type!!,
+                    first.beat,
+                    second.beat,
+                    beat_key,
+                    unset_original
+                )
+            }
+            null -> throw InvalidCursorState()
         }
     }
 
-    fun copy_line_ctl_to_beat(beat_key: BeatKey) {
-        if (this.cursor.is_selecting_range()) {
-            val (first, second) = this.cursor.get_ordered_range()!!
-            when (this.cursor.ctl_level) {
-                CtlLineLevel.Line -> {
-                    if (first != second) {
-                        this.controller_line_overwrite_range(this.cursor.ctl_type!!, beat_key, first, second)
-                    } else {
-                        this.controller_line_replace_tree(this.cursor.ctl_type!!, beat_key, listOf(), this.get_line_ctl_tree_copy(this.cursor.ctl_type!!, first, listOf()))
-                    }
-                }
-                CtlLineLevel.Channel -> {
-                    if (first != second) {
-                        this.controller_channel_to_line_overwrite_range(this.cursor.ctl_type!!, first.channel, first.beat, second.beat, beat_key)
-                    } else {
-                        this.controller_line_replace_tree(
-                            this.cursor.ctl_type!!,
-                            beat_key,
-                            listOf(),
-                            this.get_channel_ctl_tree_copy(this.cursor.ctl_type!!, first.channel, first.beat, listOf())
-                        )
-                    }
-                }
-                CtlLineLevel.Global -> {
-                    if (first != second) {
-                        this.controller_global_to_line_overwrite_range(this.cursor.ctl_type!!, first.beat, second.beat, beat_key)
-                    } else {
-                        this.controller_line_replace_tree(this.cursor.ctl_type!!, beat_key, listOf(), this.get_global_ctl_tree_copy(this.cursor.ctl_type!!, first.beat, listOf()))
-                    }
-                }
-                null -> throw InvalidCursorState()
+    fun move_effect_to_channel_beat(channel: Int, beat: Int, mode: PaganConfiguration.MoveMode) {
+        val (first, second) = this.cursor.get_ordered_range() ?: throw InvalidCursorState()
+        when (this.cursor.ctl_level) {
+            CtlLineLevel.Line -> {
+                this._controller_line_to_channel_copy_range(
+                    this.cursor.ctl_type!!,
+                    first.channel,
+                    first.line_offset,
+                    first.beat,
+                    second.beat,
+                    channel,
+                    beat,
+                    mode == PaganConfiguration.MoveMode.MOVE
+                )
             }
-        } else {
-            throw InvalidCursorState()
+            CtlLineLevel.Channel -> {
+                this._controller_channel_copy_range(
+                    this.cursor.ctl_type!!,
+                    channel,
+                    beat,
+                    first.channel,
+                    first.beat,
+                    second.beat,
+                    mode == PaganConfiguration.MoveMode.MOVE
+                )
+            }
+            CtlLineLevel.Global -> {
+                this._controller_global_to_channel_copy_range(
+                    this.cursor.ctl_type!!,
+                    beat,
+                    first.channel,
+                    first.beat,
+                    second.beat,
+                    mode == PaganConfiguration.MoveMode.MOVE
+                )
+            }
+            null -> throw InvalidCursorState()
         }
     }
 
-    fun move_line_ctl_to_beat(beat_key: BeatKey) {
-        if (this.cursor.is_selecting_range()) {
-            val (first, second) = this.cursor.get_ordered_range()!!
-            when (this.cursor.ctl_level) {
-                CtlLineLevel.Line -> {
-                    if (first != second) {
-                        this.controller_line_move_range(this.cursor.ctl_type!!, beat_key, first, second)
-                    } else {
-                        this.controller_line_move_leaf(this.cursor.ctl_type!!, first, listOf(), beat_key, listOf())
-                    }
-                }
-                CtlLineLevel.Channel -> {
-                    if (first != second) {
-                        this.controller_channel_to_line_move_range(this.cursor.ctl_type!!, first.channel, first.beat, second.beat, beat_key)
-                    } else {
-                        this.controller_channel_to_line_move_leaf(this.cursor.ctl_type!!, first.channel, first.beat, listOf(), beat_key, listOf())
-                    }
-                }
+    fun move_effect_to_global_beat(beat: Int, mode: PaganConfiguration.MoveMode) {
+        if (!this.cursor.is_selecting_range()) throw InvalidCursorState()
+        val (first, second) = this.cursor.get_ordered_range()!!
+        val unset_original = mode == PaganConfiguration.MoveMode.MOVE
 
-                CtlLineLevel.Global -> {
-                    if (first != second) {
-                        this.controller_global_to_line_move_range(this.cursor.ctl_type!!, first.beat, second.beat, beat_key)
-                    } else {
-                        this.controller_global_to_line_move_leaf(this.cursor.ctl_type!!, first.beat, listOf(), beat_key, listOf())
-                    }
-                }
-                null -> throw InvalidCursorState()
+        when (this.cursor.ctl_level!!) {
+            CtlLineLevel.Line -> {
+                this._controller_line_to_global_copy_range(
+                    this.cursor.ctl_type!!,
+                    this.cursor.channel,
+                    this.cursor.line_offset,
+                    first.beat,
+                    second.beat,
+                    beat,
+                    unset_original
+                )
             }
-        } else {
-            throw InvalidCursorState()
-        }
-
-    }
-
-    fun copy_channel_ctl_to_beat(channel: Int, beat: Int) {
-        if (this.cursor.is_selecting_range()) {
-            val (first, second) = this.cursor.get_ordered_range()!!
-            when (this.cursor.ctl_level) {
-                CtlLineLevel.Line -> {
-                    if (first != second) {
-                        this.controller_line_to_channel_overwrite_range(this.cursor.ctl_type!!, first.channel, first.line_offset, first.beat, second.beat, channel, beat)
-                    } else {
-                        this.controller_channel_replace_tree(this.cursor.ctl_type!!, channel, beat, listOf(), this.get_line_ctl_tree_copy(this.cursor.ctl_type!!, first))
-                    }
-                }
-                CtlLineLevel.Channel -> {
-                    if (first != second) {
-                        this.controller_channel_overwrite_range(this.cursor.ctl_type!!, channel, beat, first.channel, first.beat, second.beat)
-                    } else {
-                        this.controller_channel_replace_tree(this.cursor.ctl_type!!, channel, beat, listOf(), this.get_channel_ctl_tree_copy(this.cursor.ctl_type!!, first.channel, first.beat, listOf()))
-                    }
-                }
-                CtlLineLevel.Global -> {
-                    if (first != second) {
-                        this.controller_global_to_channel_overwrite_range(this.cursor.ctl_type!!, first.beat, second.beat, channel, beat)
-                    } else {
-                        this.controller_channel_replace_tree(this.cursor.ctl_type!!, channel, beat, listOf(), this.get_global_ctl_tree_copy(this.cursor.ctl_type!!, first.beat, listOf()))
-                    }
-                }
-                null -> {}
+            CtlLineLevel.Channel -> {
+                this._controller_channel_to_global_copy_range(
+                    this.cursor.ctl_type!!,
+                    beat,
+                    this.cursor.channel,
+                    first.beat,
+                    second.beat,
+                    unset_original
+                )
             }
-        } else {
-            throw InvalidCursorState()
+            CtlLineLevel.Global -> {
+                this._controller_global_copy_range(
+                    this.cursor.ctl_type!!,
+                    beat,
+                    first.beat,
+                    second.beat,
+                    unset_original
+                )
+            }
         }
     }
 
-    fun move_channel_ctl_to_beat(channel: Int, beat: Int) {
-        if (this.cursor.is_selecting_range()) {
-            val (first, second) = this.cursor.get_ordered_range()!!
-            when (this.cursor.ctl_level) {
-                CtlLineLevel.Line -> {
-                    if (first != second) {
-                        this.controller_line_to_channel_move_range(this.cursor.ctl_type!!, first.channel, first.line_offset, first.beat, second.beat, channel, beat)
-                    } else {
-                        this.controller_line_to_channel_move_leaf(this.cursor.ctl_type!!, first, listOf(), channel, beat, listOf())
-                    }
-                }
-                CtlLineLevel.Channel -> {
-                    if (first != second) {
-                        this.controller_channel_move_range(this.cursor.ctl_type!!, channel, beat, first.channel, first.beat, second.beat)
-                    } else {
-                        this.controller_channel_move_leaf(this.cursor.ctl_type!!, first.channel, first.beat, listOf(), channel, beat, listOf())
-                    }
-                }
-                CtlLineLevel.Global -> {
-                    if (first != second) {
-                        this.controller_global_to_channel_move_range(this.cursor.ctl_type!!, beat, first.channel, first.beat, second.beat)
-                    } else {
-                        this.controller_global_to_channel_move_leaf(this.cursor.ctl_type!!, beat, listOf(), first.channel, first.beat, listOf())
-                    }
-
-                }
-                null -> throw InvalidCursorState()
-            }
-        } else {
-            throw InvalidCursorState()
-        }
-    }
 
     override fun controller_global_to_line_move_leaf(type: EffectType, beat: Int, position: List<Int>, target_key: BeatKey, target_position: List<Int>) {
         super.controller_global_to_line_move_leaf(type, beat, position, target_key, target_position)
@@ -1506,30 +1464,6 @@ open class OpusLayerCursor: OpusLayerBase() {
         super.controller_line_to_global_move_leaf(type, beatkey_from, position_from, target_beat, target_position)
         val cursor_position = this.get_first_position_global_ctl(type, target_beat, target_position)
         this.cursor_select_ctl_at_global(type, target_beat, cursor_position)
-    }
-
-    fun copy_global_ctl_to_beat(beat: Int) {
-        if (this.cursor.ctl_level != CtlLineLevel.Global) throw InvalidOverwriteCall()
-        if (!this.cursor.is_selecting_range()) throw InvalidCursorState()
-
-        val (first, second) = this.cursor.get_ordered_range()!!
-        if (first != second) {
-            this.controller_global_overwrite_range(this.cursor.ctl_type!!, beat, first.beat, second.beat)
-        } else {
-            this.controller_global_replace_tree(this.cursor.ctl_type!!, beat, listOf(), this.get_global_ctl_tree(this.cursor.ctl_type!!, first.beat, listOf()))
-        }
-    }
-
-    fun move_global_ctl_to_beat(beat: Int) {
-        if (this.cursor.ctl_level != CtlLineLevel.Global) throw InvalidOverwriteCall()
-        if (!this.cursor.is_selecting_range()) throw InvalidCursorState()
-
-        val (first, second) = this.cursor.get_ordered_range()!!
-        if (first != second) {
-            this.controller_global_move_range(this.cursor.ctl_type!!, beat, first.beat, second.beat)
-        } else {
-            this.controller_global_move_leaf(this.cursor.ctl_type!!, first.beat, listOf(), beat, listOf())
-        }
     }
 
     fun select_leaf_up(repeat: Int = 1) {
@@ -2896,30 +2830,6 @@ open class OpusLayerCursor: OpusLayerBase() {
             PaganConfiguration.MoveMode.MOVE -> this.move_to_beat(beat_key)
             PaganConfiguration.MoveMode.COPY -> this.copy_to_beat(beat_key)
             PaganConfiguration.MoveMode.MERGE -> this.merge_into_beat(beat_key)
-        }
-    }
-
-    fun cmove_line_ctl_to_beat(beat_key: BeatKey, mode: PaganConfiguration.MoveMode) {
-        when (mode)  {
-            PaganConfiguration.MoveMode.MOVE -> this.move_line_ctl_to_beat(beat_key)
-            PaganConfiguration.MoveMode.COPY -> this.copy_line_ctl_to_beat(beat_key)
-            PaganConfiguration.MoveMode.MERGE -> TODO("Merge not implemented yet")
-        }
-    }
-
-    fun cmove_channel_ctl_to_beat(channel: Int, beat: Int, mode: PaganConfiguration.MoveMode) {
-        when (mode)  {
-            PaganConfiguration.MoveMode.MOVE -> this.move_channel_ctl_to_beat(channel, beat)
-            PaganConfiguration.MoveMode.COPY -> this.copy_channel_ctl_to_beat(channel, beat)
-            PaganConfiguration.MoveMode.MERGE -> TODO("Merge not implemented yet")
-        }
-    }
-
-    fun cmove_global_ctl_to_beat(beat: Int, mode: PaganConfiguration.MoveMode) {
-        when (mode)  {
-            PaganConfiguration.MoveMode.MOVE -> this.move_global_ctl_to_beat(beat)
-            PaganConfiguration.MoveMode.COPY -> this.copy_global_ctl_to_beat(beat)
-            PaganConfiguration.MoveMode.MERGE -> TODO("Merge not implemented yet")
         }
     }
 

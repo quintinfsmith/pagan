@@ -1039,7 +1039,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                     this.vm_state.add_row(
                         i++,
                         controller,
-                        ViewModelEditorState.LineData(c, l, type, null, line.muted, palette = line.palette)
+                        ViewModelEditorState.LineData(c, l, type, instrument, line.muted, palette = line.palette)
                     )
                 }
             }
@@ -1286,7 +1286,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                     this.vm_state.add_row(
                         i++,
                         controller,
-                        ViewModelEditorState.LineData(c, l, type, null, line.muted, palette = null)
+                        ViewModelEditorState.LineData(c, l, type, instrument, line.muted, palette = null)
                     )
                 }
             }
@@ -2127,6 +2127,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         if (this.ui_lock.is_locked()) return
         val channel = this.channels[channel_index ?: (this.channels.size - 1)]
         val line = channel.lines[line_offset ?: (channel.lines.size - 1)]
+
         this.vm_state.add_row(
             y,
             controller_line,
@@ -2134,7 +2135,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 channel_index,
                 line_offset,
                 ctl_type,
-                null,
+                line_offset?.let { this.get_percussion_instrument(channel_index!!, it) },
                 channel_index != null && line.muted,
                 palette = if (channel_index != null) line.palette else null
             )

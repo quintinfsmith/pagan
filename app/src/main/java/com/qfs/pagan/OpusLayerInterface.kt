@@ -26,6 +26,7 @@ import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusLineAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
 import com.qfs.pagan.structure.opusmanager.base.OpusPercussionChannel
+import com.qfs.pagan.structure.opusmanager.base.PercussionChannelRequired
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
@@ -2135,7 +2136,13 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 channel_index,
                 line_offset,
                 ctl_type,
-                line_offset?.let { this.get_percussion_instrument(channel_index!!, it) },
+                line_offset?.let {
+                    if (this.is_percussion(channel_index!!)) {
+                        this.get_percussion_instrument(channel_index, it)
+                    } else {
+                        null
+                    }
+                },
                 channel_index != null && line.muted,
                 palette = if (channel_index != null) line.palette else null
             )

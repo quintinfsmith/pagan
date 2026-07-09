@@ -58,10 +58,14 @@ import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun ShowEffectsButton(channel: Int, opus_manager: OpusLayerInterface, modifier: Modifier = Modifier, shape: Shape = Shapes.ContextMenuButtonPrimaryStart) {
+fun ShowEffectsButton(
+    vm_state: ViewModelEditorState,
+    channel: Int,
+    opus_manager: OpusLayerInterface,
+    modifier: Modifier = Modifier,
+    shape: Shape = Shapes.ContextMenuButtonPrimaryStart
+) {
     val menu_visibility = remember { mutableStateOf(false) }
-    val multi_dialog_visibility = remember { mutableStateOf(false) }
-    val selected_ctl_type = remember { mutableStateOf<EffectType?>(null) }
 
     IconCMenuButton(
         modifier = modifier.testTag(TestTag.ChannelEffects),
@@ -71,76 +75,12 @@ fun ShowEffectsButton(channel: Int, opus_manager: OpusLayerInterface, modifier: 
         description = R.string.cd_show_effect_controls
     )
 
-    if (menu_visibility.value) {
-        DialogMenu(
-            menu_visibility,
-            R.string.show_channel_controls,
-            { options ->
-                for (ctl_type in OpusLayerInterface.channel_controller_domain) {
-                    if (opus_manager.is_channel_ctl_visible(ctl_type, channel)) continue
-                    options.add(
-                        Pair(ctl_type) {
-                            Icon(
-                                modifier = Modifier.width(Dimensions.EffectDialogIconWidth),
-                                painter = painterResource(EffectResourceMap[ctl_type].icon),
-                                contentDescription = stringResource(EffectResourceMap[ctl_type].name)
-                            )
-                            Text(
-                                EffectResourceMap[ctl_type].name,
-                                Modifier.weight(1F)
-                            )
-                        }
-                    )
-                }
-            },
-            long_click_callback = { ctl_type: EffectType ->
-                selected_ctl_type.value = ctl_type
-                multi_dialog_visibility.value = true
-            },
-            callback = { ctl_type ->
-                opus_manager.set_channel_controller_visibility( ctl_type, channel, true)
-            }
-        )
-    }
-
-    if (multi_dialog_visibility.value) {
-        val ctl_type = selected_ctl_type.value!!
-        PaganDialog(multi_dialog_visibility) {
-            Icon(
-                modifier = Modifier.height(Dimensions.EffectDialogIconHeight),
-                painter = painterResource(EffectResourceMap[ctl_type].icon),
-                contentDescription = stringResource(EffectResourceMap[ctl_type].name)
-            )
-            LargeSpacer()
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = {
-                    multi_dialog_visibility.value = false
-                    menu_visibility.value = false
-                    opus_manager.set_channel_controller_visibility(ctl_type, channel, true)
-                },
-                content = { Text(R.string.show_channel_controls_single) },
-            )
-            LargeSpacer()
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = {
-                    multi_dialog_visibility.value = false
-                    menu_visibility.value = false
-                    opus_manager.set_all_channel_controller_visibility(ctl_type)
-                },
-                content = { Text(R.string.show_channel_controls_all) },
-            )
-            LargeSpacer()
-            OutlinedButton(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = {
-                    multi_dialog_visibility.value = false
-                },
-                content = { Text(android.R.string.cancel) },
-            )
-        }
-    }
+    ChannelEffectMenuDialog(
+        menu_visibility,
+        channel,
+        opus_manager,
+        vm_state
+    )
 }
 
 @Composable
@@ -340,7 +280,6 @@ fun ChannelEffectMenuDialog(
                 if (line.channel.value != active_channel) continue
                 val ctl_type = line.ctl_type.value ?: continue
                 if (!available_effects.contains(ctl_type)) continue
-
                 available_effects.remove(ctl_type)
             }
             for (ctl_type in available_effects) {
@@ -394,7 +333,7 @@ fun ChannelEffectMenuDialog(
                 subdialog_ctl_type.value = null
                 visibility.value = false
             },
-            content = { androidx.compose.material3.Text(stringResource(R.string.show_channel_controls_all)) },
+            content = { Text(stringResource(R.string.show_channel_controls_all)) },
         )
         LargeSpacer()
         OutlinedButton(
@@ -424,6 +363,7 @@ fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
         LayoutSize.XLargeLandscape -> {
             ContextMenuPrimaryRow(modifier) {
                 ShowEffectsButton(
+                    vm_state,
                     channel_index,
                     opus_manager,
                     Modifier,
@@ -472,10 +412,12 @@ fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
                 }
                 RemoveChannelButton(channel_index, opus_manager, is_percussion)
                 ShowEffectsButton(
+                    vm_state,
                     channel_index,
                     opus_manager,
                     Modifier.weight(1F, fill = false),
-                    Shapes.ContextMenuButtonPrimaryBottom
+                    Shapes.ContextMenuButtonPrimaryBottom,
+
                 )
             }
         }

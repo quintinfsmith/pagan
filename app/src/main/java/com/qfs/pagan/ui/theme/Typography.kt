@@ -95,12 +95,7 @@ object Typography {
         fontFamily = Fonts.FiraSans,
         fontSize = 16.sp,
         lineHeight = 18.sp,
-        hyphens = Hyphens.Auto,
-        lineBreak = LineBreak.Heading,
-        textIndent = TextIndent(
-            0.sp,
-            8.sp
-        )
+        textIndent = TextIndent(0.sp, 8.sp)
     )
     val DropdownMenu = TextStyle(
         fontFamily = Fonts.FiraSans,

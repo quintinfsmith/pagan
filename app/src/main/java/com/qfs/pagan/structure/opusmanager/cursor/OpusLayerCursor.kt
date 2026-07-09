@@ -1361,8 +1361,8 @@ open class OpusLayerCursor: OpusLayerBase() {
             CtlLineLevel.Global -> {
                 this._controller_global_to_channel_copy_range(
                     this.cursor.ctl_type!!,
+                    channel,
                     beat,
-                    first.channel,
                     first.beat,
                     second.beat,
                     mode == PaganConfiguration.MoveMode.MOVE

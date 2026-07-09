@@ -2170,6 +2170,12 @@ open class OpusLayerBase: Effectable {
             trees.add(this.get_line_ctl_tree<EffectEvent>(type, o_key).copy(this::copy_control_event))
         }
 
+        if (unset_original) {
+            for (clear_key in (original_keys - target_keys.toSet())) {
+                this.controller_line_unset(type, clear_key, listOf())
+            }
+        }
+
         for (i in target_keys.indices) {
             this.controller_line_replace_tree(
                 type,
@@ -2179,11 +2185,6 @@ open class OpusLayerBase: Effectable {
             )
         }
 
-        if (unset_original) {
-            for (clear_key in (original_keys - target_keys.toSet())) {
-                this.controller_line_unset(type, clear_key, listOf())
-            }
-        }
     }
 
     fun controller_line_overwrite_range(type: EffectType, beat_key: BeatKey, first_corner: BeatKey, second_corner: BeatKey) {

@@ -72,7 +72,6 @@ import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.HighPassEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEvent
@@ -405,10 +404,9 @@ fun PercussionInstrumentDialog(visibility: MutableState<Boolean>, vm_state: View
 @Composable
 fun SetLineColorButton(
     modifier: Modifier = Modifier,
-    ui_facade: ViewModelEditorState,
+    vm_state: ViewModelEditorState,
+    line: ViewModelEditorState.LineData,
     opus_manager: OpusLayerInterface,
-    channel: Int,
-    line_offset: Int,
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
     val visibility = remember { mutableStateOf(false) }
@@ -421,7 +419,7 @@ fun SetLineColorButton(
             description = R.string.cd_line_mute
         )
 
-        ui_facade.line_data[line_offset].palette.value?.event?.let { color ->
+        line.palette.value?.event?.let { color ->
             Spacer(
                 Modifier
                     .padding(
@@ -439,8 +437,10 @@ fun SetLineColorButton(
     }
 
     if (visibility.value) {
-        val default_color = opus_manager.get_channel(channel).lines[line_offset].palette.event
-            ?: opus_manager.get_channel(channel).palette.event
+        val channel = line.channel.value!!
+        val line_offset = line.line_offset.value!!
+        val default_color = line.palette.value?.event
+            ?: vm_state.channel_data[channel].palette.value.event
             ?: Colors.active_color_scheme.leaf
 
         ColorPickerDialog(default_color, visibility) { new_color ->
@@ -808,9 +808,8 @@ fun ContextMenuLineStdSecondary(vm_state: ViewModelEditorState, opus_manager: Op
         SetLineColorButton(
             Modifier,
             vm_state,
+            line,
             opus_manager,
-            line.channel.value!!,
-            line.line_offset.value!!,
             shape = Shapes.ContextMenuSecondaryButtonEnd
         )
     }

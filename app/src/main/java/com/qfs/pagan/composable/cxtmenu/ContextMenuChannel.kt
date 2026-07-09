@@ -314,7 +314,7 @@ fun SetChannelColorButton(
         }
     }
     if (visibility.value) {
-        val default_color = opus_manager.get_channel(channel_index).palette.event ?: Colors.active_color_scheme.leaf
+        val default_color = vm_state.channel_data[channel_index].palette.value.event ?: Colors.active_color_scheme.leaf
         ColorPickerDialog(default_color, visibility) { new_color ->
             opus_manager.set_channel_event_color(channel_index, new_color)
         }

@@ -232,6 +232,8 @@ fun RowScope.DelayEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLa
         }
     }
 
+    Spacer(Modifier.weight(.5F))
+
     EffectTransitionButton(working_event, opus_manager, is_initial)
 }
 

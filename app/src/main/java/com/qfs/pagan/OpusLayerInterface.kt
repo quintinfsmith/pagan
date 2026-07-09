@@ -783,14 +783,16 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         // Need to call get_drum name to repopulate instrument list if needed
         // this.get_activity()?.get_drum_name(channel, instrument)
 
-
         if (this.ui_lock.is_locked()) return
-        val y = this.get_visible_row_from_ctl_line(
+        var y = this.get_visible_row_from_ctl_line(
             this.get_actual_line_index(
                 this.get_instrument_line_index(channel, line_offset)
             )
         )!!
-        this.vm_state.line_data[y].assigned_offset.value = instrument
+
+        while (y < this.vm_state.line_data.size && this.vm_state.line_data[y].channel.value == channel && this.vm_state.line_data[y].line_offset.value == line_offset) {
+            this.vm_state.line_data[y++].assigned_offset.value = instrument
+        }
     }
 
     override fun split_tree(beat_key: BeatKey, position: List<Int>, splits: Int, move_event_to_end: Boolean) {

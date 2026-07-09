@@ -168,7 +168,6 @@ fun LineLabelView(
                     }
 
                     line_info.channel.value?.let { channel ->
-
                         val label_a = if (ctl_type == null || line_info.line_offset.value == null) {
                             if (is_percussion) {
                                 "!$channel"
@@ -179,12 +178,10 @@ fun LineLabelView(
                             ""
                         }
 
-                        val label_b = if (ctl_type == null || line_info.line_offset.value != null) {
-                            if (line_info.assigned_offset.value != null) {
-                                "${line_info.assigned_offset.value!!}"
-                            } else {
-                                "${line_info.line_offset.value!!}"
-                            }
+                        val label_b  = if (line_info.assigned_offset.value != null) {
+                            "${line_info.assigned_offset.value!!}"
+                        } else if (line_info.line_offset.value != null) {
+                            "${line_info.line_offset.value!!}"
                         } else {
                             ""
                         }
@@ -224,7 +221,15 @@ fun LineLabelView(
                     if (ctl_type != null) {
                         val (drawable_id, description_id) = EffectResourceMap[ctl_type]
                         Icon(
-                            modifier = Modifier.padding(Dimensions.LineLabelIconPadding),
+                            modifier = Modifier.padding(
+                                if (line_info.line_offset.value != null) {
+                                    Dimensions.LineLabelIconPaddingLine
+                                } else if (line_info.channel.value != null) {
+                                    Dimensions.LineLabelIconPaddingChannel
+                                } else {
+                                    Dimensions.LineLabelIconPaddingGlobal
+                                }
+                            ),
                             painter = painterResource(drawable_id),
                             contentDescription = stringResource(description_id)
                         )

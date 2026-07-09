@@ -80,7 +80,15 @@ class ViewModelEditorState: ViewModel() {
         val is_spillover = mutableStateOf(is_spillover)
     }
 
-    class ChannelData(percussion: Boolean, instrument: PresetKey, is_mute: Boolean, is_selected: Boolean = false, name: String?, size: Int = 0, palette: OpusColorPalette) {
+    class ChannelData(
+        percussion: Boolean,
+        instrument: PresetKey,
+        is_mute: Boolean,
+        is_selected: Boolean = false,
+        name: String?,
+        size: Int = 0,
+        palette: OpusColorPalette
+    ) {
         val percussion = mutableStateOf(percussion)
         val instrument = mutableStateOf(instrument)
         val is_mute = mutableStateOf(is_mute)
@@ -205,7 +213,6 @@ class ViewModelEditorState: ViewModel() {
     val relative_input_mode = mutableStateOf(RelativeInputMode.Absolute)
     val latest_input_indicator  = mutableStateOf(false)
     val move_mode = mutableStateOf(MoveMode.COPY)
-
     val highlighted_offset = mutableStateOf<Int?>(null)
     val highlighted_octave = mutableStateOf<Int?>(null)
 

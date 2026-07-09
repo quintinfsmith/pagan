@@ -3329,15 +3329,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
         if (!this._notification_channels.containsKey(channel_id)) {
-            val name = this.getString(R.string.export_wav_file_progress)
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            val name = when (channel_id) {
+                NotificationChannelKey.Export -> R.string.export_wav_file_progress
+                NotificationChannelKey.Persistent -> R.string.playback_control
+            }
+            val importance = NotificationManager.IMPORTANCE_MIN
 
-            NotificationChannel(channel_id.toString(), name, importance).let {
-                // TODO
-                //it.description = this.getString(R.string.export_wav_notification_description)
-                it.description = channel_id.toString()
-
-
+            NotificationChannel(channel_id.toString(), this.getString(name), importance).let {
                 this.notification_manager!!.createNotificationChannel(it)
                 this._notification_channels[channel_id] = it
             }
@@ -3348,12 +3346,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     fun export(type: Exportable) {
         when (type) {
-            Exportable.JSON -> { this.export_project() }
-            Exportable.MIDI1 -> { this.export_midi1() }
-            Exportable.MIDI2 -> { this.export_midi2() }
-            Exportable.WAV_SINGLE -> { this.export_wav() }
-            Exportable.WAV_LINES -> { this.export_multi_lines_wav() }
-            Exportable.WAV_CHANNELS -> { this.export_multi_channels_wav() }
+            Exportable.JSON -> this.export_project()
+            Exportable.MIDI1 -> this.export_midi1()
+            Exportable.MIDI2 -> this.export_midi2()
+            Exportable.WAV_SINGLE -> this.export_wav()
+            Exportable.WAV_LINES -> this.export_multi_lines_wav()
+            Exportable.WAV_CHANNELS -> this.export_multi_channels_wav()
         }
     }
 

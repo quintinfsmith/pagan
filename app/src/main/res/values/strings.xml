@@ -121,6 +121,7 @@
     <string name="dlg_duration">Duration</string>
     <string name="export_cancelled">Export Cancelled</string>
     <string name="export_wav_file_progress">Export Wav File Progress</string>
+    <string name="playback_control">Playback Controls</string>
     <string name="export_wav_notification_description">Converting Pagan project to .wav</string>
     <string name="export_wav_notification_title">Exporting %1$s</string>
     <string name="export_wav_feedback">Exporting to wav</string>

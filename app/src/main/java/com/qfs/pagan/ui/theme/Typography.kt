@@ -11,8 +11,12 @@ package com.qfs.pagan.ui.theme
 
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.Hyphens
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextIndent
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 
@@ -89,9 +93,18 @@ object Typography {
     )
     val DialogMenuItem = TextStyle(
         fontFamily = Fonts.FiraSans,
-        fontSize = 16.sp
+        fontSize = 16.sp,
+        lineHeight = 18.sp,
+        hyphens = Hyphens.Auto,
+        lineBreak = LineBreak.Heading,
+        textIndent = TextIndent(
+            0.sp,
+            8.sp
+        )
     )
-    val DropdownMenu = TextStyle(fontFamily = Fonts.FiraSans)
+    val DropdownMenu = TextStyle(
+        fontFamily = Fonts.FiraSans,
+    )
     val DrawerTitle = TextStyle(
         fontFamily = Fonts.FiraSans,
         fontSize = 16.sp,

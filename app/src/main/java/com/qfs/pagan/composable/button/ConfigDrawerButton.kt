@@ -79,6 +79,7 @@ fun ConfigDrawerChannelLeftButton(
 @Composable
 fun ConfigDrawerChannelRightButton(
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     content: @Composable RowScope.() -> Unit,
     colors: ButtonColors = Colors.get_button_colors(),
     onClick: () -> Unit)
@@ -90,6 +91,7 @@ fun ConfigDrawerChannelRightButton(
             bottom = Dimensions.ConfigDrawerButtonPadding,
             end = Dimensions.ConfigDrawerButtonPadding
         ),
+        enabled = enabled,
         shape = Shapes.ConfigChannelButtonEnd,
         modifier = modifier.height(Dimensions.ConfigChannelButtonHeight),
         colors = colors,

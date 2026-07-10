@@ -694,6 +694,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun set_soundfont(bad_soundfont_callback: ((Uri) -> Unit)? = null) {
         val file_paths = this.view_model.configuration.soundfonts.value
         if (List(file_paths.size) { file_paths[it].value } == this.controller_model.active_soundfont_relative_paths) {
+            this.state_model.soundfont_ready.value = true
             return
         }
 
@@ -705,7 +706,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
         if (file_paths.isEmpty()) {
             this.controller_model.unset_soundfont()
             this.state_model.unset_soundfont()
-            this.state_model.soundfont_ready.value = true
             this.update_persistent_notification()
             return
         }
@@ -2246,6 +2246,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         DrawerPadder()
                                         ConfigDrawerChannelRightButton(
                                             onClick = { opus_manager.remove_channel(i) },
+                                            enabled = state_model.channel_data.size > 1,
                                             content = {
                                                 Icon(
                                                     painter = painterResource(

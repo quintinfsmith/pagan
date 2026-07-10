@@ -111,10 +111,17 @@ fun DuplicateChannelButton(channel: Int, opus_manager: OpusLayerInterface, modif
 }
 
 @Composable
-fun RemoveChannelButton(channel: Int, opus_manager: OpusLayerInterface, is_percussion: Boolean, modifier: Modifier = Modifier) {
+fun RemoveChannelButton(
+    channel: Int,
+    enabled: Boolean,
+    opus_manager: OpusLayerInterface,
+    is_percussion: Boolean,
+    modifier: Modifier = Modifier
+) {
     IconCMenuButton(
         modifier = modifier.testTag(TestTag.ChannelRemove),
         onClick = { opus_manager.remove_channel(channel) },
+        enabled = enabled,
         icon = if (is_percussion) {
             R.drawable.icon_subtract_bang
         } else {
@@ -380,7 +387,12 @@ fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
                 ContextMenuSpacer()
                 DuplicateChannelButton(channel_index, opus_manager)
                 ContextMenuSpacer()
-                RemoveChannelButton(channel_index, opus_manager, is_percussion)
+                RemoveChannelButton(
+                    channel_index,
+                    vm_state.channel_data.size > 1,
+                    opus_manager,
+                    is_percussion
+                )
                 ContextMenuSpacer()
                 AddKitButton(channel_index, opus_manager)
                 ContextMenuSpacer()
@@ -410,7 +422,12 @@ fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
                 if (! is_percussion) {
                     AdjustChannelButton(vm_state, opus_manager)
                 }
-                RemoveChannelButton(channel_index, opus_manager, is_percussion)
+                RemoveChannelButton(
+                    channel_index,
+                    vm_state.channel_data.size > 1,
+                    opus_manager,
+                    is_percussion
+                )
                 ShowEffectsButton(
                     vm_state,
                     channel_index,

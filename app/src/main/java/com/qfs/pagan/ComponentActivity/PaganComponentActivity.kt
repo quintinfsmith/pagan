@@ -109,7 +109,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
             if (result.resultCode != RESULT_OK) return@registerForActivityResult
             result.data?.on_config { config ->
                 this.view_model.set_config(config)
-                this.on_config_load()
+                this.on_config_change()
             }
         }
 
@@ -155,10 +155,6 @@ abstract class PaganComponentActivity: ComponentActivity() {
         System.loadLibrary("pagan")
     }
 
-    override fun onResume() {
-        super.onResume()
-    }
-
     open fun on_crash() { }
 
     /**
@@ -200,6 +196,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 PaganConfiguration.from_path(this.view_model.configuration_path!!)
             )
         }
+
         this.on_config_load()
 
         enableEdgeToEdge(
@@ -301,6 +298,9 @@ abstract class PaganComponentActivity: ComponentActivity() {
         this.view_model.requires_soundfont.value = !this.is_soundfont_available()
     }
 
+    open fun on_config_change() {
+        this.on_config_load()
+    }
 
     fun get_existing_soundfonts(): List<Uri> {
         return this.get_existing_uris(this.view_model.configuration.soundfont_directory.value)

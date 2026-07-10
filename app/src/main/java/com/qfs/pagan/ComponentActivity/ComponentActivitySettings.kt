@@ -350,10 +350,6 @@ class ComponentActivitySettings: PaganComponentActivity() {
         super.onCreate(savedInstanceState)
     }
 
-    override fun on_config_load() {
-        super.on_config_load()
-    }
-
     @Composable
     override fun Drawer(modifier: Modifier) { }
 

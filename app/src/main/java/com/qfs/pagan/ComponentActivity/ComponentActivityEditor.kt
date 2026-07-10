@@ -642,7 +642,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
         if (savedInstanceState != null || this.intent.getBooleanExtra("load_backup", false)) {
             this.load_from_bkp()
         } else if (this.intent.data == null) {
-            this.new_project()
+            this.init_soundfont {
+                this.new_project()
+            }
         } else if (this.view_model.project_manager?.contains(this.intent.data!!) == true) {
             this@ComponentActivityEditor.load_project(this@ComponentActivityEditor.intent.data!!)
         } else {
@@ -651,8 +653,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     fun load_from_bkp() {
-        this.controller_model.opus_manager.vm_state.ready.value = false
-        this.controller_model.viewModelScope.launch(Dispatchers.IO) {
+        controller_model.opus_manager.vm_state.ready.value = false
+        controller_model.viewModelScope.launch(Dispatchers.IO) {
             val (backup_uri, bytes) = view_model.project_manager?.read_backup() ?: throw MissingProjectManager()
             controller_model.opus_manager.load(bytes) { json_data ->
                 controller_model.active_project = backup_uri
@@ -664,8 +666,18 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
     }
 
+    override fun on_config_change() {
+        super.on_config_change()
+        this.set_soundfont(
+            List(this.view_model.configuration.soundfonts.value.size) { i ->
+                this.view_model.configuration.soundfonts.value[i].value
+            }
+        )
+    }
+
     override fun on_config_load() {
         super.on_config_load()
+
         // If the project directory moved, update the active project uri
         this.controller_model.active_project?.let { project_uri ->
             this.view_model.project_manager?.let { project_manager ->
@@ -675,28 +687,61 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
             }
         }
+
         this.controller_model.set_sample_rate(this.view_model.configuration.sample_rate.value)
         this.state_model.latest_input_indicator.value = this.view_model.configuration.latest_input_indicator.value
         this.state_model.normalize_beat_widths.value = this.view_model.configuration.normalize_beat_widths.value
         this.state_model.beat_stroke_thickness.value = this.view_model.configuration.beat_stroke_thickness.value
         this.state_model.update_global_zoom_notches()
         this.state_model.move_mode.value = this.view_model.configuration.move_mode.value
+    }
 
-        if (this.view_model.configuration.play_in_background.value) {
-            this.update_persistent_notification()
-        } else {
-            this.destroy_persistent_notification()
+    fun check_soundfonts(file_paths: List<String>): List<SoundFont> {
+        val soundfonts = mutableListOf<SoundFont>()
+
+        // ignore not-existent or corrupt sf2 files
+        for (file_path in file_paths) {
+            check_soundfont(file_path)?.let {
+                soundfonts.add(it)
+            }
+        }
+        return soundfonts
+    }
+
+    fun check_soundfont(file_path: String): SoundFont? {
+        val soundfont_directory = this@ComponentActivityEditor.get_soundfont_directory()
+        var soundfont_file = soundfont_directory
+        for (segment in file_path.split("/")) {
+            soundfont_file = soundfont_file.findFile(segment) ?: continue
         }
 
-        this.set_soundfont {
-            this.view_model.configuration.soundfonts.value = arrayOf()
-            this.set_soundfont()
+        // Possible if user puts the sf2 in their files manually
+        if (!soundfont_file.exists()) return null
+
+        return try {
+            SoundFont(this@ComponentActivityEditor, soundfont_file.uri)
+        } catch (_: Exception) {
+            null
         }
     }
 
-    fun set_soundfont(bad_soundfont_callback: ((Uri) -> Unit)? = null) {
-        val file_paths = this.view_model.configuration.soundfonts.value
-        if (List(file_paths.size) { file_paths[it].value } == this.controller_model.active_soundfont_relative_paths) {
+    fun init_soundfont(callback: (() -> Unit)? = null) {
+        if (this.state_model.soundfont_ready.value) {
+            callback?.invoke()
+        } else {
+            this.set_soundfont(
+                List(this.view_model.configuration.soundfonts.value.size) { i ->
+                    this.view_model.configuration.soundfonts.value[i].value
+                },
+                callback
+            )
+        }
+    }
+
+    fun set_soundfont(file_paths: List<String>, callback: (() -> Unit)? = null) {
+        this.state_model.soundfont_ready.value = false
+
+        if (file_paths == this.controller_model.active_soundfont_relative_paths) {
             this.state_model.soundfont_ready.value = true
             return
         }
@@ -705,65 +750,54 @@ class ComponentActivityEditor: PaganComponentActivity() {
         this.stop_opus_midi()
         this.stop_opus()
 
-
         if (file_paths.isEmpty()) {
             this.controller_model.unset_soundfont()
             this.state_model.unset_soundfont()
-            this.update_persistent_notification()
+            this.destroy_persistent_notification()
             return
         }
 
         // Failed to change playback_state
-        if (!this.controller_model.update_playback_state_soundfont(PlaybackState.Ready)) return
-
-        this.state_model.soundfont_ready.value = false
+        if (!this.controller_model.update_playback_state_soundfont(PlaybackState.Ready)) {
+            this.state_model.soundfont_ready.value = true
+            return
+        }
 
         this.state_model.viewModelScope.launch(Dispatchers.IO) {
-            val soundfonts = mutableListOf<SoundFont>()
-            val soundfont_directory = this@ComponentActivityEditor.get_soundfont_directory()
-
-            // ignore not-existent or corrupt sf2 files
-            for (file_path in file_paths) {
-                var soundfont_file = soundfont_directory
-                for (segment in file_path.value.split("/")) {
-                    soundfont_file = soundfont_file.findFile(segment) ?: continue
-                }
-
-                // Possible if user puts the sf2 in their files manually
-                if (!soundfont_file.exists()) {
-                    if (bad_soundfont_callback == null) {
-                        continue
-                    } else {
-                        bad_soundfont_callback(soundfont_file.uri)
-                        return@launch
-                    }
-                }
-
-                try {
-                    soundfonts.add(SoundFont(this@ComponentActivityEditor, soundfont_file.uri))
-                } catch (_: Exception) {
-                    if (bad_soundfont_callback == null) {
-                        continue
-                    } else {
-                        bad_soundfont_callback(soundfont_file.uri)
-                        return@launch
-                    }
-                }
+            val soundfonts = this@ComponentActivityEditor.check_soundfonts(file_paths)
+            if (soundfonts.isEmpty()) {
+                // Failed to load all
+                Toast.makeText(
+                    this@ComponentActivityEditor,
+                    R.string.sf_none_loaded,
+                    Toast.LENGTH_SHORT
+                ).show()
+                this@ComponentActivityEditor.controller_model.unset_soundfont()
+                this@ComponentActivityEditor.state_model.unset_soundfont()
+                this@ComponentActivityEditor.destroy_persistent_notification()
+                return@launch
+            } else if (soundfonts.size < file_paths.size) {
+                Toast.makeText(
+                    this@ComponentActivityEditor,
+                    R.string.sf_none_loaded,
+                    Toast.LENGTH_SHORT
+                ).show()
             }
 
+            this@ComponentActivityEditor.view_model.configuration.soundfonts.value = Array(file_paths.size) { i ->
+                mutableStateOf(file_paths[i])
+            }
             controller_model.set_soundfonts(*soundfonts.toTypedArray())
 
             controller_model.playback_device?.attach_activity(this@ComponentActivityEditor)
-            controller_model.active_soundfont_relative_paths = List(file_paths.size) { i ->
-                file_paths[i].value
-            }
+            controller_model.active_soundfont_relative_paths = file_paths
 
-            state_model.enable_soundfont(file_paths)
+            state_model.enable_soundfont(Array(file_paths.size) { i -> mutableStateOf(file_paths[i]) })
             state_model.soundfont_ready.value = true
             this@ComponentActivityEditor.update_persistent_notification()
+            callback?.invoke()
         }
     }
-
 
     fun get_file_type(uri: Uri): CompatibleFileType {
         return this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
@@ -779,10 +813,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     fun import_project(uri: Uri) {
-        this.applicationContext.contentResolver.openFileDescriptor(uri, "r")?.use {
-            this.state_model.ready.value = false
-            val bytes = FileInputStream(it.fileDescriptor).readBytes()
-            this.controller_model.opus_manager.load(bytes)
+        val parcel_descriptor = this.applicationContext.contentResolver.openFileDescriptor(uri, "r") ?: return
+
+        this.state_model.ready.value = false
+        val bytes = FileInputStream(parcel_descriptor.fileDescriptor).readBytes()
+        this.controller_model.opus_manager.load(bytes) {
+            this._use_preferred_soundfont_hook(it)
             this.controller_model.active_project = null
             this.controller_model.project_exists.value = false
         }
@@ -844,9 +880,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
         }
 
         val inner_callback: ((Uri) -> Unit) = when (type) {
-            CompatibleFileType.Midi1 -> { uri -> this.import_midi(uri) }
-            CompatibleFileType.Pagan -> { uri -> this.import_project(uri) }
-            else -> { _ -> throw FileNotFoundException(uri.toString()) }
+            CompatibleFileType.Midi1 -> { uri ->
+                this.init_soundfont {
+                    this.import_midi(uri)
+                }
+            }
+            CompatibleFileType.Pagan -> { uri ->
+                this.import_project(uri)
+            }
+            else -> throw FileNotFoundException(uri.toString())
         }
 
         val fallback_msg = try {
@@ -856,11 +898,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
             when (type) {
                 CompatibleFileType.Midi1 -> this.getString(R.string.feedback_midi_fail)
                 CompatibleFileType.Pagan -> this.getString(R.string.feedback_import_fail)
-                null -> this.getString(R.string.feedback_file_not_found)
             }
         }
 
-        if (fallback_msg != null) {
+        fallback_msg?.let {
             this.new_project()
             runOnUiThread {
                 this.toast(fallback_msg)
@@ -3096,7 +3137,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     private fun _use_preferred_soundfont_hook(json_data: JSONHashMap) {
-        if (!view_model.configuration.use_preferred_soundfont.value) return
+        if (!view_model.configuration.use_preferred_soundfont.value) {
+            this.init_soundfont()
+            return
+        }
 
         val file_paths = mutableListOf<String>()
         json_data.get_hashmap("d").get_stringn("sf")?.let {
@@ -3114,48 +3158,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
         }
 
-        val soundfonts = view_model.configuration.soundfonts
-        val originals = List(soundfonts.value.size) {
-            soundfonts.value[it].value
-        }
-
-        // Don't change soundfonts if no soundfont is associated with the project
-        if (file_paths.isEmpty() || file_paths == originals.toList()) return
-
-        for (i in 0 until min(soundfonts.value.size, file_paths.size)) {
-            soundfonts.value[i].value = file_paths[i]
-        }
-
-        if (soundfonts.value.size < file_paths.size) {
-            soundfonts.value += Array(file_paths.size - soundfonts.value.size) { i ->
-                mutableStateOf(file_paths[i + soundfonts.value.size])
-            }
-        }
-
-        val bkp_values: MutableList<MutableState<String>> = mutableListOf()
-        if (soundfonts.value.size > file_paths.size) {
-            bkp_values.addAll(soundfonts.value.sliceArray(file_paths.size until soundfonts.value.size))
-            soundfonts.value = soundfonts.value.sliceArray(0 until file_paths.size)
-        }
-
-        // Try opening the assigned soundfont, but if it fails for any reason, go back to the
-        // Currently active one.
-        this@ComponentActivityEditor.set_soundfont {
-            // Restore the preexisting MutableState wrappers as well as the values themselves
-            if (originals.size > soundfonts.value.size) {
-                soundfonts.value += bkp_values.toTypedArray()
-            } else if (originals.size < soundfonts.value.size) {
-                soundfonts.value = soundfonts.value.sliceArray(0 until originals.size)
-            }
-            for ((i, value) in originals.enumerate()) {
-                soundfonts.value[i].value = value
-            }
-
-            this@ComponentActivityEditor.set_soundfont()
+        if (file_paths.isEmpty()) {
+            this.init_soundfont()
+        } else {
+            this@ComponentActivityEditor.set_soundfont(file_paths)
         }
     }
 
     fun load_project(uri: Uri) {
+
         // Stop Playback First
         this.stop_opus()
         this.stop_opus_midi()
@@ -3833,6 +3844,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
         this.controller_model.update_soundfont_instruments()
         opus_manager.clear_history()
+
     }
 
 }

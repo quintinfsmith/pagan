@@ -1251,6 +1251,7 @@ class ViewModelEditorState: ViewModel() {
         this.soundfont_active.value = null
         this.clear_instrument_names()
         this.active_soundfonts.value = arrayOf()
+
         this.soundfont_ready.value = true
     }
 

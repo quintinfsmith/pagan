@@ -1,6 +1,7 @@
 - High and Low Pass filters.
 - Playback in background.
 Bugfixes:
+    - crash when attempting to select soundfont without soundfont directory set (hiding button until it exists)
     - prevent crash when trying to copy effects between different levels. (line/channel/global)
     - Fixed global effect lines appearing muted in some instances.
     - Fixed potential crash onload on slower devices

@@ -1,0 +1,2 @@
+- fixed loading indicator wouldn't be dismissed without setting soundfont
+- disable RemoveChannel buttons when only one channel is active.

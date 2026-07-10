@@ -664,15 +664,17 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
     @Composable
     fun ActiveSoundfontButton(modifier: Modifier = Modifier) {
-        if (this@ComponentActivitySettings.view_model.configuration.allow_multiple_soundfonts.value) {
-            ActiveSoundfontButtonMulti(modifier)
-        } else {
-            ActiveSoundfontButtonSingle(modifier)
+        if (this@ComponentActivitySettings.view_model.configuration.soundfont_directory.value != null) {
+            if (this@ComponentActivitySettings.view_model.configuration.allow_multiple_soundfonts.value) {
+                ActiveSoundfontButtonMulti(modifier)
+            } else {
+                ActiveSoundfontButtonSingle(modifier)
+            }
+            SoundFontMenu(
+                this@ComponentActivitySettings.settings_model.soundfont_menu_visibility,
+                this@ComponentActivitySettings.settings_model.soundfont_menu_active_choice
+            )
         }
-        SoundFontMenu(
-            this@ComponentActivitySettings.settings_model.soundfont_menu_visibility,
-            this@ComponentActivitySettings.settings_model.soundfont_menu_active_choice
-        )
     }
 
     @Composable

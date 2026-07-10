@@ -3619,8 +3619,8 @@ open class OpusLayerBase: Effectable {
         this.controllers = ActiveControlSetJSONInterface.from_json(inner_map.get_hashmap("controllers"), this.length)
 
         this.marked_sections.clear()
-        val tags = inner_map.get_hashmapn("tags")
-        if (tags != null) {
+
+        inner_map.get_hashmapn("tags")?.let { tags ->
             for (key in tags.keys) {
                 val beat = key.toInt()
                 // technically possible if the user manually edits the file for sections to be out of bounds

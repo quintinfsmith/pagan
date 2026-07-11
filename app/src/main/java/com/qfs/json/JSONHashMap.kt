@@ -24,8 +24,8 @@ class JSONHashMap(vararg args: Pair<String, Any?>): JSONObject {
                 is Int -> this[arg.first] = arg.second as Int
                 is Float -> this[arg.first] = arg.second as Float
                 is String -> this[arg.first] = arg.second as String
-                is JSONEncodeable -> this[arg.first] = (arg.second as JSONEncodeable)
                 is JSONObject -> this[arg.first] = arg.second as JSONObject
+                is JSONCompliant -> this[arg.first] = (arg.second as JSONCompliant)
                 else -> throw InvalidJSONObject(arg.second!!)
             }
         }
@@ -43,7 +43,7 @@ class JSONHashMap(vararg args: Pair<String, Any?>): JSONObject {
         this.hash_map[key] = null
     }
 
-    operator fun set(key: String, value: JSONEncodeable) {
+    operator fun set(key: String, value: JSONCompliant) {
         this.hash_map[key] = value.to_json()
     }
 

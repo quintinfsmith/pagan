@@ -23,3 +23,17 @@ enum class EffectType(val apres_type: ApresEffectType?) {
     Reverb(null)
  //   Equalizer(1024 + 3),
 }
+
+fun EffectType.json_string(): String {
+    return when (this) {
+        EffectType.Tempo -> "tempo"
+        EffectType.Velocity -> "velocity"
+        EffectType.Volume -> "volume"
+        EffectType.LowPass -> "lowpass"
+        EffectType.HighPass -> "highpass"
+        EffectType.Delay -> "delay"
+        EffectType.Pan -> "pan"
+        EffectType.Pitch -> "pitch"
+        EffectType.Reverb -> "reverb"
+    }
+}

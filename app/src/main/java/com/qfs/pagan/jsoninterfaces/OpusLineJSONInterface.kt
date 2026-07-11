@@ -24,37 +24,6 @@ import com.qfs.pagan.structure.opusmanager.base.TunedInstrumentEvent
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
 object OpusLineJSONInterface {
-    fun to_json(line: OpusLineAbstract<*>): JSONHashMap {
-        var output = JSONHashMap()
-
-        val beats = JSONList()
-        for (i in line.beats.indices) {
-            val generalized_tree = OpusTreeJSONInterface.to_json(line.beats[i]) { opus_event: InstrumentEvent ->
-                InstrumentEventJSONInterface.to_json(opus_event)
-            } ?: continue
-
-            beats.add(
-                JSONList(
-                    JSONInteger(i),
-                    generalized_tree
-                )
-            )
-        }
-
-        output["beats"] = beats
-        output["controllers"] = ActiveControlSetJSONInterface.to_json(line.controllers)
-        output["muted"] = line.muted
-        output["palette"] = line.palette.to_json()
-
-        when (line) {
-            is OpusLinePercussion -> {
-                output["instrument"] = JSONInteger(line.instrument)
-            }
-        }
-
-        return output
-    }
-
     fun percussion_line(input: JSONHashMap, size: Int): OpusLinePercussion {
         val beats = input.get_list("beats")
         val beat_list = MutableList<ReducibleTree<PercussionEvent>>(size) { ReducibleTree() }

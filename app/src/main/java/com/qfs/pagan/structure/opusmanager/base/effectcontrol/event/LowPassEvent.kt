@@ -9,10 +9,10 @@
  */
 package com.qfs.pagan.structure.opusmanager.base.effectcontrol.event
 
+import com.qfs.json.JSONHashMap
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.HighPassController
 
 abstract class FilterEvent(var filter_cutoff: Float, var resonance: Float?, duration: Int, transition: EffectTransition): EffectEvent(duration, transition) {
     override fun to_float_array(): FloatArray {
@@ -59,6 +59,7 @@ abstract class FilterEvent(var filter_cutoff: Float, var resonance: Float?, dura
         return copy_event
     }
 }
+
 class LowPassEvent(
     filter_cutoff: Float,
     resonance: Float?,
@@ -79,6 +80,11 @@ class LowPassEvent(
             this.transition
         )
     }
+
+    override fun apply_to_json(json: JSONHashMap) {
+        json["cutoff"] = this.filter_cutoff
+        json["res"] = this.resonance
+    }
 }
 
 class HighPassEvent(
@@ -96,5 +102,9 @@ class HighPassEvent(
             this.duration,
             this.transition
         )
+    }
+
+    override fun apply_to_json(json: JSONHashMap) {
+        json["cutoff"] = this.filter_cutoff
     }
 }

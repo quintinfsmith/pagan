@@ -10,6 +10,11 @@
 package com.qfs.pagan.structure.opusmanager.base
 
 import androidx.compose.ui.graphics.Color
+import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONInteger
+import com.qfs.json.JSONList
+import com.qfs.json.JSONCompliant
+import com.qfs.pagan.jsoninterfaces.OpusTreeJSONInterface
 import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.ColorPalettable
 import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.OpusColorPalette
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectControlSet
@@ -19,7 +24,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.E
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
-abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<ReducibleTree<T>>): ReducibleTreeArray<T>(beats), ColorPalettable, Effectable {
+abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<ReducibleTree<T>>): ReducibleTreeArray<T>(beats), ColorPalettable, Effectable, JSONCompliant {
     class BlockedCtlTreeException(var type: EffectType, var e: BlockedTreeException): Exception(e.message)
     override var palette = OpusColorPalette()
     var controllers = EffectControlSet(this.beats.size, setOf(EffectType.Volume))
@@ -117,5 +122,29 @@ abstract class OpusLineAbstract<T: InstrumentEvent>(beats: MutableList<Reducible
     }
 
     abstract fun copy(): OpusLineAbstract<T>
+
+    override fun to_json(): JSONHashMap {
+        val output = JSONHashMap()
+
+        val beats = JSONList()
+        for (i in this.beats.indices) {
+            val generalized_tree = OpusTreeJSONInterface.to_json(this.beats[i]) { opus_event: InstrumentEvent ->
+                opus_event.to_json()
+            } ?: continue
+
+            beats.add(
+                JSONList(
+                    JSONInteger(i),
+                    generalized_tree
+                )
+            )
+        }
+
+        output["beats"] = beats
+        output["controllers"] = this.controllers.to_json()
+        output["muted"] = this.muted
+        output["palette"] = this.palette.to_json()
+        return output
+    }
 }
 

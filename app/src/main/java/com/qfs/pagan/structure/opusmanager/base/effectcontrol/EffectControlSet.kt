@@ -9,6 +9,9 @@
  */
 package com.qfs.pagan.structure.opusmanager.base.effectcontrol
 
+import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONList
+import com.qfs.json.JSONCompliant
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.LowPassController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.DelayController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
@@ -22,7 +25,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.V
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 
-class EffectControlSet(var beat_count: Int, default_enabled: Set<EffectType>? = null) {
+class EffectControlSet(var beat_count: Int, default_enabled: Set<EffectType>? = null): JSONCompliant {
     val controllers = HashMap<EffectType, EffectController<*>>()
 
     init {
@@ -111,5 +114,17 @@ class EffectControlSet(var beat_count: Int, default_enabled: Set<EffectType>? = 
             }
         }
         return true
+    }
+
+    override fun to_json(): JSONHashMap {
+        val output = JSONHashMap()
+        output["beat_count"] = this.beat_count
+
+        val controllers = this.controllers.values.toList()
+        output["controllers"] = JSONList(controllers.size) {
+            controllers[it].to_json()
+        }
+
+        return output
     }
 }

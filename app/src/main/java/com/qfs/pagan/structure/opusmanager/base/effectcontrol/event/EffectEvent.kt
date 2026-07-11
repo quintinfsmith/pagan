@@ -9,6 +9,8 @@
  */
 package com.qfs.pagan.structure.opusmanager.base.effectcontrol.event
 
+import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONCompliant
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
@@ -19,6 +21,18 @@ abstract class EffectEvent(duration: Int = 1, var transition: EffectTransition =
     abstract fun to_float_array(): FloatArray
     abstract override fun copy(): EffectEvent
     abstract fun get_event_instant(position: Rational, preceding_event: EffectEvent): EffectEvent
+
+    // NOTE: It would be possibly cleaner to use super calls to to_json() here, but having
+    // a secondary function will cause compilation failure so its harder to miss when implementing new event types
+    abstract fun apply_to_json(json: JSONHashMap)
+
+    override fun to_json(): JSONHashMap {
+        val output = JSONHashMap()
+        output["duration"] = this.duration
+        output["transition"] = this.transition.name
+        this.apply_to_json(output)
+        return output
+    }
 
     fun is_persistent(): Boolean {
         return when (this.transition) {

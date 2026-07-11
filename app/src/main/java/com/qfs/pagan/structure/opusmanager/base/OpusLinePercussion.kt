@@ -9,10 +9,12 @@
  */
 package com.qfs.pagan.structure.opusmanager.base
 
+import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONInteger
 import com.qfs.pagan.structure.opusmanager.OpusLineJSONInterface
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
-class OpusLinePercussion(var instrument: Int, beats: MutableList<ReducibleTree<PercussionEvent>>): OpusLineAbstract<PercussionEvent>(beats){
+class OpusLinePercussion(var instrument: Int, beats: MutableList<ReducibleTree<PercussionEvent>>): OpusLineAbstract<PercussionEvent>(beats) {
     constructor(instrument: Int, beat_count: Int) : this(instrument, Array<ReducibleTree<PercussionEvent>>(beat_count) { ReducibleTree() }.toMutableList())
 
     override fun equals(other: Any?): Boolean {
@@ -22,9 +24,12 @@ class OpusLinePercussion(var instrument: Int, beats: MutableList<ReducibleTree<P
     }
 
     override fun copy(): OpusLinePercussion {
-        return OpusLineJSONInterface.percussion_line(
-            OpusLineJSONInterface.to_json(this),
-            this.beat_count()
-        )
+        return OpusLineJSONInterface.percussion_line(this.to_json(), this.beat_count())
+    }
+
+    override fun to_json(): JSONHashMap {
+        return super.to_json().also {
+            it["instrument"] = JSONInteger(this.instrument)
+        }
     }
 }

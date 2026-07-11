@@ -24,6 +24,7 @@ import com.qfs.json.JSONParser
 import com.qfs.json.JSONString
 import com.qfs.pagan.PresetKey
 import com.qfs.pagan.enumerate
+import com.qfs.json.JSONCompliant
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.ActiveControlSetJSONInterface
@@ -54,7 +55,7 @@ import kotlin.math.roundToInt
  * This is completely separated from user interface or state.
  * @constructor Creates an unusably empty object. new() / load() / import() need to be called still
  */
-open class OpusLayerBase: Effectable {
+open class OpusLayerBase: Effectable, JSONCompliant {
     companion object {
         private var _channel_uuid_generator: Int = 0x00
 
@@ -3443,12 +3444,12 @@ open class OpusLayerBase: Effectable {
         }
     }
 
-    open fun to_json(): JSONHashMap {
+    override fun to_json(): JSONHashMap {
         val output = JSONHashMap()
 
         val channels: MutableList<JSONHashMap> = mutableListOf()
         for (channel in this.channels) {
-            channels.add(OpusChannelJSONInterface.generalize(channel))
+            channels.add(channel.to_json())
         }
         output["size"] = this.length
         output["tuning_map"] = JSONList(this.tuning_map.size) { i: Int ->
@@ -3465,10 +3466,10 @@ open class OpusLayerBase: Effectable {
 
         output["transpose"] = JSONInteger(this.transpose.first)
         output["transpose_radix"] = JSONInteger(this.transpose.second)
-        output["controllers"] = ActiveControlSetJSONInterface.to_json(this.controllers)
+        output["controllers"] = this.controllers.to_json()
 
         output["channels"] = JSONList(this.channels.size) { i: Int ->
-            OpusChannelJSONInterface.generalize(this.channels[i])
+            this.channels[i].to_json()
         }
 
         output["title"] = if (this.project_name == null) {

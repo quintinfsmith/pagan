@@ -14,7 +14,6 @@ import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONString
 import com.qfs.pagan.jsoninterfaces.OpusTreeJSONInterface
-import com.qfs.pagan.jsoninterfaces.UnhandledControllerException
 import com.qfs.pagan.jsoninterfaces.UnknownControllerException
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.DelayController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
@@ -25,6 +24,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.P
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.TempoController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.VelocityController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.VolumeController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.json_string
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
 object ActiveControllerJSONInterface {
@@ -131,39 +131,5 @@ object ActiveControllerJSONInterface {
             ),
             "initial" to OpusControlEventJSONInterface.convert_v2_to_v3(input.get_hashmap("initial_value")),
         )
-    }
-
-    fun to_json(controller: EffectController<out EffectEvent>): JSONHashMap {
-        val map = JSONHashMap()
-        val event_list = JSONList()
-        controller.beats.forEachIndexed { i: Int, event_tree: ReducibleTree<out EffectEvent>? ->
-            if (event_tree == null) return@forEachIndexed
-            val generalized_tree = OpusTreeJSONInterface.to_json(event_tree) { event: EffectEvent ->
-                OpusControlEventJSONInterface.to_json(event)
-            } ?: return@forEachIndexed
-
-            event_list.add(
-                JSONList(
-                    JSONInteger(i),
-                    generalized_tree
-                )
-            )
-        }
-
-        map["events"] = event_list
-        map["initial"] = OpusControlEventJSONInterface.to_json(controller.initial_event)
-        map["type"] = when (controller) {
-            is TempoController -> "tempo"
-            is VolumeController -> "volume"
-            is VelocityController -> "velocity"
-            is PanController -> "pan"
-            is DelayController -> "delay"
-            is LowPassController -> "lowpass"
-            is HighPassController -> "highpass"
-            else -> throw UnhandledControllerException(controller)
-        }
-        map["visible"] = controller.visible
-
-        return map
     }
 }

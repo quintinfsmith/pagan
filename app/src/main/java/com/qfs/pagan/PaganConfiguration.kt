@@ -18,6 +18,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import com.qfs.json.JSONCompliant
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONList
 import com.qfs.json.JSONParser
@@ -45,7 +46,7 @@ class PaganConfiguration(
     soundfont_uris: Array<Uri> = arrayOf(),
     sort_load: Int = -3,
     play_in_background: Boolean = true
-) {
+): JSONCompliant {
     val soundfonts: MutableState<Array<MutableState<String>>> = mutableStateOf(Array(if (allow_multiple_soundfonts) soundfonts.size else min(1, soundfonts.size)) { mutableStateOf(soundfonts[it]) })
     val soundfont_uris: MutableState<Array<MutableState<Uri>>> = mutableStateOf(Array(if (allow_multiple_soundfonts) soundfont_uris.size else min(1, soundfont_uris.size)) { mutableStateOf(soundfont_uris[it]) })
     val sample_rate: MutableState<Int> = mutableStateOf(sample_rate)
@@ -171,7 +172,7 @@ class PaganConfiguration(
         File(path).writeText(this.to_json().to_string())
     }
 
-    fun to_json(): JSONHashMap {
+    override fun to_json(): JSONHashMap {
         val output = JSONHashMap()
         output["allow_multiple_soundfonts"] = this.allow_multiple_soundfonts.value
 

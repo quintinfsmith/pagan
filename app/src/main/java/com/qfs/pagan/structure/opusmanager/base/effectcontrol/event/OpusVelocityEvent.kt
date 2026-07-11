@@ -9,6 +9,10 @@
  */
 package com.qfs.pagan.structure.opusmanager.base.effectcontrol.event
 
+import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONInteger
+import com.qfs.json.JSONList
+import com.qfs.json.JSONString
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
@@ -48,6 +52,16 @@ class OpusVelocityEvent(
             this.duration,
             this.transition
         )
+    }
+
+    override fun apply_to_json(json: JSONHashMap) {
+        json["velocity"] = this.value
+        json["slide"] = this.slide?.let {
+            JSONList(
+                JSONString(it.first.name),
+                JSONInteger(it.second)
+            )
+        }
     }
 
     override fun hashCode(): Int {

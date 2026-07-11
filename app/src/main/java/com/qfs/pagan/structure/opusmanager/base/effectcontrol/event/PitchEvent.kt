@@ -9,6 +9,7 @@
  */
 package com.qfs.pagan.structure.opusmanager.base.effectcontrol.event
 
+import com.qfs.json.JSONHashMap
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 
@@ -29,6 +30,10 @@ class PitchEvent(pitch: Float, duration: Int = 1, transition: EffectTransition =
 
     override fun copy(): PitchEvent {
         return PitchEvent(this.value, this.duration, this.transition)
+    }
+
+    override fun apply_to_json(json: JSONHashMap) {
+        json["shift"] = this.value
     }
 
     // override fun <T : OpusEvent> copy(): T {

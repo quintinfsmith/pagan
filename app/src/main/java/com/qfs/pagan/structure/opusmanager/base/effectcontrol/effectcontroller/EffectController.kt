@@ -9,15 +9,21 @@
  */
 package com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller
 
+import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONInteger
+import com.qfs.json.JSONList
+import com.qfs.json.JSONCompliant
+import com.qfs.pagan.jsoninterfaces.OpusTreeJSONInterface
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.ReducibleTreeArray
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.json_string
 import com.qfs.pagan.structure.plus
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.structure.times
 
-abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_event: T): ReducibleTreeArray<T>(MutableList(beat_count) { ReducibleTree() }) {
+abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_event: T): ReducibleTreeArray<T>(MutableList(beat_count) { ReducibleTree() }), JSONCompliant {
     var visible = false // I don't like this logic here, but the code is substantially cleaner with it hear than in the OpusLayerInterface
     fun set_initial_event(value: T) {
         this.initial_event = value
@@ -267,5 +273,31 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
         if (other.initial_event != this.initial_event) return false
 
         return super.equals(other)
+    }
+
+
+    override fun to_json(): JSONHashMap {
+        val map = JSONHashMap()
+        val event_list = JSONList()
+        this.beats.forEachIndexed { i: Int, event_tree: ReducibleTree<out EffectEvent>? ->
+            if (event_tree == null) return@forEachIndexed
+            val generalized_tree = OpusTreeJSONInterface.to_json(event_tree) { event: EffectEvent ->
+                event.to_json()
+            } ?: return@forEachIndexed
+
+            event_list.add(
+                JSONList(
+                    JSONInteger(i),
+                    generalized_tree
+                )
+            )
+        }
+
+        map["events"] = event_list
+        map["initial"] = this.initial_event.to_json()
+        map["type"] = this.initial_event.event_type.json_string()
+        map["visible"] = this.visible
+
+        return map
     }
 }

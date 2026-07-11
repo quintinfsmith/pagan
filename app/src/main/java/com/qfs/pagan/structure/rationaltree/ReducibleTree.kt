@@ -9,6 +9,11 @@
  */
 package com.qfs.pagan.structure.rationaltree
 
+import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONInteger
+import com.qfs.json.JSONList
+import com.qfs.json.JSONObject
+import com.qfs.json.JSONCompliant
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.greatest_common_denominator
 import com.qfs.pagan.structure.lowest_common_multiple

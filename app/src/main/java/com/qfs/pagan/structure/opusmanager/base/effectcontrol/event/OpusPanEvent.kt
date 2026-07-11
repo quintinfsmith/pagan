@@ -9,6 +9,7 @@
  */
 package com.qfs.pagan.structure.opusmanager.base.effectcontrol.event
 
+import com.qfs.json.JSONHashMap
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
@@ -30,6 +31,10 @@ class OpusPanEvent(value: Float, duration: Int = 1, transition: EffectTransition
 
     override fun copy(): OpusPanEvent {
         return OpusPanEvent(this.value, this.duration, this.transition)
+    }
+
+    override fun apply_to_json(json: JSONHashMap) {
+        json["value"] = this.value
     }
 
     // override fun <T : OpusEvent> copy(): T {

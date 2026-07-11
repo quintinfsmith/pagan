@@ -9,6 +9,7 @@
  */
 package com.qfs.pagan.structure.opusmanager.base.effectcontrol.event
 
+import com.qfs.json.JSONHashMap
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 
@@ -16,6 +17,10 @@ class OpusTempoEvent(value: Float, duration: Int = 1, transition: EffectTransiti
     override val event_type = EffectType.Tempo
     override fun copy(): OpusTempoEvent {
         return OpusTempoEvent(this.value, this.duration, this.transition)
+    }
+
+    override fun apply_to_json(json: JSONHashMap) {
+        json["tempo"] = this.value
     }
 
     override fun equals(other: Any?): Boolean {

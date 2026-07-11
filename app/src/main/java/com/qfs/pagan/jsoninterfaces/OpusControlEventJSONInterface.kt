@@ -28,51 +28,6 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocity
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 
 object OpusControlEventJSONInterface {
-    fun to_json(input: EffectEvent): JSONHashMap {
-        val output = JSONHashMap()
-        output["duration"] = input.duration
-        output["transition"] = input.transition.name
-        when (input) {
-            is OpusTempoEvent -> {
-                output["tempo"] = input.value
-            }
-            is OpusVolumeEvent -> {
-                output["volume"] = input.value
-            }
-            is OpusVelocityEvent -> {
-                output["velocity"] = input.value
-                output["slide"] = input.slide?.let {
-                    JSONList(
-                        JSONString(it.first.name),
-                        JSONInteger(it.second)
-                    )
-                }
-            }
-            is OpusReverbEvent -> {
-                output["wetness"] = input.value
-            }
-            is OpusPanEvent -> {
-                output["value"] = input.value
-            }
-            is DelayEvent -> {
-                output["frequency"] = JSONList(
-                    JSONInteger(input.numerator),
-                    JSONInteger(input.denominator)
-                )
-                output["echo"] = input.echo
-                output["fade"] = input.fade
-            }
-            is HighPassEvent -> {
-                output["cutoff"] = input.filter_cutoff
-            }
-            is LowPassEvent -> {
-                output["cutoff"] = input.filter_cutoff
-                output["res"] = input.resonance
-            }
-        }
-        return output
-    }
-
     fun convert_v2_to_v3(input: JSONHashMap): JSONHashMap {
         val output = JSONHashMap()
         val type = input.get_stringn("type")

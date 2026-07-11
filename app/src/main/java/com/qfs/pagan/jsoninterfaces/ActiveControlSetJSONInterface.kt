@@ -62,18 +62,6 @@ object ActiveControlSetJSONInterface {
         return control_set
     }
 
-    fun to_json(control_set: EffectControlSet): JSONHashMap {
-        val output = JSONHashMap()
-        output["beat_count"] = control_set.beat_count
-
-        val controllers = control_set.controllers.values.toList()
-        output["controllers"] = JSONList(controllers.size) {
-            ActiveControllerJSONInterface.to_json(controllers[it])
-        }
-
-        return output
-    }
-
     fun convert_v2_to_v3(input: JSONList, beat_count: Int): JSONHashMap {
         return JSONHashMap(
             "beat_count" to beat_count,

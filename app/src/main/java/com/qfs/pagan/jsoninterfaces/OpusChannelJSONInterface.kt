@@ -39,28 +39,6 @@ object OpusChannelJSONInterface {
     val SPECIAL_CHARS = listOf(CH_OPEN, CH_CLOSE, CH_NEXT, CH_ADD, CH_SUBTRACT, CH_UP, CH_DOWN, CH_HOLD)
     // -------------------------------------------------------------------------
 
-    fun generalize(channel: OpusChannelAbstract<*, *>): JSONHashMap {
-        val channel_map = JSONHashMap()
-        val lines = JSONList(channel.size) { i: Int ->
-            OpusLineJSONInterface.to_json(channel.lines[i])
-        }
-
-        channel_map["type"] = when (channel) {
-            is OpusPercussionChannel -> "kit"
-            is OpusChannel -> "std"
-            else -> "???"
-        }
-        channel_map["lines"] = lines
-        channel_map["midi_bank"] = channel.get_midi_bank()
-        channel_map["soundfont_index"] = channel.soundfont_index
-        channel_map["midi_program"] = channel.midi_program
-        channel_map["controllers"] = ActiveControlSetJSONInterface.to_json(channel.controllers)
-        channel_map["muted"] = channel.muted
-        channel_map["palette"] = channel.palette.to_json()
-
-        return channel_map
-    }
-
     private fun _interpret_percussion(input_map: JSONHashMap, beat_count: Int): OpusPercussionChannel {
         val channel = OpusPercussionChannel(-1)
         val input_lines = input_map.get_list("lines")

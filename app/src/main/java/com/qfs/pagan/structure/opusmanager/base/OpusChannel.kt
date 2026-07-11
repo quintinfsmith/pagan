@@ -9,7 +9,10 @@
  */
 package com.qfs.pagan.structure.opusmanager.base
 
+import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONList
 import com.qfs.pagan.PresetKey
+import com.qfs.json.JSONCompliant
 import com.qfs.pagan.structure.opusmanager.OpusChannelJSONInterface
 import com.qfs.pagan.structure.opusmanager.OpusLineJSONInterface
 import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.ColorPalettable
@@ -43,7 +46,7 @@ data class BeatKey(var channel: Int, var line_offset: Int, var beat: Int) {
 }
 
 
-abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(var uuid: Int): Effectable, ColorPalettable {
+abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(var uuid: Int): Effectable, ColorPalettable, JSONCompliant {
     class InvalidChannelUUID(uuid: Int): Exception("No such channel uuid: $uuid")
     class LineSizeMismatch(incoming_size: Int, required_size: Int): Exception("Line is $incoming_size beats but OpusManager is $required_size beats")
     class LastLineException: Exception("Can't remove final line in channel")
@@ -61,6 +64,7 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
     override var palette = OpusColorPalette()
 
     abstract fun gen_line(): T
+    abstract val jsontype: String
     open fun clear() {
         this.lines.clear()
         this.midi_program = 0
@@ -382,13 +386,32 @@ abstract class OpusChannelAbstract<U: InstrumentEvent, T: OpusLineAbstract<U>>(v
 
     fun copy(): OpusChannelAbstract<U, T> {
         return OpusChannelJSONInterface.interpret(
-            OpusChannelJSONInterface.generalize(this),
+            this.to_json(),
             this.get_beat_count()
         ) as OpusChannelAbstract<U, T>
+    }
+
+    override fun to_json(): JSONHashMap {
+        val channel_map = JSONHashMap()
+        val lines = JSONList(this.size) { i: Int ->
+            this.lines[i].to_json()
+        }
+
+        channel_map["type"] = this.jsontype
+        channel_map["lines"] = lines
+        channel_map["midi_bank"] = this.get_midi_bank()
+        channel_map["soundfont_index"] = this.soundfont_index
+        channel_map["midi_program"] = this.midi_program
+        channel_map["controllers"] = this.controllers.to_json()
+        channel_map["muted"] = this.muted
+        channel_map["palette"] = this.palette.to_json()
+
+        return channel_map
     }
 }
 
 class OpusChannel(uuid: Int): OpusChannelAbstract<TunedInstrumentEvent, OpusLine>(uuid) {
+    override val jsontype = "std"
     var midi_bank = 0
 
     fun set_midi_bank(bank: Int) {
@@ -410,10 +433,11 @@ class OpusChannel(uuid: Int): OpusChannelAbstract<TunedInstrumentEvent, OpusLine
                 && other.midi_bank == this.midi_bank
                 && super.equals(other)
     }
-
 }
 
 class OpusPercussionChannel(uuid: Int) : OpusChannelAbstract<PercussionEvent, OpusLinePercussion>(uuid) {
+    override val jsontype = "kit"
+
     companion object {
         const val DEFAULT_INSTRUMENT = 0
     }

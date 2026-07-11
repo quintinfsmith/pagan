@@ -9,6 +9,9 @@
  */
 package com.qfs.pagan.structure.opusmanager.base.effectcontrol.event
 
+import com.qfs.json.JSONHashMap
+import com.qfs.json.JSONInteger
+import com.qfs.json.JSONList
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
@@ -65,6 +68,15 @@ class DelayEvent(var numerator: Int, var denominator: Int, var echo: Int, var fa
         //}
 
         return copy_event
+    }
+
+    override fun apply_to_json(json: JSONHashMap) {
+        json["frequency"] = JSONList(
+            JSONInteger(this.numerator),
+            JSONInteger(this.denominator)
+        )
+        json["echo"] = this.echo
+        json["fade"] = this.fade
     }
 
     override fun hashCode(): Int {

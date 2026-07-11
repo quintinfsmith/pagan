@@ -653,15 +653,20 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     fun load_from_bkp() {
+        // Not loading associated soundfonts deliberately.
         controller_model.opus_manager.vm_state.ready.value = false
-        controller_model.viewModelScope.launch(Dispatchers.IO) {
-            val (backup_uri, bytes) = view_model.project_manager?.read_backup() ?: throw MissingProjectManager()
-            controller_model.opus_manager.load(bytes) { json_data ->
-                controller_model.active_project = backup_uri
-                backup_uri?.let {
-                    controller_model.project_exists.value = DocumentFile.fromTreeUri(this@ComponentActivityEditor, it)?.exists() == true
+        this.init_soundfont {
+            controller_model.viewModelScope.launch(Dispatchers.IO) {
+                val (backup_uri, bytes) = view_model.project_manager?.read_backup()
+                    ?: throw MissingProjectManager()
+                controller_model.opus_manager.load(bytes) { json_data ->
+                    controller_model.active_project = backup_uri
+                    backup_uri?.let {
+                        controller_model.project_exists.value =
+                            DocumentFile.fromTreeUri(this@ComponentActivityEditor, it)
+                                ?.exists() == true
+                    }
                 }
-                this@ComponentActivityEditor._use_preferred_soundfont_hook(json_data)
             }
         }
     }

@@ -10,7 +10,7 @@ data class PaganColorScheme(
     val effect: Color = Defaults.effect,
     val line: Color = Defaults.line,
     val effect_line: Color = Defaults.effect_line,
-    val spill: (Color) -> Color = Defaults.spill,
+    val spill: (Color, Color) -> Color = Defaults.spill,
     val selected_primary: (Boolean, Color) -> Color = Defaults.selected_primary,
     val selected_secondary: (Boolean, Color) -> Color = Defaults.selected_secondary,
     val muted: (Boolean, Color) -> Color = Defaults.muted,
@@ -261,22 +261,8 @@ data class PaganColorScheme(
             val effect: Color = Color(0xFFCB9C20)
             val line: Color = Color(0xFFE0E0E0)
             val effect_line: Color = Color(0xFFFFFFFF)
-            val spill: (Color) -> Color = { base_color ->
-                if ((base_color.red + base_color.green + base_color.blue) / 3F > .5F) {
-                    Color(
-                        red = base_color.red * .75F,
-                        green = base_color.green * .75F,
-                        blue = base_color.blue * .75F,
-                        alpha = base_color.alpha
-                    )
-                } else {
-                    Color(
-                        red = min(1F, base_color.red / .75F),
-                        green = min(1F, base_color.green / .75F),
-                        blue = min(1F, base_color.blue / .75F),
-                        alpha = base_color.alpha
-                    )
-                }
+            val spill: (Color, Color) -> Color = { base_color, line_color ->
+                base_color.merge(line_color, .7F)
             }
             val selected_primary: (Boolean, Color) -> Color = { is_empty, base_color ->
                 val weight = .2F

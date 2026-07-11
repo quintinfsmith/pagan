@@ -16,6 +16,7 @@ import androidx.compose.material3.SwitchColors
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
+import androidx.core.graphics.plus
 import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.OpusColorPalette
 import com.qfs.pagan.ui.theme.PaganColorScheme.Companion.Defaults.UNUSED
 
@@ -53,15 +54,16 @@ object Colors {
         is_effect_line: Boolean,
         is_muted: Boolean,
     ): Triple<Color, Color, Color?> {
+
         val (event_color, line_color) = if (is_effect_line) {
             Pair(
                 line_palette.effect ?: channel_palette.effect ?: active_color_scheme.effect,
-                line_palette.effect_bg ?: channel_palette.effect_bg ?: active_color_scheme.effect_line
+                (line_palette.effect ?: channel_palette.effect ?: active_color_scheme.effect_line).merge(active_color_scheme.effect_line, .1F)
             )
         } else {
             Pair(
                 line_palette.event ?: channel_palette.event ?: active_color_scheme.leaf,
-                line_palette.event_bg ?: channel_palette.event_bg ?: active_color_scheme.line
+                (line_palette.event ?: channel_palette.event ?: active_color_scheme.line).merge(active_color_scheme.line, .1F)
             )
         }
 
@@ -69,7 +71,7 @@ object Colors {
 
         var leaf_color = when(active) {
             LeafState.Active -> event_color
-            LeafState.Spill -> active_color_scheme.spill(event_color)
+            LeafState.Spill -> active_color_scheme.spill(event_color, line_color)
             LeafState.Empty -> line_color
         }
 

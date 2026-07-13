@@ -9,11 +9,6 @@
  */
 package com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller
 
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import com.qfs.json.JSONHashMap
-import com.qfs.pagan.structure.opusmanager.OpusControlEventJSONInterface
-import com.qfs.pagan.structure.opusmanager.OpusControlEventJSONInterface.tempo_event
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 
 class TempoController(beat_count: Int): EffectController<OpusTempoEvent>(beat_count, OpusTempoEvent(120F))

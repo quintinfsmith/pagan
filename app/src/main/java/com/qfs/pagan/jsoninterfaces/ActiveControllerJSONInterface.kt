@@ -31,12 +31,9 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.TTT
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.json_string
-import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
 object ActiveControllerJSONInterface {
-    fun <T: EffectEvent> from_json(obj: JSONHashMap, size: Int): EffectController<out EffectEvent> {
+    fun from_json(obj: JSONHashMap, size: Int): EffectController<out EffectEvent> {
         val output = when (val label = obj.get_string("type")) {
             "tempo" -> {
                 val controller = TempoController(size)

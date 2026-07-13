@@ -35,28 +35,9 @@ object ActiveControlSetJSONInterface {
     fun from_json(json_obj: JSONHashMap, size: Int): EffectControlSet {
         val control_set = EffectControlSet(size)
         for (json_controller in json_obj.get_listn("controllers") ?: JSONList()) {
-            val controller = when (val label = (json_controller as JSONHashMap).get_string("type")) {
-                "tempo" -> ActiveControllerJSONInterface.from_json<OpusTempoEvent>(json_controller, size)
-                "volume" -> ActiveControllerJSONInterface.from_json<OpusVolumeEvent>(json_controller, size)
-                "velocity" -> ActiveControllerJSONInterface.from_json<OpusVelocityEvent>(json_controller, size)
-                "pan" -> ActiveControllerJSONInterface.from_json<OpusPanEvent>(json_controller, size)
-                "delay" -> ActiveControllerJSONInterface.from_json<DelayEvent>(json_controller, size)
-                "lowpass" -> ActiveControllerJSONInterface.from_json<LowPassEvent>(json_controller, size)
-                "highpass" -> ActiveControllerJSONInterface.from_json<HighPassEvent>(json_controller, size)
-                else -> throw UnknownControllerException(label)
-            }
-
-            val key = when (controller) {
-                is TempoController -> EffectType.Tempo
-                is VolumeController -> EffectType.Volume
-                is PanController -> EffectType.Pan
-                is VelocityController -> EffectType.Velocity
-                is DelayController -> EffectType.Delay
-                is LowPassController -> EffectType.LowPass
-                is HighPassController -> EffectType.HighPass
-                is ReverbController -> EffectType.Reverb
-                else -> throw UnhandledControllerException(controller)
-            }
+            if (json_controller !is JSONHashMap) continue
+            val controller = ActiveControllerJSONInterface.from_json(json_controller, size)
+            val key = controller.initial_event.event_type
             control_set.new_controller(key, controller)
         }
         return control_set

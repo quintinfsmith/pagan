@@ -13,8 +13,18 @@ import com.qfs.json.JSONHashMap
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.asEffectTransition
 
 class OpusPanEvent(value: Float, duration: Int = 1, transition: EffectTransition = EffectTransition.Instant): SingleFloatEvent(value, duration, transition) {
+    companion object: TTT<OpusPanEvent> {
+        override fun from_json(map: JSONHashMap): OpusPanEvent {
+            return OpusPanEvent(
+                map.get_float("value"),
+                map.get_int("duration", 1),
+                map.get_string("transition", "Instant").asEffectTransition()
+            )
+        }
+    }
     override val event_type = EffectType.Pan
     override fun to_float_array(): FloatArray {
         return floatArrayOf(this.value)

@@ -12,8 +12,19 @@ package com.qfs.pagan.structure.opusmanager.base.effectcontrol.event
 import com.qfs.json.JSONHashMap
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.asEffectTransition
 
 class OpusTempoEvent(value: Float, duration: Int = 1, transition: EffectTransition = EffectTransition.Instant): SingleFloatEvent(value, duration, transition) {
+    companion object: TTT<OpusTempoEvent> {
+        override fun from_json(map: JSONHashMap): OpusTempoEvent {
+            return OpusTempoEvent(
+                map.get_float("tempo"),
+                map.get_int("duration", 1),
+                map.get_string("transition", "Instant").asEffectTransition()
+            )
+        }
+
+    }
     override val event_type = EffectType.Tempo
     override fun copy(): OpusTempoEvent {
         return OpusTempoEvent(this.value, this.duration, this.transition)

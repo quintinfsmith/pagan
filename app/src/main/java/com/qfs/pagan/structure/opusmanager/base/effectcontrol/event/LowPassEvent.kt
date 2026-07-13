@@ -13,6 +13,7 @@ import com.qfs.json.JSONHashMap
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.asEffectTransition
 
 abstract class FilterEvent(var filter_cutoff: Float, var resonance: Float?, duration: Int, transition: EffectTransition): EffectEvent(duration, transition) {
     override fun to_float_array(): FloatArray {
@@ -66,6 +67,17 @@ class LowPassEvent(
     duration: Int = 1,
     transition: EffectTransition = EffectTransition.Instant
 ): FilterEvent(filter_cutoff, resonance, duration, transition) {
+    companion object: TTT<LowPassEvent> {
+        override fun from_json(map: JSONHashMap): LowPassEvent {
+            return LowPassEvent(
+                filter_cutoff = map.get_float("cutoff"),
+                resonance = map.get_floatn("res"),
+                map.get_int("duration", 1),
+                map.get_string("transition", "Instant").asEffectTransition()
+            )
+        }
+    }
+
     override val event_type = EffectType.LowPass
 
     override fun equals(other: Any?): Boolean {
@@ -92,6 +104,15 @@ class HighPassEvent(
     duration: Int = 1,
     transition: EffectTransition = EffectTransition.Instant
 ): FilterEvent(filter_cutoff, null, duration, transition) {
+    companion object: TTT<HighPassEvent> {
+        override fun from_json(map: JSONHashMap): HighPassEvent {
+            return HighPassEvent(
+                filter_cutoff = map.get_float("cutoff"),
+                duration = map.get_int("duration", 1),
+                transition = map.get_string("transition", "Instant").asEffectTransition()
+            )
+        }
+    }
     override val event_type = EffectType.HighPass
     override fun equals(other: Any?): Boolean {
         return other is HighPassEvent && super.equals(other)

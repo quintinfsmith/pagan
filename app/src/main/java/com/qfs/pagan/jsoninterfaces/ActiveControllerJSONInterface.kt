@@ -24,6 +24,14 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.P
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.TempoController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.VelocityController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.VolumeController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.HighPassEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.TTT
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.json_string
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 
@@ -32,44 +40,37 @@ object ActiveControllerJSONInterface {
         val output = when (val label = obj.get_string("type")) {
             "tempo" -> {
                 val controller = TempoController(size)
-                controller.set_initial_event(OpusControlEventJSONInterface.tempo_event(obj.get_hashmap("initial")))
-                this.populate_controller(obj, controller, OpusControlEventJSONInterface::tempo_event)
+                controller.populate_controller_from_json(obj, OpusTempoEvent)
                 controller
             }
             "volume" -> {
                 val controller = VolumeController(size)
-                controller.set_initial_event(OpusControlEventJSONInterface.volume_event(obj.get_hashmap("initial")))
-                this.populate_controller(obj, controller, OpusControlEventJSONInterface::volume_event)
+                controller.populate_controller_from_json(obj, OpusVolumeEvent)
                 controller
             }
             "velocity" -> {
                 val controller = VelocityController(size)
-                controller.set_initial_event(OpusControlEventJSONInterface.velocity_event(obj.get_hashmap("initial")))
-                this.populate_controller(obj, controller, OpusControlEventJSONInterface::velocity_event)
+                controller.populate_controller_from_json(obj, OpusVelocityEvent)
                 controller
             }
             "pan" -> {
                 val controller = PanController(size)
-                controller.set_initial_event(OpusControlEventJSONInterface.pan_event(obj.get_hashmap("initial")))
-                this.populate_controller(obj, controller, OpusControlEventJSONInterface::pan_event)
+                controller.populate_controller_from_json(obj, OpusPanEvent)
                 controller
             }
             "delay" -> {
                 val controller = DelayController(size)
-                controller.set_initial_event(OpusControlEventJSONInterface.delay_event(obj.get_hashmap("initial")))
-                this.populate_controller(obj, controller, OpusControlEventJSONInterface::delay_event)
+                controller.populate_controller_from_json(obj, DelayEvent)
                 controller
             }
             "lowpass" -> {
                 val controller = LowPassController(size)
-                controller.set_initial_event(OpusControlEventJSONInterface.lowpass_event(obj.get_hashmap("initial")))
-                this.populate_controller(obj, controller, OpusControlEventJSONInterface::lowpass_event)
+                controller.populate_controller_from_json(obj, LowPassEvent)
                 controller
             }
             "highpass" -> {
                 val controller = HighPassController(size)
-                controller.set_initial_event(OpusControlEventJSONInterface.highpass_event(obj.get_hashmap("initial")))
-                this.populate_controller(obj, controller, OpusControlEventJSONInterface::highpass_event)
+                controller.populate_controller_from_json(obj, HighPassEvent)
                 controller
             }
             else -> throw UnknownControllerException(label)
@@ -79,23 +80,6 @@ object ActiveControllerJSONInterface {
         output.visible = obj.get_booleann("visible") ?: false
 
         return output
-    }
-
-    private fun <T: EffectEvent> populate_controller(obj: JSONHashMap, controller: EffectController<T>, converter: (JSONHashMap) -> T) {
-        for (pair in obj.get_list("events")) {
-            val index = (pair as JSONList).get_int(0)
-            val value = pair.get_hashmapn(1) ?: continue
-
-            val generic_event = OpusTreeJSONInterface.from_json(value) { event: JSONHashMap? ->
-                if (event == null) {
-                    null
-                } else {
-                    converter(event)
-                }
-            }
-            controller.beats[index] = generic_event
-        }
-        controller.init_blocked_tree_caches()
     }
 
     fun convert_v2_to_v3(input: JSONHashMap): JSONHashMap {

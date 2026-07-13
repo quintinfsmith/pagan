@@ -16,6 +16,7 @@ import com.qfs.json.JSONString
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.asEffectTransition
 
 
 class OpusVelocityEvent(
@@ -27,6 +28,38 @@ class OpusVelocityEvent(
     enum class SlideMaxWidth {
         Beat,
         Note
+    }
+    companion object: TTT<OpusVelocityEvent> {
+        override fun from_json(map: JSONHashMap): OpusVelocityEvent {
+            val value = if (map["velocity"] is JSONInteger) {
+                map.get_int("velocity").toFloat() / 128F
+            } else {
+                map.get_float("velocity")
+            }
+
+            val slide_list = map.get_listn("slide")
+
+            return OpusVelocityEvent(
+                value,
+                if (slide_list != null) {
+                    Pair(
+                        OpusVelocityEvent.SlideMaxWidth.valueOf(slide_list.get_string(0)),
+                        slide_list.get_intn(1) ?: 1
+                    )
+                } else {
+                    null
+                },
+                map.get_int("duration", 1),
+                /* Note: Need the try catch since I initially had transitions as int, but only used 0 */
+                try {
+                    map.get_string("transition", "Instant").asEffectTransition()
+                } catch (e: ClassCastException) {
+                    EffectTransition.Instant
+                }
+            )
+        }
+
+
     }
 
     override val event_type = EffectType.Velocity

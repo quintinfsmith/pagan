@@ -18,6 +18,7 @@ import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.ReducibleTreeArray
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.TTT
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.json_string
 import com.qfs.pagan.structure.plus
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
@@ -299,5 +300,23 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
         map["visible"] = this.visible
 
         return map
+    }
+
+    fun <K: TTT<T>> populate_controller_from_json(obj: JSONHashMap, companion: K) {
+        this.set_initial_event(companion.from_json(obj.get_hashmap("initial")))
+        for (pair in obj.get_list("events")) {
+            val index = (pair as JSONList).get_int(0)
+            val value = pair.get_hashmapn(1) ?: continue
+
+            val generic_event = OpusTreeJSONInterface.from_json(value) { event: JSONHashMap? ->
+                if (event == null) {
+                    null
+                } else {
+                    companion.from_json(event)
+                }
+            }
+            this.beats[index] = generic_event
+        }
+        this.init_blocked_tree_caches()
     }
 }

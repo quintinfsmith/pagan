@@ -9,6 +9,7 @@
  */
 package com.qfs.pagan.structure.opusmanager.base.effectcontrol.event
 
+import com.qfs.json.Deserializable
 import com.qfs.json.JSONHashMap
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
@@ -67,7 +68,7 @@ class LowPassEvent(
     duration: Int = 1,
     transition: EffectTransition = EffectTransition.Instant
 ): FilterEvent(filter_cutoff, resonance, duration, transition) {
-    companion object: TTT<LowPassEvent> {
+    companion object: Deserializable<LowPassEvent> {
         override fun from_json(map: JSONHashMap): LowPassEvent {
             return LowPassEvent(
                 filter_cutoff = map.get_float("cutoff"),
@@ -104,7 +105,7 @@ class HighPassEvent(
     duration: Int = 1,
     transition: EffectTransition = EffectTransition.Instant
 ): FilterEvent(filter_cutoff, null, duration, transition) {
-    companion object: TTT<HighPassEvent> {
+    companion object: Deserializable<HighPassEvent> {
         override fun from_json(map: JSONHashMap): HighPassEvent {
             return HighPassEvent(
                 filter_cutoff = map.get_float("cutoff"),

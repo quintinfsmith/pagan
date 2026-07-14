@@ -9,6 +9,7 @@
  */
 package com.qfs.pagan.structure.opusmanager.base.effectcontrol.event
 
+import com.qfs.json.Deserializable
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONInteger
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
@@ -21,7 +22,7 @@ class OpusVolumeEvent(
     duration: Int = 1,
     transition: EffectTransition = EffectTransition.Instant
 ): SingleFloatEvent(value, duration, transition) {
-    companion object: TTT<OpusVolumeEvent> {
+    companion object: Deserializable<OpusVolumeEvent> {
         override fun from_json(map: JSONHashMap): OpusVolumeEvent {
             val value = if (map["volume"] is JSONInteger) {
                 map.get_int("volume").toFloat() / 128F

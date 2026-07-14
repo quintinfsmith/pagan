@@ -9,13 +9,14 @@
  */
 package com.qfs.pagan.structure.opusmanager.base.effectcontrol.event
 
+import com.qfs.json.Deserializable
 import com.qfs.json.JSONHashMap
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.asEffectTransition
 
 class OpusTempoEvent(value: Float = 120F, duration: Int = 1, transition: EffectTransition = EffectTransition.Instant): SingleFloatEvent(value, duration, transition) {
-    companion object: TTT<OpusTempoEvent> {
+    companion object: Deserializable<OpusTempoEvent> {
         override fun from_json(map: JSONHashMap): OpusTempoEvent {
             return OpusTempoEvent(
                 map.get_float("tempo"),

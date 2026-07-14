@@ -13,9 +13,7 @@ import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONCompliant
-import com.qfs.pagan.PanEvent
 import com.qfs.pagan.jsoninterfaces.OpusTreeJSONInterface
-import com.qfs.pagan.jsoninterfaces.UnknownControllerException
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.ReducibleTreeArray
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
@@ -30,7 +28,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEve
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.PitchEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.TTT
+import com.qfs.json.Deserializable
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.from_json_string
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.json_string
 import com.qfs.pagan.structure.plus
@@ -39,7 +37,7 @@ import com.qfs.pagan.structure.times
 
 class EffectController<T: EffectEvent>(beat_count: Int, var initial_event: T): ReducibleTreeArray<T>(MutableList(beat_count) { ReducibleTree() }), JSONCompliant {
     var visible = false // I don't like this logic here, but the code is substantially cleaner with it hear than in the OpusLayerInterface
-    companion object: TTT<EffectController<*>> {
+    companion object: Deserializable<EffectController<*>> {
         override fun from_json(map: JSONHashMap): EffectController<*> {
             val companion = when (from_json_string(map.get_string("type"))) {
                 EffectType.Tempo -> OpusTempoEvent

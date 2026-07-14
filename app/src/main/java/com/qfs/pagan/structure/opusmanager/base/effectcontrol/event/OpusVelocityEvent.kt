@@ -9,6 +9,7 @@
  */
 package com.qfs.pagan.structure.opusmanager.base.effectcontrol.event
 
+import com.qfs.json.Deserializable
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
@@ -29,7 +30,7 @@ class OpusVelocityEvent(
         Beat,
         Note
     }
-    companion object: TTT<OpusVelocityEvent> {
+    companion object: Deserializable<OpusVelocityEvent> {
         override fun from_json(map: JSONHashMap): OpusVelocityEvent {
             val value = if (map["velocity"] is JSONInteger) {
                 map.get_int("velocity").toFloat() / 128F

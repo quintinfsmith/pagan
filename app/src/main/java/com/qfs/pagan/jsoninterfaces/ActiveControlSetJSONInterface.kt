@@ -15,18 +15,11 @@ import com.qfs.pagan.jsoninterfaces.UnhandledControllerException
 import com.qfs.pagan.jsoninterfaces.UnknownControllerException
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectControlSet
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.DelayController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.HighPassController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.LowPassController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.PanController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.ReverbController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.TempoController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.VelocityController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.VolumeController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.HighPassEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
@@ -36,7 +29,12 @@ object ActiveControlSetJSONInterface {
         val control_set = EffectControlSet(size)
         for (json_controller in json_obj.get_listn("controllers") ?: JSONList()) {
             if (json_controller !is JSONHashMap) continue
-            val controller = ActiveControllerJSONInterface.from_json(json_controller, size)
+            // Ensure size exists, (it didn't initially)
+            if (!json_controller.contains_key("size")) {
+                json_controller["size"] = size
+            }
+
+            val controller = EffectController.from_json(json_controller)
             val key = controller.initial_event.event_type
             control_set.new_controller(key, controller)
         }

@@ -14,18 +14,63 @@ import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONCompliant
 import com.qfs.pagan.jsoninterfaces.OpusTreeJSONInterface
+import com.qfs.pagan.jsoninterfaces.UnknownControllerException
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.ReducibleTreeArray
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.HighPassEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.TTT
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.json_string
 import com.qfs.pagan.structure.plus
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.structure.times
 
-abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_event: T): ReducibleTreeArray<T>(MutableList(beat_count) { ReducibleTree() }), JSONCompliant {
+class EffectController<T: EffectEvent>(beat_count: Int, var initial_event: T): ReducibleTreeArray<T>(MutableList(beat_count) { ReducibleTree() }), JSONCompliant {
     var visible = false // I don't like this logic here, but the code is substantially cleaner with it hear than in the OpusLayerInterface
+    companion object: TTT<EffectController<*>> {
+        override fun from_json(map: JSONHashMap): EffectController<*> {
+            val companion = when (val label = map.get_string("type")) {
+                "tempo" -> OpusTempoEvent
+                "volume" -> OpusVolumeEvent
+                "velocity" -> OpusVelocityEvent
+                "pan" -> OpusPanEvent
+                "delay" -> DelayEvent
+                "lowpass" -> LowPassEvent
+                "highpass" -> HighPassEvent
+                else -> throw UnknownControllerException(label)
+            }
+
+            val initial_event = companion.from_json(map.get_hashmap("initial"))
+            val size = map.get_int("size")
+            val controller = EffectController(size, initial_event)
+
+            for (pair in map.get_list("events")) {
+                val index = (pair as JSONList).get_int(0)
+                val value = pair.get_hashmapn(1) ?: continue
+
+                val generic_event = OpusTreeJSONInterface.from_json(value) { event: JSONHashMap? ->
+                    if (event == null) {
+                        null
+                    } else {
+                        companion.from_json(event)
+                    }
+                }
+                controller.beats[index] = generic_event
+            }
+            controller.init_blocked_tree_caches()
+            controller.visible = map.get_booleann("visible") ?: false
+            return controller
+        }
+    }
+
+
     fun set_initial_event(value: T) {
         this.initial_event = value
     }
@@ -298,25 +343,9 @@ abstract class EffectController<T: EffectEvent>(beat_count: Int, var initial_eve
         map["initial"] = this.initial_event.to_json()
         map["type"] = this.initial_event.event_type.json_string()
         map["visible"] = this.visible
+        map["size"] = this.beat_count()
 
         return map
     }
 
-    fun <K: TTT<T>> populate_controller_from_json(obj: JSONHashMap, companion: K) {
-        this.set_initial_event(companion.from_json(obj.get_hashmap("initial")))
-        for (pair in obj.get_list("events")) {
-            val index = (pair as JSONList).get_int(0)
-            val value = pair.get_hashmapn(1) ?: continue
-
-            val generic_event = OpusTreeJSONInterface.from_json(value) { event: JSONHashMap? ->
-                if (event == null) {
-                    null
-                } else {
-                    companion.from_json(event)
-                }
-            }
-            this.beats[index] = generic_event
-        }
-        this.init_blocked_tree_caches()
-    }
 }

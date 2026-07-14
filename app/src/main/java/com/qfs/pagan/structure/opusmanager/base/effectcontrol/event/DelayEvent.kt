@@ -17,7 +17,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.asEffectTransition
 
-class DelayEvent(var numerator: Int, var denominator: Int, var echo: Int, var fade: Float, duration: Int = 1, transition: EffectTransition = EffectTransition.Instant): EffectEvent(duration, transition) {
+class DelayEvent(var numerator: Int = 1, var denominator: Int = 1, var echo: Int = 0, var fade: Float = 0F, duration: Int = 1, transition: EffectTransition = EffectTransition.Instant): EffectEvent(duration, transition) {
     companion object: TTT<DelayEvent> {
         override fun from_json(map: JSONHashMap): DelayEvent {
             val freq = map.get_list("frequency")

@@ -12,18 +12,17 @@ package com.qfs.pagan.structure.opusmanager.base.effectcontrol
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONList
 import com.qfs.json.JSONCompliant
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.LowPassController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.DelayController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.HighPassController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.PanController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.PitchController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.ReverbController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.TempoController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.VelocityController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.VolumeController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.HighPassEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.PitchEvent
 
 class EffectControlSet(var beat_count: Int, default_enabled: Set<EffectType>? = null): JSONCompliant {
     val controllers = HashMap<EffectType, EffectController<*>>()
@@ -52,20 +51,24 @@ class EffectControlSet(var beat_count: Int, default_enabled: Set<EffectType>? = 
 
     fun new_controller(type: EffectType, controller: EffectController<*>? = null) {
         if (controller == null) {
-            this.controllers[type] = when (type) {
-                EffectType.Tempo -> TempoController(this.beat_count)
-                EffectType.Volume -> VolumeController(this.beat_count)
-                EffectType.Reverb -> ReverbController(this.beat_count)
-                EffectType.Pan -> PanController(this.beat_count)
-                EffectType.Velocity -> VelocityController(this.beat_count)
-                EffectType.Delay -> DelayController(this.beat_count)
-                EffectType.LowPass -> LowPassController(this.beat_count)
-                EffectType.HighPass -> HighPassController(this.beat_count)
-                EffectType.Pitch -> PitchController(this.beat_count)
-            }
+            this.controllers[type] = EffectController(
+                this.beat_count,
+                when (type) {
+                    EffectType.Tempo -> OpusTempoEvent()
+                    EffectType.Volume -> OpusVolumeEvent()
+                    EffectType.Reverb -> OpusReverbEvent()
+                    EffectType.Pan -> OpusPanEvent()
+                    EffectType.Velocity -> OpusVelocityEvent()
+                    EffectType.Delay -> DelayEvent()
+                    EffectType.LowPass -> LowPassEvent()
+                    EffectType.HighPass -> HighPassEvent()
+                    EffectType.Pitch -> PitchEvent()
+                }
+            )
         } else {
             this.controllers[type] = controller
         }
+
         this.controllers[type]!!.set_beat_count(this.beat_count)
     }
 

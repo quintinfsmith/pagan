@@ -17,7 +17,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.asEffectTransition
 import kotlin.math.pow
 
 class OpusVolumeEvent(
-    value: Float,
+    value: Float = 1F,
     duration: Int = 1,
     transition: EffectTransition = EffectTransition.Instant
 ): SingleFloatEvent(value, duration, transition) {

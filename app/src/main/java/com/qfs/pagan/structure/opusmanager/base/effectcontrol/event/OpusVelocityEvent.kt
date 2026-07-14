@@ -20,7 +20,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.asEffectTransition
 
 
 class OpusVelocityEvent(
-    var value: Float,
+    var value: Float = 1F,
     var slide: Pair<SlideMaxWidth, Int>? = null,
     duration: Int = 1,
     transition: EffectTransition = EffectTransition.Instant

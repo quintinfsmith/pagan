@@ -28,7 +28,6 @@ import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.DelayController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
@@ -380,7 +379,7 @@ class ProjectToMIDIConverter {
                 }
             }
 
-            fun parse_delay_map(delay_controller: DelayController): List<Pair<IntRange, DelayEvent>> {
+            fun parse_delay_map(delay_controller: EffectController<DelayEvent>): List<Pair<IntRange, DelayEvent>> {
                 // NOTE: Assumes instant transition only
                 val intermediary = mutableListOf<Pair<Int, DelayEvent>>()
                 intermediary.add(Pair(0, delay_controller.initial_event))
@@ -481,7 +480,7 @@ class ProjectToMIDIConverter {
             }
 
             val global_delay_map = if (opus_manager.has_global_controller(EffectType.Delay)) {
-                parse_delay_map(opus_manager.get_global_controller<DelayEvent>(EffectType.Delay) as DelayController)
+                parse_delay_map(opus_manager.get_global_controller(EffectType.Delay))
             } else {
                 null
             }
@@ -505,7 +504,7 @@ class ProjectToMIDIConverter {
                 }
 
                 val channel_delay_map = if (opus_manager.has_channel_controller(EffectType.Delay, c)) {
-                    parse_delay_map(opus_manager.get_channel_controller<DelayEvent>(EffectType.Delay, c) as DelayController)
+                    parse_delay_map(opus_manager.get_channel_controller(EffectType.Delay, c))
                 } else {
                     null
                 }
@@ -517,7 +516,7 @@ class ProjectToMIDIConverter {
                     if (line.muted) continue
 
                     val line_delay_map = if (opus_manager.has_line_controller(EffectType.Delay, c, l)) {
-                        parse_delay_map(opus_manager.get_line_controller<DelayEvent>(EffectType.Delay, c, l) as DelayController)
+                        parse_delay_map(opus_manager.get_line_controller(EffectType.Delay, c, l))
                     } else {
                         null
                     }

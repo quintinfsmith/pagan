@@ -34,8 +34,7 @@ import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.ControllerProfile
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.PitchController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.TempoController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.PitchEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
@@ -95,7 +94,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             return beats.toIntArray()
         }
 
-        fun calculate_tempo_changes(tempo_controller: TempoController): List<Pair<Rational, Float>> {
+        fun calculate_tempo_changes(tempo_controller: EffectController<OpusTempoEvent>): List<Pair<Rational, Float>> {
             var working_tempo = tempo_controller.initial_event.value
 
             val output = mutableListOf(Pair(Rational(0,1), working_tempo))
@@ -602,7 +601,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
             this._sample_handle_manager.change_program(midi_channel, instrument.program)
         }
 
-        this.map_tempo_changes(this.opus_manager.get_controller<OpusTempoEvent>(PaganEffectType.Tempo) as TempoController)
+        this.map_tempo_changes(this.opus_manager.get_controller(PaganEffectType.Tempo))
         this._cache_beat_frames()
 
         this.frame_count = this._cached_beat_frames!!.last()
@@ -758,7 +757,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         )
     }
 
-    fun map_tempo_changes(tempo_controller: TempoController) {
+    fun map_tempo_changes(tempo_controller: EffectController<OpusTempoEvent>) {
         this.working_tempo_controller = tempo_controller.generate_profile()
         this._tempo_ratio_map.clear()
         this._tempo_ratio_map.addAll(
@@ -828,7 +827,7 @@ class PlaybackFrameMap(val opus_manager: OpusLayerBase, private val _sample_hand
         var working_note_start = initial_offset
         var working_backup_value = bkp_note_value
 
-        val pitch_controller = PitchController(this.opus_manager.length)
+        val pitch_controller = EffectController(this.opus_manager.length, PitchEvent())
         pitch_controller.flag_ignore_blocking = true
 
         var flag_pitch_shift: Boolean = false

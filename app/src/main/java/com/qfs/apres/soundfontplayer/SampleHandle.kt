@@ -11,7 +11,6 @@ package com.qfs.apres.soundfontplayer
 
 import android.util.Log
 import com.qfs.apres.soundfont2.SampleData
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.PitchController
 import kotlin.math.abs
 
 class SampleHandle(override var ptr: Long): JNIObject<SampleHandle> {

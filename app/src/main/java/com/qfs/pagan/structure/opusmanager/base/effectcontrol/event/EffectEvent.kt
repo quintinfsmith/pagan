@@ -16,7 +16,7 @@ import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 
-interface TTT<K: EffectEvent> {
+interface TTT<K> {
     fun from_json(map: JSONHashMap): K
 }
 abstract class EffectEvent(duration: Int = 1, var transition: EffectTransition = EffectTransition.Instant): OpusEvent(duration) {

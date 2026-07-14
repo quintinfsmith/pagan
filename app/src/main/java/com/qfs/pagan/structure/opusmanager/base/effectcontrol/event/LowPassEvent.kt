@@ -62,8 +62,8 @@ abstract class FilterEvent(var filter_cutoff: Float, var resonance: Float?, dura
 }
 
 class LowPassEvent(
-    filter_cutoff: Float,
-    resonance: Float?,
+    filter_cutoff: Float = 20000F,
+    resonance: Float? = null,
     duration: Int = 1,
     transition: EffectTransition = EffectTransition.Instant
 ): FilterEvent(filter_cutoff, resonance, duration, transition) {
@@ -100,7 +100,7 @@ class LowPassEvent(
 }
 
 class HighPassEvent(
-    filter_cutoff: Float,
+    filter_cutoff: Float = 0F,
     duration: Int = 1,
     transition: EffectTransition = EffectTransition.Instant
 ): FilterEvent(filter_cutoff, null, duration, transition) {

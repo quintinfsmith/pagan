@@ -15,15 +15,8 @@ import com.qfs.json.JSONList
 import com.qfs.json.JSONString
 import com.qfs.pagan.jsoninterfaces.OpusTreeJSONInterface
 import com.qfs.pagan.jsoninterfaces.UnknownControllerException
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.DelayController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.HighPassController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.LowPassController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.PanController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.TempoController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.VelocityController
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.VolumeController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.HighPassEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
@@ -34,49 +27,12 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEv
 
 object ActiveControllerJSONInterface {
     fun from_json(obj: JSONHashMap, size: Int): EffectController<out EffectEvent> {
-        val output = when (val label = obj.get_string("type")) {
-            "tempo" -> {
-                val controller = TempoController(size)
-                controller.populate_controller_from_json(obj, OpusTempoEvent)
-                controller
-            }
-            "volume" -> {
-                val controller = VolumeController(size)
-                controller.populate_controller_from_json(obj, OpusVolumeEvent)
-                controller
-            }
-            "velocity" -> {
-                val controller = VelocityController(size)
-                controller.populate_controller_from_json(obj, OpusVelocityEvent)
-                controller
-            }
-            "pan" -> {
-                val controller = PanController(size)
-                controller.populate_controller_from_json(obj, OpusPanEvent)
-                controller
-            }
-            "delay" -> {
-                val controller = DelayController(size)
-                controller.populate_controller_from_json(obj, DelayEvent)
-                controller
-            }
-            "lowpass" -> {
-                val controller = LowPassController(size)
-                controller.populate_controller_from_json(obj, LowPassEvent)
-                controller
-            }
-            "highpass" -> {
-                val controller = HighPassController(size)
-                controller.populate_controller_from_json(obj, HighPassEvent)
-                controller
-            }
-            else -> throw UnknownControllerException(label)
+        // Ensure size exists, (it didn't initially)
+        if (!obj.contains_key("size")) {
+            obj["size"] = size
         }
 
-
-        output.visible = obj.get_booleann("visible") ?: false
-
-        return output
+        return EffectController.from_json(obj)
     }
 
     fun convert_v2_to_v3(input: JSONHashMap): JSONHashMap {

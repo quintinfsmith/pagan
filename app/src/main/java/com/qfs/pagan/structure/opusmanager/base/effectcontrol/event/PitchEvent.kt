@@ -13,7 +13,7 @@ import com.qfs.json.JSONHashMap
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 
-class PitchEvent(pitch: Float, duration: Int = 1, transition: EffectTransition = EffectTransition.Instant): SingleFloatEvent(pitch, duration, transition) {
+class PitchEvent(pitch: Float = 1F, duration: Int = 1, transition: EffectTransition = EffectTransition.Instant): SingleFloatEvent(pitch, duration, transition) {
     override val event_type = EffectType.Pitch
     override fun to_float_array(): FloatArray {
         return floatArrayOf(this.value)

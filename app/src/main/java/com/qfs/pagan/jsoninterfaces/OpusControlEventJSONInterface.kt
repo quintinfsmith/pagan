@@ -16,7 +16,6 @@ import com.qfs.pagan.jsoninterfaces.UnknownEventTypeException
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.asEffectTransition
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.HighPassController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.HighPassEvent

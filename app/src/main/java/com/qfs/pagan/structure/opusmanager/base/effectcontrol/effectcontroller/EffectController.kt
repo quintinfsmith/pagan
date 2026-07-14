@@ -13,20 +13,25 @@ import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONInteger
 import com.qfs.json.JSONList
 import com.qfs.json.JSONCompliant
+import com.qfs.pagan.PanEvent
 import com.qfs.pagan.jsoninterfaces.OpusTreeJSONInterface
 import com.qfs.pagan.jsoninterfaces.UnknownControllerException
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.ReducibleTreeArray
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.HighPassEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.PitchEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.TTT
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.from_json_string
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.json_string
 import com.qfs.pagan.structure.plus
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
@@ -36,15 +41,16 @@ class EffectController<T: EffectEvent>(beat_count: Int, var initial_event: T): R
     var visible = false // I don't like this logic here, but the code is substantially cleaner with it hear than in the OpusLayerInterface
     companion object: TTT<EffectController<*>> {
         override fun from_json(map: JSONHashMap): EffectController<*> {
-            val companion = when (val label = map.get_string("type")) {
-                "tempo" -> OpusTempoEvent
-                "volume" -> OpusVolumeEvent
-                "velocity" -> OpusVelocityEvent
-                "pan" -> OpusPanEvent
-                "delay" -> DelayEvent
-                "lowpass" -> LowPassEvent
-                "highpass" -> HighPassEvent
-                else -> throw UnknownControllerException(label)
+            val companion = when (from_json_string(map.get_string("type"))) {
+                EffectType.Tempo -> OpusTempoEvent
+                EffectType.Velocity -> OpusVelocityEvent
+                EffectType.Volume -> OpusVolumeEvent
+                EffectType.LowPass -> LowPassEvent
+                EffectType.HighPass -> HighPassEvent
+                EffectType.Delay -> DelayEvent
+                EffectType.Pan -> OpusPanEvent
+                EffectType.Pitch -> PitchEvent
+                EffectType.Reverb -> OpusReverbEvent
             }
 
             val initial_event = companion.from_json(map.get_hashmap("initial"))
@@ -56,11 +62,7 @@ class EffectController<T: EffectEvent>(beat_count: Int, var initial_event: T): R
                 val value = pair.get_hashmapn(1) ?: continue
 
                 val generic_event = OpusTreeJSONInterface.from_json(value) { event: JSONHashMap? ->
-                    if (event == null) {
-                        null
-                    } else {
-                        companion.from_json(event)
-                    }
+                    event?.let { companion.from_json(it) }
                 }
                 controller.beats[index] = generic_event
             }

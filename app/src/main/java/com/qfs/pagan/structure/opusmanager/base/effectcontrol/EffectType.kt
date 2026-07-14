@@ -37,3 +37,11 @@ fun EffectType.json_string(): String {
         EffectType.Reverb -> "reverb"
     }
 }
+
+fun from_json_string(json_string: String): EffectType {
+    for (e in EffectType.entries) {
+        if (e.json_string() == json_string) return e
+    }
+    throw Exception("Unknown Effect Type")
+}
+

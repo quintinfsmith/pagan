@@ -49,27 +49,26 @@ class EffectControlSet(var beat_count: Int, default_enabled: Set<EffectType>? = 
         }
     }
 
-    fun new_controller(type: EffectType, controller: EffectController<*>? = null) {
-        if (controller == null) {
-            this.controllers[type] = EffectController(
-                this.beat_count,
-                when (type) {
-                    EffectType.Tempo -> OpusTempoEvent()
-                    EffectType.Volume -> OpusVolumeEvent()
-                    EffectType.Reverb -> OpusReverbEvent()
-                    EffectType.Pan -> OpusPanEvent()
-                    EffectType.Velocity -> OpusVelocityEvent()
-                    EffectType.Delay -> DelayEvent()
-                    EffectType.LowPass -> LowPassEvent()
-                    EffectType.HighPass -> HighPassEvent()
-                    EffectType.Pitch -> PitchEvent()
-                }
-            )
-        } else {
-            this.controllers[type] = controller
-        }
+    fun new_controller(type: EffectType) {
+        this.controllers[type] = EffectController(
+            this.beat_count,
+            when (type) {
+                EffectType.Tempo -> OpusTempoEvent()
+                EffectType.Volume -> OpusVolumeEvent()
+                EffectType.Reverb -> OpusReverbEvent()
+                EffectType.Pan -> OpusPanEvent()
+                EffectType.Velocity -> OpusVelocityEvent()
+                EffectType.Delay -> DelayEvent()
+                EffectType.LowPass -> LowPassEvent()
+                EffectType.HighPass -> HighPassEvent()
+                EffectType.Pitch -> PitchEvent()
+            }
+        )
+    }
 
-        this.controllers[type]!!.set_beat_count(this.beat_count)
+    fun <T: EffectEvent> new_controller(controller: EffectController<T>) {
+        controller.set_beat_count(this.beat_count)
+        this.controllers[controller.initial_event.event_type] = controller
     }
 
     fun remove_controller(type: EffectType) {

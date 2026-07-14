@@ -35,8 +35,7 @@ object ActiveControlSetJSONInterface {
             }
 
             val controller = EffectController.from_json(json_controller)
-            val key = controller.initial_event.event_type
-            control_set.new_controller(key, controller)
+            control_set.new_controller(controller)
         }
         return control_set
     }

@@ -46,7 +46,4 @@ class OpusPanEvent(value: Float = 0F, duration: Int = 1, transition: EffectTrans
     override fun apply_to_json(json: JSONHashMap) {
         json["value"] = this.value
     }
-
-    // override fun <T : OpusEvent> copy(): T {
-   // }
 }

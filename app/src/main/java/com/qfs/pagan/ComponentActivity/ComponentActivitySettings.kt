@@ -43,6 +43,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -215,7 +216,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     } else {
                         configuration.soundfont_uris.value = arrayOf(mutableStateOf(uri))
                     }
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     // pass
                 }
             } else {
@@ -256,7 +257,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     output_stream?.flush()
                     output_stream?.close()
 
-                } catch (e: FileNotFoundException) {
+                } catch (_: FileNotFoundException) {
                     // TODO:  Feedback? Only breaks on devices without properly implementation (realme RE549c)
                 }
             }
@@ -280,7 +281,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 }
 
                 this.view_model.requires_soundfont.value = false
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 //this.feedback_msg(this.getString(R.string.feedback_invalid_sf2_file))
                 new_file.delete()
                 // this.loading_reticle_hide()
@@ -350,19 +351,12 @@ class ComponentActivitySettings: PaganComponentActivity() {
         super.onCreate(savedInstanceState)
     }
 
-    @Composable
-    override fun Drawer(modifier: Modifier) { }
-
     override fun on_back_press_check(): Boolean {
         return true
     }
 
-    //fun set_soundfont_directory(uri: Uri) {
-    //    this.view_model.configuration.soundfont_directory = uri
-    //    this.save_configuration()
-    //    this.ucheck_move_soundfonts()
-    //}
-
+    @Composable
+    override fun Drawer(modifier: Modifier) { }
 
     @Composable
     override fun LayoutXLargePortrait(modifier: Modifier) {
@@ -622,7 +616,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                         selected_file_name.value?.let {
                             this@ComponentActivitySettings.coerce_soundfont_uri(it)
                         }
-                    } catch (e: FileNotFoundException) {
+                    } catch (_: FileNotFoundException) {
                         null
                     }
 
@@ -632,7 +626,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                             active_soundfont_uris.add(
                                 this@ComponentActivitySettings.coerce_soundfont_uri(file_path.value)
                             )
-                        } catch (e: FileNotFoundException) {
+                        } catch (_: FileNotFoundException) {
                             continue
                         }
                     }
@@ -902,7 +896,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
         val playback_expanded = remember { mutableStateOf(false) }
         val options_playback = integerArrayResource(R.array.sample_rates)
         val active_playback_option = remember {
-            mutableStateOf(
+            mutableIntStateOf(
                 if (options_playback.contains(this.view_model.configuration.sample_rate.value)) {
                     options_playback.indexOf(this.view_model.configuration.sample_rate.value)
                 } else {
@@ -926,7 +920,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 Button(
                     content = {
                         Text(
-                            text = "${options_playback[active_playback_option.value]} hz"
+                            text = "${options_playback[active_playback_option.intValue]} hz"
                         )
                     },
                     onClick = { playback_expanded.value = !playback_expanded.value }
@@ -940,7 +934,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                             selected = rate == view_model.configuration.sample_rate.value,
                             text = { Text("$rate hz") },
                             onClick = {
-                                active_playback_option.value = i
+                                active_playback_option.intValue = i
                                 view_model.configuration.sample_rate.value = options_playback[i]
                                 this@ComponentActivitySettings.save_configuration()
                                 playback_expanded.value = false

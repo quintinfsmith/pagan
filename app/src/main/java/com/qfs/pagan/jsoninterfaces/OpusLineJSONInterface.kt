@@ -31,10 +31,8 @@ object OpusLineJSONInterface {
             val pair = beats.get_list(i)
             val beat_index = pair.get_int(0)
             val tree = OpusTreeJSONInterface.from_json(pair.get_hashmap(1)) { event: JSONHashMap? ->
-                if (event != null) {
-                    InstrumentEventJSONInterface.from_json(event) as PercussionEvent
-                } else {
-                    null
+                event?.let {
+                    InstrumentEventJSONInterface.from_json(it) as PercussionEvent
                 }
             }
 
@@ -68,7 +66,6 @@ object OpusLineJSONInterface {
         }
 
         val output = OpusLine(beat_list)
-
         this._interpret_general(input, output)
 
         return output

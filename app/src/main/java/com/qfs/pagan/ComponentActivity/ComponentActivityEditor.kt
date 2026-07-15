@@ -561,8 +561,6 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
 
     private lateinit var _midi_interface: MidiController
-    //private var _sample_handle_manager: SampleHandleManager? = null
-    // private var _feedback_sample_manager: SampleHandleManager? = null
     fun bind_midi_interface() {
         this._midi_interface = object : MidiController(this, false) {
             override fun onDeviceAdded(device_info: MidiDeviceInfo) {
@@ -846,8 +844,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             opus_manager.project_change_midi(midi)
             val filename = parse_file_name(uri)
             opus_manager.set_project_name(
-                filename?.substring(0, filename.lastIndexOf("."))
-                    ?: getString(R.string.default_imported_midi_title)
+                filename?.substring(0, filename.lastIndexOf(".")) ?: getString(R.string.default_imported_midi_title)
             )
             opus_manager.clear_history()
             controller_model.active_project = null
@@ -899,7 +896,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val fallback_msg = try {
             inner_callback(uri)
             null
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             when (type) {
                 CompatibleFileType.Midi1 -> this.getString(R.string.feedback_midi_fail)
                 CompatibleFileType.Pagan -> this.getString(R.string.feedback_import_fail)
@@ -1052,6 +1049,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
         }
     }
+
     @Composable
     fun PlayMidiButton() {
         val scope = rememberCoroutineScope()
@@ -1438,9 +1436,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 @Composable { ContextMenuRangePrimary(vm_state, opus_manager, layout) }
             }
             CursorMode.Unset,
-            null -> {
-                null
-            }
+            null -> null
         }
     }
 
@@ -1524,7 +1520,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val line_height = Dimensions.LineHeight
         val ctl_line_height = Dimensions.EffectLineHeight
         val line_label_width = Dimensions.LineLabelWidth
-        val column_widths = Array(vm_state.beat_count.value) { i ->
+        val column_widths = Array(length.value) { i ->
             vm_state.column_data[i].top_weight.value
         }
 
@@ -1722,7 +1718,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         contentAlignment = Alignment.TopStart
                     ) {
                         // Key to prevent incongruence between column_width size and content
-                        key(vm_state.beat_count.value) {
+                        key(length.value) {
                             LazyRow(
                                 modifier = Modifier.testTag(TestTag.MainRow),
                                 state = scroll_state_h,
@@ -2179,7 +2175,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             val row_height_px = this@ComponentActivityEditor.toPx(row_height)
                             for (i in 0 until state_model.channel_count.value) {
                                 val channel_data = state_model.channel_data[i]
-                                key(channel_data.update_key.value) {
+                                key(channel_data.update_key.longValue) {
                                     val is_dragging = remember { mutableStateOf(false) }
                                     Row(
                                         Modifier
@@ -2506,11 +2502,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
             LaunchedEffect(primary == null && secondary == null) {
                 if (primary == null && secondary == null) {
-                    this@ComponentActivityEditor.state_model.table_bottom_padding.value = 0F
+                    this@ComponentActivityEditor.state_model.table_bottom_padding.floatValue = 0F
                 }
             }
             LaunchedEffect(Unit) {
-                this@ComponentActivityEditor.state_model.table_side_padding.value = 0F
+                this@ComponentActivityEditor.state_model.table_side_padding.floatValue = 0F
             }
         }
     }
@@ -2557,11 +2553,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
             LaunchedEffect(primary == null && secondary == null) {
                 if (primary == null && secondary == null) {
-                    this@ComponentActivityEditor.state_model.table_bottom_padding.value = 0F
+                    this@ComponentActivityEditor.state_model.table_bottom_padding.floatValue = 0F
                 }
             }
             LaunchedEffect(Unit) {
-                this@ComponentActivityEditor.state_model.table_side_padding.value = 0F
+                this@ComponentActivityEditor.state_model.table_side_padding.floatValue = 0F
             }
         }
     }
@@ -2636,7 +2632,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 }
                 LaunchedEffect(vm_state.active_cursor.value == null) {
                     if (vm_state.active_cursor.value == null) {
-                        this@ComponentActivityEditor.state_model.table_bottom_padding.value = 0F
+                        this@ComponentActivityEditor.state_model.table_bottom_padding.floatValue = 0F
                     }
                 }
             }
@@ -2735,13 +2731,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             )
                             Spacer(Modifier.width(Dimensions.SettingsBoxPadding))
                             Text(
-                                "x${vm_state.get_active_zoom().toInt()} (${vm_state.zoom_index.value} / ${vm_state.max_zoom_index.value})",
+                                "x${vm_state.get_active_zoom().toInt()} (${vm_state.zoom_index.intValue} / ${vm_state.max_zoom_index.value})",
                                 style = Typography.ZoomBarTitle
                             )
                         }
                         Spacer(Modifier.height(Dimensions.SettingsBoxPadding))
                         LinearProgressIndicator(
-                            progress = { (vm_state.zoom_index.value.toFloat() / vm_state.max_zoom_index.value.toFloat()) },
+                            progress = { (vm_state.zoom_index.intValue.toFloat() / vm_state.max_zoom_index.intValue.toFloat()) },
                             modifier = Modifier.testTag(TestTag.ZoomSlider)
                         )
                     }
@@ -3086,7 +3082,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         return this then Modifier
             .layout { measurable, constraints ->
                 val placeable = measurable.measure(constraints)
-                this@ComponentActivityEditor.state_model.table_bottom_padding.value = placeable.height.toFloat()
+                this@ComponentActivityEditor.state_model.table_bottom_padding.floatValue = placeable.height.toFloat()
                 layout(placeable.width, placeable.height) {
                     placeable.place(0, 0)
                 }
@@ -3098,7 +3094,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         return this then Modifier
             .layout { measurable, constraints ->
                 val placeable = measurable.measure(constraints)
-                this@ComponentActivityEditor.state_model.table_side_padding.value = placeable.width.toFloat()
+                this@ComponentActivityEditor.state_model.table_side_padding.floatValue = placeable.width.toFloat()
                 layout(placeable.width, placeable.height) {
                     placeable.place(0, 0)
                 }
@@ -3420,8 +3416,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
         if ((is_dragging_channel || !is_spacer) && this.state_model.line_data[y].is_dragging.value) return this.state_model.dragging_offset.value.roundToInt()
         if (target_line == null || this.state_model.line_data[y].channel.value == null) return 0
 
-        val std_line_count = this.state_model.dragging_height.first.value
-        val ctl_line_count = this.state_model.dragging_height.second.value
+        val std_line_count = this.state_model.dragging_height.first.intValue
+        val ctl_line_count = this.state_model.dragging_height.second.intValue
 
         val first_line = this.state_model.dragging_first_line.value!!
         val check_line = first_line + std_line_count + ctl_line_count

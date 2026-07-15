@@ -9,6 +9,7 @@
  */
 package com.qfs.pagan.structure.opusmanager.base
 
+import com.qfs.json.Deserializable
 import com.qfs.json.JSONHashMap
 
 abstract class InstrumentEvent(duration: Int = 1): OpusEvent(duration) {

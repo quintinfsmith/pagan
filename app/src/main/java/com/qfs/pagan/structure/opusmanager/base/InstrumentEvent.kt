@@ -9,12 +9,10 @@
  */
 package com.qfs.pagan.structure.opusmanager.base
 
-import com.qfs.json.Deserializable
 import com.qfs.json.JSONHashMap
 
-abstract class InstrumentEvent(duration: Int = 1): OpusEvent(duration) {
-    abstract override fun copy(): InstrumentEvent
-    abstract val jsontype: String
+interface InstrumentEvent<T>: OpusEvent<T> {
+    val jsontype: String
     override fun to_json(): JSONHashMap {
         val output = JSONHashMap()
         output["duration"] = this.duration
@@ -23,9 +21,13 @@ abstract class InstrumentEvent(duration: Int = 1): OpusEvent(duration) {
     }
 }
 
-abstract class TunedInstrumentEvent(duration: Int): InstrumentEvent(duration)
+interface TunedInstrumentEvent<T>: InstrumentEvent<T>
 
-class AbsoluteNoteEvent(var note: Int, duration: Int = 1): TunedInstrumentEvent(duration) {
+class AbsoluteNoteEvent(
+    var note: Int,
+    override var duration: Int = 1
+): TunedInstrumentEvent<AbsoluteNoteEvent> {
+
     override val jsontype = "abs"
     override fun copy(): AbsoluteNoteEvent {
         val output = AbsoluteNoteEvent(this.note)
@@ -48,7 +50,10 @@ class AbsoluteNoteEvent(var note: Int, duration: Int = 1): TunedInstrumentEvent(
     }
 }
 
-class RelativeNoteEvent(var offset: Int, duration: Int = 1): TunedInstrumentEvent(duration) {
+class RelativeNoteEvent(
+    var offset: Int,
+    override var duration: Int = 1
+): TunedInstrumentEvent<RelativeNoteEvent> {
     override val jsontype = "rel"
     override fun copy(): RelativeNoteEvent {
         val output = RelativeNoteEvent(this.offset)
@@ -70,7 +75,7 @@ class RelativeNoteEvent(var offset: Int, duration: Int = 1): TunedInstrumentEven
     }
 }
 
-class PercussionEvent(duration: Int = 1): InstrumentEvent(duration) {
+class PercussionEvent(override var duration: Int = 1): InstrumentEvent<PercussionEvent> {
     override val jsontype = "perc"
 
     override fun hashCode(): Int {

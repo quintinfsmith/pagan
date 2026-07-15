@@ -15,7 +15,11 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.asEffectTransition
 
-class OpusTempoEvent(value: Float = 120F, duration: Int = 1, transition: EffectTransition = EffectTransition.Instant): SingleFloatEvent(value, duration, transition) {
+class OpusTempoEvent(
+    override var value: Float = 120F,
+    override var duration: Int = 1,
+    override var transition: EffectTransition = EffectTransition.Instant
+): SingleFloatEvent<OpusTempoEvent> {
     companion object: Deserializable<OpusTempoEvent> {
         override fun from_json(map: JSONHashMap): OpusTempoEvent {
             return OpusTempoEvent(

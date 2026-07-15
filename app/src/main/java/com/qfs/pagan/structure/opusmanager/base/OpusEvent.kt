@@ -12,15 +12,16 @@ package com.qfs.pagan.structure.opusmanager.base
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONCompliant
 
-abstract class OpusEvent(var duration: Int = 1): JSONCompliant {
-    override fun equals(other: Any?): Boolean {
-        return other is OpusEvent && other.duration == this.duration
-    }
+interface OpusEvent<T>: JSONCompliant {
+    // TODO: Comparable
+    var duration: Int
+    fun copy(): T
+    //override fun equals(other: Any?): Boolean {
+    //    return other is OpusEvent && other.duration == this.duration
+    //}
 
-    override fun hashCode(): Int {
-        val code = javaClass.hashCode()
-        return (code shl (this.duration % 32)) + (code shr (32 - (this.duration % 32)))
-    }
-
-    abstract fun copy(): OpusEvent
+    //override fun hashCode(): Int {
+    //    val code = javaClass.hashCode()
+    //    return (code shl (this.duration % 32)) + (code shr (32 - (this.duration % 32)))
+    //}
 }

@@ -16,19 +16,20 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.asEffectTransition
 
-abstract class FilterEvent(var filter_cutoff: Float, var resonance: Float?, duration: Int, transition: EffectTransition): EffectEvent(duration, transition) {
+interface FilterEvent<T: FilterEvent<T>>: EffectEvent<T> {
+    var filter_cutoff: Float
+    var resonance: Float?
+
     override fun to_float_array(): FloatArray {
         return floatArrayOf(this.filter_cutoff, this.resonance ?: 0F)
     }
-    override fun equals(other: Any?): Boolean {
-        return other is FilterEvent && this.filter_cutoff == other.filter_cutoff && this.resonance == other.resonance && super.equals(other)
-    }
+    // override fun equals(other: Any?): Boolean {
+    //     return other is FilterEvent && this.filter_cutoff == other.filter_cutoff && this.resonance == other.resonance && super.equals(other)
+    // }
 
-    abstract override fun copy(): FilterEvent
+    // abstract override fun copy(): FilterEvent
 
-    override fun get_event_instant(position: Rational, preceding_event: EffectEvent): FilterEvent {
-        if (preceding_event !is FilterEvent) throw Exception("Invalid event passed")
-
+    override fun get_event_instant(position: Rational, preceding_event: T): T {
         val copy_event = this.copy()
         when (this.transition) {
             EffectTransition.LinearB -> {
@@ -63,11 +64,11 @@ abstract class FilterEvent(var filter_cutoff: Float, var resonance: Float?, dura
 }
 
 class LowPassEvent(
-    filter_cutoff: Float = 20000F,
-    resonance: Float? = null,
-    duration: Int = 1,
-    transition: EffectTransition = EffectTransition.Instant
-): FilterEvent(filter_cutoff, resonance, duration, transition) {
+    override var filter_cutoff: Float = 20000F,
+    override var resonance: Float? = null,
+    override var duration: Int = 1,
+    override var transition: EffectTransition = EffectTransition.Instant
+): FilterEvent<LowPassEvent> {
     companion object: Deserializable<LowPassEvent> {
         override fun from_json(map: JSONHashMap): LowPassEvent {
             return LowPassEvent(
@@ -101,10 +102,11 @@ class LowPassEvent(
 }
 
 class HighPassEvent(
-    filter_cutoff: Float = 0F,
-    duration: Int = 1,
-    transition: EffectTransition = EffectTransition.Instant
-): FilterEvent(filter_cutoff, null, duration, transition) {
+    override var filter_cutoff: Float = 0F,
+    override var duration: Int = 1,
+    override var transition: EffectTransition = EffectTransition.Instant
+): FilterEvent<HighPassEvent> {
+    override var resonance: Float? = null
     companion object: Deserializable<HighPassEvent> {
         override fun from_json(map: JSONHashMap): HighPassEvent {
             return HighPassEvent(

@@ -1840,7 +1840,7 @@ open class OpusLayerHistory: OpusLayerCursor() {
 
     override fun set_channel_controller_visibility(type: EffectType, channel_index: Int, visibility: Boolean) {
         this._remember {
-            val controller = this.get_all_channels()[channel_index].get_controller<EffectEvent>(type)
+            val controller = this.get_all_channels()[channel_index].get_controller(type)
             this.push_to_history_stack(
                 HistoryToken.SET_CHANNEL_CTL_VISIBILITY,
                 listOf(type, channel_index, controller.visible)

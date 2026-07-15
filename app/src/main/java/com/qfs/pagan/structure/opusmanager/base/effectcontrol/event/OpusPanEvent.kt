@@ -15,7 +15,11 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.asEffectTransition
 
-class OpusPanEvent(value: Float = 0F, duration: Int = 1, transition: EffectTransition = EffectTransition.Instant): SingleFloatEvent(value, duration, transition) {
+class OpusPanEvent(
+    override var value: Float = 0F,
+    override var duration: Int = 1,
+    override var transition: EffectTransition = EffectTransition.Instant
+): SingleFloatEvent<OpusPanEvent> {
     companion object: Deserializable<OpusPanEvent> {
         override fun from_json(map: JSONHashMap): OpusPanEvent {
             return OpusPanEvent(

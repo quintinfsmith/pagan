@@ -15,15 +15,16 @@ import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 
-abstract class EffectEvent(duration: Int = 1, var transition: EffectTransition = EffectTransition.Instant): OpusEvent(duration) {
-    abstract val event_type: EffectType
-    abstract fun to_float_array(): FloatArray
-    abstract override fun copy(): EffectEvent
-    abstract fun get_event_instant(position: Rational, preceding_event: EffectEvent): EffectEvent
+interface EffectEvent<T>: OpusEvent<T> {
+    var transition: EffectTransition
+    val event_type: EffectType
+    fun to_float_array(): FloatArray
+    //abstract override fun copy(): EffectEvent
+    fun get_event_instant(position: Rational, preceding_event: T): T
 
     // NOTE: It would be possibly cleaner to use super calls to to_json() here, but having
     // a secondary function will cause compilation failure so its harder to miss when implementing new event types
-    abstract fun apply_to_json(json: JSONHashMap)
+    fun apply_to_json(json: JSONHashMap)
 
     override fun to_json(): JSONHashMap {
         val output = JSONHashMap()
@@ -42,14 +43,14 @@ abstract class EffectEvent(duration: Int = 1, var transition: EffectTransition =
         }
     }
 
-    override fun equals(other: Any?): Boolean {
-        return super.equals(other) && other is EffectEvent && other.transition == this.transition
-    }
+    //override fun equals(other: Any?): Boolean {
+    //    return super.equals(other) && other is EffectEvent && other.transition == this.transition
+    //}
 
-    override fun hashCode(): Int {
-        var result = super.hashCode()
-        result = 31 * result + this.transition.hashCode()
-        result = 31 * result + this.event_type.hashCode()
-        return result
-    }
+    //override fun hashCode(): Int {
+    //    var result = super.hashCode()
+    //    result = 31 * result + this.transition.hashCode()
+    //    result = 31 * result + this.event_type.hashCode()
+    //    return result
+    //}
 }

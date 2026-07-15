@@ -16,7 +16,11 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.asEffectTransition
 
-class PitchEvent(pitch: Float = 1F, duration: Int = 1, transition: EffectTransition = EffectTransition.Instant): SingleFloatEvent(pitch, duration, transition), JSONCompliant {
+class PitchEvent(
+    override var value: Float = 1F,
+    override var duration: Int = 1,
+    override var transition: EffectTransition = EffectTransition.Instant
+): SingleFloatEvent<PitchEvent> {
     companion object: Deserializable<PitchEvent> {
         override fun from_json(map: JSONHashMap): PitchEvent {
             return PitchEvent(

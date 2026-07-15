@@ -1015,7 +1015,7 @@ open class OpusLayerBase: Effectable, JSONCompliant {
     /**
      * Get the [type] controller of the channel at [channel]
      */
-    fun <T : EffectEvent> get_channel_controller(type: EffectType, channel: Int): EffectController<T> {
+    fun <T : EffectEvent<T>> get_channel_controller(type: EffectType, channel: Int): EffectController<T> {
         val controller = this.get_channel(channel).get_controller<T>(type)
         return controller
     }
@@ -1066,7 +1066,7 @@ open class OpusLayerBase: Effectable, JSONCompliant {
     /**
      * Get the initial [type] controller event of the channel at [channel]
      */
-    fun <T : EffectEvent> get_channel_controller_initial_event(type: EffectType, channel: Int, copy: Boolean = false): T {
+    fun <T : EffectEvent<T>> get_channel_controller_initial_event(type: EffectType, channel: Int, copy: Boolean = false): T {
         val output = this.get_channel_controller<T>(type, channel).initial_event
         return if (copy) {
             output.copy() as T

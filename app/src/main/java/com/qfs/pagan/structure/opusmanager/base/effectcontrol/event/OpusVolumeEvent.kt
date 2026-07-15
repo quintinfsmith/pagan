@@ -18,10 +18,10 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.asEffectTransition
 import kotlin.math.pow
 
 class OpusVolumeEvent(
-    value: Float = 1F,
-    duration: Int = 1,
-    transition: EffectTransition = EffectTransition.Instant
-): SingleFloatEvent(value, duration, transition) {
+    override var value: Float = 1F,
+    override var duration: Int = 1,
+    override var transition: EffectTransition = EffectTransition.Instant
+): SingleFloatEvent<OpusVolumeEvent> {
     companion object: Deserializable<OpusVolumeEvent> {
         override fun from_json(map: JSONHashMap): OpusVolumeEvent {
             val value = if (map["volume"] is JSONInteger) {

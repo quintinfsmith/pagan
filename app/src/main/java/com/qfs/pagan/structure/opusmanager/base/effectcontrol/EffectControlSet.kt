@@ -89,11 +89,11 @@ class EffectControlSet(var beat_count: Int, default_enabled: Set<EffectType>? = 
         }
     }
 
-    operator fun <T: EffectEvent> get(type: EffectType): EffectController<T> {
+    operator fun get(type: EffectType): EffectController<*> {
         if (!this.controllers.containsKey(type)) {
             this.new_controller(type)
         }
-        return this.controllers[type]!! as EffectController<T>
+        return this.controllers[type]!!
     }
 
     fun has_controller(type: EffectType): Boolean {

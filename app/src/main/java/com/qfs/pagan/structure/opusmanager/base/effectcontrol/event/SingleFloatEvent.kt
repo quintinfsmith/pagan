@@ -12,37 +12,38 @@ package com.qfs.pagan.structure.opusmanager.base.effectcontrol.event
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 
-abstract class SingleFloatEvent(var value: Float, duration: Int = 1, transition: EffectTransition = EffectTransition.Instant): EffectEvent(duration, transition) {
-    override fun equals(other: Any?): Boolean {
-        return other is SingleFloatEvent && this.value == other.value && super.equals(other)
-    }
+interface SingleFloatEvent<T: SingleFloatEvent<T>> : EffectEvent<T> {
+    var value: Float
+    // override fun equals(other: Any?): Boolean {
+    //     return other is SingleFloatEvent && this.value == other.value && super.equals(other)
+    // }
 
-    abstract override fun copy(): SingleFloatEvent
+    // abstract override fun copy(): SingleFloatEvent
 
-    override fun hashCode(): Int {
-        val code = super.hashCode().xor(this.value.toRawBits())
-        val shift = this.transition.i
-        return (code shl shift) + (code shr (32 - shift))
-    }
+    // override fun hashCode(): Int {
+    //     val code = super.hashCode().xor(this.value.toRawBits())
+    //     val shift = this.transition.i
+    //     return (code shl shift) + (code shr (32 - shift))
+    // }
 
     override fun to_float_array(): FloatArray {
         return floatArrayOf(this.value)
     }
 
-    override fun get_event_instant(position: Rational, preceding_event: EffectEvent): EffectEvent {
+    override fun get_event_instant(position: Rational, preceding_event: T): T {
         val copy_event = this.copy()
         when (this.transition) {
             EffectTransition.Linear -> {
-                val diff = this.value - (preceding_event as SingleFloatEvent).value
+                val diff = this.value - preceding_event.value
                 copy_event.value = preceding_event.value + (diff * position.toFloat())
             }
             EffectTransition.RLinear -> {
-                val diff = (preceding_event as SingleFloatEvent).value - this.value
+                val diff = preceding_event.value - this.value
                 copy_event.value = this.value + (diff * position.toFloat())
             }
             EffectTransition.LinearB -> {
                 if (position <= 1) {
-                    val diff = this.value - (preceding_event as SingleFloatEvent).value
+                    val diff = this.value - preceding_event.value
                     copy_event.value = preceding_event.value + (diff * position.toFloat())
                 }
             }

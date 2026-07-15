@@ -13,5 +13,5 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.E
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 
 interface Effectable {
-    fun <T: EffectEvent> get_controller(type: EffectType): EffectController<T>
+    fun <T: EffectEvent<T>> get_controller(type: EffectType): EffectController<T>
 }

@@ -429,7 +429,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             if (this.ui_lock.is_locked()) return
 
             val visible_row = this.get_visible_row_from_ctl_line_global(type)
-            val controller = this.get_controller<EffectEvent>(type)
+            val controller = this.get_controller(type)
             this._add_controller_to_column_width_map(visible_row, controller, null, null, type)
         } else {
             val visible_row = this.get_visible_row_from_ctl_line_global(type)

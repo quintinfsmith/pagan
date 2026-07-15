@@ -14,7 +14,11 @@ import com.qfs.json.JSONHashMap
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 
-class OpusReverbEvent(value: Float = 1F, duration: Int = 1, transition: EffectTransition = EffectTransition.Instant): SingleFloatEvent(value, duration, transition) {
+class OpusReverbEvent(
+    override var value: Float = 1F,
+    override var duration: Int = 1,
+    override var transition: EffectTransition = EffectTransition.Instant
+): SingleFloatEvent {
     companion object: Deserializable<OpusReverbEvent> {
         override fun from_json(map: JSONHashMap): OpusReverbEvent {
             return OpusReverbEvent(
@@ -29,9 +33,9 @@ class OpusReverbEvent(value: Float = 1F, duration: Int = 1, transition: EffectTr
         return floatArrayOf(this.value)
     }
 
-    override fun copy(): OpusReverbEvent {
-        return OpusReverbEvent(this.value, this.duration, this.transition)
-    }
+    // override fun copy(): OpusReverbEvent {
+    //     return OpusReverbEvent(this.value, this.duration, this.transition)
+    // }
 
     override fun apply_to_json(json: JSONHashMap) {
         json["wetness"] = this.value

@@ -23,9 +23,9 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.asEffectTransition
 class OpusVelocityEvent(
     var value: Float = 1F,
     var slide: Pair<SlideMaxWidth, Int>? = null,
-    duration: Int = 1,
-    transition: EffectTransition = EffectTransition.Instant
-): EffectEvent(duration, transition) {
+    override var duration: Int = 1,
+    override var transition: EffectTransition = EffectTransition.Instant
+): EffectEvent<OpusVelocityEvent> {
     enum class SlideMaxWidth {
         Beat,
         Note
@@ -76,10 +76,7 @@ class OpusVelocityEvent(
         )
     }
 
-    override fun get_event_instant(
-        position: Rational,
-        preceding_event: EffectEvent
-    ): EffectEvent {
+    override fun get_event_instant(position: Rational, preceding_event: OpusVelocityEvent): OpusVelocityEvent {
         return OpusVelocityEvent(
             this.value,
             this.slide,

@@ -76,6 +76,7 @@ fun IntegerInputDropDown(
             }
             Button(
                 modifier = Modifier
+                    .testTag(TestTag.DialogPositive)
                     .padding(Dimensions.NumberInputDialogPadding)
                     .size(42.dp),
                 onClick = {

@@ -83,7 +83,15 @@ enum class TestTag {
     FilterInput,
     LineLabel,
     Leaf,
-    ZoomSlider
+    ZoomSlider,
+    EffectsToggleGlobal,
+    EffectMenuTempo,
+    EffectMenuDelay,
+    EffectMenuVelocity,
+    EffectMenuHighPass,
+    EffectMenuLowPass,
+    EffectMenuPan,
+    EffectMenuVolume,
 }
 
 fun test_tag_to_string(tag: TestTag, vararg args: Any?): String {

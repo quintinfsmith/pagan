@@ -38,7 +38,14 @@ fun CellView(
             for ((path, leaf_data) in cell.value.leafs) {
                 LeafView(
                     Modifier
-                        .testTag(TestTag.Leaf, line_info.channel.value, line_info.line_offset.value, x, *(Array(path.size) { path[it] }))
+                        .testTag(
+                            TestTag.Leaf,
+                            line_info.ctl_type.value,
+                            line_info.channel.value,
+                            line_info.line_offset.value,
+                            x,
+                            *(Array(path.size) { path[it] })
+                        )
                         .weight(leaf_data.value.weight.floatValue),
                     opus_manager,
                     vm_state,

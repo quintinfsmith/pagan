@@ -743,9 +743,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     fun set_soundfont(file_paths: List<String>, callback: (() -> Unit)? = null) {
         this.state_model.soundfont_ready.value = false
-
         if (file_paths == this.controller_model.active_soundfont_relative_paths) {
             this.state_model.soundfont_ready.value = true
+            callback?.invoke()
             return
         }
 
@@ -757,12 +757,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
             this.controller_model.unset_soundfont()
             this.state_model.unset_soundfont()
             this.destroy_persistent_notification()
+            callback?.invoke()
             return
         }
 
         // Failed to change playback_state
         if (!this.controller_model.update_playback_state_soundfont(PlaybackState.Ready)) {
             this.state_model.soundfont_ready.value = true
+            callback?.invoke()
             return
         }
 
@@ -1672,6 +1674,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 ) {
                                     Icon(
                                         modifier = Modifier
+                                            .testTag(TestTag.EffectsToggleGlobal)
                                             .clickable {
                                                 this@ComponentActivityEditor.view_model.get_dialog_state(
                                                     "global_effects"

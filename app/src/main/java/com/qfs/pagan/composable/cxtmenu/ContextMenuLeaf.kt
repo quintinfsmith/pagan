@@ -188,10 +188,12 @@ fun UnsetButton(
     enabled: Boolean,
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
-    val is_percussion = active_line.assigned_offset.value != null
+    val is_percussion = active_line.assigned_offset.value != null && active_line.ctl_type.value == null
 
     IconCMenuButton(
-        modifier = Modifier.testTag(TestTag.EventUnset),
+        modifier = Modifier
+            .testTag(TestTag.PercussionToggle)
+            .testTag(TestTag.EventUnset),
         enabled = enabled || is_percussion,
         onClick = {
             if (!is_percussion || enabled) {

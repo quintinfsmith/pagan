@@ -1,0 +1,3 @@
+- Fixed missing effect controls when in percussion
+- Added slight tint to background of custom-colored lines/channels
+- Delay controller defaults changed

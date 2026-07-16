@@ -60,7 +60,9 @@ fun RowScope.DelayEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLa
     val cursor = vm_state.active_cursor.value ?: return
     val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
-    val fade = remember { mutableFloatStateOf(working_event.fade) }
+    val fade = remember {
+        mutableFloatStateOf(working_event.fade)
+    }
 
     val colors = Colors.get_slider_colors()
 
@@ -139,8 +141,8 @@ fun RowScope.DelayEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLa
             contentDescription = null
         )
         IntegerInput(
-            remember { mutableStateOf(working_event.echo + 1) },
-            minimum = 1,
+            remember { mutableStateOf(working_event.echo) },
+            minimum = 0,
             contentPadding = Unpadded,
             text_align = TextAlign.Center,
             revert_on_exit = true,
@@ -149,7 +151,7 @@ fun RowScope.DelayEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLa
                 .height(Dimensions.EffectWidget.InputHeight)
                 .width(Dimensions.EffectWidget.Delay.InputWidth)
         ) {
-            working_event.echo = (it - 1)
+            working_event.echo = it
             submit()
         }
     }

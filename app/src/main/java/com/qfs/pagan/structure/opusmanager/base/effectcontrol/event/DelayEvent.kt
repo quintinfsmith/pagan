@@ -18,7 +18,14 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.asEffectTransition
 
-class DelayEvent(var numerator: Int = 1, var denominator: Int = 1, var echo: Int = 0, var fade: Float = 0F, duration: Int = 1, transition: EffectTransition = EffectTransition.Instant): EffectEvent(duration, transition) {
+class DelayEvent(
+    var numerator: Int = 2,
+    var denominator: Int = 1,
+    var echo: Int = 0,
+    var fade: Float = .5F,
+    duration: Int = 1,
+    transition: EffectTransition = EffectTransition.Instant
+): EffectEvent(duration, transition) {
     companion object: Deserializable<DelayEvent> {
         override fun from_json(map: JSONHashMap): DelayEvent {
             val freq = map.get_list("frequency")
@@ -42,7 +49,12 @@ class DelayEvent(var numerator: Int = 1, var denominator: Int = 1, var echo: Int
     }
 
     override fun equals(other: Any?): Boolean {
-        return super.equals(other) && other is DelayEvent && other.numerator == this.numerator && other.denominator == this.denominator && other.echo == this.echo && this.fade == other.fade
+        return super.equals(other)
+                && other is DelayEvent
+                && other.numerator == this.numerator
+                && other.denominator == this.denominator
+                && other.echo == this.echo
+                && this.fade == other.fade
     }
 
     override fun copy(): DelayEvent {

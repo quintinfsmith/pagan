@@ -1459,7 +1459,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             CursorMode.Single -> {
                 val cursor = vm_state.active_cursor.value ?: return null
                 val line_data = vm_state.line_data[cursor.ints[0]]
-                if (line_data.assigned_offset.value != null) return null
+                if (line_data.assigned_offset.value != null && line_data.ctl_type.value == null) return null
 
                 @Composable {
                     key(vm_state.event_change_key.value, vm_state.active_event.value) {

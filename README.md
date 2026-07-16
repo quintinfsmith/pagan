@@ -67,18 +67,30 @@
 
 ## Contribute or Contact
 
-Pull requests are welcome (no AI please) but if you're not confident with development, feel free to create an issue 
+Pull requests are welcome (No "AI" FFS) but if you're not confident with development, feel free to create an issue
 
 https://github.com/quintinfsmith/pagan/issues
 
+If you have a feature request or any questions, you can always get in touch:
 
-If you have a feature request or any questions, you can also email me 
-
-smith.quintin@protonmail.com 
-
-Get in touch via BlueSky 
-
-https://bsky.app/profile/quintinfsmith.bsky.social
+<table>
+ <tr>
+  <td>Email</td>
+  <td><a href="mailto:smith.quintin@protonmail.com">smith.quintin@protonmail.com</a></td>
+ </tr>
+ <tr>
+  <td>BlueSky</td>
+  <td>https://bsky.app/profile/quintinfsmith.bsky.social</td>
+ </tr>
+ <tr>
+  <td>Mastodon</td>
+  <td>https://mastodon.social/@quintinfsmith</td>
+ </tr>
+ <tr>
+  <td>Keybase</td>
+  <td>https://keybase.io/quintinfsmith</td>
+ </tr>
+</table>
 
 Or if you just want to make sure I keep working on the project, you can ...
 

@@ -17,6 +17,7 @@ import com.qfs.pagan.ComponentActivity.ComponentActivityEditor
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Rule
@@ -186,12 +187,93 @@ class ComposeTest {
     }
 
     @Test
-    fun test_effect_menus_exist() {
+    fun reg_test_180() {
+        val opus_manager = editor_test_rule.activity.controller_model.opus_manager
+
+        //Enable an effect
+        click_elm(TestTag.LineLabel, 0,0, null)
+        click_elm(TestTag.LineEffectsShow)
+        click_elm(TestTag.EffectMenuVolume)
+
+        click_elm(TestTag.Leaf, EffectType.Volume, 0, 0, 0)
+        click_elm(TestTag.LeafSplit)
+
+        long_click_elm(TestTag.EventUnset)
+        assert(
+            opus_manager.get_line_ctl_tree_copy<OpusVolumeEvent>(
+                EffectType.Volume,
+                BeatKey(0,0,0),
+                listOf()
+            ).is_leaf()
+        )
+
+        // click twice since short click and long click have the same effect otherwise
+        click_elm(TestTag.LeafSplit)
+        click_elm(TestTag.LeafSplit)
+        long_click_elm(TestTag.LeafRemove)
+        assert(
+            opus_manager.get_line_ctl_tree_copy<OpusVolumeEvent>(
+                EffectType.Volume,
+                BeatKey(0,0,0),
+                listOf()
+            ).is_leaf()
+        )
+    }
+
+    @Test
+    fun reg_test_185() {
+        // Mute The last channel
+        click_elm(TestTag.LineLabel, 1,0, null)
+        click_elm(TestTag.LineLabel, 1,0, null)
+        click_elm(TestTag.ChannelMute)
+
+        click_elm(TestTag.EffectsToggleGlobal)
+        click_elm(TestTag.EffectMenuDelay)
+
+        val state_model = editor_test_rule.activity.state_model
+        for (line in state_model.line_data) {
+            if (line.channel.value != null) continue
+            assert(!line.is_mute.value)
+        }
+    }
+
+    @Test
+    fun reg_test_186() {
+        // Open Channel Menu & Remove it
+        click_elm(TestTag.LineLabel, 0,0, null)
+        click_elm(TestTag.LineLabel, 0,0, null)
+        click_elm(TestTag.ChannelRemove)
+
+        // Again, Open Channel Menu & Remove it
+        click_elm(TestTag.LineLabel, 0,0, null)
+        click_elm(TestTag.LineLabel, 0,0, null)
+        click_elm(TestTag.ChannelRemove)
+
+        val opus_manager = editor_test_rule.activity.controller_model.opus_manager
+        assert(opus_manager.channels.isNotEmpty())
+    }
+
+    @Test
+    fun reg_test_188() {
         click_elm(TestTag.EffectsToggleGlobal)
         click_elm(TestTag.EffectMenuDelay)
         click_elm(TestTag.Leaf, EffectType.Delay, null, null, 0)
         this.editor_test_rule.waitUntil {
             get_interaction(TestTag.DelayFadeButton).isDisplayed()
+        }
+    }
+
+    @Test
+    fun reg_test_189() {
+        click_elm(TestTag.LineLabel, 0, 0, null)
+        click_elm(TestTag.LineEffectsShow)
+        click_elm(TestTag.EffectMenuDelay)
+        click_elm(TestTag.LineLabel, 0, 0, null)
+        click_elm(TestTag.LineLabel, 0, 0, null)
+
+        click_elm(TestTag.ChannelEffects)
+        this.editor_test_rule.waitUntil {
+            get_interaction(TestTag.EffectMenuDelay).isDisplayed()
         }
     }
 }

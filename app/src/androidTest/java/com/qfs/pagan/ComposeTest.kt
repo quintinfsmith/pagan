@@ -2,6 +2,7 @@ package com.qfs.pagan
 
 import android.Manifest
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -9,17 +10,24 @@ import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.performKeyPress
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.pressKey
 import androidx.test.rule.GrantPermissionRule
 import com.qfs.pagan.ComponentActivity.ComponentActivityEditor
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.HighPassEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -41,6 +49,11 @@ class ComposeTest {
     private fun input_text(text: String, tag: TestTag, vararg args: Any?) {
         val interaction = get_interaction(tag, *args)
         interaction.performTextInput(text)
+    }
+    private fun submit_text(text: String, tag: TestTag, vararg args: Any?) {
+        val interaction = get_interaction(tag, *args)
+        interaction.performTextInput(text)
+        interaction.performKeyInput { this.pressKey(Key.Enter) }
     }
     private fun click_elm(tag: TestTag, vararg args: Any?) {
         val interaction = get_interaction(tag, *args)
@@ -285,6 +298,91 @@ class ComposeTest {
         }
     }
 
+    @Test
+    fun test_widget_highpass() {
+        this.test_widgets<HighPassEvent>(EffectType.HighPass) { controller ->
+            val test_value = 5005.01F
+            submit_text(test_value.toString(), TestTag.FilterInput)
+            assertEquals(
+                test_value,
+                controller.initial_event.filter_cutoff
+            )
+            click_elm(TestTag.EventUnset)
+            assertEquals(
+                0F,
+                controller.initial_event.filter_cutoff
+            )
+        }
+    }
+
+    @Test
+    fun test_widget_lowpass() {
+        this.test_widgets<LowPassEvent>(EffectType.LowPass) { controller ->
+            val test_value = 5005.01F
+            submit_text(test_value.toString(), TestTag.FilterInput)
+            assertEquals(
+                test_value,
+                controller.initial_event.filter_cutoff
+            )
+            click_elm(TestTag.EventUnset)
+            assertEquals(
+                20000F,
+                controller.initial_event.filter_cutoff
+            )
+        }
+    }
+
+    @Test
+    fun test_widget_delay() {
+        this.test_widgets<DelayEvent>(EffectType.Delay) { controller ->
+            submit_text("40", TestTag.DelayHzNumerator)
+            assertEquals(40, controller.initial_event.numerator)
+
+            submit_text("3", TestTag.DelayHzDenominator)
+            assertEquals(3, controller.initial_event.denominator)
+
+            submit_text("12", TestTag.DelayEcho)
+            assertEquals(12, controller.initial_event.echo)
+
+            click_elm(TestTag.DelayFadeButton)
+            get_interaction(TestTag.DelayFadeSlider).performTouchInput {
+                down(Offset(this.width * .3F,this.height * .3F))
+                up()
+            }
+
+            assertNotEquals(.5F, controller.initial_event.fade)
+        }
+    }
+
+    @Test
+    fun test_widget_velocity() {
+        this.test_widgets<OpusVelocityEvent>(EffectType.Velocity) { controller ->
+            click_elm(TestTag.VelocitySlideToggle)
+            val new_slide = 8
+            submit_text(new_slide.toString(), TestTag.VelocitySlideDenominator)
+            assertEquals(
+                Pair(OpusVelocityEvent.SlideMaxWidth.Note, new_slide),
+                controller.initial_event.slide
+            )
+
+            click_elm(TestTag.VelocitySlideDialogButton)
+            editor_test_rule.onNodeWithText(editor_test_rule.activity.getString(R.string.velocity_widget_slide_beat), true).performClick()
+            assertEquals(
+                Pair(OpusVelocityEvent.SlideMaxWidth.Beat, new_slide),
+                controller.initial_event.slide
+            )
+
+            click_elm(TestTag.VelocityButton)
+            get_interaction(TestTag.VelocityVSlider).performTouchInput {
+                down(Offset(this.width * .3F,this.height * .3F))
+                up()
+            }
+
+            assertNotEquals(1F, controller.initial_event.value)
+
+            // TODO: disable slide
+        }
+    }
 
     @Test
     fun reg_test_180() {

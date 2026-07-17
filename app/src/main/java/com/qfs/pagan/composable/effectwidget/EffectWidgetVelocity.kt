@@ -258,6 +258,7 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
                         }
 
                         Button(
+                            modifier = Modifier.testTag(TestTag.VelocitySlideDialogButton),
                             onClick = {
                                 bend_mode_dropdown_visible.value = !bend_mode_dropdown_visible.value
                             }
@@ -306,6 +307,7 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (active_layout_size.value != LayoutSize.SmallPortrait || !slide_enabled.value) {
                     Switch(
+                        modifier = Modifier.testTag(TestTag.VelocitySlideToggle),
                         checked = slide_enabled.value,
                         onCheckedChange = {
                             slide_enabled.value = it
@@ -330,15 +332,4 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
     } else {
         EffectTransitionButton(working_event, opus_manager, is_initial)
     }
-
-    // IntegerInputDialog(
-    //     dialog_visibility,
-    //     R.string.dlg_set_velocity,
-    //     0, 200,
-    //     (working_event.value * 100).roundToInt()
-    // ) {
-    //     working_event.value = it.toFloat() / 100F
-    //     working_value.floatValue = working_event.value
-    //     submit()
-    // }
 }

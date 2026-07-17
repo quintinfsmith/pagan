@@ -19,6 +19,8 @@ import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.qfs.pagan.TestTag
+import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Shapes
 import com.qfs.pagan.ui.theme.Typography
@@ -47,6 +49,7 @@ fun DropdownMenuItem(
         onClick,
         Modifier
             .padding(4.dp)
+            .testTag(TestTag.MenuItem)
             .background(
                 if (selected) Colors.active_color_scheme.menu_item_selected
                 else Colors.active_color_scheme.menu_item,

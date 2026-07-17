@@ -74,6 +74,8 @@ enum class TestTag {
     Tempo,
     TempoKnob,
     VelocityInput,
+    VelocitySlideDialogButton,
+    VelocitySlideToggle,
     VelocityVSlider,
     VelocitySlideDenominator,
     VelocityButton,

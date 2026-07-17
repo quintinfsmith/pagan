@@ -20,7 +20,6 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
@@ -29,7 +28,6 @@ import com.qfs.pagan.Values
 import com.qfs.pagan.composable.FloatInput
 import com.qfs.pagan.composable.Knob
 import com.qfs.pagan.composable.MediumSpacer
-import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.FilterEvent

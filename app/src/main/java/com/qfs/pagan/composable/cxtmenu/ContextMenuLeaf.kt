@@ -182,38 +182,54 @@ fun DurationButton(
 }
 
 @Composable
-fun UnsetButton(
+fun UnsetOrPercussionButton(
     opus_manager: OpusLayerInterface,
     active_line: ViewModelEditorState.LineData,
-    enabled: Boolean,
+    event_active: Boolean,
     shape: Shape = Shapes.ContextMenuButtonPrimary
 ) {
-    val is_percussion = active_line.assigned_offset.value != null && active_line.ctl_type.value == null
+    if (active_line.assigned_offset.value != null && active_line.ctl_type.value == null) {
+        TogglePercussionButton(opus_manager, event_active, shape)
+    } else {
+        UnsetButton(opus_manager, event_active, shape)
+    }
+}
 
+
+@Composable
+fun UnsetButton(
+    opus_manager: OpusLayerInterface,
+    event_active: Boolean,
+    shape: Shape = Shapes.ContextMenuButtonPrimary
+) {
     IconCMenuButton(
-        modifier = Modifier
-            .testTag(TestTag.PercussionToggle)
-            .testTag(TestTag.EventUnset),
-        enabled = enabled || is_percussion,
+        modifier = Modifier.testTag(TestTag.EventUnset),
+        enabled = event_active,
+        onClick = { opus_manager.unset() },
+        onLongClick = { opus_manager.unset_root_at_cursor() },
+        icon = R.drawable.icon_erase,
+        shape = shape,
+        description = R.string.btn_unset
+    )
+}
+
+@Composable
+fun TogglePercussionButton(
+    opus_manager: OpusLayerInterface,
+    event_active: Boolean,
+    shape: Shape = Shapes.ContextMenuButtonPrimary
+) {
+    IconCMenuButton(
+        modifier = Modifier.testTag(TestTag.PercussionToggle),
         onClick = {
-            if (!is_percussion || enabled) {
-                opus_manager.unset()
-            } else {
-                opus_manager.set_percussion_event_at_cursor()
-            }
+            if (event_active) opus_manager.unset()
+            else opus_manager.set_percussion_event_at_cursor()
         },
         onLongClick = { opus_manager.unset_root_at_cursor() },
-        icon = if (!is_percussion || enabled) {
-            R.drawable.icon_erase
-        } else {
-            R.drawable.percussion_indicator
-        },
+        icon = if (event_active) R.drawable.icon_erase
+            else R.drawable.percussion_indicator,
         shape = shape,
-        description = if (is_percussion) {
-            R.string.set_percussion_event
-        } else {
-            R.string.btn_unset
-        }
+        description = R.string.set_percussion_event
     )
 }
 
@@ -223,7 +239,7 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, vm_state: ViewMo
     val active_event = vm_state.active_event.value
     val cursor = vm_state.active_cursor.value ?: return
     val active_line = vm_state.line_data[cursor.ints[0]]
-    val unset_enabled = vm_state.active_event_descriptor.value != ViewModelEditorState.EventDescriptor.Backup && active_event != null
+    val event_unsettable = vm_state.active_event_descriptor.value != ViewModelEditorState.EventDescriptor.Backup && active_event != null
     if (landscape) {
         Column(
             Modifier.width(Dimensions.ContextMenuButtonWidth),
@@ -246,10 +262,10 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, vm_state: ViewMo
                 )
             }
             MediumSpacer()
-            UnsetButton(
+            UnsetOrPercussionButton(
                 opus_manager,
                 active_line,
-                unset_enabled,
+                event_unsettable,
                 Shapes.ContextMenuButtonPrimaryBottom
             )
         }
@@ -272,10 +288,10 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, vm_state: ViewMo
                 )
             }
             MediumSpacer()
-            UnsetButton(
+            UnsetOrPercussionButton(
                 opus_manager,
                 active_line,
-                unset_enabled,
+                event_unsettable,
                 Shapes.ContextMenuButtonPrimaryEnd
             )
         }

@@ -17,11 +17,16 @@ import com.qfs.pagan.ComponentActivity.ComponentActivityEditor
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Rule
 import org.junit.Test
+import kotlin.math.abs
+import kotlin.math.exp
 
 
 class ComposeTest {
@@ -33,8 +38,15 @@ class ComposeTest {
     var mRuntimePermissionRule: GrantPermissionRule = GrantPermissionRule
         .grant(Manifest.permission.POST_NOTIFICATIONS)
 
+    private fun input_text(text: String, tag: TestTag, vararg args: Any?) {
+        val interaction = get_interaction(tag, *args)
+        interaction.performTextInput(text)
+    }
     private fun click_elm(tag: TestTag, vararg args: Any?) {
         val interaction = get_interaction(tag, *args)
+        this.editor_test_rule.waitUntil(10000) {
+            interaction.isDisplayed()
+        }
         interaction.performClick()
     }
 
@@ -186,6 +198,94 @@ class ComposeTest {
         click_elm(TestTag.LineLabel, null, null, EffectType.Tempo)
     }
 
+    private fun open_line_effect_widget(effect_type: EffectType, channel: Int = 0, line_offset: Int = 0) {
+        click_elm(TestTag.LineLabel, channel, line_offset, null)
+        click_elm(TestTag.LineEffectsShow)
+        click_elm(EffectResourceMap[effect_type].test_tag)
+    }
+
+    private fun open_channel_effect_widget(effect_type: EffectType, channel: Int = 0) {
+        click_elm(TestTag.LineLabel, channel, 0, null)
+        click_elm(TestTag.LineLabel, channel, 0, null)
+        click_elm(TestTag.ChannelEffectsShow)
+        click_elm(EffectResourceMap[effect_type].test_tag)
+    }
+
+    private fun open_global_effect_widget(effect_type: EffectType) {
+        click_elm(TestTag.EffectsToggleGlobal)
+        click_elm(EffectResourceMap[effect_type].test_tag)
+    }
+
+    private fun <T: EffectEvent> test_widgets(effect_type: EffectType, callback: (EffectController<T>) -> Unit) {
+        val opus_manager = editor_test_rule.activity.controller_model.opus_manager
+        if (OpusLayerInterface.line_controller_domain.contains(effect_type)) {
+            this.open_line_effect_widget(effect_type, 0, 0)
+            callback(opus_manager.get_line_controller<T>(effect_type, 0, 0))
+        }
+        if (OpusLayerInterface.channel_controller_domain.contains(effect_type)) {
+            this.open_channel_effect_widget(effect_type, 0)
+            callback(opus_manager.get_channel_controller<T>(effect_type, 0))
+        }
+        if (OpusLayerInterface.global_controller_domain.contains(effect_type)) {
+            this.open_global_effect_widget(effect_type)
+            callback(opus_manager.get_global_controller<T>(effect_type))
+        }
+    }
+
+    @Test
+    fun test_widget_volume() {
+        this.test_widgets<OpusVolumeEvent>(EffectType.Volume) { controller ->
+            val count = 8
+            val acceptable_deviation = 1F / (count * 2).toFloat()
+            for (i in 1 until count) {
+                val position = i.toFloat() / count.toFloat()
+                val expected_value = position * 1.27F
+                // Test Slider //////////////////////////////////////////////////////////////////
+                get_interaction(TestTag.VolumeSlider).performTouchInput {
+                    down(Offset(position * this.width,this.height / 2F))
+                    up()
+                }
+
+                assert(acceptable_deviation > abs(controller.initial_event.value - expected_value)) {
+                    "Failure on Volume: ($i) Excepted: $expected_value | Actual ${controller.initial_event.value}"
+                }
+                ////////////////////////////////////////////////////////////////////////////////
+
+                // Test Button Input ///////////////////////////////////////////////////////////
+                click_elm(TestTag.VolumeButton)
+                input_text((expected_value * 100).toInt().toString(), TestTag.DialogNumberInput)
+                click_elm(TestTag.DialogPositive)
+                assertEquals(
+                    (expected_value * 100).toInt() / 100F,
+                    controller.initial_event.value
+                )
+            }
+            ////////////////////////////////////////////////////////////////////////////////
+        }
+    }
+
+    @Test
+    fun test_widget_pan() {
+        this.test_widgets<OpusPanEvent>(EffectType.Pan) { controller ->
+            val actual = mutableListOf<Float>()
+            val expected = mutableListOf<Float>()
+            for (i in 1 until 20) {
+                val r_position = (i.toFloat() / 21F) + (1F / 30F)
+                val test_value = (i - 10).toFloat() / -10F
+
+                get_interaction(TestTag.PanSlider).performTouchInput {
+                    down(Offset(r_position * this.width, this.height / 2F))
+                    up()
+                }
+
+                expected.add(test_value)
+                actual.add(controller.initial_event.value)
+            }
+            assertEquals(expected, actual)
+        }
+    }
+
+
     @Test
     fun reg_test_180() {
         val opus_manager = editor_test_rule.activity.controller_model.opus_manager
@@ -197,8 +297,12 @@ class ComposeTest {
 
         click_elm(TestTag.Leaf, EffectType.Volume, 0, 0, 0)
         click_elm(TestTag.LeafSplit)
+        click_elm(TestTag.VolumeButton)
+        input_text("50", TestTag.DialogNumberInput)
+        click_elm(TestTag.DialogPositive)
 
         long_click_elm(TestTag.EventUnset)
+
         assert(
             opus_manager.get_line_ctl_tree_copy<OpusVolumeEvent>(
                 EffectType.Volume,
@@ -271,7 +375,7 @@ class ComposeTest {
         click_elm(TestTag.LineLabel, 0, 0, null)
         click_elm(TestTag.LineLabel, 0, 0, null)
 
-        click_elm(TestTag.ChannelEffects)
+        click_elm(TestTag.ChannelEffectsShow)
         this.editor_test_rule.waitUntil {
             get_interaction(TestTag.EffectMenuDelay).isDisplayed()
         }

@@ -68,7 +68,7 @@ fun ShowEffectsButton(
     val menu_visibility = remember { mutableStateOf(false) }
 
     IconCMenuButton(
-        modifier = modifier.testTag(TestTag.ChannelEffects),
+        modifier = modifier.testTag(TestTag.ChannelEffectsShow),
         onClick = { menu_visibility.value = !menu_visibility.value },
         icon = R.drawable.icon_ctl,
         shape = shape,

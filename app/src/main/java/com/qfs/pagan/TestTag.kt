@@ -45,7 +45,7 @@ enum class TestTag {
     EventOctave,
     EventOffset,
     ChannelPreset,
-    ChannelEffects,
+    ChannelEffectsShow,
     BeatToggleTag,
     BeatRemove,
     ChannelRemove,

@@ -284,6 +284,7 @@ fun ChannelEffectMenuDialog(
         options = { options ->
             val available_effects = OpusLayerInterface.channel_controller_domain.toMutableList()
             for (line in vm_state.line_data) {
+                if (line.line_offset.value != null) continue
                 if (line.channel.value != active_channel) continue
                 val ctl_type = line.ctl_type.value ?: continue
                 if (!available_effects.contains(ctl_type)) continue

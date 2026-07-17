@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -68,20 +67,20 @@ import kotlin.math.roundToInt
 @Composable
 fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, event: OpusVelocityEvent) {
     val cursor = vm_state.active_cursor.value ?: return
-    val working_event = event.copy()
+    val working_event = remember { mutableStateOf(event.copy()) }
     val is_initial = cursor.type == CursorMode.Line
-    val working_value = remember { mutableFloatStateOf(working_event.value) }
-    val velocity_input_value = remember { mutableIntStateOf((working_event.value * 100F).roundToInt()) }
-    val slide_enabled = remember { mutableStateOf<Boolean>(working_event.slide != null) }
-    val slide_width_mode = remember { mutableStateOf(working_event.slide?.first ?: OpusVelocityEvent.SlideMaxWidth.Note) }
-    val denominator_label: MutableState<Int> = remember { mutableStateOf(working_event.slide?.second ?: Values.Defaults.SlideDenominator) }
+    val working_value = remember { mutableFloatStateOf(working_event.value.value) }
+    val velocity_input_value = remember { mutableIntStateOf((working_event.value.value * 100F).roundToInt()) }
+    val slide_enabled = remember { mutableStateOf<Boolean>(working_event.value.slide != null) }
+    val slide_width_mode = remember { mutableStateOf(working_event.value.slide?.first ?: OpusVelocityEvent.SlideMaxWidth.Note) }
+    val denominator_label: MutableState<Int> = remember { mutableStateOf(working_event.value.slide?.second ?: Values.Defaults.SlideDenominator) }
     val (channel, line_offset, beat, position) = vm_state.get_location_ints()
     val is_percussion = channel != null && vm_state.channel_data[channel].percussion.value
     val active_layout_size = (LocalActivity.current as PaganComponentActivity).view_model.active_layout_size
     val colors =  Colors.get_slider_colors()
     val submit = {
         opus_manager.lock_cursor {
-            opus_manager.set_event_at_cursor(working_event)
+            opus_manager.set_event_at_cursor(working_event.value)
         }
     }
 
@@ -153,14 +152,14 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
 
                             onValueChange = {
                                 val tmp = (it * 100F).roundToInt()
-                                working_event.value = tmp.toFloat() / 100F
-                                working_value.floatValue = working_event.value
+                                working_event.value.value = tmp.toFloat() / 100F
+                                working_value.floatValue = working_event.value.value
                                 velocity_input_value.intValue = tmp
                             },
 
                             onValueChangeFinished = {
                                 val tmp =  (working_value.floatValue * 100F).roundToInt()
-                                working_event.value = tmp.toFloat() / 100F
+                                working_event.value.value = tmp.toFloat() / 100F
                                 velocity_input_value.intValue = tmp
                                 velocity_expanded.value = false
                                 submit()
@@ -184,8 +183,8 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
                     .height(Dimensions.EffectWidget.InputHeight)
                     .width(Dimensions.EffectWidget.Velocity.InputWidth)
             ) {
-                working_event.value = it.toFloat() / 100F
-                working_value.floatValue = working_event.value
+                working_event.value.value = it.toFloat() / 100F
+                working_value.floatValue = working_event.value.value
                 submit()
             }
         }
@@ -216,10 +215,11 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
                                 DropdownMenuItem(
                                     text = { Text(R.string.velocity_widget_disable_sliding) },
                                     onClick = {
-                                        if (working_event.slide != null) {
-                                            working_event.slide = null
+                                        working_event.value.slide?.let {
+                                            working_event.value.slide = null
                                             submit()
                                         }
+
                                         slide_enabled.value = false
                                         bend_mode_dropdown_visible.value = false
                                     }
@@ -229,10 +229,10 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
                                 selected = slide_width_mode.value == OpusVelocityEvent.SlideMaxWidth.Beat,
                                 text = { Text(R.string.velocity_widget_relative_to_beat) },
                                 onClick = {
-                                    if (working_event.slide?.first != OpusVelocityEvent.SlideMaxWidth.Beat) {
-                                        working_event.slide = Pair(
+                                    if (working_event.value.slide?.first != OpusVelocityEvent.SlideMaxWidth.Beat) {
+                                        working_event.value.slide = Pair(
                                             OpusVelocityEvent.SlideMaxWidth.Beat,
-                                            working_event.slide?.second ?: Values.Defaults.SlideDenominator
+                                            working_event.value.slide?.second ?: Values.Defaults.SlideDenominator
                                         )
                                         submit()
                                     }
@@ -244,10 +244,10 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
                                 selected = slide_width_mode.value == OpusVelocityEvent.SlideMaxWidth.Note,
                                 text = { Text(R.string.velocity_widget_relative_to_note) },
                                 onClick = {
-                                    if (working_event.slide?.first != OpusVelocityEvent.SlideMaxWidth.Note) {
-                                        working_event.slide = Pair(
+                                    if (working_event.value.slide?.first != OpusVelocityEvent.SlideMaxWidth.Note) {
+                                        working_event.value.slide = Pair(
                                             OpusVelocityEvent.SlideMaxWidth.Note,
-                                            working_event.slide?.second ?: Values.Defaults.SlideDenominator
+                                            working_event.value.slide?.second ?: Values.Defaults.SlideDenominator
                                         )
                                         submit()
                                     }
@@ -287,7 +287,7 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
                                 .height(Dimensions.EffectWidget.InputHeight)
                                 .width(Dimensions.EffectWidget.Velocity.InputWidth)
                         ) {
-                            working_event.slide = Pair(slide_width_mode.value, it)
+                            working_event.value.slide = Pair(slide_width_mode.value, it)
                             submit()
                         }
                     }
@@ -312,12 +312,12 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
                         onCheckedChange = {
                             slide_enabled.value = it
                             if (it) {
-                                working_event.slide = Pair(
+                                working_event.value.slide = Pair(
                                     slide_width_mode.value,
                                     denominator_label.value
                                 )
                             } else {
-                                working_event.slide = null
+                                working_event.value.slide = null
                             }
                             submit()
                         }
@@ -326,10 +326,10 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
                     MediumSpacer()
                 }
 
-                EffectTransitionButton(working_event, opus_manager, is_initial)
+                EffectTransitionButton(working_event.value, opus_manager, is_initial)
             }
         }
     } else {
-        EffectTransitionButton(working_event, opus_manager, is_initial)
+        EffectTransitionButton(working_event.value, opus_manager, is_initial)
     }
 }

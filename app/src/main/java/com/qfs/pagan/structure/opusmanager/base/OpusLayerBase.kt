@@ -3470,17 +3470,8 @@ open class OpusLayerBase: Effectable, JSONCompliant {
             this.channels[i].to_json()
         }
 
-        output["title"] = if (this.project_name == null) {
-            null
-        } else {
-            JSONString(this.project_name!!)
-        }
-        output["notes"] = if (this.project_notes == null) {
-            null
-        } else {
-            JSONString(this.project_notes!!)
-        }
-
+        output["title"] = this.project_name?.let { JSONString(it) }
+        output["notes"] = this.project_notes?.let { JSONString(it) }
         output["ts00"] = this.timestamp.toString()
         output["ts01"] = (System.currentTimeMillis() / 1000L).toString()
 
@@ -4244,6 +4235,7 @@ open class OpusLayerBase: Effectable, JSONCompliant {
 
     override fun equals(other: Any?): Boolean {
         if (other !is OpusLayerBase
+            || this.marked_sections != other.marked_sections
             || this.length != other.length
             || this.project_name != other.project_name
             || this.project_notes != other.project_notes

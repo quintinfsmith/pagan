@@ -4,6 +4,8 @@
 package com.qfs.pagan
 
 
+import android.util.Log
+import androidx.compose.ui.graphics.Color
 import com.qfs.apres.Midi
 import com.qfs.apres.event.BankSelect
 import com.qfs.apres.event.GeneralMIDIEvent
@@ -44,17 +46,18 @@ import org.junit.Test
 import com.qfs.pagan.structure.opusmanager.cursor.OpusLayerCursor as OpusManager
 
 class OpusLayerBaseUnitReTestAsOpusLayerCursor {
+    private fun get_new_manager(): OpusManager {
+        return OpusManager().also { it._project_change_new() }
+    }
     @Test
     fun test_new() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
         assertNotEquals(manager.length, 0)
     }
 
     @Test
     fun test_set_channel_instrument() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
         val key = PresetKey(0, 5, 2)
         manager.channel_set_preset(0, key)
         assertEquals(
@@ -66,7 +69,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
    // @Test
    // fun test_get_percussion_instrument() {
-   //     val manager = OpusManager()
+   //     val manager = this.get_new_manager()
    //     manager.new()
    //     assertEquals(
    //         "Percussion instrument wasn't correctly defaulted",
@@ -87,8 +90,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_get_beat_tree() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
         val beatkey = BeatKey(0,0,0)
         manager.split_tree(beatkey, listOf(), 12)
 
@@ -110,8 +112,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_get_proceeding_leaf() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
         val first_beat_key = BeatKey(0,0,1)
 
         manager.split_tree(first_beat_key, listOf(), 4)
@@ -132,8 +133,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_get_global_ctl_proceding_leaf() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
         val type = EffectType.Tempo
 
         manager.controller_global_split_tree(type, 1, listOf(), 4)
@@ -150,8 +150,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
     }
     @Test
     fun test_get_channel_ctl_proceding_leaf() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
         val type = EffectType.Volume
 
         manager.controller_channel_split_tree(type, 0, 1, listOf(), 4)
@@ -168,8 +167,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
     }
     @Test
     fun test_get_line_ctl_proceding_leaf() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
         val type = EffectType.Volume
         val first_beat_key = BeatKey(0,0,1)
 
@@ -188,8 +186,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_get_preceding_leaf() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
         val first_beat_key = BeatKey(0,0,1)
 
         manager.split_tree(first_beat_key, listOf(), 4)
@@ -210,8 +207,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_get_proceeding_leaf_position() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
 
         val first = BeatKey(0,0,1)
 
@@ -252,8 +248,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
     }
     @Test
     fun test_get_preceding_leaf_position() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
 
         val first = BeatKey(0,0,0)
         manager.split_tree(first, listOf(), 2)
@@ -292,8 +287,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_get_absolute_value() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
 
         val first_event = AbsoluteNoteEvent(25)
         val second_event = RelativeNoteEvent(1)
@@ -342,8 +336,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_has_preceding_absolute_event() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
 
         val absolute_event = AbsoluteNoteEvent(25)
 
@@ -368,8 +361,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
     }
     @Test
     fun test_convert_event_to_relative() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
 
         assertThrows(Exception::class.java) { manager.convert_event_to_relative(BeatKey(0,0,0), listOf()) }
 
@@ -394,8 +386,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_convert_event_to_absolute() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
 
         assertThrows(NonEventConversion::class.java) {
             manager.convert_event_to_absolute(BeatKey(0,0,0), listOf())
@@ -436,8 +427,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_set_unset() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
 
         // set/unset leaf
         val beatkey = BeatKey(0,0,0)
@@ -466,8 +457,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_new_channel() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         assertEquals(2, manager.get_channel_count())
         manager.new_channel(1, lines=0)
         assertEquals(3, manager.get_channel_count())
@@ -476,8 +467,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_insert_remove_beat() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
 
         val beats = manager.length
 
@@ -512,8 +503,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_new_line() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
 
         manager.new_line(0)
         assertEquals(manager.channels[0].size, 2)
@@ -542,8 +533,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_overwrite_beat() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
 
         val beatkey_a = BeatKey(0, 0, 0)
         val beatkey_b = BeatKey(0, 0, 1)
@@ -560,8 +551,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_replace_tree() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
 
         val beatkey = BeatKey(0, 0, 0)
         val top_tree = ReducibleTree<TunedInstrumentEvent>()
@@ -596,8 +587,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_set_beat_count() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         for (i in 0 until 4) {
             manager.new_channel(manager.channels.size - 1)
             for (j in 0 until 4) {
@@ -619,8 +610,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_insert_after() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val beat_key = BeatKey(0, 0, 0)
         val beat_tree = manager.get_tree(beat_key)
         beat_tree.set_size(1)
@@ -635,8 +626,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_controller_line_insert_after() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Volume
 
         val beat_key = BeatKey(0, 0, 0)
@@ -654,8 +645,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_controller_channel_insert_after() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Volume
 
         val beat_tree = manager.get_channel_ctl_tree<OpusVolumeEvent>(type, 0, 0)
@@ -672,8 +663,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_controller_global_insert_after() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Volume
 
         val beat_tree = manager.get_global_ctl_tree<OpusVolumeEvent>(type, 0)
@@ -690,8 +681,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_remove() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val beat_key = BeatKey(0, 0, 0)
         val beat_tree = manager.get_tree(beat_key)
         beat_tree.set_size(2)
@@ -713,8 +704,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_controller_global_remove() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val beat = 0
         val type = EffectType.Tempo
         manager.controller_global_split_tree(type, beat, listOf(), 2)
@@ -754,8 +745,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_controller_channel_remove() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Volume
         val channel = 0
         val beat = 0
@@ -796,8 +787,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_controller_line_remove() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Volume
         val beat_key = BeatKey(0, 0, 0)
 
@@ -838,8 +829,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_split_tree() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val split_count = 5
         val beat_key = BeatKey(0, 0, 0)
 
@@ -867,8 +858,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
     fun test_get_midi() {
         // This is not a particularily rigorous test, but its enough for now
         // Set up some Opus
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
         manager.set_event(BeatKey(0,0,0), listOf(0), AbsoluteNoteEvent(12))
         manager.set_event(BeatKey(0,0,1), listOf(), AbsoluteNoteEvent(24))
@@ -1002,8 +993,9 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
             }
         }
 
-        val manager = OpusManager()
-        manager._project_change_midi(midi)
+        val manager = this.get_new_manager()
+        //val manager = OpusManager()
+        manager.project_change_midi(midi)
 
         assertEquals(
             OpusTempoEvent(80F),
@@ -1047,18 +1039,9 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
         assertEquals(3, manager.channels[1].midi_program)
     }
 
-    @Test
-    fun test_to_json() {
-        //TODO("test_to_json")
-    }
-    @Test
-    fun test_save() {
-        //TODO("test_save")
-    }
-
     // @Test
     // fun test_load_0() {
-    //     val manager = OpusManager()
+    //     val manager = this.get_new_manager()
     //     manager.load_path("UTP0.json")
     //     assertEquals(
     //         "UnitTestProject0",
@@ -1075,7 +1058,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
     // }
     // @Test
     // fun test_load_1() {
-    //     val manager = OpusManager()
+    //     val manager = this.get_new_manager()
     //     manager.load_path("UTP1.json")
     //     assertEquals(
     //         "UnitTestProject1",
@@ -1092,7 +1075,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     //@Test
     //fun test_load_2() {
-    //    val manager = OpusManager()
+    //    val manager = this.get_new_manager()
     //    manager.load_path("UTP2.json")
     //    assertEquals(
     //        "UnitTestProject2",
@@ -1110,8 +1093,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_set_duration() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val beat_key = BeatKey(0, 0, 0)
         val event = AbsoluteNoteEvent(20)
         manager.set_event(beat_key, listOf(), event)
@@ -1131,8 +1114,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
     
     @Test
     fun test_get_global_ctl_tree() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
 
         val event_a = OpusTempoEvent(100f)
         manager.controller_global_set_event(EffectType.Tempo, 2, listOf(), event_a)
@@ -1155,8 +1138,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_get_channel_ctl_tree() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Volume
 
         val event_a = OpusVolumeEvent(100f)
@@ -1184,8 +1167,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_get_line_ctl_tree() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Volume
 
         val beat_key_a = BeatKey(0,0,0)
@@ -1218,8 +1201,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_controller_global_overwrite_line() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Tempo
         val event = OpusTempoEvent(100F)
 
@@ -1237,13 +1220,15 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
             )
         }
         ////////////////////////
-        manager._project_change_new()
+
         manager.set_beat_count(12)
 
         // Set Up first tree
         manager.controller_global_set_event(type, 3, listOf(), event)
         // add explicitly different tree
-        manager.controller_global_split_tree(type, 0, listOf(), 3)
+        for (i in 0 until 3) {
+            manager.controller_global_split_tree(type, i, listOf(), 3)
+        }
 
         // apply overwrite
         manager.controller_global_overwrite_line(type, 3)
@@ -1268,8 +1253,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
     }
     @Test
     fun test_controller_channel_overwrite_line() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Volume
         val event = OpusVolumeEvent(.5F)
         val working_channel = 0
@@ -1288,20 +1273,22 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
             )
         }
         ////////////////////////
-        manager._project_change_new()
+
         manager.set_beat_count(12)
 
         // Set Up first tree
         manager.controller_channel_set_event(type, working_channel, 3, listOf(), event)
         // add explicitly different tree
-        manager.controller_channel_split_tree(type, working_channel, 0, listOf(), 3)
+        for (i in 0 until 3) {
+            manager.controller_channel_split_tree(type, working_channel, i, listOf(), 3)
+        }
 
         // apply overwrite
         manager.controller_channel_overwrite_line(type, working_channel, working_channel, 3)
 
         for (beat in 0 until 3) {
             assertNotEquals(
-                "Incorrectly overwrote some trees - overwrite_channel_Ctl_row",
+                "($beat) Incorrectly overwrote some trees - overwrite_channel_Ctl_row",
                 manager.get_channel_ctl_tree<EffectEvent>(type, working_channel, 3),
                 manager.get_channel_ctl_tree<EffectEvent>(type, working_channel, beat)
             )
@@ -1318,8 +1305,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_controller_line_overwrite_line() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Volume
         val event = OpusVolumeEvent(.9F)
         val working_key = BeatKey(0,0,0)
@@ -1339,13 +1326,15 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
             )
         }
         ////////////////////////
-        manager._project_change_new()
+
         manager.set_beat_count(12)
 
         // Set Up first tree
         manager.controller_line_set_event(type, working_key_b, listOf(), event)
         // add explicitly different tree
-        manager.controller_line_split_tree(type, working_key, listOf(), 5)
+        for (i in 0 until 3) {
+            manager.controller_line_split_tree(type, working_key.copy(beat = i), listOf(), 5)
+        }
 
         // apply overwrite
         manager.controller_line_overwrite_line(type, working_key_b.channel, working_key_b.line_offset, working_key_b)
@@ -1369,8 +1358,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_get_beatkeys_from_range() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         manager.new_line(0)
         manager.new_line(0)
         manager.new_channel(1)
@@ -1401,8 +1390,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_overwrite_beat_range() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         manager.new_line(0)
         manager.new_line(0)
         manager.new_channel(1)
@@ -1485,8 +1474,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_move_beat_range() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         manager.new_line(0)
         manager.new_line(0)
         manager.new_channel(1)
@@ -1550,8 +1539,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_controller_global_overwrite_range() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Tempo
         manager.controller_global_set_event(type, 0, listOf(), OpusTempoEvent(10F))
         manager.controller_global_set_event(type, 1, listOf(), OpusTempoEvent(11F))
@@ -1581,8 +1570,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_controller_global_move_range() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Tempo
         manager.controller_global_set_event(type, 0, listOf(), OpusTempoEvent(10F))
         manager.controller_global_set_event(type, 1, listOf(), OpusTempoEvent(11F))
@@ -1610,8 +1599,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_controller_channel_overwrite_range() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Volume
         manager.controller_channel_set_event(type, 0, 0, listOf(), OpusVolumeEvent(10f))
         manager.controller_channel_set_event(type, 0, 1, listOf(), OpusVolumeEvent(11f))
@@ -1633,8 +1622,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_controller_channel_move_range() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Volume
         manager.controller_channel_set_event(type, 0, 0, listOf(), OpusVolumeEvent(10f))
         manager.controller_channel_set_event(type, 0, 1, listOf(), OpusVolumeEvent(11f))
@@ -1664,8 +1653,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
     @Test
     fun test_move_line_ctl_range() {
         val type = EffectType.Volume
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         manager.new_channel(1)
         manager.controller_line_set_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(.10f))
         manager.controller_line_set_event(type, BeatKey(0, 0, 1), listOf(), OpusVolumeEvent(.11f))
@@ -1744,8 +1733,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
     @Test
     fun test_controller_line_overwrite_range() {
         val type = EffectType.Volume
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         manager.new_channel(1)
         manager.controller_line_set_event(type, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent(.10F))
         manager.controller_line_set_event(type, BeatKey(0, 0, 1), listOf(), OpusVolumeEvent(.11F))
@@ -1795,8 +1784,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_add_remove_line_controller() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Volume
         val channel = 0
         val line_offset = 0
@@ -1819,8 +1808,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_add_remove_channel_controller() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Volume
         val channel = 0
         manager.new_channel_controller(type, channel)
@@ -1842,8 +1831,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_remove_global_controller() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Volume
         manager.new_global_controller(type)
 
@@ -1864,8 +1853,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_get_current_global_controller_value() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Tempo
         val first_event = OpusTempoEvent(1F)
         val second_event = OpusTempoEvent(2F)
@@ -1911,8 +1900,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_get_current_channel_controller_value() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Volume
         val channel = 0
         val first_event = OpusVolumeEvent(.1f)
@@ -1959,8 +1948,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_get_current_line_controller_value() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Volume
         val channel = 0
         val line_offset = 0
@@ -2009,8 +1998,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_set_global_controller_initial_value() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Tempo
         val event = OpusTempoEvent(1F)
 
@@ -2024,8 +2013,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_set_channel_controller_initial_value() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Volume
         val channel = 0
         val event = OpusVolumeEvent(1f)
@@ -2040,8 +2029,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_set_line_controller_initial_value() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Volume
         val channel = 0
         val line_offset = 0
@@ -2057,8 +2046,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_is_tuning_standard() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
 
         manager.set_tuning_map(
             Array(12) {
@@ -2097,8 +2086,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_set_tuning_map() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val channel = 0
         val original_value = 12
         manager.set_event(BeatKey(channel,0,0), listOf(), AbsoluteNoteEvent(original_value))
@@ -2149,8 +2138,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_swap_lines() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         manager.new_line(0, 0)
         val test_event = RelativeNoteEvent(1)
         manager.set_event(BeatKey(0,0,0), listOf(), test_event)
@@ -2196,8 +2185,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_set_percussion_event() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
 
         val first_instrument = manager.get_percussion_instrument(1, 0)
         manager.percussion_set_event(BeatKey(1,0,0), listOf())
@@ -2215,8 +2204,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_std_abs_offset() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
 
         assertThrows(IndexOutOfBoundsException::class.java) {
             manager.get_channel_and_line_offset(2)
@@ -2262,8 +2251,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_insert() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val test_event_a = AbsoluteNoteEvent(0)
         manager.set_event(BeatKey(0,0,0), listOf(), test_event_a)
         manager.split_tree(BeatKey(0,0,0), listOf(), 2)
@@ -2289,8 +2278,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_insert_line_ctl() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Volume
         val test_event_a = OpusVolumeEvent(.64f)
         manager.controller_line_set_event(type, BeatKey(0,0,0), listOf(), test_event_a)
@@ -2317,8 +2306,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_insert_channel_ctl() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Reverb
         val channel = 0
         val beat = 0
@@ -2347,8 +2336,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_insert_global_ctl() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Tempo
         val beat = 0
         val test_event_a = OpusTempoEvent(120F)
@@ -2375,8 +2364,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_set_unset_global() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
 
         // set/unset leaf
         val beat = 0
@@ -2416,8 +2405,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_set_unset_channel() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
 
         // set/unset leaf
         val beat = 0
@@ -2449,8 +2438,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_set_unset_line() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
 
         // set/unset leaf
         val beat_key = BeatKey(0,0,0)
@@ -2481,8 +2470,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_get_first_position() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val beat_key = BeatKey(0,0,0)
         val max_depth = 3
         val splits = 3
@@ -2529,8 +2518,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_get_first_global_ctl_position() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Tempo
         val beat = 0
         val max_depth = 3
@@ -2578,8 +2567,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_get_first_channel_ctl_position() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Reverb
         val channel = 0
         val beat = 0
@@ -2629,8 +2618,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_get_first_line_ctl_position() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Volume
         val beat_key = BeatKey(0,0,0)
         val max_depth = 3
@@ -2678,8 +2667,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_move_leaf() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val key_a = BeatKey(0,0,0)
         val key_b = BeatKey(0,0,2)
         val event = AbsoluteNoteEvent(0)
@@ -2714,8 +2703,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_controller_global_move_leaf() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Tempo
         val key_a = 0
         val key_b = 2
@@ -2752,8 +2741,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_controller_channel_move_leaf() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Reverb
         val channel = 0
         val key_a = 0
@@ -2791,8 +2780,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_controller_line_move_leaf() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val type = EffectType.Volume
         val key_a = BeatKey(0,0,0)
         val key_b = BeatKey(0,0,2)
@@ -2865,8 +2854,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_get_channel_count() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         val original_channel_count = manager.channels.size
         var line_count = original_channel_count // Start with 1 line each
 
@@ -2892,8 +2881,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_get_preceding_event() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         manager.split_tree(BeatKey(0,0,0), listOf(), 4)
         manager.set_event(BeatKey(0,0,0), listOf(1), AbsoluteNoteEvent(0))
         manager.set_event(BeatKey(0,0,0), listOf(3), AbsoluteNoteEvent(1))
@@ -2914,8 +2903,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_overwrite_line() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         manager.set_beat_count(24)
         val event = AbsoluteNoteEvent(5)
         manager.set_event(BeatKey(0,0,12), listOf(), event)
@@ -2952,8 +2941,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_get_beatkeys_in_range() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         manager.new_channel(1)
         manager.new_channel(1)
         manager.new_line(0)
@@ -3017,7 +3006,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
    // @Test
    // fun test_get_shallow_representation() {
-   //     val manager = OpusManager()
+   //     val manager = this.get_new_manager()
    //     val json_string_test = """{
    //         "k0": 101,
    //         "k1": "TEST STRING",
@@ -3039,8 +3028,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_overwrite_beat_range_horizontally() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         manager.new_line(0)
         manager.new_line(0)
         manager.new_channel(1)
@@ -3074,8 +3063,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
     @Test
     fun test_controller_line_overwrite_range_horizontally() {
         val type = EffectType.Volume
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         manager.set_beat_count(12)
 
         // Only works on single line currently.
@@ -3110,9 +3099,9 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_controller_global_overwrite_range_horizontally() {
-        val manager = OpusManager()
+        val manager = this.get_new_manager()
         val type = EffectType.Tempo
-        manager._project_change_new()
+
         manager.set_beat_count(12)
 
         manager.controller_global_set_event(type, 0, listOf(), OpusTempoEvent(5F))
@@ -3134,9 +3123,9 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_controller_channel_overwrite_range_horizontally() {
-        val manager = OpusManager()
+        val manager = this.get_new_manager()
         val type = EffectType.Volume
-        manager._project_change_new()
+
         manager.set_beat_count(12)
 
         manager.controller_channel_set_event(type, 0, 0, listOf(), OpusVolumeEvent(5F))
@@ -3159,8 +3148,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_unset_range() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         manager.new_line(0)
         manager.new_channel(1)
         manager.set_beat_count(12)
@@ -3187,8 +3176,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
     @Test
     fun test_controller_line_unset_range() {
         val type = EffectType.Volume
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         manager.new_line(0)
         manager.new_channel(1)
         manager.set_beat_count(12)
@@ -3214,8 +3203,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
     @Test
     fun test_controller_channel_unset_range() {
         val type = EffectType.Volume
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         manager.new_line(0)
         manager.new_channel(1)
         manager.set_beat_count(12)
@@ -3242,8 +3231,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
     @Test
     fun test_controller_global_unset_range() {
         val type = EffectType.Tempo
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         manager.set_beat_count(12)
         for (b in 0 until 12) {
             manager.controller_global_set_event(type, b, listOf(), OpusTempoEvent(25F))
@@ -3267,8 +3256,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_get_ctl_info() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         manager.new_channel(1)
         manager.set_beat_count(12)
 
@@ -3310,8 +3299,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_set_tag() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         manager.insert_beats(0, 12)
         val tag_name = "Test Tag Name"
         val tag_position = 10
@@ -3367,8 +3356,8 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_get_percussion_instrument() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         assertThrows(PercussionChannelRequired::class.java) {
             manager.get_percussion_instrument(0,0)
         }
@@ -3376,9 +3365,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_get_percussion_tree() {
-        val manager = OpusManager()
-        manager._project_change_new()
-
+        val manager = this.get_new_manager()
         assertThrows(PercussionChannelRequired::class.java) {
             manager.get_percussion_instrument(0,0)
         }
@@ -3392,12 +3379,22 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
         assertThrows(BadBeatKey::class.java) {
             manager.get_percussion_tree(BeatKey(1,1,0), listOf())
         }
+
+        manager.percussion_set_event(BeatKey(1, 0, 2), listOf())
+        assertThrows(PercussionChannelRequired::class.java) {
+            manager.get_percussion_tree(BeatKey(0, 0, 2), listOf())
+        }
+        manager.get_percussion_tree(BeatKey(1, 0, 2), listOf())
+        assertEquals(
+            manager.get_percussion_tree(BeatKey(1, 0, 2), listOf()),
+            manager.get_percussion_tree(BeatKey(1, 0, 2))
+        )
     }
 
     @Test
     fun test_move_line() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
+
         manager.new_channel()
         manager.new_line(0, 1)
         manager.new_line(0, 1)
@@ -3440,8 +3437,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     @Test
     fun test_mute() {
-        val manager = OpusManager()
-        manager._project_change_new()
+        val manager = this.get_new_manager()
 
         manager.mute_line(0, 0)
         assert(manager.channels[0].lines[0].muted)
@@ -3455,7 +3451,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
 
     //@Test
     //fun test_merge_leafs() {
-    //    val manager = OpusManager()
+    //    val manager = this.get_new_manager()
     //    manager.new()
     //    var key_a = BeatKey(0,0,0)
     //    var key_b = BeatKey(0,0,1)
@@ -3511,4 +3507,171 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
     //    )
     //}
 
+
+    @Test
+    fun test_line_coloring() {
+        val manager = this.get_new_manager()
+
+        val test_color = Color(0xFFFF00FF)
+        manager.set_channel_event_color(0, test_color)
+        assertEquals(test_color, manager.get_channel(0).palette.event)
+        manager.set_channel_event_color(0, null)
+        assertEquals(null, manager.get_channel(0).palette.event)
+
+        val test_color_2 = Color(0xFF00FFFF)
+        manager.set_channel_event_color(1, test_color_2)
+        assertEquals(test_color_2, manager.get_channel(1).palette.event)
+        manager.set_channel_event_color(1, null)
+        assertEquals(null, manager.get_channel(1).palette.event)
+
+        val test_color_3 = Color(0xFFFFAA00)
+        manager.set_line_event_color(0, 0,test_color_3)
+        assertEquals(test_color_3, manager.get_channel(0).lines[0].palette.event)
+        manager.set_line_event_color(0, 0, null)
+        assertEquals(null, manager.get_channel(0).lines[0].palette.event)
+
+        val test_color_4 = Color(0xFF0033af)
+        manager.set_line_event_color(1, 0,test_color_4)
+        assertEquals(test_color_4, manager.get_channel(1).lines[0].palette.event)
+        manager.set_line_event_color(1, 0, null)
+        assertEquals(null, manager.get_channel(1).lines[0].palette.event)
+
+    }
+
+    @Test
+    fun test_json() {
+        val original = this.get_new_manager()
+        original.insert_beats(original.length, 4)
+        original.new_line(0)
+        original.new_line(1)
+        original.new_line(1)
+        original.percussion_set_instrument(1, 0, 15)
+        original.percussion_set_instrument(1, 1, 13)
+        original.percussion_set_instrument(1, 1, 8)
+        original.split_tree(BeatKey(1, 0, 0), listOf(), 2)
+        original.percussion_set_event(BeatKey(1, 0, 0), listOf(1))
+        original.percussion_set_event(BeatKey(1, 2, 0), listOf())
+        original.percussion_set_event(BeatKey(1, 1, 1), listOf())
+        original.overwrite_beat_range(
+            BeatKey(1, 0, 0),
+            BeatKey(1, 0, 1),
+            BeatKey(1, 0, 1),
+        )
+        original.overwrite_beat_range(
+            BeatKey(1, 0, 0),
+            BeatKey(1, 0, 0),
+            BeatKey(1, 2, original.length - 1)
+        )
+        original.set_project_name("Test Title")
+        original.set_project_notes("Some test notes")
+        original.tag_section(0, null)
+        original.tag_section(2, "Named Section")
+
+        val original_json = original.to_json()
+
+        val duplicate = OpusManager()
+        var callback_called = false
+        duplicate.load(original_json.toString().toByteArray()) {
+            callback_called = true
+        }
+        assertEquals(
+            original,
+            duplicate
+        )
+        assert(callback_called)
+    }
+
+    @Test
+    fun test_duplicate_line_channel() {
+        var manager = get_new_manager()
+        manager.split_tree(BeatKey(0, 0, 0), listOf(), 3)
+        manager.set_event(BeatKey(0, 0, 0), listOf(0), AbsoluteNoteEvent(1))
+        manager.set_event(BeatKey(0, 0, 0), listOf(1), AbsoluteNoteEvent(2))
+        manager.set_event(BeatKey(0, 0, 0), listOf(2), AbsoluteNoteEvent(44))
+        manager.split_tree(BeatKey(0, 0, 1), listOf(), 2)
+        manager.set_event(BeatKey(0, 0, 1), listOf(1), AbsoluteNoteEvent(44))
+        manager.split_tree(BeatKey(0, 0, 3), listOf(), 5)
+        manager.set_event(BeatKey(0, 0, 3), listOf(1), AbsoluteNoteEvent(42))
+        manager.duplicate_line(0, 0)
+
+        assertEquals(
+            manager.channels[0].lines[0],
+            manager.channels[0].lines[1],
+        )
+
+        manager.duplicate_channel(0)
+        assertEquals(
+            manager.channels[0],
+            manager.channels[1]
+        )
+    }
+
+    @Test
+    fun test_equals() {
+        val first = this.get_new_manager()
+        val second = this.get_new_manager()
+
+        assertNotEquals(first, 0)
+
+        first.set_project_name("Test")
+        assertNotEquals(first,second)
+        first.set_project_name(second.project_name)
+
+        first.set_project_notes("test")
+        assertNotEquals(first,second)
+        first.set_project_notes(second.project_notes)
+
+        first.insert_beat(0)
+        assertNotEquals(first,second)
+        first.remove_beat(0)
+
+        first.set_transpose(Pair(1, 12))
+        assertNotEquals(first,second)
+        first.set_transpose(second.transpose)
+
+        first.set_tuning_map(Array(3) { Pair(it, 3) })
+        assertNotEquals(first,second)
+        first.set_tuning_map(second.tuning_map)
+
+        first.new_channel(0)
+        assertNotEquals(first,second)
+        first.remove_channel(0)
+
+        first.new_line(0)
+        assertNotEquals(first, second)
+        first.remove_line(0, 0)
+
+        first.tag_section(0, "test")
+        assertNotEquals(first, second)
+        first.remove_tagged_section(0)
+
+        assertEquals(first, second)
+    }
+
+    @Test
+    fun test_radix() {
+        val manager = this.get_new_manager()
+        val new_radix = 4
+        assertEquals(12, manager.get_radix())
+        manager.set_tuning_map(Array(new_radix) { Pair(it, new_radix) })
+        assertEquals(new_radix, manager.get_radix())
+        assertEquals(Array(new_radix) { Pair(it, new_radix) }.toList(), manager.tuning_map.toList())
+    }
+
+    @Test
+    fun test_unset_beat() {
+        val manager = this.get_new_manager()
+        manager.toggle_line_controller_visibility(EffectType.Volume, 0, 0)
+        manager.toggle_channel_controller_visibility(EffectType.Volume, 0)
+        manager.set_event(BeatKey(0, 0, 0), listOf(), AbsoluteNoteEvent(35))
+        manager.controller_line_set_event<OpusVolumeEvent>(EffectType.Volume, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent())
+        manager.controller_channel_set_event<OpusVolumeEvent>(EffectType.Volume, 0, 0, listOf(), OpusVolumeEvent())
+        manager.controller_global_set_event<OpusTempoEvent>(EffectType.Tempo, 0, listOf(), OpusTempoEvent())
+        manager.unset_beat(0)
+
+        assert(manager.get_tree(BeatKey(0, 0, 0), listOf()).is_eventless())
+        assert(manager.get_line_ctl_tree<OpusVolumeEvent>(EffectType.Volume, BeatKey(0, 0, 0), listOf()).is_eventless())
+        assert(manager.get_channel_ctl_tree<OpusVolumeEvent>(EffectType.Volume, 0, 0, listOf()).is_eventless())
+        assert(manager.get_global_ctl_tree<OpusTempoEvent>(EffectType.Tempo, 0,  listOf()).is_eventless())
+    }
 }

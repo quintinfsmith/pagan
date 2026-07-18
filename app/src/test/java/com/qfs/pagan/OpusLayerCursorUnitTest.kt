@@ -38,7 +38,8 @@ class OpusLayerCursorUnitTest {
                 for (i in 0 until manager.length) {
                     this.assert_beat_selection(manager, i)
                 }
-                for ((type, _) in channel.lines[j].controllers.get_all()) {
+                for ((type, controller) in channel.lines[j].controllers.get_all()) {
+                    if (!controller.visible) continue
                     this.assert_line_controller_line_selection(manager, i, j, type)
                 }
             }
@@ -297,16 +298,16 @@ class OpusLayerCursorUnitTest {
         for (i in channels.indices) {
             for (j in channels[i].lines.indices) {
                 assertFalse(manager.is_line_selected(i, j))
-                assertEquals(
-                    i == selected_channel && j == selected_line_offset,
-                    manager.is_line_selected_secondary(i, j)
-                )
+                assertFalse(manager.is_line_selected_secondary(i, j))
 
                 var working_beatkey = BeatKey(i,j, 0)
                 var working_position = manager.get_first_position(working_beatkey)
                 while (true) {
                     assertFalse(manager.is_selected(working_beatkey, working_position))
-                    assertFalse(manager.is_secondary_selection(working_beatkey, working_position))
+                    assertFalse(
+                        "Shouldn't be secondary selected: $working_beatkey, $working_position",
+                        manager.is_secondary_selection(working_beatkey, working_position)
+                    )
 
                     val pair = manager.get_proceeding_leaf_position(working_beatkey, working_position) ?: break
                     working_beatkey = pair.first

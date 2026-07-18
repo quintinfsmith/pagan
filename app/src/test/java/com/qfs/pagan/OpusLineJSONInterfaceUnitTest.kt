@@ -14,7 +14,7 @@ class OpusLineJSONInterfaceUnitTest {
     fun test_color() {
         val working_line = OpusLine(MutableList(4) { ReducibleTree<TunedInstrumentEvent>() })
         working_line.palette.event = Color(0xFFFF0000)
-        val working_json_obj = OpusLineJSONInterface.to_json(working_line)
+        val working_json_obj = working_line.to_json()
         assertEquals(
             "#FFFF0000".lowercase(),
             working_json_obj.get_hashmap("palette").get_string("event").lowercase()

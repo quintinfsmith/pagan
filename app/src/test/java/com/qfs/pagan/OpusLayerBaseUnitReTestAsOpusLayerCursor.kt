@@ -102,7 +102,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
         assertThrows(BadBeatKey::class.java) {
             manager.get_tree(BeatKey(0,3,1))
         }
-        assertThrows(BadBeatKey::class.java) {
+        assertThrows(InvalidChannel::class.java) {
             manager.get_tree(BeatKey(2,0,0))
         }
 
@@ -892,13 +892,12 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
         manager.controller_global_set_event(EffectType.Tempo, 1, listOf(), OpusTempoEvent(120F))
         manager.controller_global_set_event(EffectType.Tempo, 2, listOf(), OpusTempoEvent(60F))
 
-        val full_midi = get_midi(manager)
+        val full_midi = ProjectToMIDIConverter.get_midi(manager)
         val event_map = HashMap<Int, List<GeneralMIDIEvent>>()
         for ((position, events) in full_midi.get_all_events_grouped()) {
             event_map[position] = events
         }
-        println("${event_map.keys}")
-        println("${event_map.values}")
+
         assertEquals(
             12, // Text, VolumeMSB(x2), BankSelect, ProgramChange, BankSelect, ProgramChange, SetTempo, NoteOn, NoteOn, Balance(msb + lsb)
             event_map[0]!!.size
@@ -929,7 +928,7 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
             event_map[1920]!!.size
         )
 
-        val partial_midi = get_midi(manager, 1, 2)
+        val partial_midi = ProjectToMIDIConverter.get_midi(manager, 1 ,2)
         val event_map_b = HashMap<Int, List<GeneralMIDIEvent>>()
         for ((position, events) in partial_midi.get_all_events_grouped()) {
             event_map_b[position] = events
@@ -3092,12 +3091,10 @@ class OpusLayerBaseUnitReTestAsOpusLayerCursor {
                 listOf(),
                 OpusVolumeEvent(value.toFloat())
             )
-            println("$beat_key => $value")
         }
 
         // -------------------------------------------------------
         manager.controller_line_overwrite_range_horizontally(type, 0, 0, BeatKey(0, 0, 0), BeatKey(0, 0, 2))
-        println("--------------------------")
         for (k in 0 until 4) {
             for (b in 0 until 3) {
                 val key_a = BeatKey(c, l, b)

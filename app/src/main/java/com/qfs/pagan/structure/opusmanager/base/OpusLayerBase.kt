@@ -999,9 +999,7 @@ open class OpusLayerBase: Effectable, JSONCompliant {
      * Get the Channel Object @ [channel]
      */
     fun get_channel(channel: Int): OpusChannelAbstract<*, *> {
-        if (channel >= this.channels.size) {
-            throw InvalidChannel(channel)
-        }
+        if (channel >= this.channels.size) throw InvalidChannel(channel)
         return this.channels[channel]
     }
 

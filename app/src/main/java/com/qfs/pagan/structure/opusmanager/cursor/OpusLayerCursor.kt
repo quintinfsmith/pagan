@@ -1952,9 +1952,7 @@ open class OpusLayerCursor: OpusLayerBase() {
     }
 
     fun is_secondary_selection(beat_key: BeatKey, position: List<Int>): Boolean {
-        if (this.cursor.ctl_level != null) {
-            return false
-        }
+        if (this.cursor.ctl_level != null) return false
 
         return when (this.cursor.mode) {
             CursorMode.Single -> {
@@ -1990,16 +1988,14 @@ open class OpusLayerCursor: OpusLayerBase() {
             }
 
             CursorMode.Line -> {
-                this.cursor.line_offset == beat_key.line_offset && this.cursor.channel == beat_key.channel
+                this.cursor.line_offset == beat_key.line_offset && this.cursor.channel == beat_key.channel && this.cursor.ctl_type == null
             }
 
             CursorMode.Channel -> {
                 beat_key.channel == this.cursor.channel
             }
 
-            else -> {
-                false
-            }
+            else -> false
         }
 
     }

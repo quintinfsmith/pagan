@@ -567,7 +567,7 @@ class ProjectToMIDIConverter {
                                         bend,
                                         event_velocity,
                                         event_uuid_gen++,
-                                        min(current.offset + (current.size * event.duration), max_tick),
+                                        min((current.size * event.duration), max_tick),
                                     )
 
                                     val line_repeats = get_delayed_pseudo_events(pseudo_event, line_delay_map)

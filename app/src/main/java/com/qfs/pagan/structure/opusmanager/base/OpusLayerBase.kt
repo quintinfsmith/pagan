@@ -23,7 +23,6 @@ import com.qfs.json.JSONList
 import com.qfs.json.JSONParser
 import com.qfs.json.JSONString
 import com.qfs.pagan.PresetKey
-import com.qfs.pagan.enumerate
 import com.qfs.json.JSONCompliant
 import com.qfs.pagan.jsoninterfaces.OpusManagerJSONInterface
 import com.qfs.pagan.structure.Rational
@@ -220,7 +219,7 @@ open class OpusLayerBase: Effectable, JSONCompliant {
             opus.set_size(beat_values.size)
 
             var overflow_events = mutableSetOf<Array<Int>>()
-            for ((i, beat_tree) in beat_values.enumerate()) {
+            for ((i, beat_tree) in beat_values.withIndex()) {
                 // Quantize the beat ////////////
                 val quantized_tree = ReducibleTree<Set<Array<Int>>>()
                 quantized_tree.set_size(beat_tree.size)

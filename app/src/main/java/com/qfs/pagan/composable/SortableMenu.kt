@@ -47,7 +47,6 @@ import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import androidx.compose.material3.Text
-import com.qfs.pagan.enumerate
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
@@ -89,7 +88,7 @@ fun <T> SortableMenu(
     }
 
     var default_index = -1
-    for ((i, item) in sorted_menu.enumerate()) {
+    for ((i, item) in sorted_menu.withIndex()) {
         if (item.first == default_value) {
             default_index = i
             break

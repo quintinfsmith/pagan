@@ -15,7 +15,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import com.qfs.pagan.enumerate
 import com.qfs.pagan.ui.theme.Dimensions
 import kotlin.math.max
 import kotlin.math.min
@@ -47,7 +46,7 @@ fun IntegerInput(
         revert_on_exit,
         { char_sequence ->
             val working_string = mutableListOf<Char>()
-            val current_text = char_sequence.toList().enumerate()
+            val current_text = char_sequence.toList().withIndex()
             var bad_char_found = false
 
             for ((i, c) in current_text) {

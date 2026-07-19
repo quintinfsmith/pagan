@@ -13,6 +13,55 @@ class JSONList(vararg args: JSONObject?): JSONObject {
     val indices: IntRange
         get() = this.list.indices
 
+    operator fun iterator(): Iterator<JSONObject?> {
+        return this.list.iterator()
+    }
+    operator fun get(i: Int): JSONObject? {
+        return this.list[i]
+    }
+    operator fun set(index: Int, nothing: Nothing?) {
+        this.list[index] = null
+    }
+    operator fun set(index: Int, value: JSONObject?) {
+        this.list[index] = value
+    }
+    operator fun set(index: Int, value: Int?) {
+        this.list[index] = value?.let { JSONInteger(it) }
+    }
+    operator fun set(index: Int, value: String?) {
+        this.list[index] = value?.let { JSONString(it) }
+    }
+    operator fun set(index: Int, value: Float?) {
+        this.list[index] = value?.let { JSONFloat(it) }
+    }
+    operator fun set(index: Int, value: Boolean?) {
+        this.list[index] = value?.let { JSONBoolean(it) }
+    }
+
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is JSONList || other.size != this.size) {
+            return false
+        }
+
+        for (i in this.list.indices) {
+            if (other.list[i] != this.list[i]) {
+                return false
+            }
+        }
+
+        return true
+    }
+
+    override fun copy(): JSONList {
+        return JSONList(*Array(this.size) { i: Int ->
+            this.list[i]?.copy()
+        })
+    }
+    override fun toString(): String {
+        return this.to_string()
+    }
+
     override fun to_string(indent: Int?): String {
         val lines = mutableListOf<String>()
         for (value in this.list) {
@@ -39,207 +88,71 @@ class JSONList(vararg args: JSONObject?): JSONObject {
         this.list.add(value)
     }
     fun add(value: Int?) {
-        if (value == null) {
-            return this.add_null()
-        }
-        this.list.add(JSONInteger(value))
+        this.add(value?.let { JSONInteger(it) })
     }
     fun add(value: String?) {
-        if (value == null) {
-            return this.add_null()
-        }
-        this.list.add(JSONString(value))
+        this.add(value?.let { JSONString(it) })
     }
     fun add(value: Float?) {
-        if (value == null) {
-            return this.add_null()
-        }
-        this.list.add(JSONFloat(value))
+        this.add(value?.let { JSONFloat(it) })
     }
     fun add(value: Boolean?) {
-        if (value == null) {
-            return this.add_null()
-        }
-        this.list.add(JSONBoolean(value))
+        this.add(value?.let { JSONBoolean(it) })
     }
 
-    fun remove_at(index: Int) {
-        this.list.removeAt(index)
-    }
-
-    fun add_null() {
-        this.list.add(null)
-    }
-    operator fun set(index: Int, value: JSONObject?) {
-        this.list[index] = value
-    }
-    operator fun set(index: Int, value: Int?) {
-        if (value == null) {
-            return this.set_null(index)
-        }
-        this.list[index] = JSONInteger(value)
-    }
-    operator fun set(index: Int, value: String?) {
-        if (value == null) {
-            return this.set_null(index)
-        }
-        this.list[index] = JSONString(value)
-    }
-    operator fun set(index: Int, value: Float?) {
-        if (value == null) {
-            return this.set_null(index)
-        }
-        this.list[index] = JSONFloat(value)
-    }
-    operator fun set(index: Int, value: Boolean?) {
-        if (value == null) {
-            return this.set_null(index)
-        }
-        this.list[index] = JSONBoolean(value)
-    }
-    fun set_null(index: Int) {
-        this.list[index] = null
-    }
-
-    fun get_int(index: Int, default: Int): Int {
-        if (this.list[index] == null) {
-            return default
-        }
-        return (this.list[index] as JSONInteger).value
-    }
-    fun get_string(index: Int, default: String): String {
-        if (this.list[index] == null) {
-            return default
-        }
-        return (this.list[index] as JSONString).value
-    }
-    fun get_float(index: Int, default: Float): Float {
-        if (this.list[index] == null) {
-            return default
-        }
-        return (this.list[index] as JSONFloat).value
-    }
-    fun get_boolean(index: Int, default: Boolean): Boolean {
-        if (this.list[index] == null) {
-            return default
-        }
-        return (this.list[index] as JSONBoolean).value
+    fun remove_at(index: Int): JSONObject? {
+        return this.list.removeAt(index)
     }
 
     fun get_intn(index: Int): Int? {
-        if (this.list[index] == null) {
-            return null
-        }
-        return (this.list[index] as JSONInteger).value
+        return this.list[index]?.let { (it as JSONInteger).value }
     }
-    fun get_stringn(index: Int): String? {
-        if (this.list[index] == null) {
-            return null
-        }
-        return (this.list[index] as JSONString).value
-    }
-    fun get_floatn(index: Int): Float? {
-        if (this.list[index] == null) {
-            return null
-        }
-        return (this.list[index] as JSONFloat).value
-    }
-    fun get_booleann(index: Int): Boolean? {
-        if (this.list[index] == null) {
-            return null
-        }
-        return (this.list[index] as JSONBoolean).value
-    }
-    fun get_listn(index: Int): JSONList? {
-        if (this.list[index] == null) {
-            return null
-        }
-        return (this.list[index] as JSONList)
-    }
-    fun get_hashmapn(index: Int): JSONHashMap? {
-        if (this.list[index] == null) {
-            return null
-        }
-        return (this.list[index] as JSONHashMap)
+    fun get_int(index: Int): Int {
+        return this.get_intn(index) ?: throw NonNullableException()
     }
 
-    fun get_int(index: Int): Int {
-        if (this.list[index] == null) {
-            throw NonNullableException()
-        }
-        return (this.list[index] as JSONInteger).value
+    fun get_stringn(index: Int): String? {
+        return this.list[index]?.let { (it as JSONString).value }
     }
     fun get_string(index: Int): String {
-        if (this.list[index] == null) {
-            throw NonNullableException()
-        }
-        return (this.list[index] as JSONString).value
+        return this.get_stringn(index) ?: throw NonNullableException()
+    }
+
+    fun get_floatn(index: Int): Float? {
+        return this.list[index]?.let { (it as JSONFloat).value }
     }
     fun get_float(index: Int): Float {
-        if (this.list[index] == null) {
-            throw NonNullableException()
-        }
-        return (this.list[index] as JSONFloat).value
+        return this.get_floatn(index) ?: throw NonNullableException()
+    }
+
+    fun get_booleann(index: Int): Boolean? {
+        return this.list[index]?.let { (it as JSONBoolean).value }
     }
     fun get_boolean(index: Int): Boolean {
-        if (this.list[index] == null) {
-            throw NonNullableException()
-        }
-        return (this.list[index] as JSONBoolean).value
+        return this.get_booleann(index) ?: throw NonNullableException()
     }
 
-    fun get_hashmap(index: Int): JSONHashMap {
-        if (this.list[index] == null) {
-            throw NonNullableException()
-        }
-        return (this.list[index] as JSONHashMap)
+    fun get_listn(index: Int): JSONList? {
+        return this.list[index]?.let { (it as JSONList) }
     }
-
     fun get_list(index: Int): JSONList {
-        if (this.list[index] == null) {
-            throw NonNullableException()
-        }
-        return (this.list[index] as JSONList)
+        return this.get_listn(index) ?: throw NonNullableException()
     }
 
-    override fun equals(other: Any?): Boolean {
-        if (other !is JSONList || other.size != this.size) {
-            return false
-        }
-
-        for (i in this.list.indices) {
-            if (other.list[i] != this.list[i]) {
-                return false
-            }
-        }
-
-        return true
+    fun get_hashmapn(index: Int): JSONHashMap? {
+        return this.list[index]?.let { (it as JSONHashMap) }
     }
-    override fun toString(): String {
-        return this.to_string()
-    }
-
-    operator fun iterator(): Iterator<JSONObject?> {
-        return this.list.iterator()
-    }
-
-    operator fun get(i: Int): JSONObject? {
-        return this.list[i]
+    fun get_hashmap(index: Int): JSONHashMap {
+        return this.get_hashmapn(index) ?: throw NonNullableException()
     }
 
     fun isNotEmpty(): Boolean {
         return this.list.isNotEmpty()
     }
-
     fun isEmpty(): Boolean {
         return this.list.isEmpty()
     }
 
-    override fun copy(): JSONList {
-        return JSONList(*Array(this.size) { i: Int ->
-            this.list[i]?.copy()
-        })
-    }
     fun <R: Comparable<R>> sort_by(sortfunc: (JSONObject?) -> R) {
         this.list.sortBy(sortfunc)
     }

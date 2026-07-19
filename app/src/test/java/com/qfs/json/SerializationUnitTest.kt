@@ -200,9 +200,77 @@ class SerializationUnitTest {
         assertNotEquals(jmap, copy)
         copy["a"] = jmap["a"]
         assertNotEquals(copy, JSONList(null))
+    }
+
+    @Test
+    fun test_list() {
+        val jmap = JSONList()
+        jmap.add(1)
+        jmap.add(1F)
+        jmap.add("Bums")
+        jmap.add(JSONList())
+        jmap.add(true)
+
+        assertEquals(5, jmap.size)
+        assertEquals(1, jmap.get_int(0))
+        assertEquals(1F, jmap.get_float(1))
+        assertEquals("Bums", jmap.get_string(2))
+        assert(jmap.get_boolean(4))
+
+        val dup = JSONList(*Array(jmap.size) { null })
+        for (i in 0 until jmap.size) {
+            dup[i] = jmap[i]
+            assertEquals(jmap[i], dup[i])
+        }
 
 
 
+        //assertEquals(1, jmap.get_int("a"))
+        //assertEquals(1F, jmap.get_float("b"))
+        //assertEquals("Bums", jmap.get_string("c"))
+        //assertEquals(null, jmap.get_stringn("e"))
+        //assertThrows(NonNullableException::class.java) {
+        //    jmap.get_string("e")
+        //}
+        //assertEquals(null, jmap.get_intn("e"))
+        //assertThrows(NonNullableException::class.java) {
+        //    jmap.get_int("e")
+        //}
+        //assertEquals(null, jmap.get_booleann("e"))
+        //assertThrows(NonNullableException::class.java) {
+        //    jmap.get_boolean("e")
+        //}
+        //assertEquals(null, jmap.get_floatn("e"))
+        //assertThrows(NonNullableException::class.java) {
+        //    jmap.get_float("e")
+        //}
+        //assertEquals(null, jmap.get_listn("e"))
+        //assertThrows(NonNullableException::class.java) {
+        //    jmap.get_list("e")
+        //}
+        //assertEquals(null, jmap.get_hashmapn("e"))
+        //assertThrows(NonNullableException::class.java) {
+        //    jmap.get_hashmap("e")
+        //}
+        //assert(jmap.get_boolean("f"))
+
+        // class Test()
+        // assertThrows(InvalidJSONObject::class.java) {
+        //     JSONHashMap("a" to Test())
+        // }
+
+        // assert(jmap.isNotEmpty())
+        // assert(!jmap.isEmpty())
+
+        // val copy = jmap.copy()
+        // assertEquals(jmap, copy)
+        // copy["x"] = null
+        // assertNotEquals(jmap, copy)
+        // copy.remove("x")
+        // copy["a"] = null
+        // assertNotEquals(jmap, copy)
+        // copy["a"] = jmap["a"]
+        // assertNotEquals(copy, JSONList(null))
     }
 }
 

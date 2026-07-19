@@ -25,7 +25,6 @@ import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.PresetKey
 import com.qfs.pagan.RelativeInputMode
 import com.qfs.pagan.Values
-import com.qfs.pagan.enumerate
 import com.qfs.pagan.structure.Rational
 import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.OpusColorPalette
 import com.qfs.pagan.structure.opusmanager.base.OpusEvent
@@ -373,7 +372,7 @@ class ViewModelEditorState: ViewModel() {
         val main_line = this.line_data[y]
         val is_dragging_channel = this.is_dragging_channel()
 
-        for ((i, line) in this.line_data.enumerate()) {
+        for ((i, line) in this.line_data.withIndex()) {
             if (main_line.channel.value != line.channel.value) continue
             if (line.line_offset.value == main_line.line_offset.value || is_dragging_channel) {
                 line.is_dragging.value = true
@@ -701,7 +700,7 @@ class ViewModelEditorState: ViewModel() {
     fun add_column(column: Int, is_tagged: Boolean, tag_content: String?, new_cells: List<ReducibleTree<out OpusEvent>>? = null) {
         this.column_data.add(column, ColumnData(is_tagged, tag_content = tag_content))
         new_cells?.let {
-            for ((y, line) in this.cell_map.enumerate()) {
+            for ((y, line) in this.cell_map.withIndex()) {
                 line.add(column, mutableStateOf(TreeData(new_cells[y])))
             }
         }
@@ -846,7 +845,7 @@ class ViewModelEditorState: ViewModel() {
                 if (y >= this.line_count.value) return // This is ok. It just means the line hasn't been added yet
                 val active_line = this.line_data[y]
                 for (x in 0 until this.beat_count.value) {
-                    for ((y, line) in this.line_data.enumerate()) {
+                    for ((y, line) in this.line_data.withIndex()) {
                         if (line.channel.value != active_line.channel.value) continue
                         if (line.line_offset.value != active_line.line_offset.value) continue
                         if (active_line.ctl_type.value != null && active_line.ctl_type.value != line.ctl_type.value) continue
@@ -863,7 +862,7 @@ class ViewModelEditorState: ViewModel() {
             }
             CursorMode.Channel -> {
                 for (x in 0 until this.beat_count.value) {
-                    for ((y, line) in this.line_data.enumerate()) {
+                    for ((y, line) in this.line_data.withIndex()) {
                         if (line.channel.value != cursor.ints[0]) continue
 
                         this.cell_map[y][x].value.also {
@@ -881,7 +880,7 @@ class ViewModelEditorState: ViewModel() {
                 val x = cursor.ints[1]
                 if (this.cell_map.size > y && this.cell_map[y].size > x) {
                     this.cell_map[y][x].value.also {
-                        for ((i, pair) in it.leafs.enumerate()) {
+                        for ((i, pair) in it.leafs.withIndex()) {
                             val (leaf_path, leaf_data) = pair
                             if (x == cursor.ints[1] && leaf_path == cursor.ints.subList(2, cursor.ints.size)) {
                                 val stack = mutableListOf<Triple<Int, Int, Boolean?>>(Triple(x, i, null))
@@ -1003,7 +1002,7 @@ class ViewModelEditorState: ViewModel() {
                 val y = cursor.ints[0]
                 if (y >= this.line_count.value) return // This is ok. It just means the line hasn't been added yet
                 val active_line = this.line_data[y]
-                for ((line_index, line) in this.line_data.enumerate()) {
+                for ((line_index, line) in this.line_data.withIndex()) {
                     if (line.channel.value != active_line.channel.value) continue
                     if (line.line_offset.value != active_line.line_offset.value) continue
                     if (active_line.ctl_type.value != null && active_line.ctl_type.value != line.ctl_type.value) continue

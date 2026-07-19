@@ -40,7 +40,6 @@ import com.qfs.pagan.composable.button.OutlinedButton
 import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.wrappers.Text
-import com.qfs.pagan.enumerate
 import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
@@ -139,7 +138,7 @@ fun ColumnScope.TuningDialogNormal(
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState()),
             ) {
-                for ((i, state) in note_map.enumerate()) {
+                for ((i, state) in note_map.withIndex()) {
                     val (numer, denom) = state
                     Surface(
                         modifier = Modifier.padding(Dimensions.TuningDialogLineSpacing),

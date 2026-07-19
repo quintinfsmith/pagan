@@ -19,7 +19,6 @@ import com.qfs.apres.soundfont2.Preset
 import com.qfs.apres.soundfont2.SampleDirective
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.PresetKey
-import com.qfs.pagan.enumerate
 import kotlin.math.max
 
 class SampleHandleManager(
@@ -202,7 +201,7 @@ class SampleHandleManager(
     }
 
     private fun decache_unused_presets() {
-        for ((i, loaded_presets) in this.loaded_presets.enumerate()) {
+        for ((i, loaded_presets) in this.loaded_presets.withIndex()) {
             val loaded_preset_keys = loaded_presets.keys.toMutableSet()
             for ((_, key) in this.preset_channel_map) {
                 val adj_key = Pair(key.bank, key.program)

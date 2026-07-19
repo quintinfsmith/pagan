@@ -21,7 +21,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import com.qfs.pagan.composable.button.Button
-import com.qfs.pagan.enumerate
 import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Shapes
@@ -38,7 +37,7 @@ fun <T> RadioMenu(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        for ((i, option) in options.enumerate()) {
+        for ((i, option) in options.withIndex()) {
             val (item, content) = option
 
             val shape = when (i) {

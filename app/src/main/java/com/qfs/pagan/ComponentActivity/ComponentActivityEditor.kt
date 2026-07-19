@@ -180,7 +180,6 @@ import com.qfs.pagan.composable.wrappers.CircularProgressIndicator
 import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.wrappers.Text
-import com.qfs.pagan.enumerate
 import com.qfs.pagan.process_zoom
 import com.qfs.pagan.put_config
 import com.qfs.pagan.setAction
@@ -1176,7 +1175,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 expanded = expanded.value,
                 onDismissRequest = { expanded.value = false }
             ) {
-                for ((_, item) in menu_items.enumerate()) {
+                for ((_, item) in menu_items.withIndex()) {
                     DropdownMenuItem(
                         text = { Text(item.first) },
                         onClick = {
@@ -2819,7 +2818,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             }
             pre_option.add(Pair(PresetKey(default.soundfont_index, 128, 0), null))
         } else if (opus_manager.vm_state.preset_names.isNotEmpty()) {
-            for ((soundfont_index, bank_map) in opus_manager.vm_state.preset_names.enumerate()) {
+            for ((soundfont_index, bank_map) in opus_manager.vm_state.preset_names.withIndex()) {
                 for ((bank, program_map) in bank_map) {
                     for ((program, name) in program_map) {
                         pre_option.add(Pair(PresetKey(soundfont_index, bank, program), name))
@@ -2830,7 +2829,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             pre_option.sortBy { it.first.bank }
             pre_option.sortBy { it.first.soundfont_index }
         } else {
-            for ((program, name) in default_presets.enumerate()) {
+            for ((program, name) in default_presets.withIndex()) {
                 pre_option.add(Pair(PresetKey(0, 0, program), name))
             }
         }
@@ -3838,7 +3837,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val opus_manager = this.controller_model.opus_manager
         opus_manager.project_change_new()
 
-        for ((c, channel) in opus_manager.channels.enumerate()) {
+        for ((c, channel) in opus_manager.channels.withIndex()) {
             if (!opus_manager.is_percussion(c)) continue
             val i = this.controller_model.audio_interface.get_minimum_instrument_index(channel.get_preset())
             for (l in 0 until opus_manager.get_channel(c).size) {

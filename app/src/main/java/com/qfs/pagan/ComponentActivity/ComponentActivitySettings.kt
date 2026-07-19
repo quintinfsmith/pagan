@@ -77,7 +77,6 @@ import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.wrappers.Switch
 import com.qfs.pagan.composable.wrappers.Text
-import com.qfs.pagan.enumerate
 import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Typography
@@ -592,7 +591,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                 view_model.add_soundfont_uri(uri)
                             } else {
                                 var index = 0
-                                for ((i, mutable_path) in active_soundfonts.enumerate()) {
+                                for ((i, mutable_path) in active_soundfonts.withIndex()) {
                                     if (mutable_path.value == selected_file_name.value) {
                                         index = i
                                         break
@@ -679,7 +678,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             MenuPadder()
             val soundfonts = this@ComponentActivitySettings.view_model.configuration.soundfonts
             Column(Modifier.width(IntrinsicSize.Min)) {
-                for ((index, soundfont_path) in soundfonts.value.enumerate()) {
+                for ((index, soundfont_path) in soundfonts.value.withIndex()) {
                     val soundfont_name = soundfont_path.value.split("/").let { it[it.size - 1].trim() }
                     Row(
                         Modifier.height(IntrinsicSize.Min),
@@ -929,7 +928,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     expanded = playback_expanded.value,
                     onDismissRequest = { playback_expanded.value = false }
                 ) {
-                    for ((i, rate) in options_playback.enumerate()) {
+                    for ((i, rate) in options_playback.withIndex()) {
                         DropdownMenuItem(
                             selected = rate == view_model.configuration.sample_rate.value,
                             text = { Text("$rate hz") },

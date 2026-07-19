@@ -29,7 +29,6 @@ import com.qfs.pagan.PlaybackDevice
 import com.qfs.pagan.PlaybackFrameMap
 import com.qfs.pagan.PlaybackState
 import com.qfs.pagan.PresetKey
-import com.qfs.pagan.enumerate
 import com.qfs.pagan.get_next_playback_state
 import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import java.io.DataOutputStream
@@ -119,7 +118,7 @@ class ViewModelEditorController: ViewModel() {
         val vm_state = this.opus_manager.vm_state
 
         vm_state.preset_names.clear()
-        for ((i, soundfont) in soundfonts.enumerate()) {
+        for ((i, soundfont) in soundfonts.withIndex()) {
             vm_state.populate_presets(i, soundfont)
         }
         vm_state.update_channel_names()
@@ -163,7 +162,7 @@ class ViewModelEditorController: ViewModel() {
     }
 
     fun update_soundfont_instruments() {
-        for ((i, channel) in this.opus_manager.channels.enumerate()) {
+        for ((i, channel) in this.opus_manager.channels.withIndex()) {
             val midi_channel = this.opus_manager.get_midi_channel(i)
             val (soundfont_index, midi_bank, midi_program) = channel.get_preset()
             this.audio_interface.update_channel_preset(midi_channel, soundfont_index, midi_bank, midi_program)
@@ -171,7 +170,7 @@ class ViewModelEditorController: ViewModel() {
     }
 
     fun update_midi_instruments() {
-        for ((i, channel) in this.opus_manager.channels.enumerate()) {
+        for ((i, channel) in this.opus_manager.channels.withIndex()) {
             val midi_channel = this.opus_manager.get_midi_channel(i)
             val (_, midi_bank, midi_program) = channel.get_preset()
             this.virtual_midi_device.send_event(BankSelect(midi_channel, midi_bank))

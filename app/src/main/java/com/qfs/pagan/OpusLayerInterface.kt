@@ -26,7 +26,6 @@ import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.OpusLineAbstract
 import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
 import com.qfs.pagan.structure.opusmanager.base.OpusPercussionChannel
-import com.qfs.pagan.structure.opusmanager.base.PercussionChannelRequired
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
@@ -353,7 +352,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         val available_controllers = global_controller_domain.toMutableList()
         for ((type, controller) in this.controllers.get_all()) {
             if (!controller.visible) continue
-            for ((i, value) in available_controllers.enumerate()) {
+            for ((i, value) in available_controllers.withIndex()) {
                 if (type == value) {
                     available_controllers.removeAt(i)
                     break
@@ -649,7 +648,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
 
         // adjust originals
         val diff = this.length - original_length
-        for ((i, entries) in originals.enumerate()) {
+        for ((i, entries) in originals.withIndex()) {
             originals[i] = List(entries.size) { j ->
                 val (head, tail) = entries[j]
                 val adj_tail_entries = mutableListOf<Pair<Int, List<Int>>>()
@@ -667,7 +666,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
             }
         }
 
-        for ((i, original_blocked_leafs) in originals.enumerate()) {
+        for ((i, original_blocked_leafs) in originals.withIndex()) {
             this.remap_blocked_leafs(
                 i,
                 original_blocked_leafs,
@@ -1016,7 +1015,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.vm_state.line_count.value = 0
         this.vm_state.channel_count.value = 0
         var i = 0
-        for ((c, channel) in this.channels.enumerate()) {
+        for ((c, channel) in this.channels.withIndex()) {
             this.vm_state.add_channel(
                 c,
                 this.is_percussion(c),
@@ -1024,7 +1023,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 channel.muted,
                 palette = channel.palette
             )
-            for ((l, line) in channel.lines.enumerate()) {
+            for ((l, line) in channel.lines.withIndex()) {
                 val instrument = if (this.is_percussion(c)) {
                     (line as OpusLinePercussion).instrument
                 } else {
@@ -1228,7 +1227,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         this.vm_state.project_name.value = this.project_name
         this.vm_state.project_notes.value = this.project_notes
 
-        for ((i, channel) in this.channels.enumerate()) {
+        for ((i, channel) in this.channels.withIndex()) {
             val instrument = channel.get_preset()
             this.vm_controller.update_channel_preset(
                 this.get_midi_channel(i),
@@ -1263,7 +1262,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
         }
 
         var i = 0
-        for ((c, channel) in this.channels.enumerate()) {
+        for ((c, channel) in this.channels.withIndex()) {
             this.vm_state.add_channel(
                 c,
                 this.is_percussion(c),
@@ -1271,7 +1270,7 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
                 channel.muted,
                 palette = channel.palette
             )
-            for ((l, line) in channel.lines.enumerate()) {
+            for ((l, line) in channel.lines.withIndex()) {
                 val instrument = if (this.is_percussion(c)) {
                     (line as OpusLinePercussion).instrument
                 } else {
@@ -1315,8 +1314,8 @@ class OpusLayerInterface(val vm_controller: ViewModelEditorController) : OpusLay
     private fun ui_add_column(beat_index: Int) {
         if (this.ui_lock.is_locked()) return
         val new_cells = mutableListOf<ReducibleTree<out OpusEvent>>()
-        for ((c, channel) in this.channels.enumerate()) {
-            for ((l, line) in channel.lines.enumerate()) {
+        for ((c, channel) in this.channels.withIndex()) {
+            for ((l, line) in channel.lines.withIndex()) {
                 new_cells.add(this.get_tree(BeatKey(c, l, beat_index)))
                 for ((type, controller) in line.controllers.get_all()) {
                     if (!controller.visible) continue

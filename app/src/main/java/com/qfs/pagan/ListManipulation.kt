@@ -1,22 +1,5 @@
 package com.qfs.pagan
 
-fun <T> Array<T>.enumerate():  Array<Pair<Int, T>> {
-    return Array(this.size) { i ->
-        Pair(i, this[i])
-    }
-}
-
-fun IntArray.enumerate(): Array<Pair<Int, Int>> {
-    return Array(this.size) { i ->
-        Pair(i, this[i])
-    }
-}
-
-fun <T> List<T>.enumerate():  Array<Pair<Int, T>> {
-    return Array(this.size) { i ->
-        Pair(i, this[i])
-    }
-}
 
 inline fun <reified T> MutableList<T>.swap_sections(first_index: Int, first_size: Int, second_index: Int, second_size: Int) {
     if (first_index == second_index) return
@@ -34,10 +17,10 @@ inline fun <reified T> MutableList<T>.swap_sections(first_index: Int, first_size
         this.removeAt(lesser.first)
     }
 
-    for ((i, elm) in larger_items.enumerate()) {
+    for ((i, elm) in larger_items.withIndex()) {
         this.add(lesser.first + i, elm)
     }
-    for ((i, elm) in lesser_items.enumerate()) {
+    for ((i, elm) in lesser_items.withIndex()) {
         this.add(larger.first + i + (larger.second - lesser.second), elm)
     }
 }

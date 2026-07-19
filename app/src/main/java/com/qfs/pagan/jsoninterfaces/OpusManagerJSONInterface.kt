@@ -24,7 +24,7 @@ object OpusManagerJSONInterface {
         val radix = input.get_int("radix")
         return JSONHashMap(
             "name" to JSONString(input.get_string("name")),
-            "transpose" to JSONInteger(input.get_int("transpose", 0)),
+            "transpose" to JSONInteger(input.get_intn("transpose") ?: 0),
             "tempo" to JSONFloat(input.get_float("tempo")),
             "tuning_map" to JSONList(radix) { i: Int ->
                 JSONHashMap(
@@ -64,7 +64,7 @@ object OpusManagerJSONInterface {
                     "type" to JSONString("Tempo"),
                     "initial_value" to JSONHashMap(
                         "type" to JSONString("com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent"),
-                        "value" to JSONFloat(input.get_float("tempo", 120F))
+                        "value" to JSONFloat(input.get_floatn("tempo") ?: 120F)
                     ),
                     "children" to JSONList()
                 )

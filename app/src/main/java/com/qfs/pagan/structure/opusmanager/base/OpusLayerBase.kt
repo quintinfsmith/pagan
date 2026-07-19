@@ -3602,8 +3602,8 @@ open class OpusLayerBase: Effectable, JSONCompliant {
         }
 
         this.transpose = Pair(
-            inner_map.get_int("transpose", 0),
-            inner_map.get_int("transpose_radix", this.tuning_map.size)
+            inner_map.get_intn("transpose") ?: 0,
+            inner_map.get_intn("transpose_radix") ?: this.tuning_map.size
         )
 
         this.controllers = ActiveControlSetJSONInterface.from_json(inner_map.get_hashmap("controllers"), this.length)
@@ -4245,7 +4245,7 @@ open class OpusLayerBase: Effectable, JSONCompliant {
             return false
         }
 
-        for (i in 0 until this.channels.size) {
+        for (i in this.channels.indices) {
             if (this.channels[i] != other.channels[i]) {
                 return false
             }

@@ -73,7 +73,7 @@ object OpusLineJSONInterface {
 
     private fun _interpret_general(input: JSONHashMap, output: OpusLineAbstract<*>) {
         output.controllers = ActiveControlSetJSONInterface.from_json(input.get_hashmap("controllers"), output.beat_count())
-        output.muted = input.get_boolean("muted", false)
+        output.muted = input.get_booleann("muted") ?: false
 
         input.get_hashmapn("palette")?.let {
             output.palette = OpusColorPalette.from_json(it)

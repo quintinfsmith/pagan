@@ -101,9 +101,9 @@ object OpusTreeJSONInterface {
         if (event_hashmap != null) {
             output["event"] = event_converter(event_hashmap)
             output["size"] = 0
-            output.set_null("divisions")
+            output["divisions"] = null
         } else {
-            output.set_null("event")
+            output["event"] = null
             val tmp_children = input.get_list("children")
             output["size"] = tmp_children.size
             output["divisions"] = JSONList(tmp_children.size) { i: Int ->

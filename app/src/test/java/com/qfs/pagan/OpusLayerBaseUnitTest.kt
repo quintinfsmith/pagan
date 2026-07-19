@@ -3661,9 +3661,9 @@ class OpusLayerBaseUnitTest {
         manager.toggle_line_controller_visibility(EffectType.Volume, 0, 0)
         manager.toggle_channel_controller_visibility(EffectType.Volume, 0)
         manager.set_event(BeatKey(0, 0, 0), listOf(), AbsoluteNoteEvent(35))
-        manager.controller_line_set_event<OpusVolumeEvent>(EffectType.Volume, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent())
-        manager.controller_channel_set_event<OpusVolumeEvent>(EffectType.Volume, 0, 0, listOf(), OpusVolumeEvent())
-        manager.controller_global_set_event<OpusTempoEvent>(EffectType.Tempo, 0, listOf(), OpusTempoEvent())
+        manager.controller_line_set_event(EffectType.Volume, BeatKey(0, 0, 0), listOf(), OpusVolumeEvent())
+        manager.controller_channel_set_event(EffectType.Volume, 0, 0, listOf(), OpusVolumeEvent())
+        manager.controller_global_set_event(EffectType.Tempo, 0, listOf(), OpusTempoEvent())
         manager.unset_beat(0)
 
         assert(manager.get_tree(BeatKey(0, 0, 0), listOf()).is_eventless())

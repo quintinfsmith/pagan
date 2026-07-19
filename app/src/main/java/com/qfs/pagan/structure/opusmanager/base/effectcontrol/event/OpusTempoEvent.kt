@@ -20,8 +20,8 @@ class OpusTempoEvent(value: Float = 120F, duration: Int = 1, transition: EffectT
         override fun from_json(map: JSONHashMap): OpusTempoEvent {
             return OpusTempoEvent(
                 map.get_float("tempo"),
-                map.get_int("duration", 1),
-                map.get_string("transition", "Instant").asEffectTransition()
+                map.get_intn("duration") ?: 1,
+                (map.get_stringn("transition") ?: "Instant").asEffectTransition()
             )
         }
 

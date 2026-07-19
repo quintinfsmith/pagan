@@ -50,10 +50,10 @@ class OpusVelocityEvent(
                 } else {
                     null
                 },
-                map.get_int("duration", 1),
+                map.get_intn("duration") ?: 1,
                 /* Note: Need the try catch since I initially had transitions as int, but only used 0 */
                 try {
-                    map.get_string("transition", "Instant").asEffectTransition()
+                    (map.get_stringn("transition") ?: "Instant").asEffectTransition()
                 } catch (e: ClassCastException) {
                     EffectTransition.Instant
                 }

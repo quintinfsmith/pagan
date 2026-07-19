@@ -20,8 +20,8 @@ class OpusPanEvent(value: Float = 0F, duration: Int = 1, transition: EffectTrans
         override fun from_json(map: JSONHashMap): OpusPanEvent {
             return OpusPanEvent(
                 map.get_float("value"),
-                map.get_int("duration", 1),
-                map.get_string("transition", "Instant").asEffectTransition()
+                map.get_intn("duration") ?: 1,
+                (map.get_stringn("transition") ?: "Instant").asEffectTransition()
             )
         }
     }

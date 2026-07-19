@@ -18,7 +18,7 @@ import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 
 object InstrumentEventJSONInterface {
     fun convert_v1_to_v3_tuned(input: JSONHashMap): JSONHashMap {
-        return if (input.get_boolean("relative", false)) {
+        return if (input.get_booleann("relative") ?: false) {
             JSONHashMap(
                 "duration" to input["duration"],
                 "type" to JSONString("rel"),
@@ -48,7 +48,7 @@ object InstrumentEventJSONInterface {
             "perc" -> PercussionEvent()
             else -> throw UnknownEventTypeException(event_type)
         }
-        output.duration = input.get_int("duration", 1)
+        output.duration = input.get_intn("duration") ?: 1
         return output
     }
 }

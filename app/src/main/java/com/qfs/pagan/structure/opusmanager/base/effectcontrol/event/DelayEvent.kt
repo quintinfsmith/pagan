@@ -34,8 +34,8 @@ class DelayEvent(
                 freq.get_int(1),
                 map.get_int("echo"),
                 map.get_float("fade"),
-                map.get_int("duration", 1),
-                map.get_string("transition", "Instant").asEffectTransition()
+                map.get_intn("duration") ?: 1,
+                (map.get_stringn("transition") ?: "Instant").asEffectTransition()
             )
         }
     }

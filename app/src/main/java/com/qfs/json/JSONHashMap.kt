@@ -9,6 +9,7 @@
  */
 package com.qfs.json
 
+import androidx.annotation.NonNull
 import kotlin.collections.iterator
 
 class JSONHashMap(vararg args: Pair<String, Any?>): JSONObject {
@@ -43,6 +44,10 @@ class JSONHashMap(vararg args: Pair<String, Any?>): JSONObject {
         this.hash_map[key] = null
     }
 
+    fun remove(key: String): JSONObject? {
+        return this.hash_map.remove(key)
+    }
+
     operator fun set(key: String, value: JSONCompliant) {
         this.hash_map[key] = value.to_json()
     }
@@ -51,131 +56,57 @@ class JSONHashMap(vararg args: Pair<String, Any?>): JSONObject {
         this.hash_map[key] = value
     }
     operator fun set(key: String, value: Int?) {
-        if (value == null) {
-            return this.set_null(key)
-        }
-        this[key] = JSONInteger(value)
+        this[key] = value?.let { JSONInteger(value) }
     }
     operator fun set(key: String, value: String?) {
-        if (value == null) {
-            return this.set_null(key)
-        }
-        this.hash_map[key] = JSONString(value)
+        this[key] = value?.let { JSONString(value) }
     }
     operator fun set(key: String, value: Float?) {
-        if (value == null) {
-            return this.set_null(key)
-        }
-        this.hash_map[key] = JSONFloat(value)
+        this[key] = value?.let { JSONFloat(value) }
     }
     operator fun set(key: String, value: Boolean?) {
-        if (value == null) {
-            return this.set_null(key)
-        }
-        this.hash_map[key] = JSONBoolean(value)
+        this[key] = value?.let { JSONBoolean(it) }
     }
-    fun set_null(key: String) {
-        this.hash_map[key] = null
-    }
-    fun get_int(key: String, default: Int): Int {
-        if (this.hash_map[key] == null) {
-            return default
-        }
-        return (this.hash_map[key] as JSONInteger).value
-    }
-    fun get_string(key: String, default: String): String {
-        if (this.hash_map[key] == null) {
-            return default
-        }
-        return (this.hash_map[key] as JSONString).value
-    }
-    fun get_float(key: String, default: Float): Float {
-        if (this.hash_map[key] == null) {
-            return default
-        }
-        return (this.hash_map[key] as JSONFloat).value
-    }
-    fun get_boolean(key: String, default: Boolean): Boolean {
-        if (this.hash_map[key] == null) {
-            return default
-        }
-        return (this.hash_map[key] as JSONBoolean).value
-    }
+
     fun get_intn(key: String): Int? {
-        if (this.hash_map[key] == null) {
-            return null
-        }
-        return (this.hash_map[key] as JSONInteger).value
+        return this.hash_map[key]?.let { (it as JSONInteger).value }
     }
-    fun get_stringn(key: String): String? {
-        if (this.hash_map[key] == null) {
-            return null
-        }
-        return (this.hash_map[key] as JSONString).value
-    }
-    fun get_floatn(key: String): Float? {
-        if (this.hash_map[key] == null) {
-            return null
-        }
-        return (this.hash_map[key] as JSONFloat).value
+    fun get_int(key: String): Int {
+        return this.get_intn(key) ?: throw NonNullableException()
     }
     fun get_booleann(key: String): Boolean? {
-        if (this.hash_map[key] == null) {
-            return null
-        }
-        return (this.hash_map[key] as JSONBoolean).value
+        return this.hash_map[key]?.let { (it as JSONBoolean).value }
+    }
+    fun get_boolean(key: String): Boolean {
+        return this.get_booleann(key) ?: throw NonNullableException()
+    }
+
+    fun get_stringn(key: String): String? {
+        return this.hash_map[key]?.let { (it as JSONString).value }
+    }
+    fun get_string(key: String): String {
+        return this.get_stringn(key) ?: throw NonNullableException()
+    }
+
+    fun get_floatn(key: String): Float? {
+        return this.hash_map[key]?.let { (it as JSONFloat).value }
+    }
+    fun get_float(key: String): Float {
+        return this.get_floatn(key) ?: throw NonNullableException()
     }
 
     fun get_hashmapn(key: String): JSONHashMap? {
-        if (this.hash_map[key] == null) {
-            return null
-        }
-        return (this.hash_map[key] as JSONHashMap)
+        return this.hash_map[key]?.let { (it as JSONHashMap) }
+    }
+    fun get_hashmap(key: String): JSONHashMap {
+        return this.get_hashmapn(key) ?: throw NonNullableException()
     }
 
     fun get_listn(key: String): JSONList? {
-        if (this.hash_map[key] == null) {
-            return null
-        }
-        return (this.hash_map[key] as JSONList)
+        return this.hash_map[key]?.let { (it as JSONList) }
     }
-
-    fun get_int(key: String): Int {
-        if (this.hash_map[key] == null) {
-            throw NonNullableException()
-        }
-        return (this.hash_map[key] as JSONInteger).value
-    }
-    fun get_string(key: String): String {
-        if (this.hash_map[key] == null) {
-            throw NonNullableException()
-        }
-        return (this.hash_map[key] as JSONString).value
-    }
-    fun get_float(key: String): Float {
-        if (this.hash_map[key] == null) {
-            throw NonNullableException()
-        }
-        return (this.hash_map[key] as JSONFloat).value
-    }
-    fun get_boolean(key: String): Boolean {
-        if (this.hash_map[key] == null) {
-            throw NonNullableException()
-        }
-        return (this.hash_map[key] as JSONBoolean).value
-    }
-    fun get_hashmap(key: String): JSONHashMap {
-        if (this.hash_map[key] == null) {
-            throw NonNullableException()
-        }
-        return (this.hash_map[key] as JSONHashMap)
-    }
-
     fun get_list(key: String): JSONList {
-        if (this.hash_map[key] == null) {
-            throw NonNullableException()
-        }
-        return (this.hash_map[key] as JSONList)
+        return this.get_listn(key) ?: throw NonNullableException()
     }
 
     override fun to_string(indent: Int?): String {
@@ -190,7 +121,7 @@ class JSONHashMap(vararg args: Pair<String, Any?>): JSONObject {
             "{ ${lines.joinToString(", ")} }"
         } else {
             val indent_string = " ".repeat(indent)
-            for (i in 0 until lines.size) {
+            for (i in lines.indices) {
                 val line = lines[i]
                 val sublines = line.split("\n")
                 lines[i] = sublines.joinToString("\n$indent_string")

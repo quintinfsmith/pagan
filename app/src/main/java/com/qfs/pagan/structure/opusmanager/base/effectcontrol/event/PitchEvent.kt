@@ -20,9 +20,9 @@ class PitchEvent(pitch: Float = 1F, duration: Int = 1, transition: EffectTransit
     companion object: Deserializable<PitchEvent> {
         override fun from_json(map: JSONHashMap): PitchEvent {
             return PitchEvent(
-                map.get_float("pitch", 1F),
-                map.get_int("duration", 1),
-                map.get_string("transition", "Instant").asEffectTransition()
+                map.get_floatn("pitch") ?: 1F,
+                map.get_intn("duration") ?: 1,
+                (map.get_stringn("transition") ?: "Instant").asEffectTransition()
             )
         }
     }

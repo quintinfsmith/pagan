@@ -73,8 +73,8 @@ class LowPassEvent(
             return LowPassEvent(
                 filter_cutoff = map.get_float("cutoff"),
                 resonance = map.get_floatn("res"),
-                map.get_int("duration", 1),
-                map.get_string("transition", "Instant").asEffectTransition()
+                map.get_intn("duration") ?: 1,
+                (map.get_stringn("transition") ?: "Instant").asEffectTransition()
             )
         }
     }
@@ -109,8 +109,8 @@ class HighPassEvent(
         override fun from_json(map: JSONHashMap): HighPassEvent {
             return HighPassEvent(
                 filter_cutoff = map.get_float("cutoff"),
-                duration = map.get_int("duration", 1),
-                transition = map.get_string("transition", "Instant").asEffectTransition()
+                duration = map.get_intn("duration") ?: 1,
+                transition = (map.get_stringn("transition") ?: "Instant").asEffectTransition()
             )
         }
     }

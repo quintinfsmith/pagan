@@ -19,7 +19,7 @@ class OpusReverbEvent(value: Float = 1F, duration: Int = 1, transition: EffectTr
         override fun from_json(map: JSONHashMap): OpusReverbEvent {
             return OpusReverbEvent(
                 map.get_float("wetness"),
-                map.get_int("duration", 1)
+                map.get_intn("duration") ?: 1
             )
         }
 

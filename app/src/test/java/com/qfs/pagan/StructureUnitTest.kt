@@ -31,11 +31,7 @@ class StructureUnitTest {
         tree_b[0][0].set_event(0)
         val tree_c: ReducibleTree<Set<Int>> = tree_a.merge(ReducibleTree.get_set_tree(tree_b))
 
-        assertEquals(
-            setOf(0, 1),
-            tree_c[0].get_event()
-        )
-
+        assertEquals(setOf(0, 1), tree_c[0].get_event())
     }
 
     // Series of bizarre behaviours i've found

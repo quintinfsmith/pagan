@@ -76,10 +76,10 @@ object OpusChannelJSONInterface {
 
         channel.size = channel.lines.size
         channel.set_beat_count(beat_count)
-        channel.soundfont_index = input_map.get_int("soundfont_index", 0)
-        channel.midi_program = input_map.get_int("midi_program", 0)
+        channel.soundfont_index = input_map.get_intn("soundfont_index") ?: 0
+        channel.midi_program = input_map.get_intn("midi_program") ?: 0
         channel.controllers = ActiveControlSetJSONInterface.from_json(input_map.get_hashmap("controllers"), beat_count)
-        channel.muted = input_map.get_boolean("muted", false)
+        channel.muted = input_map.get_booleann("muted") ?: false
         channel.palette = input_map.get_hashmapn("palette")?.let { OpusColorPalette.from_json(it) } ?: OpusColorPalette()
 
         return channel
@@ -275,7 +275,7 @@ object OpusChannelJSONInterface {
                     "type" to JSONString("Tempo"),
                     "initial_value" to JSONHashMap(
                         "type" to JSONString("com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent"),
-                        "value" to JSONFloat(input_map.get_float("tempo", 120F))
+                        "value" to JSONFloat(input_map.get_floatn("tempo") ?: 120F)
                     ),
                     "children" to JSONList()
                 )

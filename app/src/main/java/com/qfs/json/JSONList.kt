@@ -37,7 +37,9 @@ class JSONList(vararg args: JSONObject?): JSONObject {
     operator fun set(index: Int, value: Boolean?) {
         this.list[index] = value?.let { JSONBoolean(it) }
     }
-
+    operator fun set(index: Int, value: JSONCompliant?) {
+        this.list[index] = value?.let { value.to_json() }
+    }
 
     override fun equals(other: Any?): Boolean {
         if (other !is JSONList || other.size != this.size) {

@@ -155,6 +155,10 @@ class JSONHashMap(vararg args: Pair<String, Any?>): JSONObject {
         return this.hash_map.isEmpty()
     }
 
+    fun clear() {
+        this.hash_map.clear()
+    }
+
     override fun copy(): JSONHashMap {
         val output = JSONHashMap()
         for ((key, value) in this.hash_map) {

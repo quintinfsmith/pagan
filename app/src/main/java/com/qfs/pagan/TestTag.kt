@@ -94,6 +94,9 @@ enum class TestTag {
     EffectMenuLowPass,
     EffectMenuPan,
     EffectMenuVolume,
+    RelativeSetAbsolute,
+    RelativeSetNegative,
+    RelativeSetPositive
 }
 
 fun test_tag_to_string(tag: TestTag, vararg args: Any?): String {

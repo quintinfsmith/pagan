@@ -148,6 +148,9 @@ class JSONList(vararg args: JSONObject?): JSONObject {
         return this.get_hashmapn(index) ?: throw NonNullableException()
     }
 
+    fun clear() {
+        this.list.clear()
+    }
     fun isNotEmpty(): Boolean {
         return this.list.isNotEmpty()
     }

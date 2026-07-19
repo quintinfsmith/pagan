@@ -205,11 +205,16 @@ class SerializationUnitTest {
     @Test
     fun test_list() {
         val jmap = JSONList()
+        assert(jmap.isEmpty())
+        assert(!jmap.isNotEmpty())
         jmap.add(1)
         jmap.add(1F)
         jmap.add("Bums")
         jmap.add(JSONList())
         jmap.add(true)
+
+        assert(!jmap.isEmpty())
+        assert(jmap.isNotEmpty())
 
         assertEquals(5, jmap.size)
         assertEquals(1, jmap.get_int(0))

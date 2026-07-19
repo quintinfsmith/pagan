@@ -11,15 +11,18 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
-import androidx.compose.ui.test.performKeyPress
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pressKey
 import androidx.test.rule.GrantPermissionRule
 import com.qfs.pagan.ComponentActivity.ComponentActivityEditor
+import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
+import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.base.OpusLinePercussion
+import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
+import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.effectcontroller.EffectController
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
@@ -30,11 +33,11 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Rule
 import org.junit.Test
 import kotlin.math.abs
-import kotlin.math.exp
 
 
 class ComposeTest {
@@ -45,6 +48,36 @@ class ComposeTest {
     @Rule
     var mRuntimePermissionRule: GrantPermissionRule = GrantPermissionRule
         .grant(Manifest.permission.POST_NOTIFICATIONS)
+
+    private fun get_manager(): OpusLayerInterface {
+        return editor_test_rule.activity.controller_model.opus_manager
+    }
+
+    private fun check_undo_redo(callback: () -> Unit) {
+        val opus_manager = this.get_manager()
+
+        val original = OpusLayerBase()
+        original.import_from_other(opus_manager)
+
+        val original_size = opus_manager.history_cache.size()
+
+        callback()
+
+        val altered = OpusLayerBase()
+        altered.import_from_other(opus_manager)
+        val altered_size = opus_manager.history_cache.size()
+        assertNotEquals(original_size, altered_size)
+
+        click_elm(TestTag.Undo)
+
+        assertEquals(original, opus_manager)
+        assertEquals(original_size, opus_manager.history_cache.size())
+
+        click_elm(TestTag.Redo)
+
+        assertEquals(altered_size, opus_manager.history_cache.size())
+        assertEquals(altered, opus_manager)
+    }
 
     private fun input_text(text: String, tag: TestTag, vararg args: Any?) {
         val interaction = get_interaction(tag, *args)
@@ -80,60 +113,70 @@ class ComposeTest {
 
     @Test
     fun test_new_project() {
-        //click_elm(TestTag.LandingNewProject)
         click_elm(TestTag.TopBarKebab)
         editor_test_rule.onNodeWithText("New Project").performClick()
     }
 
     @Test
     fun test_build_song() {
-        val opus_manager = editor_test_rule.activity.controller_model.opus_manager
+        val opus_manager = this.get_manager()
         click_elm(TestTag.OuterInsertBeat)
         get_interaction(TestTag.DialogNumberInput).performTextInput("200")
         click_elm(TestTag.DialogPositive)
         assertEquals(204, opus_manager.length)
 
         // Build Drums
-        click_elm(TestTag.LineLabel, 1, 0, null)
-        click_elm(TestTag.LineNew)
-        click_elm(TestTag.LineNew)
-        assertEquals(
-            3,
-            opus_manager.get_channel(1).lines.size
-        )
+        this.check_undo_redo {
+            click_elm(TestTag.LineLabel, 1, 0, null)
+            click_elm(TestTag.LineNew)
+        }
+        this.check_undo_redo {
+            click_elm(TestTag.LineNew)
+        }
+        assertEquals(3, opus_manager.get_channel(1).lines.size)
 
-        click_elm(TestTag.InstrumentSet)
-        click_elm(TestTag.MenuItem, 8)
+        this.check_undo_redo {
+            click_elm(TestTag.InstrumentSet)
+            click_elm(TestTag.MenuItem, 8)
+        }
         assertEquals(
             8,
             (opus_manager.get_channel(1).lines[2] as OpusLinePercussion).instrument
         )
 
-        click_elm(TestTag.LineLabel, 1, 1, null)
-        click_elm(TestTag.InstrumentSet)
-        click_elm(TestTag.MenuItem, 13)
+        this.check_undo_redo {
+            click_elm(TestTag.LineLabel, 1, 1, null)
+            click_elm(TestTag.InstrumentSet)
+            click_elm(TestTag.MenuItem, 13)
+        }
         assertEquals(
             13,
             (opus_manager.get_channel(1).lines[1] as OpusLinePercussion).instrument
         )
 
-        click_elm(TestTag.LineLabel, 1, 0, null)
-        click_elm(TestTag.InstrumentSet)
-        click_elm(TestTag.MenuItem, 15)
+        this.check_undo_redo {
+            click_elm(TestTag.LineLabel, 1, 0, null)
+            click_elm(TestTag.InstrumentSet)
+            click_elm(TestTag.MenuItem, 15)
+        }
         assertEquals(
             15,
             (opus_manager.get_channel(1).lines[0] as OpusLinePercussion).instrument
         )
 
-        click_elm(TestTag.Leaf, null, 1, 0, 0)
-        click_elm(TestTag.LeafSplit)
+        this.check_undo_redo {
+            click_elm(TestTag.Leaf, null, 1, 0, 0)
+            click_elm(TestTag.LeafSplit)
+        }
         assertEquals(2, opus_manager.get_tree(BeatKey(1, 0, 0)).size)
 
         click_elm(TestTag.Leaf, null, 1, 0, 0, 1)
         click_elm(TestTag.LeafSplit)
         assertEquals(2, opus_manager.get_tree(BeatKey(1, 0, 0), listOf(1)).size)
 
-        click_elm(TestTag.PercussionToggle)
+        this.check_undo_redo {
+            click_elm(TestTag.PercussionToggle)
+        }
         assertNotEquals(
             null,
             opus_manager.get_tree(BeatKey(1, 0, 0), listOf(1, 0)).event
@@ -146,10 +189,12 @@ class ComposeTest {
             opus_manager.get_tree(BeatKey(1, 0, 0), listOf(1, 1)).event
         )
 
-        long_click_elm(TestTag.Leaf, null, 1, 0, 0, 1, 1)
-        click_elm(TestTag.LineLabel, 1, 0, null)
-        get_interaction(TestTag.DialogNumberInput).performTextInput("28")
-        click_elm(TestTag.DialogPositive)
+        this.check_undo_redo {
+            long_click_elm(TestTag.Leaf, null, 1, 0, 0, 1, 1)
+            click_elm(TestTag.LineLabel, 1, 0, null)
+            get_interaction(TestTag.DialogNumberInput).performTextInput("28")
+            click_elm(TestTag.DialogPositive)
+        }
         for (i in 0 until 28) {
             assertEquals(
                 opus_manager.get_tree(BeatKey(1, 0, 0)),
@@ -157,15 +202,21 @@ class ComposeTest {
             )
         }
 
-        click_elm(TestTag.Leaf, null, 1, 2, 0)
-        click_elm(TestTag.PercussionToggle)
-        click_elm(TestTag.Leaf, null, 1, 1, 1)
-        click_elm(TestTag.PercussionToggle)
-        long_click_elm(TestTag.Leaf, null, 1, 1, 1)
-        long_click_elm(TestTag.Leaf, null, 1, 2, 0)
-        click_elm(TestTag.LineLabel, 1, 1, null)
-        get_interaction(TestTag.DialogNumberInput).performTextInput("14")
-        click_elm(TestTag.DialogPositive)
+        this.check_undo_redo {
+            click_elm(TestTag.Leaf, null, 1, 2, 0)
+            click_elm(TestTag.PercussionToggle)
+        }
+        this.check_undo_redo {
+            click_elm(TestTag.Leaf, null, 1, 1, 1)
+            click_elm(TestTag.PercussionToggle)
+        }
+        this.check_undo_redo {
+            long_click_elm(TestTag.Leaf, null, 1, 1, 1)
+            long_click_elm(TestTag.Leaf, null, 1, 2, 0)
+            click_elm(TestTag.LineLabel, 1, 1, null)
+            get_interaction(TestTag.DialogNumberInput).performTextInput("14")
+            click_elm(TestTag.DialogPositive)
+        }
         for (i in 1 until 14) {
             assertEquals(
                 opus_manager.get_tree(BeatKey(1, 1, 0)).event,
@@ -204,6 +255,78 @@ class ComposeTest {
     }
 
     @Test
+    fun test_set_event() {
+        var manager = this.get_manager()
+        click_elm(TestTag.Leaf, null, 0, 0, 0)
+        click_elm(TestTag.EventOffset, 4)
+        click_elm(TestTag.EventOctave, 2)
+
+        manager.get_tree(BeatKey(0, 0, 0)).event.let { event ->
+            assert(event is AbsoluteNoteEvent)
+            assertEquals((2 * 12) + 4, (event as AbsoluteNoteEvent).note)
+        }
+
+        click_elm(TestTag.EventDuration)
+        submit_text("3", TestTag.DialogNumberInput)
+        manager.get_tree(BeatKey(0, 0, 0)).event.let { event ->
+            assertEquals(3, event!!.duration)
+        }
+
+        click_elm(TestTag.Leaf, null, 0, 0, 1)
+        click_elm(TestTag.EventOffset, 4)
+        manager.get_tree(BeatKey(0, 0, 1)).event.let { event ->
+            assert(event == null)
+        }
+
+        long_click_elm(TestTag.EventDuration)
+        manager.get_tree(BeatKey(0, 0, 0)).event.let { event ->
+            assertEquals(1, event!!.duration)
+        }
+
+
+        click_elm(TestTag.Leaf, null, 0, 0, 1)
+        long_click_elm(TestTag.EventOffset, 3)
+        click_elm(TestTag.RelativeSetPositive)
+        manager.get_tree(BeatKey(0, 0, 1)).event.let { event ->
+            assert(event is RelativeNoteEvent)
+            assertEquals(3, (event as RelativeNoteEvent).offset)
+        }
+
+        long_click_elm(TestTag.EventOctave, 1)
+        click_elm(TestTag.RelativeSetNegative)
+        manager.get_tree(BeatKey(0, 0, 1)).event.let { event ->
+            assert(event is RelativeNoteEvent)
+            assertEquals(-15, (event as RelativeNoteEvent).offset)
+        }
+
+        long_click_elm(TestTag.EventOctave, 0)
+        click_elm(TestTag.RelativeSetAbsolute)
+        manager.get_tree(BeatKey(0, 0, 1)).event.let { event ->
+            assert(event is AbsoluteNoteEvent)
+            assertEquals(4, (event as AbsoluteNoteEvent).note)
+        }
+
+        click_elm(TestTag.Leaf, null, 1, 0, 0)
+        click_elm(TestTag.PercussionToggle)
+        manager.get_tree(BeatKey(1, 0, 0)).event.let { event ->
+            assert(event is PercussionEvent)
+        }
+
+        click_elm(TestTag.PercussionToggle)
+        manager.get_tree(BeatKey(1, 0, 0)).event.let { event ->
+            assertFalse(event is PercussionEvent)
+        }
+    }
+
+   // @Test
+   // fun test_duration() {
+   //     var manager = this.get_manager()
+   //     click_elm(TestTag.Leaf, null, 0, 0, 0)
+   //     click_elm(TestTag.EventOffset,)
+   //         ...
+   // }
+
+    @Test
     fun test_undo_global_effect_removal() {
         click_elm(TestTag.LineLabel, null, null, EffectType.Tempo)
         click_elm(TestTag.LineEffectRemove)
@@ -229,8 +352,9 @@ class ComposeTest {
         click_elm(EffectResourceMap[effect_type].test_tag)
     }
 
+
     private fun <T: EffectEvent> test_widgets(effect_type: EffectType, callback: (EffectController<T>) -> Unit) {
-        val opus_manager = editor_test_rule.activity.controller_model.opus_manager
+        val opus_manager = this.get_manager()
         if (OpusLayerInterface.line_controller_domain.contains(effect_type)) {
             this.open_line_effect_widget(effect_type, 0, 0)
             callback(opus_manager.get_line_controller<T>(effect_type, 0, 0))
@@ -384,9 +508,10 @@ class ComposeTest {
         }
     }
 
+
     @Test
     fun reg_test_180() {
-        val opus_manager = editor_test_rule.activity.controller_model.opus_manager
+        val opus_manager = this.get_manager()
 
         //Enable an effect
         click_elm(TestTag.LineLabel, 0,0, null)

@@ -409,6 +409,7 @@ fun RelativeInputDropDown(vm_state: ViewModelEditorState, opus_manager: OpusLaye
                 Pair(RelativeInputMode.Negative) {
                     Icon(
                         modifier = Modifier
+                            .testTag(TestTag.RelativeSetNegative)
                             .padding(vertical = Dimensions.RelativeInputPopup.ItemPadding)
                             .height(Dimensions.RelativeInputPopup.ItemHeight),
                         painter = painterResource(R.drawable.icon_subtract),
@@ -419,6 +420,7 @@ fun RelativeInputDropDown(vm_state: ViewModelEditorState, opus_manager: OpusLaye
                     Text(
                         R.string.absolute_label,
                         modifier = Modifier
+                            .testTag(TestTag.RelativeSetAbsolute)
                             .padding(vertical = Dimensions.RelativeInputPopup.ItemPadding)
                             .height(Dimensions.RelativeInputPopup.ItemHeight),
                         style = Typography.RadioMenu
@@ -427,6 +429,7 @@ fun RelativeInputDropDown(vm_state: ViewModelEditorState, opus_manager: OpusLaye
                 Pair(RelativeInputMode.Positive) {
                     Icon(
                         modifier = Modifier
+                            .testTag(TestTag.RelativeSetPositive)
                             .padding(vertical = Dimensions.RelativeInputPopup.ItemPadding)
                             .height(Dimensions.RelativeInputPopup.ItemHeight),
                         painter = painterResource(R.drawable.icon_add),

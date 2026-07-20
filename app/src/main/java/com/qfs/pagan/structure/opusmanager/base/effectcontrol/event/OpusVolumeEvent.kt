@@ -12,6 +12,7 @@ package com.qfs.pagan.structure.opusmanager.base.effectcontrol.event
 import com.qfs.json.Deserializable
 import com.qfs.json.JSONHashMap
 import com.qfs.json.JSONInteger
+import com.qfs.pagan.Values
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.asEffectTransition
@@ -23,6 +24,7 @@ class OpusVolumeEvent(
     transition: EffectTransition = EffectTransition.Instant
 ): SingleFloatEvent(value, duration, transition) {
     companion object: Deserializable<OpusVolumeEvent> {
+        var RAMP = Values.Defaults.VolumeRamp
         override fun from_json(map: JSONHashMap): OpusVolumeEvent {
             val value = if (map["volume"] is JSONInteger) {
                 map.get_int("volume").toFloat() / 128F
@@ -45,10 +47,13 @@ class OpusVolumeEvent(
     override val event_type = EffectType.Volume
     override fun to_float_array(): FloatArray {
         val adjusted = this.value / 1.27F
-        return floatArrayOf(adjusted.pow(1.5F)) // 1.27 == 1
+        return floatArrayOf(adjusted.pow(OpusVolumeEvent.RAMP)) // 1.27 == 1
     }
     override fun equals(other: Any?): Boolean {
-        return other is OpusVolumeEvent && this.value == other.value && this.transition == other.transition && super.equals(other)
+        return other is OpusVolumeEvent
+                && this.value == other.value
+                && this.transition == other.transition
+                && super.equals(other)
     }
     override fun copy(): OpusVolumeEvent {
         return OpusVolumeEvent(this.value, this.duration, this.transition)

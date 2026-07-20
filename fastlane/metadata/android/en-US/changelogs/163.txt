@@ -1,0 +1,2 @@
+- fixed midi output
+- fixed velocity slide getting reset whenever the user changes the velocity value

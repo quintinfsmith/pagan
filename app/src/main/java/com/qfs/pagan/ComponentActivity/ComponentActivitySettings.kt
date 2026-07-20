@@ -43,6 +43,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -60,8 +61,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.R
+import com.qfs.pagan.Values
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
+import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.MenuPadder
 import com.qfs.pagan.composable.PaganDialog
 import com.qfs.pagan.composable.RadioMenu
@@ -75,6 +78,7 @@ import com.qfs.pagan.composable.button.TopBarNoIcon
 import com.qfs.pagan.composable.wrappers.CircularProgressIndicator
 import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.DropdownMenuItem
+import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.composable.wrappers.Switch
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.ui.theme.Colors
@@ -949,7 +953,10 @@ class ComponentActivitySettings: PaganComponentActivity() {
     @Composable
     fun OptionMultipleSoundfonts(modifier: Modifier = Modifier) {
         SettingsRow(
-            modifier = modifier,
+            modifier = modifier
+                .clickable {
+                    view_model.configuration.allow_multiple_soundfonts.value = !view_model.configuration.allow_multiple_soundfonts.value
+                },
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -976,7 +983,10 @@ class ComponentActivitySettings: PaganComponentActivity() {
     @Composable
     fun OptionNormalizeBeatWidth(modifier: Modifier = Modifier) {
         SettingsRow(
-            modifier = modifier,
+            modifier = modifier
+                .clickable {
+                    view_model.configuration.normalize_beat_widths.value = !view_model.configuration.normalize_beat_widths.value
+                },
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -1176,6 +1186,59 @@ class ComponentActivitySettings: PaganComponentActivity() {
         }
     }
 
+    @Composable
+    fun OptionVolumeRamp(modifier: Modifier = Modifier) {
+        SettingsRow(
+            modifier = modifier,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val dialog_visibility = remember { mutableStateOf(false) }
+            PaganDialog(dialog_visibility) {
+                val slider_value = remember {
+                    mutableFloatStateOf(
+                        this@ComponentActivitySettings.view_model.configuration.volume_ramp.floatValue - 1F
+                    )
+                }
+                // Text {
+      Span(R.string.dialog_settings_volume_ramp)
+      Span(
+          "%.2f".format(1F + slider_value.floatValue),
+          style = TextStyle.Su
+      )
+  }
+                Slider(
+                    slider_value.floatValue,
+                    onValueChange = { slider_value.floatValue = it },
+                )
+                DialogBar(
+                    negative_label = R.string.use_default_ramp,
+                    negative = {
+                        this@ComponentActivitySettings.view_model.configuration.volume_ramp.floatValue = Values.Defaults.VolumeRamp
+                        this@ComponentActivitySettings.save_configuration()
+                    },
+                    neutral = {},
+                    positive = {
+                        this@ComponentActivitySettings.view_model.configuration.volume_ramp.floatValue = 1F + slider_value.floatValue
+                        this@ComponentActivitySettings.save_configuration()
+                    }
+                )
+            }
+
+            Text(
+                R.string.label_settings_volume_ramp,
+                modifier = Modifier.weight(1F),
+                style = Typography.Settings.Label
+            )
+
+            Button(
+                content = { Text(text = "%.2f".format(this@ComponentActivitySettings.view_model.configuration.volume_ramp.floatValue)) },
+                onClick = { dialog_visibility.value = !dialog_visibility.value }
+            )
+
+        }
+    }
+
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun SettingsSectionB(modifier: Modifier = Modifier) {
@@ -1187,6 +1250,8 @@ class ComponentActivitySettings: PaganComponentActivity() {
             OptionNoteInputMemory(Modifier.fillMaxWidth())
             MenuPadder()
             PlaybackRateMenu(Modifier.fillMaxWidth())
+            MenuPadder()
+            OptionVolumeRamp(Modifier.fillMaxWidth())
             MenuPadder()
             OptionUsePreferredSoundfont(Modifier.fillMaxWidth())
             MenuPadder()

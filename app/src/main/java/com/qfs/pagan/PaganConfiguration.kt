@@ -13,7 +13,9 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.net.Uri
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -45,7 +47,8 @@ class PaganConfiguration(
     allow_multiple_soundfonts: Boolean = false,
     soundfont_uris: Array<Uri> = arrayOf(),
     sort_load: Int = -3,
-    play_in_background: Boolean = true
+    play_in_background: Boolean = true,
+    volume_ramp: Float = Values.Defaults.VolumeRamp
 ): JSONCompliant {
     val soundfonts: MutableState<Array<MutableState<String>>> = mutableStateOf(Array(if (allow_multiple_soundfonts) soundfonts.size else min(1, soundfonts.size)) { mutableStateOf(soundfonts[it]) })
     val soundfont_uris: MutableState<Array<MutableState<Uri>>> = mutableStateOf(Array(if (allow_multiple_soundfonts) soundfont_uris.size else min(1, soundfont_uris.size)) { mutableStateOf(soundfont_uris[it]) })
@@ -64,7 +67,7 @@ class PaganConfiguration(
     val allow_multiple_soundfonts: MutableState<Boolean> = mutableStateOf(allow_multiple_soundfonts)
     val sort_load: MutableState<Int?> = mutableStateOf(sort_load)
     val play_in_background: MutableState<Boolean> = mutableStateOf(play_in_background)
-
+    val volume_ramp: MutableFloatState = mutableFloatStateOf(volume_ramp)
     enum class MoveMode {
         MOVE,
         COPY,
@@ -116,6 +119,7 @@ class PaganConfiguration(
                 allow_multiple_soundfonts = content.get_booleann("allow_multiple_soundfonts") ?: false,
                 sort_load = content.get_intn("sort_load") ?: -3,
                 play_in_background = content.get_booleann("play_in_background") ?: true,
+                volume_ramp = content.get_floatn("volume_ramp") ?: Values.Defaults.VolumeRamp
             )
         }
 
@@ -161,6 +165,7 @@ class PaganConfiguration(
         this.allow_multiple_soundfonts.value = config.allow_multiple_soundfonts.value
         this.sort_load.value = config.sort_load.value
         this.play_in_background.value = config.play_in_background.value
+        this.volume_ramp.value = config.volume_ramp.value
     }
 
     fun update_from_path(path: String) {
@@ -204,6 +209,7 @@ class PaganConfiguration(
         output["beat_stroke_thickness"] = this.beat_stroke_thickness.value.value
         output["sort_load"] = this.sort_load.value
         output["play_in_background"] = this.play_in_background.value
+        output["volume_ramp"] = this.volume_ramp.value
 
         // output["channel_colors"] = JSONList(*Array(this.channel_colors.size) {
         //     JSONString(this.channel_colors[it].toHexString(HexFormat.Default))

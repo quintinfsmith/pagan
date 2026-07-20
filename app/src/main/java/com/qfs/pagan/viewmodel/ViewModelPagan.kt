@@ -17,7 +17,9 @@ import androidx.lifecycle.ViewModel
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.PaganConfiguration
+import com.qfs.pagan.VolumeEvent
 import com.qfs.pagan.projectmanager.ProjectManager
+import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.ui.theme.Dimensions
 
 class ViewModelPagan: ViewModel() {
@@ -95,6 +97,7 @@ class ViewModelPagan: ViewModel() {
         this.configuration.from_other(config)
         this.has_saved_project.value = this.project_manager?.has_projects_saved() ?: false
         this.has_backup_saved.value = this.project_manager?.has_backup_saved() == true
+        OpusVolumeEvent.RAMP = this.configuration.volume_ramp.value
     }
 
     fun set_project_manager(project_manager: ProjectManager) {
@@ -117,11 +120,13 @@ class ViewModelPagan: ViewModel() {
     fun remove_soundfont(index: Int) {
         this.configuration.soundfonts.value = this.configuration.soundfonts.value.sliceArray(0 until index) + this.configuration.soundfonts.value.sliceArray(index + 1 until this.configuration.soundfonts.value.size)
     }
+
     fun add_soundfont_uri(uri: Uri) {
         this.coerce_relative_soundfont_path(uri)?.let { path ->
             this.configuration.soundfonts.value += arrayOf(mutableStateOf(path))
         }
     }
+
     fun set_soundfont_uri(uri: Uri, index: Int) {
         this.coerce_relative_soundfont_path(uri)?.let { path ->
             this.configuration.soundfonts.value[index].value = path

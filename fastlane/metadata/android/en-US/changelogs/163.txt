@@ -1,2 +1,3 @@
-- fixed midi output
+- fixed midi output timing
 - fixed velocity slide getting reset whenever the user changes the velocity value
+- reduced default volume curve from x^1.5 -> x^1.2 & added 'volume curve' config option

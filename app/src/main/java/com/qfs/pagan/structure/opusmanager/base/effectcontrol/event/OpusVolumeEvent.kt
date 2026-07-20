@@ -24,7 +24,7 @@ class OpusVolumeEvent(
     transition: EffectTransition = EffectTransition.Instant
 ): SingleFloatEvent(value, duration, transition) {
     companion object: Deserializable<OpusVolumeEvent> {
-        var RAMP = Values.Defaults.VolumeRamp
+        var CURVE = Values.Defaults.VolumeCurve
         override fun from_json(map: JSONHashMap): OpusVolumeEvent {
             val value = if (map["volume"] is JSONInteger) {
                 map.get_int("volume").toFloat() / 128F
@@ -47,7 +47,7 @@ class OpusVolumeEvent(
     override val event_type = EffectType.Volume
     override fun to_float_array(): FloatArray {
         val adjusted = this.value / 1.27F
-        return floatArrayOf(adjusted.pow(OpusVolumeEvent.RAMP)) // 1.27 == 1
+        return floatArrayOf(adjusted.pow(OpusVolumeEvent.CURVE)) // 1.27 == 1
     }
     override fun equals(other: Any?): Boolean {
         return other is OpusVolumeEvent

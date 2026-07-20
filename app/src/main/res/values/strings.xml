@@ -50,11 +50,10 @@
     <string name="label_settings_note_memory">Indicate latest octave &amp; offset input</string>
     <string name="label_settings_normalize_beat_widths">Normalize beat width</string>
     <string name="label_settings_allow_multiple_soundfonts">Use multiple soundfonts</string>
-    <string name="label_settings_volume_ramp">Volume Ramp</string>
-    <string name="dialog_settings_volume_ramp">Volume Ramp: x</string>
+    <string name="label_settings_volume_curve">Volume Curve</string>
     <string name="btn_settings_sfmute">Mute</string>
     <string name="unload_soundfont">Unload Soundfont</string>
-    <string name="use_default_ramp">Default</string>
+    <string name="use_default_curve">Default</string>
 
     <string name="btn_cfg_change_name">Change Project Name…</string>
     <string name="label_tuning">Tuning</string>

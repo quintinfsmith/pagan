@@ -17,7 +17,7 @@ object Values {
         const val Radix = 12
         const val ZoomSensitivity = .8F
         const val SlideDenominator = 4
-        const val VolumeRamp = 1.2F
+        const val VolumeCurve = 1.2F
     }
 
     object DialogInput {

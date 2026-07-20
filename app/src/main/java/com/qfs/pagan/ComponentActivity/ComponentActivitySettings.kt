@@ -54,17 +54,21 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.res.integerArrayResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import com.qfs.apres.soundfont2.SoundFont
 import com.qfs.pagan.R
 import com.qfs.pagan.Values
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
-import com.qfs.pagan.composable.DialogTitle
 import com.qfs.pagan.composable.MenuPadder
 import com.qfs.pagan.composable.PaganDialog
 import com.qfs.pagan.composable.RadioMenu
@@ -83,6 +87,7 @@ import com.qfs.pagan.composable.wrappers.Switch
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Fonts
 import com.qfs.pagan.ui.theme.Typography
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -909,7 +914,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
         }
 
         SettingsRow(
-            modifier = modifier,
+            modifier = modifier.clickable { playback_expanded.value = !playback_expanded.value },
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -952,11 +957,18 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
     @Composable
     fun OptionMultipleSoundfonts(modifier: Modifier = Modifier) {
+        fun submit(value: Boolean) {
+            view_model.configuration.allow_multiple_soundfonts.value = value
+            if (!value && view_model.configuration.soundfonts.value.size > 1) {
+                view_model.configuration.soundfonts.value = view_model.configuration.soundfonts.value.sliceArray(0 until min(1, view_model.configuration.soundfonts.value.size))
+            }
+
+            this@ComponentActivitySettings.save_configuration()
+        }
+
         SettingsRow(
             modifier = modifier
-                .clickable {
-                    view_model.configuration.allow_multiple_soundfonts.value = !view_model.configuration.allow_multiple_soundfonts.value
-                },
+                .clickable { submit(!view_model.configuration.allow_multiple_soundfonts.value) },
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -967,25 +979,21 @@ class ComponentActivitySettings: PaganComponentActivity() {
             )
             Switch(
                 checked = view_model.configuration.allow_multiple_soundfonts.value,
-                onCheckedChange = {
-                    view_model.configuration.allow_multiple_soundfonts.value = it
-
-                    if (!it && view_model.configuration.soundfonts.value.size > 1) {
-                        view_model.configuration.soundfonts.value = view_model.configuration.soundfonts.value.sliceArray(0 until min(1, view_model.configuration.soundfonts.value.size))
-                    }
-
-                    this@ComponentActivitySettings.save_configuration()
-                }
+                onCheckedChange = { submit(it) }
             )
         }
     }
 
     @Composable
     fun OptionNormalizeBeatWidth(modifier: Modifier = Modifier) {
+        fun submit(value: Boolean) {
+            view_model.configuration.normalize_beat_widths.value = value
+            this@ComponentActivitySettings.save_configuration()
+        }
         SettingsRow(
             modifier = modifier
                 .clickable {
-                    view_model.configuration.normalize_beat_widths.value = !view_model.configuration.normalize_beat_widths.value
+                    submit(!view_model.configuration.normalize_beat_widths.value)
                 },
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
@@ -997,18 +1005,21 @@ class ComponentActivitySettings: PaganComponentActivity() {
             )
             Switch(
                 checked = view_model.configuration.normalize_beat_widths.value,
-                onCheckedChange = {
-                    view_model.configuration.normalize_beat_widths.value = it
-                    this@ComponentActivitySettings.save_configuration()
-                }
+                onCheckedChange = { submit(it) }
             )
         }
     }
 
     @Composable
     fun OptionNoteInputMemory(modifier: Modifier = Modifier) {
+        fun submit(value: Boolean) {
+            view_model.configuration.latest_input_indicator.value = value
+            this@ComponentActivitySettings.save_configuration()
+        }
         SettingsRow(
-            modifier = modifier,
+            modifier = modifier.clickable {
+                submit(!view_model.configuration.latest_input_indicator.value)
+            },
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -1019,18 +1030,21 @@ class ComponentActivitySettings: PaganComponentActivity() {
             )
             Switch(
                 checked = view_model.configuration.latest_input_indicator.value,
-                onCheckedChange = {
-                    view_model.configuration.latest_input_indicator.value = it
-                    this@ComponentActivitySettings.save_configuration()
-                }
+                onCheckedChange = { submit(it) }
             )
         }
     }
 
     @Composable
     fun OptionUsePreferredSoundfont(modifier: Modifier = Modifier) {
+        fun submit(value: Boolean) {
+            view_model.configuration.use_preferred_soundfont.value = value
+            this@ComponentActivitySettings.save_configuration()
+        }
         SettingsRow(
-            modifier = modifier,
+            modifier = modifier.clickable {
+                submit(!view_model.configuration.use_preferred_soundfont.value)
+            },
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -1041,10 +1055,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             )
             Switch(
                 checked = view_model.configuration.use_preferred_soundfont.value,
-                onCheckedChange = {
-                    view_model.configuration.use_preferred_soundfont.value = it
-                    this@ComponentActivitySettings.save_configuration()
-                }
+                onCheckedChange = { submit(it) }
             )
         }
     }
@@ -1059,7 +1070,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             Pair(Dimensions.Stroke.Thick) { Text(R.string.settings_beat_stroke_thick) }
         )
         SettingsRow(
-            modifier = modifier,
+            modifier = modifier.clickable { expanded.value = !expanded.value },
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -1098,7 +1109,6 @@ class ComponentActivitySettings: PaganComponentActivity() {
                                 expanded.value = false
                             }
                         )
-
                     }
                 }
             }
@@ -1107,8 +1117,15 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
     @Composable
     fun OptionAllowStdPercussion(modifier: Modifier = Modifier) {
+        fun submit(value: Boolean) {
+            view_model.configuration.allow_std_percussion.value = value
+            this@ComponentActivitySettings.save_configuration()
+        }
+
         SettingsRow(
-            modifier = modifier,
+            modifier = modifier.clickable {
+                submit(!view_model.configuration.allow_std_percussion.value)
+            },
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -1119,10 +1136,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             )
             Switch(
                 checked = view_model.configuration.allow_std_percussion.value,
-                onCheckedChange = {
-                    view_model.configuration.allow_std_percussion.value = it
-                    this@ComponentActivitySettings.save_configuration()
-                }
+                onCheckedChange = { submit(it) }
             )
         }
     }
@@ -1166,8 +1180,14 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
     @Composable
     fun OptionPlayInBackground(modifier: Modifier = Modifier) {
+        fun submit(value: Boolean) {
+            view_model.configuration.play_in_background.value = value
+            this@ComponentActivitySettings.save_configuration()
+        }
         SettingsRow(
-            modifier = modifier,
+            modifier = modifier.clickable {
+                submit(!view_model.configuration.play_in_background.value)
+            },
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -1178,64 +1198,90 @@ class ComponentActivitySettings: PaganComponentActivity() {
             )
             Switch(
                 checked = view_model.configuration.play_in_background.value,
-                onCheckedChange = {
-                    view_model.configuration.play_in_background.value = it
-                    this@ComponentActivitySettings.save_configuration()
-                }
+                onCheckedChange = { submit(it) }
             )
         }
     }
 
     @Composable
-    fun OptionVolumeRamp(modifier: Modifier = Modifier) {
+    fun OptionVolumeCurve(modifier: Modifier = Modifier) {
+        val dialog_visibility = remember { mutableStateOf(false) }
         SettingsRow(
-            modifier = modifier,
+            modifier = modifier.clickable { dialog_visibility.value = !dialog_visibility.value },
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val dialog_visibility = remember { mutableStateOf(false) }
             PaganDialog(dialog_visibility) {
                 val slider_value = remember {
                     mutableFloatStateOf(
-                        this@ComponentActivitySettings.view_model.configuration.volume_ramp.floatValue - 1F
+                        this@ComponentActivitySettings.view_model.configuration.volume_curve.floatValue - 1F
                     )
                 }
-                // Text {
-      Span(R.string.dialog_settings_volume_ramp)
-      Span(
-          "%.2f".format(1F + slider_value.floatValue),
-          style = TextStyle.Su
-      )
-  }
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        R.string.label_settings_volume_curve,
+                        style = Typography.DialogTitle
+                    )
+                    Text(
+                        buildAnnotatedString {
+                            withStyle(
+                                SpanStyle(
+                                    fontSize = Typography.DialogTitle.fontSize
+                                ),
+                                block = { append("x") },
+                            )
+                            withStyle(
+                                SpanStyle(
+                                    fontFamily = Fonts.FiraMono,
+                                    fontSize = (Typography.DialogTitle.fontSize.value - 2).sp,
+                                    baselineShift = BaselineShift.Superscript
+                                ),
+                                block = { append("%.2f".format(1F + slider_value.floatValue)) }
+                            )
+                        },
+                        style = Typography.DialogTitle
+                    )
+                    Spacer(Modifier)
+                }
+
                 Slider(
                     slider_value.floatValue,
+                    modifier = Modifier.padding(12.dp),
                     onValueChange = { slider_value.floatValue = it },
                 )
+
                 DialogBar(
-                    negative_label = R.string.use_default_ramp,
+                    negative_label = R.string.use_default_curve,
                     negative = {
-                        this@ComponentActivitySettings.view_model.configuration.volume_ramp.floatValue = Values.Defaults.VolumeRamp
+                        this@ComponentActivitySettings.view_model.configuration.volume_curve.floatValue = Values.Defaults.VolumeCurve
                         this@ComponentActivitySettings.save_configuration()
+                        dialog_visibility.value = false
                     },
-                    neutral = {},
+                    neutral = {
+                        dialog_visibility.value = false
+                    },
                     positive = {
-                        this@ComponentActivitySettings.view_model.configuration.volume_ramp.floatValue = 1F + slider_value.floatValue
+                        this@ComponentActivitySettings.view_model.configuration.volume_curve.floatValue = 1F + slider_value.floatValue
                         this@ComponentActivitySettings.save_configuration()
+                        dialog_visibility.value = false
                     }
                 )
             }
 
             Text(
-                R.string.label_settings_volume_ramp,
+                R.string.label_settings_volume_curve,
                 modifier = Modifier.weight(1F),
                 style = Typography.Settings.Label
             )
 
             Button(
-                content = { Text(text = "%.2f".format(this@ComponentActivitySettings.view_model.configuration.volume_ramp.floatValue)) },
+                content = { Text(text = "%.2f".format(this@ComponentActivitySettings.view_model.configuration.volume_curve.floatValue)) },
                 onClick = { dialog_visibility.value = !dialog_visibility.value }
             )
-
         }
     }
 
@@ -1251,7 +1297,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             MenuPadder()
             PlaybackRateMenu(Modifier.fillMaxWidth())
             MenuPadder()
-            OptionVolumeRamp(Modifier.fillMaxWidth())
+            OptionVolumeCurve(Modifier.fillMaxWidth())
             MenuPadder()
             OptionUsePreferredSoundfont(Modifier.fillMaxWidth())
             MenuPadder()

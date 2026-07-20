@@ -17,7 +17,6 @@ import androidx.lifecycle.ViewModel
 import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.PaganConfiguration
-import com.qfs.pagan.VolumeEvent
 import com.qfs.pagan.projectmanager.ProjectManager
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.ui.theme.Dimensions
@@ -97,7 +96,7 @@ class ViewModelPagan: ViewModel() {
         this.configuration.from_other(config)
         this.has_saved_project.value = this.project_manager?.has_projects_saved() ?: false
         this.has_backup_saved.value = this.project_manager?.has_backup_saved() == true
-        OpusVolumeEvent.RAMP = this.configuration.volume_ramp.value
+        OpusVolumeEvent.CURVE = this.configuration.volume_curve.value
     }
 
     fun set_project_manager(project_manager: ProjectManager) {

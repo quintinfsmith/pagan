@@ -1256,14 +1256,8 @@ class ComponentActivitySettings: PaganComponentActivity() {
 
                 DialogBar(
                     negative_label = R.string.use_default_curve,
-                    negative = {
-                        this@ComponentActivitySettings.view_model.configuration.volume_curve.floatValue = Values.Defaults.VolumeCurve
-                        this@ComponentActivitySettings.save_configuration()
-                        dialog_visibility.value = false
-                    },
-                    neutral = {
-                        dialog_visibility.value = false
-                    },
+                    negative = { slider_value.floatValue = Values.Defaults.VolumeCurve - 1F },
+                    neutral = { dialog_visibility.value = false },
                     positive = {
                         this@ComponentActivitySettings.view_model.configuration.volume_curve.floatValue = 1F + slider_value.floatValue
                         this@ComponentActivitySettings.save_configuration()

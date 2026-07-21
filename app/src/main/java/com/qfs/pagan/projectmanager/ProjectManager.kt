@@ -334,7 +334,11 @@ class ProjectManager(val context: Context, var uri: Uri?) {
         val content = reader.readText()
         reader.close()
 
-        return JSONParser.parse(content)
+        return try {
+            JSONParser.parse(content)
+        } catch (_: InvalidJSON) {
+            null
+        }
     }
 
     /**

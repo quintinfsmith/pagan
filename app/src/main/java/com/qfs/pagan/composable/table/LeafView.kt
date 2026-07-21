@@ -28,7 +28,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -388,7 +391,24 @@ fun LeafView(
                                     }
                                 }
 
-                                null -> {}
+                                null -> {
+                                    Canvas(
+                                        Modifier
+                                            .alpha(.3F)
+                                            .fillMaxSize()
+                                    ) {
+                                        drawRect(
+                                            Color(0xFF000000),
+                                            size = Size(4F, this.size.height)
+                                        )
+                                        drawRect(
+                                            Color(0xFF000000),
+                                            topLeft = Offset(4F, 0F),
+                                            size = Size(this.size.width - 4F, 4F)
+                                        )
+                                    }
+
+                                }
                             }
                         }
                     }

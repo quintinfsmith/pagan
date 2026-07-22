@@ -27,6 +27,8 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -71,6 +73,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -170,7 +173,6 @@ import com.qfs.pagan.composable.TuningDialogTiny
 import com.qfs.pagan.composable.cxtmenu.ContextMenuBeatSliderSecondary
 import com.qfs.pagan.composable.cxtmenu.ContextMenuRangePrimary
 import com.qfs.pagan.composable.cxtmenu.EffectMenuItem
-import com.qfs.pagan.composable.dashed_border
 import com.qfs.pagan.composable.dragging_scroll
 import com.qfs.pagan.composable.keyboardAsState
 import com.qfs.pagan.composable.long_press
@@ -1762,16 +1764,18 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         return@itemsIndexed
                                     }
                                     val column_width = Dimensions.LeafBaseWidth * vm_state.get_active_zoom(x)
+                                    val animated_width by animateDpAsState(
+                                        targetValue = column_width + if (x == 0) {
+                                            0.dp
+                                        } else {
+                                            vm_state.beat_stroke_thickness.value
+                                        },
+                                        label = "animated_width"
+                                    )
                                     Column {
                                         Column(
                                             Modifier
-                                                .width(
-                                                    column_width + if (x == 0) {
-                                                        0.dp
-                                                    } else {
-                                                        vm_state.beat_stroke_thickness.value
-                                                    }
-                                                )
+                                                .width(animated_width)
                                                 .height(line_height),
                                         ) {
                                             Row(Modifier.weight(1F)) {
@@ -1788,25 +1792,18 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                     vm_state = vm_state,
                                                     opus_manager = opus_manager,
                                                     column_info = vm_state.column_data[x],
-                                                    column_width = (column_width)
+                                                    column_width = animated_width
                                                 )
                                             }
                                             TableLine()
                                         }
-
                                         Column(
                                             Modifier
                                                 .verticalScroll(
                                                     scroll_state_v,
                                                     overscrollEffect = null
                                                 )
-                                                .width(
-                                                    column_width + if (x == 0) {
-                                                        0.dp
-                                                    } else {
-                                                        vm_state.beat_stroke_thickness.value
-                                                    }
-                                                )
+                                                .width(animated_width)
                                         ) {
                                             for (y in 0 until vm_state.line_count.value) {
                                                 val cell = vm_state.cell_map[y][x]
@@ -2740,9 +2737,15 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             )
                         }
                         Spacer(Modifier.height(Dimensions.SettingsBoxPadding))
+                        val animated_value by animateFloatAsState(
+                            (vm_state.zoom_index.intValue.toFloat() / vm_state.max_zoom_index.intValue.toFloat()),
+                            label = "zoom_slider"
+                        )
                         LinearProgressIndicator(
-                            progress = { (vm_state.zoom_index.intValue.toFloat() / vm_state.max_zoom_index.intValue.toFloat()) },
-                            modifier = Modifier.testTag(TestTag.ZoomSlider)
+                            progress = { animated_value },
+                            modifier = Modifier.testTag(TestTag.ZoomSlider),
+                            trackColor = Colors.active_color_scheme.slider_track_inactive,
+                            color = Colors.active_color_scheme.slider_track
                         )
                     }
                 }

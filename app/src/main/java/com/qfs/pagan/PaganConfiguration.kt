@@ -220,11 +220,17 @@ class PaganConfiguration(
 }
 
 fun Intent.put_config(config: PaganConfiguration): Intent {
+    this.putExtra("json_config_ts", System.currentTimeMillis())
     this.putExtra("json_config", config.to_json().toString())
     return this
 }
 
 fun Intent.on_config(callback: (PaganConfiguration) -> Unit): Boolean {
+    val refresh_threshold = 10_000
+    if (System.currentTimeMillis() - this.getLongExtra("json_config_ts", 0) > refresh_threshold) {
+        return false
+    }
+
     var output = false
     this.getStringExtra("json_config")?.let { json_string ->
         PaganConfiguration.from_string(json_string)?.let { config ->

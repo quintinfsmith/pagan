@@ -257,7 +257,7 @@ fun Modifier.dashed_border(
     width: Dp = Dimensions.DashedBorder.Width,
     dash: Dp = Dimensions.DashedBorder.Dash,
     gap: Dp = Dimensions.DashedBorder.Gap,
-    cap: StrokeCap = StrokeCap.Round
+    cap: StrokeCap = StrokeCap.Square
 ) = this.drawWithContent {
     drawContent()
     drawOutline(

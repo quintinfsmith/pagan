@@ -32,7 +32,7 @@ object Shadows {
         radius = 0.dp,
         spread = 0.dp,
         alpha = .5f,
-        offset = DpOffset(0.dp, 2.dp),
+        offset = DpOffset(0.dp, 0.dp),
     )
     val ActiveLeaf = Shadow(
         radius = 0.dp,
@@ -41,4 +41,5 @@ object Shadows {
         offset = DpOffset(0.dp, 0.dp),
         color = Color.Yellow
     )
+    val InnerLeaf = 4.5F
 }

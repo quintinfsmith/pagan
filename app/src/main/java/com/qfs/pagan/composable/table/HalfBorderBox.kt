@@ -12,6 +12,7 @@ package com.qfs.pagan.composable.table
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,21 +30,17 @@ fun HalfBorderBox(
     border_width: Dp = Dimensions.TableLineStroke,
     border_color: Color,
     content: @Composable BoxScope.() -> Unit) {
-    Box(
-        modifier,
-        contentAlignment = Alignment.BottomEnd,
-        content = {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                content = content,
-                contentAlignment = Alignment.Center
-            )
-            Spacer(
-                Modifier
-                    .width(border_width)
-                    .background(border_color)
-                    .fillMaxHeight()
-            )
-        }
-    )
+    Row(modifier) {
+        Box(
+            modifier = Modifier.weight(1F),
+            content = content,
+            contentAlignment = Alignment.Center
+        )
+        Spacer(
+            Modifier
+                .width(border_width)
+                .background(border_color)
+                .fillMaxHeight()
+        )
+    }
 }

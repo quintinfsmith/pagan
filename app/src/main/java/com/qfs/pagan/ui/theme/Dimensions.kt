@@ -306,12 +306,7 @@ object Dimensions {
         end = 2.dp,
     )
 
-    val SelectionBorderPadding = PaddingValues(
-        top = 2.dp,
-        bottom = 2.dp,
-        end = 3.dp,
-        start = 2.dp
-    )
+    val SelectionBorderPadding = PaddingValues(1.5.dp)
 
     val NumberInputDialogPadding = PaddingValues(
         horizontal = 8.dp,

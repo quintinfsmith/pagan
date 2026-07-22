@@ -1,6 +1,7 @@
 package com.qfs.pagan.composable.table
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,6 +23,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import com.qfs.pagan.EffectResourceMap
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
@@ -151,9 +153,10 @@ fun LineLabelView(
                     } else if (line_info.is_selected.value) {
                         Spacer(
                             Modifier
-                                .padding(Dimensions.SelectionBorderPadding)
                                 .fillMaxSize()
-                                .dashed_border(
+                                .padding(Dimensions.SelectionBorderPadding)
+                                .border(
+                                    width = 1.dp,
                                     color = foreground,
                                     shape = RectangleShape
                                 )
@@ -227,7 +230,6 @@ fun LineLabelView(
                             contentDescription = stringResource(description_id)
                         )
                     }
-
                 }
             }
         )

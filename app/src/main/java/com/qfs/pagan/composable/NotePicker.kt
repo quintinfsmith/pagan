@@ -26,6 +26,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shape
@@ -83,7 +84,7 @@ fun NotePickerButton(
             .pressable(pressed)
             .then(
                 if (selected || pressed.value) {
-                    Modifier
+                    Modifier.clip(shape)
                 } else {
                     Modifier.dropShadow(
                         shape = shape,

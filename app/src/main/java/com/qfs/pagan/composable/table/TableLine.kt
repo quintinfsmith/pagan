@@ -23,13 +23,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.zIndex
 import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Dimensions
 
 @Composable
 fun ColumnScope.TableLine(color: Color = Colors.active_color_scheme.table_line) {
     Spacer(
-        Modifier.Companion
+        Modifier
             .background(color = color)
             .fillMaxWidth()
             .height(Dimensions.TableLineStroke)
@@ -52,9 +53,9 @@ fun RowScope.TableLine(
 @Composable
 fun BoxScope.TableLine(color: Color = Colors.active_color_scheme.table_line) {
     Spacer(
-        Modifier.Companion
+        Modifier
             .background(color = color)
-            .align(Alignment.Companion.CenterEnd)
+            .align(Alignment.CenterEnd)
             .fillMaxHeight()
             .width(Dimensions.TableLineStroke)
     )

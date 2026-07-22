@@ -12,6 +12,7 @@ package com.qfs.pagan.composable.table
 import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,16 +23,18 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -63,6 +66,8 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocity
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.ui.theme.Colors
+import com.qfs.pagan.ui.theme.Colors.LeafSelection
+import com.qfs.pagan.ui.theme.Colors.LeafState
 import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorController
@@ -88,8 +93,8 @@ fun LeafView(
 
     val event = leaf_data.event.value
     val leaf_state = if (leaf_data.is_spillover.value) Colors.LeafState.Spill
-    else if (event != null) Colors.LeafState.Active
-    else Colors.LeafState.Empty
+            else if (event != null) Colors.LeafState.Active
+            else Colors.LeafState.Empty
 
     val leaf_selection = if (leaf_data.is_selected.value) Colors.LeafSelection.Primary
     else if (leaf_data.is_secondary.value) Colors.LeafSelection.Secondary
@@ -107,314 +112,459 @@ fun LeafView(
     val context = LocalContext.current
 
     ProvideContentColorTextStyle(contentColor = text_color) {
-        Box(
-            modifier
-                .combinedClickable(
-                    onClick = {
-                        val move_mode = vm_state.move_mode.value
-                        val cursor = opus_manager.cursor
-                        val selecting_range = cursor.mode == CursorMode.Range
-                        val channel = line_info.channel.value
-                        val line_offset = line_info.line_offset.value
-                        if (selecting_range && cursor.ctl_type == ctl_type) {
-                            try {
-                                if (ctl_type == null) {
-                                    val beat_key = BeatKey(channel!!, line_offset!!, beat)
-                                    opus_manager.cmove_to_beat(beat_key, move_mode)
-                                } else if (line_offset != null) {
-                                    val beat_key = BeatKey(channel!!, line_offset, beat)
-                                    opus_manager.move_effect_to_line_beat(beat_key, move_mode)
-                                } else if (channel != null) {
-                                    opus_manager.move_effect_to_channel_beat(channel, beat, move_mode)
-                                } else {
-                                    opus_manager.move_effect_to_global_beat(beat, move_mode)
+        Row(modifier) {
+            Box(
+                Modifier
+                    .combinedClickable(
+                        onClick = {
+                            val move_mode = vm_state.move_mode.value
+                            val cursor = opus_manager.cursor
+                            val selecting_range = cursor.mode == CursorMode.Range
+                            val channel = line_info.channel.value
+                            val line_offset = line_info.line_offset.value
+                            if (selecting_range && cursor.ctl_type == ctl_type) {
+                                try {
+                                    if (ctl_type == null) {
+                                        val beat_key = BeatKey(channel!!, line_offset!!, beat)
+                                        opus_manager.cmove_to_beat(beat_key, move_mode)
+                                    } else if (line_offset != null) {
+                                        val beat_key = BeatKey(channel!!, line_offset, beat)
+                                        opus_manager.move_effect_to_line_beat(beat_key, move_mode)
+                                    } else if (channel != null) {
+                                        opus_manager.move_effect_to_channel_beat(
+                                            channel,
+                                            beat,
+                                            move_mode
+                                        )
+                                    } else {
+                                        opus_manager.move_effect_to_global_beat(beat, move_mode)
+                                    }
+                                } catch (_: RangeOverflow) {
+                                    Toast.makeText(
+                                        context,
+                                        R.string.range_overflow,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                } catch (_: MixedInstrumentException) {
+                                    Toast.makeText(
+                                        context,
+                                        R.string.feedback_mixed_copy,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                } catch (_: InvalidOverwriteCall) {
+
                                 }
-                            } catch (_: RangeOverflow) {
-                                Toast.makeText(context, R.string.range_overflow, Toast.LENGTH_SHORT).show()
-                            } catch (_: MixedInstrumentException) {
-                                Toast.makeText(context, R.string.feedback_mixed_copy, Toast.LENGTH_SHORT).show()
-                            } catch (_: InvalidOverwriteCall) {
+                            } else if (ctl_type == null) {
+                                val beat_key = BeatKey(channel!!, line_offset!!, beat)
+                                opus_manager.cursor_select(beat_key, position)
 
-                            }
-                        } else if (ctl_type == null) {
-                            val beat_key = BeatKey(channel!!, line_offset!!, beat)
-                            opus_manager.cursor_select(beat_key, position)
+                                val tree = opus_manager.get_tree() ?: return@combinedClickable
+                                if (vm_state.soundfont_ready.value && tree.has_event()) {
+                                    val note = if (opus_manager.is_percussion(channel)) {
+                                        opus_manager.get_percussion_instrument(channel, line_offset)
+                                    } else {
+                                        opus_manager.get_absolute_value(beat_key, position)
+                                            ?: return@combinedClickable
+                                    }
 
-                            val tree = opus_manager.get_tree() ?: return@combinedClickable
-                            if (vm_state.soundfont_ready.value && tree.has_event()) {
-                                val note = if (opus_manager.is_percussion(channel)) {
-                                    opus_manager.get_percussion_instrument(channel, line_offset)
-                                } else {
-                                    opus_manager.get_absolute_value(beat_key, position) ?: return@combinedClickable
+                                    controller_model.play_event(
+                                        beat_key.channel,
+                                        note
+                                    )
                                 }
-
-                                controller_model.play_event(
-                                    beat_key.channel,
-                                    note
+                            } else if (line_offset != null) {
+                                val beat_key = BeatKey(channel!!, line_offset, beat)
+                                opus_manager.cursor_select_ctl_at_line(ctl_type, beat_key, position)
+                            } else if (channel != null) {
+                                opus_manager.cursor_select_ctl_at_channel(
+                                    ctl_type,
+                                    channel,
+                                    beat,
+                                    position
                                 )
+                            } else {
+                                opus_manager.cursor_select_ctl_at_global(ctl_type, beat, position)
                             }
-                        } else if (line_offset != null) {
-                            val beat_key = BeatKey(channel!!, line_offset, beat)
-                            opus_manager.cursor_select_ctl_at_line(ctl_type, beat_key, position)
-                        } else if (channel != null) {
-                            opus_manager.cursor_select_ctl_at_channel(ctl_type, channel, beat, position)
-                        } else {
-                            opus_manager.cursor_select_ctl_at_global(ctl_type, beat, position)
-                        }
-                    },
-                    onLongClick = {
-                        val channel = line_info.channel.value
-                        val line_offset = line_info.line_offset.value
-                        if (ctl_type == null) {
-                            val beat_key = BeatKey(channel!!, line_offset!!, beat)
-                            opus_manager.cursor_select_range_next(beat_key)
-                        } else if (line_offset != null) {
-                            val beat_key = BeatKey(channel!!, line_offset, beat)
-                            opus_manager.cursor_select_line_ctl_range_next(ctl_type, beat_key)
-                        } else if (channel != null) {
-                            opus_manager.cursor_select_channel_ctl_range_next(ctl_type, channel, beat)
-                        } else {
-                            opus_manager.cursor_select_global_ctl_range_next(ctl_type, beat)
-                        }
-                    }
-                )
-                .fillMaxHeight()
-                .background(color = leaf_color),
-            contentAlignment = Alignment.Center
-        ) {
-            if (leaf_selection == Colors.LeafSelection.Primary) {
-                Spacer(
-                    Modifier
-                        .fillMaxSize()
-                        .padding(Dimensions.SelectionBorderPadding)
-                        .dashed_border(
-                            color = text_color,
-                            shape = RectangleShape
-                        )
-                )
-            }
-
-            if (zoom * leaf_data.weight.floatValue >= 1F) {
-                when (event) {
-                    is AbsoluteNoteEvent -> {
-                        val octave = event.note / radix
-                        val offset = event.note % radix
-                        Row(
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(verticalArrangement = Arrangement.Center) {
-                                Spacer(Modifier.weight(4F))
-                                ProvideTextStyle(Typography.Leaf.Octave) {
-                                    Text("$octave")
-                                }
-                                Spacer(Modifier.weight(1F))
-                            }
-
-                            Column(verticalArrangement = Arrangement.Center) {
-                                ProvideTextStyle(Typography.Leaf.Offset) {
-                                    Text("$offset")
-                                }
+                        },
+                        onLongClick = {
+                            val channel = line_info.channel.value
+                            val line_offset = line_info.line_offset.value
+                            if (ctl_type == null) {
+                                val beat_key = BeatKey(channel!!, line_offset!!, beat)
+                                opus_manager.cursor_select_range_next(beat_key)
+                            } else if (line_offset != null) {
+                                val beat_key = BeatKey(channel!!, line_offset, beat)
+                                opus_manager.cursor_select_line_ctl_range_next(ctl_type, beat_key)
+                            } else if (channel != null) {
+                                opus_manager.cursor_select_channel_ctl_range_next(
+                                    ctl_type,
+                                    channel,
+                                    beat
+                                )
+                            } else {
+                                opus_manager.cursor_select_global_ctl_range_next(ctl_type, beat)
                             }
                         }
-                    }
-
-                    is RelativeNoteEvent -> {
-                        val octave = abs(event.offset) / radix
-                        val offset = abs(event.offset) % radix
-                        Row(
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                contentAlignment = Alignment.Center
-                            ) {
-                                ProvideTextStyle(Typography.Leaf.RelativePrefix) {
-                                    Text(
-                                        text = if (event.offset > 0) "+" else "-",
-                                        modifier = Modifier
-                                            .padding(bottom = 16.dp)
-                                            .align(Alignment.Center)
-                                    )
-                                }
-                                ProvideTextStyle(Typography.Leaf.Octave) {
-                                    Text(
-                                        text = "$octave",
-                                        modifier = Modifier
-                                            .padding(top = 12.dp)
-                                            .align(Alignment.Center)
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(1.dp))
-                            ProvideTextStyle(Typography.Leaf.Offset) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.Center
-                                ) {
-                                    Text("$offset")
-                                }
-                            }
-                        }
-                    }
-
-                    is PercussionEvent -> Icon(
-                        modifier = Modifier.padding(8.dp),
-                        painter = painterResource(R.drawable.percussion_indicator),
-                        contentDescription = ""
                     )
+                    .leaf_inset(leaf_state, leaf_selection)
+                    .fillMaxHeight()
+                    .weight(1F)
+                    .background(color = leaf_color),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    Modifier
+                        .fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ){
+                    if (zoom * leaf_data.weight.floatValue >= 1F) {
+                        when (event) {
+                            is AbsoluteNoteEvent -> {
+                                val octave = event.note / radix
+                                val offset = event.note % radix
+                                Row(
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(verticalArrangement = Arrangement.Center) {
+                                        Spacer(Modifier.weight(4F))
+                                        ProvideTextStyle(Typography.Leaf.Octave) {
+                                            Text("$octave")
+                                        }
+                                        Spacer(Modifier.weight(1F))
+                                    }
 
-                    else -> {
-                        ProvideTextStyle(Typography.EffectLeaf) {
-                            when (event) {
-                                is OpusVolumeEvent -> {
-                                    Text(
-                                        "${(event.value * 100F).roundToInt()}%",
-                                        color = text_color
-                                    )
+                                    Column(verticalArrangement = Arrangement.Center) {
+                                        ProvideTextStyle(Typography.Leaf.Offset) {
+                                            Text("$offset")
+                                        }
+                                    }
                                 }
-                                is OpusPanEvent -> {
-                                    Text(
-                                        text = if (event.value > 0) {
-                                            "<${(abs(event.value) * 10).roundToInt()}"
-                                        } else if (event.value < 0) {
-                                            "${(abs(event.value) * 10).roundToInt()}>"
-                                        } else {
-                                            "-0-"
-                                        },
-                                        color = text_color
-                                    )
-                                }
+                            }
 
-                                is DelayEvent -> {
-                                    if (event.echo == 0 || event.fade == 0F) {
-                                        Canvas(modifier = Modifier.fillMaxSize()) {
-                                            drawCircle(
-                                                color = text_color,
-                                                radius = (size.height * .1F),
-                                                center = Offset(size.width / 2F, size.height / 2F)
+                            is RelativeNoteEvent -> {
+                                val octave = abs(event.offset) / radix
+                                val offset = abs(event.offset) % radix
+                                Row(
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        ProvideTextStyle(Typography.Leaf.RelativePrefix) {
+                                            Text(
+                                                text = if (event.offset > 0) "+" else "-",
+                                                modifier = Modifier
+                                                    .padding(bottom = 16.dp)
+                                                    .align(Alignment.Center)
                                             )
                                         }
-                                    } else {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            Canvas(
+                                        ProvideTextStyle(Typography.Leaf.Octave) {
+                                            Text(
+                                                text = "$octave",
                                                 modifier = Modifier
-                                                    .fillMaxHeight()
-                                                    .width(Dimensions.LeafBaseWidth)
-                                            ) {
-                                                drawLine(
-                                                    start = Offset((.1F * size.width), (.5F * size.height)),
-                                                    end = Offset((size.width * .9F), (.5F * size.height)),
-                                                    color = text_color,
-                                                    strokeWidth = 1F
-                                                )
-                                            }
-                                            ProvideTextStyle(Typography.EffectLeafDelay) {
-                                                Column(
-                                                    verticalArrangement = Arrangement.SpaceBetween,
-                                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                                    modifier = Modifier
-                                                        .padding(vertical = 2.dp)
-                                                        .fillMaxHeight(),
-                                                    content = {
-                                                        Text(
-                                                            "${event.numerator}",
-                                                            maxLines = 1,
-                                                            lineHeight = 1.em
+                                                    .padding(top = 12.dp)
+                                                    .align(Alignment.Center)
+                                            )
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.width(1.dp))
+                                    ProvideTextStyle(Typography.Leaf.Offset) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.Center
+                                        ) {
+                                            Text("$offset")
+                                        }
+                                    }
+                                }
+                            }
+
+                            is PercussionEvent -> Icon(
+                                modifier = Modifier.padding(8.dp),
+                                painter = painterResource(R.drawable.percussion_indicator),
+                                contentDescription = ""
+                            )
+
+                            else -> {
+                                ProvideTextStyle(Typography.EffectLeaf) {
+                                    when (event) {
+                                        is OpusVolumeEvent -> {
+                                            Text(
+                                                "${(event.value * 100F).roundToInt()}%",
+                                                color = text_color
+                                            )
+                                        }
+
+                                        is OpusPanEvent -> {
+                                            Text(
+                                                text = if (event.value > 0) {
+                                                    "<${(abs(event.value) * 10).roundToInt()}"
+                                                } else if (event.value < 0) {
+                                                    "${(abs(event.value) * 10).roundToInt()}>"
+                                                } else {
+                                                    "-0-"
+                                                },
+                                                color = text_color
+                                            )
+                                        }
+
+                                        is DelayEvent -> {
+                                            if (event.echo == 0 || event.fade == 0F) {
+                                                Canvas(modifier = Modifier.fillMaxSize()) {
+                                                    drawCircle(
+                                                        color = text_color,
+                                                        radius = (size.height * .1F),
+                                                        center = Offset(
+                                                            size.width / 2F,
+                                                            size.height / 2F
                                                         )
-                                                        Text(
-                                                            "${event.denominator}",
-                                                            maxLines = 1,
-                                                            lineHeight = 1.em
+                                                    )
+                                                }
+                                            } else {
+                                                Box(contentAlignment = Alignment.Center) {
+                                                    Canvas(
+                                                        modifier = Modifier
+                                                            .fillMaxHeight()
+                                                            .width(Dimensions.LeafBaseWidth)
+                                                    ) {
+                                                        drawLine(
+                                                            start = Offset(
+                                                                (.1F * size.width),
+                                                                (.5F * size.height)
+                                                            ),
+                                                            end = Offset(
+                                                                (size.width * .9F),
+                                                                (.5F * size.height)
+                                                            ),
+                                                            color = text_color,
+                                                            strokeWidth = 1F
                                                         )
                                                     }
-                                                )
+                                                    ProvideTextStyle(Typography.EffectLeafDelay) {
+                                                        Column(
+                                                            verticalArrangement = Arrangement.SpaceBetween,
+                                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                                            modifier = Modifier
+                                                                .padding(vertical = 2.dp)
+                                                                .fillMaxHeight(),
+                                                            content = {
+                                                                Text(
+                                                                    "${event.numerator}",
+                                                                    maxLines = 1,
+                                                                    lineHeight = 1.em
+                                                                )
+                                                                Text(
+                                                                    "${event.denominator}",
+                                                                    maxLines = 1,
+                                                                    lineHeight = 1.em
+                                                                )
+                                                            }
+                                                        )
+                                                    }
+                                                }
                                             }
                                         }
-                                    }
-                                }
 
-                                is OpusTempoEvent -> Text(
-                                    "${event.value.roundToInt()}",
-                                    color = text_color,
-                                    style = Typography.EffectLeaf
-                                )
+                                        is OpusTempoEvent -> Text(
+                                            "${event.value.roundToInt()}",
+                                            color = text_color,
+                                            style = Typography.EffectLeaf
+                                        )
 
-                                is OpusVelocityEvent -> {
-                                    var label_string = "${(event.value * 100F).toInt()}"
-                                    if (event.slide != null) {
-                                        label_string += "^"
-                                    }
-                                    Text(
-                                        label_string,
-                                        color = text_color,
-                                        style = Typography.EffectLeaf
-                                    )
-                                }
-
-                                is FilterEvent -> {
-                                    if ((event is HighPassEvent && event.filter_cutoff <= Values.LowPassMinimum) || (event is LowPassEvent && event.filter_cutoff >= Values.LowPassMaximum)) {
-                                        Canvas(modifier = Modifier.fillMaxSize()) {
-                                            drawCircle(
+                                        is OpusVelocityEvent -> {
+                                            var label_string = "${(event.value * 100F).toInt()}"
+                                            if (event.slide != null) {
+                                                label_string += "^"
+                                            }
+                                            Text(
+                                                label_string,
                                                 color = text_color,
-                                                radius = (size.height * .1F),
-                                                center = Offset(size.width / 2F, size.height / 2F)
+                                                style = Typography.EffectLeaf
                                             )
                                         }
-                                    } else {
-                                        Column(
-                                            verticalArrangement = Arrangement.Center,
-                                            horizontalAlignment = Alignment.CenterHorizontally
-                                        ) {
-                                            Text(
-                                                if (event.filter_cutoff >= 1000F) {
-                                                    stringResource(
-                                                        R.string.low_pass_event_text_top,
-                                                        event.filter_cutoff / 1000F
+
+                                        is FilterEvent -> {
+                                            if ((event is HighPassEvent && event.filter_cutoff <= Values.LowPassMinimum) || (event is LowPassEvent && event.filter_cutoff >= Values.LowPassMaximum)) {
+                                                Canvas(modifier = Modifier.fillMaxSize()) {
+                                                    drawCircle(
+                                                        color = text_color,
+                                                        radius = (size.height * .1F),
+                                                        center = Offset(
+                                                            size.width / 2F,
+                                                            size.height / 2F
+                                                        )
                                                     )
-                                                } else {
-                                                    "${event.filter_cutoff.roundToInt()}"
-                                                },
-                                                textAlign = TextAlign.Center,
-                                                style = Typography.EffectLeafFilterTop
-                                            )
-                                            Text(
-                                                if (event.filter_cutoff >= 1000F) {
-                                                    R.string.khz
-                                                } else {
-                                                    R.string.hz
-                                                },
-                                                textAlign = TextAlign.Center,
-                                                style = Typography.EffectLeafFilterKhz
-                                            )
+                                                }
+                                            } else {
+                                                Column(
+                                                    verticalArrangement = Arrangement.Center,
+                                                    horizontalAlignment = Alignment.CenterHorizontally
+                                                ) {
+                                                    Text(
+                                                        if (event.filter_cutoff >= 1000F) {
+                                                            stringResource(
+                                                                R.string.low_pass_event_text_top,
+                                                                event.filter_cutoff / 1000F
+                                                            )
+                                                        } else {
+                                                            "${event.filter_cutoff.roundToInt()}"
+                                                        },
+                                                        textAlign = TextAlign.Center,
+                                                        style = Typography.EffectLeafFilterTop
+                                                    )
+                                                    Text(
+                                                        if (event.filter_cutoff >= 1000F) {
+                                                            R.string.khz
+                                                        } else {
+                                                            R.string.hz
+                                                        },
+                                                        textAlign = TextAlign.Center,
+                                                        style = Typography.EffectLeafFilterKhz
+                                                    )
+                                                }
+                                            }
                                         }
-                                    }
-                                }
 
-                                null -> {
-                                    Canvas(
-                                        Modifier
-                                            .alpha(.3F)
-                                            .fillMaxSize()
-                                    ) {
-                                        drawRect(
-                                            Color(0xFF000000),
-                                            size = Size(4F, this.size.height)
-                                        )
-                                        drawRect(
-                                            Color(0xFF000000),
-                                            topLeft = Offset(4F, 0F),
-                                            size = Size(this.size.width - 4F, 4F)
-                                        )
+                                        null -> {}
                                     }
-
                                 }
                             }
                         }
                     }
                 }
+
+                if (leaf_selection == LeafSelection.Primary) {
+                    Spacer(
+                        Modifier
+                            .fillMaxSize()
+                            .padding(Dimensions.SelectionBorderPadding)
+                            .border(
+                                width = 1.dp,
+                                color = text_color,
+                                shape = RectangleShape
+                            )
+                    )
+                }
             }
             TableLine(Colors.active_color_scheme.table_line)
         }
+    }
+}
+
+@Composable
+fun Modifier.inset(): Modifier {
+    return this.drawWithCache {
+        val shadow_width = 10F
+        val hbrush = Brush.horizontalGradient(
+            0F to Color(0x44000000),
+            1F to Color.Transparent,
+            startX = 0F,
+            endX = shadow_width
+        )
+
+        val vbrush = Brush.verticalGradient(
+            0F to Color(0x44000000),
+            1F to Color.Transparent,
+            startY = 0F,
+            endY = shadow_width
+        )
+
+        val vpath = Path()
+        vpath.moveTo(0F,0F)
+        vpath.lineTo(shadow_width, shadow_width)
+        vpath.lineTo(this.size.width, shadow_width)
+        vpath.lineTo(this.size.width, 0F)
+        vpath.close()
+
+        val hpath = Path()
+        hpath.moveTo(0F,0F)
+        hpath.lineTo(shadow_width, shadow_width)
+        hpath.lineTo(shadow_width, this.size.height)
+        hpath.lineTo(0F, this.size.height)
+        hpath.close()
+
+        onDrawWithContent {
+            drawContent()
+            drawPath(vpath, vbrush)
+            drawPath(hpath, hbrush)
+        }
+    }
+}
+
+@Composable
+fun Modifier.outset(): Modifier {
+    return this.drawWithCache {
+        val highlight_width = 4F
+        val top_path = Path()
+        top_path.moveTo(0F,0F)
+        top_path.lineTo(highlight_width, highlight_width)
+        top_path.lineTo(this.size.width - highlight_width, highlight_width)
+        top_path.lineTo(this.size.width, 0F)
+        top_path.close()
+
+        val start_path = Path()
+        start_path.moveTo(0F,0F)
+        start_path.lineTo(highlight_width, highlight_width)
+        start_path.lineTo(highlight_width, this.size.height - highlight_width)
+        start_path.lineTo(0F, this.size.height)
+        start_path.close()
+
+
+        val top_brush = Brush.verticalGradient(
+            0F to Color(0x88FFFFFF),
+            1F to Color.Transparent,
+            startY = 0F,
+            endY = highlight_width
+        )
+        val start_brush = Brush.horizontalGradient(
+            0F to Color(0x88FFFFFF),
+            1F to Color.Transparent,
+            startX = 0F,
+            endX = highlight_width
+        )
+        val bottom_path = Path()
+        bottom_path.moveTo(0F,this.size.height)
+        bottom_path.lineTo(highlight_width, this.size.height - highlight_width)
+        bottom_path.lineTo(this.size.width - highlight_width, this.size.height - highlight_width)
+        bottom_path.lineTo(this.size.width, this.size.height)
+        bottom_path.close()
+
+        val end_path = Path()
+        end_path.moveTo(this.size.width - highlight_width, highlight_width)
+        end_path.lineTo(this.size.width - highlight_width, this.size.height - highlight_width)
+        end_path.lineTo(this.size.width, this.size.height)
+        end_path.lineTo(this.size.width,0F)
+        end_path.close()
+
+        val bottom_brush = Brush.verticalGradient(
+            0F to Color.Transparent,
+            1F to Color(0x44000000),
+            startY = this.size.height - highlight_width,
+            endY = this.size.height
+        )
+        val end_brush = Brush.horizontalGradient(
+            0F to Color.Transparent,
+            1F to Color(0x44000000),
+            startX = this.size.width - highlight_width,
+            endX = this.size.width
+        )
+        onDrawWithContent {
+            drawContent()
+            drawPath(top_path, top_brush)
+            drawPath(start_path, start_brush)
+            drawPath(bottom_path, bottom_brush)
+            drawPath(end_path, end_brush)
+        }
+    }
+}
+
+@Composable
+fun Modifier.leaf_inset(leaf_state: Colors.LeafState, selection: Colors.LeafSelection): Modifier {
+    return if (leaf_state == LeafState.Empty && selection == LeafSelection.Unselected) {
+        this.inset()
+    } else {
+        this
     }
 }

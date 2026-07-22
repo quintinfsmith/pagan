@@ -30,6 +30,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -79,7 +80,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
@@ -1716,7 +1719,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                 ScaleBox(Modifier, vm_state) {
                     Box(
-                        Modifier.fillMaxSize(),
+                        Modifier
+                            .fillMaxSize(),
                         contentAlignment = Alignment.TopStart
                     ) {
                         // Key to prevent incongruence between column_width size and content
@@ -2036,29 +2040,27 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             .padding(
                                 horizontal = Dimensions.BeatLabelHorizontalPadding,
                                 vertical = Dimensions.BeatLabelVerticalPadding
-                            )
-                            .then(
-                                if (column_info.is_tagged.value) {
-                                    Modifier.dashed_border(
-                                        foreground,
-                                        Shapes.TaggedBeat,
-                                        Dimensions.Stroke.Thin
-                                    )
-                                } else {
-                                    Modifier
-                                }
                             ),
                         contentAlignment = Alignment.Center,
                         content = {
+                            if (column_info.is_tagged.value) {
+                                Icon(
+                                    modifier = Modifier.alpha(.2F),
+                                    painter = painterResource(R.drawable.icon_tag_jump),
+                                    contentDescription = null,
+                                    tint = foreground
+                                )
+                            }
                             Text(text = "$x")
                         }
                     )
                     if (column_info.is_selected.value) {
                         Spacer(
                             Modifier
-                                .padding(Dimensions.SelectionBorderPadding)
                                 .fillMaxSize()
-                                .dashed_border(
+                                .padding(Dimensions.SelectionBorderPadding)
+                                .border(
+                                    width = 1.dp,
                                     color = foreground,
                                     shape = RectangleShape
                                 )
@@ -3851,4 +3853,3 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
 }
-

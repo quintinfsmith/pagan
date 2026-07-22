@@ -562,7 +562,7 @@ fun Modifier.outset(): Modifier {
 
 @Composable
 fun Modifier.leaf_inset(leaf_state: Colors.LeafState, selection: Colors.LeafSelection): Modifier {
-    return if (leaf_state == LeafState.Empty && selection == LeafSelection.Unselected) {
+    return if (leaf_state == LeafState.Empty && selection != LeafSelection.Primary) {
         this.inset()
     } else {
         this

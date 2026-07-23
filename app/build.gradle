@@ -10,7 +10,7 @@ android {
     compileSdk 36
 
     defaultConfig {
-        applicationId "com.qfs.pagan"
+        applicationId "com.qfs.pagandev"
         minSdk 27
         targetSdk 36
         versionCode 163
@@ -63,7 +63,7 @@ dependencies {
     testImplementation "io.mockk:mockk:1.14.9"
     testImplementation "io.mockk:mockk-bdd:1.14.9"
 
-    def composeBom = platform('androidx.compose:compose-bom:2026.04.01')
+    def composeBom = platform('androidx.compose:compose-bom:2026.06.01')
     implementation composeBom
     androidTestImplementation composeBom
 

@@ -20,6 +20,197 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 
+data class PaganTypography(
+    val Default: TextStyle = TextStyle(fontFamily = Fonts.FiraSans),
+    val AboutLicense: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 14.sp,
+        lineHeight = 1.4.em,
+        textAlign = TextAlign.Justify
+    ),
+    val AboutLinkTitle: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 20.sp
+    ),
+    val AboutLinkUrl: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraMono,
+        textDecoration = TextDecoration.Underline
+    ),
+
+    val Button: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        letterSpacing = 1.sp,
+        fontSize = 16.sp
+    ),
+
+    val BeatLabel: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 14.sp,
+        lineHeight = 14.sp
+    ),
+
+    val ColorPickerLabel: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 16.sp,
+        textAlign = TextAlign.End,
+        lineHeight = 16.sp
+    ),
+    val ColorPickerHexLabel: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraMono,
+        fontWeight = FontWeight.Bold,
+        textAlign = TextAlign.Center,
+        fontSize = 16.sp,
+        lineHeight = 16.sp
+    ),
+
+    val ContextMenuButton: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraMono,
+        fontWeight = FontWeight.Bold,
+        fontSize = 12.sp,
+        lineHeight = 12.sp
+    ),
+
+    val ContextMenuUnits: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 16.sp,
+        letterSpacing = 1.sp
+    ),
+
+    val DialogTitle: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 16.sp,
+        lineHeight = 20.sp
+    ),
+    val DialogBody: TextStyle = TextStyle(fontFamily = Fonts.FiraSans),
+    val DialogBodyMono: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraMono,
+        fontSize = 13.sp
+    ),
+    val DialogMenuItem: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 16.sp,
+        lineHeight = 18.sp,
+        textIndent = TextIndent(0.sp, 8.sp)
+    ),
+    val DropdownMenu: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraSans,
+    ),
+    val DrawerTitle: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 16.sp,
+        lineHeight = 20.sp,
+        textAlign = TextAlign.Center,
+    ),
+    val EffectLeaf: TextStyle = TextStyle(fontFamily = Fonts.FiraSans, fontSize = 12.sp),
+    val EffectLeafDelay: TextStyle = TextStyle(fontFamily = Fonts.FiraSans, fontSize = 10.sp),
+    val EffectLeafFilterTop: TextStyle = TextStyle(fontFamily = Fonts.FiraMono, fontSize = 10.sp),
+    val EffectLeafFilterKhz: TextStyle = TextStyle(fontFamily = Fonts.FiraSans, fontSize = 8.sp),
+
+    val LineLabel: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 14.sp,
+        lineHeight = 12.sp
+    ),
+    val LineCtlLabel: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 12.sp,
+        lineHeight = 12.sp
+    ),
+
+    val EffectWidgetPanIndicator: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 14.sp
+    ),
+
+    val LeafOctave: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 14.sp
+    ),
+    val LeafOffset: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 18.sp,
+        fontWeight = FontWeight.Bold
+    ),
+    val LeafRelativePrefix: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 16.sp,
+        fontWeight = FontWeight.Bold
+    ),
+
+    val NumberPicker: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraMono,
+        fontSize = 16.sp,
+        lineHeight = 16.sp,
+    ),
+
+    val NotePicker: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 18.sp
+    ),
+    val ProjectNotes: TextStyle = TextStyle(fontFamily = Fonts.FiraSans),
+    val RadioMenu: TextStyle = TextStyle(fontFamily = Fonts.FiraSans, fontSize = 22.sp, fontWeight = FontWeight.Bold),
+
+    val SettingsTitle: TextStyle = TextStyle(fontFamily = Fonts.FiraSans)
+    val SettingsLabel: TextStyle = TextStyle(fontFamily = Fonts.FiraSans)
+
+    val SoundFontWarningTitle: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 16.sp,
+        fontWeight = FontWeight.W300
+    ),
+    val SoundFontWarningUrl: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraMono,
+        lineHeight = 14.sp,
+        fontSize = 12.sp
+    ),
+    val SoundFontWarningBody: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        lineHeight = 14.sp,
+        fontSize = 12.sp
+    ),
+
+    val TopBar: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 14.sp,
+        lineHeight = 14.sp
+    ),
+
+    val NumberInput: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraMono,
+        textAlign = TextAlign.Center,
+        fontSize = 16.sp,
+        lineHeight = 1.em
+    ),
+    val NumberInputLabel: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraMono,
+        fontSize = 14.sp,
+        lineHeight = 1.em
+    ),
+
+    val TextField: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraMono,
+        fontSize = 16.sp,
+        lineHeight = 16.sp
+    ),
+    val TextFieldLabel: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraMono,
+        fontSize = 14.sp,
+        lineHeight = 14.sp
+    ),
+
+    val TinyTuningDialogLabel: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraSans,
+        fontSize = 12.sp,
+        lineHeight = 12.sp
+    ),
+
+    val ZoomBarTitle: TextStyle = TextStyle(
+        fontFamily = Fonts.FiraMono,
+        fontSize = 14.sp,
+        lineHeight = 14.sp
+    )
+)
+
 object Typography {
     val Default = TextStyle(
         fontFamily = Fonts.FiraSans

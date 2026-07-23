@@ -41,5 +41,4 @@ object Shadows {
         offset = DpOffset(0.dp, 0.dp),
         color = Color.Yellow
     )
-    val InnerLeaf = 4.5F
 }

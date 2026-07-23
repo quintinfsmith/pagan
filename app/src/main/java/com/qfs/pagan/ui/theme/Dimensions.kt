@@ -21,12 +21,68 @@ import com.qfs.pagan.LayoutSize.SmallLandscape
 import com.qfs.pagan.LayoutSize.SmallPortrait
 import com.qfs.pagan.LayoutSize.XLargeLandscape
 import com.qfs.pagan.LayoutSize.XLargePortrait
-import com.qfs.pagan.LayoutSize as VLayoutSize
+
+
+data class PaganDimensionsI(
+    val AboutPadding: Sized<Dp> = Sized(12.dp),
+)
+
+class PaganDimensionsB(val dd: PaganDimensionsI) {
+    val AboutPadding: Dp get() { return getter(dd.AboutPadding) }
+
+    val active_size: LayoutSize = LayoutSize.SmallPortrait
+
+    fun <T, U: Sized<T>> getter(v: U): T {
+        return v[this.active_size]
+    }
+}
+
+class Sized<T>(vararg dimensions: Pair<LayoutSize, T>) {
+    constructor(dim: T): this(SmallPortrait to dim)
+
+    val mapped_values = HashMap<LayoutSize, T>()
+
+    init {
+        for ((layout, dim) in dimensions) {
+            this.mapped_values[layout] = dim
+        }
+    }
+
+    operator fun get(active_size: LayoutSize): T {
+        // If the value is mapped, use it
+        this.mapped_values[active_size]?.let { return it }
+
+        // If the value is not mapped, but the other orientation of the same size is, then use it
+        when (active_size) {
+            SmallPortrait -> this.mapped_values[SmallLandscape]?.let { return it }
+            SmallLandscape -> this.mapped_values[SmallPortrait]?.let { return it }
+            MediumPortrait -> this.mapped_values[MediumLandscape]?.let { return it }
+            MediumLandscape -> this.mapped_values[MediumPortrait]?.let { return it }
+            LargePortrait -> this.mapped_values[LargeLandscape]?.let { return it }
+            LargeLandscape -> this.mapped_values[LargePortrait]?.let { return it }
+            XLargePortrait -> this.mapped_values[XLargeLandscape]?.let { return it }
+            XLargeLandscape -> this.mapped_values[XLargePortrait]?.let { return it }
+        }
+
+        // Find the next-smallest mapped value
+        var actual_layout_passed = false
+        var working_value: T? = null
+        for (layout_size in listOf(SmallPortrait, SmallLandscape, MediumPortrait, MediumLandscape, LargePortrait, LargeLandscape, XLargePortrait, XLargeLandscape)) {
+            if (actual_layout_passed && working_value != null) break
+            working_value = this.mapped_values[layout_size] ?: working_value
+            actual_layout_passed = actual_layout_passed || (layout_size == active_size)
+        }
+        working_value?.let { return it }
+
+        throw Exception("Value Not Set") // TODO: Specify
+    }
+}
+
 
 object Dimensions {
-    var active_layout_size = VLayoutSize.SmallPortrait
+    var active_layout_size = LayoutSize.SmallPortrait
 
-    fun set_active_layout_size(width: Dp, height: Dp): VLayoutSize {
+    fun set_active_layout_size(width: Dp, height: Dp): LayoutSize {
         this.active_layout_size = if (width >= height) {
             if (height >= Layout.XLarge.short) LayoutSize.XLargeLandscape
             else if (height >= Layout.Large.short) LayoutSize.LargeLandscape
@@ -89,14 +145,14 @@ object Dimensions {
 
         // If the value is not mapped, but the other orientation of the same size is, then use it
         when (active_size) {
-            VLayoutSize.SmallPortrait -> mapped_values[SmallLandscape]?.let { return it }
-            VLayoutSize.SmallLandscape -> mapped_values[SmallPortrait]?.let { return it }
-            VLayoutSize.MediumPortrait -> mapped_values[MediumLandscape]?.let { return it }
-            VLayoutSize.MediumLandscape -> mapped_values[MediumPortrait]?.let { return it }
-            VLayoutSize.LargePortrait -> mapped_values[LargeLandscape]?.let { return it }
-            VLayoutSize.LargeLandscape -> mapped_values[LargePortrait]?.let { return it }
-            VLayoutSize.XLargePortrait -> mapped_values[XLargeLandscape]?.let { return it }
-            VLayoutSize.XLargeLandscape -> mapped_values[XLargePortrait]?.let { return it }
+            SmallPortrait -> mapped_values[SmallLandscape]?.let { return it }
+            SmallLandscape -> mapped_values[SmallPortrait]?.let { return it }
+            MediumPortrait -> mapped_values[MediumLandscape]?.let { return it }
+            MediumLandscape -> mapped_values[MediumPortrait]?.let { return it }
+            LargePortrait -> mapped_values[LargeLandscape]?.let { return it }
+            LargeLandscape -> mapped_values[LargePortrait]?.let { return it }
+            XLargePortrait -> mapped_values[XLargeLandscape]?.let { return it }
+            XLargeLandscape -> mapped_values[XLargePortrait]?.let { return it }
         }
 
         // Find the next-smallest mapped value

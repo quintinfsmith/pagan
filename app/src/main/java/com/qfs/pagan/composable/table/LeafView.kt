@@ -24,10 +24,8 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,7 +47,6 @@ import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.Values
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
-import com.qfs.pagan.composable.table.leaf_inset
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.structure.opusmanager.base.AbsoluteNoteEvent
 import com.qfs.pagan.structure.opusmanager.base.BeatKey
@@ -119,7 +116,6 @@ fun LeafView(
         Row(modifier) {
             Box(
                 Modifier
-                    .LeafViewWrapModifier(leaf_selection, leaf_state, leaf_color)
                     .fillMaxHeight()
                     .weight(1F)
                     .combinedClickable(
@@ -232,7 +228,7 @@ fun LeafView(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                LeafViewWrap(leaf_selection, leaf_state) {
+                ThemedLeafView(leaf_selection, leaf_state, leaf_color) {
                     if (zoom * leaf_data.weight.floatValue >= 1F) {
                         val radix = vm_state.radix.value
                         when (event) {
@@ -256,33 +252,38 @@ fun LeafView(
 }
 
 @Composable
-fun Modifier.LeafViewWrapModifier(
+fun BoxScope.ThemedLeafView(
     leaf_selection: LeafSelection,
     leaf_state: LeafState,
     leaf_color: Color,
-): Modifier {
-    return this
-        .background(leaf_color)
-        .leaf_inset(leaf_state, leaf_selection)
-}
-@Composable
-fun BoxScope.LeafViewWrap(
-    leaf_selection: LeafSelection,
-    leaf_state: LeafState,
     content: @Composable (BoxScope.() -> Unit)
 ) {
-    content()
-    if (leaf_selection == LeafSelection.Primary) {
-        Spacer(
-            Modifier
-                .fillMaxSize()
-                .padding(Dimensions.SelectionBorderPadding)
-                .border(
-                    width = 1.dp,
-                    color = LocalContentColor.current,
-                    shape = RectangleShape
-                )
-        )
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(leaf_color)
+            .then(
+                if (leaf_state == LeafState.Empty && leaf_selection != LeafSelection.Primary) {
+                    Modifier.inset()
+                } else {
+                    Modifier
+                }
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        content()
+        if (leaf_selection == LeafSelection.Primary) {
+            Spacer(
+                Modifier
+                    .fillMaxSize()
+                    .padding(Dimensions.SelectionBorderPadding)
+                    .border(
+                        width = 1.dp,
+                        color = LocalContentColor.current,
+                        shape = RectangleShape
+                    )
+            )
+        }
     }
 }
 
@@ -548,79 +549,4 @@ fun Modifier.inset(): Modifier {
     }
 }
 
-@Composable
-fun Modifier.outset(): Modifier {
-    return this.drawWithCache {
-        val highlight_width = 4F
-        val top_path = Path()
-        top_path.moveTo(0F,0F)
-        top_path.lineTo(highlight_width, highlight_width)
-        top_path.lineTo(this.size.width - highlight_width, highlight_width)
-        top_path.lineTo(this.size.width, 0F)
-        top_path.close()
-
-        val start_path = Path()
-        start_path.moveTo(0F,0F)
-        start_path.lineTo(highlight_width, highlight_width)
-        start_path.lineTo(highlight_width, this.size.height - highlight_width)
-        start_path.lineTo(0F, this.size.height)
-        start_path.close()
-
-
-        val top_brush = Brush.verticalGradient(
-            0F to Color(0x88FFFFFF),
-            1F to Color.Transparent,
-            startY = 0F,
-            endY = highlight_width
-        )
-        val start_brush = Brush.horizontalGradient(
-            0F to Color(0x88FFFFFF),
-            1F to Color.Transparent,
-            startX = 0F,
-            endX = highlight_width
-        )
-        val bottom_path = Path()
-        bottom_path.moveTo(0F,this.size.height)
-        bottom_path.lineTo(highlight_width, this.size.height - highlight_width)
-        bottom_path.lineTo(this.size.width - highlight_width, this.size.height - highlight_width)
-        bottom_path.lineTo(this.size.width, this.size.height)
-        bottom_path.close()
-
-        val end_path = Path()
-        end_path.moveTo(this.size.width - highlight_width, highlight_width)
-        end_path.lineTo(this.size.width - highlight_width, this.size.height - highlight_width)
-        end_path.lineTo(this.size.width, this.size.height)
-        end_path.lineTo(this.size.width,0F)
-        end_path.close()
-
-        val bottom_brush = Brush.verticalGradient(
-            0F to Color.Transparent,
-            1F to Color(0x44000000),
-            startY = this.size.height - highlight_width,
-            endY = this.size.height
-        )
-        val end_brush = Brush.horizontalGradient(
-            0F to Color.Transparent,
-            1F to Color(0x44000000),
-            startX = this.size.width - highlight_width,
-            endX = this.size.width
-        )
-        onDrawWithContent {
-            drawContent()
-            drawPath(top_path, top_brush)
-            drawPath(start_path, start_brush)
-            drawPath(bottom_path, bottom_brush)
-            drawPath(end_path, end_brush)
-        }
-    }
-}
-
-@Composable
-fun Modifier.leaf_inset(leaf_state: Colors.LeafState, selection: Colors.LeafSelection): Modifier {
-    return if (leaf_state == LeafState.Empty && selection != LeafSelection.Primary) {
-        this.inset()
-    } else {
-        this
-    }
-}
 

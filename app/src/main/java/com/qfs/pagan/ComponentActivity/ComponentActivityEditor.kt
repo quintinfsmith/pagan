@@ -181,6 +181,7 @@ import com.qfs.pagan.composable.table.HalfBorderBox
 import com.qfs.pagan.composable.table.LineLabelView
 import com.qfs.pagan.composable.table.ShortcutView
 import com.qfs.pagan.composable.table.TableLine
+import com.qfs.pagan.composable.table.outset
 import com.qfs.pagan.composable.wrappers.CircularProgressIndicator
 import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.DropdownMenuItem
@@ -1957,111 +1958,120 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     .fillMaxSize(),
                 border_color = Colors.active_color_scheme.table_line,
                 content = {
-                    if (vm_state.active_wide_beat.value == x && LocalContext.current.toPx(Dimensions.LeafBaseWidth * zoom) > vm_state.scroll_state_x.value.layoutInfo.viewportSize.width * 1.5) {
-                        LinearProgressIndicator(
+                    Box(
+                        Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (vm_state.active_wide_beat.value == x && LocalContext.current.toPx(
+                                Dimensions.LeafBaseWidth * zoom
+                            ) > vm_state.scroll_state_x.value.layoutInfo.viewportSize.width * 1.5
+                        ) {
+                            LinearProgressIndicator(
+                                modifier = Modifier
+                                    .width(toDp(vm_state.scroll_state_x.value.layoutInfo.viewportSize.width.toFloat() / 3F))
+                                    .graphicsLayer {
+                                        val width_px = column_width.toPx()
+                                        val scroll_offset =
+                                            vm_state.scroll_state_x.value.firstVisibleItemScrollOffset.toFloat()
+                                        val viewport_width =
+                                            vm_state.scroll_state_x.value.layoutInfo.viewportSize.width
+                                        val floating_position =
+                                            (width_px / -2F) + (viewport_width / 4) + scroll_offset
+                                        translationX = floating_position
+                                    },
+                                // track and background seem to be reversed. not sure whats up with that.
+                                color = if (column_info.is_selected.value || column_info.is_secondary.value) {
+                                    Colors.active_color_scheme.wide_beat_slider_track_selected
+                                } else {
+                                    Colors.active_color_scheme.wide_beat_slider_track
+                                },
+                                trackColor = if (column_info.is_selected.value || column_info.is_secondary.value) {
+                                    Colors.active_color_scheme.wide_beat_slider_background_selected
+                                } else {
+                                    Colors.active_color_scheme.wide_beat_slider_background
+                                },
+                                drawStopIndicator = {},
+                                progress = { vm_state.wide_beat_progress.floatValue },
+                            )
+                        }
+
+                        Box(
                             modifier = Modifier
-                                .width(toDp(vm_state.scroll_state_x.value.layoutInfo.viewportSize.width.toFloat() / 3F))
                                 .graphicsLayer {
                                     val width_px = column_width.toPx()
-                                    val scroll_offset =
-                                        vm_state.scroll_state_x.value.firstVisibleItemScrollOffset.toFloat()
                                     val viewport_width =
                                         vm_state.scroll_state_x.value.layoutInfo.viewportSize.width
-                                    val floating_position =
-                                        (width_px / -2F) + (viewport_width / 4) + scroll_offset
-                                    translationX = floating_position
-                                },
-                            // track and background seem to be reversed. not sure whats up with that.
-                            color = if (column_info.is_selected.value || column_info.is_secondary.value) {
-                                Colors.active_color_scheme.wide_beat_slider_track_selected
-                            } else {
-                                Colors.active_color_scheme.wide_beat_slider_track
-                            },
-                            trackColor = if (column_info.is_selected.value || column_info.is_secondary.value) {
-                                Colors.active_color_scheme.wide_beat_slider_background_selected
-                            } else {
-                                Colors.active_color_scheme.wide_beat_slider_background
-                            },
-                            drawStopIndicator = {},
-                            progress = { vm_state.wide_beat_progress.floatValue },
-                        )
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .graphicsLayer {
-                                val width_px = column_width.toPx()
-                                val viewport_width =
-                                    vm_state.scroll_state_x.value.layoutInfo.viewportSize.width
-                                translationX =
-                                    if (width_px >= viewport_width && viewport_width > 0) {
-                                        val visible_items =
-                                            vm_state.scroll_state_x.value.layoutInfo.visibleItemsInfo
-                                        if (vm_state.scroll_state_x.value.firstVisibleItemIndex == x) {
-                                            val scroll_offset =
-                                                vm_state.scroll_state_x.value.firstVisibleItemScrollOffset.toFloat()
-                                            val floating_position =
-                                                ((viewport_width - width_px) / 2F) + scroll_offset
-                                            val end_position = ((width_px - viewport_width) / 2F)
-                                            if (floating_position < end_position) {
-                                                vm_state.active_wide_beat.value = x
-                                                vm_state.wide_beat_progress.floatValue =
-                                                    scroll_offset / (width_px - viewport_width)
-                                                floating_position
+                                    translationX =
+                                        if (width_px >= viewport_width && viewport_width > 0) {
+                                            val visible_items =
+                                                vm_state.scroll_state_x.value.layoutInfo.visibleItemsInfo
+                                            if (vm_state.scroll_state_x.value.firstVisibleItemIndex == x) {
+                                                val scroll_offset =
+                                                    vm_state.scroll_state_x.value.firstVisibleItemScrollOffset.toFloat()
+                                                val floating_position =
+                                                    ((viewport_width - width_px) / 2F) + scroll_offset
+                                                val end_position =
+                                                    ((width_px - viewport_width) / 2F)
+                                                if (floating_position < end_position) {
+                                                    vm_state.active_wide_beat.value = x
+                                                    vm_state.wide_beat_progress.floatValue =
+                                                        scroll_offset / (width_px - viewport_width)
+                                                    floating_position
+                                                } else {
+                                                    if (vm_state.active_wide_beat.value == x) {
+                                                        vm_state.active_wide_beat.value = null
+                                                    }
+                                                    end_position
+                                                }
+                                            } else if (visible_items.isNotEmpty() && visible_items.last().index == x) {
+                                                if (vm_state.active_wide_beat.value == x) {
+                                                    vm_state.active_wide_beat.value = null
+                                                }
+                                                (viewport_width - width_px) / 2F
                                             } else {
                                                 if (vm_state.active_wide_beat.value == x) {
                                                     vm_state.active_wide_beat.value = null
                                                 }
-                                                end_position
+                                                0F
                                             }
-                                        } else if (visible_items.isNotEmpty() && visible_items.last().index == x) {
-                                            if (vm_state.active_wide_beat.value == x) {
-                                                vm_state.active_wide_beat.value = null
-                                            }
-                                            (viewport_width - width_px) / 2F
                                         } else {
-                                            if (vm_state.active_wide_beat.value == x) {
+                                            if (x == vm_state.active_wide_beat.value) {
                                                 vm_state.active_wide_beat.value = null
                                             }
                                             0F
                                         }
-                                    } else {
-                                        if (x == vm_state.active_wide_beat.value) {
-                                            vm_state.active_wide_beat.value = null
-                                        }
-                                        0F
-                                    }
+                                }
+                                .fillMaxHeight()
+                                .widthIn(Dimensions.LeafBaseWidth - (Dimensions.BeatLabelHorizontalPadding * 2))
+                                .padding(
+                                    horizontal = Dimensions.BeatLabelHorizontalPadding,
+                                    vertical = Dimensions.BeatLabelVerticalPadding
+                                ),
+                            contentAlignment = Alignment.Center,
+                            content = {
+                                if (column_info.is_tagged.value) {
+                                    Icon(
+                                        modifier = Modifier.alpha(.2F),
+                                        painter = painterResource(R.drawable.icon_tag_jump),
+                                        contentDescription = null,
+                                        tint = foreground
+                                    )
+                                }
+                                Text(text = "$x")
                             }
-                            .fillMaxHeight()
-                            .widthIn(Dimensions.LeafBaseWidth - (Dimensions.BeatLabelHorizontalPadding * 2))
-                            .padding(
-                                horizontal = Dimensions.BeatLabelHorizontalPadding,
-                                vertical = Dimensions.BeatLabelVerticalPadding
-                            ),
-                        contentAlignment = Alignment.Center,
-                        content = {
-                            if (column_info.is_tagged.value) {
-                                Icon(
-                                    modifier = Modifier.alpha(.2F),
-                                    painter = painterResource(R.drawable.icon_tag_jump),
-                                    contentDescription = null,
-                                    tint = foreground
-                                )
-                            }
-                            Text(text = "$x")
-                        }
-                    )
-                    if (column_info.is_selected.value) {
-                        Spacer(
-                            Modifier
-                                .fillMaxSize()
-                                .padding(Dimensions.SelectionBorderPadding)
-                                .border(
-                                    width = 1.dp,
-                                    color = foreground,
-                                    shape = RectangleShape
-                                )
                         )
+                        if (column_info.is_selected.value) {
+                            Spacer(
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(Dimensions.SelectionBorderPadding)
+                                    .border(
+                                        width = 1.dp,
+                                        color = foreground,
+                                        shape = RectangleShape
+                                    )
+                            )
+                        }
                     }
                 }
             )

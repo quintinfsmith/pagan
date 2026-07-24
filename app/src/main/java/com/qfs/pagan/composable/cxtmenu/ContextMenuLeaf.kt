@@ -22,10 +22,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.qfs.pagan.OpusLayerInterface
@@ -66,6 +70,8 @@ import com.qfs.pagan.ui.theme.MasterTheme
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.abs
 import kotlin.math.ceil
+import kotlin.math.max
+import kotlin.math.roundToInt
 
 @Composable
 fun SplitButton(
@@ -144,25 +150,67 @@ fun DurationButton(
     shape: Shape = MasterTheme.shapes.ContextMenuButtonPrimary
 ) {
     val dialog_visibility = remember { mutableStateOf(false) }
+    val dragged_duration = remember { mutableIntStateOf(0) }
+    val current_duration = remember { mutableIntStateOf(active_event?.duration ?: 1)}
+    val button_height = remember { mutableStateOf(100F) }
+    var start_y = 0F
     Box {
         TextCMenuButton(
             modifier = Modifier
+                // Work on issue #192. I'll turn this into a radial menu but i'll leave this logic here, commented out
+                // .drawWithContent {
+                //     button_height.value = this.size.height
+                //     drawContent()
+                // }
+                // .pointerInput(Unit) {
+                //     awaitPointerEventScope {
+                //         // Main drag loop
+                //         while (true) {
+                //             val event = awaitPointerEvent()
+                //             when (event.type) {
+                //                 PointerEventType.Press -> {
+                //                     if (event.changes.size == 1) {
+                //                         start_y = event.changes[0].position.y
+                //                     }
+                //                 }
+                //                 PointerEventType.Move -> {
+                //                     val diff = start_y - event.changes[0].position.y
+                //                     if (diff > 0) {
+                //                         dragged_duration.intValue = (diff / button_height.value).toInt()
+                //                     } else {
+                //                         dragged_duration.intValue = max(
+                //                             -1 * (current_duration.intValue - 1),
+                //                             (diff * current_duration.intValue.toFloat() / button_height.value).toInt()
+                //                         )
+                //                     }
+                //                 }
+                //                 PointerEventType.Release -> {
+                //                     if (event.changes.size == 1) {
+                //                         opus_manager.set_duration_at_cursor(dragged_duration.intValue + current_duration.intValue)
+                //                         dragged_duration.intValue = 0
+                //                     }
+                //                 }
+                //             }
+                //         }
+                //     }
+                // }
                 .testTag(TestTag.EventDuration)
                 .width(MasterTheme.dimensions.ButtonHeightNormal),
             enabled = when (descriptor) {
                 ViewModelEditorState.EventDescriptor.Selected,
                 ViewModelEditorState.EventDescriptor.Tail -> true
-
                 else -> false
             },
             shape = shape,
             contentPadding = MasterTheme.dimensions.Unpadded,
             onClick = { dialog_visibility.value = !dialog_visibility.value },
-            onLongClick = { opus_manager.set_duration_at_cursor(1) },
+            onLongClick = {
+                current_duration.intValue = 1
+                opus_manager.set_duration_at_cursor(1)
+            },
             text = when (descriptor) {
                 ViewModelEditorState.EventDescriptor.Selected,
-                ViewModelEditorState.EventDescriptor.Tail -> "x${active_event?.duration ?: 1}"
-
+                ViewModelEditorState.EventDescriptor.Tail -> "x${current_duration.intValue + dragged_duration.intValue}"
                 else -> ""
             }
         )
@@ -173,6 +221,7 @@ fun DurationButton(
             value = dialog_value,
             min_value = Values.DialogInput.Min.Duration,
         ) {
+            current_duration.intValue = 1
             opus_manager.set_duration_at_cursor(it)
         }
     }

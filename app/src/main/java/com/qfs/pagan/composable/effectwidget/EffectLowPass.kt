@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
@@ -35,13 +36,11 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.HighPassEven
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.LowPassEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Dimensions.Unpadded
-import com.qfs.pagan.ui.theme.Typography
+import com.qfs.pagan.ui.theme.MasterTheme
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun <T: FilterEvent> RowScope.FilterEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, event: T) {
+fun <T: FilterEvent> RowScope.FilterEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, event: T, layout: LayoutSize) {
     val cursor = vm_state.active_cursor.value ?: return
     val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
@@ -51,8 +50,8 @@ fun <T: FilterEvent> RowScope.FilterEventMenu(vm_state: ViewModelEditorState, op
     IconCMenuButton(
         modifier = Modifier
             .testTag(TestTag.EventUnset)
-            .height(Dimensions.ContextMenuButtonHeight)
-            .width(Dimensions.ContextMenuButtonWidth),
+            .height(MasterTheme.dimensions.ContextMenuButtonHeight)
+            .width(MasterTheme.dimensions.ContextMenuButtonWidth),
         enabled = (working_event is HighPassEvent && working_cutoff.floatValue > Values.LowPassMinimum) || (working_event is LowPassEvent && working_cutoff.floatValue < Values.LowPassMaximum),
         onClick = {
             working_cutoff.floatValue = when (working_event) {
@@ -65,13 +64,18 @@ fun <T: FilterEvent> RowScope.FilterEventMenu(vm_state: ViewModelEditorState, op
         },
         icon = R.drawable.no_soundfont,
         description = R.string.disable_filter,
+        shape = when (layout) {
+            LayoutSize.MediumLandscape,
+            LayoutSize.SmallLandscape -> MasterTheme.shapes.ContextMenuButtonPrimaryStart
+            else -> MasterTheme.shapes.ContextMenuButtonPrimary
+        },
     )
 
     MediumSpacer()
 
     Knob(
         Modifier
-            .size(Dimensions.ContextMenuButtonWidth, Dimensions.ContextMenuButtonHeight)
+            .size(MasterTheme.dimensions.ContextMenuButtonWidth, MasterTheme.dimensions.ContextMenuButtonHeight)
             .testTag(TestTag.FilterKnob),
         working_cutoff,
         Values.LowPassMinimum,
@@ -93,18 +97,18 @@ fun <T: FilterEvent> RowScope.FilterEventMenu(vm_state: ViewModelEditorState, op
         prefix = {
             Icon(
                 modifier = Modifier
-                    .width(Dimensions.ContextMenuButtonIconWidth),
+                    .width(MasterTheme.dimensions.ContextMenuButtonIconWidth),
                 painter = painterResource(R.drawable.icon_lowpass),
                 contentDescription = null
             )
         },
         minimum = Values.LowPassMinimum,
         maximum = Values.LowPassMaximum,
-        contentPadding = Unpadded,
+        contentPadding = MasterTheme.dimensions.Unpadded,
         text_align = TextAlign.Center,
         modifier = Modifier
             .testTag(TestTag.FilterInput)
-            .height(Dimensions.EffectWidget.InputHeight)
+            .height(MasterTheme.dimensions.EffectWidgetInputHeight)
             .weight(1F, fill = false)
     ) {
         working_event.filter_cutoff = it
@@ -116,10 +120,10 @@ fun <T: FilterEvent> RowScope.FilterEventMenu(vm_state: ViewModelEditorState, op
 
     Text(
         R.string.hz,
-        style = Typography.ContextMenuUnits
+        style = MasterTheme.typography.ContextMenuUnits
     )
 
     Spacer(Modifier.weight(.25F))
 
-    EffectTransitionButton(working_event, opus_manager, is_initial)
+    EffectTransitionButton(working_event, opus_manager, is_initial, layout)
 }

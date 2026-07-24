@@ -19,7 +19,7 @@ import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.PaganConfiguration
 import com.qfs.pagan.projectmanager.ProjectManager
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
-import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.MasterTheme
 
 class ViewModelPagan: ViewModel() {
     companion object {
@@ -69,7 +69,7 @@ class ViewModelPagan: ViewModel() {
     }
 
     fun set_layout_size(width: Dp, height: Dp) {
-        this.active_layout_size.value = Dimensions.set_active_layout_size(width, height)
+        this.active_layout_size.value = MasterTheme.dimensions.set_active_layout_size(width, height)
     }
 
     fun get_layout_size(): LayoutSize {

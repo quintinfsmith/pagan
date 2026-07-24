@@ -11,13 +11,14 @@ package com.qfs.pagan.composable.effectwidget
 
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.runtime.Composable
+import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusReverbEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
-fun RowScope.ReverbEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, event: OpusReverbEvent) {
+fun RowScope.ReverbEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, event: OpusReverbEvent, layout: LayoutSize) {
     val cursor = vm_state.active_cursor.value ?: return
     val is_initial = cursor.type == CursorMode.Line
 

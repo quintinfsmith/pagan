@@ -22,15 +22,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.MasterTheme
 
 @Composable
 fun ConfigDrawerTopButton(modifier: Modifier = Modifier, content: (@Composable RowScope.() -> Unit), onClick: () -> Unit) {
     Button(
-        modifier = modifier.height(Dimensions.ConfigChannelButtonHeight),
-        shape = RoundedCornerShape(Dimensions.ConfigDrawerButtonRadius),
-        contentPadding = Dimensions.ConfigButtonPadding,
+        modifier = modifier.height(MasterTheme.dimensions.ConfigChannelButtonHeight),
+        shape = RoundedCornerShape(MasterTheme.dimensions.ConfigDrawerButtonRadius),
+        contentPadding = MasterTheme.dimensions.ConfigButtonPadding,
         onClick = onClick,
         content = content,
     )
@@ -40,10 +39,10 @@ fun ConfigDrawerTopButton(modifier: Modifier = Modifier, content: (@Composable R
 fun ConfigDrawerBottomButton(modifier: Modifier = Modifier, icon: Int, description: Int, enabled: Boolean = true, onClick: () -> Unit) {
     Button(
         modifier = modifier
-            .height(Dimensions.ConfigBottomButtonHeight)
-            .widthIn(Dimensions.ConfigBottomButtonWidth),
-        shape = RoundedCornerShape(Dimensions.ConfigDrawerButtonRadius),
-        contentPadding = Dimensions.ConfigButtonPadding,
+            .height(MasterTheme.dimensions.ConfigBottomButtonHeight)
+            .widthIn(MasterTheme.dimensions.ConfigBottomButtonWidth),
+        shape = RoundedCornerShape(MasterTheme.dimensions.ConfigDrawerButtonRadius),
+        contentPadding = MasterTheme.dimensions.ConfigButtonPadding,
         onClick = onClick,
         enabled = enabled,
         content = {
@@ -63,14 +62,14 @@ fun ConfigDrawerChannelLeftButton(
     onClick: () -> Unit
 ) {
     Button(
-        modifier = modifier.height(Dimensions.ConfigChannelButtonHeight),
+        modifier = modifier.height(MasterTheme.dimensions.ConfigChannelButtonHeight),
         contentPadding = PaddingValues(
-            top = Dimensions.ConfigDrawerButtonPadding,
-            start = Dimensions.ConfigDrawerButtonPadding,
-            bottom = Dimensions.ConfigDrawerButtonPadding,
-            end = Dimensions.ConfigDrawerButtonExtraPadding
+            top = MasterTheme.dimensions.ConfigDrawerButtonPadding,
+            start = MasterTheme.dimensions.ConfigDrawerButtonPadding,
+            bottom = MasterTheme.dimensions.ConfigDrawerButtonPadding,
+            end = MasterTheme.dimensions.ConfigDrawerButtonExtraPadding
         ),
-        shape = Shapes.ConfigChannelButtonStart,
+        shape = MasterTheme.shapes.ConfigChannelButtonStart,
         colors = colors,
         onClick = onClick,
         content = content
@@ -86,14 +85,14 @@ fun ConfigDrawerChannelRightButton(
 {
     Button(
         contentPadding = PaddingValues(
-            top = Dimensions.ConfigDrawerButtonPadding,
-            start = Dimensions.ConfigDrawerButtonExtraPadding,
-            bottom = Dimensions.ConfigDrawerButtonPadding,
-            end = Dimensions.ConfigDrawerButtonPadding
+            top = MasterTheme.dimensions.ConfigDrawerButtonPadding,
+            start = MasterTheme.dimensions.ConfigDrawerButtonExtraPadding,
+            bottom = MasterTheme.dimensions.ConfigDrawerButtonPadding,
+            end = MasterTheme.dimensions.ConfigDrawerButtonPadding
         ),
         enabled = enabled,
-        shape = Shapes.ConfigChannelButtonEnd,
-        modifier = modifier.height(Dimensions.ConfigChannelButtonHeight),
+        shape = MasterTheme.shapes.ConfigChannelButtonEnd,
+        modifier = modifier.height(MasterTheme.dimensions.ConfigChannelButtonHeight),
         colors = colors,
         onClick = onClick,
         content = content

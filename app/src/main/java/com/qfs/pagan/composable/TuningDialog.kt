@@ -41,9 +41,7 @@ import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Shapes
-import com.qfs.pagan.ui.theme.Typography
+import com.qfs.pagan.ui.theme.MasterTheme
 
 @Composable
 fun TuningDialogTopLine(
@@ -63,8 +61,8 @@ fun TuningDialogTopLine(
                 IntegerInput(
                     value = transpose_numerator,
                     minimum = 0,
-                    contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
-                    modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
+                    contentPadding = PaddingValues(MasterTheme.dimensions.TransposeDialogInputPadding),
+                    modifier = Modifier.width(MasterTheme.dimensions.TransposeDialogInputWidth),
                     revert_on_exit = true,
                     callback = {
                        // transpose_numerator.value = it
@@ -74,8 +72,8 @@ fun TuningDialogTopLine(
                 IntegerInput(
                     value = transpose_denominator,
                     minimum = 1,
-                    contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
-                    modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
+                    contentPadding = PaddingValues(MasterTheme.dimensions.TransposeDialogInputPadding),
+                    modifier = Modifier.width(MasterTheme.dimensions.TransposeDialogInputWidth),
                     revert_on_exit = true,
                     callback = {
                         //transpose_denominator.value = it
@@ -93,8 +91,8 @@ fun TuningDialogTopLine(
                 value = radix,
                 minimum = 1,
                 maximum = 36,
-                contentPadding = PaddingValues(Dimensions.TransposeDialogInnerPadding),
-                modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
+                contentPadding = PaddingValues(MasterTheme.dimensions.TransposeDialogInnerPadding),
+                modifier = Modifier.width(MasterTheme.dimensions.TransposeDialogInputWidth),
                 revert_on_exit = true,
                 callback = {
                     note_map.clear()
@@ -120,46 +118,46 @@ fun ColumnScope.TuningDialogNormal(
 
     TuningDialogTopLine(transpose_numerator, transpose_denominator, radix, note_map)
 
-    Spacer(Modifier.height(Dimensions.TransposeDialogInnerPadding))
+    Spacer(Modifier.height(MasterTheme.dimensions.TransposeDialogInnerPadding))
 
     Surface(
         modifier = Modifier.weight(1F, fill = false),
         border = BorderStroke(
-            Dimensions.TuningDialogStrokeWidth,
+            MasterTheme.dimensions.TuningDialogStrokeWidth,
             Colors.active_color_scheme.container_border
         ),
         color = Colors.active_color_scheme.menu_background,
-        shape = Shapes.TuningDialogBox,
+        shape = MasterTheme.shapes.TuningDialogBox,
     ) {
         key(radix.value) {
             FlowRow(
                 modifier = Modifier
-                    .padding(Dimensions.TuningDialogBoxPadding)
+                    .padding(MasterTheme.dimensions.TuningDialogBoxPadding)
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState()),
             ) {
                 for ((i, state) in note_map.withIndex()) {
                     val (numer, denom) = state
                     Surface(
-                        modifier = Modifier.padding(Dimensions.TuningDialogLineSpacing),
+                        modifier = Modifier.padding(MasterTheme.dimensions.TuningDialogLineSpacing),
                         color = Colors.active_color_scheme.tuning_table_item,
-                        shape = Shapes.TuningDialogBox,
+                        shape = MasterTheme.shapes.TuningDialogBox,
                     ) {
                         Row(
-                            modifier = Modifier.padding(Dimensions.TuningDialogLinePadding),
+                            modifier = Modifier.padding(MasterTheme.dimensions.TuningDialogLinePadding),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
                             Text(
                                 "%02d".format(i),
-                                modifier = Modifier.padding(horizontal = Dimensions.TuningDialogLinePadding)
+                                modifier = Modifier.padding(horizontal = MasterTheme.dimensions.TuningDialogLinePadding)
                             )
                             Spacer(Modifier.weight(1F))
                             IntegerInput(
                                 value = remember { mutableStateOf(numer) },
                                 minimum = 0,
-                                modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
-                                contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
+                                modifier = Modifier.width(MasterTheme.dimensions.TransposeDialogInputWidth),
+                                contentPadding = PaddingValues(MasterTheme.dimensions.TransposeDialogInputPadding),
                                 revert_on_exit = true,
                                 callback = { note_map[i] = Pair(it, note_map[i].second) }
                             )
@@ -167,8 +165,8 @@ fun ColumnScope.TuningDialogNormal(
                             IntegerInput(
                                 value = remember { mutableStateOf(denom) },
                                 minimum = 1,
-                                modifier = Modifier.width(Dimensions.TransposeDialogInputWidth),
-                                contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
+                                modifier = Modifier.width(MasterTheme.dimensions.TransposeDialogInputWidth),
+                                contentPadding = PaddingValues(MasterTheme.dimensions.TransposeDialogInputPadding),
                                 revert_on_exit = true,
                                 callback = { note_map[i] = Pair(note_map[i].first, it) }
                             )
@@ -181,7 +179,7 @@ fun ColumnScope.TuningDialogNormal(
 
     Spacer(
         Modifier
-            .height(Dimensions.Space.Medium)
+            .height(MasterTheme.dimensions.SpaceMedium)
             .fillMaxWidth()
     )
 
@@ -223,7 +221,7 @@ fun ColumnScope.TuningDialogTiny(
                 .weight(1F, fill = false),
             verticalArrangement = Arrangement.SpaceAround
         ) {
-            ProvideTextStyle(com.qfs.pagan.ui.theme.Typography.TinyTuningDialogLabel) {
+            ProvideTextStyle(MasterTheme.typography.TinyTuningDialogLabel) {
                 TuningDialogTopLine(transpose_numerator, transpose_denominator, radix, note_map)
             }
             Column(
@@ -232,15 +230,15 @@ fun ColumnScope.TuningDialogTiny(
             ) {
                 Text(
                     R.string.label_tuning,
-                    style = Typography.TinyTuningDialogLabel
+                    style = MasterTheme.typography.TinyTuningDialogLabel
                 )
                 Surface(
-                    shape = Shapes.Container,
+                    shape = MasterTheme.shapes.Container,
                     color = Colors.active_color_scheme.menu_background
                 ) {
                     Row(
                         modifier = Modifier
-                            .padding(Dimensions.TinyTuningDialogInnerPadding)
+                            .padding(MasterTheme.dimensions.TinyTuningDialogInnerPadding)
                             .fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
@@ -274,8 +272,8 @@ fun ColumnScope.TuningDialogTiny(
                                     minimum = 0,
                                     modifier = Modifier
                                         .background(Colors.active_color_scheme.tuning_table_item)
-                                        .width(Dimensions.TinyTuningDialogInputWidth),
-                                    contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
+                                        .width(MasterTheme.dimensions.TinyTuningDialogInputWidth),
+                                    contentPadding = PaddingValues(MasterTheme.dimensions.TransposeDialogInputPadding),
                                     revert_on_exit = true,
                                     callback = {
                                         note_map[actively_editting_index.value] = Pair(
@@ -290,8 +288,8 @@ fun ColumnScope.TuningDialogTiny(
                                     minimum = 1,
                                     modifier = Modifier
                                         .background(Colors.active_color_scheme.tuning_table_item)
-                                        .width(Dimensions.TinyTuningDialogInputWidth),
-                                    contentPadding = PaddingValues(Dimensions.TransposeDialogInputPadding),
+                                        .width(MasterTheme.dimensions.TinyTuningDialogInputWidth),
+                                    contentPadding = PaddingValues(MasterTheme.dimensions.TransposeDialogInputPadding),
                                     revert_on_exit = true,
                                     callback = {
                                         note_map[actively_editting_index.value] = Pair(
@@ -307,25 +305,25 @@ fun ColumnScope.TuningDialogTiny(
             }
         }
 
-        Spacer(Modifier.width(Dimensions.TinyTuningDialogInnerPadding))
+        Spacer(Modifier.width(MasterTheme.dimensions.TinyTuningDialogInnerPadding))
 
         Column(
             Modifier
                 .fillMaxHeight()
-                .background(color = Colors.active_color_scheme.container, shape = Shapes.Container)
+                .background(color = Colors.active_color_scheme.container, shape = MasterTheme.shapes.Container)
                 .border(
-                    width = Dimensions.TuningDialogStrokeWidth,
+                    width = MasterTheme.dimensions.TuningDialogStrokeWidth,
                     color = Colors.active_color_scheme.container_border,
-                    shape = Shapes.Container
+                    shape = MasterTheme.shapes.Container
                 )
-                .padding(horizontal = Dimensions.TuningDialogBoxPadding),
+                .padding(horizontal = MasterTheme.dimensions.TuningDialogBoxPadding),
             verticalArrangement = Arrangement.SpaceEvenly
         ) {
             OutlinedButton(
                 modifier = Modifier
-                    .width(Dimensions.TinyTuningDialogButtonSize)
-                    .height(Dimensions.TinyTuningDialogButtonSize),
-                contentPadding = PaddingValues(Dimensions.TinyTuningDialogButtonPadding),
+                    .width(MasterTheme.dimensions.TinyTuningDialogButtonSize)
+                    .height(MasterTheme.dimensions.TinyTuningDialogButtonSize),
+                contentPadding = PaddingValues(MasterTheme.dimensions.TinyTuningDialogButtonPadding),
                 shape = CircleShape,
                 onClick = close_callback,
                 content = {
@@ -338,9 +336,9 @@ fun ColumnScope.TuningDialogTiny(
             )
             Button(
                 modifier = Modifier
-                    .width(Dimensions.TinyTuningDialogButtonSize)
-                    .height(Dimensions.TinyTuningDialogButtonSize),
-                contentPadding = PaddingValues(Dimensions.TinyTuningDialogButtonPadding),
+                    .width(MasterTheme.dimensions.TinyTuningDialogButtonSize)
+                    .height(MasterTheme.dimensions.TinyTuningDialogButtonSize),
+                contentPadding = PaddingValues(MasterTheme.dimensions.TinyTuningDialogButtonPadding),
                 shape = CircleShape,
                 onClick = {
                     close_callback()

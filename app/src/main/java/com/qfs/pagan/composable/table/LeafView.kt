@@ -53,7 +53,6 @@ import com.qfs.pagan.structure.opusmanager.base.BeatKey
 import com.qfs.pagan.structure.opusmanager.base.InvalidOverwriteCall
 import com.qfs.pagan.structure.opusmanager.base.MixedInstrumentException
 import com.qfs.pagan.structure.opusmanager.base.OpusColorPalette.OpusColorPalette
-import com.qfs.pagan.structure.opusmanager.base.OpusEvent
 import com.qfs.pagan.structure.opusmanager.base.PercussionEvent
 import com.qfs.pagan.structure.opusmanager.base.RangeOverflow
 import com.qfs.pagan.structure.opusmanager.base.RelativeNoteEvent
@@ -69,8 +68,7 @@ import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.ui.theme.Colors
 import com.qfs.pagan.ui.theme.Colors.LeafSelection
 import com.qfs.pagan.ui.theme.Colors.LeafState
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Typography
+import com.qfs.pagan.ui.theme.MasterTheme
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.abs
@@ -276,7 +274,7 @@ fun BoxScope.ThemedLeafView(
             Spacer(
                 Modifier
                     .fillMaxSize()
-                    .padding(Dimensions.SelectionBorderPadding)
+                    .padding(MasterTheme.dimensions.SelectionBorderPadding)
                     .border(
                         width = 1.dp,
                         color = LocalContentColor.current,
@@ -297,14 +295,14 @@ fun LeafViewAbsoluteNoteEvent(event: AbsoluteNoteEvent, radix: Int) {
     ) {
         Column(verticalArrangement = Arrangement.Center) {
             Spacer(Modifier.weight(4F))
-            ProvideTextStyle(Typography.Leaf.Octave) {
+            ProvideTextStyle(MasterTheme.typography.LeafOctave) {
                 Text("$octave")
             }
             Spacer(Modifier.weight(1F))
         }
 
         Column(verticalArrangement = Arrangement.Center) {
-            ProvideTextStyle(Typography.Leaf.Offset) {
+            ProvideTextStyle(MasterTheme.typography.LeafOffset) {
                 Text("$offset")
             }
         }
@@ -322,7 +320,7 @@ fun LeafViewRelativeNoteEvent(event: RelativeNoteEvent, radix: Int) {
         Box(
             contentAlignment = Alignment.Center
         ) {
-            ProvideTextStyle(Typography.Leaf.RelativePrefix) {
+            ProvideTextStyle(MasterTheme.typography.LeafRelativePrefix) {
                 Text(
                     text = if (event.offset > 0) "+" else "-",
                     modifier = Modifier
@@ -330,7 +328,7 @@ fun LeafViewRelativeNoteEvent(event: RelativeNoteEvent, radix: Int) {
                         .align(Alignment.Center)
                 )
             }
-            ProvideTextStyle(Typography.Leaf.Octave) {
+            ProvideTextStyle(MasterTheme.typography.LeafOctave) {
                 Text(
                     text = "$octave",
                     modifier = Modifier
@@ -340,7 +338,7 @@ fun LeafViewRelativeNoteEvent(event: RelativeNoteEvent, radix: Int) {
             }
         }
         Spacer(modifier = Modifier.width(1.dp))
-        ProvideTextStyle(Typography.Leaf.Offset) {
+        ProvideTextStyle(MasterTheme.typography.LeafOffset) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
@@ -363,7 +361,7 @@ fun LeafViewPercussionEvent(event: PercussionEvent) {
 fun LeafViewOpusVolumeEvent(event: OpusVolumeEvent) {
     Text(
         "${(event.value * 100F).roundToInt()}%",
-        style = Typography.EffectLeaf
+        style = MasterTheme.typography.EffectLeaf
     )
 }
 
@@ -377,13 +375,13 @@ fun LeafViewOpusPanEvent(event: OpusPanEvent) {
         } else {
             "-0-"
         },
-        style = Typography.EffectLeaf
+        style = MasterTheme.typography.EffectLeaf
     )
 }
 
 @Composable
 fun LeafViewDelayEvent(event: DelayEvent) {
-    ProvideTextStyle(Typography.EffectLeaf) {
+    ProvideTextStyle(MasterTheme.typography.EffectLeaf) {
         val text_color = LocalContentColor.current
         if (event.echo == 0 || event.fade == 0F) {
             Canvas(modifier = Modifier.fillMaxSize()) {
@@ -401,7 +399,7 @@ fun LeafViewDelayEvent(event: DelayEvent) {
                 Canvas(
                     modifier = Modifier
                         .fillMaxHeight()
-                        .width(Dimensions.LeafBaseWidth)
+                        .width(MasterTheme.dimensions.LeafBaseWidth)
                 ) {
                     drawLine(
                         start = Offset(
@@ -416,7 +414,7 @@ fun LeafViewDelayEvent(event: DelayEvent) {
                         strokeWidth = 1F
                     )
                 }
-                ProvideTextStyle(Typography.EffectLeafDelay) {
+                ProvideTextStyle(MasterTheme.typography.EffectLeafDelay) {
                     Column(
                         verticalArrangement = Arrangement.SpaceBetween,
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -448,7 +446,7 @@ fun LeafViewOpusTempoEvent(event: OpusTempoEvent) {
     Text(
         "${event.value.roundToInt()}",
         color = text_color,
-        style = Typography.EffectLeaf
+        style = MasterTheme.typography.EffectLeaf
     )
 }
 
@@ -460,12 +458,12 @@ fun LeafViewOpusVelocityEvent(event: OpusVelocityEvent) {
     }
     Text(
         label_string,
-        style = Typography.EffectLeaf
+        style = MasterTheme.typography.EffectLeaf
     )
 }
 @Composable
 fun LeafViewFilter(event: FilterEvent) {
-    ProvideTextStyle(Typography.EffectLeaf) {
+    ProvideTextStyle(MasterTheme.typography.EffectLeaf) {
         if ((event is HighPassEvent && event.filter_cutoff <= Values.LowPassMinimum) || (event is LowPassEvent && event.filter_cutoff >= Values.LowPassMaximum)) {
             val text_color = LocalContentColor.current
             Canvas(modifier = Modifier.fillMaxSize()) {
@@ -493,7 +491,7 @@ fun LeafViewFilter(event: FilterEvent) {
                         "${event.filter_cutoff.roundToInt()}"
                     },
                     textAlign = TextAlign.Center,
-                    style = Typography.EffectLeafFilterTop
+                    style = MasterTheme.typography.EffectLeafFilterTop
                 )
                 Text(
                     if (event.filter_cutoff >= 1000F) {
@@ -502,7 +500,7 @@ fun LeafViewFilter(event: FilterEvent) {
                         R.string.hz
                     },
                     textAlign = TextAlign.Center,
-                    style = Typography.EffectLeafFilterKhz
+                    style = MasterTheme.typography.EffectLeafFilterKhz
                 )
             }
         }

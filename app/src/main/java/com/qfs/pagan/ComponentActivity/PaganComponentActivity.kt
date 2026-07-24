@@ -88,10 +88,9 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.ui.theme.AppBackground
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.MasterTheme
 import com.qfs.pagan.ui.theme.PaganColorScheme
-import com.qfs.pagan.ui.theme.Shapes
-import com.qfs.pagan.ui.theme.Typography
+import com.qfs.pagan.ui.theme.PaganTheme
 import com.qfs.pagan.viewmodel.ViewModelPagan
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -215,11 +214,17 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 AppCompatDelegate.MODE_NIGHT_NO -> false
                 else -> isSystemInDarkTheme()
             }
-            if (is_night_mode) {
-                Colors.active_color_scheme = PaganColorScheme.Dark()
-            } else {
-                Colors.active_color_scheme = PaganColorScheme()
-            }
+
+            MasterTheme.set(
+                PaganTheme(
+                    color_scheme = if (is_night_mode) {
+                        PaganColorScheme.Dark()
+                    } else {
+                        PaganColorScheme()
+                    }
+                )
+            )
+
 
             this.drawer_state = rememberDrawerState(DrawerValue.Closed) { state ->
                 this.drawer_gesture_enabled.value = state == DrawerValue.Open
@@ -406,8 +411,8 @@ abstract class PaganComponentActivity: ComponentActivity() {
                     } else {
                         Button(
                             modifier = Modifier
-                                .height(Dimensions.SortableMenuSortButtonDiameter)
-                                .width(Dimensions.SortableMenuSortButtonDiameter),
+                                .height(MasterTheme.dimensions.SortableMenuSortButtonDiameter)
+                                .width(MasterTheme.dimensions.SortableMenuSortButtonDiameter),
                             onClick = {
                                 is_refreshing.value = true
                                 scope.launch(Dispatchers.IO) {
@@ -420,7 +425,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                                     is_refreshing.value = false
                                 }
                             },
-                            contentPadding = Dimensions.SortableMenuSortButtonPadding,
+                            contentPadding = MasterTheme.dimensions.SortableMenuSortButtonPadding,
                             content = {
                                 Icon(
                                     painter = painterResource(R.drawable.icon_refresh),
@@ -429,7 +434,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
                             }
                         )
                     }
-                    Spacer(Modifier.width(Dimensions.Space.Large))
+                    Spacer(Modifier.width(MasterTheme.dimensions.SpaceLarge))
                 },
                 long_click_callback = { value ->
                     for ((uri, title) in project_list) {
@@ -446,20 +451,20 @@ abstract class PaganComponentActivity: ComponentActivity() {
                 val confirm_visibility = remember { mutableStateOf(false) }
 
                 ProjectCard(modifier = Modifier.fillMaxWidth(), uri = project_card_pair.value!!.second)
-                Spacer(Modifier.height(Dimensions.Space.Large))
+                Spacer(Modifier.height(MasterTheme.dimensions.SpaceLarge))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     OutlinedButton(
-                        modifier = Modifier.height(Dimensions.ButtonHeight.Small),
+                        modifier = Modifier.height(MasterTheme.dimensions.ButtonHeightSmall),
                         onClick = { project_card_visibility.value = false },
                         content = { Text(android.R.string.cancel) }
                     )
-                    Spacer(Modifier.width(Dimensions.Space.Medium))
+                    Spacer(Modifier.width(MasterTheme.dimensions.SpaceMedium))
                     Button(
-                        modifier = Modifier.height(Dimensions.ButtonHeight.Small),
+                        modifier = Modifier.height(MasterTheme.dimensions.ButtonHeightSmall),
                         onClick = { confirm_visibility.value = true },
                         content = {
                             Icon(
@@ -468,9 +473,9 @@ abstract class PaganComponentActivity: ComponentActivity() {
                             )
                         }
                     )
-                    Spacer(Modifier.width(Dimensions.Space.Medium))
+                    Spacer(Modifier.width(MasterTheme.dimensions.SpaceMedium))
                     Button(
-                        modifier = Modifier.height(Dimensions.ButtonHeight.Small),
+                        modifier = Modifier.height(MasterTheme.dimensions.ButtonHeightSmall),
                         onClick = {
                             project_card_visibility.value = false
                             visibility.value = false
@@ -517,9 +522,9 @@ abstract class PaganComponentActivity: ComponentActivity() {
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         val initial_tempo = other_project.get_global_controller<OpusTempoEvent>(EffectType.Tempo).initial_event.value
 
-        val padding = Dimensions.Space.Large
+        val padding = MasterTheme.dimensions.SpaceLarge
         Column(modifier) {
-            ProvideTextStyle(Typography.DialogTitle) {
+            ProvideTextStyle(MasterTheme.typography.DialogTitle) {
                 if (other_project.project_name == null) {
                     Text(R.string.untitled_opus)
                 } else {
@@ -528,7 +533,7 @@ abstract class PaganComponentActivity: ComponentActivity() {
             }
             Spacer(Modifier.height(padding))
 
-            ProvideTextStyle(Typography.DialogBodyMono) {
+            ProvideTextStyle(MasterTheme.typography.DialogBodyMono) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -567,18 +572,18 @@ abstract class PaganComponentActivity: ComponentActivity() {
 
             Spacer(Modifier.height(padding))
 
-            ProvideTextStyle(Typography.ProjectNotes) {
+            ProvideTextStyle(MasterTheme.typography.ProjectNotes) {
                 Row(
                     Modifier
                         .dashed_border(
                             color = Colors.active_color_scheme.foreground,
-                            shape = Shapes.ProjectCardNotes,
-                            width = Dimensions.Stroke.Thin
+                            shape = MasterTheme.shapes.ProjectCardNotes,
+                            width = MasterTheme.dimensions.StrokeThin
                         )
                 ) {
                     Text(
                         modifier = Modifier
-                            .padding(Dimensions.ProjectCardNotesPadding)
+                            .padding(MasterTheme.dimensions.ProjectCardNotesPadding)
                             .fillMaxWidth(),
                         text = if (other_project.project_notes != null) {
                             other_project.project_notes!!

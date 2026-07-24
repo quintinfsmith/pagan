@@ -35,18 +35,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusPanEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Typography
+import com.qfs.pagan.ui.theme.MasterTheme
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @Composable
-fun RowScope.PanEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, event: OpusPanEvent) {
+fun RowScope.PanEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, event: OpusPanEvent, layout: LayoutSize) {
     val cursor = vm_state.active_cursor.value ?: return
     val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
@@ -66,7 +66,7 @@ fun RowScope.PanEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLaye
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         ProvideTextStyle(
-            Typography.EffectWidget.Pan.Indicator
+            MasterTheme.typography.EffectWidgetPanIndicator
         ) {
             Text(
                 text = if (working_value.floatValue < 0F) {
@@ -80,7 +80,7 @@ fun RowScope.PanEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLaye
                 textAlign = TextAlign.Center,
                 lineHeight = 2.em,
                 modifier = Modifier
-                    .width(Dimensions.EffectWidget.Pan.SliderPadding)
+                    .width(MasterTheme.dimensions.EffectWidgetPanSliderPadding)
                     .clip(CircleShape)
                     .background(Colors.active_color_scheme.button),
                 color = Colors.active_color_scheme.button_foreground
@@ -113,8 +113,8 @@ fun RowScope.PanEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLaye
                 colors = colors,
                 modifier = Modifier
                     .padding(
-                        start = Dimensions.EffectWidget.Pan.SliderPadding / 2,
-                        end = Dimensions.EffectWidget.Pan.SliderPadding / 2
+                        start = MasterTheme.dimensions.EffectWidgetPanSliderPadding / 2,
+                        end = MasterTheme.dimensions.EffectWidgetPanSliderPadding / 2
                     )
                     .testTag(TestTag.PanSlider)
                     .fillMaxWidth()
@@ -125,5 +125,5 @@ fun RowScope.PanEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLaye
         working_value.floatValue = working_event.value * -1
     }
 
-    EffectTransitionButton(working_event, opus_manager, is_initial)
+    EffectTransitionButton(working_event, opus_manager, is_initial, layout)
 }

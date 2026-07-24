@@ -9,11 +9,11 @@ import androidx.compose.ui.graphics.drawscope.clipRect
 import kotlin.math.ceil
 
 fun DrawScope.AppBackground() {
-    val gap_width = Dimensions.Background.Gap.toPx()
-    val bar_width = Dimensions.Background.BarWidth.toPx()
+    val gap_width = MasterTheme.dimensions.BackGroundGap.toPx()
+    val bar_width = MasterTheme.dimensions.BackGroundBarWidth.toPx()
     val f = (this.size.width + gap_width + (bar_width / 2)) / (gap_width + bar_width)
-    val bar_height_small = Dimensions.Background.BarSmallHeight.toPx()
-    val bar_height_large = Dimensions.Background.BarLargeHeight.toPx()
+    val bar_height_small = MasterTheme.dimensions.BackGroundBarSmallHeight.toPx()
+    val bar_height_large = MasterTheme.dimensions.BackGroundBarLargeHeight.toPx()
     clipRect {
         for (x in 0 until ceil(f).toInt()) {
             var y_offset = if (x % 2 == 1) {
@@ -44,7 +44,7 @@ fun DrawScope.AppBackground() {
                         width = bar_width,
                         height = bar_height
                     ),
-                    cornerRadius = CornerRadius(Dimensions.Background.Radius.toPx())
+                    cornerRadius = CornerRadius(MasterTheme.dimensions.BackGroundRadius.toPx())
                 )
 
                 y_offset += bar_height + gap_width

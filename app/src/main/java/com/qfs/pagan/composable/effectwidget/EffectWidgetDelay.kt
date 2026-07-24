@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableFloatStateOf
@@ -33,7 +32,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
-import com.qfs.pagan.ActionDispatcher
+import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
@@ -43,20 +42,16 @@ import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.DivisorSeparator
 import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.Slider
-import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.DelayEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Dimensions.Unpadded
-import com.qfs.pagan.ui.theme.Shapes
-import com.qfs.pagan.ui.theme.Typography
+import com.qfs.pagan.ui.theme.MasterTheme
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.roundToInt
 
 @Composable
-fun RowScope.DelayEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, event: DelayEvent) {
+fun RowScope.DelayEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, event: DelayEvent, layout: LayoutSize) {
     val cursor = vm_state.active_cursor.value ?: return
     val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
@@ -81,19 +76,19 @@ fun RowScope.DelayEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLa
         Icon(
             modifier = Modifier
                 .alpha(.2F)
-                .width(Dimensions.EffectWidget.Delay.InputIconWidth),
+                .width(MasterTheme.dimensions.EffectWidgetDelayInputIconWidth),
             painter = painterResource(R.drawable.icon_hz),
             contentDescription = null
         )
         IntegerInput(
             remember { mutableStateOf(working_event.numerator) },
-            contentPadding = Unpadded,
+            contentPadding = MasterTheme.dimensions.Unpadded,
             text_align = TextAlign.Center,
             revert_on_exit = true,
             modifier = Modifier
                 .testTag(TestTag.DelayHzNumerator)
-                .height(Dimensions.EffectWidget.InputHeight)
-                .width(Dimensions.EffectWidget.Delay.InputWidth)
+                .height(MasterTheme.dimensions.EffectWidgetInputHeight)
+                .width(MasterTheme.dimensions.EffectWidgetDelayInputWidth)
         ) {
             working_event.numerator = it
             submit()
@@ -107,20 +102,20 @@ fun RowScope.DelayEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLa
         Icon(
             modifier = Modifier
                 .alpha(.2F)
-                .width(Dimensions.EffectWidget.Delay.InputIconWidth),
+                .width(MasterTheme.dimensions.EffectWidgetDelayInputIconWidth),
             painter = painterResource(R.drawable.icon_hz),
             contentDescription = null
         )
         IntegerInput(
             remember { mutableStateOf(working_event.denominator) },
             minimum = 1,
-            contentPadding = Unpadded,
+            contentPadding = MasterTheme.dimensions.Unpadded,
             text_align = TextAlign.Center,
             revert_on_exit = true,
             modifier = Modifier
                 .testTag(TestTag.DelayHzDenominator)
-                .height(Dimensions.EffectWidget.InputHeight)
-                .width(Dimensions.EffectWidget.Delay.InputWidth)
+                .height(MasterTheme.dimensions.EffectWidgetInputHeight)
+                .width(MasterTheme.dimensions.EffectWidgetDelayInputWidth)
         ) {
             working_event.denominator = it
             submit()
@@ -136,20 +131,20 @@ fun RowScope.DelayEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLa
         Icon(
             modifier = Modifier
                 .alpha(.2F)
-                .width(Dimensions.EffectWidget.Delay.InputIconWidth),
+                .width(MasterTheme.dimensions.EffectWidgetDelayInputIconWidth),
             painter = painterResource(R.drawable.icon_echo),
             contentDescription = null
         )
         IntegerInput(
             remember { mutableStateOf(working_event.echo) },
             minimum = 0,
-            contentPadding = Unpadded,
+            contentPadding = MasterTheme.dimensions.Unpadded,
             text_align = TextAlign.Center,
             revert_on_exit = true,
             modifier = Modifier
                 .testTag(TestTag.DelayEcho)
-                .height(Dimensions.EffectWidget.InputHeight)
-                .width(Dimensions.EffectWidget.Delay.InputWidth)
+                .height(MasterTheme.dimensions.EffectWidgetInputHeight)
+                .width(MasterTheme.dimensions.EffectWidgetDelayInputWidth)
         ) {
             working_event.echo = it
             submit()
@@ -161,12 +156,12 @@ fun RowScope.DelayEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLa
     val fade_expanded = remember { mutableStateOf(false) }
     Box(contentAlignment = Alignment.Center) {
         Button(
-            contentPadding = Dimensions.ContextMenuButtonPadding,
-            shape = Shapes.ContextMenuButtonPrimary,
+            contentPadding = MasterTheme.dimensions.ContextMenuButtonPadding,
+            shape = MasterTheme.shapes.ContextMenuButtonPrimary,
             modifier = Modifier
                 .testTag(TestTag.DelayFadeButton)
-                .height(Dimensions.ContextMenuButtonHeight)
-                .width(Dimensions.ContextMenuButtonWidth),
+                .height(MasterTheme.dimensions.ContextMenuButtonHeight)
+                .width(MasterTheme.dimensions.ContextMenuButtonWidth),
             content = {
                 Box(contentAlignment = Alignment.Center) {
                     if (!fade_expanded.value) {
@@ -178,7 +173,7 @@ fun RowScope.DelayEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLa
                     }
                     Text(
                         text = "${(fade.floatValue * 100).roundToInt()}%",
-                        style = Typography.ContextMenuButton
+                        style = MasterTheme.typography.ContextMenuButton
                     )
                 }
             },
@@ -191,8 +186,8 @@ fun RowScope.DelayEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLa
             onDismissRequest = { fade_expanded.value = false },
             shape = CircleShape,
             modifier = Modifier
-                .height(Dimensions.EffectWidget.Delay.FadePopupHeight)
-                .width(Dimensions.EffectWidget.Delay.FadePopupWidth)
+                .height(MasterTheme.dimensions.EffectWidgetDelayFadePopupHeight)
+                .width(MasterTheme.dimensions.EffectWidgetDelayFadePopupWidth)
         ) {
             Slider(
                 value = fade.floatValue,
@@ -201,7 +196,7 @@ fun RowScope.DelayEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLa
                 valueRange = 0F..1F,
                 modifier = Modifier
                     .testTag(TestTag.DelayFadeSlider)
-                    .padding(vertical = Dimensions.EffectWidget.Delay.FadePopupPadding)
+                    .padding(vertical = MasterTheme.dimensions.EffectWidgetDelayFadePopupPadding)
                     .graphicsLayer {
                         rotationZ = 270f
                         transformOrigin = TransformOrigin(0f, 0f)
@@ -236,6 +231,6 @@ fun RowScope.DelayEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLa
 
     Spacer(Modifier.weight(.5F))
 
-    EffectTransitionButton(working_event, opus_manager, is_initial)
+    EffectTransitionButton(working_event, opus_manager, is_initial, layout)
 }
 

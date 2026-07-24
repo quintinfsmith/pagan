@@ -36,8 +36,7 @@ import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.MasterTheme
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.log
 import kotlin.math.max
@@ -79,7 +78,7 @@ fun ContextMenuBeatSliderSecondary(modifier: Modifier = Modifier, vm_state: View
                     },
                     icon = R.drawable.icon_tag_jump,
                     description = R.string.jump_to_section,
-                    shape = Shapes.ContextMenuButtonPrimaryStart
+                    shape = MasterTheme.shapes.ContextMenuButtonPrimaryStart
                 )
 
                 DropdownMenu(
@@ -107,7 +106,7 @@ fun ContextMenuBeatSliderSecondary(modifier: Modifier = Modifier, vm_state: View
                                 val section_string = "%02d".format(section_index)
                                 Row(horizontalArrangement = Arrangement.SpaceBetween) {
                                     Text(
-                                        modifier = Modifier.padding(end = Dimensions.SectionMenuInternalPadding),
+                                        modifier = Modifier.padding(end = MasterTheme.dimensions.SectionMenuInternalPadding),
                                         text = "$section_string | $beat_string)"
                                     )
                                     Text(tag ?: stringResource(R.string.untitled_section))
@@ -119,7 +118,7 @@ fun ContextMenuBeatSliderSecondary(modifier: Modifier = Modifier, vm_state: View
                 }
             }
         } else {
-            Spacer(modifier = Modifier.width(Dimensions.ContextMenuButtonWidth))
+            Spacer(modifier = Modifier.width(MasterTheme.dimensions.ContextMenuButtonWidth))
         }
 
         Column(

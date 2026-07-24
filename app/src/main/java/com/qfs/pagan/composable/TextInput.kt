@@ -31,8 +31,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Shapes
-import com.qfs.pagan.ui.theme.Typography
+import com.qfs.pagan.ui.theme.MasterTheme
 
 @Composable
 fun TextInput(
@@ -44,7 +43,7 @@ fun TextInput(
     lineLimits: TextFieldLineLimits = TextFieldLineLimits.Default,
     on_focus_enter: (() -> Unit)? = null,
     on_focus_exit: ((String) -> Unit)? = null,
-    shape: Shape = Shapes.Container,
+    shape: Shape = MasterTheme.shapes.Container,
     callback_on_return: Boolean = false,
     callback: (String) -> Unit
 ) {
@@ -66,10 +65,10 @@ fun TextInput(
         state = state,
         lineLimits = lineLimits,
         label = label?.let {
-            { ProvideTextStyle(Typography.NumberInputLabel, { label() }) }
+            { ProvideTextStyle(MasterTheme.typography.NumberInputLabel, { label() }) }
         },
         placeholder = placeholder,
-        textStyle = Typography.TextField.copy(textAlign = textAlign),
+        textStyle = MasterTheme.typography.TextField.copy(textAlign = textAlign),
         modifier = modifier.onFocusChanged { focus_change_callback(it) },
         shape = shape,
         scrollState = rememberScrollState(),

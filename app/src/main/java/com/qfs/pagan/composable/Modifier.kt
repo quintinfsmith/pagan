@@ -34,7 +34,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.unit.Dp
-import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.MasterTheme
 import kotlinx.coroutines.launch
 import kotlin.math.pow
 
@@ -254,9 +254,9 @@ fun Modifier.long_press(
 fun Modifier.dashed_border(
     color: Color,
     shape: Shape,
-    width: Dp = Dimensions.DashedBorder.Width,
-    dash: Dp = Dimensions.DashedBorder.Dash,
-    gap: Dp = Dimensions.DashedBorder.Gap,
+    width: Dp = MasterTheme.dimensions.DashedBorderWidth,
+    dash: Dp = MasterTheme.dimensions.DashedBorderDash,
+    gap: Dp = MasterTheme.dimensions.DashedBorderGap,
     cap: StrokeCap = StrokeCap.Square
 ) = this.drawWithContent {
     drawContent()

@@ -15,19 +15,18 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
-import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.MasterTheme
 
 @Composable
 fun HalfBorderBox(
     modifier: Modifier = Modifier,
-    border_width: Dp = Dimensions.TableLineStroke,
+    border_width: Dp = MasterTheme.dimensions.TableLineStroke,
     border_color: Color,
     content: @Composable BoxScope.() -> Unit) {
     Row(modifier) {

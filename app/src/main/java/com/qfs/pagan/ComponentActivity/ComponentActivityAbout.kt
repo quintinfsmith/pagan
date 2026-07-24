@@ -43,27 +43,26 @@ import com.qfs.pagan.composable.button.TopBarIcon
 import com.qfs.pagan.composable.button.TopBarNoIcon
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.find_activity
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Typography
+import com.qfs.pagan.ui.theme.MasterTheme
 
 class ComponentActivityAbout: PaganComponentActivity() {
     override val top_bar_wrapper: @Composable RowScope.() -> Unit = {
-        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
+        Spacer(Modifier.width(MasterTheme.dimensions.TopBarItemSpace))
         TopBarIcon(
             icon = R.drawable.baseline_arrow_back_24,
             description = R.string.go_back,
             contentAlignment = Alignment.CenterStart,
             onClick = { this@ComponentActivityAbout.finish() }
         )
-        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
+        Spacer(Modifier.width(MasterTheme.dimensions.TopBarItemSpace))
         Text(
             modifier = Modifier.weight(1F),
             textAlign = TextAlign.Center,
             text = stringResource(R.string.app_name)
         )
-        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
+        Spacer(Modifier.width(MasterTheme.dimensions.TopBarItemSpace))
         TopBarNoIcon()
-        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
+        Spacer(Modifier.width(MasterTheme.dimensions.TopBarItemSpace))
     }
 
     fun get_version_name(): String {
@@ -88,23 +87,23 @@ class ComponentActivityAbout: PaganComponentActivity() {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(Modifier.height(Dimensions.AboutPadding))
-            HorizontalDivider(thickness = Dimensions.Stroke.Thin)
+            Spacer(Modifier.height(MasterTheme.dimensions.AboutPadding))
+            HorizontalDivider(thickness = MasterTheme.dimensions.StrokeThin)
             SelectionContainer {
                 Text(
                     string_id = R.string.fira_sans_license_blurb,
-                    modifier = Modifier.padding(vertical = Dimensions.AboutPadding),
-                    style = Typography.About.License
+                    modifier = Modifier.padding(vertical = MasterTheme.dimensions.AboutPadding),
+                    style = MasterTheme.typography.AboutLicense
                 )
             }
 
-            HorizontalDivider(thickness = Dimensions.Stroke.Thin)
-            Spacer(Modifier.height(Dimensions.AboutPadding))
+            HorizontalDivider(thickness = MasterTheme.dimensions.StrokeThin)
+            Spacer(Modifier.height(MasterTheme.dimensions.AboutPadding))
 
             SelectionContainer {
                 Text(
                     bytes.toString(charset = Charsets.UTF_8),
-                    style = Typography.About.License
+                    style = MasterTheme.typography.AboutLicense
                 )
             }
         }
@@ -122,16 +121,16 @@ class ComponentActivityAbout: PaganComponentActivity() {
                     context.startActivity(intent)
                 }
         ) {
-            ProvideTextStyle(Typography.About.LinkTitle) {
+            ProvideTextStyle(MasterTheme.typography.AboutLinkTitle) {
                 Text(
                     string_id = R.string.label_manual,
                     textAlign = TextAlign.Start
                 )
             }
-            ProvideTextStyle(Typography.About.LinkUrl) {
+            ProvideTextStyle(MasterTheme.typography.AboutLinkUrl) {
                 SelectionContainer {
                     Text(
-                        modifier = Modifier.padding(vertical = Dimensions.LinkUrlPadding),
+                        modifier = Modifier.padding(vertical = MasterTheme.dimensions.LinkUrlPadding),
                         text = stringResource(R.string.url_manual)
                     )
                 }
@@ -151,13 +150,13 @@ class ComponentActivityAbout: PaganComponentActivity() {
                     context.startActivity(intent)
                 }
         ) {
-            ProvideTextStyle(Typography.About.LinkTitle) {
+            ProvideTextStyle(MasterTheme.typography.AboutLinkTitle) {
                 Text(stringResource(R.string.label_source_code))
             }
-            ProvideTextStyle(Typography.About.LinkUrl) {
+            ProvideTextStyle(MasterTheme.typography.AboutLinkUrl) {
                 SelectionContainer {
                     Text(
-                        modifier = Modifier.padding(vertical = Dimensions.LinkUrlPadding),
+                        modifier = Modifier.padding(vertical = MasterTheme.dimensions.LinkUrlPadding),
                         text = stringResource(R.string.url_git)
                     )
                 }
@@ -177,13 +176,13 @@ class ComponentActivityAbout: PaganComponentActivity() {
                 }
         ) {
 
-            ProvideTextStyle(Typography.About.LinkTitle) {
+            ProvideTextStyle(MasterTheme.typography.AboutLinkTitle) {
                 Text(stringResource(R.string.label_issues_location))
             }
-            ProvideTextStyle(Typography.About.LinkUrl) {
+            ProvideTextStyle(MasterTheme.typography.AboutLinkUrl) {
                 SelectionContainer {
                     Text(
-                        modifier = Modifier.padding(vertical = Dimensions.LinkUrlPadding),
+                        modifier = Modifier.padding(vertical = MasterTheme.dimensions.LinkUrlPadding),
                         text = stringResource(R.string.url_issues)
                     )
                 }
@@ -202,13 +201,13 @@ class ComponentActivityAbout: PaganComponentActivity() {
                     intent.putExtra(Intent.EXTRA_EMAIL, support_email)
                 }
         ) {
-            ProvideTextStyle(Typography.About.LinkTitle) {
+            ProvideTextStyle(MasterTheme.typography.AboutLinkTitle) {
                 Text(stringResource(R.string.suggestions_description))
             }
-            ProvideTextStyle(Typography.About.LinkUrl) {
+            ProvideTextStyle(MasterTheme.typography.AboutLinkUrl) {
                 SelectionContainer {
                     Text(
-                        modifier = Modifier.padding(vertical = Dimensions.LinkUrlPadding),
+                        modifier = Modifier.padding(vertical = MasterTheme.dimensions.LinkUrlPadding),
                         text = support_email
                     )
                 }
@@ -223,16 +222,16 @@ class ComponentActivityAbout: PaganComponentActivity() {
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalArrangement = Arrangement.Center
         ) {
-            Box(Modifier.padding(Dimensions.AboutUrlSectionPadding)) {
+            Box(Modifier.padding(MasterTheme.dimensions.AboutUrlSectionPadding)) {
                 UrlManual()
             }
-            Box(Modifier.padding(Dimensions.AboutUrlSectionPadding)) {
+            Box(Modifier.padding(MasterTheme.dimensions.AboutUrlSectionPadding)) {
                 UrlSource()
             }
-            Box(Modifier.padding(Dimensions.AboutUrlSectionPadding)) {
+            Box(Modifier.padding(MasterTheme.dimensions.AboutUrlSectionPadding)) {
                 UrlIssueTracker()
             }
-            Box(Modifier.padding(Dimensions.AboutUrlSectionPadding)) {
+            Box(Modifier.padding(MasterTheme.dimensions.AboutUrlSectionPadding)) {
                 SupportEmail()
             }
         }
@@ -245,11 +244,11 @@ class ComponentActivityAbout: PaganComponentActivity() {
             contentAlignment = Alignment.Center
         ) {
             Column(
-                modifier.padding(Dimensions.AboutPadding),
+                modifier.padding(MasterTheme.dimensions.AboutPadding),
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                ProvideTextStyle(Typography.Default) {
+                ProvideTextStyle(MasterTheme.typography.Default) {
                     Text("v${this@ComponentActivityAbout.get_version_name()}")
                 }
                 SectionUrls()

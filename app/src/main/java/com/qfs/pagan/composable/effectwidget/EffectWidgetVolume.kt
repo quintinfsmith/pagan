@@ -18,6 +18,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.layout
+import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
@@ -28,13 +30,12 @@ import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.MasterTheme
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.roundToInt
 
 @Composable
-fun RowScope.VolumeEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, event: OpusVolumeEvent) {
+fun RowScope.VolumeEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, event: OpusVolumeEvent, layout: LayoutSize) {
     val cursor = vm_state.active_cursor.value ?: return
     val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
@@ -44,9 +45,13 @@ fun RowScope.VolumeEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusL
     TextCMenuButton(
         modifier = Modifier
             .testTag(TestTag.VolumeButton)
-            .width(Dimensions.ContextMenuButtonWidth),
+            .width(MasterTheme.dimensions.ContextMenuButtonWidth),
         text = "%02d".format((working_value.floatValue * 100).roundToInt()),
-        shape = Shapes.ContextMenuSecondaryButtonStart,
+        shape = when (layout) {
+            LayoutSize.MediumLandscape,
+            LayoutSize.SmallLandscape -> MasterTheme.shapes.ContextMenuButtonPrimaryStart
+            else -> MasterTheme.shapes.ContextMenuButtonPrimary
+        },
         onClick = { dialog_visibility.value = true },
         onLongClick = {
             working_value.floatValue = 1F
@@ -58,7 +63,7 @@ fun RowScope.VolumeEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusL
     Slider(
         modifier = Modifier
             .testTag(TestTag.VolumeSlider)
-            .height(Dimensions.ContextMenuButtonHeight)
+            .height(MasterTheme.dimensions.ContextMenuButtonHeight)
             .weight(1F),
         value = working_value.floatValue,
         valueRange = 0F .. 1.27F,
@@ -81,5 +86,5 @@ fun RowScope.VolumeEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusL
         working_value.floatValue = working_event.value
         opus_manager.set_event_at_cursor(working_event)
     }
-    EffectTransitionButton(working_event, opus_manager, is_initial)
+    EffectTransitionButton(working_event, opus_manager, is_initial, layout)
 }

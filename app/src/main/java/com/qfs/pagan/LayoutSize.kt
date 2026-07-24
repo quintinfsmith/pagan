@@ -9,6 +9,9 @@
  */
 package com.qfs.pagan
 
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+
 enum class LayoutSize {
     SmallPortrait,
     MediumPortrait,

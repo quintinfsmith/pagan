@@ -34,10 +34,8 @@ import androidx.compose.ui.text.font.FontWeight
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.MasterTheme
 import com.qfs.pagan.ui.theme.Shadows
-import com.qfs.pagan.ui.theme.Shapes
-import com.qfs.pagan.ui.theme.Typography
 
 @Composable
 fun NotePickerButton(
@@ -47,7 +45,7 @@ fun NotePickerButton(
     selected: Boolean,
     highlighted: Boolean,
     default: Boolean,
-    shape: Shape = Shapes.NumberSelectorButton,
+    shape: Shape = MasterTheme.shapes.NumberSelectorButton,
     on_long_click: (Int) -> Unit,
     on_click: (Int) -> Unit,
 ) {
@@ -80,7 +78,7 @@ fun NotePickerButton(
                     Modifier.testTag(TestTag.EventOctave, index)
                 }
             )
-            .height(Dimensions.NotePickerButtonHeight)
+            .height(MasterTheme.dimensions.NotePickerButtonHeight)
             .pressable(pressed)
             .then(
                 if (selected || pressed.value) {
@@ -107,7 +105,7 @@ fun NotePickerButton(
                 "$index",
                 maxLines = 1,
                 color = foreground,
-                style = Typography.NotePicker.copy(
+                style = MasterTheme.typography.NotePicker.copy(
                     fontWeight = if (selected) {
                         FontWeight.Bold
                     } else {
@@ -149,15 +147,15 @@ fun RowScope.NotePicker(
     highlighted: Int?,
     default: Int?,
     alternate: Boolean,
-    shape_start: Shape = Shapes.NumberSelectorButton,
-    shape_middle: Shape = Shapes.NumberSelectorButton,
-    shape_end: Shape = Shapes.NumberSelectorButton,
+    shape_start: Shape = MasterTheme.shapes.NumberSelectorButton,
+    shape_middle: Shape = MasterTheme.shapes.NumberSelectorButton,
+    shape_end: Shape = MasterTheme.shapes.NumberSelectorButton,
     on_long_click: (Int) -> Unit,
     on_click: (Int) -> Unit
 ) {
     for (i in progression) {
         if (i != progression.first) {
-            Spacer(Modifier.width(Dimensions.NotePickerSpacing))
+            Spacer(Modifier.width(MasterTheme.dimensions.NotePickerSpacing))
         }
         NotePickerButton(
             modifier = Modifier.weight(1F),
@@ -184,15 +182,15 @@ fun ColumnScope.NotePicker(
     highlighted: Int?,
     default: Int?,
     alternate: Boolean,
-    shape_start: Shape = Shapes.NumberSelectorButton,
-    shape_middle: Shape = Shapes.NumberSelectorButton,
-    shape_end: Shape = Shapes.NumberSelectorButton,
+    shape_start: Shape = MasterTheme.shapes.NumberSelectorButton,
+    shape_middle: Shape = MasterTheme.shapes.NumberSelectorButton,
+    shape_end: Shape = MasterTheme.shapes.NumberSelectorButton,
     on_long_click: (Int) -> Unit,
     on_click: (Int) -> Unit
 ) {
     for (i in progression) {
         if (i != progression.first) {
-            Spacer(Modifier.height(Dimensions.NotePickerSpacing))
+            Spacer(Modifier.height(MasterTheme.dimensions.NotePickerSpacing))
         }
 
         NotePickerButton(

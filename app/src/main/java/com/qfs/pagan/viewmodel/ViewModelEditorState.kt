@@ -32,7 +32,7 @@ import com.qfs.pagan.structure.opusmanager.base.ReducibleTreeArray
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
-import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.MasterTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -302,7 +302,7 @@ class ViewModelEditorState: ViewModel() {
     fun set_zoom(beat: Int, position: Rational, new_zoom: Float) {
         if (new_zoom <= this.active_zoom.floatValue) return
         val new_zoom_index = this.zoom_notches.indexOf(new_zoom)
-        val base_leaf_width = this.pixel_density.floatValue * Dimensions.LeafBaseWidth.value
+        val base_leaf_width = this.pixel_density.floatValue * MasterTheme.dimensions.LeafBaseWidth.value
         val beat_stroke_width = this.pixel_density.floatValue * this.beat_stroke_thickness.value.value
         val target_position = ((Array(beat) { this.get_active_zoom(it) }.sum() + (get_active_zoom(beat) * position.toFloat())) * base_leaf_width) + (beat_stroke_width * beat.toFloat())
         val first_visible_beat = this.scroll_state_x.value.firstVisibleItemIndex
@@ -330,10 +330,10 @@ class ViewModelEditorState: ViewModel() {
         var targeted_x = this.scroll_state_x.value.firstVisibleItemIndex
         var working_offset = initial_center + this.scroll_state_x.value.firstVisibleItemScrollOffset
 
-        var working_chunk_size = this.get_active_zoom(targeted_x) * (Dimensions.LeafBaseWidth.value * this.pixel_density.floatValue)
+        var working_chunk_size = this.get_active_zoom(targeted_x) * (MasterTheme.dimensions.LeafBaseWidth.value * this.pixel_density.floatValue)
         while (working_offset - working_chunk_size > 0F && targeted_x < this.column_data.size - 1) {
             working_offset -= working_chunk_size
-            working_chunk_size = this.get_active_zoom(++targeted_x) * (Dimensions.LeafBaseWidth.value * this.pixel_density.floatValue)
+            working_chunk_size = this.get_active_zoom(++targeted_x) * (MasterTheme.dimensions.LeafBaseWidth.value * this.pixel_density.floatValue)
         }
 
         callback()
@@ -349,7 +349,7 @@ class ViewModelEditorState: ViewModel() {
         val scroll_triple = this.scroll_x_center.value ?: return
         this.scroll_x_center.value = null
         val (beat, pivot, center) = scroll_triple
-        val pivot_px = (Dimensions.LeafBaseWidth.value * this.pixel_density.floatValue) * this.get_active_zoom(beat) * pivot
+        val pivot_px = (MasterTheme.dimensions.LeafBaseWidth.value * this.pixel_density.floatValue) * this.get_active_zoom(beat) * pivot
         this.scroll_state_x.value.requestScrollToItem(beat, (pivot_px - center).roundToInt())
     }
 
@@ -1159,7 +1159,7 @@ class ViewModelEditorState: ViewModel() {
         } else if (state.firstVisibleItemIndex >= beat) {
             Pair(beat, 0)
         } else if (state.layoutInfo.visibleItemsInfo.last().index <= beat) {
-            val base_leaf_width = Dimensions.LeafBaseWidth.value * this.pixel_density.floatValue
+            val base_leaf_width = MasterTheme.dimensions.LeafBaseWidth.value * this.pixel_density.floatValue
             Pair(beat, (0 - state.layoutInfo.viewportSize.width + (base_leaf_width * this.get_active_zoom(beat)).toInt()))
         } else {
             return
@@ -1179,7 +1179,7 @@ class ViewModelEditorState: ViewModel() {
 
     fun scroll_to_leaf(beat: Int, offset: Rational, width: Rational) {
         val beat_width = this.get_active_zoom(beat)
-        val base_leaf_width = Dimensions.LeafBaseWidth.value * this.pixel_density.floatValue
+        val base_leaf_width = MasterTheme.dimensions.LeafBaseWidth.value * this.pixel_density.floatValue
         val offset_px = (beat_width * offset.toFloat() * base_leaf_width)
 
         val state = this.scroll_state_x.value

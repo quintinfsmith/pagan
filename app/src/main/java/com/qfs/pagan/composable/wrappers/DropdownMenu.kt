@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.MasterTheme
 
 @Composable
 fun DropdownMenu(
@@ -35,7 +35,7 @@ fun DropdownMenu(
     offset: DpOffset = DpOffset(0.dp, 0.dp),
     scrollState: ScrollState = rememberScrollState(),
     properties: PopupProperties = PopupProperties(focusable = true),
-    shape: Shape = Shapes.SortableMenuBox,
+    shape: Shape = MasterTheme.shapes.SortableMenuBox,
     containerColor: Color = Colors.active_color_scheme.container,
     tonalElevation: Dp = MenuDefaults.TonalElevation,
     shadowElevation: Dp = MenuDefaults.ShadowElevation,

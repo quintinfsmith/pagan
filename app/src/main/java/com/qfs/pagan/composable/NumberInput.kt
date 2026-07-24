@@ -40,14 +40,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions.Unpadded
-import com.qfs.pagan.ui.theme.Typography
+import com.qfs.pagan.ui.theme.MasterTheme
 
 @Composable
 fun <T> NumberInput(
     input_value: MutableState<T>,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = Unpadded,
+    contentPadding: PaddingValues = MasterTheme.dimensions.Unpadded,
     text_align: TextAlign = TextAlign.End,
     prefix: @Composable (() -> Unit)? = null,
     label: (@Composable TextFieldLabelScope.() -> Unit)? = null,
@@ -84,10 +83,10 @@ fun <T> NumberInput(
     OutlinedTextField(
         state = state,
         label = label?.let {
-            { ProvideTextStyle(Typography.NumberInputLabel, { label() }) }
+            { ProvideTextStyle(MasterTheme.typography.NumberInputLabel, { label() }) }
         },
         contentPadding = contentPadding,
-        textStyle = Typography.NumberInput,
+        textStyle = MasterTheme.typography.NumberInput,
         prefix = prefix,
         modifier = modifier
             .onKeyEvent { event ->

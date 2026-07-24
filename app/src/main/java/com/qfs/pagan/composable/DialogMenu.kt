@@ -11,7 +11,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.qfs.pagan.composable.wrappers.CircularProgressIndicator
-import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.MasterTheme
+import com.qfs.pagan.ui.theme.MasterTheme.dimensions
 
 @Composable
 fun <T> DialogMenu(
@@ -97,7 +98,7 @@ fun <T> DialogSortableMenu(
                 },
                 default_menu = mutable_options.value,
                 sort_row_padding = PaddingValues(
-                    bottom = Dimensions.DialogBarPaddingVertical,
+                    bottom = MasterTheme.dimensions.DialogBarPaddingVertical,
                 ),
                 sort_options = sort_options,
                 active_sort_option = active_sort_option,

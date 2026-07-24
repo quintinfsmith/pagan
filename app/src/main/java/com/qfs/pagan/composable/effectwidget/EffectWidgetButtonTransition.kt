@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
@@ -31,40 +32,48 @@ import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectTransition
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.EffectEvent
 import com.qfs.pagan.testTag
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.MasterTheme
 
 @Composable
-fun EffectTransitionButton(event: EffectEvent, opus_manager: OpusLayerInterface, is_initial: Boolean, modifier: Modifier = Modifier) {
-    if (!is_initial) {
-        val transition = event.transition
-        val dialog_visibility = remember { mutableStateOf(false) }
-        Spacer(Modifier.width(Dimensions.ContextMenuPadding))
-        IconCMenuButton(
-            modifier = modifier
-                .testTag(TestTag.EffectTransition)
-                .height(Dimensions.ContextMenuButtonHeight)
-                .width(Dimensions.ContextMenuButtonWidth),
-            onClick = { dialog_visibility.value = true },
-            icon = when (transition) {
-                EffectTransition.Instant -> R.drawable.icon_transition_immediate
-                EffectTransition.Linear -> R.drawable.icon_transition_linear
-                EffectTransition.InstantB -> R.drawable.icon_transition_rimmediate
-                EffectTransition.RLinear -> R.drawable.icon_transition_rlinear
-                EffectTransition.LinearB -> R.drawable.icon_transition_linearb
-            },
-            shape = Shapes.ContextMenuSecondaryButtonEnd,
-            description = R.string.cd_show_effect_controls
-        )
+fun EffectTransitionButton(
+    event: EffectEvent,
+    opus_manager: OpusLayerInterface,
+    is_initial: Boolean,
+    layout: LayoutSize,
+    modifier: Modifier = Modifier,
+) {
+    if (is_initial) return
 
-        EffectTransitionDialog(dialog_visibility, event) {
-            opus_manager.lock_cursor {
-                event.transition = it
-                opus_manager.set_event_at_cursor(event.copy())
-            }
+    val transition = event.transition
+    val dialog_visibility = remember { mutableStateOf(false) }
+    Spacer(Modifier.width(MasterTheme.dimensions.ContextMenuPadding))
+    IconCMenuButton(
+        modifier = modifier
+            .testTag(TestTag.EffectTransition)
+            .height(MasterTheme.dimensions.ContextMenuButtonHeight)
+            .width(MasterTheme.dimensions.ContextMenuButtonWidth),
+        onClick = { dialog_visibility.value = true },
+        icon = when (transition) {
+            EffectTransition.Instant -> R.drawable.icon_transition_immediate
+            EffectTransition.Linear -> R.drawable.icon_transition_linear
+            EffectTransition.InstantB -> R.drawable.icon_transition_rimmediate
+            EffectTransition.RLinear -> R.drawable.icon_transition_rlinear
+            EffectTransition.LinearB -> R.drawable.icon_transition_linearb
+        },
+        shape = when(layout) {
+            LayoutSize.MediumLandscape,
+            LayoutSize.SmallLandscape -> MasterTheme.shapes.ContextMenuButtonPrimaryEnd
+            else -> MasterTheme.shapes.ContextMenuButtonPrimary
+        },
+        description = R.string.cd_show_effect_controls
+    )
+
+    EffectTransitionDialog(dialog_visibility, event) {
+        opus_manager.lock_cursor {
+            event.transition = it
+            opus_manager.set_event_at_cursor(event.copy())
         }
     }
-
 }
 
 @Composable
@@ -78,7 +87,7 @@ fun EffectTransitionDialog(
             options.add(
                 Pair(transition_option) {
                     Icon(
-                        modifier = Modifier.height(Dimensions.EffectTransitionDialogIconHeight),
+                        modifier = Modifier.height(MasterTheme.dimensions.EffectTransitionDialogIconHeight),
                         painter = painterResource(
                             when (transition_option) {
                                 EffectTransition.Instant -> R.drawable.icon_transition_immediate

@@ -35,8 +35,7 @@ import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.testTag
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.MasterTheme
 
 @Composable
 fun IntegerInputDropDown(
@@ -51,7 +50,7 @@ fun IntegerInputDropDown(
     DropdownMenu(
         expanded = visibility.value,
         onDismissRequest = { visibility.value = false },
-        shape = Shapes.NumberInputDialog
+        shape = MasterTheme.shapes.NumberInputDialog
 
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -60,10 +59,10 @@ fun IntegerInputDropDown(
                 label = { Text(title_string_id) },
                 modifier = Modifier
                     .testTag(TestTag.DialogNumberInput)
-                    .width(Dimensions.NumberInputDialogWidth)
-                    .padding(Dimensions.NumberInputDialogPadding)
+                    .width(MasterTheme.dimensions.NumberInputDialogWidth)
+                    .padding(MasterTheme.dimensions.NumberInputDialogPadding)
                     .focusRequester(focus_requester),
-                contentPadding = Dimensions.NumberInputDialogPadding,
+                contentPadding = MasterTheme.dimensions.NumberInputDialogPadding,
                 text_align = TextAlign.Center,
                 on_focus_exit = { dialog_value ->
                     dialog_value?.let { value.intValue = it }
@@ -77,7 +76,7 @@ fun IntegerInputDropDown(
             Button(
                 modifier = Modifier
                     .testTag(TestTag.DialogPositive)
-                    .padding(Dimensions.NumberInputDialogPadding)
+                    .padding(MasterTheme.dimensions.NumberInputDialogPadding)
                     .size(42.dp),
                 onClick = {
                     visibility.value = false

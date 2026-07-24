@@ -86,9 +86,8 @@ import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.composable.wrappers.Switch
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions
 import com.qfs.pagan.ui.theme.Fonts
-import com.qfs.pagan.ui.theme.Typography
+import com.qfs.pagan.ui.theme.MasterTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.FileInputStream
@@ -105,21 +104,21 @@ class ComponentActivitySettings: PaganComponentActivity() {
     }
 
     override val top_bar_wrapper: @Composable (RowScope.() -> Unit) = {
-        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
+        Spacer(Modifier.width(MasterTheme.dimensions.TopBarItemSpace))
         TopBarIcon(
             icon = R.drawable.baseline_arrow_back_24,
             description = R.string.go_back,
             onClick = { this@ComponentActivitySettings.finish() }
         )
-        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
+        Spacer(Modifier.width(MasterTheme.dimensions.TopBarItemSpace))
         Text(
             modifier = Modifier.weight(1F),
             textAlign = TextAlign.Center,
             text = stringResource(R.string.settings_fragment_label)
         )
-        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
+        Spacer(Modifier.width(MasterTheme.dimensions.TopBarItemSpace))
         TopBarNoIcon()
-        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
+        Spacer(Modifier.width(MasterTheme.dimensions.TopBarItemSpace))
     }
 
     val settings_model: SettingsModel by this.viewModels()
@@ -127,21 +126,21 @@ class ComponentActivitySettings: PaganComponentActivity() {
     val options_orientation: List<Pair<Int, @Composable RowScope.() -> Unit>> = listOf(
         Pair(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) @Composable {
             Icon(
-                modifier = Modifier.height(Dimensions.SettingsRadioIconHeight),
+                modifier = Modifier.height(MasterTheme.dimensions.SettingsRadioIconHeight),
                 painter = painterResource(R.drawable.icon_landscape),
                 contentDescription = stringResource(R.string.settings_orientation_landscape),
             )
         },
         Pair(ActivityInfo.SCREEN_ORIENTATION_USER) @Composable {
             Icon(
-                modifier = Modifier.height(Dimensions.SettingsRadioIconHeight),
+                modifier = Modifier.height(MasterTheme.dimensions.SettingsRadioIconHeight),
                 painter = painterResource(R.drawable.icon_orientation_system),
                 contentDescription = stringResource(R.string.settings_orientation_system),
             )
         },
         Pair(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) @Composable {
             Icon(
-                modifier = Modifier.height(Dimensions.SettingsRadioIconHeight),
+                modifier = Modifier.height(MasterTheme.dimensions.SettingsRadioIconHeight),
                 painter = painterResource(R.drawable.icon_portrait),
                 contentDescription = stringResource(R.string.settings_orientation_portrait),
             )
@@ -151,21 +150,21 @@ class ComponentActivitySettings: PaganComponentActivity() {
     val options_nightmode: List<Pair<Int, @Composable RowScope.() -> Unit>> = listOf(
         Pair(AppCompatDelegate.MODE_NIGHT_YES) @Composable {
             Icon(
-                modifier = Modifier.height(Dimensions.SettingsRadioIconHeight),
+                modifier = Modifier.height(MasterTheme.dimensions.SettingsRadioIconHeight),
                 painter = painterResource(R.drawable.icon_night_mode),
                 contentDescription = stringResource(R.string.settings_night_mode_yes),
             )
         },
         Pair(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM) @Composable {
             Icon(
-                modifier = Modifier.height(Dimensions.SettingsRadioIconHeight),
+                modifier = Modifier.height(MasterTheme.dimensions.SettingsRadioIconHeight),
                 painter = painterResource(R.drawable.icon_night_mode_system),
                 contentDescription = stringResource(R.string.settings_night_mode_system)
             )
         },
         Pair(AppCompatDelegate.MODE_NIGHT_NO) @Composable {
             Icon(
-                modifier = Modifier.height(Dimensions.SettingsRadioIconHeight),
+                modifier = Modifier.height(MasterTheme.dimensions.SettingsRadioIconHeight),
                 painter = painterResource(R.drawable.icon_day_mode),
                 contentDescription = stringResource(R.string.settings_night_mode_no)
             )
@@ -374,7 +373,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 .fillMaxSize(),
         ) {
             Column(
-                modifier = Modifier.padding(Dimensions.SoundFontMenuPadding),
+                modifier = Modifier.padding(MasterTheme.dimensions.SoundFontMenuPadding),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -382,7 +381,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     ActiveSoundfontButton(Modifier.weight(1F))
                     SoundFontWarningWrapper(Modifier
                         .weight(1F)
-                        .padding(start = Dimensions.SoundFontMenuPadding))
+                        .padding(start = MasterTheme.dimensions.SoundFontMenuPadding))
                 }
                 MenuPadder()
                 Row {
@@ -413,7 +412,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
         ) {
             Row(
                 modifier = Modifier
-                    .padding(Dimensions.SoundFontMenuPadding)
+                    .padding(MasterTheme.dimensions.SoundFontMenuPadding)
                     .fillMaxWidth(),
                 verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -422,7 +421,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     Modifier.weight(1F),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    SoundFontWarningWrapper(Modifier.padding(bottom = Dimensions.SoundFontMenuPadding))
+                    SoundFontWarningWrapper(Modifier.padding(bottom = MasterTheme.dimensions.SoundFontMenuPadding))
                     ActiveSoundfontButton(Modifier.fillMaxWidth())
                     MenuPadder()
                     ActiveSoundfontDirectoryButton(Modifier.fillMaxWidth())
@@ -454,14 +453,14 @@ class ComponentActivitySettings: PaganComponentActivity() {
         ) {
             Column(
                 modifier = Modifier
-                    .padding(Dimensions.SoundFontMenuPadding)
+                    .padding(MasterTheme.dimensions.SoundFontMenuPadding)
                     .fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 SoundFontWarningWrapper(Modifier
                     .fillMaxWidth()
-                    .padding(bottom = Dimensions.SoundFontMenuPadding))
+                    .padding(bottom = MasterTheme.dimensions.SoundFontMenuPadding))
                 ActiveSoundfontButton(Modifier.fillMaxWidth())
                 MenuPadder()
                 Row {
@@ -495,13 +494,13 @@ class ComponentActivitySettings: PaganComponentActivity() {
         ) {
             Column(
                 modifier = Modifier
-                    .padding(Dimensions.SoundFontMenuPadding),
+                    .padding(MasterTheme.dimensions.SoundFontMenuPadding),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 SoundFontWarningWrapper(Modifier
                     .fillMaxWidth()
-                    .padding(bottom = Dimensions.SoundFontMenuPadding))
+                    .padding(bottom = MasterTheme.dimensions.SoundFontMenuPadding))
                 ActiveSoundfontButton(Modifier.fillMaxWidth())
                 MenuPadder()
                 ActiveSoundfontDirectoryButton(Modifier.fillMaxWidth())
@@ -546,8 +545,8 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     DialogSTitle(R.string.dialog_select_soundfont)
                     Spacer(modifier = Modifier.weight(1F))
                     Button(
-                        modifier = Modifier.height(Dimensions.SoundFontMenuIconHeight),
-                        contentPadding = PaddingValues(Dimensions.SoundFontMenuInnerPadding),
+                        modifier = Modifier.height(MasterTheme.dimensions.SoundFontMenuIconHeight),
+                        contentPadding = PaddingValues(MasterTheme.dimensions.SoundFontMenuInnerPadding),
                         content = {
                             Icon(
                                 painter = painterResource(R.drawable.icon_import),
@@ -562,8 +561,8 @@ class ComponentActivitySettings: PaganComponentActivity() {
                     )
                     MenuPadder()
                     Button(
-                        modifier = Modifier.height(Dimensions.SoundFontMenuIconHeight),
-                        contentPadding = PaddingValues(Dimensions.SoundFontMenuInnerPadding),
+                        modifier = Modifier.height(MasterTheme.dimensions.SoundFontMenuIconHeight),
+                        contentPadding = PaddingValues(MasterTheme.dimensions.SoundFontMenuInnerPadding),
                         content = {
                             Icon(
                                 painter = painterResource(R.drawable.no_soundfont),
@@ -682,7 +681,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
         val need_sf_dir_visibility = remember { mutableStateOf(false) }
 
         SettingsColumn(modifier) {
-            Text(R.string.label_settings_sfs, style = Typography.Settings.Title)
+            Text(R.string.label_settings_sfs, style = MasterTheme.typography.SettingsTitle)
 
             MenuPadder()
             val soundfonts = this@ComponentActivitySettings.view_model.configuration.soundfonts
@@ -697,7 +696,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
                             modifier = Modifier
                                 .weight(1F)
                                 .width(IntrinsicSize.Max)
-                                .defaultMinSize(minHeight = Dimensions.ButtonHeight.Normal),
+                                .defaultMinSize(minHeight = MasterTheme.dimensions.ButtonHeightNormal),
                             content = {
                                 Text(soundfont_name, textAlign = TextAlign.Center)
                             },
@@ -711,16 +710,16 @@ class ComponentActivitySettings: PaganComponentActivity() {
                         Icon(
                             modifier = Modifier
                                 .padding(
-                                    top = Dimensions.SoundFontMenuButtonPadding,
-                                    start = Dimensions.SoundFontMenuButtonExtraPadding,
-                                    bottom = Dimensions.SoundFontMenuButtonPadding,
+                                    top = MasterTheme.dimensions.SoundFontMenuButtonPadding,
+                                    start = MasterTheme.dimensions.SoundFontMenuButtonExtraPadding,
+                                    bottom = MasterTheme.dimensions.SoundFontMenuButtonPadding,
                                     end = 0.dp
                                 )
                                 .clickable(onClick = {
                                     view_model.remove_soundfont(index)
                                     this@ComponentActivitySettings.save_configuration()
                                 })
-                                .height(Dimensions.SoundFontMenuIconHeight),
+                                .height(MasterTheme.dimensions.SoundFontMenuIconHeight),
                             painter = painterResource(R.drawable.icon_cross_circle),
                             contentDescription = stringResource(R.string.unload_soundfont),
                             tint = Colors.active_color_scheme.button
@@ -734,7 +733,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             Button(
                 modifier = Modifier
                     .width(IntrinsicSize.Max)
-                    .height(Dimensions.ButtonHeight.Normal),
+                    .height(MasterTheme.dimensions.ButtonHeightNormal),
                 content = {
                     Text(
                         text = if (soundfonts.value.isEmpty()) {
@@ -787,7 +786,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
         SettingsColumn(modifier) {
             Text(
                 R.string.label_settings_sf,
-                style = Typography.Settings.Title
+                style = MasterTheme.typography.SettingsTitle
             )
 
             MenuPadder()
@@ -831,11 +830,11 @@ class ComponentActivitySettings: PaganComponentActivity() {
         SettingsColumn(modifier) {
             Text(
                 R.string.label_settings_soundfont_directory,
-                style = Typography.Settings.Title
+                style = MasterTheme.typography.SettingsTitle
             )
             MenuPadder()
             Button(
-                modifier = Modifier.height(Dimensions.ButtonHeight.Normal),
+                modifier = Modifier.height(MasterTheme.dimensions.ButtonHeightNormal),
                 onClick = {
                     this@ComponentActivitySettings._set_soundfont_directory_intent_launcher.launch(
                         Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also { intent ->
@@ -863,11 +862,11 @@ class ComponentActivitySettings: PaganComponentActivity() {
         SettingsColumn(modifier) {
             Text(
                 R.string.label_settings_projects_directory,
-                style = Typography.Settings.Title
+                style = MasterTheme.typography.SettingsTitle
             )
             MenuPadder()
             Button(
-                modifier = Modifier.height(Dimensions.ButtonHeight.Normal),
+                modifier = Modifier.height(MasterTheme.dimensions.ButtonHeightNormal),
                 onClick = {
                     this@ComponentActivitySettings.result_launcher_set_project_directory.launch(
                         Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).also { intent ->
@@ -921,7 +920,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             Text(
                 R.string.label_settings_playback_quality,
                 modifier = Modifier.weight(1F),
-                style = Typography.Settings.Label
+                style = MasterTheme.typography.SettingsLabel
             )
 
             Box(contentAlignment = Alignment.Center) {
@@ -975,7 +974,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             Text(
                 R.string.label_settings_allow_multiple_soundfonts,
                 modifier = Modifier.weight(1F),
-                style = Typography.Settings.Label
+                style = MasterTheme.typography.SettingsLabel
             )
             Switch(
                 checked = view_model.configuration.allow_multiple_soundfonts.value,
@@ -1001,7 +1000,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             Text(
                 R.string.label_settings_normalize_beat_widths,
                 modifier = Modifier.weight(1F),
-                style = Typography.Settings.Label
+                style = MasterTheme.typography.SettingsLabel
             )
             Switch(
                 checked = view_model.configuration.normalize_beat_widths.value,
@@ -1026,7 +1025,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             Text(
                 R.string.label_settings_note_memory,
                 modifier = Modifier.weight(1F),
-                style = Typography.Settings.Label
+                style = MasterTheme.typography.SettingsLabel
             )
             Switch(
                 checked = view_model.configuration.latest_input_indicator.value,
@@ -1051,7 +1050,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             Text(
                 stringResource(R.string.label_settings_use_preferred_sf),
                 modifier = Modifier.weight(1F),
-                style = Typography.Settings.Label
+                style = MasterTheme.typography.SettingsLabel
             )
             Switch(
                 checked = view_model.configuration.use_preferred_soundfont.value,
@@ -1065,9 +1064,9 @@ class ComponentActivitySettings: PaganComponentActivity() {
         val expanded = remember { mutableStateOf(false) }
         val options: List<Pair<Dp, @Composable (() -> Unit)>> = listOf(
             Pair(0.dp) { Text(R.string.settings_beat_stroke_none) },
-            Pair(Dimensions.Stroke.Thin) { Text(R.string.settings_beat_stroke_thin) },
-            Pair(Dimensions.Stroke.Medium) { Text(R.string.settings_beat_stroke_medium) },
-            Pair(Dimensions.Stroke.Thick) { Text(R.string.settings_beat_stroke_thick) }
+            Pair(MasterTheme.dimensions.StrokeThin) { Text(R.string.settings_beat_stroke_thin) },
+            Pair(MasterTheme.dimensions.StrokeMedium) { Text(R.string.settings_beat_stroke_medium) },
+            Pair(MasterTheme.dimensions.StrokeThick) { Text(R.string.settings_beat_stroke_thick) }
         )
         SettingsRow(
             modifier = modifier.clickable { expanded.value = !expanded.value },
@@ -1077,7 +1076,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             Text(
                 stringResource(R.string.label_settings_stroke_beats),
                 modifier = Modifier.weight(1F),
-                style = Typography.Settings.Label
+                style = MasterTheme.typography.SettingsLabel
             )
 
             Box {
@@ -1087,9 +1086,9 @@ class ComponentActivitySettings: PaganComponentActivity() {
                         Text(
                             when (view_model.configuration.beat_stroke_thickness.value) {
                                 0.dp -> stringResource(R.string.settings_beat_stroke_none)
-                                Dimensions.Stroke.Thin -> stringResource(R.string.settings_beat_stroke_thin)
-                                Dimensions.Stroke.Medium -> stringResource(R.string.settings_beat_stroke_medium)
-                                Dimensions.Stroke.Thick -> stringResource(R.string.settings_beat_stroke_thick)
+                                MasterTheme.dimensions.StrokeThin -> stringResource(R.string.settings_beat_stroke_thin)
+                                MasterTheme.dimensions.StrokeMedium -> stringResource(R.string.settings_beat_stroke_medium)
+                                MasterTheme.dimensions.StrokeThick -> stringResource(R.string.settings_beat_stroke_thick)
                                 else -> view_model.configuration.beat_stroke_thickness.value.toString()
                             }
                         )
@@ -1132,7 +1131,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             Text(
                 stringResource(R.string.label_settings_allow_std_percussion),
                 modifier = Modifier.weight(1F),
-                style = Typography.Settings.Label
+                style = MasterTheme.typography.SettingsLabel
             )
             Switch(
                 checked = view_model.configuration.allow_std_percussion.value,
@@ -1146,7 +1145,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
         SettingsColumn(modifier) {
             Text(
                 R.string.settings_screen_orientation,
-                style = Typography.Settings.Title
+                style = MasterTheme.typography.SettingsTitle
             )
             MenuPadder()
             RadioMenu(
@@ -1165,7 +1164,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
         SettingsColumn(modifier) {
             Text(
                 R.string.settings_night_mode,
-                style = Typography.Settings.Title
+                style = MasterTheme.typography.SettingsTitle
             )
             MenuPadder()
             RadioMenu(
@@ -1194,7 +1193,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             Text(
                 stringResource(R.string.settings_play_in_background),
                 modifier = Modifier.weight(1F),
-                style = Typography.Settings.Label
+                style = MasterTheme.typography.SettingsLabel
             )
             Switch(
                 checked = view_model.configuration.play_in_background.value,
@@ -1224,26 +1223,26 @@ class ComponentActivitySettings: PaganComponentActivity() {
                 ) {
                     Text(
                         R.string.label_settings_volume_curve,
-                        style = Typography.DialogTitle
+                        style = MasterTheme.typography.DialogTitle
                     )
                     Text(
                         buildAnnotatedString {
                             withStyle(
                                 SpanStyle(
-                                    fontSize = Typography.DialogTitle.fontSize
+                                    fontSize = MasterTheme.typography.DialogTitle.fontSize
                                 ),
                                 block = { append("x") },
                             )
                             withStyle(
                                 SpanStyle(
                                     fontFamily = Fonts.FiraMono,
-                                    fontSize = (Typography.DialogTitle.fontSize.value - 2).sp,
+                                    fontSize = (MasterTheme.typography.DialogTitle.fontSize.value - 2).sp,
                                     baselineShift = BaselineShift.Superscript
                                 ),
                                 block = { append("%.2f".format(1F + slider_value.floatValue)) }
                             )
                         },
-                        style = Typography.DialogTitle
+                        style = MasterTheme.typography.DialogTitle
                     )
                     Spacer(Modifier)
                 }
@@ -1269,7 +1268,7 @@ class ComponentActivitySettings: PaganComponentActivity() {
             Text(
                 R.string.label_settings_volume_curve,
                 modifier = Modifier.weight(1F),
-                style = Typography.Settings.Label
+                style = MasterTheme.typography.SettingsLabel
             )
 
             Button(

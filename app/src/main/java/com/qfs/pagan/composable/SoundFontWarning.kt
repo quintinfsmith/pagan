@@ -33,9 +33,7 @@ import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.find_activity
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Shapes
-import com.qfs.pagan.ui.theme.Typography
+import com.qfs.pagan.ui.theme.MasterTheme
 
 
 @Composable
@@ -46,37 +44,37 @@ fun SoundFontWarning(in_settings: Boolean = false) {
     ProvideContentColorTextStyle(contentColor = Colors.active_color_scheme.soundfont_warning_foreground) {
         Column(
             Modifier
-                .background(Colors.active_color_scheme.soundfont_warning, shape = Shapes.SoundFontWarningBox)
+                .background(Colors.active_color_scheme.soundfont_warning, shape = MasterTheme.shapes.SoundFontWarningBox)
                 .border(
-                    Dimensions.SoundFontWarningBorderWidth,
+                    MasterTheme.dimensions.SoundFontWarningBorderWidth,
                     Colors.active_color_scheme.soundfont_warning_border,
-                    shape = Shapes.SoundFontWarningBox
+                    shape = MasterTheme.shapes.SoundFontWarningBox
                 )
-                .padding(Dimensions.SoundFontWarningPadding),
+                .padding(MasterTheme.dimensions.SoundFontWarningPadding),
 
         ) {
-            ProvideTextStyle(Typography.SoundFontWarning.Title) {
+            ProvideTextStyle(MasterTheme.typography.SoundFontWarningTitle) {
                 Text(
                     string_id = R.string.warning_nosoundfont_a,
                     textAlign = TextAlign.Center
                 )
             }
 
-            Spacer(Modifier.height(Dimensions.SFWarningInnerPadding))
+            Spacer(Modifier.height(MasterTheme.dimensions.SFWarningInnerPadding))
 
             Column {
-                ProvideTextStyle(Typography.SoundFontWarning.Body) {
+                ProvideTextStyle(MasterTheme.typography.SoundFontWarningBody) {
                     Text(R.string.warning_nosoundfont_b)
                 }
-                Spacer(Modifier.height(Dimensions.SFWarningInnerPadding))
+                Spacer(Modifier.height(MasterTheme.dimensions.SFWarningInnerPadding))
 
-                ProvideTextStyle(Typography.SoundFontWarning.Url) {
+                ProvideTextStyle(MasterTheme.typography.SoundFontWarningUrl) {
                     Text(
                         text = url,
                         textAlign = TextAlign.Center,
                         textDecoration = TextDecoration.Underline,
                         modifier = Modifier
-                            .padding(top = Dimensions.Space.Small)
+                            .padding(top = MasterTheme.dimensions.SpaceSmall)
                             .clickable {
                                 val intent = Intent(Intent.ACTION_VIEW)
                                 intent.data = url.toUri()
@@ -88,9 +86,9 @@ fun SoundFontWarning(in_settings: Boolean = false) {
             }
 
             if (!in_settings) {
-                Spacer(Modifier.height(Dimensions.SFWarningInnerPadding))
+                Spacer(Modifier.height(MasterTheme.dimensions.SFWarningInnerPadding))
                 Row(horizontalArrangement = Arrangement.Center) {
-                    ProvideTextStyle(Typography.SoundFontWarning.Body) {
+                    ProvideTextStyle(MasterTheme.typography.SoundFontWarningBody) {
                         Text(R.string.warning_nosoundfont_c)
                     }
                 }

@@ -29,10 +29,8 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.MasterTheme
 import com.qfs.pagan.ui.theme.Shadows
-import com.qfs.pagan.ui.theme.Shapes
-import com.qfs.pagan.ui.theme.Typography
 
 @Composable
 fun ScaffoldWithTopBar(
@@ -65,15 +63,15 @@ fun ScaffoldWithTopBar(
 
                 top_app_bar?.let {
                     ProvideContentColorTextStyle(
-                        textStyle = Typography.TopBar,
+                        textStyle = MasterTheme.typography.TopBar,
                         contentColor = foreground
                     ) {
                         Row(
                             modifier = Modifier
-                                .height(Dimensions.TopBarHeight)
+                                .height(MasterTheme.dimensions.TopBarHeight)
                                 .dropShadow(
                                     shadow = Shadows.TopBar,
-                                    shape = Shapes.TopBar
+                                    shape = MasterTheme.shapes.TopBar
                                 )
                                 .background(color = background),
                             verticalAlignment = Alignment.CenterVertically,

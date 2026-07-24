@@ -18,7 +18,6 @@ import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
@@ -30,13 +29,11 @@ import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
-import com.qfs.pagan.composable.dashed_border
 import com.qfs.pagan.structure.opusmanager.base.CtlLineLevel
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Typography
+import com.qfs.pagan.ui.theme.MasterTheme
 import com.qfs.pagan.ui.theme.merge
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.ceil
@@ -77,9 +74,9 @@ fun LineLabelView(
         foreground = Colors.active_color_scheme.muted(true, foreground)
     }
     val text_style = if (ctl_type == null) {
-        Typography.LineLabel
+        MasterTheme.typography.LineLabel
     } else {
-        Typography.LineCtlLabel
+        MasterTheme.typography.LineCtlLabel
     }
     ProvideContentColorTextStyle(foreground, text_style) {
         HalfBorderBox(
@@ -155,7 +152,7 @@ fun LineLabelView(
                         Spacer(
                             Modifier
                                 .fillMaxSize()
-                                .padding(Dimensions.SelectionBorderPadding)
+                                .padding(MasterTheme.dimensions.SelectionBorderPadding)
                                 .border(
                                     width = 1.dp,
                                     color = foreground,
@@ -187,9 +184,9 @@ fun LineLabelView(
                             Modifier
                                 .fillMaxSize()
                                 .padding(if (ctl_type != null) {
-                                    Dimensions.LineCtlLabelPadding
+                                    MasterTheme.dimensions.LineCtlLabelPadding
                                 } else {
-                                    Dimensions.LineLabelPadding
+                                    MasterTheme.dimensions.LineLabelPadding
                                 }),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
@@ -220,11 +217,11 @@ fun LineLabelView(
                         Icon(
                             modifier = Modifier.padding(
                                 if (line_info.line_offset.value != null) {
-                                    Dimensions.LineLabelIconPaddingLine
+                                    MasterTheme.dimensions.LineLabelIconPaddingLine
                                 } else if (line_info.channel.value != null) {
-                                    Dimensions.LineLabelIconPaddingChannel
+                                    MasterTheme.dimensions.LineLabelIconPaddingChannel
                                 } else {
-                                    Dimensions.LineLabelIconPaddingGlobal
+                                    MasterTheme.dimensions.LineLabelIconPaddingGlobal
                                 }
                             ),
                             painter = painterResource(drawable_id),

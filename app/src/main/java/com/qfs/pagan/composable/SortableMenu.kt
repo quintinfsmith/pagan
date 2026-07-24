@@ -49,18 +49,15 @@ import com.qfs.pagan.composable.wrappers.DropdownMenuItem
 import androidx.compose.material3.Text
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Dimensions.Unpadded
+import com.qfs.pagan.ui.theme.MasterTheme
 import com.qfs.pagan.ui.theme.Shadows
-import com.qfs.pagan.ui.theme.Shapes
-import com.qfs.pagan.ui.theme.Typography
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @Composable
 fun <T> SortableMenu(
     modifier: Modifier = Modifier,
-    sort_row_padding: PaddingValues = Unpadded,
+    sort_row_padding: PaddingValues = MasterTheme.dimensions.Unpadded,
     default_menu: List<Pair<T, @Composable RowScope.() -> Unit>>,
     sort_options: List<Pair<Int, (Int, Int) -> Int>>,
     active_sort_option: MutableState<Int?> = mutableStateOf(null),
@@ -114,18 +111,18 @@ fun <T> SortableMenu(
                         verticalAlignment = Alignment.CenterVertically,
                         content = { it() }
                     )
-                    Spacer(Modifier.width(Dimensions.SortableMenuHeadSpacing))
+                    Spacer(Modifier.width(MasterTheme.dimensions.SortableMenuHeadSpacing))
                 }
 
                 Box {
                     Button(
                         modifier = Modifier
-                            .height(Dimensions.SortableMenuSortButtonDiameter)
-                            .width(Dimensions.SortableMenuSortButtonDiameter),
+                            .height(MasterTheme.dimensions.SortableMenuSortButtonDiameter)
+                            .width(MasterTheme.dimensions.SortableMenuSortButtonDiameter),
                         onClick = {
                             expanded.value = !expanded.value
                         },
-                        contentPadding = Dimensions.SortableMenuSortButtonPadding,
+                        contentPadding = MasterTheme.dimensions.SortableMenuSortButtonPadding,
                         content = {
                             Icon(
                                 painter = painterResource(R.drawable.icon_sort),
@@ -178,19 +175,19 @@ fun <T> SortableMenu(
 
         Surface(
             modifier = Modifier
-                .clip(Shapes.SortableMenuBox),
+                .clip(MasterTheme.shapes.SortableMenuBox),
             color = Colors.active_color_scheme.menu_background
         ) {
             Column(
                 modifier = Modifier
                     .testTag(TestTag.SortableMenu)
-                    .padding(Dimensions.SortableMenuLineGap)
+                    .padding(MasterTheme.dimensions.SortableMenuLineGap)
                     .verticalScroll(scroll_state)
-                    .clip(Shapes.SortableMenuBox)
+                    .clip(MasterTheme.shapes.SortableMenuBox)
             ) {
                 sorted_menu.forEachIndexed { i, (item, label_content) ->
                     if (i > 0) {
-                        Spacer(Modifier.height(Dimensions.SortableMenuLineGap))
+                        Spacer(Modifier.height(MasterTheme.dimensions.SortableMenuLineGap))
                     }
 
                     ProvideContentColorTextStyle(
@@ -200,7 +197,7 @@ fun <T> SortableMenu(
                         } else {
                             Colors.active_color_scheme.menu_item_foreground
                         },
-                        textStyle = Typography.DialogMenuItem
+                        textStyle = MasterTheme.typography.DialogMenuItem
                     ) {
                         Row(
                             modifier = Modifier
@@ -211,9 +208,9 @@ fun <T> SortableMenu(
                                     } else {
                                         Colors.active_color_scheme.menu_item
                                     },
-                                    Shapes.SortableMenuBox
+                                    MasterTheme.shapes.SortableMenuBox
                                 )
-                                .heightIn(min = Dimensions.DialogLineHeight)
+                                .heightIn(min = MasterTheme.dimensions.DialogLineHeight)
                                 .combinedClickable(
                                     onClick = { onClick(item) },
                                     onLongClick = { onLongClick(item) }
@@ -222,7 +219,7 @@ fun <T> SortableMenu(
                                     item_map[i] = coordinates.positionInParent().y
                                 }
                                 .fillMaxWidth()
-                                .padding(Dimensions.DialogLinePadding),
+                                .padding(MasterTheme.dimensions.DialogLinePadding),
                             content = label_content,
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
@@ -250,7 +247,7 @@ fun <T> UnSortableMenu(
 ) {
     SortableMenu(
         modifier,
-        Unpadded,
+        MasterTheme.dimensions.Unpadded,
         options,
         listOf(),
         default_value = default_value,

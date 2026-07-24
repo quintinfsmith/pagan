@@ -16,7 +16,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import com.qfs.pagan.structure.pow
-import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.MasterTheme
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -28,7 +28,7 @@ fun FloatInput(
     minimum: Float? = null,
     maximum: Float? = null,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = Dimensions.NumberInputPadding,
+    contentPadding: PaddingValues = MasterTheme.dimensions.NumberInputPadding,
     text_align: TextAlign = TextAlign.End,
     prefix: @Composable (() -> Unit)? = null,
     label: (@Composable TextFieldLabelScope.() -> Unit)? = null,

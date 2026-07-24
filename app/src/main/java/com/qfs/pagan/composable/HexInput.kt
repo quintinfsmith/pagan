@@ -17,7 +17,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.MasterTheme
 import kotlin.math.min
 
 @Composable
@@ -25,7 +25,7 @@ fun HexInput(
     value: MutableState<Int>,
     maximum: Int? = null,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = Dimensions.NumberInputPadding,
+    contentPadding: PaddingValues = MasterTheme.dimensions.NumberInputPadding,
     text_align: TextAlign = TextAlign.End,
     prefix: @Composable (() -> Unit)? = null,
     label: (@Composable TextFieldLabelScope.() -> Unit)? = null,

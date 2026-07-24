@@ -53,8 +53,7 @@ import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.MasterTheme
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
@@ -63,7 +62,7 @@ fun ShowEffectsButton(
     channel: Int,
     opus_manager: OpusLayerInterface,
     modifier: Modifier = Modifier,
-    shape: Shape = Shapes.ContextMenuButtonPrimaryStart
+    shape: Shape = MasterTheme.shapes.ContextMenuButtonPrimaryStart
 ) {
     val menu_visibility = remember { mutableStateOf(false) }
 
@@ -144,7 +143,7 @@ fun AddKitButton(channel: Int, opus_manager: OpusLayerInterface, modifier: Modif
 }
 
 @Composable
-fun AddChannelButton(channel: Int, opus_manager: OpusLayerInterface, modifier: Modifier = Modifier, shape: Shape = Shapes.ContextMenuButtonPrimaryStart) {
+fun AddChannelButton(channel: Int, opus_manager: OpusLayerInterface, modifier: Modifier = Modifier, shape: Shape = MasterTheme.shapes.ContextMenuButtonPrimaryStart) {
     IconCMenuButton(
         modifier = modifier.testTag(TestTag.ChannelInsert),
         onClick = {
@@ -162,7 +161,7 @@ fun MuteChannelButton(
     opus_manager: OpusLayerInterface,
     active_channel: ViewModelEditorState.ChannelData,
     modifier: Modifier = Modifier,
-    shape: Shape = Shapes.ContextMenuButtonPrimary
+    shape: Shape = MasterTheme.shapes.ContextMenuButtonPrimary
 ) {
     IconCMenuButton(
         modifier = modifier.testTag(TestTag.ChannelMute),
@@ -187,7 +186,7 @@ fun SetPresetButton(
     opus_manager: OpusLayerInterface,
     channel_index: Int,
     active_channel: ViewModelEditorState.ChannelData,
-    shape: Shape = Shapes.ContextMenuButtonPrimary
+    shape: Shape = MasterTheme.shapes.ContextMenuButtonPrimary
 ) {
     if (vm_state.soundfont_ready.value) {
         TextCMenuButton(
@@ -232,7 +231,7 @@ fun SetChannelColorButton(
     vm_state: ViewModelEditorState,
     opus_manager: OpusLayerInterface,
     channel_index: Int,
-    shape: Shape = Shapes.ContextMenuButtonPrimary
+    shape: Shape = MasterTheme.shapes.ContextMenuButtonPrimary
 ) {
     val visibility = remember { mutableStateOf(false) }
     Box(contentAlignment = Alignment.BottomEnd) {
@@ -248,12 +247,12 @@ fun SetChannelColorButton(
             Spacer(
                 Modifier
                     .padding(
-                        end = Dimensions.PaletteDotPaddingEnd,
-                        bottom = Dimensions.PaletteDotPaddingBottom
+                        end = MasterTheme.dimensions.PaletteDotPaddingEnd,
+                        bottom = MasterTheme.dimensions.PaletteDotPaddingBottom
                     )
                     .size(
-                        Dimensions.PaletteDotSize,
-                        Dimensions.PaletteDotSize
+                        MasterTheme.dimensions.PaletteDotSize,
+                        MasterTheme.dimensions.PaletteDotSize
                     )
                     .clip(CircleShape)
                     .background(color)
@@ -310,7 +309,7 @@ fun ChannelEffectMenuDialog(
 
     PaganDialog(subdialog_visibility) {
         Icon(
-            modifier = Modifier.height(Dimensions.EffectDialogIconHeight),
+            modifier = Modifier.height(MasterTheme.dimensions.EffectDialogIconHeight),
             painter = painterResource(EffectResourceMap[subdialog_ctl_type.value!!].icon),
             contentDescription = stringResource(EffectResourceMap[subdialog_ctl_type.value!!].name)
         )
@@ -375,11 +374,11 @@ fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
                     channel_index,
                     opus_manager,
                     Modifier,
-                    Shapes.ContextMenuButtonPrimaryStart
+                    MasterTheme.shapes.ContextMenuButtonPrimaryStart
                 )
                 Spacer(
                     Modifier
-                        .width(Dimensions.ContextMenuPadding)
+                        .width(MasterTheme.dimensions.ContextMenuPadding)
                         .weight(1F)
                 )
                 if (! is_percussion) {
@@ -401,7 +400,7 @@ fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
                     channel_index,
                     opus_manager,
                     Modifier,
-                    Shapes.ContextMenuButtonPrimaryEnd
+                    MasterTheme.shapes.ContextMenuButtonPrimaryEnd
                 )
             }
         }
@@ -416,7 +415,7 @@ fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
                     channel_index,
                     opus_manager,
                     Modifier,
-                    Shapes.ContextMenuButtonPrimaryStart
+                    MasterTheme.shapes.ContextMenuButtonPrimaryStart
                 )
                 AddKitButton(channel_index, opus_manager)
                 DuplicateChannelButton(channel_index, opus_manager)
@@ -434,7 +433,7 @@ fun ContextMenuChannelPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
                     channel_index,
                     opus_manager,
                     Modifier.weight(1F, fill = false),
-                    Shapes.ContextMenuButtonPrimaryBottom,
+                    MasterTheme.shapes.ContextMenuButtonPrimaryBottom,
 
                 )
             }
@@ -459,21 +458,21 @@ fun ContextMenuChannelSecondary(vm_state: ViewModelEditorState, opus_manager: Op
             active_channel,
             Modifier,
             if (layout == LayoutSize.SmallLandscape || layout == LayoutSize.MediumLandscape) {
-                Shapes.ContextMenuButtonPrimaryStart
+                MasterTheme.shapes.ContextMenuButtonPrimaryStart
             } else {
-                Shapes.ContextMenuButtonPrimary
+                MasterTheme.shapes.ContextMenuButtonPrimary
             }
         )
         ContextMenuSpacer()
         SetPresetButton(
             modifier = Modifier
-                .height(Dimensions.ContextMenuButtonHeight)
+                .height(MasterTheme.dimensions.ContextMenuButtonHeight)
                 .weight(1f),
             vm_state,
             opus_manager,
             channel_index,
             active_channel,
-            Shapes.ContextMenuButtonPrimary
+            MasterTheme.shapes.ContextMenuButtonPrimary
         )
         ContextMenuSpacer()
         SetChannelColorButton(
@@ -481,7 +480,11 @@ fun ContextMenuChannelSecondary(vm_state: ViewModelEditorState, opus_manager: Op
             vm_state,
             opus_manager,
             channel_index,
-            shape = Shapes.ContextMenuSecondaryButtonEnd
+            shape = when (layout) {
+                LayoutSize.MediumLandscape,
+                LayoutSize.SmallLandscape -> MasterTheme.shapes.ContextMenuButtonPrimaryEnd
+                else -> MasterTheme.shapes.ContextMenuButtonPrimary
+            }
         )
 
     }

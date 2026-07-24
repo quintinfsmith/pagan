@@ -35,15 +35,13 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.util.lerp
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Shapes
-import com.qfs.pagan.ui.theme.Typography
+import com.qfs.pagan.ui.theme.MasterTheme
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 @Composable
 fun NumberPicker(modifier: Modifier = Modifier, range: IntRange, default: MutableState<Int>) {
-    val h = Dimensions.NumberPickerRowHeight
+    val h = MasterTheme.dimensions.NumberPickerRowHeight
 
     val column_height = 3
     val page_count = range.last - range.first + 1
@@ -60,14 +58,14 @@ fun NumberPicker(modifier: Modifier = Modifier, range: IntRange, default: Mutabl
             modifier
                 .background(
                     color = Colors.active_color_scheme.number_picker_background,
-                    shape = Shapes.SettingsBox
+                    shape = MasterTheme.shapes.SettingsBox
                 )
                 .border(
-                    width = Dimensions.NumberPickerStrokeWidth,
+                    width = MasterTheme.dimensions.NumberPickerStrokeWidth,
                     color = Colors.active_color_scheme.number_picker_foreground,
-                    shape = Shapes.SettingsBox
+                    shape = MasterTheme.shapes.SettingsBox
                 )
-                .width(Dimensions.NumberPickerRowWidth)
+                .width(MasterTheme.dimensions.NumberPickerRowWidth)
                 .height(h * column_height),
             contentAlignment = Alignment.Center
         ) {
@@ -80,13 +78,13 @@ fun NumberPicker(modifier: Modifier = Modifier, range: IntRange, default: Mutabl
             ) {
                 Spacer(
                     Modifier
-                        .height(Dimensions.NumberPickerStrokeWidth)
+                        .height(MasterTheme.dimensions.NumberPickerStrokeWidth)
                         .fillMaxWidth(.8F)
                         .background(Colors.active_color_scheme.container_border)
                 )
                 Spacer(
                     Modifier
-                        .height(Dimensions.NumberPickerStrokeWidth)
+                        .height(MasterTheme.dimensions.NumberPickerStrokeWidth)
                         .fillMaxWidth(.8F)
                         .background(Colors.active_color_scheme.container_border)
                 )
@@ -123,7 +121,7 @@ fun NumberPicker(modifier: Modifier = Modifier, range: IntRange, default: Mutabl
                     content = {
                         Text(
                             "${range.first + page}",
-                            style = Typography.NumberPicker
+                            style = MasterTheme.typography.NumberPicker
                         )
                     }
                 )

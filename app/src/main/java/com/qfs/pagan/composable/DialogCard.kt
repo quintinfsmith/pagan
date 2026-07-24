@@ -23,9 +23,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardColors
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -34,7 +32,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.sp
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
@@ -43,8 +40,8 @@ import com.qfs.pagan.composable.button.SmallOutlinedButton
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Typography
+import com.qfs.pagan.ui.theme.MasterTheme.dimensions
+import com.qfs.pagan.ui.theme.MasterTheme
 
 @Composable
 fun DialogCard(
@@ -55,13 +52,13 @@ fun DialogCard(
         disabledContentColor = Color.Gray,
         disabledContainerColor = Color.Green,
     ),
-    shape: Shape = RoundedCornerShape(Dimensions.DialogRadius),
+    shape: Shape = RoundedCornerShape(MasterTheme.dimensions.DialogRadius),
     border: BorderStroke? = null,
     alignment: Alignment.Horizontal,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     ProvideContentColorTextStyle(
-        textStyle = Typography.Default,
+        textStyle = MasterTheme.typography.Default,
         contentColor = colors.contentColor
     ) {
         Column(
@@ -70,7 +67,7 @@ fun DialogCard(
                 .then(if (border != null) modifier.border(border) else Modifier)
                 .background(colors.containerColor)
                 .wrapContentSize()
-                .padding(Dimensions.DialogPadding),
+                .padding(MasterTheme.dimensions.DialogPadding),
             horizontalAlignment = alignment,
             content = content
         )
@@ -79,10 +76,10 @@ fun DialogCard(
 
 @Composable
 fun DialogTitle(text: String, modifier: Modifier = Modifier) {
-    ProvideTextStyle(Typography.DialogTitle) {
+    ProvideTextStyle(MasterTheme.typography.DialogTitle) {
         Text(
             text = text,
-            modifier = modifier.padding(Dimensions.DialogTitlePadding)
+            modifier = modifier.padding(MasterTheme.dimensions.DialogTitlePadding)
         )
     }
 }
@@ -106,7 +103,7 @@ fun ColumnScope.DialogBar(
     Row(
         modifier = modifier
             .padding(
-                vertical = Dimensions.DialogBarPaddingVertical
+                vertical = MasterTheme.dimensions.DialogBarPaddingVertical
             ),
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically
@@ -115,7 +112,7 @@ fun ColumnScope.DialogBar(
             SmallButton(
                 modifier = Modifier
                     .testTag(TestTag.DialogNegative)
-                    .height(Dimensions.DialogBarButtonHeight)
+                    .height(MasterTheme.dimensions.DialogBarButtonHeight)
                     .weight(1F),
                 onClick = it,
                 content = { Text(negative_label) }
@@ -123,12 +120,12 @@ fun ColumnScope.DialogBar(
         }
         neutral?.let {
             if (negative != null) {
-                Spacer(Modifier.width(Dimensions.DialogBarSpacing))
+                Spacer(Modifier.width(MasterTheme.dimensions.DialogBarSpacing))
             }
             SmallOutlinedButton(
                 modifier = Modifier
                     .testTag(TestTag.DialogNeutral)
-                    .height(Dimensions.DialogBarButtonHeight)
+                    .height(MasterTheme.dimensions.DialogBarButtonHeight)
                     .weight(1F),
                 onClick = it,
                 content = { Text(neutral_label, maxLines = 1) }
@@ -136,12 +133,12 @@ fun ColumnScope.DialogBar(
         }
         positive?.let {
             if (negative != null || neutral != null) {
-                Spacer(Modifier.width(Dimensions.DialogBarSpacing))
+                Spacer(Modifier.width(MasterTheme.dimensions.DialogBarSpacing))
             }
             SmallButton(
                 modifier = Modifier
                     .testTag(TestTag.DialogPositive)
-                    .height(Dimensions.DialogBarButtonHeight)
+                    .height(MasterTheme.dimensions.DialogBarButtonHeight)
                     .weight(1F),
                 onClick = it,
                 content = { Text(positive_label) }

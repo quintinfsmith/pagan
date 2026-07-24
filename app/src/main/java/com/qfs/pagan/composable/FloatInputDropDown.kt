@@ -35,8 +35,7 @@ import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.testTag
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.MasterTheme
 
 @Composable
 fun FloatInputDropDown(
@@ -51,7 +50,7 @@ fun FloatInputDropDown(
     DropdownMenu(
         expanded = visibility.value,
         onDismissRequest = { visibility.value = false },
-        shape = Shapes.NumberInputDialog
+        shape = MasterTheme.shapes.NumberInputDialog
 
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -60,10 +59,10 @@ fun FloatInputDropDown(
                 label = { Text(title_string_id) },
                 modifier = Modifier
                     .testTag(TestTag.DialogNumberInput)
-                    .width(Dimensions.FloatInputDialogWidth)
-                    .padding(Dimensions.NumberInputDialogPadding)
+                    .width(MasterTheme.dimensions.FloatInputDialogWidth)
+                    .padding(MasterTheme.dimensions.NumberInputDialogPadding)
                     .focusRequester(focus_requester),
-                contentPadding = Dimensions.NumberInputDialogPadding,
+                contentPadding = MasterTheme.dimensions.NumberInputDialogPadding,
                 text_align = TextAlign.Center,
                 on_focus_exit = { dialog_value ->
                     dialog_value?.let { value.floatValue = it }
@@ -76,7 +75,7 @@ fun FloatInputDropDown(
             }
             Button(
                 modifier = Modifier
-                    .padding(Dimensions.NumberInputDialogPadding)
+                    .padding(MasterTheme.dimensions.NumberInputDialogPadding)
                     .size(42.dp),
                 onClick = {
                     visibility.value = false

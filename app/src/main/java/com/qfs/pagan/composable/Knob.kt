@@ -27,7 +27,7 @@ import com.qfs.pagan.R
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.structure.pow
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.MasterTheme
 import kotlin.math.roundToInt
 
 @Composable
@@ -39,7 +39,7 @@ fun Knob(
     rotations: Int = 1,
     precision: Int? = null,
     color: Color = Colors.active_color_scheme.button,
-    padding: PaddingValues = Dimensions.KnobPadding,
+    padding: PaddingValues = MasterTheme.dimensions.KnobPadding,
     callback: (value: Float) -> Unit
 ) {
     Box(

@@ -25,26 +25,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.MasterTheme
 import com.qfs.pagan.ui.theme.Shadows
-import com.qfs.pagan.ui.theme.Shapes
-import com.qfs.pagan.ui.theme.Typography
 
 
 @Composable
 fun CMBoxBottom(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     Surface(
         Modifier.dropShadow(
-            Shapes.CMBoxBottom,
+            MasterTheme.shapes.CMBoxBottom,
             Shadows.ContextMenu
         ),
-        shape = Shapes.CMBoxBottom,
+        shape = MasterTheme.shapes.CMBoxBottom,
         color = Colors.active_color_scheme.context_menu_background,
         contentColor = Colors.active_color_scheme.context_menu_foreground,
         content = {
-            ProvideTextStyle(Typography.Default) {
+            ProvideTextStyle(MasterTheme.typography.Default) {
                 Column(
-                    modifier = modifier.padding(Dimensions.ContextMenuPadding),
+                    modifier = modifier.padding(MasterTheme.dimensions.ContextMenuPadding),
                     content = content,
                     verticalArrangement = Arrangement.Center
                 )
@@ -57,16 +55,16 @@ fun CMBoxBottom(modifier: Modifier = Modifier, content: @Composable ColumnScope.
 fun CMBoxEnd(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     Surface(
         Modifier.dropShadow(
-            Shapes.CMBoxEnd,
+            MasterTheme.shapes.CMBoxEnd,
             Shadows.ContextMenu
         ),
-        shape = Shapes.CMBoxEnd,
+        shape = MasterTheme.shapes.CMBoxEnd,
         color = Colors.active_color_scheme.context_menu_background,
         contentColor = Colors.active_color_scheme.context_menu_foreground,
         content = {
-            ProvideTextStyle(Typography.Default) {
+            ProvideTextStyle(MasterTheme.typography.Default) {
                 Column(
-                    modifier = modifier.padding(Dimensions.ContextMenuPadding),
+                    modifier = modifier.padding(MasterTheme.dimensions.ContextMenuPadding),
                     content = content
                 )
             }

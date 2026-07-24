@@ -22,15 +22,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.MasterTheme
 
 @Composable
 fun <T> RadioMenu(
     modifier: Modifier = Modifier,
     options: List<Pair<T, @Composable (RowScope.() -> Unit)>>,
     active: MutableState<T>,
-    gap_size: Dp = Dimensions.RadioMenu.Gap,
+    gap_size: Dp = MasterTheme.dimensions.RadioMenuGap,
     callback: (T) -> Unit
 ) {
     Row(
@@ -41,9 +40,9 @@ fun <T> RadioMenu(
             val (item, content) = option
 
             val shape = when (i) {
-                0 -> Shapes.RadioMenu.Start
-                options.size - 1 -> Shapes.RadioMenu.End
-                else -> Shapes.RadioMenu.Middle
+                0 -> MasterTheme.shapes.RadioMenuStart
+                options.size - 1 -> MasterTheme.shapes.RadioMenuEnd
+                else -> MasterTheme.shapes.RadioMenuMiddle
             }
 
             if (i != 0) {
@@ -64,7 +63,7 @@ fun <T> RadioMenu(
                     }
                 ),
                 border = BorderStroke(
-                    width = Dimensions.RadioMenu.StrokeWidth,
+                    width = MasterTheme.dimensions.RadioMenuStrokeWidth,
                     color = if (active.value == item) {
                         Colors.active_color_scheme.switch_border_checked
                     } else {

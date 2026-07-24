@@ -9,7 +9,6 @@
  */
 package com.qfs.pagan.composable.effectwidget
 
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -23,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import com.qfs.pagan.LayoutSize
 import com.qfs.pagan.OpusLayerInterface
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
@@ -30,20 +30,16 @@ import com.qfs.pagan.Values
 import com.qfs.pagan.composable.FloatInput
 import com.qfs.pagan.composable.Knob
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
-import com.qfs.pagan.composable.cxtmenu.InsertButton
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEvent
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Dimensions.Unpadded
-import com.qfs.pagan.ui.theme.Typography
+import com.qfs.pagan.ui.theme.MasterTheme
 import com.qfs.pagan.viewmodel.ViewModelEditorState
-import kotlin.math.roundToInt
 
 @Composable
-fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, opus_manager: OpusLayerInterface, event: OpusTempoEvent) {
+fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, opus_manager: OpusLayerInterface, event: OpusTempoEvent, layout: LayoutSize) {
     val cursor = ui_facade.active_cursor.value ?: return
     val working_event = event.copy()
     val is_initial = cursor.type == CursorMode.Line
@@ -56,8 +52,8 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, opus_manager: OpusL
         Modifier
             .testTag(TestTag.TempoKnob)
             .size(
-                Dimensions.ContextMenuButtonWidth,
-                Dimensions.ContextMenuButtonHeight,
+                MasterTheme.dimensions.ContextMenuButtonWidth,
+                MasterTheme.dimensions.ContextMenuButtonHeight,
             ),
         tempo_label,
         minimum = Values.TempoMinimum,
@@ -79,17 +75,17 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, opus_manager: OpusL
         revert_on_exit = true,
         prefix = {
             Icon(
-                modifier = Modifier.width(Dimensions.ContextMenuButtonIconWidth),
+                modifier = Modifier.width(MasterTheme.dimensions.ContextMenuButtonIconWidth),
                 painter = painterResource(R.drawable.icon_tempo),
                 contentDescription = null
             )
         },
         minimum = Values.TempoMinimum,
-        contentPadding = Unpadded,
+        contentPadding = MasterTheme.dimensions.Unpadded,
         text_align = TextAlign.Center,
         modifier = Modifier
             .testTag(TestTag.Tempo)
-            .height(Dimensions.EffectWidget.InputHeight)
+            .height(MasterTheme.dimensions.EffectWidgetInputHeight)
             .weight(1F, fill = true)
     ) {
         working_event.value = it
@@ -103,13 +99,13 @@ fun RowScope.TempoEventMenu(ui_facade: ViewModelEditorState, opus_manager: OpusL
         content = {
             Text(
                 R.string.bpm,
-                Modifier.padding(start = Dimensions.Space.Medium),
-                style = Typography.ContextMenuUnits
+                Modifier.padding(start = MasterTheme.dimensions.SpaceMedium),
+                style = MasterTheme.typography.ContextMenuUnits
             )
         }
     )
 
     Spacer(Modifier.weight(.5F))
 
-    EffectTransitionButton(working_event, opus_manager, is_initial)
+    EffectTransitionButton(working_event, opus_manager, is_initial, layout)
 }

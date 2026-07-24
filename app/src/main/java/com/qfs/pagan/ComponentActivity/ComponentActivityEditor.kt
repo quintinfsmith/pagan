@@ -83,9 +83,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.dropShadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
@@ -181,7 +179,6 @@ import com.qfs.pagan.composable.table.HalfBorderBox
 import com.qfs.pagan.composable.table.LineLabelView
 import com.qfs.pagan.composable.table.ShortcutView
 import com.qfs.pagan.composable.table.TableLine
-import com.qfs.pagan.composable.table.outset
 import com.qfs.pagan.composable.wrappers.CircularProgressIndicator
 import com.qfs.pagan.composable.wrappers.DropdownMenu
 import com.qfs.pagan.composable.wrappers.DropdownMenuItem
@@ -195,11 +192,10 @@ import com.qfs.pagan.structure.opusmanager.base.OpusLayerBase
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.structure.rationaltree.ReducibleTree
 import com.qfs.pagan.testTag
+import com.qfs.pagan.ui.theme.MasterTheme
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.Layout
 import com.qfs.pagan.ui.theme.Shadows
-import com.qfs.pagan.ui.theme.Shapes
-import com.qfs.pagan.ui.theme.Typography
 import com.qfs.pagan.viewmodel.ViewModelEditorController
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlinx.coroutines.CoroutineScope
@@ -1173,7 +1169,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 modifier = Modifier.testTag(TestTag.TopBarKebab),
                 icon = R.drawable.icon_kebab,
                 description = R.string.menu_item_playpause,
-                width = Dimensions.TopBarIconWidth * 3 / 4,
+                width = MasterTheme.dimensions.TopBarIconWidth * 3 / 4,
                 contentAlignment = Alignment.CenterEnd,
                 onClick = { expanded.value = !expanded.value }
             )
@@ -1234,13 +1230,13 @@ class ComponentActivityEditor: PaganComponentActivity() {
         ) {
             Icon(
                 modifier = Modifier.size(
-                    Dimensions.TopBarIconWidth,
-                    Dimensions.TopBarIconHeight
+                    MasterTheme.dimensions.TopBarIconWidth,
+                    MasterTheme.dimensions.TopBarIconHeight
                 ),
                 painter = painterResource(R.drawable.icon_zoom),
                 contentDescription = null
             )
-            Spacer(Modifier.width(Dimensions.TopBarItemSpace))
+            Spacer(Modifier.width(MasterTheme.dimensions.TopBarItemSpace))
             Text("${vm_state.zoom_index.intValue} / ${vm_state.max_zoom_index.intValue}")
         }
     }
@@ -1312,9 +1308,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val vm_state = this@ComponentActivityEditor.state_model
         val opus_manager = this@ComponentActivityEditor.controller_model.opus_manager
 
-        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
+        Spacer(Modifier.width(MasterTheme.dimensions.TopBarItemSpace))
         MasterPlayButton(vm_state)
-        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
+        Spacer(Modifier.width(MasterTheme.dimensions.TopBarItemSpace))
         Row(
             modifier = Modifier.weight(1F),
             horizontalArrangement = Arrangement.Center,
@@ -1327,14 +1323,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 text = vm_state.project_name.value ?: stringResource(R.string.untitled_opus),
-                style = Typography.TopBar
+                style = MasterTheme.typography.TopBar
             )
             NameAndNotesDialog(dialog_visible)
         }
 
         UndoButton(vm_state, opus_manager)
         RedoButton(vm_state, opus_manager)
-        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
+        Spacer(Modifier.width(MasterTheme.dimensions.TopBarItemSpace))
     }
 
     @Composable
@@ -1342,11 +1338,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val vm_top = this@ComponentActivityEditor.view_model
         val scope = rememberCoroutineScope()
 
-        Spacer(Modifier.width(Dimensions.TopBarItemSpace))
+        Spacer(Modifier.width(MasterTheme.dimensions.TopBarItemSpace))
         TopBarIcon(
             icon = R.drawable.icon_hamburger_32,
             description = R.string.song_configuration,
-            width = Dimensions.TopBarIconWidth * 3 / 4,
+            width = MasterTheme.dimensions.TopBarIconWidth * 3 / 4,
             contentAlignment = Alignment.CenterStart,
             onClick = {
                 scope.launch {
@@ -1497,21 +1493,21 @@ class ComponentActivityEditor: PaganComponentActivity() {
             Modifier
                 .fillMaxHeight()
                 .background(Colors.active_color_scheme.table_accent)
-                .width(Dimensions.LineLabelWidth),
+                .width(MasterTheme.dimensions.LineLabelWidth),
         )
         Row {
             Spacer(
                 Modifier
                     .background(Colors.active_color_scheme.table_accent)
-                    .width(Dimensions.LineLabelWidth)
-                    .height(Dimensions.LineHeight),
+                    .width(MasterTheme.dimensions.LineLabelWidth)
+                    .height(MasterTheme.dimensions.LineHeight),
             )
 
             Spacer(
                 Modifier
                     .weight(1F)
                     .background(Colors.active_color_scheme.table_accent)
-                    .height(Dimensions.LineHeight),
+                    .height(MasterTheme.dimensions.LineHeight),
             )
         }
     }
@@ -1524,14 +1520,14 @@ class ComponentActivityEditor: PaganComponentActivity() {
         length: MutableState<Int>,
         layout: LayoutSize
     ) {
-        val line_height = Dimensions.LineHeight
-        val ctl_line_height = Dimensions.EffectLineHeight
-        val line_label_width = Dimensions.LineLabelWidth
+        val line_height = MasterTheme.dimensions.LineHeight
+        val ctl_line_height = MasterTheme.dimensions.EffectLineHeight
+        val line_label_width = MasterTheme.dimensions.LineLabelWidth
         val column_widths = Array(length.value) { i ->
             vm_state.column_data[i].top_weight.value
         }
 
-        val channel_gap_height = Dimensions.ChannelGapHeight
+        val channel_gap_height = MasterTheme.dimensions.ChannelGapHeight
 
         val scope = rememberCoroutineScope()
         val scroll_state_v = vm_state.scroll_state_y.value
@@ -1665,7 +1661,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                 Spacer(
                                     modifier = Modifier
                                         .draggable_line(y, dragging_to_y, is_after, true)
-                                        .width(Dimensions.LineLabelWidth)
+                                        .width(MasterTheme.dimensions.LineLabelWidth)
                                         .height(channel_gap_height)
                                         .background(Colors.active_color_scheme.channel_separator)
                                 )
@@ -1688,7 +1684,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                 }
                                             }
                                             .background(color = Color.Transparent, CircleShape)
-                                            .padding(Dimensions.ExtraTableIconsPadding),
+                                            .padding(MasterTheme.dimensions.ExtraTableIconsPadding),
                                         painter = painterResource(R.drawable.icon_ctl),
                                         contentDescription = stringResource(R.string.cd_show_effect_controls)
                                     )
@@ -1741,12 +1737,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                             Box(
                                                 modifier = Modifier
                                                     .testTag(TestTag.OuterInsertBeat)
-                                                    .width(Dimensions.LeafBaseWidth)
+                                                    .width(MasterTheme.dimensions.LeafBaseWidth)
                                                     .clickable { dialog_visibility.value = true },
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 Icon(
-                                                    modifier = Modifier.padding(Dimensions.ExtraTableIconsPadding),
+                                                    modifier = Modifier.padding(MasterTheme.dimensions.ExtraTableIconsPadding),
                                                     painter = painterResource(R.drawable.icon_add),
                                                     contentDescription = stringResource(R.string.cd_insert_beat)
                                                 )
@@ -1764,7 +1760,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
                                         return@itemsIndexed
                                     }
-                                    val column_width = Dimensions.LeafBaseWidth * vm_state.get_active_zoom(x)
+                                    val column_width = MasterTheme.dimensions.LeafBaseWidth * vm_state.get_active_zoom(x)
                                     val animated_width by animateDpAsState(
                                         targetValue = column_width + if (x == 0) {
                                             0.dp
@@ -1944,7 +1940,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             )
         }
         val zoom = vm_state.active_zoom.floatValue
-        ProvideContentColorTextStyle(foreground, Typography.BeatLabel) {
+        ProvideContentColorTextStyle(foreground, MasterTheme.typography.BeatLabel) {
             HalfBorderBox(
                 modifier
                     .testTag(TestTag.BeatLabel, x)
@@ -1963,7 +1959,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                         contentAlignment = Alignment.Center
                     ) {
                         if (vm_state.active_wide_beat.value == x && LocalContext.current.toPx(
-                                Dimensions.LeafBaseWidth * zoom
+                                MasterTheme.dimensions.LeafBaseWidth * zoom
                             ) > vm_state.scroll_state_x.value.layoutInfo.viewportSize.width * 1.5
                         ) {
                             LinearProgressIndicator(
@@ -2042,10 +2038,10 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                         }
                                 }
                                 .fillMaxHeight()
-                                .widthIn(Dimensions.LeafBaseWidth - (Dimensions.BeatLabelHorizontalPadding * 2))
+                                .widthIn(MasterTheme.dimensions.LeafBaseWidth - (MasterTheme.dimensions.BeatLabelHorizontalPadding * 2))
                                 .padding(
-                                    horizontal = Dimensions.BeatLabelHorizontalPadding,
-                                    vertical = Dimensions.BeatLabelVerticalPadding
+                                    horizontal = MasterTheme.dimensions.BeatLabelHorizontalPadding,
+                                    vertical = MasterTheme.dimensions.BeatLabelVerticalPadding
                                 ),
                             contentAlignment = Alignment.Center,
                             content = {
@@ -2064,7 +2060,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             Spacer(
                                 Modifier
                                     .fillMaxSize()
-                                    .padding(Dimensions.SelectionBorderPadding)
+                                    .padding(MasterTheme.dimensions.SelectionBorderPadding)
                                     .border(
                                         width = 1.dp,
                                         color = foreground,
@@ -2090,11 +2086,11 @@ class ComponentActivityEditor: PaganComponentActivity() {
 
     @Composable
     fun RowScope.DrawerPadder() {
-        Spacer(modifier = Modifier.width(Dimensions.ConfigDrawerPadding))
+        Spacer(modifier = Modifier.width(MasterTheme.dimensions.ConfigDrawerPadding))
     }
     @Composable
     fun ColumnScope.DrawerPadder() {
-        Spacer(modifier = Modifier.height(Dimensions.ConfigDrawerPadding))
+        Spacer(modifier = Modifier.height(MasterTheme.dimensions.ConfigDrawerPadding))
     }
 
     @Composable
@@ -2122,20 +2118,20 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 Text(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = Dimensions.ConfigDrawerPadding)
+                        .padding(vertical = MasterTheme.dimensions.ConfigDrawerPadding)
                         .combinedClickable(
                             onClick = { dialog_visible.value = true }
                         ),
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 1,
                     text = state_model.project_name.value ?: stringResource(R.string.untitled_opus),
-                    style = Typography.DrawerTitle
+                    style = MasterTheme.typography.DrawerTitle
                 )
                 NameAndNotesDialog(dialog_visible)
             }
 
             Row(
-                Modifier.padding(Dimensions.ConfigDrawerPadding),
+                Modifier.padding(MasterTheme.dimensions.ConfigDrawerPadding),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 ConfigDrawerTopButton(
@@ -2168,21 +2164,21 @@ class ComponentActivityEditor: PaganComponentActivity() {
             DrawerPadder()
             Surface(
                 color = Colors.active_color_scheme.menu_background,
-                shape = Shapes.Container,
+                shape = MasterTheme.shapes.Container,
                 modifier = Modifier.weight(1F),
             ) {
                 if (state_model.ready.value) {
                     if (state_model.soundfont_ready.value) {
                         Column(
                             Modifier
-                                .padding(Dimensions.ConfigDrawerPadding)
+                                .padding(MasterTheme.dimensions.ConfigDrawerPadding)
                                 .dragging_scroll(
                                     dragging_row_index.value != null,
                                     scroll_state,
                                 )
                         ) {
-                            val row_height = Dimensions.ConfigChannelButtonHeight
-                            val padding_height_px = this@ComponentActivityEditor.toPx(Dimensions.ConfigChannelSpacing)
+                            val row_height = MasterTheme.dimensions.ConfigChannelButtonHeight
+                            val padding_height_px = this@ComponentActivityEditor.toPx(MasterTheme.dimensions.ConfigChannelSpacing)
                             val row_height_px = this@ComponentActivityEditor.toPx(row_height)
                             for (i in 0 until state_model.channel_count.value) {
                                 val channel_data = state_model.channel_data[i]
@@ -2279,7 +2275,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                         else "%02d:".format(i),
                                                         modifier = Modifier
                                                             .padding(
-                                                                horizontal = Dimensions.ConfigDrawerChannelLabelPadding,
+                                                                horizontal = MasterTheme.dimensions.ConfigDrawerChannelLabelPadding,
                                                             )
                                                     )
                                                     Text(
@@ -2334,7 +2330,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
             DrawerPadder()
             Row(
                 modifier = Modifier
-                    .padding(Dimensions.ConfigDrawerPadding)
+                    .padding(MasterTheme.dimensions.ConfigDrawerPadding)
                     .fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -2417,7 +2413,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     Row(
                         modifier = Modifier
                             .weight(1F)
-                            .height(Dimensions.ConfigBottomButtonHeight)
+                            .height(MasterTheme.dimensions.ConfigBottomButtonHeight)
                             .combinedClickable(
                                 onClick = {
                                     this@ComponentActivityEditor.runOnUiThread {
@@ -2501,7 +2497,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 CMBoxBottom(
                     Modifier
                         .update_bottom_padding()
-                        .width(Dimensions.Layout.Large.short)
+                        .width(Layout.Large.short)
                 ) {
                     primary?.invoke()
                     if (primary != null && secondary != null) {
@@ -2599,7 +2595,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     this@ComponentActivityEditor.get_context_menu_secondary(Modifier, vm_state, opus_manager, layout)?.let {
                         Box(
                             Modifier
-                                .padding(horizontal = Dimensions.ContextMenuPadding)
+                                .padding(horizontal = MasterTheme.dimensions.ContextMenuPadding)
                                 .weight(1F),
                             contentAlignment = Alignment.BottomCenter
                         ) {
@@ -2608,7 +2604,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     .update_bottom_padding()
                                     .then(
                                         if (layout != LayoutSize.SmallLandscape) {
-                                            Modifier.width(Dimensions.Layout.Medium.long)
+                                            Modifier.width(Layout.Medium.long)
                                         } else {
                                             Modifier
                                         }
@@ -2667,7 +2663,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
     @Composable
     fun ScaleBox(modifier: Modifier = Modifier, vm_state: ViewModelEditorState, content: @Composable BoxScope.() -> Unit) {
         val zoom_state = remember { mutableStateOf(0.dp) }
-        val zoom_unit = Dimensions.LeafBaseWidth * 2
+        val zoom_unit = MasterTheme.dimensions.LeafBaseWidth * 2
         val consume_events = remember { mutableStateOf(false) }
         val zoom_bar_visible = remember { mutableStateOf(false) }
 
@@ -2727,7 +2723,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                 ) {
                     SettingsColumn(
                         modifier = Modifier.dropShadow(
-                            Shapes.SettingsBox,
+                            MasterTheme.shapes.SettingsBox,
                             Shadows.TopBar
                         )
                     ) {
@@ -2736,17 +2732,17 @@ class ComponentActivityEditor: PaganComponentActivity() {
                             horizontalArrangement = Arrangement.Center
                         ) {
                             Icon(
-                                modifier = Modifier.height(Dimensions.ZoomBarTitleHeight),
+                                modifier = Modifier.height(MasterTheme.dimensions.ZoomBarTitleHeight),
                                 painter = painterResource(R.drawable.icon_zoom),
                                 contentDescription = null
                             )
-                            Spacer(Modifier.width(Dimensions.SettingsBoxPadding))
+                            Spacer(Modifier.width(MasterTheme.dimensions.SettingsBoxPadding))
                             Text(
                                 "x${vm_state.get_active_zoom().toInt()} (${vm_state.zoom_index.intValue} / ${vm_state.max_zoom_index.value})",
-                                style = Typography.ZoomBarTitle
+                                style = MasterTheme.typography.ZoomBarTitle
                             )
                         }
-                        Spacer(Modifier.height(Dimensions.SettingsBoxPadding))
+                        Spacer(Modifier.height(MasterTheme.dimensions.SettingsBoxPadding))
                         val animated_value by animateFloatAsState(
                             (vm_state.zoom_index.intValue.toFloat() / vm_state.max_zoom_index.intValue.toFloat()),
                             label = "zoom_slider"
@@ -2778,7 +2774,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                     modifier = Modifier.fillMaxWidth(),
                     lineLimits = TextFieldLineLimits.Default
                 ) {}
-                Spacer(modifier = Modifier.height(Dimensions.Space.Medium))
+                Spacer(modifier = Modifier.height(MasterTheme.dimensions.SpaceMedium))
                 TextInput(
                     label = { Text(R.string.dlg_project_notes) },
                     input = project_notes,
@@ -2913,8 +2909,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                             )
                                         }
                                     }
-                                    .height(Dimensions.PreviewIconHeight)
-                                    .width(Dimensions.PreviewIconHeight),
+                                    .height(MasterTheme.dimensions.PreviewIconHeight)
+                                    .width(MasterTheme.dimensions.PreviewIconHeight),
                                 contentAlignment = Alignment.CenterEnd
                             ) {
                                 Icon(
@@ -2922,12 +2918,12 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     contentDescription = null,
                                     modifier = Modifier
                                         .padding(
-                                            top = Dimensions.PreviewIconPadding,
-                                            bottom = Dimensions.PreviewIconPadding,
-                                            start = Dimensions.PreviewIconPadding
+                                            top = MasterTheme.dimensions.PreviewIconPadding,
+                                            bottom = MasterTheme.dimensions.PreviewIconPadding,
+                                            start = MasterTheme.dimensions.PreviewIconPadding
                                         )
-                                        .height(Dimensions.PreviewIconHeight - (Dimensions.PreviewIconPadding * 2))
-                                        .width(Dimensions.PreviewIconHeight - (Dimensions.PreviewIconPadding))
+                                        .height(MasterTheme.dimensions.PreviewIconHeight - (MasterTheme.dimensions.PreviewIconPadding * 2))
+                                        .width(MasterTheme.dimensions.PreviewIconHeight - (MasterTheme.dimensions.PreviewIconPadding))
                                 )
                             }
                         }
@@ -3010,8 +3006,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                 state.animateScrollToPage(i - 1)
                                             }
                                         }
-                                        .width(Dimensions.PresetMenuArrowWidth)
-                                        .height(Dimensions.PresetMenuArrowHeight),
+                                        .width(MasterTheme.dimensions.PresetMenuArrowWidth)
+                                        .height(MasterTheme.dimensions.PresetMenuArrowHeight),
                                     painter = painterResource(R.drawable.icon_arrow_prev),
                                     contentDescription = (opus_manager.vm_state.active_soundfonts.value[sorted_pages[i - 1]]).split(
                                         "/"
@@ -3027,7 +3023,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                     .weight(1F)
                                     .clickable { expanded.value = true },
                                 overflow = TextOverflow.StartEllipsis,
-                                style = Typography.DialogTitle
+                                style = MasterTheme.typography.DialogTitle
                             )
                             if (i < sorted_pages.size - 1) {
                                 Icon(
@@ -3037,22 +3033,22 @@ class ComponentActivityEditor: PaganComponentActivity() {
                                                 state.animateScrollToPage(i + 1)
                                             }
                                         }
-                                        .width(Dimensions.PresetMenuArrowWidth)
-                                        .height(Dimensions.PresetMenuArrowHeight),
+                                        .width(MasterTheme.dimensions.PresetMenuArrowWidth)
+                                        .height(MasterTheme.dimensions.PresetMenuArrowHeight),
                                     painter = painterResource(R.drawable.icon_arrow_next),
                                     contentDescription = (opus_manager.vm_state.active_soundfonts.value[sorted_pages[i + 1]]).split(
                                         "/"
                                     ).let { it[it.size - 1].trim() },
                                 )
                             }
-                            Spacer(Modifier.width(Dimensions.Space.Medium))
+                            Spacer(Modifier.width(MasterTheme.dimensions.SpaceMedium))
                         } else {
                             DialogSTitle(R.string.dropdown_choose_instrument)
                         }
                     },
                     default_menu = options[sorted_pages[i]],
                     sort_row_padding = PaddingValues(
-                        bottom = Dimensions.DialogBarPaddingVertical,
+                        bottom = MasterTheme.dimensions.DialogBarPaddingVertical,
                     ),
                     active_sort_option = selected_sort,
                     sort_options = sort_options[sorted_pages[i]],
@@ -3426,8 +3422,8 @@ class ComponentActivityEditor: PaganComponentActivity() {
     fun get_dragged_offset(y: Int, target_line: Int?, is_after: Boolean, is_spacer: Boolean = false): Int {
         if (this.state_model.dragging_line.value == null) return 0
 
-        val line_height = toPx(Dimensions.LineHeight)
-        val ctl_line_height = toPx(Dimensions.EffectLineHeight)
+        val line_height = toPx(MasterTheme.dimensions.LineHeight)
+        val ctl_line_height = toPx(MasterTheme.dimensions.EffectLineHeight)
         val is_dragging_channel = this.state_model.is_dragging_channel()
 
         if ((is_dragging_channel || !is_spacer) && this.state_model.line_data[y].is_dragging.value) return this.state_model.dragging_offset.value.roundToInt()
@@ -3440,7 +3436,7 @@ class ComponentActivityEditor: PaganComponentActivity() {
         val check_line = first_line + std_line_count + ctl_line_count
 
         val gap_size = if (is_dragging_channel) {
-            (toPx(Dimensions.ChannelGapHeight) + (std_line_count * line_height) + (ctl_line_count * ctl_line_height)).toInt()
+            (toPx(MasterTheme.dimensions.ChannelGapHeight) + (std_line_count * line_height) + (ctl_line_count * ctl_line_height)).toInt()
         } else {
             ((std_line_count * line_height) + (ctl_line_count * ctl_line_height)).toInt()
         }
@@ -3474,9 +3470,9 @@ class ComponentActivityEditor: PaganComponentActivity() {
     }
 
     fun build_dragging_line_map(): List<Triple<ClosedFloatingPointRange<Float>, IntRange, Boolean>> {
-        val line_height = toPx(Dimensions.LineHeight).roundToInt()
-        val ctl_line_height = toPx(Dimensions.EffectLineHeight).roundToInt()
-        val gap_height = toPx(Dimensions.ChannelGapHeight).roundToInt()
+        val line_height = toPx(MasterTheme.dimensions.LineHeight).roundToInt()
+        val ctl_line_height = toPx(MasterTheme.dimensions.EffectLineHeight).roundToInt()
+        val gap_height = toPx(MasterTheme.dimensions.ChannelGapHeight).roundToInt()
         val is_dragging_channel = this.state_model.is_dragging_channel()
 
         val output = mutableListOf<Triple<ClosedFloatingPointRange<Float>, IntRange, Boolean>>()

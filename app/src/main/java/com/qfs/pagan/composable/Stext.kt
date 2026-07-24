@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.MutableState
@@ -38,18 +37,17 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.MasterTheme
 
 
 @Composable
 fun SettingsBoxWrapper(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Box(
         modifier
-            .border(1.dp, Colors.active_color_scheme.foreground, Shapes.SettingsBox)
+            .border(1.dp, Colors.active_color_scheme.foreground, MasterTheme.shapes.SettingsBox)
             .background(
                 Colors.active_color_scheme.container,
-                shape = Shapes.SettingsBox
+                shape = MasterTheme.shapes.SettingsBox
             ),
         contentAlignment = Alignment.Center,
         content = {
@@ -63,7 +61,7 @@ fun SettingsBoxWrapper(modifier: Modifier = Modifier, content: @Composable () ->
 @Composable
 fun SettingsColumn(
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(Dimensions.SettingsBoxPadding),
+    contentPadding: PaddingValues = PaddingValues(MasterTheme.dimensions.SettingsBoxPadding),
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     verticalArrangement: Arrangement.Vertical = Arrangement.Center,
     content: @Composable ColumnScope.() -> Unit
@@ -81,7 +79,7 @@ fun SettingsColumn(
 @Composable
 fun SettingsBox(
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(Dimensions.SettingsBoxPadding),
+    contentPadding: PaddingValues = PaddingValues(MasterTheme.dimensions.SettingsBoxPadding),
     contentAlignment: Alignment = Alignment.TopCenter,
     content: @Composable BoxScope.() -> Unit
 ) {
@@ -97,7 +95,7 @@ fun SettingsBox(
 @Composable
 fun SettingsRow(
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(Dimensions.SettingsBoxPadding),
+    contentPadding: PaddingValues = PaddingValues(MasterTheme.dimensions.SettingsBoxPadding),
     horizontalArrangement: Arrangement.Horizontal = Arrangement.Center,
     verticalAlignment: Alignment.Vertical = Alignment.CenterVertically,
     content: @Composable RowScope.() -> Unit
@@ -116,8 +114,8 @@ fun SettingsRow(
 fun MenuPadder() {
     Spacer(
         Modifier
-            .width(Dimensions.SoundFontMenuPadding)
-            .height(Dimensions.SoundFontMenuPadding)
+            .width(MasterTheme.dimensions.SoundFontMenuPadding)
+            .height(MasterTheme.dimensions.SoundFontMenuPadding)
     )
 }
 

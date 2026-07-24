@@ -14,13 +14,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.MasterTheme
 
 @Composable
 fun ContextMenuSpacer() {
     Spacer(
         Modifier
-            .height(Dimensions.ContextMenuSpacing)
-            .width(Dimensions.ContextMenuSpacing)
+            .height(MasterTheme.dimensions.ContextMenuSpacing)
+            .width(MasterTheme.dimensions.ContextMenuSpacing)
     )
 }

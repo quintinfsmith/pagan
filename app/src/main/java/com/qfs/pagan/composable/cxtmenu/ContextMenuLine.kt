@@ -80,8 +80,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocity
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.MasterTheme
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
@@ -98,7 +97,7 @@ fun AdjustSelectionDialog(visibility: MutableState<Boolean>, radix: Int, callbac
                 Text(R.string.offset_dialog_octaves)
                 NumberPicker(Modifier, -7..7, octave)
             }
-            Spacer(Modifier.width(Dimensions.DialogAdjustInnerSpace))
+            Spacer(Modifier.width(MasterTheme.dimensions.DialogAdjustInnerSpace))
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(R.string.offset_dialog_offset)
                 NumberPicker(Modifier, 0 - max_abs .. max_abs, offset)
@@ -123,7 +122,7 @@ fun AdjustLineButton(vm_state: ViewModelEditorState, opus_manager: OpusLayerInte
         onClick = {
             visibility.value = !visibility.value
         },
-        shape = Shapes.ContextMenuButtonPrimary,
+        shape = MasterTheme.shapes.ContextMenuButtonPrimary,
         icon = R.drawable.icon_adjust,
         description = R.string.cd_adjust_selection
     )
@@ -143,7 +142,7 @@ fun DuplicateLineButton(active_line: ViewModelEditorState.LineData, opus_manager
             val line_offset = active_line.line_offset.value ?: return@IconCMenuButton
             opus_manager.duplicate_line(channel, line_offset)
         },
-        shape = Shapes.ContextMenuButtonPrimary,
+        shape = MasterTheme.shapes.ContextMenuButtonPrimary,
         icon = R.drawable.icon_ic_baseline_content_copy_24,
         description = R.string.cd_adjust_selection
     )
@@ -154,7 +153,7 @@ fun ToggleLineControllerButton(
     vm_state: ViewModelEditorState,
     active_line: ViewModelEditorState.LineData,
     opus_manager: OpusLayerInterface,
-    shape: Shape = Shapes.ContextMenuButtonPrimary
+    shape: Shape = MasterTheme.shapes.ContextMenuButtonPrimary
 ) {
     val dialog_visibility = remember { mutableStateOf(false) }
     IconCMenuButton(
@@ -178,7 +177,7 @@ fun InsertLineButton(
     active_line: ViewModelEditorState.LineData,
     opus_manager: OpusLayerInterface,
     dialog_value: MutableIntState,
-    shape: Shape = Shapes.ContextMenuButtonPrimaryStart
+    shape: Shape = MasterTheme.shapes.ContextMenuButtonPrimaryStart
 ) {
     val visibility = remember { mutableStateOf(false) }
     Box {
@@ -354,8 +353,8 @@ fun PercussionInstrumentDialog(visibility: MutableState<Boolean>, vm_state: View
                                             context.play_event(channel, index, .7F)
                                         }
                                     }
-                                    .height(Dimensions.PreviewIconHeight)
-                                    .width(Dimensions.PreviewIconHeight),
+                                    .height(MasterTheme.dimensions.PreviewIconHeight)
+                                    .width(MasterTheme.dimensions.PreviewIconHeight),
                                 contentAlignment = Alignment.CenterEnd
                             ) {
                                 Icon(
@@ -363,12 +362,12 @@ fun PercussionInstrumentDialog(visibility: MutableState<Boolean>, vm_state: View
                                     contentDescription = null,
                                     modifier = Modifier
                                         .padding(
-                                            top = Dimensions.PreviewIconPadding,
-                                            bottom = Dimensions.PreviewIconPadding,
-                                            start = Dimensions.PreviewIconPadding
+                                            top = MasterTheme.dimensions.PreviewIconPadding,
+                                            bottom = MasterTheme.dimensions.PreviewIconPadding,
+                                            start = MasterTheme.dimensions.PreviewIconPadding
                                         )
-                                        .height(Dimensions.PreviewIconHeight - (Dimensions.PreviewIconPadding * 2))
-                                        .width(Dimensions.PreviewIconHeight - (Dimensions.PreviewIconPadding))
+                                        .height(MasterTheme.dimensions.PreviewIconHeight - (MasterTheme.dimensions.PreviewIconPadding * 2))
+                                        .width(MasterTheme.dimensions.PreviewIconHeight - (MasterTheme.dimensions.PreviewIconPadding))
                                 )
                             }
                         }
@@ -407,7 +406,7 @@ fun SetLineColorButton(
     vm_state: ViewModelEditorState,
     line: ViewModelEditorState.LineData,
     opus_manager: OpusLayerInterface,
-    shape: Shape = Shapes.ContextMenuButtonPrimary
+    shape: Shape = MasterTheme.shapes.ContextMenuButtonPrimary
 ) {
     val visibility = remember { mutableStateOf(false) }
     Box(contentAlignment = Alignment.BottomEnd) {
@@ -423,12 +422,12 @@ fun SetLineColorButton(
             Spacer(
                 Modifier
                     .padding(
-                        end = Dimensions.PaletteDotPaddingEnd,
-                        bottom = Dimensions.PaletteDotPaddingBottom
+                        end = MasterTheme.dimensions.PaletteDotPaddingEnd,
+                        bottom = MasterTheme.dimensions.PaletteDotPaddingBottom
                     )
                     .size(
-                        Dimensions.PaletteDotSize,
-                        Dimensions.PaletteDotSize
+                        MasterTheme.dimensions.PaletteDotSize,
+                        MasterTheme.dimensions.PaletteDotSize
                     )
                     .clip(CircleShape)
                     .background(color)
@@ -453,6 +452,7 @@ fun SetLineColorButton(
 fun MuteButton(
     opus_manager: OpusLayerInterface,
     line: ViewModelEditorState.LineData,
+    shape: Shape
 ) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.LineMute),
@@ -465,7 +465,7 @@ fun MuteButton(
         },
         icon = if (!line.is_mute.value) R.drawable.icon_unmute
         else R.drawable.icon_mute,
-        shape = Shapes.ContextMenuSecondaryButtonStart,
+        shape = shape,
         description = R.string.cd_line_mute
     )
 }
@@ -538,7 +538,7 @@ fun LineEffectMenuDialog(
 
     PaganDialog(subdialog_visibility) {
         Icon(
-            modifier = Modifier.height(Dimensions.EffectDialogIconHeight),
+            modifier = Modifier.height(MasterTheme.dimensions.EffectDialogIconHeight),
             painter = painterResource(EffectResourceMap[subdialog_ctl_type.value!!].icon),
             contentDescription = stringResource(EffectResourceMap[subdialog_ctl_type.value!!].name)
         )
@@ -650,7 +650,7 @@ fun ContextMenuLineStdPrimary(
                     vm_state,
                     active_line,
                     opus_manager,
-                    shape = Shapes.ContextMenuButtonPrimaryStart
+                    shape = MasterTheme.shapes.ContextMenuButtonPrimaryStart
                 )
 
                 if (active_line.assigned_offset.value != null) {
@@ -681,7 +681,7 @@ fun ContextMenuLineStdPrimary(
                     active_line,
                     opus_manager,
                     vm_state.dlg_insert_line,
-                    Shapes.ContextMenuButtonPrimaryEnd
+                    MasterTheme.shapes.ContextMenuButtonPrimaryEnd
                 )
             }
         }
@@ -710,8 +710,8 @@ fun ContextMenuLineStdPrimary(
                     MediumSpacer()
                     PercussionSetInstrumentButton(
                         Modifier
-                            .width(Dimensions.ContextMenuButtonWidth)
-                            .height(Dimensions.ContextMenuButtonHeight),
+                            .width(MasterTheme.dimensions.ContextMenuButtonWidth)
+                            .height(MasterTheme.dimensions.ContextMenuButtonHeight),
                         vm_state,
                         opus_manager,
                         cursor.ints[0],
@@ -728,7 +728,7 @@ fun ContextMenuLineStdPrimary(
                     vm_state,
                     active_line,
                     opus_manager,
-                    shape = Shapes.ContextMenuButtonPrimaryBottom
+                    shape = MasterTheme.shapes.ContextMenuButtonPrimaryBottom
                 )
             }
         }
@@ -746,18 +746,18 @@ fun ContextMenuLineCtlPrimary(modifier: Modifier = Modifier, vm_state: ViewModel
         LayoutSize.XLargePortrait,
         LayoutSize.XLargeLandscape -> {
             ContextMenuPrimaryRow(modifier) {
-                HideEffectButton(active_line, opus_manager, Shapes.ContextMenuButtonPrimaryStart)
+                HideEffectButton(active_line, opus_manager, MasterTheme.shapes.ContextMenuButtonPrimaryStart)
                 Spacer(Modifier.weight(1F))
-                RemoveEffectButton(active_line, opus_manager, Shapes.ContextMenuButtonPrimaryEnd)
+                RemoveEffectButton(active_line, opus_manager, MasterTheme.shapes.ContextMenuButtonPrimaryEnd)
             }
         }
         LayoutSize.SmallLandscape,
         LayoutSize.LargeLandscape,
         LayoutSize.MediumLandscape -> {
             Column {
-                RemoveEffectButton(active_line, opus_manager, Shapes.ContextMenuButtonPrimaryStart)
+                RemoveEffectButton(active_line, opus_manager, MasterTheme.shapes.ContextMenuButtonPrimaryStart)
                 Spacer(Modifier.weight(1F))
-                HideEffectButton(active_line, opus_manager, Shapes.ContextMenuButtonPrimaryBottom)
+                HideEffectButton(active_line, opus_manager, MasterTheme.shapes.ContextMenuButtonPrimaryBottom)
             }
         }
     }
@@ -781,14 +781,14 @@ fun ContextMenuLineSecondary(ui_facade: ViewModelEditorState, opus_manager: Opus
 fun ContextMenuLineCtlSecondary(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, modifier: Modifier = Modifier, layout: LayoutSize) {
     ContextMenuSecondaryRow {
         when (val initial_event = vm_state.active_event.value) {
-            is OpusVolumeEvent -> VolumeEventMenu(vm_state, opus_manager, initial_event)
-            is OpusTempoEvent -> TempoEventMenu(vm_state, opus_manager, initial_event)
-            is OpusPanEvent -> PanEventMenu(vm_state, opus_manager, initial_event)
-            is OpusReverbEvent -> ReverbEventMenu(vm_state, opus_manager, initial_event)
-            is DelayEvent -> DelayEventMenu(vm_state, opus_manager, initial_event)
-            is OpusVelocityEvent -> VelocityEventMenu(vm_state, opus_manager, initial_event)
+            is OpusVolumeEvent -> VolumeEventMenu(vm_state, opus_manager, initial_event, layout)
+            is OpusTempoEvent -> TempoEventMenu(vm_state, opus_manager, initial_event, layout)
+            is OpusPanEvent -> PanEventMenu(vm_state, opus_manager, initial_event, layout)
+            is OpusReverbEvent -> ReverbEventMenu(vm_state, opus_manager, initial_event, layout)
+            is DelayEvent -> DelayEventMenu(vm_state, opus_manager, initial_event, layout)
+            is OpusVelocityEvent -> VelocityEventMenu(vm_state, opus_manager, initial_event, layout)
             is HighPassEvent,
-            is LowPassEvent -> FilterEventMenu(vm_state, opus_manager, initial_event)
+            is LowPassEvent -> FilterEventMenu(vm_state, opus_manager, initial_event, layout)
             else -> {}
         }
     }
@@ -801,16 +801,39 @@ fun ContextMenuLineStdSecondary(vm_state: ViewModelEditorState, opus_manager: Op
     val line = vm_state.line_data[y]
 
     ContextMenuSecondaryRow {
-        MuteButton(opus_manager, line)
+        MuteButton(
+            opus_manager,
+            line,
+            when (layout) {
+                LayoutSize.MediumLandscape,
+                LayoutSize.SmallLandscape -> MasterTheme.shapes.ContextMenuButtonPrimaryStart
+                else -> MasterTheme.shapes.ContextMenuButtonPrimary
+            }
+        )
         MediumSpacer()
-        VolumeEventMenu(vm_state, opus_manager, vm_state.active_event.value!! as OpusVolumeEvent)
+        VolumeEventMenu(
+            vm_state,
+            opus_manager,
+            vm_state.active_event.value!! as OpusVolumeEvent,
+            when (layout) {
+                LayoutSize.SmallLandscape -> LayoutSize.SmallPortrait
+                LayoutSize.MediumLandscape -> LayoutSize.MediumPortrait
+                LayoutSize.LargeLandscape -> LayoutSize.LargePortrait
+                LayoutSize.XLargeLandscape -> LayoutSize.XLargePortrait
+                else -> layout
+            }
+        )
         MediumSpacer()
         SetLineColorButton(
             Modifier,
             vm_state,
             line,
             opus_manager,
-            shape = Shapes.ContextMenuSecondaryButtonEnd
+            shape = when (layout) {
+                LayoutSize.MediumLandscape,
+                LayoutSize.SmallLandscape -> MasterTheme.shapes.ContextMenuButtonPrimaryEnd
+                else -> MasterTheme.shapes.ContextMenuButtonPrimary
+            }
         )
     }
 }

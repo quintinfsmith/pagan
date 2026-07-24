@@ -11,7 +11,6 @@ package com.qfs.pagan.composable.button
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -21,10 +20,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Shapes
-import com.qfs.pagan.ui.theme.Typography
+import com.qfs.pagan.ui.theme.MasterTheme
 
 
 @Composable
@@ -35,21 +31,21 @@ fun IconCMenuButton(
     icon: Int,
     description: Int,
     enabled: Boolean = true,
-    shape: Shape = Shapes.ContextMenuButtonPrimary,
-    contentPadding: PaddingValues = Dimensions.ContextMenuButtonPadding
+    shape: Shape = MasterTheme.shapes.ContextMenuButtonPrimary,
+    contentPadding: PaddingValues = MasterTheme.dimensions.ContextMenuButtonPadding
 ) {
     Button(
         enabled = enabled,
         modifier = modifier
-            .height(Dimensions.ContextMenuButtonHeight)
-            .width(Dimensions.ContextMenuButtonWidth),
+            .height(MasterTheme.dimensions.ContextMenuButtonHeight)
+            .width(MasterTheme.dimensions.ContextMenuButtonWidth),
         onClick = onClick,
         onLongClick = onLongClick ?: {},
         contentPadding = contentPadding,
         shape = shape,
         content = {
             Icon(
-                modifier = Modifier.width(Dimensions.ContextMenuButtonIconWidth),
+                modifier = Modifier.width(MasterTheme.dimensions.ContextMenuButtonIconWidth),
                 painter = painterResource(icon),
                 contentDescription = stringResource(description),
             )
@@ -63,13 +59,13 @@ fun TextCMenuButton(
     onClick: () -> Unit,
     onLongClick: (() -> Unit) ?= null,
     text: String,
-    shape: Shape = Shapes.ContextMenuButtonPrimary,
+    shape: Shape = MasterTheme.shapes.ContextMenuButtonPrimary,
     enabled: Boolean = true,
-    contentPadding: PaddingValues = Dimensions.ContextMenuButtonPadding
+    contentPadding: PaddingValues = MasterTheme.dimensions.ContextMenuButtonPadding
 ) {
     Button(
         enabled = enabled,
-        modifier = modifier.height(Dimensions.ContextMenuButtonHeight),
+        modifier = modifier.height(MasterTheme.dimensions.ContextMenuButtonHeight),
         contentPadding = contentPadding,
         shape = shape,
         onClick = onClick,
@@ -78,7 +74,7 @@ fun TextCMenuButton(
             Text(
                 text = text,
                 maxLines = 1,
-                style = Typography.ContextMenuButton,
+                style = MasterTheme.typography.ContextMenuButton,
                 overflow = TextOverflow.Ellipsis
             )
         }

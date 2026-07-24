@@ -19,8 +19,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,14 +28,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import com.qfs.pagan.R
 import com.qfs.pagan.composable.wrappers.Slider
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Shapes
-import com.qfs.pagan.ui.theme.Typography
+import com.qfs.pagan.ui.theme.MasterTheme
 
 @Composable
 fun ColorPicker(
@@ -54,20 +49,20 @@ fun ColorPicker(
         Spacer(
             Modifier
                 .fillMaxWidth()
-                .background(color.value, shape = Shapes.Container)
-                .height(Dimensions.ColorPickerPreviewHeight)
+                .background(color.value, shape = MasterTheme.shapes.Container)
+                .height(MasterTheme.dimensions.ColorPickerPreviewHeight)
         )
-        Spacer(Modifier.height(Dimensions.ColorPickerInnerPadding))
+        Spacer(Modifier.height(MasterTheme.dimensions.ColorPickerInnerPadding))
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 R.string.red,
-                style = Typography.ColorPickerLabel,
-                modifier = Modifier.width(Dimensions.ColorPickerLabelWidth)
+                style = MasterTheme.typography.ColorPickerLabel,
+                modifier = Modifier.width(MasterTheme.dimensions.ColorPickerLabelWidth)
             )
-            Spacer(Modifier.width(Dimensions.ColorPickerInnerPadding))
+            Spacer(Modifier.width(MasterTheme.dimensions.ColorPickerInnerPadding))
             Slider(
                 red.floatValue,
                 colors = slider_colors.copy(
@@ -86,20 +81,20 @@ fun ColorPicker(
                     )
                 }
             )
-            Spacer(Modifier.width(Dimensions.ColorPickerInnerPadding))
+            Spacer(Modifier.width(MasterTheme.dimensions.ColorPickerInnerPadding))
             HexDisplay(value = red.value)
         }
-        Spacer(Modifier.height(Dimensions.ColorPickerInnerPadding))
+        Spacer(Modifier.height(MasterTheme.dimensions.ColorPickerInnerPadding))
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 R.string.green,
-                style = Typography.ColorPickerLabel,
-                modifier = Modifier.width(Dimensions.ColorPickerLabelWidth)
+                style = MasterTheme.typography.ColorPickerLabel,
+                modifier = Modifier.width(MasterTheme.dimensions.ColorPickerLabelWidth)
             )
-            Spacer(Modifier.width(Dimensions.ColorPickerInnerPadding))
+            Spacer(Modifier.width(MasterTheme.dimensions.ColorPickerInnerPadding))
             Slider(
                 green.floatValue,
                 colors = slider_colors.copy(
@@ -118,20 +113,20 @@ fun ColorPicker(
                     )
                 }
             )
-            Spacer(Modifier.width(Dimensions.ColorPickerInnerPadding))
+            Spacer(Modifier.width(MasterTheme.dimensions.ColorPickerInnerPadding))
             HexDisplay(value = green.value)
         }
-        Spacer(Modifier.height(Dimensions.ColorPickerInnerPadding))
+        Spacer(Modifier.height(MasterTheme.dimensions.ColorPickerInnerPadding))
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 R.string.blue,
-                style = Typography.ColorPickerLabel,
-                modifier = Modifier.width(Dimensions.ColorPickerLabelWidth)
+                style = MasterTheme.typography.ColorPickerLabel,
+                modifier = Modifier.width(MasterTheme.dimensions.ColorPickerLabelWidth)
             )
-            Spacer(Modifier.width(Dimensions.ColorPickerInnerPadding))
+            Spacer(Modifier.width(MasterTheme.dimensions.ColorPickerInnerPadding))
             Slider(
                 blue.floatValue,
                 colors = slider_colors.copy(
@@ -150,25 +145,25 @@ fun ColorPicker(
                     )
                 }
             )
-            Spacer(Modifier.width(Dimensions.ColorPickerInnerPadding))
+            Spacer(Modifier.width(MasterTheme.dimensions.ColorPickerInnerPadding))
             HexDisplay(value = blue.value)
         }
         if (show_alpha) {
-            Spacer(Modifier.height(Dimensions.ColorPickerInnerPadding))
+            Spacer(Modifier.height(MasterTheme.dimensions.ColorPickerInnerPadding))
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     R.string.alpha,
-                    style = Typography.ColorPickerLabel,
-                    modifier = Modifier.width(Dimensions.ColorPickerLabelWidth)
+                    style = MasterTheme.typography.ColorPickerLabel,
+                    modifier = Modifier.width(MasterTheme.dimensions.ColorPickerLabelWidth)
                 )
-                Spacer(Modifier.width(Dimensions.ColorPickerInnerPadding))
+                Spacer(Modifier.width(MasterTheme.dimensions.ColorPickerInnerPadding))
                 Slider(
                     alpha.floatValue,
                     modifier = Modifier
-                        .width(Dimensions.ColorPickerSliderWidth)
+                        .width(MasterTheme.dimensions.ColorPickerSliderWidth)
                         .weight(1F, fill = false),
                     onValueChange = {
                         alpha.floatValue = it
@@ -180,7 +175,7 @@ fun ColorPicker(
                         )
                     }
                 )
-                Spacer(Modifier.width(Dimensions.ColorPickerInnerPadding))
+                Spacer(Modifier.width(MasterTheme.dimensions.ColorPickerInnerPadding))
                 HexDisplay(value = alpha.value)
             }
         }
@@ -190,19 +185,19 @@ fun ColorPicker(
 @Composable
 fun HexDisplay(modifier: Modifier = Modifier, value: Float) {
     Surface(
-        shape = Shapes.Container,
+        shape = MasterTheme.shapes.Container,
         color = Colors.active_color_scheme.container,
         contentColor = Colors.active_color_scheme.foreground,
-        border = BorderStroke(Dimensions.HexDisplayStrokeWidth, color = Colors.active_color_scheme.container_border)
+        border = BorderStroke(MasterTheme.dimensions.HexDisplayStrokeWidth, color = Colors.active_color_scheme.container_border)
     ) {
         Box(
-            modifier = Modifier.height(Dimensions.HexDisplayHeight),
+            modifier = Modifier.height(MasterTheme.dimensions.HexDisplayHeight),
             contentAlignment = Alignment.Center
         ) {
             Text(
-                modifier = modifier.width(Dimensions.ColorPickerHexInputWidth),
+                modifier = modifier.width(MasterTheme.dimensions.ColorPickerHexInputWidth),
                 text = "%02X".format((value * 255F).toInt()),
-                style = Typography.ColorPickerHexLabel
+                style = MasterTheme.typography.ColorPickerHexLabel
             )
         }
     }

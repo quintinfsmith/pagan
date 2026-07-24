@@ -16,121 +16,89 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import com.qfs.pagan.ComponentActivity.pow
 import com.qfs.pagan.ComponentActivity.sqrt
-import com.qfs.pagan.ui.theme.Dimensions.ContextMenuButtonRadius
-import com.qfs.pagan.ui.theme.Dimensions.getter
 
-object Shapes {
-    val ButtonDefault = CircleShape
-    val NumberSelectorButton = RoundedCornerShape(Dimensions.NotePickerButtonRadius)
-    val NumberSelectorButtonStart = RoundedCornerShape(
-        topStart = Dimensions.ContextMenuRadius,
-        topEnd = Dimensions.NotePickerButtonRadius,
-        bottomStart = Dimensions.NotePickerButtonRadius,
-        bottomEnd = Dimensions.NotePickerButtonRadius,
-    )
-    val NumberSelectorButtonEnd = RoundedCornerShape(
-        topStart = Dimensions.NotePickerButtonRadius,
-        topEnd = Dimensions.ContextMenuRadius,
-        bottomStart = Dimensions.NotePickerButtonRadius,
-        bottomEnd = Dimensions.NotePickerButtonRadius,
-    )
-
-    val ConfigChannelButtonEnd = RoundedCornerShape(
+data class PaganShapes(
+    val ButtonDefault: Shape = CircleShape,
+    val NumberSelectorButton: Shape = RoundedCornerShape(MasterTheme.dimensions.NotePickerButtonRadius),
+    val NumberSelectorButtonStart: Shape = RoundedCornerShape(
+        topStart = MasterTheme.dimensions.ContextMenuRadius,
+        topEnd = MasterTheme.dimensions.NotePickerButtonRadius,
+        bottomStart = MasterTheme.dimensions.NotePickerButtonRadius,
+        bottomEnd = MasterTheme.dimensions.NotePickerButtonRadius,
+    ),
+    val NumberSelectorButtonEnd: Shape = RoundedCornerShape(
+        topStart = MasterTheme.dimensions.NotePickerButtonRadius,
+        topEnd = MasterTheme.dimensions.ContextMenuRadius,
+        bottomStart = MasterTheme.dimensions.NotePickerButtonRadius,
+        bottomEnd = MasterTheme.dimensions.NotePickerButtonRadius,
+    ),
+    val ConfigChannelButtonEnd: Shape = RoundedCornerShape(
         0.dp,
-        Dimensions.ConfigDrawerButtonRadius,
-        Dimensions.ConfigDrawerButtonRadius,
+        MasterTheme.dimensions.ConfigDrawerButtonRadius,
+        MasterTheme.dimensions.ConfigDrawerButtonRadius,
         0.dp,
-    )
-    val ConfigChannelButtonStart = RoundedCornerShape(
-        Dimensions.ConfigDrawerButtonRadius,
+    ),
+    val ConfigChannelButtonStart: Shape = RoundedCornerShape(
+        MasterTheme.dimensions.ConfigDrawerButtonRadius,
         0.dp,
         0.dp,
-        Dimensions.ConfigDrawerButtonRadius,
-    )
-    val Container = RoundedCornerShape(12.dp)
-    val ContextMenuButtonFull = RoundedCornerShape(
-        topEnd = Dimensions.ContextMenuRadius,
-        topStart = Dimensions.ContextMenuRadius,
-        bottomEnd = Dimensions.ContextMenuButtonRadius,
-        bottomStart = Dimensions.ContextMenuButtonRadius
-    )
-    val ContextMenuButtonPrimary = RoundedCornerShape(ContextMenuButtonRadius)
-    val ContextMenuButtonPrimaryStart = RoundedCornerShape(
-        topStart = Dimensions.ContextMenuRadius,
-        topEnd = Dimensions.ContextMenuButtonRadius,
-        bottomStart = Dimensions.ContextMenuButtonRadius,
-        bottomEnd = Dimensions.ContextMenuButtonRadius,
-    )
-    val ContextMenuButtonPrimaryEnd = RoundedCornerShape(
-        topEnd = Dimensions.ContextMenuRadius,
-        topStart = Dimensions.ContextMenuButtonRadius,
-        bottomEnd = Dimensions.ContextMenuButtonRadius,
-        bottomStart = Dimensions.ContextMenuButtonRadius
-    )
-    val ContextMenuButtonPrimaryBottom = RoundedCornerShape(
-        bottomStart = Dimensions.ContextMenuRadius,
-        topEnd = Dimensions.ContextMenuButtonRadius,
-        topStart = Dimensions.ContextMenuButtonRadius,
-        bottomEnd = Dimensions.ContextMenuButtonRadius,
-    )
-
-    val ContextMenuSecondaryButtonEnd: Shape
-        get() = getter(
-            small_portrait = ContextMenuButtonPrimary,
-            small_landscape = ContextMenuButtonPrimaryEnd,
-            medium_portrait = ContextMenuButtonPrimary,
-        )
-    val ContextMenuSecondaryButtonStart: Shape
-        get() = getter(
-            small_portrait = ContextMenuButtonPrimary,
-            small_landscape = ContextMenuButtonPrimaryStart,
-            medium_portrait = ContextMenuButtonPrimary,
-        )
-
-    val CMBoxBottom = RoundedCornerShape(
-        topStart = Dimensions.ContextMenuRadius,
-        topEnd = Dimensions.ContextMenuRadius,
+        MasterTheme.dimensions.ConfigDrawerButtonRadius,
+    ),
+    val Container: Shape = RoundedCornerShape(12.dp),
+    val ContextMenuButtonFull: Shape = RoundedCornerShape(
+        topEnd = MasterTheme.dimensions.ContextMenuRadius,
+        topStart = MasterTheme.dimensions.ContextMenuRadius,
+        bottomEnd = MasterTheme.dimensions.ContextMenuButtonRadius,
+        bottomStart = MasterTheme.dimensions.ContextMenuButtonRadius
+    ),
+    val ContextMenuButtonPrimary: Shape = RoundedCornerShape(MasterTheme.dimensions.ContextMenuButtonRadius),
+    val ContextMenuButtonPrimaryStart: Shape = RoundedCornerShape(
+        topStart = MasterTheme.dimensions.ContextMenuRadius,
+        topEnd = MasterTheme.dimensions.ContextMenuButtonRadius,
+        bottomStart = MasterTheme.dimensions.ContextMenuButtonRadius,
+        bottomEnd = MasterTheme.dimensions.ContextMenuButtonRadius,
+    ),
+    val ContextMenuButtonPrimaryEnd: Shape = RoundedCornerShape(
+        topEnd = MasterTheme.dimensions.ContextMenuRadius,
+        topStart = MasterTheme.dimensions.ContextMenuButtonRadius,
+        bottomEnd = MasterTheme.dimensions.ContextMenuButtonRadius,
+        bottomStart = MasterTheme.dimensions.ContextMenuButtonRadius
+    ),
+    val ContextMenuButtonPrimaryBottom: Shape = RoundedCornerShape(
+        bottomStart = MasterTheme.dimensions.ContextMenuRadius,
+        topEnd = MasterTheme.dimensions.ContextMenuButtonRadius,
+        topStart = MasterTheme.dimensions.ContextMenuButtonRadius,
+        bottomEnd = MasterTheme.dimensions.ContextMenuButtonRadius,
+    ),
+    val CMBoxBottom: Shape = RoundedCornerShape(
+        topStart = MasterTheme.dimensions.ContextMenuRadius,
+        topEnd = MasterTheme.dimensions.ContextMenuRadius,
         bottomStart = 0.dp,
         bottomEnd = 0.dp
-    )
-    val CMBoxEnd = RoundedCornerShape(
+    ),
+    val CMBoxEnd: Shape = RoundedCornerShape(
         topEnd = 0.dp,
-        topStart = Dimensions.ContextMenuRadius,
-        bottomStart = Dimensions.ContextMenuRadius,
+        topStart = MasterTheme.dimensions.ContextMenuRadius,
+        bottomStart = MasterTheme.dimensions.ContextMenuRadius,
         bottomEnd = 0.dp
-    )
+    ),
+    val Drawer: Shape = RoundedCornerShape(topStart = 0.dp, bottomStart = 0.dp, topEnd = 4.dp, bottomEnd = 4.dp),
+    val LandingButtonShape: Shape = RoundedCornerShape(MasterTheme.dimensions.LandingButtonCornerRadius),
+    val LandingButtonShapeNeedsSF: Shape = RoundedCornerShape(MasterTheme.dimensions.LandingButtonCornerRadius, 0.dp, 0.dp, MasterTheme.dimensions.LandingButtonCornerRadius),
+    val NumberInputDialog: Shape = Container,
+    val ProjectCardNotes: Shape = RoundedCornerShape(4.dp),
 
-    val Drawer = RoundedCornerShape(topStart = 0.dp, bottomStart = 0.dp, topEnd = 4.dp, bottomEnd = 4.dp)
+    val RadioMenuStart: Shape = RoundedCornerShape(50F, 0F, 0F, 50F),
+    val RadioMenuMiddle: Shape = RectangleShape,
+    val RadioMenuEnd: Shape = RoundedCornerShape(0F, 50F, 50F, 0F),
 
-    val LandingButtonShape = RoundedCornerShape(Dimensions.LandingButtonCornerRadius)
-    val LandingButtonShapeNeedsSF = RoundedCornerShape(Dimensions.LandingButtonCornerRadius, 0.dp, 0.dp, Dimensions.LandingButtonCornerRadius)
-
-    val NumberInputDialog = Container
-
-    val ProjectCardNotes = RoundedCornerShape(4.dp)
-
-    object RadioMenu {
-        val Start = RoundedCornerShape(50F, 0F, 0F, 50F)
-        val Middle = RectangleShape
-        val End = RoundedCornerShape(0F, 50F, 50F, 0F)
-    }
-
-    val SectionButtonEnd = RoundedCornerShape(0.dp, 50.dp, 50.dp, 0.dp)
-    val SectionButtonCenter = RectangleShape
-    val SectionButtonStart = RoundedCornerShape(
-        50.dp,
-        0.dp,
-        0.dp,
-        50.dp
-    )
-
-    val SettingsBox = RoundedCornerShape((Dimensions.SettingsBoxPadding.pow(2) * 2).sqrt())
-
-    val SortableMenuBox = RoundedCornerShape(Dimensions.SortableMenuBoxRadius)
-    val SoundFontWarningBox = RoundedCornerShape(24.dp)
-
-    val TaggedBeat = RoundedCornerShape(6.dp)
-    val TopBar = RectangleShape
-
-    val TuningDialogBox = Container
-}
+    val SectionButtonEnd: Shape = RoundedCornerShape(0.dp, 50.dp, 50.dp, 0.dp),
+    val SectionButtonCenter: Shape = RectangleShape,
+    val SectionButtonStart: Shape = RoundedCornerShape(50.dp, 0.dp, 0.dp, 50.dp),
+    val SettingsBox: Shape = RoundedCornerShape((MasterTheme.dimensions.SettingsBoxPadding.pow(2) * 2).sqrt()),
+    val SortableMenuBox: Shape = RoundedCornerShape(MasterTheme.dimensions.SortableMenuBoxRadius),
+    val SoundFontWarningBox: Shape = RoundedCornerShape(24.dp),
+    val TaggedBeat: Shape = RoundedCornerShape(6.dp),
+    val TopBar: Shape = RectangleShape,
+    val TuningDialogBox: Shape = Container
+)

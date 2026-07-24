@@ -58,14 +58,12 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocity
 import com.qfs.pagan.structure.opusmanager.cursor.CursorMode
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Dimensions.Unpadded
-import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.MasterTheme
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.roundToInt
 
 @Composable
-fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, event: OpusVelocityEvent) {
+fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, event: OpusVelocityEvent, layout: LayoutSize) {
     val cursor = vm_state.active_cursor.value ?: return
     val working_event = remember { mutableStateOf(event.copy()) }
     val is_initial = cursor.type == CursorMode.Line
@@ -99,12 +97,16 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
                     modifier = Modifier.width(IntrinsicSize.Min)
                 ) {
                     Button(
-                        contentPadding = Dimensions.ContextMenuButtonPadding,
-                        shape = Shapes.ContextMenuButtonPrimary,
+                        contentPadding = MasterTheme.dimensions.ContextMenuButtonPadding,
+                        shape = when (layout) {
+                            LayoutSize.MediumLandscape,
+                            LayoutSize.SmallLandscape -> MasterTheme.shapes.ContextMenuButtonPrimaryStart
+                            else -> MasterTheme.shapes.ContextMenuButtonPrimary
+                        },
                         modifier = Modifier
                             .testTag(TestTag.VelocityButton)
-                            .height(Dimensions.ContextMenuButtonHeight)
-                            .width(Dimensions.ContextMenuButtonWidth),
+                            .height(MasterTheme.dimensions.ContextMenuButtonHeight)
+                            .width(MasterTheme.dimensions.ContextMenuButtonWidth),
                         content = {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
@@ -120,8 +122,8 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
                         onDismissRequest = { velocity_expanded.value = false },
                         shape = CircleShape,
                         modifier = Modifier
-                            .height(Dimensions.EffectWidget.Velocity.FadePopupHeight)
-                            .width(Dimensions.EffectWidget.Velocity.FadePopupWidth)
+                            .height(MasterTheme.dimensions.EffectWidgetVelocityFadePopupHeight)
+                            .width(MasterTheme.dimensions.EffectWidgetVelocityFadePopupWidth)
                     ) {
                         Slider(
                             value = working_value.floatValue,
@@ -130,7 +132,7 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
                             valueRange = 0F..1F,
                             modifier = Modifier
                                 .testTag(TestTag.VelocityVSlider)
-                                .padding(vertical = Dimensions.EffectWidget.Velocity.FadePopupPadding)
+                                .padding(vertical = MasterTheme.dimensions.EffectWidgetVelocityFadePopupPadding)
                                 .graphicsLayer {
                                     rotationZ = 270f
                                     transformOrigin = TransformOrigin(0f, 0f)
@@ -175,13 +177,13 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
                 velocity_input_value,
                 minimum = 0,
                 maximum = 100,
-                contentPadding = Unpadded,
+                contentPadding = MasterTheme.dimensions.Unpadded,
                 text_align = TextAlign.Center,
                 revert_on_exit = true,
                 modifier = Modifier
                     .testTag(TestTag.VelocityInput)
-                    .height(Dimensions.EffectWidget.InputHeight)
-                    .width(Dimensions.EffectWidget.Velocity.InputWidth)
+                    .height(MasterTheme.dimensions.EffectWidgetInputHeight)
+                    .width(MasterTheme.dimensions.EffectWidgetVelocityInputWidth)
             ) {
                 working_event.value.value = it.toFloat() / 100F
                 working_value.floatValue = working_event.value.value
@@ -280,12 +282,12 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
                             denominator_label,
                             minimum = 1,
                             revert_on_exit = true,
-                            contentPadding = Unpadded,
+                            contentPadding = MasterTheme.dimensions.Unpadded,
                             text_align = TextAlign.Center,
                             modifier = Modifier
                                 .testTag(TestTag.VelocitySlideDenominator)
-                                .height(Dimensions.EffectWidget.InputHeight)
-                                .width(Dimensions.EffectWidget.Velocity.InputWidth)
+                                .height(MasterTheme.dimensions.EffectWidgetInputHeight)
+                                .width(MasterTheme.dimensions.EffectWidgetVelocityInputWidth)
                         ) {
                             working_event.value.slide = Pair(slide_width_mode.value, it)
                             submit()
@@ -326,10 +328,10 @@ fun RowScope.VelocityEventMenu(vm_state: ViewModelEditorState, opus_manager: Opu
                     MediumSpacer()
                 }
 
-                EffectTransitionButton(working_event.value, opus_manager, is_initial)
+                EffectTransitionButton(working_event.value, opus_manager, is_initial, layout)
             }
         }
     } else {
-        EffectTransitionButton(working_event.value, opus_manager, is_initial)
+        EffectTransitionButton(working_event.value, opus_manager, is_initial, layout)
     }
 }

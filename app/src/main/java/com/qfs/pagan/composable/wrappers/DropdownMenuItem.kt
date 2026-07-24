@@ -22,8 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Shapes
-import com.qfs.pagan.ui.theme.Typography
+import com.qfs.pagan.ui.theme.MasterTheme
 
 @Composable
 fun DropdownMenuItem(
@@ -42,7 +41,7 @@ fun DropdownMenuItem(
 
     DropdownMenuItem(
         {
-            ProvideTextStyle(Typography.DropdownMenu) {
+            ProvideTextStyle(MasterTheme.typography.DropdownMenu) {
                 text()
             }
         },
@@ -53,7 +52,7 @@ fun DropdownMenuItem(
             .background(
                 if (selected) Colors.active_color_scheme.menu_item_selected
                 else Colors.active_color_scheme.menu_item,
-                Shapes.SortableMenuBox
+                MasterTheme.shapes.SortableMenuBox
             ),
         leadingIcon,
         trailingIcon,

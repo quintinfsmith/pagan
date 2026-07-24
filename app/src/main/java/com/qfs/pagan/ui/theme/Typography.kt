@@ -11,12 +11,9 @@ package com.qfs.pagan.ui.theme
 
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.Hyphens
-import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextIndent
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 
@@ -150,8 +147,8 @@ data class PaganTypography(
     val ProjectNotes: TextStyle = TextStyle(fontFamily = Fonts.FiraSans),
     val RadioMenu: TextStyle = TextStyle(fontFamily = Fonts.FiraSans, fontSize = 22.sp, fontWeight = FontWeight.Bold),
 
-    val SettingsTitle: TextStyle = TextStyle(fontFamily = Fonts.FiraSans)
-    val SettingsLabel: TextStyle = TextStyle(fontFamily = Fonts.FiraSans)
+    val SettingsTitle: TextStyle = TextStyle(fontFamily = Fonts.FiraSans),
+    val SettingsLabel: TextStyle = TextStyle(fontFamily = Fonts.FiraSans),
 
     val SoundFontWarningTitle: TextStyle = TextStyle(
         fontFamily = Fonts.FiraSans,
@@ -211,7 +208,7 @@ data class PaganTypography(
     )
 )
 
-object Typography {
+object Typ22ography {
     val Default = TextStyle(
         fontFamily = Fonts.FiraSans
     )

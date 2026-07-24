@@ -62,10 +62,7 @@ import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusTempoEve
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVelocityEvent
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.event.OpusVolumeEvent
 import com.qfs.pagan.testTag
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Dimensions.Unpadded
-import com.qfs.pagan.ui.theme.Shapes
-import com.qfs.pagan.ui.theme.Typography
+import com.qfs.pagan.ui.theme.MasterTheme
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -74,7 +71,7 @@ import kotlin.math.ceil
 fun SplitButton(
     opus_manager: OpusLayerInterface,
     dialog_value: MutableIntState,
-    shape: Shape = Shapes.ContextMenuButtonPrimaryStart
+    shape: Shape = MasterTheme.shapes.ContextMenuButtonPrimaryStart
 ) {
     Box {
         val dialog_visibility = remember { mutableStateOf(false) }
@@ -144,14 +141,14 @@ fun DurationButton(
     dialog_value: MutableIntState,
     descriptor: ViewModelEditorState.EventDescriptor?,
     active_event: OpusEvent?,
-    shape: Shape = Shapes.ContextMenuButtonPrimary
+    shape: Shape = MasterTheme.shapes.ContextMenuButtonPrimary
 ) {
     val dialog_visibility = remember { mutableStateOf(false) }
     Box {
         TextCMenuButton(
             modifier = Modifier
                 .testTag(TestTag.EventDuration)
-                .width(Dimensions.ButtonHeight.Normal),
+                .width(MasterTheme.dimensions.ButtonHeightNormal),
             enabled = when (descriptor) {
                 ViewModelEditorState.EventDescriptor.Selected,
                 ViewModelEditorState.EventDescriptor.Tail -> true
@@ -159,7 +156,7 @@ fun DurationButton(
                 else -> false
             },
             shape = shape,
-            contentPadding = Unpadded,
+            contentPadding = MasterTheme.dimensions.Unpadded,
             onClick = { dialog_visibility.value = !dialog_visibility.value },
             onLongClick = { opus_manager.set_duration_at_cursor(1) },
             text = when (descriptor) {
@@ -186,7 +183,7 @@ fun UnsetOrPercussionButton(
     opus_manager: OpusLayerInterface,
     active_line: ViewModelEditorState.LineData,
     event_active: Boolean,
-    shape: Shape = Shapes.ContextMenuButtonPrimary
+    shape: Shape = MasterTheme.shapes.ContextMenuButtonPrimary
 ) {
     if (active_line.assigned_offset.value != null && active_line.ctl_type.value == null) {
         TogglePercussionButton(opus_manager, event_active, shape)
@@ -200,7 +197,7 @@ fun UnsetOrPercussionButton(
 fun UnsetButton(
     opus_manager: OpusLayerInterface,
     event_active: Boolean,
-    shape: Shape = Shapes.ContextMenuButtonPrimary
+    shape: Shape = MasterTheme.shapes.ContextMenuButtonPrimary
 ) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.EventUnset),
@@ -217,7 +214,7 @@ fun UnsetButton(
 fun TogglePercussionButton(
     opus_manager: OpusLayerInterface,
     event_active: Boolean,
-    shape: Shape = Shapes.ContextMenuButtonPrimary
+    shape: Shape = MasterTheme.shapes.ContextMenuButtonPrimary
 ) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.PercussionToggle),
@@ -242,7 +239,7 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, vm_state: ViewMo
     val event_unsettable = vm_state.active_event_descriptor.value != ViewModelEditorState.EventDescriptor.Backup && active_event != null
     if (landscape) {
         Column(
-            Modifier.width(Dimensions.ContextMenuButtonWidth),
+            Modifier.width(MasterTheme.dimensions.ContextMenuButtonWidth),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             SplitButton(opus_manager, vm_state.dlg_split)
@@ -258,7 +255,7 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, vm_state: ViewMo
                     vm_state.dlg_duration,
                     vm_state.active_event_descriptor.value,
                     active_event,
-                    shape = Shapes.ContextMenuButtonPrimary
+                    shape = MasterTheme.shapes.ContextMenuButtonPrimary
                 )
             }
             MediumSpacer()
@@ -266,7 +263,7 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, vm_state: ViewMo
                 opus_manager,
                 active_line,
                 event_unsettable,
-                Shapes.ContextMenuButtonPrimaryBottom
+                MasterTheme.shapes.ContextMenuButtonPrimaryBottom
             )
         }
     } else {
@@ -284,7 +281,7 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, vm_state: ViewMo
                     vm_state.dlg_duration,
                     vm_state.active_event_descriptor.value,
                     active_event,
-                    shape = Shapes.ContextMenuButtonPrimary
+                    shape = MasterTheme.shapes.ContextMenuButtonPrimary
                 )
             }
             MediumSpacer()
@@ -292,7 +289,7 @@ fun ContextMenuStructureControls(modifier: Modifier = Modifier, vm_state: ViewMo
                 opus_manager,
                 active_line,
                 event_unsettable,
-                Shapes.ContextMenuButtonPrimaryEnd
+                MasterTheme.shapes.ContextMenuButtonPrimaryEnd
             )
         }
     }
@@ -326,7 +323,7 @@ fun ContextMenuLeafPrimary(modifier: Modifier = Modifier, vm_state: ViewModelEdi
                 Row {
                     ContextMenuStructureControls(Modifier, vm_state, opus_manager, true)
                     MediumSpacer()
-                    Column(Modifier.width(Dimensions.NotePickerColumnWidth)) {
+                    Column(Modifier.width(MasterTheme.dimensions.NotePickerColumnWidth)) {
                         val octave_dropdown_visible: MutableState<Int?> = remember { mutableStateOf(null) }
                         NotePicker(
                             progression = 7 downTo 0,
@@ -384,14 +381,14 @@ fun ContextMenuLeafSecondary(vm_state: ViewModelEditorState, opus_manager: OpusL
 fun ContextMenuLeafCtlSecondary(vm_state: ViewModelEditorState, opus_manager: OpusLayerInterface, modifier: Modifier = Modifier, layout: LayoutSize) {
     ContextMenuSecondaryRow(modifier) {
         when (val active_event = vm_state.active_event.value) {
-            is OpusVolumeEvent -> VolumeEventMenu(vm_state, opus_manager, active_event)
-            is OpusTempoEvent -> TempoEventMenu(vm_state, opus_manager, active_event)
-            is OpusPanEvent -> PanEventMenu(vm_state, opus_manager, active_event)
-            is OpusReverbEvent -> ReverbEventMenu(vm_state, opus_manager, active_event)
-            is DelayEvent -> DelayEventMenu(vm_state, opus_manager, active_event)
-            is OpusVelocityEvent -> VelocityEventMenu(vm_state, opus_manager, active_event)
+            is OpusVolumeEvent -> VolumeEventMenu(vm_state, opus_manager, active_event, layout)
+            is OpusTempoEvent -> TempoEventMenu(vm_state, opus_manager, active_event, layout)
+            is OpusPanEvent -> PanEventMenu(vm_state, opus_manager, active_event, layout)
+            is OpusReverbEvent -> ReverbEventMenu(vm_state, opus_manager, active_event, layout)
+            is DelayEvent -> DelayEventMenu(vm_state, opus_manager, active_event, layout)
+            is OpusVelocityEvent -> VelocityEventMenu(vm_state, opus_manager, active_event, layout)
             is HighPassEvent,
-            is LowPassEvent -> FilterEventMenu(vm_state, opus_manager, active_event)
+            is LowPassEvent -> FilterEventMenu(vm_state, opus_manager, active_event, layout)
             else -> {}
         }
     }
@@ -404,14 +401,14 @@ fun RelativeInputDropDown(vm_state: ViewModelEditorState, opus_manager: OpusLaye
         onDismissRequest = { expanded.value = null}
     ) {
         RadioMenu(
-            modifier = Modifier.padding(Dimensions.RelativeInputPopup.Padding),
+            modifier = Modifier.padding(MasterTheme.dimensions.RelativeInputPopupPadding),
             options = listOf(
                 Pair(RelativeInputMode.Negative) {
                     Icon(
                         modifier = Modifier
                             .testTag(TestTag.RelativeSetNegative)
-                            .padding(vertical = Dimensions.RelativeInputPopup.ItemPadding)
-                            .height(Dimensions.RelativeInputPopup.ItemHeight),
+                            .padding(vertical = MasterTheme.dimensions.RelativeInputPopupItemPadding)
+                            .height(MasterTheme.dimensions.RelativeInputPopupItemHeight),
                         painter = painterResource(R.drawable.icon_subtract),
                         contentDescription = stringResource(R.string.relative_input_mode_positive)
                     )
@@ -421,17 +418,17 @@ fun RelativeInputDropDown(vm_state: ViewModelEditorState, opus_manager: OpusLaye
                         R.string.absolute_label,
                         modifier = Modifier
                             .testTag(TestTag.RelativeSetAbsolute)
-                            .padding(vertical = Dimensions.RelativeInputPopup.ItemPadding)
-                            .height(Dimensions.RelativeInputPopup.ItemHeight),
-                        style = Typography.RadioMenu
+                            .padding(vertical = MasterTheme.dimensions.RelativeInputPopupItemPadding)
+                            .height(MasterTheme.dimensions.RelativeInputPopupItemHeight),
+                        style = MasterTheme.typography.RadioMenu
                     )
                 },
                 Pair(RelativeInputMode.Positive) {
                     Icon(
                         modifier = Modifier
                             .testTag(TestTag.RelativeSetPositive)
-                            .padding(vertical = Dimensions.RelativeInputPopup.ItemPadding)
-                            .height(Dimensions.RelativeInputPopup.ItemHeight),
+                            .padding(vertical = MasterTheme.dimensions.RelativeInputPopupItemPadding)
+                            .height(MasterTheme.dimensions.RelativeInputPopupItemHeight),
                         painter = painterResource(R.drawable.icon_add),
                         contentDescription = stringResource(R.string.relative_input_mode_positive)
                     )
@@ -494,10 +491,20 @@ fun ContextMenuLeafStdSecondary(vm_state: ViewModelEditorState, opus_manager: Op
                     },
                     alternate = false,
                     on_click = { opus_manager.set_note_octave_at_cursor(it, vm_state.relative_input_mode.value) },
-                    on_long_click = { octave_dropdown_visible.value = it }
+                    on_long_click = { octave_dropdown_visible.value = it },
+                    shape_start = if (layout == LayoutSize.MediumLandscape) {
+                        MasterTheme.shapes.ContextMenuButtonPrimaryStart
+                    } else {
+                        MasterTheme.shapes.ContextMenuButtonPrimary
+                    },
+                    shape_end = if (layout == LayoutSize.MediumLandscape) {
+                        MasterTheme.shapes.ContextMenuButtonPrimaryEnd
+                    } else {
+                        MasterTheme.shapes.ContextMenuButtonPrimary
+                    },
                 )
             }
-            Spacer(Modifier.height(Dimensions.NotePickerSpacing))
+            Spacer(Modifier.height(MasterTheme.dimensions.NotePickerSpacing))
         }
 
         LayoutSize.SmallLandscape -> {}
@@ -537,21 +544,21 @@ fun ContextMenuLeafStdSecondary(vm_state: ViewModelEditorState, opus_manager: Op
                     },
                     alternate = true,
                     shape_start = if (layout == LayoutSize.SmallLandscape) {
-                        Shapes.NumberSelectorButtonStart
+                        MasterTheme.shapes.NumberSelectorButtonStart
                     } else {
-                        Shapes.NumberSelectorButton
+                        MasterTheme.shapes.NumberSelectorButton
                     },
                     shape_end = if (layout == LayoutSize.SmallLandscape) {
-                        Shapes.NumberSelectorButtonEnd
+                        MasterTheme.shapes.NumberSelectorButtonEnd
                     } else {
-                        Shapes.NumberSelectorButton
+                        MasterTheme.shapes.NumberSelectorButton
                     },
                     on_long_click = { offset_dropdown_visible.value = it },
                     on_click = { opus_manager.set_note_offset_at_cursor(it, vm_state.relative_input_mode.value) }
                 )
             }
             if (i != 0) {
-                Spacer(Modifier.height(Dimensions.NotePickerSpacing))
+                Spacer(Modifier.height(MasterTheme.dimensions.NotePickerSpacing))
             }
         }
     }

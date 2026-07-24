@@ -30,9 +30,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.MasterTheme
 import com.qfs.pagan.ui.theme.Shadows
-import com.qfs.pagan.ui.theme.Shapes
 
 @Composable
 fun DrawerCard(
@@ -44,7 +43,7 @@ fun DrawerCard(
         disabledContainerColor = Color.Green,
     ),
     elevation: CardElevation = CardDefaults.cardElevation(),
-    shape: Shape = Shapes.Drawer,
+    shape: Shape = MasterTheme.shapes.Drawer,
     border: BorderStroke? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -64,7 +63,7 @@ fun DrawerCard(
             Column(
                 modifier = Modifier
                     .width(IntrinsicSize.Min)
-                    .padding(Dimensions.DialogPadding),
+                    .padding(MasterTheme.dimensions.DialogPadding),
                 horizontalAlignment = Alignment.End,
                 content = content
             )

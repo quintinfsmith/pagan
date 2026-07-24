@@ -23,7 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
-import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.MasterTheme
 
 
 @Composable
@@ -31,7 +31,7 @@ fun TopBarIcon(
     icon: Int,
     description: Int,
     modifier: Modifier = Modifier,
-    width: Dp = Dimensions.TopBarIconWidth,
+    width: Dp = MasterTheme.dimensions.TopBarIconWidth,
     contentAlignment: Alignment = Alignment.Center,
     onLongClick: (() -> Unit)? = null,
     onClick: () -> Unit,
@@ -39,7 +39,7 @@ fun TopBarIcon(
     Box(
         modifier = modifier
             .background(color = Color.Transparent, shape = CircleShape)
-            .size(width, Dimensions.TopBarIconHeight)
+            .size(width, MasterTheme.dimensions.TopBarIconHeight)
             .clip(CircleShape)
             .combinedClickable(
                 onClick = onClick,
@@ -60,6 +60,6 @@ fun TopBarIcon(
 fun TopBarNoIcon() {
     Box(
         modifier = Modifier
-            .size(Dimensions.TopBarIconWidth, Dimensions.TopBarIconHeight)
+            .size(MasterTheme.dimensions.TopBarIconWidth, MasterTheme.dimensions.TopBarIconHeight)
     )
 }

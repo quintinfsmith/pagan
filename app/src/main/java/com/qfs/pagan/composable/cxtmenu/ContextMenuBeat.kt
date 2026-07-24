@@ -32,7 +32,7 @@ import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.TextInput
 import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.testTag
-import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.MasterTheme
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 
@@ -41,7 +41,7 @@ fun TagButton(
     opus_manager: OpusLayerInterface,
     column_data: ViewModelEditorState.ColumnData,
     beat: Int,
-    shape: Shape = Shapes.ContextMenuButtonPrimary
+    shape: Shape = MasterTheme.shapes.ContextMenuButtonPrimary
 ) {
     IconCMenuButton(
         modifier = Modifier.testTag(TestTag.BeatToggleTag),
@@ -68,7 +68,7 @@ fun AdjustBeatButton(vm_state: ViewModelEditorState, opus_manager: OpusLayerInte
             modifier = Modifier.testTag(TestTag.AdjustSelection),
             onClick = { dialog_visibility.value = !dialog_visibility.value },
             icon = R.drawable.icon_adjust,
-            shape = Shapes.ContextMenuButtonPrimary,
+            shape = MasterTheme.shapes.ContextMenuButtonPrimary,
             description = R.string.cd_adjust_selection
         )
 
@@ -110,7 +110,7 @@ fun RemoveBeatButton(
 fun InsertBeatButton(
     opus_manager: OpusLayerInterface,
     dialog_value: MutableIntState,
-    shape: Shape = Shapes.ContextMenuButtonPrimary
+    shape: Shape = MasterTheme.shapes.ContextMenuButtonPrimary
 ) {
     val dialog_visibility = remember { mutableStateOf(false) }
     Box {
@@ -146,7 +146,7 @@ fun ContextMenuColumnPrimary(modifier: Modifier = Modifier, vm_state: ViewModelE
                 InsertBeatButton(
                     opus_manager,
                     vm_state.dlg_insert_beat,
-                    Shapes.ContextMenuButtonPrimaryStart
+                    MasterTheme.shapes.ContextMenuButtonPrimaryStart
                 )
                 MediumSpacer()
                 RemoveBeatButton(
@@ -157,7 +157,7 @@ fun ContextMenuColumnPrimary(modifier: Modifier = Modifier, vm_state: ViewModelE
                 MediumSpacer()
                 AdjustBeatButton(vm_state, opus_manager)
                 Spacer(Modifier.weight(1F))
-                TagButton(opus_manager, column_data, beat, Shapes.ContextMenuButtonPrimaryBottom)
+                TagButton(opus_manager, column_data, beat, MasterTheme.shapes.ContextMenuButtonPrimaryBottom)
             }
         }
         else -> {
@@ -179,7 +179,7 @@ fun ContextMenuColumnSecondary(modifier: Modifier = Modifier, vm_state: ViewMode
         }
         else -> {
             ContextMenuPrimaryRow(modifier) {
-                TagButton(opus_manager, column_data, beat, Shapes.ContextMenuButtonPrimaryStart)
+                TagButton(opus_manager, column_data, beat, MasterTheme.shapes.ContextMenuButtonPrimaryStart)
                 MediumSpacer()
                 AdjustBeatButton(vm_state, opus_manager)
                 MediumSpacer()
@@ -193,9 +193,9 @@ fun ContextMenuColumnSecondary(modifier: Modifier = Modifier, vm_state: ViewMode
                     opus_manager,
                     vm_state.dlg_insert_beat,
                     if (!column_data.is_tagged.value) {
-                        Shapes.ContextMenuButtonPrimaryEnd
+                        MasterTheme.shapes.ContextMenuButtonPrimaryEnd
                     } else {
-                        Shapes.ContextMenuButtonPrimary
+                        MasterTheme.shapes.ContextMenuButtonPrimary
                     }
                 )
             }
@@ -219,7 +219,7 @@ fun TagDescription(modifier: Modifier = Modifier, vm_state: ViewModelEditorState
                 minHeightInLines = 1,
                 maxHeightInLines = 4
             ),
-            shape = Shapes.ContextMenuButtonFull,
+            shape = MasterTheme.shapes.ContextMenuButtonFull,
             callback_on_return = true,
             callback = {
                 val description = it.trim().ifEmpty { null }

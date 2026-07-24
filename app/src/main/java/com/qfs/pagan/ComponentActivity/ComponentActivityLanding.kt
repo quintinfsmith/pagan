@@ -51,8 +51,8 @@ import com.qfs.pagan.composable.button.Button
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.put_config
 import com.qfs.pagan.testTag
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.Layout
+import com.qfs.pagan.ui.theme.MasterTheme
 import java.io.File
 import java.io.FileOutputStream
 import java.time.LocalDateTime
@@ -94,22 +94,22 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
     @Composable
     fun RowScope.Padder(factor: Float = 1F) {
-        Spacer(Modifier.width(Dimensions.LandingPadding * factor))
+        Spacer(Modifier.width(MasterTheme.dimensions.LandingPadding * factor))
     }
     @Composable
     fun ColumnScope.Padder(factor: Float = 1F) {
-        Spacer(Modifier.height(Dimensions.LandingPadding * factor))
+        Spacer(Modifier.height(MasterTheme.dimensions.LandingPadding * factor))
     }
 
     @Composable
     fun ButtonRecent(
         modifier: Modifier = Modifier,
-        shape: Shape = Shapes.LandingButtonShape
+        shape: Shape = MasterTheme.shapes.LandingButtonShape
     ) {
         Button(
             modifier = modifier
                 .testTag(TestTag.LandingRecent)
-                .height(Dimensions.LandingButtonHeight),
+                .height(MasterTheme.dimensions.LandingButtonHeight),
             content = { Text(stringResource(R.string.btn_landing_most_recent)) },
             shape = shape,
             onClick = {
@@ -127,12 +127,12 @@ class ComponentActivityLanding: PaganComponentActivity() {
     @Composable
     fun ButtonNew(
         modifier: Modifier = Modifier,
-        shape: Shape = Shapes.LandingButtonShape
+        shape: Shape = MasterTheme.shapes.LandingButtonShape
     ) {
         Button(
             modifier = modifier
                 .testTag(TestTag.LandingNewProject)
-                .height(Dimensions.LandingButtonHeight),
+                .height(MasterTheme.dimensions.LandingButtonHeight),
             content = { Text(stringResource(R.string.btn_landing_new)) },
             shape = shape,
             onClick = {
@@ -148,13 +148,13 @@ class ComponentActivityLanding: PaganComponentActivity() {
     @Composable
     fun ButtonLoad(
         modifier: Modifier = Modifier,
-        shape: Shape = Shapes.LandingButtonShape
+        shape: Shape = MasterTheme.shapes.LandingButtonShape
     ) {
         val load_menu_visibility = remember { mutableStateOf(false) }
         Button(
             modifier = modifier
                 .testTag(TestTag.LandingLoadProject)
-                .height(Dimensions.LandingButtonHeight),
+                .height(MasterTheme.dimensions.LandingButtonHeight),
             content = { Text(stringResource(R.string.btn_landing_load)) },
             shape = shape,
             onClick = { load_menu_visibility.value = true }
@@ -175,13 +175,13 @@ class ComponentActivityLanding: PaganComponentActivity() {
     @Composable
     fun SmallIconButton(
         modifier: Modifier = Modifier,
-        contentPadding: PaddingValues = PaddingValues(Dimensions.LandingIconButtonPadding),
+        contentPadding: PaddingValues = PaddingValues(MasterTheme.dimensions.LandingIconButtonPadding),
         onClick: () -> Unit, content: @Composable RowScope.() -> Unit
     ) {
         Button(
             modifier = modifier
-                .height(Dimensions.LandingIconButtonSize)
-                .width(Dimensions.LandingIconButtonSize),
+                .height(MasterTheme.dimensions.LandingIconButtonSize)
+                .width(MasterTheme.dimensions.LandingIconButtonSize),
             onClick = onClick,
             contentPadding = contentPadding,
             shape = CircleShape,
@@ -235,7 +235,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
     @Composable
     fun ButtonAbout(
         modifier: Modifier = Modifier,
-        shape: Shape = Shapes.LandingButtonShape
+        shape: Shape = MasterTheme.shapes.LandingButtonShape
     ) {
         SmallIconButton(
             modifier = modifier.testTag(TestTag.LandingAbout),
@@ -268,7 +268,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
     @Composable
     override fun LayoutLargePortrait(modifier: Modifier) {
         Column(
-            modifier = modifier.padding(Dimensions.LandingPadding),
+            modifier = modifier.padding(MasterTheme.dimensions.LandingPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
@@ -279,7 +279,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
             }
 
             Column(
-                Modifier.width(Dimensions.Layout.Medium.long),
+                Modifier.width(Layout.Medium.long),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 if (view_model.has_backup_saved.value) {
@@ -318,7 +318,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
     override fun LayoutSmallPortrait(modifier: Modifier) {
         Column(
             modifier = modifier
-                .padding(Dimensions.LandingPadding)
+                .padding(MasterTheme.dimensions.LandingPadding)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
@@ -361,16 +361,16 @@ class ComponentActivityLanding: PaganComponentActivity() {
 
     @Composable
     fun LayoutSmallLandscapeNeedsSF(modifier: Modifier = Modifier) {
-        val button_shape = Shapes.LandingButtonShapeNeedsSF
+        val button_shape = MasterTheme.shapes.LandingButtonShapeNeedsSF
         Row(
-            modifier.padding(Dimensions.LandingPadding),
+            modifier.padding(MasterTheme.dimensions.LandingPadding),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Box(
                 modifier = Modifier
                     .weight(2F)
-                    .padding(Dimensions.Space.Large),
+                    .padding(MasterTheme.dimensions.SpaceLarge),
                 contentAlignment = Alignment.Center
             ) {
                 SoundFontWarning()
@@ -385,13 +385,13 @@ class ComponentActivityLanding: PaganComponentActivity() {
                 Spacer(Modifier)
                 Column(horizontalAlignment = Alignment.End) {
                     if (view_model.has_backup_saved.value) {
-                        ButtonRecent(shape = Shapes.LandingButtonShapeNeedsSF)
+                        ButtonRecent(shape = MasterTheme.shapes.LandingButtonShapeNeedsSF)
                         Padder()
                     }
                     ButtonNew(shape = button_shape)
                     if (view_model.has_saved_project.value) {
                         Padder()
-                        ButtonLoad(shape = Shapes.LandingButtonShapeNeedsSF)
+                        ButtonLoad(shape = MasterTheme.shapes.LandingButtonShapeNeedsSF)
                     }
                 }
                 LayoutSmallIconLinks()
@@ -403,14 +403,14 @@ class ComponentActivityLanding: PaganComponentActivity() {
     @Composable
     fun LayoutSmallLandscapeNormal(modifier: Modifier = Modifier) {
         Column(
-            modifier.padding(Dimensions.LandingPadding),
+            modifier.padding(MasterTheme.dimensions.LandingPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Spacer(Modifier.height(1.dp))
 
             Column(
-                Modifier.width(Dimensions.Layout.Small.short)
+                Modifier.width(Layout.Small.short)
             ) {
                 if (view_model.has_backup_saved.value) {
                     ButtonRecent(Modifier.fillMaxWidth())
@@ -443,7 +443,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
             DialogSTitle(R.string.crash_report_save)
             Text(
                 R.string.crash_report_desc,
-                modifier = Modifier.padding(vertical = Dimensions.BugReportPadding)
+                modifier = Modifier.padding(vertical = MasterTheme.dimensions.BugReportPadding)
             )
             DialogBar(
                 negative = {

@@ -16,14 +16,14 @@ import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.wrappers.Text
 import com.qfs.pagan.structure.opusmanager.base.effectcontrol.EffectType
 import com.qfs.pagan.testTag
-import com.qfs.pagan.ui.theme.Dimensions
+import com.qfs.pagan.ui.theme.MasterTheme
 
 @Composable
 fun RowScope.EffectMenuItem(ctl_type: EffectType, exists: Boolean) {
     Icon(
         modifier = Modifier
             .testTag(EffectResourceMap[ctl_type].test_tag)
-            .width(Dimensions.EffectDialogIconWidth),
+            .width(MasterTheme.dimensions.EffectDialogIconWidth),
         painter = painterResource(EffectResourceMap[ctl_type].icon),
         contentDescription = stringResource(EffectResourceMap[ctl_type].name)
     )
@@ -34,7 +34,7 @@ fun RowScope.EffectMenuItem(ctl_type: EffectType, exists: Boolean) {
         Icon(
             modifier = Modifier
                 .alpha(.8F)
-                .width(Dimensions.EffectDialogIconWidth),
+                .width(MasterTheme.dimensions.EffectDialogIconWidth),
             painter = painterResource(R.drawable.icon_hide),
             contentDescription = stringResource(EffectResourceMap[ctl_type].name),
         )

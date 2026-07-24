@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -46,8 +45,7 @@ import com.qfs.pagan.composable.button.IconCMenuButton
 import com.qfs.pagan.composable.button.ProvideContentColorTextStyle
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Colors
-import com.qfs.pagan.ui.theme.Dimensions
-import com.qfs.pagan.ui.theme.Shapes
+import com.qfs.pagan.ui.theme.MasterTheme
 import com.qfs.pagan.viewmodel.ViewModelEditorState
 
 @Composable
@@ -162,11 +160,11 @@ fun ContextMenuRangePrimary(
 
                 Spacer(Modifier.weight(1F))
                 if (vm_state.std_notes_in_range.value) {
-                    AdjustRangeButton(vm_state, opus_manager, Shapes.ContextMenuButtonPrimary)
+                    AdjustRangeButton(vm_state, opus_manager, MasterTheme.shapes.ContextMenuButtonPrimary)
                     MediumSpacer()
                 }
 
-                UnsetRangeButton(opus_manager, Shapes.ContextMenuButtonPrimaryBottom)
+                UnsetRangeButton(opus_manager, MasterTheme.shapes.ContextMenuButtonPrimaryBottom)
             }
         }
         else -> {
@@ -214,17 +212,17 @@ fun ContextMenuRangeSecondary(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (vm_state.std_notes_in_range.value) {
-                    AdjustRangeButton(vm_state, opus_manager, Shapes.ContextMenuButtonPrimary)
+                    AdjustRangeButton(vm_state, opus_manager, MasterTheme.shapes.ContextMenuButtonPrimary)
                 } else {
                     Spacer(
                         Modifier
-                            .height(Dimensions.ContextMenuButtonHeight)
-                            .width(Dimensions.ContextMenuButtonWidth)
+                            .height(MasterTheme.dimensions.ContextMenuButtonHeight)
+                            .width(MasterTheme.dimensions.ContextMenuButtonWidth)
                     )
                 }
 
                 ModeRadio(vm_state)
-                UnsetRangeButton(opus_manager, Shapes.ContextMenuButtonPrimary)
+                UnsetRangeButton(opus_manager, MasterTheme.shapes.ContextMenuButtonPrimary)
             }
         }
     }

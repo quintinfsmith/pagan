@@ -351,6 +351,8 @@
     <string name="khz">KHz</string>
     <string name="hz">Hz</string>
     <string name="disable_filter">Disable Filter</string>
+    <string name="codeberg_dialog_neutral">I manually installed the sdk</string>
+    <string name="codeberg_dialog_positive">Refetch Obtanium Config</string>
 
 
     <string-array name="general_midi_presets">

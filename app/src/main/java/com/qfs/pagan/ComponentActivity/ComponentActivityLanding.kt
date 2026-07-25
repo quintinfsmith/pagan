@@ -11,6 +11,7 @@ package com.qfs.pagan.ComponentActivity
 
 import android.content.Intent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,24 +32,32 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import com.qfs.pagan.R
 import com.qfs.pagan.TestTag
 import com.qfs.pagan.composable.DialogBar
 import com.qfs.pagan.composable.DialogSTitle
+import com.qfs.pagan.composable.DialogTitle
+import com.qfs.pagan.composable.MediumSpacer
 import com.qfs.pagan.composable.PaganDialog
 import com.qfs.pagan.composable.SettingsRow
 import com.qfs.pagan.composable.SoundFontWarning
 import com.qfs.pagan.composable.button.Button
+import com.qfs.pagan.composable.button.OutlinedButton
 import com.qfs.pagan.composable.wrappers.Text
+import com.qfs.pagan.find_activity
 import com.qfs.pagan.put_config
 import com.qfs.pagan.testTag
 import com.qfs.pagan.ui.theme.Layout
@@ -272,6 +281,7 @@ class ComponentActivityLanding: PaganComponentActivity() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
+            CodebergDialog()
             Spacer(Modifier.height(1.dp))
 
             if (this@ComponentActivityLanding.view_model.requires_soundfont.value) {
@@ -323,6 +333,8 @@ class ComponentActivityLanding: PaganComponentActivity() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
+            CodebergDialog()
+
             Spacer(Modifier.height(1.dp))
             if (this@ComponentActivityLanding.view_model.requires_soundfont.value) {
                 SoundFontWarning()
@@ -469,6 +481,72 @@ class ComponentActivityLanding: PaganComponentActivity() {
             ButtonSettings()
             Padder(2F)
             ButtonAbout()
+        }
+    }
+
+    @Composable
+    fun ColumnScope.CodebergDialog() {
+        val visibility = remember { mutableStateOf(!this@ComponentActivityLanding.view_model.configuration.codeberg_warning_seen.value) }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.icon_navi),
+                contentDescription = null,
+                modifier = Modifier
+                    .height(41.dp)
+                    .clickable {
+                        visibility.value = true
+                    }
+            )
+        }
+
+        val context = LocalContext.current.find_activity() ?: return
+        PaganDialog(visibility) {
+            DialogTitle("Pagan has moved to codeberg.org")
+            Text(
+                "If you're seeing this, you use obtainium or manually installed the sdk. If you use Obtainium, you'll need to get the new configuration to keep receiving updates. Otherwise, you can ignore this.",
+                style = MasterTheme.typography.DialogBody
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+                    .height(41.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedButton(
+                    modifier = Modifier.fillMaxHeight(),
+                    onClick = {
+                        visibility.value = false
+                        this@ComponentActivityLanding.view_model.configuration.codeberg_warning_seen.value = true
+                    },
+                    content = { Text("Ignore") }
+                )
+                Button(
+                    modifier = Modifier.fillMaxHeight(),
+                    onClick = {
+                        visibility.value = false
+                        this@ComponentActivityLanding.view_model.configuration.codeberg_warning_seen.value = true
+                        val url = "http://apps.obtainium.imranr.dev/redirect.html?r=obtainium://app/%7B%22id%22%3A%22com.qfs.pagan%22%2C%22url%22%3A%22https%3A%2F%2Fcodeberg.org%2Fquintinfsmith%2Fpagan%22%2C%22author%22%3A%22Quintin%20F%20Smith%22%2C%22name%22%3A%22Pagan%22%7D"
+                        val intent = Intent(Intent.ACTION_VIEW)
+                        intent.data = url.toUri()
+                        context.startActivity(intent)
+                    },
+                    content = {
+                        Icon(
+                            modifier = Modifier
+                                .padding(end = 8.dp),
+                            painter = painterResource(R.drawable.icon_obtainium),
+                            contentDescription = null
+                        )
+
+                        Text("Get Config", style=MasterTheme.typography.Button.copy(fontSize = 10.sp))
+                    }
+                )
+            }
         }
     }
 

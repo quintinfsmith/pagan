@@ -48,7 +48,8 @@ class PaganConfiguration(
     soundfont_uris: Array<Uri> = arrayOf(),
     sort_load: Int = -3,
     play_in_background: Boolean = true,
-    volume_curve: Float = Values.Defaults.VolumeCurve
+    volume_curve: Float = Values.Defaults.VolumeCurve,
+    codeberg_warning_seen: Boolean = false
 ): JSONCompliant {
     val soundfonts: MutableState<Array<MutableState<String>>> = mutableStateOf(Array(if (allow_multiple_soundfonts) soundfonts.size else min(1, soundfonts.size)) { mutableStateOf(soundfonts[it]) })
     val soundfont_uris: MutableState<Array<MutableState<Uri>>> = mutableStateOf(Array(if (allow_multiple_soundfonts) soundfont_uris.size else min(1, soundfont_uris.size)) { mutableStateOf(soundfont_uris[it]) })
@@ -68,6 +69,7 @@ class PaganConfiguration(
     val sort_load: MutableState<Int?> = mutableStateOf(sort_load)
     val play_in_background: MutableState<Boolean> = mutableStateOf(play_in_background)
     val volume_curve: MutableFloatState = mutableFloatStateOf(volume_curve)
+    val codeberg_warning_seen: MutableState<Boolean> = mutableStateOf(codeberg_warning_seen)
     enum class MoveMode {
         MOVE,
         COPY,
@@ -119,7 +121,8 @@ class PaganConfiguration(
                 allow_multiple_soundfonts = content.get_booleann("allow_multiple_soundfonts") ?: false,
                 sort_load = content.get_intn("sort_load") ?: -3,
                 play_in_background = content.get_booleann("play_in_background") ?: true,
-                volume_curve = content.get_floatn("volume_curve") ?: Values.Defaults.VolumeCurve
+                volume_curve = content.get_floatn("volume_curve") ?: Values.Defaults.VolumeCurve,
+                codeberg_warning_seen = content.get_booleann("cb_warn") ?: false
             )
         }
 
@@ -166,6 +169,7 @@ class PaganConfiguration(
         this.sort_load.value = config.sort_load.value
         this.play_in_background.value = config.play_in_background.value
         this.volume_curve.value = config.volume_curve.value
+        this.codeberg_warning_seen.value = config.codeberg_warning_seen.value
     }
 
     fun update_from_path(path: String) {
@@ -210,6 +214,7 @@ class PaganConfiguration(
         output["sort_load"] = this.sort_load.value
         output["play_in_background"] = this.play_in_background.value
         output["volume_curve"] = this.volume_curve.floatValue
+        output["cb_warn"] = this.codeberg_warning_seen.value
 
         // output["channel_colors"] = JSONList(*Array(this.channel_colors.size) {
         //     JSONString(this.channel_colors[it].toHexString(HexFormat.Default))
